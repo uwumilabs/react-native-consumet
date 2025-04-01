@@ -1,7 +1,6 @@
 import {
   ANIME,
   MANGA,
-  BOOKS,
   COMICS,
   LIGHT_NOVELS,
   MOVIES,
@@ -40,7 +39,6 @@ export const PROVIDERS_LIST = {
     new MANGA.MangaHost(),
     new MANGA.BRMangas(),
   ],
-  BOOKS: [new BOOKS.Libgen()],
   COMICS: [new COMICS.GetComics()],
   LIGHT_NOVELS: [new LIGHT_NOVELS.ReadLightNovels()],
   MOVIES: [

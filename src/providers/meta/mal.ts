@@ -2,14 +2,14 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IAnimeEpisode,
+  type IAnimeResult,
+  type ISource,
+  type IAnimeEpisode,
   SubOrSub,
-  IEpisodeServer,
+  type IEpisodeServer,
   MediaFormat,
 } from '../../models';
 import {
@@ -131,7 +131,7 @@ class Myanimelist extends AnimeParser {
       const id = $(item)
         .find('.hoverinfo_trigger')
         .attr('href')
-        ?.split('anime/')[1]
+        ?.split('anime/')[1]!
         .split('/')[0];
       const title = $(item).find('strong').text();
       const description = $(item)
@@ -292,7 +292,7 @@ class Myanimelist extends AnimeParser {
         ) {
           if (fillerEpisodes[episode.number! - 1])
             episode.isFiller = new Boolean(
-              fillerEpisodes[episode.number! - 1]['filler-bool']
+              fillerEpisodes?.[episode.number! - 1]!['filler-bool']
             ).valueOf();
         }
 
@@ -374,13 +374,13 @@ class Myanimelist extends AnimeParser {
 
     if (this.provider instanceof Crunchyroll) {
       return await this.provider.fetchAnimeInfo(
-        findAnime.results[0].id,
-        findAnime.results[0].type as string
+        findAnime.results[0]?.id!,
+        findAnime.results[0]?.type! as string
       );
     }
     // TODO: use much better way than this
     return (await this.provider.fetchAnimeInfo(
-      findAnime.results[0].id
+      findAnime.results[0]!.id
     )) as IAnimeInfo;
   };
 
@@ -420,7 +420,7 @@ class Myanimelist extends AnimeParser {
           };
         };
         let sites = Object.values(sitesT).map((v, i) => {
-          const obj = [...Object.values(Object.values(sitesT)[i])];
+          const obj = [...Object.values(Object.values(sitesT)[i]!)];
           const pages = obj.map((v) => ({
             page: v.page,
             url: v.url,
@@ -705,7 +705,7 @@ class Myanimelist extends AnimeParser {
       const style = $(teaserDOM).attr('style');
       if (teaserURL) {
         animeInfo.trailer = {
-          id: substringAfter(teaserURL, 'embed/').split('?')[0],
+          id: substringAfter(teaserURL, 'embed/').split('?')[0]!,
           site: 'https://youtube.com/watch?v=',
           thumbnail: style
             ? substringBefore(substringAfter(style, "url('"), "'")
@@ -738,8 +738,8 @@ class Myanimelist extends AnimeParser {
               .text()
               .trim()
               .split(index)[1]
-              .split(band)[0]
-              .trim(),
+              ?.split(band)[0]
+              ?.trim(),
             band: band.replace('by ', ''),
             episodes: episodes,
           };
@@ -752,8 +752,8 @@ class Myanimelist extends AnimeParser {
               .eq(1)
               .text()
               .trim()
-              .split(band)[0]
-              .trim(),
+              ?.split(band)[0]
+              ?.trim(),
             band: band.replace('by ', ''),
             episodes: episodes,
           };
@@ -784,8 +784,8 @@ class Myanimelist extends AnimeParser {
               .text()
               .trim()
               .split(index)[1]
-              .split(band)[0]
-              .trim(),
+              ?.split(band)[0]
+              ?.trim(),
             band: band.replace('by ', ''),
             episodes: episodes,
           };
@@ -798,8 +798,8 @@ class Myanimelist extends AnimeParser {
               .eq(1)
               .text()
               .trim()
-              .split(band)[0]
-              .trim(),
+              ?.split(band)[0]
+              ?.trim(),
             band: band.replace('by ', ''),
             episodes: episodes,
           };
@@ -827,15 +827,15 @@ class Myanimelist extends AnimeParser {
           if (isNaN(animeInfo.totalEpisodes)) animeInfo.totalEpisodes = 0;
           break;
         case 'premiered':
-          animeInfo.season = value.split(' ')[0].toUpperCase();
+          animeInfo.season = value.split(' ')[0]?.toUpperCase();
           break;
         case 'aired':
           const dates = value.split('to');
           if (dates.length >= 2) {
-            const start = dates[0].trim();
-            const end = dates[1].trim();
-            const startDate = new Date(start);
-            const endDate = new Date(end);
+            const start = dates[0]?.trim();
+            const end = dates[1]?.trim();
+            const startDate = new Date(start!);
+            const endDate = new Date(end!);
 
             if (startDate.toString() !== 'Invalid Date') {
               animeInfo.startDate = {

@@ -1,5 +1,5 @@
-import { Hashes } from './base-types';
-import { GetComicsComics, LibgenBook } from './types';
+import { type Hashes } from './base-types';
+import { type GetComicsComics, type LibgenBook } from './types';
 
 export class LibgenBookObject implements LibgenBook {
   title = '';

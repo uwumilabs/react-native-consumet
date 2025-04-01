@@ -3,12 +3,12 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
 } from '../../models';
 import { MixDrop, AsianLoad, StreamTape, StreamSB } from '../../extractors';
 

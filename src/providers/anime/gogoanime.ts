@@ -1,18 +1,18 @@
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IEpisodeServer,
   StreamingServers,
   MediaStatus,
   SubOrSub,
-  IAnimeResult,
-  ISource,
+  type IAnimeResult,
+  type ISource,
   MediaFormat,
-  ProxyConfig,
+  type ProxyConfig,
 } from '../../models';
 import { USER_AGENT } from '../../utils';
 import { GogoCDN, Mp4Upload, StreamSB, StreamWish } from '../../extractors';
@@ -118,7 +118,7 @@ class Gogoanime extends AnimeParser {
 
       const $ = load(res.data);
 
-      animeInfo.id = new URL(id).pathname.split('/')[2];
+      animeInfo.id = new URL(id).pathname.split('/')[2]!;
       animeInfo.title = $(
         'section.content_left > div.main_body > div:nth-child(2) > div.anime_info_body_bg > h1'
       )
@@ -386,7 +386,7 @@ class Gogoanime extends AnimeParser {
         $(
           '#wrapper_bg > section > section.content_left > div:nth-child(1) > div.anime_video_body > div.anime_video_body_cate > div.anime-info > a'
         ).attr('href') as string
-      ).split('/')[2];
+      ).split('/')[2]!;
     } catch (err) {
       throw new Error('Episode not found.');
     }
@@ -496,7 +496,7 @@ class Gogoanime extends AnimeParser {
             .find('a:nth-child(2)')
             .text()
             .trim()
-            .split(',')[0]
+            .split(',')[0]!
             .trim()!,
           image: $(el)
             .find('a:nth-child(1) > div')

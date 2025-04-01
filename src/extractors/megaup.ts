@@ -1,6 +1,6 @@
 //extractor for https://animekai.to
 
-import { ISource, IVideo, VideoExtractor } from '../models';
+import { type ISource, type IVideo, VideoExtractor } from '../models';
 
 export class MegaUp extends VideoExtractor {
   protected serverName: string = 'MegaUp';
@@ -29,15 +29,20 @@ export class MegaUp extends VideoExtractor {
     const v = Array.from({ length: 256 }, (_, i) => i);
     let c = 0,
       f = '';
-
-    for (let w = 0; w < 256; w++) {
+      
+      for (let w = 0; w < 256; w++) {
+      // @ts-ignore
       c = (c + v[w] + n.charCodeAt(w % n.length)) % 256;
+      // @ts-ignore
       [v[w], v[c]] = [v[c], v[w]];
     }
     for (let a = (c = 0), w = 0; a < t.length; a++) {
       w = (w + 1) % 256;
+      // @ts-ignore
       c = (c + v[w]) % 256;
+      // @ts-ignore
       [v[w], v[c]] = [v[c], v[w]];
+      // @ts-ignore
       f += String.fromCharCode(t.charCodeAt(a) ^ v[(v[w] + v[c]) % 256]);
     }
 

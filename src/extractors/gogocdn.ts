@@ -58,7 +58,7 @@ class GogoCDN extends VideoExtractor {
       );
       resolutions?.forEach((res: string) => {
         const index = decryptedData.source[0].file.lastIndexOf('/');
-        const quality = res.split('\n')[0].split('x')[1].split(',')[0];
+        const quality = res.split('\n')[0]?.split('x')[1]?.split(',')[0];
         const url = decryptedData.source[0].file.slice(0, index);
         this.sources.push({
           url: url + '/' + res.split('\n')[1],

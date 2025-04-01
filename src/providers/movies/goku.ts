@@ -3,13 +3,13 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
-  IMovieEpisode,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
+  type IMovieEpisode,
 } from '../../models';
 import { MixDrop, VidCloud } from '../../extractors';
 
@@ -176,7 +176,7 @@ class Goku extends MovieParser {
                 id: $$$(el).find('a').attr('data-id') ?? '',
                 title: $$$(el).find('a').attr('title') ?? '',
                 number: parseInt(
-                  $$$(el).find('a').text()?.split(':')[0].trim().substring(3) ??
+                  $$$(el).find('a').text()?.split(':')[0]?.trim().substring(3) ??
                     ''
                 ),
                 season: season.season,
@@ -266,7 +266,7 @@ class Goku extends MovieParser {
       const serverUrl: URL = new URL(
         servers.filter(
           (s) => s.name.toLowerCase() === server.toLowerCase()
-        )[0].url
+        )[0]!.url
       );
 
       return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);
@@ -370,12 +370,12 @@ class Goku extends MovieParser {
             season: $(ele)
               .find('.info-split > div:nth-child(2)')
               .text()
-              .split('/')[0]
+              .split('/')[0]!
               .trim(),
             latestEpisode: $(ele)
               .find('.info-split > div:nth-child(2)')
               .text()
-              .split('/')[1]
+              .split('/')[1]!
               .trim(),
             type:
               ($(ele)
@@ -447,12 +447,12 @@ class Goku extends MovieParser {
             season: $(ele)
               .find('.info-split > div:nth-child(2)')
               .text()
-              .split('/')[0]
+              .split('/')[0]!
               .trim(),
             latestEpisode: $(ele)
               .find('.info-split > div:nth-child(2)')
               .text()
-              .split('/')[1]
+              .split('/')[1]!
               .trim(),
             type:
               ($(ele)
@@ -515,12 +515,12 @@ class Goku extends MovieParser {
             resultItem.season = $(el)
               .find('div.movie-info > div.info-split > div:nth-child(2)')
               .text()
-              .split('/')[0]
+              .split('/')[0]!
               .trim();
             resultItem.latestEpisode = $(el)
               .find('div.movie-info > div.info-split > div:nth-child(2)')
               .text()
-              .split('/')[1]
+              .split('/')[1]!
               .trim();
           } else {
             resultItem.releaseDate = $(el)
@@ -583,12 +583,12 @@ class Goku extends MovieParser {
             resultItem.season = $(el)
               .find('div.movie-info > div.info-split > div:nth-child(2)')
               .text()
-              .split('/')[0]
+              .split('/')[0]!
               .trim();
             resultItem.latestEpisode = $(el)
               .find('div.movie-info > div.info-split > div:nth-child(2)')
               .text()
-              .split('/')[1]
+              .split('/')[1]!
               .trim();
           } else {
             resultItem.releaseDate = $(el)

@@ -1,10 +1,10 @@
 import { load } from 'cheerio';
 import {
-  IEpisodeServer,
-  IMovieInfo,
-  IMovieResult,
-  ISearch,
-  ISource,
+  type IEpisodeServer,
+  type IMovieInfo,
+  type IMovieResult,
+  type ISearch,
+  type ISource,
   MovieParser,
   TvType,
 } from '../../models';
@@ -64,7 +64,7 @@ class Ummangurau extends MovieParser {
     }
 
     const movieInfo: IMovieInfo = {
-      id: mediaId.split('com/')[-1],
+      id: mediaId.split('com/')[-1]!,
       title: '',
       url: mediaId,
     };

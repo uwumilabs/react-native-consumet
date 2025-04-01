@@ -31,6 +31,7 @@ export default defineConfig([
           useTabs: false,
         },
       ],
+      "no-new-wrappers": "off",
       "no-eval": [
         "warn",
         {

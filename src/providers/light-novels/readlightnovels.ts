@@ -3,11 +3,11 @@ import FormData from 'form-data';
 
 import {
   LightNovelParser,
-  ISearch,
-  ILightNovelInfo,
-  ILightNovelChapter,
-  ILightNovelChapterContent,
-  ILightNovelResult,
+  type ISearch,
+  type ILightNovelInfo,
+  type ILightNovelChapter,
+  type ILightNovelChapterContent,
+  type ILightNovelResult,
   MediaStatus,
 } from '../../models';
 import { USER_AGENT } from '../../utils';

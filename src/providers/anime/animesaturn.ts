@@ -2,12 +2,12 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IAnimeEpisode,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IAnimeEpisode,
+  type IEpisodeServer,
 } from '../../models';
 
 import { StreamTape } from '../../utils';
@@ -129,7 +129,7 @@ class AnimeSaturn extends AnimeParser {
     ); // scrape from server 1 (m3u8 and mp4 urls)
     if (serverOneUrl === null) throw new Error('Invalid url');
 
-    let data = await this.client.get(serverOneUrl);
+    let data = await this.client.get(serverOneUrl!);
     let $ = await load(data.data);
 
     const sources: ISource = {
@@ -152,7 +152,7 @@ class AnimeSaturn extends AnimeParser {
       scriptText.split('\n').forEach((line) => {
         if (line.includes('file:') && !serverOneSource) {
           serverOneSource = line
-            .split('file:')[1]
+            .split('file:')[1]!
             .trim()
             .replace(/'/g, '')
             .replace(/,/g, '')
@@ -194,8 +194,8 @@ class AnimeSaturn extends AnimeParser {
     if (!serverTwoSource) throw new Error('Invalid source');
 
     sources.sources.push({
-      url: serverTwoSource[0].url,
-      isM3U8: serverTwoSource[0].isM3U8,
+      url: serverTwoSource[0]!.url,
+      isM3U8: serverTwoSource[0]!.isM3U8,
     });
 
     return sources;

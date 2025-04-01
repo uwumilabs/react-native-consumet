@@ -3,12 +3,12 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
   MediaStatus,
 } from '../../models';
 import { Mp4Upload, StreamWish, VidMoly } from '../../extractors';
@@ -270,7 +270,7 @@ class KissAsian extends MovieParser {
       const serverUrl: URL = new URL(
         servers.filter(
           (s) => s.name.toLowerCase() === server.toLowerCase()
-        )[0].url
+        )[0]!.url
       );
 
       return await this.fetchEpisodeSources(serverUrl.href, server);

@@ -2,12 +2,12 @@ import { load } from 'cheerio';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
   MediaStatus,
-  IMangaChapterPage,
-  IMangaChapter,
+  type IMangaChapterPage,
+  type IMangaChapter,
 } from '../../models';
 
 class MangaHost extends MangaParser {

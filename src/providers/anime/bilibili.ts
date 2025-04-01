@@ -1,17 +1,17 @@
 import {
   AnimeParser,
-  IAnimeEpisode,
-  IAnimeInfo,
-  IAnimeResult,
-  IEpisodeServer,
-  ISearch,
-  ISource,
-  ISubtitle,
-  ProxyConfig,
+  type IAnimeEpisode,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type IEpisodeServer,
+  type ISearch,
+  type ISource,
+  type ISubtitle,
+  type ProxyConfig,
   SubOrSub,
 } from '../../models';
 import { BilibiliExtractor } from '../../extractors';
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 
 class Bilibili extends AnimeParser {
   override readonly name = 'Bilibili';

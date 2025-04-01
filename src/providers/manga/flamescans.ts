@@ -2,11 +2,11 @@ import { load } from 'cheerio';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
-  IMangaChapterPage,
-  IMangaChapter,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
+  type IMangaChapterPage,
+  type IMangaChapter,
   MediaStatus,
 } from '../../models';
 
@@ -38,7 +38,7 @@ class FlameScans extends MangaParser {
               $(el)
                 .find('a')
                 .attr('href')
-                ?.split('/series/')[1]
+                ?.split('/series/')[1]!
                 .replace('/', '') ?? '',
             title: $(el).find('a').attr('title') ?? '',
             image: $(el).find('img').attr('src'),

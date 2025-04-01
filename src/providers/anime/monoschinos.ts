@@ -1,15 +1,15 @@
-import { CheerioAPI, load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 
 import { StreamTape, Voe } from '../../extractors';
 import {
   AnimeParser,
-  IAnimeInfo,
-  IAnimeResult,
-  IEpisodeServer,
-  ISearch,
-  ISource,
-  ISubtitle,
-  IVideo,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type IEpisodeServer,
+  type ISearch,
+  type ISource,
+  type ISubtitle,
+  type IVideo,
   StreamingServers,
 } from '../../models';
 
@@ -157,7 +157,7 @@ class MonosChinos extends AnimeParser {
       const $2 = load(res2.data);
       const base64Match = $2.html().match(/atob\("([^"]+)"\)/)!;
 
-      return Buffer.from(base64Match[1], 'base64').toString('utf-8');
+      return Buffer.from(base64Match[1]!, 'base64').toString('utf-8');
     } catch (err) {
       throw new Error((err as Error).message);
     }

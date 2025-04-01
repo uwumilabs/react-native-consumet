@@ -3,13 +3,13 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
-  IMovieEpisode,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
+  type IMovieEpisode,
 } from '../../models';
 import { MixDrop, VidCloud } from '../../extractors';
 
@@ -63,7 +63,7 @@ class MovieHdWatch extends MovieParser {
           image: $(el).find('div.film-poster > img').attr('data-src'),
           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
           seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1])
+            ? parseInt(releaseDate.split('SS')[1]!)
             : undefined,
           duration: !duration.includes('EPS') ? duration : undefined,
           type: $(el).find('div.film-poster > a').attr('href')?.includes('tv/')
@@ -163,7 +163,7 @@ class MovieHdWatch extends MovieParser {
           image: $(el).find('div.film-poster > img').attr('data-src'),
           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
           seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1])
+            ? parseInt(releaseDate.split('SS')[1]!)
             : undefined,
           duration: !duration.includes('EPS') ? duration : undefined,
           type: $(el).find('div.film-poster > a').attr('href')?.includes('tv/')
@@ -198,10 +198,10 @@ class MovieHdWatch extends MovieParser {
           $$$('.nav > li')
             .map((i, el) => {
               const episode: IMovieEpisode = {
-                id: $$$(el).find('a').attr('id')!.split('-')[1],
+                id: $$$(el).find('a').attr('id')!.split('-')[1]!,
                 title: $$$(el).find('a').attr('title')!,
                 number: parseInt(
-                  $$$(el).find('a').attr('title')!.split(':')[0].slice(3).trim()
+                  $$$(el).find('a').attr('title')!.split(':')[0]!.slice(3).trim()
                 ),
                 season: season,
                 url: `${this.baseUrl}/ajax/v2/episode/servers/${$$$(el).find('a').attr('id')!.split('-')[1]}`,
@@ -287,7 +287,7 @@ class MovieHdWatch extends MovieParser {
       const serverUrl: URL = new URL(
         servers.filter(
           (s) => s.name.toLowerCase() === server.toLowerCase()
-        )[0].url
+        )[0]!.url
       );
 
       return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);

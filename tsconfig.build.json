@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig",
-  "exclude": ["example", "lib"]
+  "exclude": ["apps/bare-example","apps/expo-example","example", "lib","android/build/**",]
 }

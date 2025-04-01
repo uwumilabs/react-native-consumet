@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo, ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 
 class StreamHub extends VideoExtractor {
   protected override serverName = 'StreamHub';
@@ -18,7 +18,7 @@ class StreamHub extends VideoExtractor {
       });
 
       const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2].replace('eval', '')
+        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
       );
 
       const links =

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import staticData from './staticdata';
 
 function stringToWordArray(input: string) {

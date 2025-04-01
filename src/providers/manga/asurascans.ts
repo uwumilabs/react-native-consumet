@@ -1,15 +1,15 @@
-import { CheerioAPI, load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
   MediaStatus,
-  IMangaChapterPage,
-  IMangaChapter,
+  type IMangaChapterPage,
+  type IMangaChapter,
 } from '../../models';
-import { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
 
 class AsuraScans extends MangaParser {
   override readonly name = 'AsuraScans';
@@ -185,7 +185,7 @@ class AsuraScans extends MangaParser {
               .find('.flex.items-center.justify-center > a')
               .attr('style') as string
           )
-            .split('pointer-events:')[1]
+            .split('pointer-events:')[1]!
             .slice(1, -1) === 'auto'
             ? true
             : false,

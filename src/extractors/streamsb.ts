@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 import { USER_AGENT } from '../utils';
 
 class StreamSB extends VideoExtractor {

@@ -1,24 +1,25 @@
-import axios, { AxiosAdapter } from 'axios';
+/* eslint-disable no-new-wrappers */
+import axios, { type AxiosAdapter } from 'axios';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IAnimeEpisode,
+  type IAnimeResult,
+  type ISource,
+  type IAnimeEpisode,
   SubOrSub,
-  IEpisodeServer,
+  type IEpisodeServer,
   Genres,
   MangaParser,
-  IMangaChapterPage,
-  IMangaInfo,
-  IMangaResult,
-  IMangaChapter,
-  ProxyConfig,
-  ITitle,
-  IStaff,
+  type IMangaChapterPage,
+  type IMangaInfo,
+  type IMangaResult,
+  type IMangaChapter,
+  type ProxyConfig,
+  type ITitle,
+  type IStaff,
 } from '../../models';
 import {
   anilistSearchQuery,
@@ -476,6 +477,7 @@ class Anilist extends AnimeParser {
           break;
         case 'HIATUS':
           animeInfo.status = MediaStatus.HIATUS;
+          break;
         default:
           animeInfo.status = MediaStatus.UNKNOWN;
       }
@@ -771,7 +773,7 @@ class Anilist extends AnimeParser {
         ) {
           if (fillerEpisodes[episode.number! - 1])
             episode.isFiller = new Boolean(
-              fillerEpisodes[episode.number! - 1]['filler-bool']
+              fillerEpisodes?.[episode.number! - 1]!['filler-bool']
             ).valueOf();
         }
 
@@ -911,7 +913,7 @@ class Anilist extends AnimeParser {
           };
         };
         let sites = Object.values(sitesT).map((v, i) => {
-          const obj: any = [...Object.values(Object.values(sitesT)[i])];
+          const obj: any = [...Object.values(Object.values(sitesT)[i]!)];
           const pages = obj.map(
             (v: { page: string; url: string; title: string }) => ({
               page: v.page,
@@ -1368,7 +1370,7 @@ class Anilist extends AnimeParser {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      query: anilistAiringScheduleQuery(page, perPage, day1, day2, notYetAired),
+      query: anilistAiringScheduleQuery(page, perPage, day1!, day2!, notYetAired),
     };
 
     try {
@@ -1574,11 +1576,11 @@ class Anilist extends AnimeParser {
     if (topRating >= 0.7) {
       if (this.provider instanceof Crunchyroll) {
         return await this.provider.fetchAnimeInfo(
-          findAnime.results[0].id,
-          findAnime.results[0].type as string
+          findAnime.results[0]?.id!,
+          findAnime.results[0]?.type! as string
         );
       } else {
-        return await this.provider.fetchAnimeInfo(findAnime.results[0].id);
+        return await this.provider.fetchAnimeInfo(findAnime.results[0]?.id!);
       }
     }
 
@@ -1861,7 +1863,7 @@ class Anilist extends AnimeParser {
         ) {
           if (fillerEpisodes[episode.number! - 1])
             episode.isFiller = new Boolean(
-              fillerEpisodes[episode.number! - 1]['filler-bool']
+              fillerEpisodes[episode.number! - 1]!['filler-bool']
             ).valueOf();
         }
 
@@ -1948,6 +1950,7 @@ class Anilist extends AnimeParser {
           break;
         case 'HIATUS':
           animeInfo.status = MediaStatus.HIATUS;
+          break;
         default:
           animeInfo.status = MediaStatus.UNKNOWN;
       }
@@ -2209,7 +2212,7 @@ class Anilist extends AnimeParser {
         .filter((g: string) => !g.includes(', ['))
         .map((r: string) => ({
           id: r.match(/\/(\d+)/)?.[1],
-          name: r.match(/([^)]+)\]/)?.[1].replace(/\[/g, ''),
+          name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
           relationship: r.match(/\(([^)]+)\).*?(\(([^)]+)\))/)?.[3],
         }));
       const race = Character.description
@@ -2228,7 +2231,7 @@ class Anilist extends AnimeParser {
         .filter((g: string) => !g.includes(', ['))
         .map((r: string) => ({
           id: r.match(/\/(\d+)/)?.[1],
-          name: r.match(/([^)]+)\]/)?.[1].replace(/\[/g, ''),
+          name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
         }));
       const dislikes = Character.description.match(/__Dislikes:__(.*)/)?.[1];
       const sign = Character.description.match(/__Sign:__(.*)/)?.[1];
@@ -2512,6 +2515,7 @@ class Anilist extends AnimeParser {
             break;
           case 'HIATUS':
             mangaInfo.status = MediaStatus.HIATUS;
+            break;
           default:
             mangaInfo.status = MediaStatus.UNKNOWN;
         }
@@ -2691,7 +2695,7 @@ class Anilist extends AnimeParser {
           };
         };
         let sites = Object.values(sitesT).map((v, i) => {
-          const obj: any = [...Object.values(Object.values(sitesT)[i])];
+          const obj: any = [...Object.values(Object.values(sitesT)[i]!)];
           const pages: any = obj.map((v: any) => ({
             page: v.page,
             url: v.url,
@@ -2737,7 +2741,7 @@ class Anilist extends AnimeParser {
 
     if (!possibleManga)
       return (await provider.fetchMangaInfo(
-        findAnime.results[0].id
+        findAnime.results[0]!.id
       )) as IMangaInfo;
     return (await provider.fetchMangaInfo(possibleManga.id)) as IMangaInfo;
   };

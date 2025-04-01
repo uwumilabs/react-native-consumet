@@ -2,11 +2,11 @@ import { load } from 'cheerio';
 
 import {
   LightNovelParser,
-  ISearch,
-  ILightNovelInfo,
-  ILightNovelChapter,
-  ILightNovelChapterContent,
-  ILightNovelResult,
+  type ISearch,
+  type ILightNovelInfo,
+  type ILightNovelChapter,
+  type ILightNovelChapterContent,
+  type ILightNovelResult,
   MediaStatus,
 } from '../../models';
 
@@ -199,7 +199,7 @@ class NovelUpdates extends LightNovelParser {
           id: $(el)
             .find('div.search_body_nu div.search_title a')
             .attr('href')
-            ?.split('/series/')[1]
+            ?.split('/series/')[1]!
             .split('/')[0]!,
           title: $(el).find('div.search_body_nu div.search_title a').text(),
           url: $(el)

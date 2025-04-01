@@ -3,11 +3,11 @@ import { isText } from 'domhandler';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
-  IMangaChapterPage,
-  IMangaChapter,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
+  type IMangaChapterPage,
+  type IMangaChapter,
 } from '../../models';
 
 class Mangasee123 extends MangaParser {
@@ -33,9 +33,9 @@ class Mangasee123 extends MangaParser {
       const { data } = await this.client.get(`${url}/${mangaId}`);
       const $ = load(data);
 
-      const schemaScript = $('body > script:nth-child(15)').get()[0]
+      const schemaScript = $('body > script:nth-child(15)').get()[0]!
         .children[0];
-      if (isText(schemaScript)) {
+      if (isText(schemaScript!)) {
         const mainEntity = JSON.parse(schemaScript.data).mainEntity;
 
         mangaInfo.title = mainEntity.name;
@@ -47,9 +47,9 @@ class Mangasee123 extends MangaParser {
       mangaInfo.headerForImage = { Referer: this.baseUrl };
       mangaInfo.description = $('.top-5 .Content').text();
 
-      const contentScript = $('body > script:nth-child(16)').get()[0]
+      const contentScript = $('body > script:nth-child(16)').get()[0]!
         .children[0];
-      if (isText(contentScript)) {
+      if (isText(contentScript!)) {
         const chaptersData = this.processScriptTagVariable(
           contentScript.data,
           'vm.Chapters = '
@@ -81,9 +81,9 @@ class Mangasee123 extends MangaParser {
       const { data } = await this.client.get(`${url}`);
       const $ = load(data);
 
-      const chapterScript = $('body > script:nth-child(19)').get()[0]
+      const chapterScript = $('body > script:nth-child(19)').get()[0]!
         .children[0];
-      if (isText(chapterScript)) {
+      if (isText(chapterScript!)) {
         const curChapter = this.processScriptTagVariable(
           chapterScript.data,
           'vm.CurChapter = '
@@ -180,10 +180,10 @@ class Mangasee123 extends MangaParser {
   //                 ?    chap   dec
   private processChapterNumber = (chapter: string): string => {
     const decimal = chapter.substring(chapter.length - 1, chapter.length);
-    chapter = chapter.replace(chapter[0], '').slice(0, -1);
+    chapter = chapter.replace(chapter[0]!, '').slice(0, -1);
     if (decimal === '0') return `${+chapter}`;
 
-    if (chapter.startsWith('0')) chapter = chapter.replace(chapter[0], '');
+    if (chapter.startsWith('0')) chapter = chapter.replace(chapter[0]!, '');
 
     return `${+chapter}.${decimal}`;
   };
@@ -192,7 +192,7 @@ class Mangasee123 extends MangaParser {
     if (!chapter.includes('.')) return chapter.padStart(4, '0');
 
     const values = chapter.split('.');
-    const pad = values[0].padStart(4, '0');
+    const pad = values[0]!.padStart(4, '0');
 
     return `${pad}.${values[1]}`;
   };

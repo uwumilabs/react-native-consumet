@@ -1,9 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import {
-  IMangaChapterPage,
-  IMangaInfo,
-  IMangaResult,
-  ISearch,
+  type IMangaChapterPage,
+  type IMangaInfo,
+  type IMangaResult,
+  type ISearch,
   MangaParser,
   MediaStatus,
 } from '../../models';
@@ -52,7 +52,7 @@ class ComicK extends MangaParser {
           (data.status ?? 0 === 0)
             ? MediaStatus.ONGOING
             : MediaStatus.COMPLETED,
-        image: `https://meo.comick.pictures${data.md_covers ? data.md_covers[0].b2key : ''}`,
+        image: `https://meo.comick.pictures${data.md_covers ? data.md_covers[0]!.b2key : ''}`,
         malId: data.links?.mal,
         links: links,
         chapters: [],
@@ -139,7 +139,7 @@ class ComicK extends MangaParser {
 
       for (const manga of data) {
         let cover: Cover | string | null = manga.md_covers
-          ? manga.md_covers[0]
+          ? manga.md_covers[0]!
           : null;
         if (cover && cover.b2key !== undefined) {
           cover = `https://meo.comick.pictures${cover.b2key}`;

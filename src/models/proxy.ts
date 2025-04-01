@@ -1,6 +1,6 @@
-import axios, { AxiosAdapter, AxiosInstance } from 'axios';
+import axios, { type AxiosAdapter, type AxiosInstance } from 'axios';
 
-import { ProxyConfig } from './types';
+import type { ProxyConfig } from './types';
 
 export class Proxy {
   /**
@@ -64,7 +64,7 @@ export class Proxy {
       const url = proxy.urls.shift();
       if (url) proxy.urls.push(url);
 
-      this.setProxy({ url: proxy.urls[0], key: proxy.key });
+      this.setProxy({ url: proxy.urls[0]!, key: proxy.key });
     }, proxy?.rotateInterval ?? 5000);
   };
 

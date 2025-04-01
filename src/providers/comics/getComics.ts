@@ -1,8 +1,8 @@
 import { load } from 'cheerio';
 import {
   ComicParser,
-  ComicRes,
-  GetComicsComics,
+  type ComicRes,
+  type GetComicsComics,
   GetComicsComicsObject,
 } from '../../models';
 import { parsePostInfo } from '../../utils';

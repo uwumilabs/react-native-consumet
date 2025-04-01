@@ -1,14 +1,14 @@
-import { CheerioAPI, load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 import {
-  IMangaChapter,
-  IMangaChapterPage,
-  IMangaInfo,
-  IMangaResult,
-  ISearch,
+  type IMangaChapter,
+  type IMangaChapterPage,
+  type IMangaInfo,
+  type IMangaResult,
+  type ISearch,
   MangaParser,
   MediaStatus,
 } from '../../models';
-import { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
 
 interface ReadMangaSearchResultData {
   overview: string;
@@ -245,7 +245,7 @@ class ReadManga extends MangaParser {
         .map((index, ele) => {
           // link to chapter is not always baseUrl -> id = entire link
           const chapter: IMangaChapter = {
-            id: ele.attribs.href,
+            id: ele.attribs.href!,
             title: $(ele).text().trim(),
           };
 
@@ -303,7 +303,7 @@ class ReadManga extends MangaParser {
         .find('.chapter-detail-novel-big-image.text-center > img')
         .map((index, ele) => {
           const chapterPage: IMangaChapterPage = {
-            img: ele.attribs.src,
+            img: ele.attribs.src!,
             page: index + 1,
           };
 
@@ -396,7 +396,7 @@ class ReadManga extends MangaParser {
   private getTotalPages = (str: string, splitOn: string): number => {
     const split = str.split(splitOn);
 
-    return parseInt(split[split.length - 1]);
+    return parseInt(split[split.length - 1]!);
   };
 
   private formatSearchResultData = (
@@ -406,7 +406,7 @@ class ReadManga extends MangaParser {
       const split = result.link.split('/');
       const id = split[split.length - 1];
       return {
-        id: id,
+        id: id!,
         title: result.original_title,
         altTitles: result.overview,
         image: result.image,

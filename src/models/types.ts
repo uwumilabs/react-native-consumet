@@ -1,4 +1,4 @@
-import { Book, Hashes } from './base-types';
+import { type Book, type Hashes } from './base-types';
 
 export interface IProviderStats {
   name: string;

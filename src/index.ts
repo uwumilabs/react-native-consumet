@@ -5,7 +5,6 @@ export function getSources(s: string): Promise<string> {
 }
 import {
   ANIME,
-  BOOKS,
   COMICS,
   LIGHT_NOVELS,
   MANGA,
@@ -73,7 +72,7 @@ import {
   type ProxyConfig,
 } from './models';
 
-export { ANIME, BOOKS, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
+export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
 export { PROVIDERS_LIST };
 export {
   Topics,

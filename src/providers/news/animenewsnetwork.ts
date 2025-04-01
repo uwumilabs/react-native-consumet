@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import axios from 'axios';
 import { getHashFromImage } from '../../utils/utils';
-import { NewsParser, INewsFeed, Topics, INewsInfo } from '../../models';
+import { NewsParser, type INewsFeed, Topics, type INewsInfo } from '../../models';
 
 class NewsFeed implements INewsFeed {
   constructor(
@@ -45,7 +45,7 @@ async function scrapNewsInfo(url: string): Promise<INewsInfo> {
   );
 
   return {
-    id: url.split('news/')[1],
+    id: url.split('news/')[1]!,
     title,
     uploadedAt: time,
     intro,

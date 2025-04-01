@@ -1,6 +1,6 @@
 import { load } from 'cheerio';
 
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 
 class StreamTape extends VideoExtractor {
   protected override serverName = 'StreamTape';
@@ -15,11 +15,11 @@ class StreamTape extends VideoExtractor {
       const $ = load(data);
 
       let [fh, sh] = $.html()
-        ?.match(/robotlink'\).innerHTML = (.*)'/)![1]
+        ?.match(/robotlink'\).innerHTML = (.*)'/)![1]!
         .split("+ ('");
 
-      sh = sh.substring(3);
-      fh = fh.replace(/\'/g, '');
+      sh = sh?.substring(3);
+      fh = fh?.replace(/\'/g, '');
 
       const url = `https:${fh}${sh}`;
 

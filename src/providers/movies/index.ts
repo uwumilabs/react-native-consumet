@@ -3,7 +3,7 @@ import FlixHQ from './flixhq';
 import Fmovies from './fmovies';
 import Goku from './goku';
 import KissAsian from './kissasian';
-import MovieHdWatch from './movidhdwatch';
+import MovieHdWatch from './moviehdwatch';
 import SmashyStream from './smashystream';
 import Turkish from './turkish123';
 import ViewAsian from './viewAsian';

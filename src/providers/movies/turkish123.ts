@@ -1,9 +1,9 @@
 import { load } from 'cheerio';
 import {
-  IAnimeInfo,
-  IEpisodeServer,
-  IMovieInfo,
-  ISource,
+  type IAnimeInfo,
+  type IEpisodeServer,
+  type IMovieInfo,
+  type ISource,
   MovieParser,
   TvType,
 } from '../../models';
@@ -47,7 +47,7 @@ export default class Turkish extends MovieParser {
       info.totalEpisodes = $('.les-content > a').length;
       info.episodes = $('.les-content > a')
         .map((i, e) => ({
-          id: $(e).attr('href')!.split('/').slice(-2)[0],
+          id: $(e).attr('href')!.split('/').slice(-2)[0]!,
           title: `Episode ${i + 1}`,
         }))
         .get();
@@ -71,7 +71,7 @@ export default class Turkish extends MovieParser {
       const resp = (
         await this.client(data.match(/"(https:\/\/tukipasti.com\/t\/.*?)"/)![1])
       ).data;
-      source.sources[0].url = resp.match(/var urlPlay = '(.*?)'/)![1];
+      source.sources[0]!.url = resp.match(/var urlPlay = '(.*?)'/)![1];
     } catch (error) {}
     return source;
   }

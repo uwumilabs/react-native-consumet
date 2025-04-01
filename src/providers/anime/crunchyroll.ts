@@ -1,13 +1,13 @@
-import axios, { AxiosAdapter } from 'axios';
+import axios, { type AxiosAdapter } from 'axios';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
-  ProxyConfig,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
+  type ProxyConfig,
 } from '../../models';
 import { USER_AGENT } from '../../utils';
 

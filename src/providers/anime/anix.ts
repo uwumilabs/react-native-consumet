@@ -2,18 +2,18 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
   MediaFormat,
   MediaStatus,
   StreamingServers,
-  ProxyConfig,
+  type ProxyConfig,
 } from '../../models';
 import { Mp4Upload, StreamWish, VidHide } from '../../extractors';
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 
 class Anix extends AnimeParser {
   override readonly name = 'Anix';
@@ -436,6 +436,7 @@ class Anix extends AnimeParser {
             ),
           };
         }
+        throw new Error('Vidhide server not found');
       case StreamingServers.Mp4Upload:
         if (servers.get('Mp4upload') !== undefined) {
           const streamUri = new URL(servers.get('Mp4upload')!);

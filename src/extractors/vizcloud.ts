@@ -46,7 +46,7 @@ class VizCloud extends VideoExtractor {
       })),
     ];
 
-    const main = this.sources[this.sources.length - 1].url;
+    const main = this.sources[this.sources.length - 1]!.url;
     const req = await this.client({
       method: 'get',
       url: main,
@@ -55,7 +55,7 @@ class VizCloud extends VideoExtractor {
     const resolutions = req.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
     resolutions?.forEach((res: string) => {
       const index = main.lastIndexOf('/');
-      const quality = res.split('\n')[0].split('x')[1].split(',')[0];
+      const quality = res.split('\n')[0]?.split('x')[1]!.split(',')[0];
       const url = main.slice(0, index);
       this.sources.push({
         url: url + '/' + res.split('\n')[1],

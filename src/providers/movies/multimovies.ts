@@ -2,12 +2,12 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
 } from '../../models';
 import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
 
@@ -78,7 +78,7 @@ class MultiMovies extends MovieParser {
 
           for (const episode of episodes) {
             if (episode.season !== null) {
-              seasonSet.add(episode.season);
+              seasonSet.add(episode.season!);
             }
           }
           searchResult.results.push({
@@ -215,7 +215,7 @@ class MultiMovies extends MovieParser {
                   .replace(/^\/|\/$/g, '')!,
                 season: seasonNumber,
                 number: parseInt(
-                  $(ep).find('.numerando').text().trim().split('-')[1]
+                  $(ep).find('.numerando').text().trim().split('-')[1]!
                 ),
                 title: $(ep).find('.episodiotitle a').text().trim(),
                 url: $(ep).find('.episodiotitle a').attr('href')?.trim() ?? '',
@@ -318,7 +318,7 @@ class MultiMovies extends MovieParser {
         throw new Error(`Server ${server} not found`);
       }
 
-      const serverUrl: URL = new URL(servers[i].url);
+      const serverUrl: URL = new URL(servers[i]!.url);
       let fileId = '';
 
       if (!episodeId.startsWith('http')) {

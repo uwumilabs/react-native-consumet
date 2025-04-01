@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 
 class MixDrop extends VideoExtractor {
   protected override serverName = 'MixDrop';
@@ -9,12 +9,12 @@ class MixDrop extends VideoExtractor {
       const { data } = await this.client.get(videoUrl.href);
 
       const formated = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2].replace('eval', '')
+        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
       );
 
       const [poster, source] = formated
         .match(/poster="([^"]+)"|wurl="([^"]+)"/g)
-        .map((x: string) => x.split(`="`)[1].replace(/"/g, ''))
+        .map((x: string) => x.split(`="`)[1]!.replace(/"/g, ''))
         .map((x: string) => (x.startsWith('http') ? x : `https:${x}`));
 
       this.sources.push({

@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 
 class Kwik extends VideoExtractor {
   protected override serverName = 'kwik';
@@ -15,7 +15,7 @@ class Kwik extends VideoExtractor {
       const data = await response.text();
 
       const source = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2].replace('eval', '')
+        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
       ).match(/https.*?m3u8/);
       this.sources.push({
         url: source[0],

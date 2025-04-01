@@ -1,4 +1,4 @@
-import { IProviderStats } from '.';
+import { type IProviderStats } from '.';
 import Proxy from './proxy';
 
 abstract class BaseProvider extends Proxy {

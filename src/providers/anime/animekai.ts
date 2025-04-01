@@ -1,17 +1,17 @@
-import { CheerioAPI, load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
   StreamingServers,
   MediaFormat,
   SubOrSub,
   MediaStatus,
-  Intro,
+  type Intro,
 } from '../../models';
 
 import { MegaUp } from '../../utils';
@@ -181,7 +181,7 @@ class AnimeKai extends AnimeParser {
    * @returns A promise that resolves to an object containing the search results.
    */
   async fetchSchedule(
-    date: string = new Date().toISOString().split('T')[0]
+    date: string = new Date().toISOString().split('T')[0]!
   ): Promise<ISearch<IAnimeResult>> {
     try {
       const res: ISearch<IAnimeResult> = {
@@ -545,7 +545,7 @@ class AnimeKai extends AnimeParser {
         throw new Error(`Server ${server} not found`);
       }
 
-      const serverUrl: URL = new URL(servers[i].url);
+      const serverUrl: URL = new URL(servers[i]!.url);
       const sources = await this.fetchEpisodeSources(
         serverUrl.href,
         server,
@@ -658,7 +658,7 @@ class AnimeKai extends AnimeParser {
   ): Promise<IEpisodeServer[]> => {
     if (!episodeId.startsWith(this.baseUrl + '/ajax'))
       episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(
-        episodeId.split('$token=')[1]
+        episodeId.split('$token=')[1]!
       )}`;
     try {
       const { data } = await this.client.get(episodeId, {

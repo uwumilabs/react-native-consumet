@@ -2,11 +2,11 @@ import { load } from 'cheerio';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
   MediaStatus,
-  IMangaChapterPage,
+  type IMangaChapterPage,
 } from '../../models';
 
 class MangaHere extends MangaParser {
@@ -59,7 +59,7 @@ class MangaHere extends MangaParser {
         .get();
       mangaInfo.chapters = $('ul.detail-main-list > li')
         .map((i, el) => ({
-          id: $(el).find('a').attr('href')?.split('/manga/')[1].slice(0, -7)!,
+          id: $(el).find('a').attr('href')?.split('/manga/')[1]?.slice(0, -7)!,
           title: $(el).find('a > div > p.title3').text(),
           releasedDate: $(el).find('a > div > p.title2').text().trim(),
         }))
@@ -101,7 +101,7 @@ class MangaHere extends MangaParser {
         const s = html.substring(ss, se).replace('eval', '');
         const ds = eval(s) as string;
 
-        const urls = ds.split("['")[1].split("']")[0].split("','");
+        const urls = ds.split("['")[1]?.split("']")[0]?.split("','")!;
 
         urls.map((url, i) =>
           chapterPages.push({

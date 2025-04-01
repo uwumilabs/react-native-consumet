@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 
 class VidMoly extends VideoExtractor {
   protected override serverName = 'vidmoly';

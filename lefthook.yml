@@ -2,13 +2,22 @@ pre-commit:
   parallel: true
   commands:
     lint:
-      glob: "*.{js,ts,jsx,tsx}"
-      run: npx eslint {staged_files}
+      glob: '*.{js,ts,jsx,tsx,json,md,html,css}'
+      run: |
+        echo "Running ESLint..."
+        npx eslint {staged_files}
+        echo "ESLint completed ✅"
     types:
-      glob: "*.{js,ts, jsx, tsx}"
-      run: npx tsc
+      glob: '*.{js,ts,jsx,tsx}' # Fixed the glob pattern spacing
+      run: |
+        echo "Running TypeScript check..."
+        npx tsc --noEmit
+        echo "TypeScript check completed ✅"
 commit-msg:
   parallel: true
   commands:
     commitlint:
       run: npx commitlint --edit
+
+# Add debug mode to see what's happening
+debug: true

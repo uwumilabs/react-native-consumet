@@ -1,15 +1,15 @@
 import { load } from 'cheerio';
-import axios, { AxiosResponse } from 'axios';
+import axios, { type AxiosResponse } from 'axios';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
-  IVideo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
+  type IVideo,
   MediaFormat,
 } from '../../models';
 
@@ -123,7 +123,7 @@ class AnimeDrive extends AnimeParser {
         .text()
         .trim();
       const totalEpisodesWithoutSlash = totalEpisodesWithSlash
-        .split('/')[0]
+        .split('/')[0]!
         .trim();
       info.totalEpisodes = parseInt(totalEpisodesWithoutSlash);
       info.url = `${this.baseUrl}/anime/?id=${id}`;
@@ -202,7 +202,7 @@ class AnimeDrive extends AnimeParser {
         const title = $(el).find('div.film-poster > img').attr('alt');
         const url = `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`;
         const episode = parseInt(
-          $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]
+          $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!
         );
         if (id && image && title && url && !isNaN(episode)) {
           recentEpisodes.push({ id, image, title, url, episode });
@@ -263,13 +263,13 @@ class AnimeDrive extends AnimeParser {
           /{\s*src:\s*'(.*?)'.*?type:\s*'(.*?)'.*?size:\s*(\d+),?\s*}/g;
         let match;
 
-        while ((match = sourceRegex.exec(sourcesData)) !== null) {
+        while ((match = sourceRegex.exec(sourcesData!)) !== null) {
           const url = match[1];
           const size = match[3];
           const quality = `${size}p`;
           const isM3U8 = false; // it's always an mp4 file
 
-          sources.push({ url: url, quality: quality, isM3U8: isM3U8 });
+          sources.push({ url: url!, quality: quality, isM3U8: isM3U8 });
         }
       }
 

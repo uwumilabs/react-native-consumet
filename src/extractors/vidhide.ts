@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo, ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 
 class VidHide extends VideoExtractor {
   protected override serverName = 'VidHide';
@@ -16,7 +16,7 @@ class VidHide extends VideoExtractor {
       });
 
       const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2].replace('eval', '')
+        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
       );
       const links =
         unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];

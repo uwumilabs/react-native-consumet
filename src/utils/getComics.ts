@@ -13,7 +13,7 @@ export const parsePostInfo = (post: string) => {
       post[i + 4] === ' ' &&
       post[i + 5] === ':'
     ) {
-      year = post[i + 7] + post[i + 8] + post[i + 9] + post[i + 10];
+      year = post[i + 7]! + post[i + 8] + post[i + 9] + post[i + 10];
       i += 9;
     } else if (
       i + 5 < post.length &&
@@ -33,7 +33,7 @@ export const parsePostInfo = (post: string) => {
           break;
         }
       }
-      size += post[j] + post[j + 1];
+      size += post[j]! + post[j + 1];
       i += j - i;
       i += 2;
       sizeDone = true;

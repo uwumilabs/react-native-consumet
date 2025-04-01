@@ -2,11 +2,11 @@ import { load } from 'cheerio';
 
 import {
   MangaParser,
-  ISearch,
-  IMangaInfo,
-  IMangaResult,
-  IMangaChapterPage,
-  IMangaChapter,
+  type ISearch,
+  type IMangaInfo,
+  type IMangaResult,
+  type IMangaChapterPage,
+  type IMangaChapter,
 } from '../../models';
 
 class MangaPill extends MangaParser {
@@ -70,7 +70,7 @@ class MangaPill extends MangaParser {
         'div.container div.my-3 div.flex-col div.gap-3.mb-3 div:contains("Year")'
       )
         .text()
-        .split('Year\n')[1]
+        .split('Year\n')[1]!
         .trim();
       mangaInfo.genres = $(
         'div.container div.my-3 div.flex-col div.mb-3:contains("Genres")'
@@ -114,7 +114,7 @@ class MangaPill extends MangaParser {
           (i, el): IMangaChapterPage => ({
             img: $(el).find('div picture img').attr('data-src')!,
             page: parseFloat(
-              $(el).find(`div[data-summary] > div`).text().split('page ')[1]
+              $(el).find(`div[data-summary] > div`).text().split('page ')[1]!
             ),
           })
         )

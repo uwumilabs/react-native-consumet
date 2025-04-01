@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo, ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 
 class Mp4Player extends VideoExtractor {
   protected override serverName = 'mp4player';

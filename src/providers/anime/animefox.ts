@@ -2,12 +2,12 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
   MediaFormat,
 } from '../../models';
 
@@ -198,7 +198,7 @@ class AnimeFox extends AnimeParser {
           title: $(el).find('div.film-poster > img').attr('alt')!,
           url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}!`,
           episode: parseInt(
-            $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]
+            $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!
           )!,
         });
       });

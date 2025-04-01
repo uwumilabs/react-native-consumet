@@ -1,7 +1,7 @@
 {
   "name": "react-native-consumet",
   "version": "0.1.0",
-  "description": "React Native library that provides high-level APIs for obtaining information on various entertainment media such as books, movies, comic books, anime, manga, and so on.",
+  "description": "React Native library providing access to entertainment media information (anime, movies, manga, etc.) from multiple sources, adapting the Consumet API for mobile applications.",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -42,9 +42,10 @@
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
+    "clean": "del-cli android/build lib \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
     "prepare": "bob build",
-    "release": "release-it"
+    "release": "release-it",
+    "precommit": "echo '🔍 Running pre-commit checks...'"
   },
   "keywords": [
     "react-native",
@@ -95,12 +96,14 @@
     "react-native": "*"
   },
   "workspaces": [
-    "example"
+    "example",
+    "apps/*"
   ],
   "packageManager": "yarn@3.6.1",
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [
+      "<rootDir>/apps/*/node_modules",
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
     ]

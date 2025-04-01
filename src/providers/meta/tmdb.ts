@@ -1,20 +1,20 @@
 import {
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
   MovieParser,
   TvType,
-  IMovieResult,
-  IMovieInfo,
-  ProxyConfig,
-  IMovieEpisode,
+  type IMovieResult,
+  type IMovieInfo,
+  type ProxyConfig,
+  type IMovieEpisode,
 } from '../../models';
-import { IPeopleResult } from '../../models/types';
+import type { IPeopleResult } from '../../models/types';
 import { compareTwoStrings } from '../../utils';
 import FlixHQ from '../movies/flixhq';
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
@@ -444,7 +444,7 @@ class TMDB extends MovieParser {
     if (extraData && extraData.year && extraData.type === TvType.MOVIE) {
       findMedia.results = findMedia.results.filter((result) => {
         return (
-          String(result.releaseDate).split('-')[0].trim() ===
+          String(result.releaseDate).split('-')[0]?.trim() ===
           String(extraData.year).trim()
         );
       });

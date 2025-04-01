@@ -1,6 +1,6 @@
 import { load } from 'cheerio';
 
-import { IVideo, VideoExtractor, ISubtitle } from '../models';
+import { type IVideo, VideoExtractor, type ISubtitle } from '../models';
 
 class Voe extends VideoExtractor {
   protected override serverName = 'voe';
@@ -32,8 +32,8 @@ class Voe extends VideoExtractor {
       let match;
       while ((match = subtitleRegex.exec(bodyHtml)) !== null) {
         subtitles.push({
-          lang: match[1],
-          url: new URL(match[3], videoUrl.origin).href,
+          lang: match[1]!,
+          url: new URL(match[3]!, videoUrl.origin).href,
         });
       }
 

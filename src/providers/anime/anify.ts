@@ -1,16 +1,16 @@
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
-  IAnimeEpisode,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
+  type IAnimeEpisode,
   MediaFormat,
 } from '../../models';
-import { AxiosAdapter } from 'axios';
-import { ProxyConfig } from '../../models';
+import type { AxiosAdapter } from 'axios';
+import type { ProxyConfig } from '../../models';
 import { ANIFY_URL } from '../../utils/utils';
 
 type ProviderId = '9anime' | 'animepahe' | 'zoro' | 'gogoanime';
@@ -182,7 +182,7 @@ class Anify extends AnimeParser {
         img?: string;
         rating: number | null;
       }): IAnimeEpisode => ({
-        id: this.actions[this.providerId].unformat(episode.id),
+        id: this.actions[this.providerId]!.unformat(episode.id),
         number: episode.number,
         isFiller: episode.isFiller,
         title: episode.title,
@@ -264,7 +264,7 @@ class Anify extends AnimeParser {
         img?: string;
         rating: number | null;
       }): IAnimeEpisode => ({
-        id: this.actions[this.providerId].unformat(episode.id),
+        id: this.actions[this.providerId]!.unformat(episode.id),
         number: episode.number,
         isFiller: episode.isFiller,
         title: episode.title,
@@ -286,7 +286,7 @@ class Anify extends AnimeParser {
       const { data } = await this.client.get(
         `${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[
           this.providerId
-        ].format(
+        ]!.format(
           episodeId
         )}&episodeNumber=${episodeNumber}&id=${id}&subType=sub`
       );

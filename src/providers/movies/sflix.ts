@@ -3,12 +3,13 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
+  type IMovieEpisode,
 } from '../../models';
 import { MixDrop, VidCloud, Voe } from '../../extractors';
 
@@ -60,7 +61,7 @@ class SFlix extends MovieParser {
           image: $(el).find('div.film-poster > img').attr('data-src'),
           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
           seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1])
+            ? parseInt(releaseDate.split('SS')[1]!)
             : undefined,
           type:
             $(el)
@@ -211,7 +212,7 @@ class SFlix extends MovieParser {
                   $$$(el)
                     .find('div.flw-item > a > img')
                     .attr('title')!
-                    .split(':')[0]
+                    .split(':')[0]!
                     .slice(8)
                     .trim()
                 ),
@@ -220,7 +221,7 @@ class SFlix extends MovieParser {
                   $$$(el).find('div.flw-item').attr('id')!.split('-')[1]
                 }`,
               };
-              movieInfo.episodes?.push(episode);
+              movieInfo.episodes?.push(episode as IMovieEpisode);
             })
             .get();
           season++;
@@ -298,7 +299,7 @@ class SFlix extends MovieParser {
       }
 
       const { data } = await this.client.get(
-        `${this.baseUrl}/ajax/get_link/${servers[i].url.split('.').slice(-1).shift()}`
+        `${this.baseUrl}/ajax/get_link/${servers[i]!.url.split('.').slice(-1).shift()}`
       );
 
       const serverUrl: URL = new URL(data.link);
@@ -533,7 +534,7 @@ class SFlix extends MovieParser {
                 .find('div.film-poster > a')
                 .attr('href')
                 ?.slice(1)
-                .split('/')[0]
+                .split('/')[0]!
                 .toLowerCase() === 'movie'
                 ? TvType.MOVIE
                 : TvType.TVSERIES,
@@ -606,7 +607,7 @@ class SFlix extends MovieParser {
                 .find('div.film-poster > a')
                 .attr('href')
                 ?.slice(1)
-                .split('/')[0]
+                .split('/')[0]!
                 .toLowerCase() === 'movie'
                 ? TvType.MOVIE
                 : TvType.TVSERIES,

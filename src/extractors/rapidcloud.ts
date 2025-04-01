@@ -118,8 +118,8 @@ class RapidCloud extends VideoExtractor {
           );
 
           const TdArray = secondHalf.map((s: string[]) => {
-            const f1 = s[0].split(',C')[0];
-            const f2 = s[1].replace(/"/g, '');
+            const f1 = s[0]?.split(',C')[0];
+            const f2 = s[1]?.replace(/"/g, '');
 
             return [f1, f2];
           });

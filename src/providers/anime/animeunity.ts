@@ -2,11 +2,11 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
   SubOrSub,
 } from '../../models';
 
@@ -162,7 +162,7 @@ class AnimeUnity extends AnimeParser {
           ?.match(/expires': '(.*)'/)![1];
 
         const defaultUrl = `${domain}${
-          domain.includes('?') ? '&' : '?'
+          domain?.includes('?') ? '&' : '?'
         }token=${token}&referer=&expires=${expires}&h=1`;
         const m3u8Content = await this.client.get(defaultUrl);
 

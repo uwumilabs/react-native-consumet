@@ -1,10 +1,10 @@
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeResult,
-  ISource,
-  IEpisodeServer,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISource,
+  type IEpisodeServer,
 } from '../../models';
 
 /**
@@ -28,9 +28,9 @@ class Marin extends AnimeParser {
     });
 
     token.push(
-      response.headers['set-cookie']![1].replace('marin_session=', '')
+      response.headers['set-cookie']![1]!.replace('marin_session=', '')
     );
-    token.push(response.headers['set-cookie']![0].replace('XSRF-TOKEN=', ''));
+    token.push(response.headers['set-cookie']![0]!.replace('XSRF-TOKEN=', ''));
 
     return token;
   }
@@ -67,7 +67,7 @@ class Marin extends AnimeParser {
             'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
             'User-Agent':
               'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-            'x-xsrf-token': token[1].split(';')[0].replace('%3D', '='),
+            'x-xsrf-token': token[1]?.split(';')[0]!.replace('%3D', '='),
             'x-inertia': true,
           },
         }
@@ -128,7 +128,7 @@ class Marin extends AnimeParser {
             'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
             'User-Agent':
               'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-            'x-xsrf-token': token[1].split(';')[0].replace('%3D', '='),
+            'x-xsrf-token': token[1]?.split(';')[0]!.replace('%3D', '='),
             'x-inertia': true,
           },
         }
@@ -167,15 +167,15 @@ class Marin extends AnimeParser {
           headers: {
             'Origin': 'https://marin.moe/',
             'Referer': `https://marin.moe/anime/${id}`,
-            'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${
-              token[0].split(';')[0]
+            'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]?.split(';')[0]}; marin_session=${
+              token[0]?.split(';')[0]
             };`,
             'User-Agent':
               'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
             'x-inertia': true,
             'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
             'x-requested-with': 'XMLHttpRequest',
-            'x-xsrf-token': token[1].split(';')[0].replace('%3D', '='),
+            'x-xsrf-token': token[1]?.split(';')[0]!.replace('%3D', '='),
           },
         }
       );
@@ -196,15 +196,15 @@ class Marin extends AnimeParser {
             headers: {
               'Origin': 'https://marin.moe/',
               'Referer': `https://marin.moe/anime/${id}`,
-              'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${
-                token[0].split(';')[0]
+              'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]!.split(';')[0]}; marin_session=${
+                token[0]!.split(';')[0]
               };`,
               'User-Agent':
                 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
               'x-inertia': true,
               'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
               'x-requested-with': 'XMLHttpRequest',
-              'x-xsrf-token': token[1].split(';')[0].replace('%3D', '='),
+              'x-xsrf-token': token[1]?.split(';')[0]!.replace('%3D', '='),
             },
           }
         );
@@ -260,8 +260,8 @@ class Marin extends AnimeParser {
    */
   override fetchEpisodeSources = async (id: string): Promise<ISource> => {
     const token = await this.getToken();
-    const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${
-      token[0].split(';')[0]
+    const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]!.split(';')[0]}; marin_session=${
+      token[0]!.split(';')[0]
     };`;
     let data;
     try {
@@ -278,7 +278,7 @@ class Marin extends AnimeParser {
             'x-inertia': true,
             'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
             'x-requested-with': 'XMLHttpRequest',
-            'x-xsrf-token': token[1].split(';')[0].replace('%3D', '='),
+            'x-xsrf-token': token[1]?.split(';')[0]!.replace('%3D', '='),
           },
         }
       );

@@ -1,18 +1,18 @@
 import { load } from 'cheerio';
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 import { substringAfter, substringBeforeLast } from '../../utils/utils';
 
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
-  IMovieEpisode,
-  ProxyConfig,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
+  type IMovieEpisode,
+  type ProxyConfig,
 } from '../../models';
 import { StreamTape, VizCloud } from '../../extractors';
 
@@ -78,7 +78,7 @@ class Fmovies extends MovieParser {
             ? undefined
             : parseInt(releaseDate).toString(),
           seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1])
+            ? parseInt(releaseDate.split('SS')[1]!)
             : undefined,
           type:
             $(el).find('i.type').text() === 'Movie'
@@ -179,10 +179,10 @@ class Fmovies extends MovieParser {
 
         if (movieInfo.type === TvType.TVSERIES) {
           episode.number = parseInt(
-            $(el).find('a')?.attr('data-kname')!.split('-')[1]
+            $(el).find('a')?.attr('data-kname')!.split('-')[1]!
           );
           episode.season = parseInt(
-            $(el).find('a')?.attr('data-kname')!.split('-')[0]
+            $(el).find('a')?.attr('data-kname')!.split('-')[0]!
           );
         }
 
@@ -271,7 +271,7 @@ class Fmovies extends MovieParser {
 
       $$('.server').each((i, el) => {
         const serverId = $(el).attr('data-id')!;
-        let serverName = $(el).text().toLowerCase().split('server')[1].trim();
+        let serverName = $(el).text().toLowerCase().split('server')[1]!.trim();
         if (serverName === 'vidstream') {
           serverName = 'vizcloud';
         }
@@ -285,8 +285,8 @@ class Fmovies extends MovieParser {
         );
         for (const serverId in serverString) {
           epsiodeServers.push({
-            name: servers[serverId],
-            url: serverString[serverId],
+            name: servers[serverId]!,
+            url: serverString[serverId]!,
           });
         }
 

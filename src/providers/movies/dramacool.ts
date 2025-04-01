@@ -9,11 +9,11 @@ import {
   VidHide,
 } from '../../extractors';
 import {
-  IEpisodeServer,
-  IMovieInfo,
-  IMovieResult,
-  ISearch,
-  ISource,
+  type IEpisodeServer,
+  type IMovieInfo,
+  type IMovieResult,
+  type ISearch,
+  type ISource,
   MediaStatus,
   MovieParser,
   StreamingServers,
@@ -331,7 +331,7 @@ class DramaCool extends MovieParser {
       const serverUrl: URL = new URL(
         servers.filter(
           (s) => s.name.toLowerCase() === server.toLowerCase()
-        )[0].url
+        )[0]!.url
       );
 
       return await this.fetchEpisodeSources(serverUrl.href, server);
@@ -426,7 +426,7 @@ class DramaCool extends MovieParser {
 
           if (isTvShow) {
             result.episodeNumber = parseFloat(
-              $(el).find('span.ep').text().trim().split(' ')[1]
+              $(el).find('span.ep').text().trim().split(' ')[1]!
             );
           }
 

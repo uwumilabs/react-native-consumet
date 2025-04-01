@@ -3,12 +3,13 @@ import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
-  IMovieInfo,
-  IEpisodeServer,
+  type IMovieInfo,
+  type IEpisodeServer,
   StreamingServers,
-  ISource,
-  IMovieResult,
-  ISearch,
+  type ISource,
+  type IMovieResult,
+  type ISearch,
+  type IMovieEpisode,
 } from '../../models';
 import { MixDrop, VidCloud } from '../../extractors';
 
@@ -60,7 +61,7 @@ class FlixHQ extends MovieParser {
           image: $(el).find('div.film-poster > img').attr('data-src'),
           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
           seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1])
+            ? parseInt(releaseDate.split('SS')[1]!)
             : undefined,
           type:
             $(el)
@@ -182,12 +183,12 @@ class FlixHQ extends MovieParser {
                 id: $$$(el).find('a').attr('id')!.split('-')[1],
                 title: $$$(el).find('a').attr('title')!,
                 number: parseInt(
-                  $$$(el).find('a').attr('title')!.split(':')[0].slice(3).trim()
+                  $$$(el).find('a').attr('title')!.split(':')[0]!.slice(3).trim()
                 ),
                 season: season,
                 url: `${this.baseUrl}/ajax/v2/episode/servers/${$$$(el).find('a').attr('id')!.split('-')[1]}`,
               };
-              movieInfo.episodes?.push(episode);
+              movieInfo.episodes?.push(episode as IMovieEpisode);
             })
             .get();
           season++;
@@ -267,7 +268,7 @@ class FlixHQ extends MovieParser {
       }
 
       const { data } = await this.client.get(
-        `${this.baseUrl}/ajax/episode/sources/${servers[i].url.split('.').slice(-1).shift()}`
+        `${this.baseUrl}/ajax/episode/sources/${servers[i]?.url.split('.').slice(-1).shift()}`
       );
 
       const serverUrl: URL = new URL(data.link);

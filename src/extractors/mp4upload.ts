@@ -1,4 +1,4 @@
-import { VideoExtractor, IVideo } from '../models';
+import { VideoExtractor, type IVideo } from '../models';
 
 class Mp4Upload extends VideoExtractor {
   protected override serverName = 'mp4upload';

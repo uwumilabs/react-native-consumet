@@ -1,5 +1,5 @@
 import { convertDuration } from '../utils/utils';
-import { ISource, IVideo, VideoExtractor } from '../models';
+import { type ISource, type IVideo, VideoExtractor } from '../models';
 
 class BilibiliExtractor extends VideoExtractor {
   protected override serverName = 'Bilibili';

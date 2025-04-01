@@ -187,7 +187,7 @@ export const getHashFromImage = (url: string) => {
   if (url?.length === 0) {
     return '';
   } else {
-    let hash!: string;
+    // let hash!: string;
     // generateHash(url).then(hashKey => (hash = hashKey));
     return 'hash';
   }

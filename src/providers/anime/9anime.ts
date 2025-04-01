@@ -1,18 +1,18 @@
 import { load } from 'cheerio';
-import { AxiosAdapter } from 'axios';
+import type { AxiosAdapter } from 'axios';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
-  IAnimeEpisode,
+  type ISearch,
+  type IAnimeInfo,
+  type IAnimeEpisode,
   MediaStatus,
-  IAnimeResult,
-  IEpisodeServer,
-  ISource,
+  type IAnimeResult,
+  type IEpisodeServer,
+  type ISource,
   StreamingServers,
   MediaFormat,
-  ProxyConfig,
+  type ProxyConfig,
 } from '../../models';
 import { StreamTape, VizCloud, Filemoon } from '../../extractors';
 import { USER_AGENT } from '../../utils';
@@ -129,7 +129,7 @@ class NineAnime extends AnimeParser {
 
       const $ = load(res.data);
 
-      animeInfo.id = new URL(`${this.baseUrl}/animeUrl`).pathname.split('/')[2];
+      animeInfo.id = new URL(`${this.baseUrl}/animeUrl`).pathname.split('/')[2]!;
       animeInfo.title = $('h1.title').text();
       animeInfo.jpTitle = $('h1.title').attr('data-jp');
       animeInfo.genres = Array.from(
@@ -201,7 +201,7 @@ class NineAnime extends AnimeParser {
       animeInfo.score = parseFloat(
         $('.bmeta > div:nth-child(2) > div:nth-child(2) > span:nth-child(1)')
           ?.text()
-          .split('by')[0]
+          .split('by')[0]!
       );
       animeInfo.premiered = $(
         '.bmeta > div:nth-child(2) > div:nth-child(3) > span:nth-child(1) > a:nth-child(1)'
@@ -252,7 +252,7 @@ class NineAnime extends AnimeParser {
             const isFiller = $$(el).hasClass('filler');
 
             episodes.push({
-              id: possibleIds[0],
+              id: possibleIds[0]!,
               dubId: possibleIds[1],
               number: number,
               title: title,

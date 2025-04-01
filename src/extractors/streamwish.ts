@@ -41,18 +41,17 @@ class StreamWish extends VideoExtractor {
       const match = functionRegex.exec(data);
       let p = '';
       if (match) {
-        const params = match[1].split(',').map((param) => param.trim());
+        const params = match[1]?.split(',').map((param) => param.trim());
         const encodedString = match[0];
 
-        p = encodedString.split("',36,")?.[0].trim();
+        p = encodedString.split("',36,")?.[0]?.trim()!;
         const a = 36;
-        let c = encodedString.split("',36,")[1].slice(2).split('|').length;
-        const k = encodedString.split("',36,")[1].slice(2).split('|');
-
+        let c = encodedString.split("',36,")[1]?.slice(2).split('|').length!;
+        const k = encodedString.split("',36,")[1]?.slice(2).split('|')!;
         while (c--) {
           if (k[c]) {
             const regex = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
-            p = p.replace(regex, k[c]);
+            p = p.replace(regex, k[c]!);
           }
         }
 
@@ -97,14 +96,14 @@ class StreamWish extends VideoExtractor {
       });
 
       try {
-        const m3u8Content = await this.client.get(this.sources[0].url, options);
+        const m3u8Content = await this.client.get(this.sources[0]!.url, options);
 
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
           for (const video of videoList ?? []) {
             if (!video.includes('m3u8')) continue;
 
-            const url = links[1].split('master.m3u8')[0] + video.split('\n')[1];
+            const url = links[1]?.split('master.m3u8')[0] + video.split('\n')[1];
             const quality = video
               .split('RESOLUTION=')[1]
               .split(',')[0]

@@ -1,10 +1,10 @@
 import {
   BaseParser,
   TvType,
-  ISource,
-  IEpisodeServer,
-  IMovieInfo,
-  IAnimeInfo,
+  type ISource,
+  type IEpisodeServer,
+  type IMovieInfo,
+  type IAnimeInfo,
 } from '.';
 
 abstract class MovieParser extends BaseParser {

@@ -1,13 +1,13 @@
 import {
-  IMangaChapter,
-  IMangaChapterPage,
-  IMangaInfo,
-  IMangaResult,
-  ISearch,
+  type IMangaChapter,
+  type IMangaChapterPage,
+  type IMangaInfo,
+  type IMangaResult,
+  type ISearch,
   MangaParser,
   MediaStatus,
 } from '../../models';
-import { CheerioAPI, load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 
 interface VyvyMangaSearchResult {
   result: VyvyMangaSearchResultData[];
@@ -68,8 +68,8 @@ class VyvyManga extends MangaParser {
                 .find('div.comic-image')
                 .attr('data-background-image') as string
             )
-              .split('cover/')[1]
-              .split('/')[0],
+              .split('cover/')[1]!
+              .split('/')[0]!,
             title: $(ele).find('div.comic-title').text().trim(),
             image: $(ele)
               .find('div.comic-image')

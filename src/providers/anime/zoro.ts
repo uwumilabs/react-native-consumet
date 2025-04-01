@@ -573,14 +573,19 @@ class Zoro extends AnimeParser {
     switch (sortListType) {
       case WatchListType.WATCHING:
         type = 1;
+        break;
       case WatchListType.ONHOLD:
         type = 2;
+        break;
       case WatchListType.PLAN_TO_WATCH:
         type = 3;
+        break;
       case WatchListType.DROPPED:
         type = 4;
+        break;
       case WatchListType.COMPLETED:
         type = 5;
+        break;
     }
     return this.scrapeCardPage(
       `${this.baseUrl}/user/watch-list?page=${page}${type !== 0 ? '&type=' + type : ''}`,

@@ -2,13 +2,13 @@ import { load } from 'cheerio';
 
 import {
   AnimeParser,
-  ISearch,
-  IAnimeInfo,
+  type ISearch,
+  type IAnimeInfo,
   MediaStatus,
-  IAnimeResult,
-  ISource,
-  IAnimeEpisode,
-  IEpisodeServer,
+  type IAnimeResult,
+  type ISource,
+  type IAnimeEpisode,
+  type IEpisodeServer,
   MediaFormat,
 } from '../../models';
 import { Kwik } from '../../extractors';
@@ -95,7 +95,7 @@ class AnimePahe extends AnimeParser {
         .toUpperCase() as MediaFormat;
       animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")')
         .text()
-        .split('to')[0]
+        .split('to')[0]!
         .replace('Aired:', '')
         .trim();
       animeInfo.studios = $('div.anime-info > p:contains("Studio:")')
@@ -188,7 +188,7 @@ class AnimePahe extends AnimeParser {
       const { data } = await this.client.get(
         `${this.baseUrl}/play/${episodeId}`,
         {
-          headers: this.Headers(episodeId.split('/')[0]),
+          headers: this.Headers(episodeId.split('/')[0]!),
         }
       );
 
@@ -208,9 +208,9 @@ class AnimePahe extends AnimeParser {
       };
       for (const link of links) {
         const res = await new Kwik(this.proxyConfig).extract(new URL(link.url));
-        res[0].quality = link.quality;
-        res[0].isDub = link.audio === 'eng';
-        iSource.sources.push(res[0]);
+        res[0]!.quality = link.quality;
+        res[0]!.isDub = link.audio === 'eng';
+        iSource.sources.push(res[0]!);
       }
 
       return iSource;
