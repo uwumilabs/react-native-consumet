@@ -77,6 +77,7 @@ export default defineConfig([
       // Testing and Coverage
       '__tests__/',
       'test/',
+      "jest.settup.js",
       'coverage/',
       'jest.config.*',
       
