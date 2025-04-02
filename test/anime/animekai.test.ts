@@ -1,4 +1,3 @@
-import { StreamingServers, SubOrSub } from '../../src/models';
 import { ANIME } from '../../src/providers';
 
 jest.setTimeout(120000);

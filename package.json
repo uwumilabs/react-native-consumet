@@ -44,8 +44,7 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build lib \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
     "prepare": "bob build",
-    "release": "release-it",
-    "precommit": "echo '🔍 Running pre-commit checks...'"
+    "release": "release-it"
   },
   "keywords": [
     "react-native",
@@ -66,6 +65,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.26.9",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/compat": "^1.2.7",
     "@eslint/eslintrc": "^3.3.0",
@@ -74,8 +74,10 @@
     "@react-native-community/cli": "15.0.1",
     "@react-native/eslint-config": "^0.78.0",
     "@release-it/conventional-changelog": "^9.0.2",
+    "@types/crypto-js": "^4.2.2",
     "@types/jest": "^29.5.5",
     "@types/react": "^19.0.0",
+    "babel-jest": "^29.7.0",
     "commitlint": "^19.6.1",
     "del-cli": "^5.1.0",
     "eslint": "^9.22.0",
@@ -88,6 +90,8 @@
     "react-native": "0.78.1",
     "react-native-builder-bob": "^0.38.3",
     "release-it": "^17.10.0",
+    "ts-jest": "^29.3.1",
+    "ts-node": "^10.9.2",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2"
   },
@@ -100,14 +104,6 @@
     "apps/*"
   ],
   "packageManager": "yarn@3.6.1",
-  "jest": {
-    "preset": "react-native",
-    "modulePathIgnorePatterns": [
-      "<rootDir>/apps/*/node_modules",
-      "<rootDir>/example/node_modules",
-      "<rootDir>/lib/"
-    ]
-  },
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"

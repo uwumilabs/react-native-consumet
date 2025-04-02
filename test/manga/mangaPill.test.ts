@@ -17,6 +17,8 @@ test('fetchMangaInfo: returns filled manga info when given a mangaId.', async ()
 });
 
 test('fetchChapterPages: returns filled page data when given a chapterId.', async () => {
-  const data = await mangaPill.fetchChapterPages('2-11069000/one-piece-chapter-1069');
+  const data = await mangaPill.fetchChapterPages(
+    '2-11069000/one-piece-chapter-1069'
+  );
   expect(data).not.toEqual([]);
 });

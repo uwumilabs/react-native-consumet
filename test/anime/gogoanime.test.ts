@@ -1,4 +1,3 @@
-import { info } from 'console';
 import { ANIME } from '../../src/providers';
 import { StreamingServers } from '../../src/models';
 

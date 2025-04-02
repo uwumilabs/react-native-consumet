@@ -17,11 +17,15 @@ test('fetchMediaInfo: returns filled movie/TV info when given a mediaId.', async
 });
 
 test('fetchEpisodeServers: returns filled object of streaming sources when given an episodeId.', async () => {
-  const data = await kissAsian.fetchEpisodeServers('Drama/Vincenzo/Episode-1?id=62565');
+  const data = await kissAsian.fetchEpisodeServers(
+    'Drama/Vincenzo/Episode-1?id=62565'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchEpisodeSources: returns filled object of streaming sources when given an episodeId.', async () => {
-  const data = await kissAsian.fetchEpisodeSources('Drama/Vincenzo/Episode-1?id=62565');
+  const data = await kissAsian.fetchEpisodeSources(
+    'Drama/Vincenzo/Episode-1?id=62565'
+  );
   expect(data).not.toEqual({});
 });

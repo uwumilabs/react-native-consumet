@@ -1,7 +1,12 @@
 import { load } from 'cheerio';
 import axios from 'axios';
 import { getHashFromImage } from '../../utils/utils';
-import { NewsParser, type INewsFeed, Topics, type INewsInfo } from '../../models';
+import {
+  NewsParser,
+  type INewsFeed,
+  Topics,
+  type INewsInfo,
+} from '../../models';
 
 class NewsFeed implements INewsFeed {
   constructor(

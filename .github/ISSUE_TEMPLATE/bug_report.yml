@@ -58,11 +58,11 @@ body:
         2. …
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: reproducible-example
     attributes:
       label: Reproducible example repository 
       description: Please provide a link to a repository on GitHub with a reproducible example.
-      render: js
+      render: plain
     validations:
       required: true

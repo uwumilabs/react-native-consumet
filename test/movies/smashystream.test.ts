@@ -10,7 +10,12 @@ test('returns a filled object of streaming movie servers', async () => {
 });
 
 test('returns a filled object of streaming movie sources', async () => {
-  const data = await smashyStream.fetchEpisodeSources('697843', undefined, undefined, 'Player F');
+  const data = await smashyStream.fetchEpisodeSources(
+    '697843',
+    undefined,
+    undefined,
+    'Player F'
+  );
   expect(data.sources).not.toEqual([]);
 });
 

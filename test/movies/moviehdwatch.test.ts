@@ -10,18 +10,26 @@ test('returns a filled array of movies/tv', async () => {
 });
 
 test('returns a filled object of movies data', async () => {
-  const data = await moviesHd.fetchMediaInfo('movie/watch-the-batman-online-16076');
+  const data = await moviesHd.fetchMediaInfo(
+    'movie/watch-the-batman-online-16076'
+  );
   expect(data.description).not.toEqual('');
   expect(data.episodes).not.toEqual([]);
 });
 
 test('returns a filled object of streaming movie servers', async () => {
-  const data = await moviesHd.fetchEpisodeServers('16076', 'movie/watch-the-batman-online-16076');
+  const data = await moviesHd.fetchEpisodeServers(
+    '16076',
+    'movie/watch-the-batman-online-16076'
+  );
   expect(data).not.toEqual([]);
 });
 
 test('returns a filled object of streaming movie sources', async () => {
-  const data = await moviesHd.fetchEpisodeSources('16076', 'movie/watch-the-batman-online-16076');
+  const data = await moviesHd.fetchEpisodeSources(
+    '16076',
+    'movie/watch-the-batman-online-16076'
+  );
   expect(data.sources).not.toEqual([]);
 });
 
@@ -32,12 +40,18 @@ test('returns a filled object of tv data', async () => {
 });
 
 test('returns a filled object of streaming tv servers', async () => {
-  const data = await moviesHd.fetchEpisodeServers('46259', 'tv/watch-batman-online-39276');
+  const data = await moviesHd.fetchEpisodeServers(
+    '46259',
+    'tv/watch-batman-online-39276'
+  );
   expect(data).not.toEqual([]);
 });
 
 test('returns a filled object of streaming tv sources', async () => {
-  const data = await moviesHd.fetchEpisodeSources('46259', 'tv/watch-batman-online-39276');
+  const data = await moviesHd.fetchEpisodeSources(
+    '46259',
+    'tv/watch-batman-online-39276'
+  );
   expect(data.sources).not.toEqual([]);
 });
 

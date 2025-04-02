@@ -7,6 +7,12 @@ pre-commit:
         echo "Running ESLint..."
         npx eslint {staged_files}
         echo "ESLint completed ✅"
+    format:
+      glob: '*.{js,ts,jsx,tsx,json,md,css}'
+      run: |
+        echo "Running Prettier..."
+        npx prettier --write {staged_files}
+        echo "Prettier formatting completed ✅"
     types:
       glob: '*.{js,ts,jsx,tsx}' # Fixed the glob pattern spacing
       run: |
@@ -17,7 +23,7 @@ commit-msg:
   parallel: true
   commands:
     commitlint:
-      run: npx commitlint --edit
+      run: npx --no-install commitlint --edit "$1"
 
 # Add debug mode to see what's happening
 debug: true

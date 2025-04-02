@@ -201,7 +201,12 @@ class MovieHdWatch extends MovieParser {
                 id: $$$(el).find('a').attr('id')!.split('-')[1]!,
                 title: $$$(el).find('a').attr('title')!,
                 number: parseInt(
-                  $$$(el).find('a').attr('title')!.split(':')[0]!.slice(3).trim()
+                  $$$(el)
+                    .find('a')
+                    .attr('title')!
+                    .split(':')[0]!
+                    .slice(3)
+                    .trim()
                 ),
                 season: season,
                 url: `${this.baseUrl}/ajax/v2/episode/servers/${$$$(el).find('a').attr('id')!.split('-')[1]}`,

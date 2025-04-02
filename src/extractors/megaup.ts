@@ -29,8 +29,8 @@ export class MegaUp extends VideoExtractor {
     const v = Array.from({ length: 256 }, (_, i) => i);
     let c = 0,
       f = '';
-      
-      for (let w = 0; w < 256; w++) {
+
+    for (let w = 0; w < 256; w++) {
       // @ts-ignore
       c = (c + v[w] + n.charCodeAt(w % n.length)) % 256;
       // @ts-ignore

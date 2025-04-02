@@ -1,4 +1,3 @@
-import { info } from 'console';
 import { ANIME } from '../../src/providers';
 
 jest.setTimeout(120000);
@@ -32,13 +31,19 @@ test('returns a filled object of anime data', async () => {
 });
 
 test('returns a filled object of episode sources', async () => {
-  const data = await anix.fetchEpisodeSources('douluo-dalu-ii-jueshi-tangmen', 'ep-76');
+  const data = await anix.fetchEpisodeSources(
+    'douluo-dalu-ii-jueshi-tangmen',
+    'ep-76'
+  );
   expect(data.sources).not.toEqual([]);
   expect(data.subtitles).not.toEqual([]);
 });
 
 test('returns a filled array of servers', async () => {
-  const data = await anix.fetchEpisodeServers('douluo-dalu-ii-jueshi-tangmen', 'ep-76');
+  const data = await anix.fetchEpisodeServers(
+    'douluo-dalu-ii-jueshi-tangmen',
+    'ep-76'
+  );
   expect(data).not.toEqual([]);
 });
 
@@ -73,24 +78,44 @@ test('returns a filled array of servers (type: raw)', async () => {
 });
 
 test('returns a filled object of episode sources (type: sub)', async () => {
-  const data = await anix.fetchEpisodeSources('dandadan', 'ep-11', undefined, 'sub');
+  const data = await anix.fetchEpisodeSources(
+    'dandadan',
+    'ep-11',
+    undefined,
+    'sub'
+  );
   expect(data.sources).not.toEqual([]);
   expect(data.subtitles).not.toEqual([]);
 });
 
 test('returns a filled object of episode sources (type: dub)', async () => {
-  const data = await anix.fetchEpisodeSources('dandadan', 'ep-11', undefined, 'dub');
+  const data = await anix.fetchEpisodeSources(
+    'dandadan',
+    'ep-11',
+    undefined,
+    'dub'
+  );
   expect(data.sources).not.toEqual([]);
   expect(data.subtitles).not.toEqual([]);
 });
 
 test('returns a filled object of episode sources (type: raw)', async () => {
-  const data = await anix.fetchEpisodeSources('dandadan', 'ep-11', undefined, 'raw');
+  const data = await anix.fetchEpisodeSources(
+    'dandadan',
+    'ep-11',
+    undefined,
+    'raw'
+  );
   expect(data.sources).not.toEqual([]);
   expect(data.subtitles).not.toEqual([]);
 });
 
 test('returns a empty object of episode sources (type: invalid option)', async () => {
-  const data = await anix.fetchEpisodeSources('dandadan', 'ep-11', undefined, 'invalid');
+  const data = await anix.fetchEpisodeSources(
+    'dandadan',
+    'ep-11',
+    undefined,
+    'invalid'
+  );
   expect(data.sources).toEqual([]);
 });

@@ -64,6 +64,7 @@ export default defineConfig([
       'ios/**/*',
       '.ios/',
       '.github/',
+      "example/",
       
       // Build and Output
       'lib/',
@@ -75,6 +76,7 @@ export default defineConfig([
       
       // Testing and Coverage
       '__tests__/',
+      'test/',
       'coverage/',
       'jest.config.*',
       

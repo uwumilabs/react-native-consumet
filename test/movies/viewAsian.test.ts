@@ -17,6 +17,8 @@ test('fetchMediaInfo: returns filled movie/TV info when given a mediaId.', async
 });
 
 test('fetchEpisodeSources: returns filled object of streaming sources when given an episodeId.', async () => {
-  const data = await viewAsian.fetchEpisodeSources('/watch/vincenzo/watching.html$episode$20');
+  const data = await viewAsian.fetchEpisodeSources(
+    '/watch/vincenzo/watching.html$episode$20'
+  );
   expect(data).not.toEqual({});
 });

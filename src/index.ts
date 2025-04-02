@@ -1,8 +1,8 @@
-import Consumet from './NativeConsumet';
+// import Consumet from './NativeConsumet';
 
-export function getSources(s: string): Promise<string> {
-  return Consumet.getSources(s);
-}
+// export function getSources(s: string): Promise<string> {
+//   return Consumet.getSources(s);
+// }
 import {
   ANIME,
   COMICS,

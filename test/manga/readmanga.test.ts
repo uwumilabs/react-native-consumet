@@ -12,12 +12,16 @@ test('Search: returns a filled array of manga.', async () => {
 });
 
 test('fetchMangaInfo: returns filled manga info when given a mangaId.', async () => {
-  const data = await readManga.fetchMangaInfo('https://readmanga.app/one-piece');
+  const data = await readManga.fetchMangaInfo(
+    'https://readmanga.app/one-piece'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchChapterPages: returns filled page data when given a chapterId.', async () => {
-  const data = await readManga.fetchChapterPages('https://rmanga.app/one-piece/chapter-1107/all-pages');
+  const data = await readManga.fetchChapterPages(
+    'https://rmanga.app/one-piece/chapter-1107/all-pages'
+  );
   expect(data).not.toEqual([]);
 });
 

@@ -1,4 +1,3 @@
-/* eslint-disable no-new-wrappers */
 import axios, { type AxiosAdapter } from 'axios';
 
 import {
@@ -1370,7 +1369,13 @@ class Anilist extends AnimeParser {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      query: anilistAiringScheduleQuery(page, perPage, day1!, day2!, notYetAired),
+      query: anilistAiringScheduleQuery(
+        page,
+        perPage,
+        day1!,
+        day2!,
+        notYetAired
+      ),
     };
 
     try {

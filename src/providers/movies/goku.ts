@@ -176,8 +176,12 @@ class Goku extends MovieParser {
                 id: $$$(el).find('a').attr('data-id') ?? '',
                 title: $$$(el).find('a').attr('title') ?? '',
                 number: parseInt(
-                  $$$(el).find('a').text()?.split(':')[0]?.trim().substring(3) ??
-                    ''
+                  $$$(el)
+                    .find('a')
+                    .text()
+                    ?.split(':')[0]
+                    ?.trim()
+                    .substring(3) ?? ''
                 ),
                 season: season.season,
                 url: $$$(el).find('a').attr('href'),

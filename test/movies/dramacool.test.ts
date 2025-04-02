@@ -12,32 +12,44 @@ test('Search: returns a filled array of movies/TV.', async () => {
 });
 
 test('fetchMediaInfo: returns filled movie/TV info when given a mediaId.', async () => {
-  const data = await dramaCool.fetchMediaInfo('drama-detail/squid-games-2021-czf');
+  const data = await dramaCool.fetchMediaInfo(
+    'drama-detail/squid-games-2021-czf'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchEpisodeServers: returns filled object of streaming sources when given an episodeId.', async () => {
-  const data = await dramaCool.fetchEpisodeServers('video-watch/squid-games-2021-episode-9-as-jao');
+  const data = await dramaCool.fetchEpisodeServers(
+    'video-watch/squid-games-2021-episode-9-as-jao'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchEpisodeSources: returns filled object of streaming sources when given an episodeId.', async () => {
-  const data = await dramaCool.fetchEpisodeSources('video-watch/squid-games-2021-episode-9-as-jao');
+  const data = await dramaCool.fetchEpisodeSources(
+    'video-watch/squid-games-2021-episode-9-as-jao'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchMediaInfo: returns genres list when given a mediaId.', async () => {
-  const data = await dramaCool.fetchMediaInfo('drama-detail/squid-games-2021-czf');
+  const data = await dramaCool.fetchMediaInfo(
+    'drama-detail/squid-games-2021-czf'
+  );
   expect(data.genres?.length).not.toEqual([]);
 });
 
 test('fetchMediaInfo: returns status when given a mediaId.', async () => {
-  const data = await dramaCool.fetchMediaInfo('drama-detail/squid-games-2021-czf');
+  const data = await dramaCool.fetchMediaInfo(
+    'drama-detail/squid-games-2021-czf'
+  );
   expect(data.status).not.toEqual(undefined);
 });
 
 test('fetchMediaInfo: returns duration (if available) when given a mediaId.', async () => {
-  const data = await dramaCool.fetchMediaInfo('drama-detail/kimi-ga-kokoro-wo-kuretakara');
+  const data = await dramaCool.fetchMediaInfo(
+    'drama-detail/kimi-ga-kokoro-wo-kuretakara'
+  );
   expect(data.duration).not.toEqual(undefined);
 });
 
@@ -62,7 +74,9 @@ test('fetchRecentTvShows: returns a filled array of recent tv-shows.', async () 
 });
 
 test('fetchMediaInfo:returns content-rating, airs-on, director, original-network,trailer, characters', async () => {
-  const data = await dramaCool.fetchMediaInfo('drama-detail/squid-games-2021-czf');
+  const data = await dramaCool.fetchMediaInfo(
+    'drama-detail/squid-games-2021-czf'
+  );
   expect(data.contentRating).not.toEqual(undefined);
   expect(data.airsOn).not.toEqual(undefined);
   expect(data.director).not.toEqual(undefined);

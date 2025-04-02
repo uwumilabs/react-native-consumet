@@ -129,7 +129,9 @@ class NineAnime extends AnimeParser {
 
       const $ = load(res.data);
 
-      animeInfo.id = new URL(`${this.baseUrl}/animeUrl`).pathname.split('/')[2]!;
+      animeInfo.id = new URL(`${this.baseUrl}/animeUrl`).pathname.split(
+        '/'
+      )[2]!;
       animeInfo.title = $('h1.title').text();
       animeInfo.jpTitle = $('h1.title').attr('data-jp');
       animeInfo.genres = Array.from(

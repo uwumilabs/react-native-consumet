@@ -1,4 +1,3 @@
-import { TvType } from '../../src/models';
 import { META } from '../../src/providers';
 
 jest.setTimeout(120000);
@@ -40,11 +39,17 @@ test('returns a filled object of anime data', async () => {
 });
 
 test('returns a filled array of servers', async () => {
-  const data = await tmdb.fetchEpisodeServers('2899', 'tv/watch-the-flash-39535');
+  const data = await tmdb.fetchEpisodeServers(
+    '2899',
+    'tv/watch-the-flash-39535'
+  );
   expect(data).not.toEqual([]);
 });
 
 test('returns a filled object of episode sources', async () => {
-  const data = await tmdb.fetchEpisodeSources('2899', 'tv/watch-the-flash-39535');
+  const data = await tmdb.fetchEpisodeSources(
+    '2899',
+    'tv/watch-the-flash-39535'
+  );
   expect(data.sources).not.toEqual([]);
 });

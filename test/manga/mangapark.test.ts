@@ -12,11 +12,15 @@ test('Search: returns a filled array of manga.', async () => {
 });
 
 test('fetchMangaInfo: returns filled manga info when given a mangaId.', async () => {
-  const data = await mangapark.fetchMangaInfo('kimetsu-no-yaiba-gotouge-koyoharu');
+  const data = await mangapark.fetchMangaInfo(
+    'kimetsu-no-yaiba-gotouge-koyoharu'
+  );
   expect(data).not.toEqual({});
 });
 
 test('fetchChapterPages: returns filled page data when given a chapterId.', async () => {
-  const data = await mangapark.fetchChapterPages('kimetsu-no-yaiba-gotouge-koyoharu/i2325814');
+  const data = await mangapark.fetchChapterPages(
+    'kimetsu-no-yaiba-gotouge-koyoharu/i2325814'
+  );
   expect(data).not.toEqual([]);
 });
