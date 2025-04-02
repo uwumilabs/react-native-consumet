@@ -1,5 +1,13 @@
 # Changelog
 
+## <small>v0.2.1 (2025-04-02)</small>
+
+* chore(eslint | tsconfig): add jest.setup.js to ignored files, update exclude list ([3779930](https://github.com/2004durgesh/react-native-consumet/commit/3779930))
+* first commit ([d8ef215](https://github.com/2004durgesh/react-native-consumet/commit/d8ef215))
+* chore(jest): refine config and setup, update issue and PR templates ([622d6ef](https://github.com/2004durgesh/react-native-consumet/commit/622d6ef))
+* chore(package): add infile option for conventional changelog ([f8780b2](https://github.com/2004durgesh/react-native-consumet/commit/f8780b2))
+* fix(types): fix all type issues and add docs and test ([f30fb53](https://github.com/2004durgesh/react-native-consumet/commit/f30fb53))
+
 ## v0.2.0 (2025-04-02)
 
 * chore(jest): refine config and setup, update issue and PR templates ([622d6ef](https://github.com/2004durgesh/react-native-consumet/commit/622d6ef))
