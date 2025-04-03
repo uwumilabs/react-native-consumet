@@ -1,4 +1,11 @@
 {
-  "extends": "./tsconfig",
-  "exclude": ["apps/bare-example","apps/expo-example","example", "lib","android/build/**","test","ios/build/**"],
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./lib/typescript",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true
+  },
+  "include": ["src"]
 }

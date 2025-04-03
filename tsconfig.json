@@ -4,6 +4,9 @@
     "paths": {
       "react-native-consumet": ["./src/index"]
     },
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "esModuleInterop": true,

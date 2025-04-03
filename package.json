@@ -5,6 +5,14 @@
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/typescript/commonjs/src/index.d.ts",
+        "lib/typescript/module/src/index.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "import": {
@@ -38,7 +46,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-consumet-example",
+    "example": "yarn workspace react-native-consumet-bare-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -100,8 +108,8 @@
     "react-native": "*"
   },
   "workspaces": [
-    "example",
-    "apps/*"
+    "apps/bare-example",
+    "apps/expo-example"
   ],
   "packageManager": "yarn@3.6.1",
   "commitlint": {
@@ -183,6 +191,7 @@
     "ascii-url-encoder": "^1.2.0",
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
-    "crypto-js": "^4.2.0"
+    "crypto-js": "^4.2.0",
+    "react-native-consumet": "^0.2.1"
   }
 }
