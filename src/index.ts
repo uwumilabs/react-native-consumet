@@ -1,8 +1,8 @@
-// import Consumet from './NativeConsumet';
+import Consumet from './NativeConsumet';
 
-// export function getSources(s: string): Promise<string> {
-//   return Consumet.getSources(s);
-// }
+export function getSources(s: string): Promise<string> {
+  return Consumet.getSources(s);
+}
 import {
   ANIME,
   COMICS,
@@ -14,23 +14,27 @@ import {
 } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import {
-  VizCloud,
   AsianLoad,
+  BilibiliExtractor,
+  Filemoon,
   GogoCDN,
   Kwik,
   MixDrop,
+  Mp4Upload,
   RapidCloud,
-  BilibiliExtractor,
-  Filemoon,
+  SmashyStream,
+  StreamHub,
+  StreamLare,
   StreamSB,
   StreamTape,
-  VidCloud,
-  StreamLare,
-  StreamHub,
-  SmashyStream,
-  VidMoly,
-  Mp4Upload,
   StreamWish,
+  VidCloud,
+  VidMoly,
+  VizCloud,
+  Mp4Player,
+  MegaCloud,
+  VidHide,
+  Voe,
   MegaUp,
 } from './extractors';
 import {
@@ -100,6 +104,10 @@ export {
   StreamWish,
   VidMoly,
   MegaUp,
+  Mp4Player,
+  MegaCloud,
+  VidHide,
+  Voe,
 };
 export type {
   IProviderStats,

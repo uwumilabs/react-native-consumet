@@ -19,13 +19,15 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.Zoro();
-    const sources = await animekai.search('jujutsu');
-    const s = await animekai.fetchEpisodeSources(
-      'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394'
-    );
-    // const a= await getSources("ZNsenNosoJNT")
+    const animekai = new ANIME.AnimeKai();
+    const sources = await animekai.search('one piece');
+
+    const s = await animekai.fetchEpisodeSources('jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH');
     console.log(s);
+    if (!sources || !sources.results) {
+      throw new Error('Invalid response format from API');
+    }
+    // @ts-ignore
     return sources;
   } catch (error) {
     console.log(error);
@@ -44,7 +46,11 @@ export default function Zoro() {
   const loadData = async () => {
     try {
       const sources = await fetchData();
-      setState({ data: sources.results, isLoading: false, error: null });
+      setState({
+        data: sources.results || [],
+        isLoading: false,
+        error: null,
+      });
     } catch (error: unknown) {
       console.log(error);
       setState((prev) => ({
@@ -67,7 +73,7 @@ export default function Zoro() {
   if (state.error) {
     return (
       <View style={styles.container}>
-        {/* <Text style={styles.errorText}>Error: {state.error}</Text> */}
+        <Text style={styles.errorText}>Error: {state.error.toString()}</Text>
       </View>
     );
   }

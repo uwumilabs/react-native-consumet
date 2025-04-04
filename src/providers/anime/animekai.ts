@@ -526,6 +526,7 @@ class AnimeKai extends AnimeParser {
             ...(await new MegaUp(this.proxyConfig, this.adapter).extract(
               serverUrl
             )),
+            download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
         default:
           return {
@@ -533,6 +534,7 @@ class AnimeKai extends AnimeParser {
             ...(await new MegaUp(this.proxyConfig, this.adapter).extract(
               serverUrl
             )),
+            download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
       }
     }
@@ -722,7 +724,7 @@ class AnimeKai extends AnimeParser {
 //   const anime = await animekai.search('dandadan');
 //   const info = await animekai.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-x7rq');
 //     console.log(info.episodes);
-//   const sources = await animekai.fetchEpisodeSources(info?.episodes![0].id!);
+//   const sources = await animekai.fetchEpisodeSources(info?.episodes![0]?.id!);
 //   console.log(sources);
 // })();
 

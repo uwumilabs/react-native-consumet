@@ -63,12 +63,13 @@ class AnimePahe extends AnimeParser {
       id: id,
       title: '',
     };
-
+    console.log(`${this.baseUrl}/anime/${id}`, this.Headers(id));
     try {
-      const res = await this.client.get(`${this.baseUrl}/anime/${id}`, {
+      const res = await fetch(`${this.baseUrl}/anime/${id}`, {
         headers: this.Headers(id),
       });
-      const $ = load(res.data);
+      const data = await res.text();
+      const $ = load(data);
 
       animeInfo.title = $('div.title-wrapper > h1 > span').first().text();
       animeInfo.image = $('div.anime-poster a').attr('href');
@@ -258,9 +259,8 @@ class AnimePahe extends AnimeParser {
     return {
       'authority': 'animepahe.ru',
       'accept': 'application/json, text/javascript, */*; q=0.01',
-      'accept-language': 'en-US,en;q=0.9',
-      'cookie': '__ddg2_=;',
-      'dnt': '1',
+      'Cookie':
+        '__ddg8_=t30Kk4WN3QXxGGeS; __ddg10_=1743778081; __ddg9_=103.123.226.218; __ddgid_=UyBX8L5x2N3PVwHQ; __ddgmark_=zzjwIU0XrzYhLZNA; __ddg2_=mYFJpxSZiwbzc2Lj; __ddg1_=dyfub1Uw7hUQG4jJhFzD; XSRF-TOKEN=eyJpdiI6Ii9qdkJOVkdIckU4c3pURnE4UGQwRGc9PSIsInZhbHVlIjoiWFd0L3hJaXA2MmZ4emtuSnFTWFNnemtPaHdwMmpISDkwV2VtVDJ5Tjl1VVFHNEd0aXlPNzRTTkZ4ZXRHUVliZzhWbng1cEV3MjgvMWFtekRETkRpY0pOTE9sNkM3enVVeGxGTExTRzlkZUhmZUtlZVAwRitOYVUvaGdBV0J1a04iLCJtYWMiOiI3OWEwZDZhZmQwMmJhYjZlZmU3MDFiN2EyM2E2ZDU2MjE0YTNhNWI3MGEwZTQzZDEzYTIyMGY4OTVhYWMzYzI0IiwidGFnIjoiIn0%3D; laravel_session=eyJpdiI6Im5jdVZKbjBpck56eEtlWEhzNVFGR0E9PSIsInZhbHVlIjoiWG42MjV4RmVFa1hNcVUvWFFaRDlQdmZsbU53UlMvRUFzL0padFRTcFhSYmhJaWJ5R3RheW11SElCcGl5NkRxUkMwdW8rUTFKMW5qblBRV2xHMmZXZHd3S3dMMExVTHVVamNwZk1IMkJIRmUwcjMrV0VXM2JEcWJZb2FOTXNmaWgiLCJtYWMiOiI3ODk4YWJkYjM0ZGVkZDYzNWUxNWQxMjFhOGZkYWQ3Yzc2ZmIzN2Q1MGUyMjcxMGQxNTU5YTNjNTU3MGE5YTRmIiwidGFnIjoiIn0%3D; latest=6081; res=1080; aud=jpn; av1=0',
       'sec-ch-ua':
         '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
@@ -269,10 +269,8 @@ class AnimePahe extends AnimeParser {
       'sec-fetch-mode': 'cors',
       'sec-fetch-site': 'same-origin',
       'x-requested-with': 'XMLHttpRequest',
-      'referer': sessionId
-        ? `${this.baseUrl}/anime/${sessionId}`
-        : `${this.baseUrl}`,
-      'user-agent': USER_AGENT,
+      'Referer': `${this.baseUrl}/`,
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     };
   }
 }
