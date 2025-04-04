@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>v0.2.2 (2025-04-04)</small>
+
+* fix(megaup): fix megaup decoding logic ([e761ffe](https://github.com/2004durgesh/react-native-consumet/commit/e761ffe))
+* chore: migrate example to bare-example structure and remove deprecated files ([fbd25b4](https://github.com/2004durgesh/react-native-consumet/commit/fbd25b4))
+
 ## <small>v0.2.1 (2025-04-02)</small>
 
 * chore(eslint | tsconfig): add jest.setup.js to ignored files, update exclude list ([3779930](https://github.com/2004durgesh/react-native-consumet/commit/3779930))
