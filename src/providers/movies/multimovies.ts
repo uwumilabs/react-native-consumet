@@ -13,9 +13,9 @@ import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.life';
+  protected override baseUrl = 'https://multimovies.guru';
   protected override logo =
-    'https://multimovies.life/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+    'https://multimovies.guru/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {

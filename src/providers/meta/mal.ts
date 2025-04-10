@@ -21,7 +21,6 @@ import {
 } from '../../utils';
 import Gogoanime from '../anime/gogoanime';
 import Zoro from '../anime/zoro';
-import Crunchyroll from '../anime/crunchyroll';
 import Anify from '../anime/anify';
 import Bilibili from '../anime/bilibili';
 import { ANIFY_URL } from '../../utils/utils';
@@ -326,20 +325,6 @@ class Myanimelist extends AnimeParser {
   }
 
   private findAnimeRaw = async (slug: string, externalLinks?: any) => {
-    if (externalLinks && this.provider instanceof Crunchyroll) {
-      if (externalLinks.map((link: any) => link.site.includes('Crunchyroll'))) {
-        const link = externalLinks.find((link: any) =>
-          link.site.includes('Crunchyroll')
-        );
-        const { request } = await this.client.get(link.url, {
-          validateStatus: () => true,
-        });
-        const mediaType = request.res.responseUrl.split('/')[3];
-        const id = request.res.responseUrl.split('/')[4];
-
-        return await this.provider.fetchAnimeInfo(id, mediaType);
-      }
-    }
     const findAnime = (await this.provider.search(
       slug
     )) as ISearch<IAnimeResult>;
@@ -372,12 +357,6 @@ class Myanimelist extends AnimeParser {
       return secondRating - firstRating;
     });
 
-    if (this.provider instanceof Crunchyroll) {
-      return await this.provider.fetchAnimeInfo(
-        findAnime.results[0]?.id!,
-        findAnime.results[0]?.type! as string
-      );
-    }
     // TODO: use much better way than this
     return (await this.provider.fetchAnimeInfo(
       findAnime.results[0]!.id
@@ -400,13 +379,7 @@ class Myanimelist extends AnimeParser {
 
     let possibleAnime: any | undefined;
 
-    if (
-      malId &&
-      !(
-        this.provider instanceof Crunchyroll ||
-        this.provider instanceof Bilibili
-      )
-    ) {
+    if (malId && !(this.provider instanceof Bilibili)) {
       const malAsyncReq = await this.client({
         method: 'GET',
         url: `${this.malSyncUrl}/mal/anime/${malId}`,
@@ -490,29 +463,6 @@ class Myanimelist extends AnimeParser {
           ].id.replace(`$both`, dub ? '$dub' : '$sub');
         }
       });
-    }
-
-    if (this.provider instanceof Crunchyroll) {
-      const nestedEpisodes = Object.keys(possibleAnime.episodes)
-        .filter((key: any) => key.toLowerCase().includes(dub ? 'dub' : 'sub'))
-        .sort((first: any, second: any) => {
-          return (
-            (possibleAnime.episodes[first]?.[0].season_number ?? 0) -
-            (possibleAnime.episodes[second]?.[0].season_number ?? 0)
-          );
-        })
-        .map((key: any) => {
-          const audio = key
-            .replace(/[0-9]/g, '')
-            .replace(/(^\w{1})|(\s+\w{1})/g, (letter: string) =>
-              letter.toUpperCase()
-            );
-          possibleAnime.episodes[key].forEach(
-            (element: any) => (element.type = audio)
-          );
-          return possibleAnime.episodes[key];
-        });
-      return nestedEpisodes.flat();
     }
 
     const possibleProviderEpisodes = possibleAnime.episodes as IAnimeEpisode[];

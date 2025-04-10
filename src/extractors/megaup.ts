@@ -6,6 +6,7 @@ export class MegaUp extends VideoExtractor {
   protected serverName: string = 'MegaUp';
   protected sources: IVideo[] = [];
 
+
   #reverseIt = (n: string) => {
     return n.split('').reverse().join('');
   };
@@ -132,38 +133,37 @@ export class MegaUp extends VideoExtractor {
   };
   Decode = (n: string) => {
     n = this.#substitute(
-      this.#reverseIt(
-        this.#transform(
-          '3U8XtHJfgam02k',
-          this.#base64UrlDecode(
+      this.#transform(
+        'XvxVdt4eTSnCyG',
+        this.#base64UrlDecode(
+          this.#reverseIt(
             this.#transform(
-              'PgiY5eIZWn',
+              'ENZqBfw54cgsJ',
               this.#base64UrlDecode(
-                this.#substitute(
-                  this.#reverseIt(
-                    this.#substitute(
-                      this.#transform(
-                        'QKbVomcBHysCW9',
-                        this.#base64UrlDecode(
-                          this.#reverseIt(this.#base64UrlDecode(n))
+                this.#reverseIt(
+                  this.#substitute(
+                    this.#transform(
+                      'HCcYA9gQqxUD',
+                      this.#base64UrlDecode(
+                        this.#substitute(
+                          this.#reverseIt(this.#base64UrlDecode(n)),
+                          'OdilCbZWmrtUeYg',
+                          'YirdmeZblOtgCWU'
                         )
-                      ),
-                      '0GsO8otUi21aY',
-                      'Go1UiY82st0Oa'
-                    )
-                  ),
-                  'rXjnhU3SsbEd',
-                  'rXEsS3nbjhUd'
+                      )
+                    ),
+                    'K9lQq2SsnjkObe',
+                    'l9j2sSnekQOqKb'
+                  )
                 )
               )
             )
           )
         )
       ),
-      '7DtY4mHcMA2yIL',
-      'IM7Am4D2yYHctL'
+      'nMW7qCTpe6SQhco',
+      'nqce7WMQC6pSTho'
     );
-
     return decodeURIComponent(n);
   };
 

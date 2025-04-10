@@ -15,11 +15,9 @@ import {
  */
 export const PROVIDERS_LIST = {
   ANIME: [
-    new ANIME.NineAnime(),
     new ANIME.AnimeFox(),
     new ANIME.AnimePahe(),
     new ANIME.Bilibili(),
-    new ANIME.Crunchyroll(),
     new ANIME.Anify(),
     new ANIME.Gogoanime(),
     new ANIME.Zoro(),

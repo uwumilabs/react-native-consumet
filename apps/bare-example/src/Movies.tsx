@@ -1,4 +1,4 @@
-import { ANIME, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
 import {
   Text,
   View,
@@ -10,27 +10,24 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
-// ZNsenNosoJNT
 interface FetchState {
-  data: IAnimeResult[];
+  data: IMovieResult[];
   isLoading: boolean;
   error: string | null | Error;
 }
 
-const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
+const fetchData = async (): Promise<ISearch<IMovieResult>> => {
   try {
-    const animekai = new ANIME.AnimeKai();
-    const sources = await animekai.search('one piece');
-    console.log('sources');
-    const s = await animekai.fetchEpisodeSources(
-      'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
-    );
-    console.log('sources end');
-    console.log(s);
+    const movies = new MOVIES.MultiMovies();
+    const sources = await movies.search('one piece');
+
+    // const s = await movies.fetchEpisodeSources(
+    //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
+    // );
+    // console.log(s);
     if (!sources || !sources.results) {
       throw new Error('Invalid response format from API');
     }
-    // @ts-ignore
     return sources;
   } catch (error) {
     console.log(error);
@@ -38,11 +35,11 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   }
 };
 
-export default function Zoro() {
+export default function Movies() {
   const [state, setState] = useState<FetchState>({
     data: [],
     isLoading: true,
-    error: "",
+    error: null,
   });
   const [refreshing, setRefreshing] = useState(false);
 
