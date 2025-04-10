@@ -11,21 +11,24 @@ const novelupdates = new LIGHT_NOVELS.NovelUpdates();
 - [fetchChapterContent](#fetchchaptercontent)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
 | Parameter | Type     | Description                                                                         |
 | --------- | -------- | ----------------------------------------------------------------------------------- |
-| query     | `string` | query to search for. (*In this case, We're searching for `Classrrom of the Elite`*) |
+| query     | `string` | query to search for. (_In this case, We're searching for `Classrrom of the Elite`_) |
 
 ```ts
-novelupdates.search("Clasroom of the Elite").then(data => {
+novelupdates.search('Clasroom of the Elite').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of light novels. (*<a href= "https://github.com/consumet/extensions/blob/master/src/models/types.ts#L128-L134"> <code>Promise<ISearch\<ILightNovelResult>></code></a>*)\
+
+returns a promise which resolves into an array of light novels. (_<a href= "https://github.com/consumet/extensions/blob/master/src/models/types.ts#L128-L134"> <code>Promise<ISearch\<ILightNovelResult>></code></a>_)\
 output:
+
 ```js
 {
   results: [
@@ -47,16 +50,20 @@ output:
 
 | Parameter              | Type     | Description                                                                                            |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| lightNovelUrl          | `string` | id or url of the light novel. (*light novel id or url can be found in the light novel search results*) |
-| chapterPage (optional) | `number` | chapter page number (*default: -1 meaning will fetch all chapters*)                                    |
+| lightNovelUrl          | `string` | id or url of the light novel. (_light novel id or url can be found in the light novel search results_) |
+| chapterPage (optional) | `number` | chapter page number (_default: -1 meaning will fetch all chapters_)                                    |
 
 ```ts
-novelupdates.fetchLightNovelInfo("youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e").then(data => {
-  console.log(data);
-})
+novelupdates
+  .fetchLightNovelInfo('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an light novel info object (including the chapters or volumes). (*<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L148-L156"><code>Promise\<ILightNovelInfo></code></a>*)\
+
+returns a promise which resolves into an light novel info object (including the chapters or volumes). (_<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L148-L156"><code>Promise\<ILightNovelInfo></code></a>_)\
 output:
+
 ```js
 {
   id: 'youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e',
@@ -89,15 +96,17 @@ output:
 
 | Parameter | Type     | Description                                                            |
 | --------- | -------- | ---------------------------------------------------------------------- |
-| chapterId | `string` | chapter id. (*chapter id can be found in the light novel info object*) |
+| chapterId | `string` | chapter id. (_chapter id can be found in the light novel info object_) |
 
 ```ts
-readlightnovels.fetchChapterContent("5692421").then(data => {
+readlightnovels.fetchChapterContent('5692421').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a content object. (*<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L143-L146"><code>Promise\<ILightNovelChapterContent></code></a>*)\
+
+returns a content object. (_<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L143-L146"><code>Promise\<ILightNovelChapterContent></code></a>_)\
 output:
+
 ```js
 {
   text: '\n' +

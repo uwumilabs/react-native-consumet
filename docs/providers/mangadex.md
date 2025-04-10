@@ -15,23 +15,26 @@ const mangadex = new MANGA.MangaDex();
 - [fetchRandom](#fetchrandom)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
->
+
 <h4>Parameters</h4>
 
 | Parameter        | Type     | Description                                                                  |
 | ---------------- | -------- | ---------------------------------------------------------------------------- |
-| query            | `string` | query to search for. (*In this case, We're searching for `Tomodachi Gamee`*) |
+| query            | `string` | query to search for. (_In this case, We're searching for `Tomodachi Gamee`_) |
 | page (optional)  | `number` | page number (default: 1)                                                     |
 | limit (optional) | `number` | limit of results (default: 20)                                               |
 
 ```ts
-mangadex.search("Tomodachi Game").then(data => {
+mangadex.search('Tomodachi Game').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -64,15 +67,17 @@ output:
 
 | Parameter | Type     | Description                                                    |
 | --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id.(*manga id can be found in the manga search results*) |
+| mangaId   | `string` | manga id.(_manga id can be found in the manga search results_) |
 
 ```ts
-managdex.fetchMangaInfo("b35f67b6-bfb9-4cbd-86f0-621f37e6cb41").then(data => {
+managdex.fetchMangaInfo('b35f67b6-bfb9-4cbd-86f0-621f37e6cb41').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
   id: 'b35f67b6-bfb9-4cbd-86f0-621f37e6cb41',
@@ -115,15 +120,19 @@ output:
 
 | Parameter | Type     | Description                                              |
 | --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id.(*chapter id can be found in the manga info*) |
+| chapterId | `string` | chapter id.(_chapter id can be found in the manga info_) |
 
 ```ts
-mangadex.fetchChapterPages("a79255c8-21b5-4a8c-a586-48469fa87020").then(data => {
-  console.log(data);
-})
+mangadex
+  .fetchChapterPages('a79255c8-21b5-4a8c-a586-48469fa87020')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
   {
@@ -143,18 +152,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter        | Type     | Description                                                                  |
-| ---------------- | -------- | ---------------------------------------------------------------------------- |
-| page (optional)  | `number` | page number (default: 1)                                                     |
-| limit (optional) | `number` | limit of results (default: 20)                                               |
+| Parameter        | Type     | Description                    |
+| ---------------- | -------- | ------------------------------ |
+| page (optional)  | `number` | page number (default: 1)       |
+| limit (optional) | `number` | limit of results (default: 20) |
 
 ```ts
-mangadex.fetchPopular().then(data => {
+mangadex.fetchPopular().then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -185,18 +196,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter        | Type     | Description                                                                  |
-| ---------------- | -------- | ---------------------------------------------------------------------------- |
-| page (optional)  | `number` | page number (default: 1)                                                     |
-| limit (optional) | `number` | limit of results (default: 20)                                               |
+| Parameter        | Type     | Description                    |
+| ---------------- | -------- | ------------------------------ |
+| page (optional)  | `number` | page number (default: 1)       |
+| limit (optional) | `number` | limit of results (default: 20) |
 
 ```ts
-mangadex.fetchRecentlyAdded().then(data => {
+mangadex.fetchRecentlyAdded().then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -222,18 +235,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter        | Type     | Description                                                                  |
-| ---------------- | -------- | ---------------------------------------------------------------------------- |
-| page (optional)  | `number` | page number (default: 1)                                                     |
-| limit (optional) | `number` | limit of results (default: 20)                                               |
+| Parameter        | Type     | Description                    |
+| ---------------- | -------- | ------------------------------ |
+| page (optional)  | `number` | page number (default: 1)       |
+| limit (optional) | `number` | limit of results (default: 20) |
 
 ```ts
-mangadex.fetchLatestUpdates().then(data => {
+mangadex.fetchLatestUpdates().then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -264,17 +279,18 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter        | Type     | Description                                                                  |
-| ---------------- | -------- | ---------------------------------------------------------------------------- |
-
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
 
 ```ts
-mangadex.fetchRandom().then(data => {
+mangadex.fetchRandom().then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   results: [

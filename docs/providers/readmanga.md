@@ -1,7 +1,7 @@
 <h1> ReadManga </h1>
 
 ```ts
-  const readManga = new MANGA.ReadManga();
+const readManga = new MANGA.ReadManga();
 ```
 
 <h2>Methods</h2>
@@ -13,21 +13,24 @@
 - [fetchTopRatedManga](#fetchtopratedmanga)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class, meaning it is available across most categories.
-> 
+
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                  |
-| --------- | -------- | ---------------------------------------------------------------------------- |
-| query     | `string` | query to search for. (*In this case, we're searching for `one piece`*) |
+| Parameter | Type     | Description                                                            |
+| --------- | -------- | ---------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, we're searching for `one piece`_) |
 
 ```ts
-readManga.search('one piece').then(data => {
+readManga.search('one piece').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
     results: [
@@ -52,17 +55,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id (*can be found in the manga search results*) |
+| Parameter | Type     | Description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| mangaId   | `string` | manga id (_can be found in the manga search results_) |
 
 ```ts
-readManga.fetchMangaInfo('one-piece-colored-edition-55493').then(data => {
+readManga.fetchMangaInfo('one-piece-colored-edition-55493').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
       id: 'one-piece-colored-edition-55493',
@@ -87,23 +92,28 @@ output:
       ]
 }
 ```
+
 Note: The `headerForImage` property might be useful when getting the image to display.
 
 ### fetchChapterPages
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                              |
-| --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id (*can be found in the manga info*) |
+| Parameter | Type     | Description                                   |
+| --------- | -------- | --------------------------------------------- |
+| chapterId | `string` | chapter id (_can be found in the manga info_) |
 
 ```ts
-readManga.fetchChapterPages('one-piece-colored-edition-55493/en/chapter-1004').then(data => {
-  console.log(data);
-})
+readManga
+  .fetchChapterPages('one-piece-colored-edition-55493/en/chapter-1004')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
     {
@@ -130,17 +140,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                  |
-| --------- | -------- | ---------------------------------------------------------------------------- |
-| page     | `number` | page number (default: 1) |
+| Parameter | Type     | Description              |
+| --------- | -------- | ------------------------ |
+| page      | `number` | page number (default: 1) |
 
 ```ts
-readManga.fetchNewManga(3).then(data => {
+readManga.fetchNewManga(3).then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
     currentPage: 3,
@@ -176,17 +188,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                  |
-| --------- | -------- | ---------------------------------------------------------------------------- |
-| page     | `number` | page number (default: 1) |
+| Parameter | Type     | Description              |
+| --------- | -------- | ------------------------ |
+| page      | `number` | page number (default: 1) |
 
 ```ts
-readManga.fetchTopRatedManga().then(data => {
+readManga.fetchTopRatedManga().then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
     currentPage: 1,

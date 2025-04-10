@@ -13,6 +13,7 @@ const comicProvider = COMICS.<providerName>();
 ```
 
 ## Comic Providers List
+
 This list is in alphabetical order. (except the sub bullet points)
 
 - [GetComics](#todo)

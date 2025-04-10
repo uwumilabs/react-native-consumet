@@ -18,26 +18,26 @@ const sflix = new MOVIES.SFlix();
 - [fetchByGenre](#fetchbygenre)
 - [fetchSpotlight](#fetchspotlight)
 
-
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description                                                                                                                                |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| query           | `string` | query to search for. (*In this case, We're searching for `Vincenzo`*) |
-| page (optional) | `number` | page number (default: 1)                                                                                                                   |
+| Parameter       | Type     | Description                                                           |
+| --------------- | -------- | --------------------------------------------------------------------- |
+| query           | `string` | query to search for. (_In this case, We're searching for `Vincenzo`_) |
+| page (optional) | `number` | page number (default: 1)                                              |
 
 ```ts
-sflix.search("Vincenzo").then(data => {
+sflix.search('Vincenzo').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
   currentPage: 1, // current page
@@ -64,16 +64,17 @@ output:
 
 | Parameter | Type     | Description                                                                                                                     |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| mediaId   | `string` | takes media id or url as a parameter. (*media id or url can be found in the media search results as shown on the above method*) |
+| mediaId   | `string` | takes media id or url as a parameter. (_media id or url can be found in the media search results as shown on the above method_) |
 
 ```ts
-sflix.fetchMediaInfo("tv/free-vincenzo-hd-67955").then(data => {
+sflix.fetchMediaInfo('tv/free-vincenzo-hd-67955').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
 output:
+
 ```js
 {
   id: 'tv/free-vincenzo-hd-67955',  // media id
@@ -108,7 +109,7 @@ output:
       image: 'https://f.woowoowoowoo.net/resize/300x200/23/9b/239bbfb9c4fdac8645f46c5841002ca0/239bbfb9c4fdac8645f46c5841002ca0.jpg',
       title: 'Episode 1: Episode 1',
       number: 1,
-      season: 1, 
+      season: 1,
       url: 'https://sflix.to/ajax/v2/episode/servers/1167571'
     },
     {...},
@@ -121,20 +122,27 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter         | Type                                                                                                 | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
-| mediaId           | `string`                                                                                             | takes media id as a parameter. (*media id can be found in the media info object*)                                                                          |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. *default: [`StreamingServers.VidCloud`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)* |
-
+| Parameter         | Type                                                                                                   | Description                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                   |
+| mediaId           | `string`                                                                                               | takes media id as a parameter. (_media id can be found in the media info object_)                                                                       |
+| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. _default: [`StreamingServers.VidCloud`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)_ |
 
 ```ts
-sflix.fetchEpisodeSources("1167571","tv/free-vincenzo-hd-67955",StreamingServers.Voe).then(data => {
-  console.log(data);
-})
+sflix
+  .fetchEpisodeSources(
+    '1167571',
+    'tv/free-vincenzo-hd-67955',
+    StreamingServers.Voe
+  )
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)*)\
+
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
 output:
+
 ```js
 {
   headers: { Referer: 'https://voe.sx/e/zm0wvpglgaww' },
@@ -160,39 +168,43 @@ output:
 
 | Parameter | Type     | Description                                                                                                   |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------- |
-| episodeId | `string` | take an episode id or url as a parameter. (*episode id or episode url can be found in the media info object*) |
-| mediaId   | `string` | takes media id as a parameter. (*media id can be found in the media info object*)                             |
+| episodeId | `string` | take an episode id or url as a parameter. (_episode id or episode url can be found in the media info object_) |
+| mediaId   | `string` | takes media id as a parameter. (_media id can be found in the media info object_)                             |
 
 ```ts
-sflix.fetchEpisodeServers("1167571","tv/free-vincenzo-hd-67955").then(data => {
-  console.log(data);
-})
+sflix
+  .fetchEpisodeServers('1167571', 'tv/free-vincenzo-hd-67955')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)*)\
+
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)_)\
 output:
+
 ```js
 [
   {
     name: 'upcloud',
-    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4829542'
+    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4829542',
   },
   {
     name: 'vidcloud',
-    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4087001'
+    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4087001',
   },
   {
     name: 'voe',
-    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.7823107'
+    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.7823107',
   },
   {
     name: 'doodstream',
-    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4087002'
+    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.4087002',
   },
   {
     name: 'mixdrop',
-    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.6488473'
-  }
-]
+    url: 'https://sflix.to/watch-tv/free-vincenzo-hd-67955.6488473',
+  },
+];
 ```
 
 <p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>
@@ -200,13 +212,14 @@ output:
 ### fetchRecentMovies
 
 ```ts
-sflix.fetchRecentMovies().then(data => {
+sflix.fetchRecentMovies().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
    {
@@ -231,17 +244,17 @@ output:
 ]
 ```
 
-
 ### fetchRecentTvShows
 
 ```ts
-sflix.fetchRecentTvShows().then(data => {
+sflix.fetchRecentTvShows().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
  {
@@ -266,17 +279,17 @@ output:
 ]
 ```
 
-
 ### fetchTrendingMovies
 
 ```ts
-sflix.fetchTrendingMovies().then(data => {
+sflix.fetchTrendingMovies().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
  {
@@ -301,17 +314,17 @@ output:
 ]
 ```
 
-
 ### fetchTrendingTvShows
 
 ```ts
-sflix.fetchTrendingTvShows().then(data => {
+sflix.fetchTrendingTvShows().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
 {
@@ -340,19 +353,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description                                                             |
-| --------------- | -------- | ----------------------------------------------------------------------- |
-| country         | `string` | param to filter by country. (*In this case, We're filtering by `KR`*)   |
-| page (optional) | `number` | page number (default: 1)                                                |
+| Parameter       | Type     | Description                                                           |
+| --------------- | -------- | --------------------------------------------------------------------- |
+| country         | `string` | param to filter by country. (_In this case, We're filtering by `KR`_) |
+| page (optional) | `number` | page number (default: 1)                                              |
 
 ```ts
-sflix.fetchByCountry('KR').then(data => {
+sflix.fetchByCountry('KR').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -387,17 +401,18 @@ output:
 
 | Parameter       | Type     | Description                                                            |
 | --------------- | -------- | ---------------------------------------------------------------------- |
-| genre           | `string` | param to filter by genre. (*In this case, We're filtering by `drama`*) |
+| genre           | `string` | param to filter by genre. (_In this case, We're filtering by `drama`_) |
 | page (optional) | `number` | page number (default: 1)                                               |
 
 ```ts
-sflix.fetchByGenre('drama').then(data => {
+sflix.fetchByGenre('drama').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -427,15 +442,16 @@ output:
 ```
 
 ### fetchSpotlight
-  
-  ```ts
-  sflix.fetchSpotlight().then(data => {
-    console.log(data);
-  })
-  ```
 
-  returns a promise which resolves into an array of movies. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+```ts
+sflix.fetchSpotlight().then((data) => {
+  console.log(data);
+});
+```
+
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 
 {

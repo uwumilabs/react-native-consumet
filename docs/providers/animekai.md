@@ -16,23 +16,24 @@ const animekai = new ANIME.AnimeKai();
 - [fetchSearchSuggestions](#fetchSearchSuggestions)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Spy x Family`*) |
+| Parameter | Type     | Description                                                               |
+| --------- | -------- | ------------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, We're searching for `Spy x Family`_) |
 
 ```ts
-animekai.search("dandadan").then(data => {
+animekai.search('dandadan').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 0,
@@ -61,17 +62,17 @@ output:
 
 | Parameter | Type     | Description                                                                                               |
 | --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*) |
-
+| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
 
 ```ts
-animekai.fetchAnimeInfo("jujutsu-kaisen-4gm6").then(data => {
+animekai.fetchAnimeInfo('jujutsu-kaisen-4gm6').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object . (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object . (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: 'jujutsu-kaisen-4gm6',
@@ -138,52 +139,56 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                           |
-| --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-| subOrDub (optional) | `SubOrSub `| takes subOrDub enum as a parameter. (*can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`*) |
-
+| Parameter           | Type        | Description                                                                                              |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| episodeId           | `string`    | takes episode id as a parameter. (_episode id can be found in the anime info object_)                    |
+| subOrDub (optional) | `SubOrSub ` | takes subOrDub enum as a parameter. (_can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`_) |
 
 ```ts
-animekai.fetchEpisodeServers("jujutsu-kaisen-4gm6#ep=1?token=30nW30ysAuVpjobTutx2").then(data => {
-  console.log(data);
-})
+animekai
+  .fetchEpisodeServers('jujutsu-kaisen-4gm6#ep=1?token=30nW30ysAuVpjobTutx2')
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 [
   {
     name: 'MegaUp Server 1',
-    url: 'https://megaup.cc/e/mIXhIDmsWS2JcOL2GLxI7RXpCQ'
+    url: 'https://megaup.cc/e/mIXhIDmsWS2JcOL2GLxI7RXpCQ',
   },
   {
     name: 'MegaUp Server 2',
-    url: 'https://megaup.cc/e/mIXhIDmsWSyJcOL2GLxI7RXpCQ'
-  }
-]
+    url: 'https://megaup.cc/e/mIXhIDmsWSyJcOL2GLxI7RXpCQ',
+  },
+];
 ```
 
 ### fetchEpisodeSources
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                           |
-| --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-| server (optional) | `StreamingServers` | takes server enum as a parameter. (*default: `StreamingServers.MegaUp`*) |
-| subOrDub (optional) | `SubOrSub `| takes subOrDub enum as a parameter. (*can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`*) |
-
+| Parameter           | Type               | Description                                                                                              |
+| ------------------- | ------------------ | -------------------------------------------------------------------------------------------------------- |
+| episodeId           | `string`           | takes episode id as a parameter. (_episode id can be found in the anime info object_)                    |
+| server (optional)   | `StreamingServers` | takes server enum as a parameter. (_default: `StreamingServers.MegaUp`_)                                 |
+| subOrDub (optional) | `SubOrSub `        | takes subOrDub enum as a parameter. (_can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`_) |
 
 ```ts
-animekai.fetchEpisodeSources("jujutsu-kaisen-4gm6#ep=1?token=30nW30ysAuVpjobTutx2").then(data => {
-  console.log(data);
-})
+animekai
+  .fetchEpisodeSources('jujutsu-kaisen-4gm6#ep=1?token=30nW30ysAuVpjobTutx2')
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   headers: { Referer: 'https://megaup.cc/e/mIXhIDmsWSyJcOL2GLxI7RXpCQ' },
@@ -207,20 +212,21 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-animekai.fetchLatestCompleted().then(data => {
+animekai.fetchLatestCompleted().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
-{                                                        
+{
   currentPage: 1,
   hasNextPage: true,
   totalPages: 9,
@@ -241,24 +247,26 @@ output:
   ]
 }
 ```
+
 > Note: The responses from the `fetchRecentlyAdded`, `fetchNewReleases`, `fetchMovie`, `fetchTV`, `fetchONA`, `fetchOVA`, and `fetchSpecial` methods are similar to `fetchLatestCompleted`.
 
 ### fetchSchedule
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| date    | `string` | Date in format 'YYYY-MM-DD'. Defaults to the current date. |
+| Parameter | Type     | Description                                                |
+| --------- | -------- | ---------------------------------------------------------- |
+| date      | `string` | Date in format 'YYYY-MM-DD'. Defaults to the current date. |
 
 ```ts
-animekai.fetchSchedule().then(data => {
+animekai.fetchSchedule().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   results: [
@@ -284,16 +292,17 @@ output:
 ### fetchSpotlight
 
 ```ts
-animekai.fetchSpotlight().then(data => {
+animekai.fetchSpotlight().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
-  
+
   results: [
     {
       id: 'rezero-starting-life-in-another-world-season-3-7n80',
@@ -328,16 +337,18 @@ output:
   ]
 }
 ```
+
 ### fetchSearchSuggestions
 
 ```ts
-animekai.fetchSearchSuggestions("One Piece").then(data => {
+animekai.fetchSearchSuggestions('One Piece').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   results: [

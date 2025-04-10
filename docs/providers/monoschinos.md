@@ -11,23 +11,24 @@ const monoschinos = new ANIME.MonosChinos();
 - [fetchEpisodeSources](#fetchepisodesources)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Jujutsu Kaisen 2`*) |
+| Parameter | Type     | Description                                                                   |
+| --------- | -------- | ----------------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, We're searching for `Jujutsu Kaisen 2`_) |
 
 ```ts
-monoschinos.search("Jujutsu Kaisen").then(data => {
+monoschinos.search('Jujutsu Kaisen').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
     hasNextPage: false,
@@ -56,10 +57,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                                               |
-| --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*) |
-| totalEpisodes?     | `number` | takes page number as a parameter                                                                          |
+| Parameter      | Type     | Description                                                                                               |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| id             | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
+| totalEpisodes? | `number` | takes page number as a parameter                                                                          |
 
 Why total episodes? The source to know the total episodes is blocked by a token and,
 since urls are similar, they can be built from scratch.
@@ -67,13 +68,14 @@ since urls are similar, they can be built from scratch.
 If no value is passed, it will give you 1000 episodes by default.
 
 ```ts
-monoschinos.fetchAnimeInfo("jujutsu-kaisen-sub-espanol", 24).then(data => {
+monoschinos.fetchAnimeInfo('jujutsu-kaisen-sub-espanol', 24).then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
     id: 'jujutsu-kaisen-sub-espanol',
@@ -101,20 +103,22 @@ output:
 
 | Parameter | Type     | Description                                                                           |
 | --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
 
 Doesn't always work as this provider uses many different servers to store the episodes.
 Current working servers: Voe, Streamtape.
 
 In this example, we're getting the sources for the first episode of Demon Slayer: Kimetsu no Yaiba Hashira Training Arc.
+
 ```ts
-monoschinos.fetchEpisodeSources("jujutsu-kaisen-episodio-1").then(data => {
+monoschinos.fetchEpisodeSources('jujutsu-kaisen-episodio-1').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
     sources: [

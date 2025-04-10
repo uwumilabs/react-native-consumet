@@ -11,21 +11,24 @@ const mangahere = new MANGA.MangaHere();
 - [fetchChapterPages](#fetchchapterpages)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
-> 
+
 <h4>Parameters</h4>
 
 | Parameter | Type     | Description                                                                  |
 | --------- | -------- | ---------------------------------------------------------------------------- |
-| query     | `string` | query to search for. (*In this case, We're searching for `Tomodachi Gamee`*) |
+| query     | `string` | query to search for. (_In this case, We're searching for `Tomodachi Gamee`_) |
 
 ```ts
-mangahere.search("Tomodachi Game").then(data => {
+mangahere.search('Tomodachi Game').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -57,15 +60,17 @@ output:
 
 | Parameter | Type     | Description                                                    |
 | --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id.(*manga id can be found in the manga search results*) |
+| mangaId   | `string` | manga id.(_manga id can be found in the manga search results_) |
 
 ```ts
-mangahere.fetchMangaInfo("tomodachi_game").then(data => {
+mangahere.fetchMangaInfo('tomodachi_game').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
   id: 'tomodachi_game',
@@ -95,15 +100,17 @@ output:
 
 | Parameter | Type     | Description                                              |
 | --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id.(*chapter id can be found in the manga info*) |
+| chapterId | `string` | chapter id.(_chapter id can be found in the manga info_) |
 
 ```ts
-mangahere.fetchChapterPages("tomodachi_game/c102").then(data => {
+mangahere.fetchChapterPages('tomodachi_game/c102').then((data) => {
   console.log(data);
-})
+});
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
   {

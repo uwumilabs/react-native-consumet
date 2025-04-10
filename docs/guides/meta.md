@@ -16,24 +16,24 @@ const metaProvider = META.<providerName>();
 
 provider Anilist {
 
-``languages`` - string, the language of the current provider, return language code, example: ``languages: 'en'``
+`languages` - string, the language of the current provider, return language code, example: `languages: 'en'`
 
-``isNSFW`` - bool, ``true`` if the provider providers NSFW content.
+`isNSFW` - bool, `true` if the provider providers NSFW content.
 
-``isWorking`` - bool, a bool to identify the state of the current provider, ``true`` if the provider is working, ``false`` otherwise. 
+`isWorking` - bool, a bool to identify the state of the current provider, `true` if the provider is working, `false` otherwise.
 
-``isDubAvailableSeparately`` - bool, ``true`` if the provider providers dubbed content. 
+`isDubAvailableSeparately` - bool, `true` if the provider providers dubbed content.
 
-``name`` - string, the name of the current provider, example: ``name: 'Anilist'``
+`name` - string, the name of the current provider, example: `name: 'Anilist'`
 
-``baseUrl`` - string, url to the base URL of the current provider
+`baseUrl` - string, url to the base URL of the current provider
 
-``logo`` - string, url to the logo image of the current provider
+`logo` - string, url to the logo image of the current provider
 
-``classPath`` - string,
-
+`classPath` - string,
 
 ## Meta Providers List
+
 This list is in alphabetical order. (except the sub bullet points)
 
 - [Anilist](../providers/anilist.md)

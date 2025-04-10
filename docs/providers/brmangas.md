@@ -11,31 +11,34 @@ const brmangas = new MANGA.BRMangas();
 - [fetchChapterPages](#fetchchapterpages)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
->
+
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                  |
-| --------- | -------- | ---------------------------------------------------------------------------- |
-| query     | `string` | query to search for. (*In this case, We're searching for `punpun`*) |
+| Parameter | Type     | Description                                                         |
+| --------- | -------- | ------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, We're searching for `punpun`_) |
 
 ```ts
-brmangas.search("punpun").then(data => {
+brmangas.search('punpun').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
   results: [
-      {
-        id: 'berserk-online',
-        title: 'Berserk',
-        image: 'https://cdn.plaquiz.xyz/uploads/b/berserk/berserk.jpg',
-        headerForImage: { Referer: 'https://brmangas.net' }
-      }
-    ]
+    {
+      id: 'berserk-online',
+      title: 'Berserk',
+      image: 'https://cdn.plaquiz.xyz/uploads/b/berserk/berserk.jpg',
+      headerForImage: { Referer: 'https://brmangas.net' },
+    },
+  ];
 }
 ```
 
@@ -45,15 +48,17 @@ output:
 
 | Parameter | Type     | Description                                                    |
 | --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id.(*manga id can be found in the manga search results*) |
+| mangaId   | `string` | manga id.(_manga id can be found in the manga search results_) |
 
 ```ts
-brmangas.fetchMangaInfo("berserk-online").then(data => {
+brmangas.fetchMangaInfo('berserk-online').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
       id: 'berserk-online',
@@ -84,6 +89,7 @@ output:
       ]
     }
 ```
+
 Note: The `headerForImage` property might be useful when getting the image to display.
 
 ### fetchChapterPages
@@ -92,15 +98,17 @@ Note: The `headerForImage` property might be useful when getting the image to di
 
 | Parameter | Type     | Description                                              |
 | --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id.(*chapter id can be found in the manga info*) |
+| chapterId | `string` | chapter id.(_chapter id can be found in the manga info_) |
 
 ```ts
-brmangas.fetchChapterPages("berserk-16-online").then(data => {
+brmangas.fetchChapterPages('berserk-16-online').then((data) => {
   console.log(data);
-})
+});
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
   {

@@ -18,24 +18,25 @@ const goku = new MOVIES.Goku();
 - [fetchByGenre](#fetchbygenre)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description                                                                                                                                |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| query           | `string` | query to search for. (*In this case, We're searching for `Batman`*)                                                                        |
-| page (optional) | `number` | page number (default: 1)                                                                                                                   |
+| Parameter       | Type     | Description                                                         |
+| --------------- | -------- | ------------------------------------------------------------------- |
+| query           | `string` | query to search for. (_In this case, We're searching for `Batman`_) |
+| page (optional) | `number` | page number (default: 1)                                            |
 
 ```ts
-goku.search("Batman").then(data => {
+goku.search('Batman').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
   currentPage: 1, // current page
@@ -62,16 +63,17 @@ output:
 
 | Parameter | Type     | Description                                                                                                                     |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| mediaId   | `string` | takes media id or url as a parameter. (*media id or url can be found in the media search results as shown on the above method*) |
+| mediaId   | `string` | takes media id or url as a parameter. (_media id or url can be found in the media search results as shown on the above method_) |
 
 ```ts
-goku.fetchMediaInfo("watch-movie/watch-batman-begins-19636").then(data => {
+goku.fetchMediaInfo('watch-movie/watch-batman-begins-19636').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
 output:
+
 ```js
 {
   id: 'watch-movie/watch-batman-begins-19636',
@@ -104,20 +106,23 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter         | Type                                                                                                 | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
-| mediaId           | `string`                                                                                             | takes media id as a parameter. (*media id can be found in the media info object*)                                                                          |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. *default: [`StreamingServers.VidCloud`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)* |
-
+| Parameter         | Type                                                                                                   | Description                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                   |
+| mediaId           | `string`                                                                                               | takes media id as a parameter. (_media id can be found in the media info object_)                                                                       |
+| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. _default: [`StreamingServers.VidCloud`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)_ |
 
 ```ts
-goku.fetchEpisodeSources('1064170', 'watch-movie/watch-batman-begins-19636').then(data => {
-  console.log(data);
-})
+goku
+  .fetchEpisodeSources('1064170', 'watch-movie/watch-batman-begins-19636')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)*)\
+
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
 output:
+
 ```js
 {
   headers: { Referer: 'https://dokicloud.one/embed-4/K6ki8JPP1SkJ?autoPlay=0' },
@@ -162,16 +167,20 @@ output:
 
 | Parameter | Type     | Description                                                                                                   |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------- |
-| episodeId | `string` | take an episode id or url as a parameter. (*episode id or episode url can be found in the media info object*) |
-| mediaId   | `string` | takes media id as a parameter. (*media id can be found in the media info object*)                             |
+| episodeId | `string` | take an episode id or url as a parameter. (_episode id or episode url can be found in the media info object_) |
+| mediaId   | `string` | takes media id as a parameter. (_media id can be found in the media info object_)                             |
 
 ```ts
-goku.fetchEpisodeServers('1064170', 'watch-movie/watch-batman-begins-19636').then(data => {
-  console.log(data);
-})
+goku
+  .fetchEpisodeServers('1064170', 'watch-movie/watch-batman-begins-19636')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)*)\
+
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)_)\
 output:
+
 ```js
 [
   {
@@ -186,10 +195,10 @@ output:
     name: 'Upstream',
     url: 'https://upstream.to/embed-ncw8o5bt6ie5.html'
   },
-  { 
+  {
     name: 'MixDrop',
-    url: 'https://mixdrop.co/e/kn9l3gelc3d4med' 
-  }    
+    url: 'https://mixdrop.co/e/kn9l3gelc3d4med'
+  }
   {...},
    ...
 ]
@@ -200,13 +209,14 @@ output:
 ### fetchRecentMovies
 
 ```ts
-goku.fetchRecentMovies().then(data => {
+goku.fetchRecentMovies().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
   {
@@ -240,17 +250,17 @@ output:
 ]
 ```
 
-
 ### fetchRecentTvShows
 
 ```ts
-goku.fetchRecentTvShows().then(data => {
+goku.fetchRecentTvShows().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
   {
@@ -284,17 +294,17 @@ output:
 ]
 ```
 
-
 ### fetchTrendingMovies
 
 ```ts
-goku.fetchTrendingMovies().then(data => {
+goku.fetchTrendingMovies().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
  {
@@ -328,17 +338,17 @@ output:
 ]
 ```
 
-
 ### fetchTrendingTvShows
 
 ```ts
-goku.fetchTrendingTvShows().then(data => {
+goku.fetchTrendingTvShows().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 [
   {
@@ -375,12 +385,12 @@ output:
 ### fetchByCountry
 
 ```ts
-goku.fetchByCountrty('india-105').then(data => {
+goku.fetchByCountrty('india-105').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
 
 ```js
@@ -414,12 +424,12 @@ output:
 ### fetchByGenre
 
 ```ts
-goku.fetchByGenre('action-1').then(data => {
+goku.fetchByGenre('action-1').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
 
 ```js

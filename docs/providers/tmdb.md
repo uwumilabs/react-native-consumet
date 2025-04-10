@@ -18,20 +18,21 @@ const tmdb = new META.TMDB();
 
 <h4>Parameters</h4>
 
-| Parameter             | Type     | Description                                                                         |
-| --------------------- | -------- | ----------------------------------------------------------------------------------- |
-| type                  | `string` | type of trending option we want('movie', 'tv series', 'people' or 'all')            |
-| timePeriod (optional) | `string` | the duration of trending we want ('day' or 'week')                                  |
-| page (optional)       | `number` | page number to search for.                                                          |
+| Parameter             | Type     | Description                                                              |
+| --------------------- | -------- | ------------------------------------------------------------------------ |
+| type                  | `string` | type of trending option we want('movie', 'tv series', 'people' or 'all') |
+| timePeriod (optional) | `string` | the duration of trending we want ('day' or 'week')                       |
+| page (optional)       | `number` | page number to search for.                                               |
 
 ```ts
-tmdb.fetchTrending("the flash").then(data => {
+tmdb.fetchTrending('the flash').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<(IMovieResult | IAnimeResult | IPeopleResult)[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<(IMovieResult | IAnimeResult | IPeopleResult)[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -70,19 +71,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter            | Type     | Description                                                                         |
-| -------------------- | -------- | ----------------------------------------------------------------------------------- |
-| query                | `string` | query to search for. (*In this case, We're searching for `Classroom of the elite`*) |
-| page (optional)      | `number` | page number to search for.                                                          |
+| Parameter       | Type     | Description                                                                         |
+| --------------- | -------- | ----------------------------------------------------------------------------------- |
+| query           | `string` | query to search for. (_In this case, We're searching for `Classroom of the elite`_) |
+| page (optional) | `number` | page number to search for.                                                          |
 
 ```ts
-tmdb.search("the flash").then(data => {
+tmdb.search('the flash').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -117,26 +119,24 @@ output:
 }
 ```
 
-
-
 ### fetchMediaInfo
 
 <h4>Parameters</h4>
 
-| Parameter      | Type      | Description                                                                                               |
-| -------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| id             | `string`  | takes anime id as a parameter. (*anime id can be found in the anime search results or Movie info object*) |
-| type           | `string`  | takes movie or tv as a parameter (*type can be found in the anime search results or Movie info object*)   |
-
+| Parameter | Type     | Description                                                                                               |
+| --------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or Movie info object_) |
+| type      | `string` | takes movie or tv as a parameter (_type can be found in the anime search results or Movie info object_)   |
 
 ```ts
-tmdb.fetchMediaInfo("60735", "tv").then(data => {
+tmdb.fetchMediaInfo('60735', 'tv').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an movie info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an movie info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   "id": "tv/watch-the-flash-39535",
@@ -225,21 +225,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                                            |
-| --------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the Movie info object*)                  |
-| MediaId   | `string` | takes media id as a parameter. (*media id can be found in the Movie info seasons episodes object*)     |
-
-
+| Parameter | Type     | Description                                                                                        |
+| --------- | -------- | -------------------------------------------------------------------------------------------------- |
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the Movie info object_)              |
+| MediaId   | `string` | takes media id as a parameter. (_media id can be found in the Movie info seasons episodes object_) |
 
 ```ts
-tmdb.fetchEpisodeSources("2899", "tv/watch-the-flash-39535").then(data => {
+tmdb.fetchEpisodeSources('2899', 'tv/watch-the-flash-39535').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   "headers": {

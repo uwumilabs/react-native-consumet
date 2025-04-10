@@ -6,7 +6,6 @@ export class MegaUp extends VideoExtractor {
   protected serverName: string = 'MegaUp';
   protected sources: IVideo[] = [];
 
-
   #reverseIt = (n: string) => {
     return n.split('').reverse().join('');
   };

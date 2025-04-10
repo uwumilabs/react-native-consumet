@@ -16,24 +16,25 @@ const dramacool = new MOVIES.DramaCool();
 - [fetchSpotlight](#fetchspotlight)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description                                                                                                                                |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| query           | `string` | query to search for. (*In this case, We're searching for `Vincenzo`*)|
-| page (optional) | `number` | page number (default: 1)                                                                                                                   |
+| Parameter       | Type     | Description                                                           |
+| --------------- | -------- | --------------------------------------------------------------------- |
+| query           | `string` | query to search for. (_In this case, We're searching for `Vincenzo`_) |
+| page (optional) | `number` | page number (default: 1)                                              |
 
 ```ts
-dramacool.search("Vincenzo").then(data => {
+dramacool.search('Vincenzo').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
   currentPage: 1, // current page number
@@ -56,16 +57,17 @@ output:
 
 | Parameter | Type     | Description                                                                                                                     |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| mediaId   | `string` | takes media id or url as a parameter. (*media id or url can be found in the media search results as shown on the above method*) |
+| mediaId   | `string` | takes media id or url as a parameter. (_media id or url can be found in the media search results as shown on the above method_) |
 
 ```ts
-dramacool.fetchMediaInfo("drama-detail/vincenzo").then(data => {
+dramacool.fetchMediaInfo('drama-detail/vincenzo').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
 output:
+
 ```js
 {
   id: 'drama-detail/vincenzo',
@@ -112,19 +114,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter         | Type                                                                                                 | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. *default: [`StreamingServers.AsianLoad`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)* |
-
+| Parameter         | Type                                                                                                   | Description                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                    |
+| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. _default: [`StreamingServers.AsianLoad`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)_ |
 
 ```ts
-dramacool.fetchEpisodeSources("vincenzo-2021-episode-1").then(data => {
+dramacool.fetchEpisodeSources('vincenzo-2021-episode-1').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)*)\
+
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
 output:
+
 ```js
 {
   sources: [
@@ -153,35 +156,36 @@ output:
 
 | Parameter | Type     | Description                                                                                                   |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------- |
-| episodeId | `string` | take an episode id or url as a parameter. (*episode id or episode url can be found in the media info object*) |
-
+| episodeId | `string` | take an episode id or url as a parameter. (_episode id or episode url can be found in the media info object_) |
 
 ```ts
-dramacool.fetchEpisodeServers("vincenzo-2021-episode-1").then(data => {
+dramacool.fetchEpisodeServers('vincenzo-2021-episode-1').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)*)\
+
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)_)\
 output:
+
 ```js
 [
   {
     name: 'asianload',
-    url: 'https://plcool1.com/pl454545?id=MjMwOTI2&title=Vincenzo+%282021%29+episode+1&typesub=SUB'
+    url: 'https://plcool1.com/pl454545?id=MjMwOTI2&title=Vincenzo+%282021%29+episode+1&typesub=SUB',
   },
   {
     name: 'kvid',
-    url: 'https://plcool1.com/embedplus?id=MjMwOTI2&token=SGWtnrSwuIw3RsQGPe5tRg&expires=1721846948'
+    url: 'https://plcool1.com/embedplus?id=MjMwOTI2&token=SGWtnrSwuIw3RsQGPe5tRg&expires=1721846948',
   },
   { name: 'asianstream', url: '7YE2aUb7PNVD3bY8NDIYqg' },
   { name: 'streamwish', url: 'https://dwish.pro/e/dr1qk2hew1v8' },
   {
     name: 'streamtape',
-    url: 'https://streamtape.com/e/plglOyRJPaTrOGP/vincenzo-2021-episode-1.mp4'
+    url: 'https://streamtape.com/e/plglOyRJPaTrOGP/vincenzo-2021-episode-1.mp4',
   },
   { name: 'doodstream', url: 'https://dood.wf/e/zh9uj55c901a' },
-  { name: 'vidhide', url: 'https://dlions.pro/v/7thb1yedp816' }
-]
+  { name: 'vidhide', url: 'https://dlions.pro/v/7thb1yedp816' },
+];
 ```
 
 <p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>
@@ -189,13 +193,14 @@ output:
 ### fetchPopular
 
 ```ts
-dramacool.fetchPopular.then(data => {
+dramacool.fetchPopular.then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -219,17 +224,17 @@ output:
 }
 ```
 
-
 ### fetchRecentMovies
 
 ```ts
-dramacool.fetchRecentMovies.then(data => {
+dramacool.fetchRecentMovies.then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -253,17 +258,17 @@ output:
 }
 ```
 
-
 ### fetchRecentTvShows
 
 ```ts
-dramacool.fetchRecentTvShows.then(data => {
+dramacool.fetchRecentTvShows.then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -290,15 +295,16 @@ output:
 ```
 
 ### fetchSpotlight
-  
-  ```ts
-  dramacool.fetchSpotlight().then(data => {
-    console.log(data);
-  })
-  ```
 
-  returns a promise which resolves into an array of movies. (*[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+```ts
+dramacool.fetchSpotlight().then((data) => {
+  console.log(data);
+});
+```
+
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
 output:
+
 ```js
 
 {

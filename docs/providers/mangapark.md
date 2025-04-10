@@ -11,21 +11,24 @@ const mangapark = new MANGA.Mangapark();
 - [fetchChapterPages](#fetchchapterpages)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class, meaning it is available across most categories.
-> 
+
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                  |
-| --------- | -------- | ---------------------------------------------------------------------------- |
-| query     | `string` | query to search for. (*In this case, we're searching for `Demon Slayer`*) |
+| Parameter | Type     | Description                                                               |
+| --------- | -------- | ------------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, we're searching for `Demon Slayer`_) |
 
 ```ts
-mangapark.search('Demon Slayer').then(data => {
+mangapark.search('Demon Slayer').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
     results: [
@@ -48,17 +51,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id (*can be found in the manga search results*) |
+| Parameter | Type     | Description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| mangaId   | `string` | manga id (_can be found in the manga search results_) |
 
 ```ts
-mangapark.fetchMangaInfo('kimetsu-no-yaiba-gotouge-koyoharu').then(data => {
+mangapark.fetchMangaInfo('kimetsu-no-yaiba-gotouge-koyoharu').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
         id: 'kimetsu-no-yaiba-gotouge-koyoharu',
@@ -75,23 +80,28 @@ output:
         ]
 }
 ```
+
 Note: The `headerForImage` property might be useful when getting the image to display.
 
 ### fetchChapterPages
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                              |
-| --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id (*can be found in the manga info*) |
+| Parameter | Type     | Description                                   |
+| --------- | -------- | --------------------------------------------- |
+| chapterId | `string` | chapter id (_can be found in the manga info_) |
 
 ```ts
-mangapark.fetchChapterPages('kimetsu-no-yaiba-gotouge-koyoharu/i2325814').then(data => {
-  console.log(data);
-})
+mangapark
+  .fetchChapterPages('kimetsu-no-yaiba-gotouge-koyoharu/i2325814')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
     {

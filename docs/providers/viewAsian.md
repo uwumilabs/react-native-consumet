@@ -11,24 +11,25 @@ const viewAsian = new MOVIES.ViewAsian();
 - [fetchEpisodeSources](#fetchepisodesources)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
 | Parameter       | Type     | Description                                                                                                                                |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| query           | `string` | query to search for. (*In this case, We're searching for `Vincenzo`*) P.S: `vincenzo` is a really good korean drama i highly recommend it. |
+| query           | `string` | query to search for. (_In this case, We're searching for `Vincenzo`_) P.S: `vincenzo` is a really good korean drama i highly recommend it. |
 | page (optional) | `number` | page number (default: 1)                                                                                                                   |
 
 ```ts
-viewAsian.search("Vincenzo").then(data => {
+viewAsian.search('Vincenzo').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
 output:
+
 ```js
 {
     currentPage: 1,
@@ -51,16 +52,17 @@ output:
 
 | Parameter | Type     | Description                                                                                                                     |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| mediaId   | `string` | takes media id or url as a parameter. (*media id or url can be found in the media search results as shown on the above method*) |
+| mediaId   | `string` | takes media id or url as a parameter. (_media id or url can be found in the media search results as shown on the above method_) |
 
 ```ts
-viewAsian.fetchMediaInfo("drama/vincenzo").then(data => {
+viewAsian.fetchMediaInfo('drama/vincenzo').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
 output:
+
 ```js
 {
     id: 'drama/vincenzo',
@@ -94,20 +96,23 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter         | Type                                                                                                 | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
-| mediaId           | `string`                                                                                             | takes media id as a parameter. (*media id can be found in the media info object*)                                                                          |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes server enum as a parameter. *default: [`StreamingServers.AsianLoad`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L139-L152)* |
-
+| Parameter         | Type                                                                                                 | Description                                                                                                                                                   |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| episodeId         | `string`                                                                                             | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                         |
+| mediaId           | `string`                                                                                             | takes media id as a parameter. (_media id can be found in the media info object_)                                                                             |
+| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes server enum as a parameter. _default: [`StreamingServers.AsianLoad`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L139-L152)_ |
 
 ```ts
-viewAsian.fetchEpisodeSources("/watch/vincenzo/watching.html$episode$20").then(data => {
-  console.log(data);
-})
+viewAsian
+  .fetchEpisodeSources('/watch/vincenzo/watching.html$episode$20')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L295-L300)*)\
+
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L295-L300)_)\
 output:
+
 ```js
 {
     sources: [
@@ -128,4 +133,5 @@ output:
     ]
 }
 ```
+
 <p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>

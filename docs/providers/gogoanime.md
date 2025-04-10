@@ -19,24 +19,25 @@ const gogoanime = new ANIME.Gogoanime();
 - [fetchDirectDownloadLink](#fetchdirectdownloadlink)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
 | Parameter       | Type     | Description                                                            |
 | --------------- | -------- | ---------------------------------------------------------------------- |
-| query           | `string` | query to search for. (*In this case, We're searching for `One Piece`*) |
+| query           | `string` | query to search for. (_In this case, We're searching for `One Piece`_) |
 | page (optional) | `number` | page number (default: 1)                                               |
 
 ```ts
-gogoanime.search("One Piece").then(data => {
+gogoanime.search('One Piece').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1, // current page
@@ -74,12 +75,13 @@ output:
 | type (optional) | `string` | type of anime (default: `1`). `1`: Japanese with subtitles, `2`: english/dub with no subtitles, `3`: chinese with english subtitles |
 
 ```ts
-gogoanime.fetchRecentEpisodes().then(data => {
+gogoanime.fetchRecentEpisodes().then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 {
   currentPage: 1, // current page
@@ -110,12 +112,13 @@ return popular anime list.
 | page (optional) | `number` | page number (default: 1) |
 
 ```ts
-gogoanime.fetchPopular().then(data => {
+gogoanime.fetchPopular().then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 {
   currentPage: 1,
@@ -139,12 +142,13 @@ output:
 return list of genre in gogoanime and its corresponding genre id
 
 ```ts
-gogoanime.fetchGenreList().then(data => {
+gogoanime.fetchGenreList().then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 [
   { id: 'action', title: 'Action' },
@@ -159,18 +163,19 @@ return anime list based on genre.
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description              |
-| --------------- | -------- | ------------------------ |
-| genre | `string` | genre id from fetchGenreList |
-| page (optional) | `number` | page number (default: 1) |
+| Parameter       | Type     | Description                  |
+| --------------- | -------- | ---------------------------- |
+| genre           | `string` | genre id from fetchGenreList |
+| page (optional) | `number` | page number (default: 1)     |
 
 ```ts
-gogoanime.fetchGenreInfo('action').then(data => {
+gogoanime.fetchGenreInfo('action').then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 {
   currentPage: 1,
@@ -200,12 +205,13 @@ return top airing anime list.
 | page (optional) | `number` | page number (default: 1) |
 
 ```ts
-gogoanime.fetchTopAiring().then(data => {
+gogoanime.fetchTopAiring().then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 {
   currentPage: 1,
@@ -237,12 +243,13 @@ return gogo anime list.
 | page (optional) | `number` | page number (default: 1) |
 
 ```ts
-gogoanime.fetchAnimeList().then(data => {
+gogoanime.fetchAnimeList().then((data) => {
   console.log(data);
-})
+});
 ```
 
 output:
+
 ```js
 {
   currentPage: 1,
@@ -268,16 +275,17 @@ output:
 
 | Parameter | Type     | Description                                                                                        |
 | --------- | -------- | -------------------------------------------------------------------------------------------------- |
-| animeUrl  | `string` | takes anime url or id as a parameter. (*anime id or url can be found in the anime search results*) |
+| animeUrl  | `string` | takes anime url or id as a parameter. (_anime id or url can be found in the anime search results_) |
 
 ```ts
-gogoanime.fetchAnimeInfo("one-piece").then(data => {
+gogoanime.fetchAnimeInfo('one-piece').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: 'one-piece',
@@ -319,17 +327,18 @@ output:
 
 | Parameter         | Type                                                                                                 | Description                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the anime info object*)                                                                     |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes server enum as a parameter. *default: [`StreamingServers.GogoCDN`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82)* |
-
+| episodeId         | `string`                                                                                             | takes episode id as a parameter. (_episode id can be found in the anime info object_)                                                                     |
+| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes server enum as a parameter. _default: [`StreamingServers.GogoCDN`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82)_ |
 
 ```ts
-gogoanime.fetchEpisodeSources("one-piece-episode-1022").then(data => {
+gogoanime.fetchEpisodeSources('one-piece-episode-1022').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   headers: {
@@ -377,70 +386,79 @@ output:
 
 | Parameter | Type     | Description                                                                                                   |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------- |
-| episodeId | `string` | take an episode id or url as a parameter. (*episode id or episode url can be found in the anime info object*) |
+| episodeId | `string` | take an episode id or url as a parameter. (_episode id or episode url can be found in the anime info object_) |
 
 ```ts
-gogoanime.fetchEpisodeServers("one-piece-episode-1022").then(data => {
+gogoanime.fetchEpisodeServers('one-piece-episode-1022').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L54-L57)*)\
+
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L54-L57)_)\
 output:
+
 ```js
 [
   {
     name: 'Vidstreaming',
-    url: 'https://s3taku.com/abpl1245?id=MjI4Mzg0&title=Hazurewaku+no+%22Joutai+Ijou+Skill%22+de+Saikyou+ni+Natta+Ore+ga+Subete+wo+Juurin+suru+made+Episode+4'
+    url: 'https://s3taku.com/abpl1245?id=MjI4Mzg0&title=Hazurewaku+no+%22Joutai+Ijou+Skill%22+de+Saikyou+ni+Natta+Ore+ga+Subete+wo+Juurin+suru+made+Episode+4',
   },
   {
     name: 'Gogo server',
-    url: 'https://s3taku.com/embedplus?id=MjI4Mzg0&token=mVz9w3TEpFrufILsiUq_Rw&expires=1722508210'
+    url: 'https://s3taku.com/embedplus?id=MjI4Mzg0&token=mVz9w3TEpFrufILsiUq_Rw&expires=1722508210',
   },
   { name: 'Streamwish', url: 'https://awish.pro/e/tx8n3caofulp' },
   {
     name: 'Mp4Upload',
-    url: 'https://www.mp4upload.com/embed-rnp7cpglaqjc.html'
+    url: 'https://www.mp4upload.com/embed-rnp7cpglaqjc.html',
   },
   { name: 'Doodstream', url: 'https://dood.wf/e/dfx1530xo3yr' },
-  { name: 'Vidhide', url: 'https://alions.pro/e/clqkhvh1y0zm' }
-]
+  { name: 'Vidhide', url: 'https://alions.pro/e/clqkhvh1y0zm' },
+];
 ```
 
 ### fetchDirectDownloadLink
-Fetch direct download link of an episode from an episode's download link
 
+Fetch direct download link of an episode from an episode's download link
 
 <h4>Parameters</h4>
 
-| Parameter         | Type                                                                                                 | Description                                                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| downloadUrl         | `string`                                                                                             | takes episode's download link url. (*can be found in the fetchEpisodeSources object*)                                                                     |
-| captchaToken (optional) | [`string`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes gogoanime recaptcha token(can be get via scanning network tools on download link). *only for advanced users* |
+| Parameter               | Type                                                                                       | Description                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| downloadUrl             | `string`                                                                                   | takes episode's download link url. (_can be found in the fetchEpisodeSources object_)                              |
+| captchaToken (optional) | [`string`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L76-L82) | takes gogoanime recaptcha token(can be get via scanning network tools on download link). _only for advanced users_ |
+
 ```ts
-gogoanime.fetchDirectDownloadLink("https://s3taku.com/download?id=MjI4Mzg0&typesub=Gogoanime-SUB&title=Hazurewaku+no+%22Joutai+Ijou+Skill%22+de+Saikyou+ni+Natta+Ore+ga+Subete+wo+Juurin+suru+made+Episode+4").then(data => {
-  console.log(data);
-})
+gogoanime
+  .fetchDirectDownloadLink(
+    'https://s3taku.com/download?id=MjI4Mzg0&typesub=Gogoanime-SUB&title=Hazurewaku+no+%22Joutai+Ijou+Skill%22+de+Saikyou+ni+Natta+Ore+ga+Subete+wo+Juurin+suru+made+Episode+4'
+  )
+  .then((data) => {
+    console.log(data);
+  });
 ```
+
 output:
+
 ```js
 [
   {
     source: 'Download\n                        (360P - mp4)',
-    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyURASDGHUSRFSJGYfdsffsderFStewthsfSFtrfteAdeqwrwedffryretgsdFrsftrsvfsfsrsdf9wd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjM2MHAubXA0P3Rva2VuPTM5SDcxejF4ck41c1JjTU5mTkxtdkEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA=='
+    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyURASDGHUSRFSJGYfdsffsderFStewthsfSFtrfteAdeqwrwedffryretgsdFrsftrsvfsfsrsdf9wd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjM2MHAubXA0P3Rva2VuPTM5SDcxejF4ck41c1JjTU5mTkxtdkEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA==',
   },
   {
     source: 'Download\n                        (480P - mp4)',
-    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAawehyfcghysfdsDGDYdgdsfsdfwstdgdsgtert9URASDGHUSRFSJGYfdsffsderFStewthsfSFtrftesdfwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjQ4MHAubXA0P3Rva2VuPWhfWFlmRGlGV0VQRDNWMWJtQTRQRUEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA=='
+    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAawehyfcghysfdsDGDYdgdsfsdfwstdgdsgtert9URASDGHUSRFSJGYfdsffsderFStewthsfSFtrftesdfwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjQ4MHAubXA0P3Rva2VuPWhfWFlmRGlGV0VQRDNWMWJtQTRQRUEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA==',
   },
   {
     source: 'Download\n                        (720P - mp4)',
-    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAawehyfcghysfdsDGDYdgdsfsdfwstdgdsgtert9AdeqwrwedffryretgsdFrsftrsvfsfsrwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjcyMHAubXA0P3Rva2VuPTIwX0doYVQwRFZSWFRRMHFkR1FMQlEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA=='
+    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAawehyfcghysfdsDGDYdgdsfsdfwstdgdsgtert9AdeqwrwedffryretgsdFrsftrsvfsfsrwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjcyMHAubXA0P3Rva2VuPTIwX0doYVQwRFZSWFRRMHFkR1FMQlEmZXhwaXJlcz0xNzIyNTE1ODUwJmlkPTIyODM4NA==',
   },
   {
     source: 'Download\n                        (1080P - mp4)',
-    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAdrefsdsdfwerFrefdsfrersfdsrfer363435349AdeqwrwedffryretgsdFrsftrsvfsfsrwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjEwODBwLm1wND90b2tlbj1CamFfQjNCUlFCSkt2azhGS05HeEJnJmV4cGlyZXM9MTcyMjUxNTg1MCZpZD0yMjgzODQ='
-  }
-]
+    link: 'https://gredirect.info/download.php?url=aHR0cHM6LyAdrefsdsdfwerFrefdsfrersfdsrfer363435349AdeqwrwedffryretgsdFrsftrsvfsfsrwd3l4aXltZWx1LmFuZjU5OC5jb20vdXNlcjEzNDIvMmZiY2U2YjEzYmQ5ZjBkYzk5N2ZjOTk1MWIwZTQzYzcvRVAuNC52MS4xNzIxOTMzNzA0LjEwODBwLm1wND90b2tlbj1CamFfQjNCUlFCSkt2azhGS05HeEJnJmV4cGlyZXM9MTcyMjUxNTg1MCZpZD0yMjgzODQ=',
+  },
+];
 ```
 
 <p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/anime.md#">back to anime providers list</a>)</p>

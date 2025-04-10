@@ -11,23 +11,26 @@ const animeunity = new ANIME.AnimeUnity();
 - [fetchEpisodeSources](#fetchepisodesources)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Jujutsu Kaisen 2`*) |
+| Parameter | Type     | Description                                                                   |
+| --------- | -------- | ----------------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, We're searching for `Jujutsu Kaisen 2`_) |
 
 ```ts
-animeunity.search("Demon Slayer: Kimetsu no Yaiba Hashira Training Arc").then(data => {
-  console.log(data);
-})
+animeunity
+  .search('Demon Slayer: Kimetsu no Yaiba Hashira Training Arc')
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
     hasNextPage: false,
@@ -54,23 +57,27 @@ output:
 
 | Parameter | Type     | Description                                                                                               |
 | --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*) |
+| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
 | page?     | `number` | takes page number as a parameter                                                                          |
 
 Why page number? AnimeUnity provides only 120 episodes at a time, how to use:
+
 - page: 1, you'll get episodes info from 1 to 120;
 - page: 4, you'll get episodes info from 361 to 480.
 
 If no page number is passed, the first page will be fetched.
 
 ```ts
-animesaturn.fetchAnimeInfo("5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc", 1).then(data => {
-  console.log(data);
-})
+animesaturn
+  .fetchAnimeInfo('5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc', 1)
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
     currentPage: 1,
@@ -111,18 +118,23 @@ output:
 
 | Parameter | Type     | Description                                                                           |
 | --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
 
 In this example, we're getting the sources for the first episode of Demon Slayer: Kimetsu no Yaiba Hashira Training Arc.
+
 ```ts
-animesaturn.fetchEpisodeSources("5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc/80480").then(data => {
-  console.log(data);
-})
+animesaturn
+  .fetchEpisodeSources(
+    '5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc/80480'
+  )
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
     sources: [

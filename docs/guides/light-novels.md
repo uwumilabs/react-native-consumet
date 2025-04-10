@@ -12,12 +12,11 @@ import { LIGHT_NOVELS } from '@consumet/extensions';
 const lightnovelProvider = LIGHT_NOVELS.<providerName>();
 ```
 
-
 ## Light Novels Providers List
+
 This list is in alphabetical order. (except the sub bullet points)
 
 - [NovelUpdates](../providers/novelupdates.md)
 - [ReadLightNovels](../providers/readlightnovels.md)
-
 
 <p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs">back to table of contents</a>)</p>

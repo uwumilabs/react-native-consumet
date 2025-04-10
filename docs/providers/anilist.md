@@ -21,20 +21,21 @@ const anilist = new META.Anilist();
 
 <h4>Parameters</h4>
 
-| Parameter            | Type     | Description                                                                         |
-| -------------------- | -------- | ----------------------------------------------------------------------------------- |
-| query                | `string` | query to search for. (*In this case, We're searching for `Classroom of the elite`*) |
-| page (optional)      | `number` | page number to search for.                                                          |
-| perPage   (optional) | `number` | number of results per page.  **Default: 15**                                        |
+| Parameter          | Type     | Description                                                                         |
+| ------------------ | -------- | ----------------------------------------------------------------------------------- |
+| query              | `string` | query to search for. (_In this case, We're searching for `Classroom of the elite`_) |
+| page (optional)    | `number` | page number to search for.                                                          |
+| perPage (optional) | `number` | number of results per page. **Default: 15**                                         |
 
 ```ts
-anilist.search("Classroom of the elite").then(data => {
+anilist.search('Classroom of the elite').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -80,13 +81,14 @@ output:
 | perPage (optional) | `number` | number of results per page. |
 
 ```ts
-anilist.fetchTrendingAnime().then(data => {
+anilist.fetchTrendingAnime().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```ts
 {
   currentPage: 1,
@@ -142,13 +144,14 @@ output:
 | perPage (optional) | `number` | number of results per page. |
 
 ```ts
-anilist.fetchPopularAnime().then(data => {
+anilist.fetchPopularAnime().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```ts
 {
   currentPage: 1,
@@ -200,18 +203,18 @@ output:
 
 | Parameter      | Type      | Description                                                                                               |
 | -------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| id             | `string`  | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*) |
-| dub (optional) | `boolean` | if true, will fetch dubbed anime.  **Default: false**                                                     |
-
+| id             | `string`  | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
+| dub (optional) | `boolean` | if true, will fetch dubbed anime. **Default: false**                                                      |
 
 ```ts
-anilist.fetchAnimeInfo("98659").then(data => {
+anilist.fetchAnimeInfo('98659').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: '98659',
@@ -242,7 +245,7 @@ output:
   genres: [ 'Drama', 'Psychological' ],
   studios: [ 'Lerche' ],
   subOrDub: 'sub',
-  recommendations: [ 
+  recommendations: [
       {
         id: 101921,
         idMal: 37999,
@@ -280,20 +283,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter          | Type     | Description                 |
-| ------------------ | -------- | --------------------------- |
-| genres    | `string[]` | a list containing the genres of the animes to fetch.  |
-| page (optional)    | `number` | page number to search for.  |
-| perPage (optional) | `number` | number of results per page. |
-
+| Parameter          | Type       | Description                                          |
+| ------------------ | ---------- | ---------------------------------------------------- |
+| genres             | `string[]` | a list containing the genres of the animes to fetch. |
+| page (optional)    | `number`   | page number to search for.                           |
+| perPage (optional) | `number`   | number of results per page.                          |
 
 ```ts
-anilist.fetchAnimeGenres(["Action", "Adventure"])
-.then(data => {
+anilist.fetchAnimeGenres(['Action', 'Adventure']).then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
 
 ```ts
@@ -333,15 +335,17 @@ output:
 | weekEnd                | `number`  | Filter by the time of airing.                                                                                                                                                      |
 | notYetAired (optional) | `boolean` | Filter to episodes that haven't yet aired. (default: false)                                                                                                                        |
 
-
 ```ts
-anilist.fetchAiringSchedule(1 , 20, 1660047922, 1661832000, true).then(data => {
-  console.log(data);
-})
+anilist
+  .fetchAiringSchedule(1, 20, 1660047922, 1661832000, true)
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```ts
 
     {
@@ -388,7 +392,7 @@ output:
         ...
       ]
     }
-  
+
 ```
 
 ### fetchEpisodeSources
@@ -397,20 +401,23 @@ output:
 
 | Parameter | Type     | Description                                                                           |
 | --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
 
 In this example, we're getting the sources for the first episode of classroom of the elite.
 
-
 ```ts
-anilist.fetchEpisodeSources("youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-tv-episode-12").then(data => {
-  console.log(data);
-})
+anilist
+  .fetchEpisodeSources(
+    'youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-tv-episode-12'
+  )
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   headers: {

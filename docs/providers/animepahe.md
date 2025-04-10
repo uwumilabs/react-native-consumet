@@ -11,23 +11,24 @@ const animepahe = new ANIME.AnimePahe();
 - [fetchEpisodeSources](#fetchepisodesources)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
 | Parameter | Type     | Description                                                              |
 | --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Overlord IV`*) |
+| query     | `string` | query to search for. (_In this case, We're searching for `Overlord IV`_) |
 
 ```ts
-animepahe.search("Overlord IV").then(data => {
+animepahe.search('Overlord IV').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   results: [
@@ -59,18 +60,20 @@ output:
 
 | Parameter              | Type     | Description                                                                                                                              |
 | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| id                     | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*)                                |
-| episodePage (optional) | `number` | takes episode page number as a parameter. default: -1 to get all episodes at once (*episodePages can be found in the anime info object*) |
-
+| id                     | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_)                                |
+| episodePage (optional) | `number` | takes episode page number as a parameter. default: -1 to get all episodes at once (_episodePages can be found in the anime info object_) |
 
 ```ts
-animepahe.fetchAnimeInfo("adb84358-8fec-fe80-1dc5-ad6218421dc1").then(data => {
-  console.log(data);
-})
+animepahe
+  .fetchAnimeInfo('adb84358-8fec-fe80-1dc5-ad6218421dc1')
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: 'adb84358-8fec-fe80-1dc5-ad6218421dc1',
@@ -104,18 +107,23 @@ output:
 
 | Parameter | Type     | Description                                                                           |
 | --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
 
 In this example, we're getting the sources for the first episode of Overlord IV.
+
 ```ts
-animepahe.fetchEpisodeSources("c673b4d6cedf5e4cd1900d30d61ee2130e23a74e58f4401a85f21a4e95c94f73").then(data => {
-  console.log(data);
-})
+animepahe
+  .fetchEpisodeSources(
+    'c673b4d6cedf5e4cd1900d30d61ee2130e23a74e58f4401a85f21a4e95c94f73'
+  )
+  .then((data) => {
+    console.log(data);
+  });
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   headers: { Referer: 'https://kwik.cx/' },

@@ -19,10 +19,12 @@ const ann = new NEWS.ANN();
 | topic (optional) | [`Topics`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L348-361) | topic for getting the feed. |
 
 ```ts
-ann.fetchNewsFeeds().then(console.log)
+ann.fetchNewsFeeds().then(console.log);
 ```
-returns a promise which resolves into an array of the NewsFeed class. (*[`Promise<NewsFeed[]>`](https://github.com/consumet/extensions/blob/master/src/providers/news/animenewsnetwork.ts#L5-13)*)\
+
+returns a promise which resolves into an array of the NewsFeed class. (_[`Promise<NewsFeed[]>`](https://github.com/consumet/extensions/blob/master/src/providers/news/animenewsnetwork.ts#L5-13)_)\
 output:
+
 ```js
 [
     {
@@ -60,10 +62,10 @@ output:
 
 #### Getting the news info for one of the feeds
 
-```ts 
+```ts
 ann.fetchNewsFeeds().then((res) => {
-    res[0].getInfo().then(console.log)
-})
+  res[0].getInfo().then(console.log);
+});
 ```
 
 ### fetchNewsInfo
@@ -72,13 +74,19 @@ ann.fetchNewsFeeds().then((res) => {
 
 | Parameter | Type     | Description                                                                                |
 | --------- | -------- | ------------------------------------------------------------------------------------------ |
-| id        | `string` | id of the news.(*news id can be found in the url of the news, it is next to the "/news/"*) |
+| id        | `string` | id of the news.(_news id can be found in the url of the news, it is next to the "/news/"_) |
 
 ```ts
-ann.fetchNewsInfo("2022-08-26/higurashi-no-naku-koro-ni-rei-oni-okoshi-hen-manga-ends/.188996" /* --> https://www.animenewsnetwork.com/news/2022-08-26/higurashi-no-naku-koro-ni-rei-oni-okoshi-hen-manga-ends/.188996*/ ).then(console.log)
+ann
+  .fetchNewsInfo(
+    '2022-08-26/higurashi-no-naku-koro-ni-rei-oni-okoshi-hen-manga-ends/.188996' /* --> https://www.animenewsnetwork.com/news/2022-08-26/higurashi-no-naku-koro-ni-rei-oni-okoshi-hen-manga-ends/.188996*/
+  )
+  .then(console.log);
 ```
-returns a promise which resolves into a news info object. (*[`Promise<INewsInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L286-L291)*)\
+
+returns a promise which resolves into a news info object. (_[`Promise<INewsInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L286-L291)_)\
 output:
+
 ```js
 {
     id: "2022-08-26/higurashi-no-naku-koro-ni-rei-oni-okoshi-hen-manga-ends/.188996",

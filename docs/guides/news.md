@@ -13,6 +13,7 @@ const newsProvider = NEWS.<providerName>();
 ```
 
 ## Anime Providers List
+
 This list is in alphabetical order. (except the sub bullet points)
 
 - [ANN (Anime News Network)](../providers/ann.md)

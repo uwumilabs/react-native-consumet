@@ -52,7 +52,8 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build lib \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
     "prepare": "bob build",
-    "release": "release-it"
+    "release": "release-it",
+    "prettier": "prettier --write \"**/*.{js,ts,tsx,json}\""
   },
   "keywords": [
     "react-native",
@@ -136,13 +137,6 @@
         "infile": "CHANGELOG.md"
       }
     }
-  },
-  "prettier": {
-    "quoteProps": "consistent",
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "es5",
-    "useTabs": false
   },
   "react-native-builder-bob": {
     "source": "src",

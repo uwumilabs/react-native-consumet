@@ -42,7 +42,7 @@ export default function Zoro() {
   const [state, setState] = useState<FetchState>({
     data: [],
     isLoading: true,
-    error: "",
+    error: '',
   });
   const [refreshing, setRefreshing] = useState(false);
 

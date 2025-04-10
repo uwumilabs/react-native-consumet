@@ -1,7 +1,7 @@
 <h1> AsuraScans </h1>
 
 ```ts
-  const asuraScans = new MANGA.AsuraScans();
+const asuraScans = new MANGA.AsuraScans();
 ```
 
 <h2>Methods</h2>
@@ -11,22 +11,25 @@
 - [fetchChapterPages](#fetchchapterpages)
 
 ### search
+
 > Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class, meaning it is available across most categories.
-> 
+
 <h4>Parameters</h4>
 
-| Parameter         | Type     | Description                                                                                |
-| ------------------| -------- | ------------------------------------------------------------------------------------------ |
-| query             | `string` | query to search for. (*In this case, we're searching for `Omniscient Reader’s Viewpoint`*) |
-| page (optional)   | `number` | page number (default: 1)                                                                   |
+| Parameter       | Type     | Description                                                                                |
+| --------------- | -------- | ------------------------------------------------------------------------------------------ |
+| query           | `string` | query to search for. (_In this case, we're searching for `Omniscient Reader’s Viewpoint`_) |
+| page (optional) | `number` | page number (default: 1)                                                                   |
 
 ```ts
-asuraScans.search('Omniscient Reader’s Viewpoint').then(data => {
+asuraScans.search('Omniscient Reader’s Viewpoint').then((data) => {
   console.log(data);
-})
+});
 ```
-returns a promise which resolves into an array of manga. (*[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)*)\
+
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
 output:
+
 ```js
 {
     currentPage: 1,
@@ -48,17 +51,21 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| mangaId   | `string` | manga id (*can be found in the manga search results*)          |
+| Parameter | Type     | Description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| mangaId   | `string` | manga id (_can be found in the manga search results_) |
 
 ```ts
-asuraScans.fetchMangaInfo('series/solo-max-level-newbie-d9977a85').then(data => {
-  console.log(data);
-})
+asuraScans
+  .fetchMangaInfo('series/solo-max-level-newbie-d9977a85')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns a promise which resolves into an manga info object (including the chapters). (*[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)*)\
+
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
 output:
+
 ```js
 {
     id: '/series/solo-max-level-newbie-d9977a85',
@@ -137,17 +144,21 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                              |
-| --------- | -------- | -------------------------------------------------------- |
-| chapterId | `string` | chapter id (*can be found in the manga info*)            |
+| Parameter | Type     | Description                                   |
+| --------- | -------- | --------------------------------------------- |
+| chapterId | `string` | chapter id (_can be found in the manga info_) |
 
 ```ts
-asuraScans.fetchChapterPages('solo-max-level-newbie-d9977a85/chapter/66').then(data => {
-  console.log(data);
-})
+asuraScans
+  .fetchChapterPages('solo-max-level-newbie-d9977a85/chapter/66')
+  .then((data) => {
+    console.log(data);
+  });
 ```
-returns an array of pages. (*[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)*)\
+
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
 output:
+
 ```js
 [
     {

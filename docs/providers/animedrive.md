@@ -14,18 +14,19 @@ const animedrive = new ANIME.AnimeDrive();
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Call of the Night`*) |
+| Parameter | Type     | Description                                                                    |
+| --------- | -------- | ------------------------------------------------------------------------------ |
+| query     | `string` | query to search for. (_In this case, We're searching for `Call of the Night`_) |
 
 ```ts
-animedrive.search("Yofukashi no Uta").then(data => {
+animedrive.search('Yofukashi no Uta').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
       currentPage: 1,
@@ -50,16 +51,17 @@ output:
 
 | Parameter | Type     | Description                                                                                               |
 | --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*)
+| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
 
 ```ts
-animedrive.fetchAnimeInfo("1031").then(data => {
+animedrive.fetchAnimeInfo('1031').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: '1031',
@@ -90,47 +92,48 @@ output:
 
 | Parameter | Type     | Description                                                                           |
 | --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-
+| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
 
 In this example, we're getting the sources for the first episode of Call of the Night.
+
 ```ts
-animedrive.fetchEpisodeSources("?id=1031&ep=1").then(data => {
+animedrive.fetchEpisodeSources('?id=1031&ep=1').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
-      sources: [
-        {
-          url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.oaa.mp4',
-          quality: '240p',
-          isM3U8: false
-        },
-        {
-          url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.baa.mp4',
-          quality: '360p',
-          isM3U8: false
-        },
-        {
-          url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.caa.mp4',
-          quality: '480p',
-          isM3U8: false
-        },
-        {
-          url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.gaa.mp4',
-          quality: '720p',
-          isM3U8: false
-        },
-        {
-          url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.haa.mp4',
-          quality: '1080p',
-          isM3U8: false
-        }
-    ]
+  sources: [
+    {
+      url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.oaa.mp4',
+      quality: '240p',
+      isM3U8: false,
+    },
+    {
+      url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.baa.mp4',
+      quality: '360p',
+      isM3U8: false,
+    },
+    {
+      url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.caa.mp4',
+      quality: '480p',
+      isM3U8: false,
+    },
+    {
+      url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.gaa.mp4',
+      quality: '720p',
+      isM3U8: false,
+    },
+    {
+      url: 'https://hugh.cdn.rumble.cloud/video/s8/2/p/A/k/5/pAk5o.haa.mp4',
+      quality: '1080p',
+      isM3U8: false,
+    },
+  ];
 }
 ```
 

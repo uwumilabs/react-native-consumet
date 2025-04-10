@@ -23,23 +23,24 @@ const zoro = new ANIME.Zoro();
 - [fetchSearchSuggestions](#fetchSearchSuggestions)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
+> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| query     | `string` | query to search for. (*In this case, We're searching for `Spy x Family`*) |
+| Parameter | Type     | Description                                                               |
+| --------- | -------- | ------------------------------------------------------------------------- |
+| query     | `string` | query to search for. (_In this case, We're searching for `Spy x Family`_) |
 
 ```ts
-zoro.search("spy x family").then(data => {
+zoro.search('spy x family').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -81,32 +82,33 @@ Fetches a list of anime based on various filters and sorting options.
 
 ## Parameters
 
-| Parameter  | Type       | Description |
-|------------|------------|-------------|
-| `page` | `number` | Page number (default: `1`). Must be `>= 1`. |
-| `type` | `string` | *(Optional)* One of: `"movie"`, `"tv"`, `"ova"`, `"ona"`, `"special"`, `"music"`. |
-| `status` | `string` | *(Optional)* One of: `"finished_airing"`, `"currently_airing"`, `"not_yet_aired"`. |
-| `rated` | `string` | *(Optional)* One of: `"g"`, `"pg"`, `"pg_13"`, `"r"`, `"r_plus"`, `"rx"`. |
-| `score` | `number` | *(Optional)* A rating from `1` to `10`. |
-| `season` | `string` | *(Optional)* One of: `"spring"`, `"summer"`, `"fall"`, `"winter"`. |
-| `language` | `string` | *(Optional)* One of: `"sub"`, `"dub"`, `"sub_dub"`. |
-| `startDate` | `{ year: number, month: number, day: number }` | *(Optional)* The starting release date. |
-| `endDate` | `{ year: number, month: number, day: number }` | *(Optional)* The ending release date. |
-| `sort` | `string` | *(Optional)* One of: `"recently_added"`, `"recently_updated"`, `"score"`, `"name_az"`, `"released_date"`, `"most_watched"`. |
-| `genres` | `string[]` | *(Optional)* An array of genres such as `"action"`, `"adventure"`, `"comedy"`, `"drama"`, `"fantasy"`, `"horror"`, `"sci_fi"`, `"thriller"`, etc. |
+| Parameter   | Type                                           | Description                                                                                                                                       |
+| ----------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `page`      | `number`                                       | Page number (default: `1`). Must be `>= 1`.                                                                                                       |
+| `type`      | `string`                                       | _(Optional)_ One of: `"movie"`, `"tv"`, `"ova"`, `"ona"`, `"special"`, `"music"`.                                                                 |
+| `status`    | `string`                                       | _(Optional)_ One of: `"finished_airing"`, `"currently_airing"`, `"not_yet_aired"`.                                                                |
+| `rated`     | `string`                                       | _(Optional)_ One of: `"g"`, `"pg"`, `"pg_13"`, `"r"`, `"r_plus"`, `"rx"`.                                                                         |
+| `score`     | `number`                                       | _(Optional)_ A rating from `1` to `10`.                                                                                                           |
+| `season`    | `string`                                       | _(Optional)_ One of: `"spring"`, `"summer"`, `"fall"`, `"winter"`.                                                                                |
+| `language`  | `string`                                       | _(Optional)_ One of: `"sub"`, `"dub"`, `"sub_dub"`.                                                                                               |
+| `startDate` | `{ year: number, month: number, day: number }` | _(Optional)_ The starting release date.                                                                                                           |
+| `endDate`   | `{ year: number, month: number, day: number }` | _(Optional)_ The ending release date.                                                                                                             |
+| `sort`      | `string`                                       | _(Optional)_ One of: `"recently_added"`, `"recently_updated"`, `"score"`, `"name_az"`, `"released_date"`, `"most_watched"`.                       |
+| `genres`    | `string[]`                                     | _(Optional)_ An array of genres such as `"action"`, `"adventure"`, `"comedy"`, `"drama"`, `"fantasy"`, `"horror"`, `"sci_fi"`, `"thriller"`, etc. |
 
 ---
 
 ## Example Usage
 
 ```ts
-zoro.fetchAdvancedSearch(1, 'tv', 'finished_airing').then(data => {
+zoro.fetchAdvancedSearch(1, 'tv', 'finished_airing').then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -153,17 +155,17 @@ output:
 
 | Parameter | Type     | Description                                                                                               |
 | --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (*anime id can be found in the anime search results or anime info object*) |
-
+| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
 
 ```ts
-zoro.fetchAnimeInfo("overlord-iv-18075").then(data => {
+zoro.fetchAnimeInfo('overlord-iv-18075').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an anime info object (including the episodes and optionally MAL and Anilist ID ). (*[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)*)\
+returns a promise which resolves into an anime info object (including the episodes and optionally MAL and Anilist ID ). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
 output:
+
 ```js
 {
   id: 'overlord-iv-18075',
@@ -198,22 +200,23 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                           |
-| --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (*episode id can be found in the anime info object*) |
-| server (optional) | `StreamingServers` | takes server enum as a parameter. (*default: `StreamingServers.MegaUp`*) |
-| subOrDub (optional) | `SubOrSub `| takes subOrDub enum as a parameter. (*can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`*) |
-
+| Parameter           | Type               | Description                                                                                              |
+| ------------------- | ------------------ | -------------------------------------------------------------------------------------------------------- |
+| episodeId           | `string`           | takes episode id as a parameter. (_episode id can be found in the anime info object_)                    |
+| server (optional)   | `StreamingServers` | takes server enum as a parameter. (_default: `StreamingServers.MegaUp`_)                                 |
+| subOrDub (optional) | `SubOrSub `        | takes subOrDub enum as a parameter. (_can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`_) |
 
 In this example, we're getting the sources for the first episode of Overlord IV.
+
 ```ts
-zoro.fetchEpisodeSources("overlord-iv-18075$episode$92599").then(data => {
+zoro.fetchEpisodeSources('overlord-iv-18075$episode$92599').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of episode sources. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)*)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
 output:
+
 ```js
 {
   headers: { Referer: 'https://rapid-cloud.ru/embed-6/hMN2fYuGi1E2?z=' },
@@ -267,18 +270,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchTopAiring().then(data => {
+zoro.fetchTopAiring().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {                                                        currentPage: 1,
   hasNextPage: true,
@@ -320,18 +324,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchMostPopular().then(data => {
+zoro.fetchMostPopular().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {                                                        currentPage: 1,
   hasNextPage: true,
@@ -373,18 +378,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchMostFavorite().then(data => {
+zoro.fetchMostFavorite().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -427,18 +433,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchLatestCompleted().then(data => {
+zoro.fetchLatestCompleted().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -481,18 +488,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchRecentlyUpdated().then(data => {
+zoro.fetchRecentlyUpdated().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -535,18 +543,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchRecentlyAdded().then(data => {
+zoro.fetchRecentlyAdded().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -589,18 +598,19 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
+| Parameter       | Type     | Description             |
+| --------------- | -------- | ----------------------- |
 | page (optional) | `number` | page number (default 1) |
 
 ```ts
-zoro.fetchTopUpcoming().then(data => {
+zoro.fetchTopUpcoming().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -638,22 +648,24 @@ output:
   ]
 }
 ```
+
 ### fetchSchedule
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| date    | `string` | Date in format 'YYYY-MM-DD'. Defaults to the current date. |
+| Parameter | Type     | Description                                                |
+| --------- | -------- | ---------------------------------------------------------- |
+| date      | `string` | Date in format 'YYYY-MM-DD'. Defaults to the current date. |
 
 ```ts
-zoro.fetchSchedule('2024-03-11').then(data => {
+zoro.fetchSchedule('2024-03-11').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   results: [
@@ -663,7 +675,7 @@ output:
       japaneseTitle: 'High Card Season 2',
       url: 'https://hianime.to/high-card-season-2-18820',
       airingEpisode: 'Episode 10',
-      airingTime: '07:30'
+      airingTime: '07:30',
     },
     {
       id: 'tsukimichi-moonlit-fantasy-season-2-18877',
@@ -671,7 +683,7 @@ output:
       japaneseTitle: 'Tsuki ga Michibiku Isekai Douchuu 2nd Season',
       url: 'https://hianime.to/tsukimichi-moonlit-fantasy-season-2-18877',
       airingEpisode: 'Episode 10',
-      airingTime: '09:00'
+      airingTime: '09:00',
     },
     {
       id: 'the-foolish-angel-dances-with-the-devil-18832',
@@ -679,7 +691,7 @@ output:
       japaneseTitle: 'Oroka na Tenshi wa Akuma to Odoru',
       url: 'https://hianime.to/the-foolish-angel-dances-with-the-devil-18832',
       airingEpisode: 'Episode 10',
-      airingTime: '10:30'
+      airingTime: '10:30',
     },
     {
       id: 'synduality-noir-part-2-18754',
@@ -687,7 +699,7 @@ output:
       japaneseTitle: 'Synduality: Noir Part 2',
       url: 'https://hianime.to/synduality-noir-part-2-18754',
       airingEpisode: 'Episode 10',
-      airingTime: '10:30'
+      airingTime: '10:30',
     },
     {
       id: 'tis-time-for-torture-princess-18778',
@@ -695,7 +707,7 @@ output:
       japaneseTitle: 'Himesama "Goumon" no Jikan desu',
       url: 'https://hianime.to/tis-time-for-torture-princess-18778',
       airingEpisode: 'Episode 10',
-      airingTime: '11:30'
+      airingTime: '11:30',
     },
     {
       id: 'hokkaido-gals-are-super-adorable-18853',
@@ -703,9 +715,9 @@ output:
       japaneseTitle: 'Dosanko Gal wa Namara Menkoi',
       url: 'https://hianime.to/hokkaido-gals-are-super-adorable-18853',
       airingEpisode: 'Episode 10',
-      airingTime: '11:45'
-    }
-  ]
+      airingTime: '11:45',
+    },
+  ];
 }
 ```
 
@@ -713,19 +725,20 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                              |
-| --------- | -------- | ------------------------------------------------------------------------ |
-| studio    | `string` | studio id, e.g. "toei-animation" |
-| page (optional) | `number` | page number (default 1) |
+| Parameter       | Type     | Description                      |
+| --------------- | -------- | -------------------------------- |
+| studio          | `string` | studio id, e.g. "toei-animation" |
+| page (optional) | `number` | page number (default 1)          |
 
 ```ts
-zoro.fetchStudio('toei-animation').then(data => {
+zoro.fetchStudio('toei-animation').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   currentPage: 1,
@@ -767,16 +780,17 @@ output:
 ### fetchSpotlight
 
 ```ts
-zoro.fetchSpotlight().then(data => {
+zoro.fetchSpotlight().then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
-  
+
   results: [
     {
       id: 'delicious-in-dungeon-18506',
@@ -799,21 +813,24 @@ output:
   ]
 }
 ```
+
 ### fetchSearchSuggestions
 
 ```ts
-zoro.fetchSearchSuggestions("One Piece").then(data => {
+zoro.fetchSearchSuggestions('One Piece').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 {
   results: [
     {
-      image: 'https://cdn.noitatnemucod.net/thumbnail/300x400/100/ff736656ba002e0dd51363c3d889d9ff.jpg',
+      image:
+        'https://cdn.noitatnemucod.net/thumbnail/300x400/100/ff736656ba002e0dd51363c3d889d9ff.jpg',
       id: 'one-piece-movie-1-3096',
       title: 'One Piece Movie 1',
       japaneseTitle: 'One Piece Movie 1',
@@ -821,10 +838,11 @@ output:
       releaseDate: 'Mar 4, 2000',
       type: 'Movie',
       duration: '50m',
-      url: 'https://hianime.to/one-piece-movie-1-3096'
+      url: 'https://hianime.to/one-piece-movie-1-3096',
     },
     {
-      image: 'https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg',
+      image:
+        'https://cdn.noitatnemucod.net/thumbnail/300x400/100/bcd84731a3eda4f4a306250769675065.jpg',
       id: 'one-piece-100',
       title: 'One Piece',
       japaneseTitle: 'One Piece',
@@ -832,10 +850,11 @@ output:
       releaseDate: 'Oct 20, 1999',
       type: 'TV',
       duration: '24m',
-      url: 'https://hianime.to/one-piece-100'
+      url: 'https://hianime.to/one-piece-100',
     },
     {
-      image: 'https://cdn.noitatnemucod.net/thumbnail/300x400/100/a1e98b07e290cd9653b41a895342a377.jpg',
+      image:
+        'https://cdn.noitatnemucod.net/thumbnail/300x400/100/a1e98b07e290cd9653b41a895342a377.jpg',
       id: 'one-piece-film-red-18236',
       title: 'One Piece Film: Red',
       japaneseTitle: 'One Piece Film: Red',
@@ -843,10 +862,11 @@ output:
       releaseDate: 'Aug 6, 2022',
       type: 'Movie',
       duration: '1h 55m',
-      url: 'https://hianime.to/one-piece-film-red-18236'
+      url: 'https://hianime.to/one-piece-film-red-18236',
     },
     {
-      image: 'https://cdn.noitatnemucod.net/thumbnail/300x400/100/7156c377053c230cc42b66bbf7260325.jpg',
+      image:
+        'https://cdn.noitatnemucod.net/thumbnail/300x400/100/7156c377053c230cc42b66bbf7260325.jpg',
       id: 'one-piece-the-movie-13-film-gold-550',
       title: 'One Piece: The Movie 13 - Film: Gold',
       japaneseTitle: 'One Piece Film: Gold',
@@ -854,10 +874,11 @@ output:
       releaseDate: 'Jul 23, 2016',
       type: 'Movie',
       duration: '1h 30m',
-      url: 'https://hianime.to/one-piece-the-movie-13-film-gold-550'
+      url: 'https://hianime.to/one-piece-the-movie-13-film-gold-550',
     },
     {
-      image: 'https://cdn.noitatnemucod.net/thumbnail/300x400/100/14f2be76eee4a497ad81a5039425ff06.jpg',
+      image:
+        'https://cdn.noitatnemucod.net/thumbnail/300x400/100/14f2be76eee4a497ad81a5039425ff06.jpg',
       id: 'one-room-third-season-6959',
       title: 'One Room Third Season',
       japaneseTitle: 'One Room Third Season',
@@ -865,9 +886,9 @@ output:
       releaseDate: 'Oct 6, 2020',
       type: 'TV',
       duration: '4m',
-      url: 'https://hianime.to/one-room-third-season-6959'
-    }
-  ]
+      url: 'https://hianime.to/one-room-third-season-6959',
+    },
+  ];
 }
 ```
 
@@ -875,19 +896,19 @@ output:
 
 <h4>Parameters</h4>
 
-
-| Parameter   | Type     | Description                                      |
-| ----------- | -------- | ------------------------------------------------ |
-| connectSid  | `string` | The session ID obtained from the website cookies |
+| Parameter  | Type     | Description                                      |
+| ---------- | -------- | ------------------------------------------------ |
+| connectSid | `string` | The session ID obtained from the website cookies |
 
 ```ts
-zoro.fetchContinueWatching("{user_connect_sid}").then(data => {
+zoro.fetchContinueWatching('{user_connect_sid}').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of episodes. (*[`Promise<IAnimeEpisode[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of episodes. (_[`Promise<IAnimeEpisode[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 [
   {
@@ -913,19 +934,19 @@ output:
 
 <h4>Parameters</h4>
 
-
-| Parameter   | Type     | Description                                      |
-| ----------- | -------- | ------------------------------------------------ |
-| connectSid  | `string` | The session ID obtained from the website cookies |
+| Parameter  | Type     | Description                                      |
+| ---------- | -------- | ------------------------------------------------ |
+| connectSid | `string` | The session ID obtained from the website cookies |
 
 ```ts
-zoro.fetchWatchList("{user_connect_sid}").then(data => {
+zoro.fetchWatchList('{user_connect_sid}').then((data) => {
   console.log(data);
-})
+});
 ```
 
-returns a promise which resolves into an array of anime. (*[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)*)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
 output:
+
 ```js
 [
   {

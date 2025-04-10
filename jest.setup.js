@@ -8,7 +8,7 @@ jest.mock('react-native', () => {
     TouchableOpacity: 'TouchableOpacity',
     Platform: {
       OS: 'android',
-      select: jest.fn(obj => obj.android || obj.default),
+      select: jest.fn((obj) => obj.android || obj.default),
     },
     // Add the TurboModuleRegistry mock
     TurboModuleRegistry: {
@@ -22,7 +22,7 @@ jest.mock('react-native', () => {
       }),
     },
   };
-  
+
   return mockRN;
 });
 
