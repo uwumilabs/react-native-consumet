@@ -1,6 +1,6 @@
 {
   "name": "react-native-consumet",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "React Native library providing access to entertainment media information (anime, movies, manga, etc.) from multiple sources, adapting the Consumet API for mobile applications.",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
@@ -186,7 +186,6 @@
     "ascii-url-encoder": "^1.2.0",
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
-    "crypto-js": "^4.2.0",
-    "react-native-consumet": "^0.2.1"
+    "crypto-js": "^4.2.0"
   }
 }

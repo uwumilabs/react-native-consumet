@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.0 (2025-04-12)
+
+* feat(meta): improve fetchEpisodesListById and tmdb, code format, update base url of zoro ([85d3da7](https://github.com/2004durgesh/react-native-consumet/commit/85d3da7))
+* feat(prettier): improve dx [skip ci] ([0e950c4](https://github.com/2004durgesh/react-native-consumet/commit/0e950c4))
+* fix(streamwish,megaup): fix streamwish and megaup extractors and remove old providers ([955bbe9](https://github.com/2004durgesh/react-native-consumet/commit/955bbe9))
+
 ## <small>v0.2.2 (2025-04-04)</small>
 
 * fix(megaup): fix megaup decoding logic ([e761ffe](https://github.com/2004durgesh/react-native-consumet/commit/e761ffe))
