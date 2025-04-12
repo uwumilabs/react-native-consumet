@@ -3,15 +3,7 @@ import Consumet from './NativeConsumet';
 export function getSources(s: string): Promise<string> {
   return Consumet.getSources(s);
 }
-import {
-  ANIME,
-  COMICS,
-  LIGHT_NOVELS,
-  MANGA,
-  MOVIES,
-  META,
-  NEWS,
-} from './providers';
+import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META, NEWS } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import {
   AsianLoad,

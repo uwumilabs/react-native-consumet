@@ -25,13 +25,11 @@ export class Proxy {
     if (!proxyConfig?.url) return;
 
     if (typeof proxyConfig?.url === 'string')
-      if (!this.validUrl.test(proxyConfig.url))
-        throw new Error('Proxy URL is invalid!');
+      if (!this.validUrl.test(proxyConfig.url)) throw new Error('Proxy URL is invalid!');
 
     if (Array.isArray(proxyConfig?.url)) {
       for (const [i, url] of this.toMap<string>(proxyConfig.url))
-        if (!this.validUrl.test(url))
-          throw new Error(`Proxy URL at index ${i} is invalid!`);
+        if (!this.validUrl.test(url)) throw new Error(`Proxy URL at index ${i} is invalid!`);
 
       this.rotateProxy({ ...proxyConfig, urls: proxyConfig.url });
 
@@ -44,8 +42,7 @@ export class Proxy {
         config.url = `${proxyConfig.url}${config?.url ? config?.url : ''}`;
       }
 
-      if (config?.url?.includes('anify'))
-        config.headers.set('User-Agent', 'consumet');
+      if (config?.url?.includes('anify')) config.headers.set('User-Agent', 'consumet');
 
       return config;
     });
@@ -57,9 +54,7 @@ export class Proxy {
   setAxiosAdapter(adapter: AxiosAdapter) {
     this.client.defaults.adapter = adapter;
   }
-  private rotateProxy = (
-    proxy: Omit<ProxyConfig, 'url'> & { urls: string[] }
-  ) => {
+  private rotateProxy = (proxy: Omit<ProxyConfig, 'url'> & { urls: string[] }) => {
     setInterval(() => {
       const url = proxy.urls.shift();
       if (url) proxy.urls.push(url);

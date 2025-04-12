@@ -1,26 +1,26 @@
-import { ANIME, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { META, ANIME, MOVIES, type IAnimeEpisode, type IMovieResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
+import Zoro from '../../../src/providers/anime/zoro';
 
-// ZNsenNosoJNT
 interface FetchState {
-  data: IAnimeResult[];
+  data: IAnimeEpisode[];
   isLoading: boolean;
   error: string | null | Error;
 }
 
-const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
+const fetchData = async (): Promise<IAnimeEpisode[]> => {
   try {
-    const animekai = new ANIME.AnimeKai();
-    const sources = await animekai.search('one piece');
-    console.log('sources');
-    const s = await animekai.fetchEpisodeSources('jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH');
-    console.log('sources end');
-    console.log(s);
-    if (!sources || !sources.results) {
+    const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
+    const sources = await movies.fetchMediaInfo('86031',"tv");
+    console.log(sources);
+    // const s = await movies.fetchEpisodeSources(
+    //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
+    // );
+    // console.log(s);
+    if (!sources || !sources) {
       throw new Error('Invalid response format from API');
     }
-    // @ts-ignore
     return sources;
   } catch (error) {
     console.log(error);
@@ -28,11 +28,11 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   }
 };
 
-export default function Zoro() {
+export default function Meta() {
   const [state, setState] = useState<FetchState>({
     data: [],
     isLoading: true,
-    error: '',
+    error: null,
   });
   const [refreshing, setRefreshing] = useState(false);
 
@@ -40,7 +40,7 @@ export default function Zoro() {
     try {
       const sources = await fetchData();
       setState({
-        data: sources.results || [],
+        data: sources || [],
         isLoading: false,
         error: null,
       });

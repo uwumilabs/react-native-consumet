@@ -13,8 +13,7 @@ import {
 class Marin extends AnimeParser {
   override readonly name = 'Marin';
   protected override baseUrl = 'https://marin.moe';
-  protected override logo =
-    'https://i.pinimg.com/736x/62/8d/3f/628d3f2e60b0aa8c8fa9598e8dae6320.jpg';
+  protected override logo = 'https://i.pinimg.com/736x/62/8d/3f/628d3f2e60b0aa8c8fa9598e8dae6320.jpg';
   protected override classPath = 'ANIME.Marin';
 
   private async getToken(): Promise<string[]> {
@@ -27,17 +26,13 @@ class Marin extends AnimeParser {
       },
     });
 
-    token.push(
-      response.headers['set-cookie']![1]!.replace('marin_session=', '')
-    );
+    token.push(response.headers['set-cookie']![1]!.replace('marin_session=', ''));
     token.push(response.headers['set-cookie']![0]!.replace('XSRF-TOKEN=', ''));
 
     return token;
   }
 
-  public recentEpisodes = async (
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  public recentEpisodes = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
     const token = await this.getToken();
     let data;
     try {
@@ -95,10 +90,7 @@ class Marin extends AnimeParser {
   /**
    * @param query Search query
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     const token = await this.getToken();
     let data;
     try {
@@ -260,9 +252,7 @@ class Marin extends AnimeParser {
    */
   override fetchEpisodeSources = async (id: string): Promise<ISource> => {
     const token = await this.getToken();
-    const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]!.split(';')[0]}; marin_session=${
-      token[0]!.split(';')[0]
-    };`;
+    const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]!.split(';')[0]}; marin_session=${token[0]!.split(';')[0]};`;
     let data;
     try {
       const response = await this.client.post(
@@ -311,9 +301,7 @@ class Marin extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

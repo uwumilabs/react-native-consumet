@@ -21,10 +21,7 @@ class MultiMovies extends MovieParser {
   constructor(customBaseURL?: string) {
     super(...arguments);
     if (customBaseURL) {
-      if (
-        customBaseURL.startsWith('http://') ||
-        customBaseURL.startsWith('https://')
-      ) {
+      if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
       } else {
         this.baseUrl = `http://${customBaseURL}`;
@@ -38,10 +35,7 @@ class MultiMovies extends MovieParser {
    * @param query search query string
    * @param page page number (default 1) (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const searchResult: ISearch<IMovieResult> = {
       currentPage: page,
       hasNextPage: false,
@@ -58,8 +52,7 @@ class MultiMovies extends MovieParser {
       const $ = load(data);
 
       const navSelector = 'div.pagination';
-      searchResult.hasNextPage =
-        $(navSelector).find('#nextpagination').length > 0;
+      searchResult.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
       const articles = $('.search-page .result-item article').toArray();
 
       await Promise.all(
@@ -86,16 +79,11 @@ class MultiMovies extends MovieParser {
             title: $(el).find('.details .title a').text().trim(),
             url: $(el).find('.thumbnail a').attr('href') ?? '',
             image: $(el).find('.thumbnail img').attr('src') ?? '',
-            rating:
-              parseFloat(
-                $(el).find('.meta .rating').text().replace('IMDb ', '')
-              ) || 0,
+            rating: parseFloat($(el).find('.meta .rating').text().replace('IMDb ', '')) || 0,
             releaseDate: $(el).find('.meta .year').text().trim(),
             season: seasonSet.size,
             description: $(el).find('.contenido p').text().trim(),
-            type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/')
-              ? TvType.MOVIE
-              : TvType.TVSERIES,
+            type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
           });
         })
       );
@@ -132,44 +120,23 @@ class MultiMovies extends MovieParser {
             ?.replace(/^https?:\/\/[^/]+\//, '')
             .replace(/^\/|\/$/g, '')!,
           title: $(el).find('a img').attr('alt')!,
-          image:
-            $(el).find('a img').attr('data-src') ??
-            $(el).find('a img').attr('src'),
+          image: $(el).find('a img').attr('data-src') ?? $(el).find('a img').attr('src'),
           type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/')
             ? TvType.TVSERIES
             : (TvType.MOVIE ?? null),
         });
       });
-      movieInfo.cover =
-        $('div#info .galeria').first().find('.g-item a').attr('href')?.trim() ??
-        '';
+      movieInfo.cover = $('div#info .galeria').first().find('.g-item a').attr('href')?.trim() ?? '';
       movieInfo.title = $('.sheader > .data > h1').text();
-      movieInfo.image =
-        $('.sheader > .poster > img').attr('src') ??
-        $('.sheader > .poster > img').attr('data-src');
-      movieInfo.description = $(
-        'div#info div[itemprop="description"] p'
-      ).text();
-      movieInfo.type =
-        movieInfo.id.split('/')[0] === 'tvshows'
-          ? TvType.TVSERIES
-          : TvType.MOVIE;
-      movieInfo.releaseDate = $('.sheader > .data > .extra > span.date')
-        .text()
-        .trim();
+      movieInfo.image = $('.sheader > .poster > img').attr('src') ?? $('.sheader > .poster > img').attr('data-src');
+      movieInfo.description = $('div#info div[itemprop="description"] p').text();
+      movieInfo.type = movieInfo.id.split('/')[0] === 'tvshows' ? TvType.TVSERIES : TvType.MOVIE;
+      movieInfo.releaseDate = $('.sheader > .data > .extra > span.date').text().trim();
       movieInfo.trailer = {
         id:
-          $('div#trailer .embed  iframe')
-            .attr('data-litespeed-src')
-            ?.split('embed/')[1]
-            ?.split('?')[0] ??
-          $('div#trailer .embed  iframe')
-            .attr('src')
-            ?.split('embed/')[1]
-            ?.split('?')[0]!,
-        url:
-          $('div#trailer .embed iframe').attr('data-litespeed-src') ??
-          $('div#trailer .embed iframe').attr('src'),
+          $('div#trailer .embed  iframe').attr('data-litespeed-src')?.split('embed/')[1]?.split('?')[0] ??
+          $('div#trailer .embed  iframe').attr('src')?.split('embed/')[1]?.split('?')[0]!,
+        url: $('div#trailer .embed iframe').attr('data-litespeed-src') ?? $('div#trailer .embed iframe').attr('src'),
       };
       movieInfo.genres = $('.sgeneros a')
         .map((i, el) => $(el).text())
@@ -178,9 +145,7 @@ class MultiMovies extends MovieParser {
       movieInfo.characters = [];
       $('div#cast .persons .person').each((i, el) => {
         const url = $(el).find('.img > a').attr('href');
-        const image =
-          $(el).find('.img > a > img').attr('data-src') ??
-          $(el).find('.img > a > img').attr('src');
+        const image = $(el).find('.img > a > img').attr('data-src') ?? $(el).find('.img > a > img').attr('src');
         const name = $(el).find('.data > .name > a').text();
         const character = $(el).find('.data > .caracter').text();
 
@@ -193,11 +158,7 @@ class MultiMovies extends MovieParser {
       });
       movieInfo.country = $('.sheader > .data > .extra > span.country').text();
       movieInfo.duration = $('.sheader > .data > .extra > span.runtime').text();
-      movieInfo.rating = parseFloat(
-        $(
-          '.starstruck-rating span.dt_rating_vgs[itemprop="ratingValue"]'
-        ).text()
-      );
+      movieInfo.rating = parseFloat($('.starstruck-rating span.dt_rating_vgs[itemprop="ratingValue"]').text());
       movieInfo.recommendations = recommendationsArray as any;
 
       if (movieInfo.type === TvType.TVSERIES) {
@@ -214,19 +175,12 @@ class MultiMovies extends MovieParser {
                   ?.replace(/^https?:\/\/[^/]+\//, '')
                   .replace(/^\/|\/$/g, '')!,
                 season: seasonNumber,
-                number: parseInt(
-                  $(ep).find('.numerando').text().trim().split('-')[1]!
-                ),
+                number: parseInt($(ep).find('.numerando').text().trim().split('-')[1]!),
                 title: $(ep).find('.episodiotitle a').text().trim(),
                 url: $(ep).find('.episodiotitle a').attr('href')?.trim() ?? '',
-                releaseDate: String(
-                  new Date(
-                    $(ep).find('.episodiotitle .date').text().trim()
-                  ).getFullYear()
-                ),
+                releaseDate: String(new Date($(ep).find('.episodiotitle .date').text().trim()).getFullYear()),
                 image:
-                  $(ep).find('.imagen img').attr('data-src')?.trim() ??
-                  $(ep).find('.imagen img').attr('src')?.trim(),
+                  $(ep).find('.imagen img').attr('data-src')?.trim() ?? $(ep).find('.imagen img').attr('src')?.trim(),
               };
 
               movieInfo.episodes?.push(episode);
@@ -267,42 +221,31 @@ class MultiMovies extends MovieParser {
         case StreamingServers.MixDrop:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            ),
+            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.StreamWish:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.StreamTape:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new StreamTape(
-              this.proxyConfig,
-              this.adapter
-            ).extract(serverUrl),
+            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.VidHide:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new VidHide(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            ),
+            sources: await new VidHide(this.proxyConfig, this.adapter).extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
       }
@@ -310,9 +253,7 @@ class MultiMovies extends MovieParser {
 
     try {
       const servers = await this.fetchEpisodeServers(episodeId);
-      const i = servers.findIndex(
-        (s) => s.name.toLowerCase() === server.toLowerCase()
-      );
+      const i = servers.findIndex((s) => s.name.toLowerCase() === server.toLowerCase());
 
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
@@ -322,18 +263,11 @@ class MultiMovies extends MovieParser {
       let fileId = '';
 
       if (!episodeId.startsWith('http')) {
-        const { fileId: id } = await this.getServer(
-          `${this.baseUrl}/${episodeId}`
-        );
+        const { fileId: id } = await this.getServer(`${this.baseUrl}/${episodeId}`);
         fileId = id ?? '';
       }
       // fileId to be used for download link
-      return await this.fetchEpisodeSources(
-        serverUrl.href,
-        mediaId,
-        server,
-        fileId
-      );
+      return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, fileId);
     } catch (err) {
       throw new Error((err as Error).message);
     }
@@ -343,9 +277,7 @@ class MultiMovies extends MovieParser {
    *
    * @param episodeId takes episode link or movie id
    */
-  override fetchEpisodeServers = async (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = async (episodeId: string): Promise<IEpisodeServer[]> => {
     if (!episodeId.startsWith(this.baseUrl)) {
       episodeId = `${this.baseUrl}/${episodeId}`;
     }
@@ -366,9 +298,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/trending/page/${page}/`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/trending/page/${page}/`);
       const $ = load(data);
       const navSelector = 'div.pagination';
 
@@ -380,12 +310,7 @@ class MultiMovies extends MovieParser {
             title: $(el).find('div.data > h3').text() ?? '',
             url: $(el).find('div.poster > a').attr('href'),
             image: $(el).find('div.poster > img').attr('data-src') ?? '',
-            type: $(el)
-              .find('div.poster > a')
-              .attr('href')
-              ?.includes('/movies/')
-              ? TvType.MOVIE
-              : TvType.TVSERIES,
+            type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
             rating: $(el).find('div.poster > div.rating').text() ?? '',
             releaseDate: $(el).find('div.data > span').text() ?? '',
           };
@@ -399,19 +324,14 @@ class MultiMovies extends MovieParser {
     }
   };
 
-  fetchByGenre = async (
-    genre: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult>> => {
+  fetchByGenre = async (genre: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const result: ISearch<IMovieResult> = {
       currentPage: page,
       hasNextPage: false,
       results: [],
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/genre/${genre}/page/${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}/page/${page}`);
 
       const $ = load(data);
       const navSelector = 'div.pagination';
@@ -424,12 +344,7 @@ class MultiMovies extends MovieParser {
             title: $(el).find('div.data > h3').text() ?? '',
             url: $(el).find('div.poster > a').attr('href'),
             image: $(el).find('div.poster > img').attr('data-src') ?? '',
-            type: $(el)
-              .find('div.poster > a')
-              .attr('href')
-              ?.includes('/movies/')
-              ? TvType.MOVIE
-              : TvType.TVSERIES,
+            type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
             rating: $(el).find('div.poster > div.rating').text() ?? '',
             releaseDate: $(el).find('div.data > span').text() ?? '',
           };
@@ -443,9 +358,7 @@ class MultiMovies extends MovieParser {
     }
   };
 
-  private async getServer(
-    url: string
-  ): Promise<{ servers: IEpisodeServer[]; fileId: string }> {
+  private async getServer(url: string): Promise<{ servers: IEpisodeServer[]; fileId: string }> {
     try {
       const { data } = await this.client.get(url);
       const $ = load(data);
@@ -468,22 +381,15 @@ class MultiMovies extends MovieParser {
       formData.append('type', playerConfig.type);
 
       const headers = {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       };
 
-      const playerRes = await this.client.post(
-        `${this.baseUrl}/wp-admin/admin-ajax.php`,
-        formData,
-        {
-          headers,
-        }
-      );
+      const playerRes = await this.client.post(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData, {
+        headers,
+      });
 
       const iframeUrl =
-        playerRes.data?.embed_url?.match(
-          /<iframe[^>]+src="([^"]+)"[^>]*>/i
-        )?.[1] || playerRes.data?.embed_url;
+        playerRes.data?.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.data?.embed_url;
 
       // Handle non-multimovies case
       if (!iframeUrl.includes('multimovies')) {
@@ -495,14 +401,8 @@ class MultiMovies extends MovieParser {
         // Update base URL if redirect occurred
         if (redirectResponse) {
           playerBaseUrl =
-            redirectResponse.request._redirectable._options.href
-              .split('/')
-              .slice(0, 3)
-              .join('/') ||
-            redirectResponse.request.res.responseURL
-              .split('/')
-              .slice(0, 3)
-              .join('/');
+            redirectResponse.request._redirectable._options.href.split('/').slice(0, 3).join('/') ||
+            redirectResponse.request.res.responseURL.split('/').slice(0, 3).join('/');
         }
         const fileId = iframeUrl.split('/').pop();
 
@@ -513,13 +413,9 @@ class MultiMovies extends MovieParser {
         const streamRequestData = new FormData();
         streamRequestData.append('sid', fileId);
 
-        const streamResponse = await this.client.post(
-          `${playerBaseUrl}/embedhelper.php`,
-          streamRequestData,
-          {
-            headers,
-          }
-        );
+        const streamResponse = await this.client.post(`${playerBaseUrl}/embedhelper.php`, streamRequestData, {
+          headers,
+        });
 
         if (!streamResponse.data) {
           throw new Error('No stream data found');
@@ -530,9 +426,7 @@ class MultiMovies extends MovieParser {
         const siteUrlsKeys = new Set(Object.keys(streamDetails.siteUrls));
 
         // Find common keys
-        const commonKeys = [...mresultKeys].filter((key) =>
-          siteUrlsKeys.has(key)
-        );
+        const commonKeys = [...mresultKeys].filter((key) => siteUrlsKeys.has(key));
 
         // Convert to a Set (if needed)
         const commonStreamSites = new Set(commonKeys);

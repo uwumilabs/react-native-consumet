@@ -4,9 +4,7 @@ class StreamHub extends VideoExtractor {
   protected override serverName = 'StreamHub';
   protected override sources: IVideo[] = [];
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -17,12 +15,9 @@ class StreamHub extends VideoExtractor {
         throw new Error('Video not found');
       });
 
-      const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
-      );
+      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
 
-      const links =
-        unpackedData.match(new RegExp('sources:\\[\\{src:"(.*?)"')) ?? [];
+      const links = unpackedData.match(new RegExp('sources:\\[\\{src:"(.*?)"')) ?? [];
       const m3u8Content = await this.client.get(links[1], {
         headers: {
           Referer: links[1],
@@ -41,10 +36,7 @@ class StreamHub extends VideoExtractor {
           if (!video.includes('m3u8')) continue;
 
           const url = video.split('\n')[1];
-          const quality = video
-            .split('RESOLUTION=')[1]
-            .split(',')[0]
-            .split('x')[1];
+          const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
 
           result.sources.push({
             url: url,

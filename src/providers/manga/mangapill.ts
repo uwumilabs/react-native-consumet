@@ -22,9 +22,7 @@ class MangaPill extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search?q=${encodeURIComponent(query)}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
       const $ = load(data);
 
       const results = $('div.container div.my-3.justify-end > div')
@@ -52,37 +50,22 @@ class MangaPill extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/manga/${mangaId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
-      mangaInfo.title = $('div.container div.my-3 div.flex-col div.mb-3 h1')
-        .text()
-        .trim();
-      mangaInfo.description = $(
-        'div.container div.my-3  div.flex-col p.text--secondary'
-      )
-        .text()
-        .split('\n')
-        .join(' ')!;
-      mangaInfo.releaseDate = $(
-        'div.container div.my-3 div.flex-col div.gap-3.mb-3 div:contains("Year")'
-      )
+      mangaInfo.title = $('div.container div.my-3 div.flex-col div.mb-3 h1').text().trim();
+      mangaInfo.description = $('div.container div.my-3  div.flex-col p.text--secondary').text().split('\n').join(' ')!;
+      mangaInfo.releaseDate = $('div.container div.my-3 div.flex-col div.gap-3.mb-3 div:contains("Year")')
         .text()
         .split('Year\n')[1]!
         .trim();
-      mangaInfo.genres = $(
-        'div.container div.my-3 div.flex-col div.mb-3:contains("Genres")'
-      )
+      mangaInfo.genres = $('div.container div.my-3 div.flex-col div.mb-3:contains("Genres")')
         .text()
         .split('\n')
         .filter((genre: string) => genre !== 'Genres' && genre !== '')
         .map((genre) => genre.trim());
 
-      mangaInfo.chapters = $(
-        'div.container div.border-border div#chapters div.grid-cols-1 a'
-      )
+      mangaInfo.chapters = $('div.container div.border-border div#chapters div.grid-cols-1 a')
         .map(
           (i, el): IMangaChapter => ({
             id: $(el).attr('href')?.split('/chapters/')[1]!,
@@ -98,13 +81,9 @@ class MangaPill extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/chapters/${chapterId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/chapters/${chapterId}`);
       const $ = load(data);
 
       const chapterSelector = $('chapter-page');
@@ -113,9 +92,7 @@ class MangaPill extends MangaParser {
         .map(
           (i, el): IMangaChapterPage => ({
             img: $(el).find('div picture img').attr('data-src')!,
-            page: parseFloat(
-              $(el).find(`div[data-summary] > div`).text().split('page ')[1]!
-            ),
+            page: parseFloat($(el).find(`div[data-summary] > div`).text().split('page ')[1]!),
           })
         )
         .get();

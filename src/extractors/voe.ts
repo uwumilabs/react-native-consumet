@@ -8,17 +8,13 @@ class Voe extends VideoExtractor {
 
   private readonly domains = ['voe.sx'];
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const res = await this.client.get(videoUrl.href);
       const $ = load(res.data);
       const scriptContent = $('script').html();
       const pageUrl = scriptContent
-        ? (scriptContent.match(
-            /window\.location\.href\s*=\s*'(https:\/\/[^']+)';/
-          )?.[1] ?? '')
+        ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
         : '';
 
       const { data } = await this.client.get(pageUrl);
@@ -26,8 +22,7 @@ class Voe extends VideoExtractor {
       const bodyHtml = $$('body').html() || '';
       const url = bodyHtml.match(/'hls'\s*:\s*'([^']+)'/s)?.[1] || '';
 
-      const subtitleRegex =
-        /<track\s+kind="subtitles"\s+label="([^"]+)"\s+srclang="([^"]+)"\s+src="([^"]+)"/g;
+      const subtitleRegex = /<track\s+kind="subtitles"\s+label="([^"]+)"\s+srclang="([^"]+)"\s+src="([^"]+)"/g;
       let subtitles: ISubtitle[] = [];
       let match;
       while ((match = subtitleRegex.exec(bodyHtml)) !== null) {

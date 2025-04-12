@@ -21,6 +21,8 @@ export default defineConfig([
     plugins: { prettier, "unused-imports": unusedImports, },
     rules: {
       'react/react-in-jsx-scope': 'off',
+      'radix': 'off',
+      'no-bitwise': 'off',
       'prettier/prettier': [
         'warn',
         {
@@ -64,8 +66,9 @@ export default defineConfig([
       'ios/**/*',
       '.ios/',
       '.github/',
-      "example/",
-      
+      "apps/bare-example/android/**/*",
+      "apps/bare-example/ios/**/*",
+
       // Build and Output
       'lib/',
       'dist/',
@@ -73,14 +76,14 @@ export default defineConfig([
       'web-build/',
       '*.jsbundle',
       '*.bundle',
-      
+
       // Testing and Coverage
       '__tests__/',
       'test/',
       "jest.setup.*",
       'coverage/',
       'jest.config.*',
-      
+
       // Configuration Files
       '*.config.js',
       'metro.config.js',
@@ -89,11 +92,11 @@ export default defineConfig([
       'app.json',
       'expo-env.d.ts',
       '.env*',
-      
+
       // Documentation and Info
       'README.md',
       '*.md',
-      
+
       // Media and Assets
       'assets/',
       '*.svg',
@@ -102,24 +105,24 @@ export default defineConfig([
       '*.jpeg',
       '*.gif',
       '*.ico',
-      
+
       // Cache and System Files
       '.cache/',
       '*.log',
       '.DS_Store',
       'temp/',
       '*.tmp',
-      
+
       // Package Management
       'package.json',
       'package-lock.json',
       'yarn.lock',
-      
+
       // Auto-generated
       '*.generated.*',
       '*.auto.*',
       '*.d.ts',
-      
+
       // IDE specific
       '.idea/',
       '*.sublime-*',

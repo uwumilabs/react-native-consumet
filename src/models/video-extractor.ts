@@ -17,10 +17,7 @@ abstract class VideoExtractor extends Proxy {
    *
    * returns video sources (video links) available
    */
-  protected abstract extract(
-    videoUrl: URL,
-    ...args: any
-  ): Promise<IVideo[] | ISource>;
+  protected abstract extract(videoUrl: URL, ...args: any): Promise<IVideo[] | ISource>;
 }
 
 export default VideoExtractor;

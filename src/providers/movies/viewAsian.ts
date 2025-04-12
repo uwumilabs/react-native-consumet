@@ -19,10 +19,7 @@ class ViewAsian extends MovieParser {
   protected override classPath = 'MOVIES.ViewAsian';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
 
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const searchResult: ISearch<IMovieResult> = {
       currentPage: page,
       hasNextPage: false,
@@ -39,14 +36,10 @@ class ViewAsian extends MovieParser {
       const navSelector = 'div#pagination > nav:nth-child(1) > ul:nth-child(1)';
 
       searchResult.hasNextPage =
-        $(navSelector).length > 0
-          ? !$(navSelector).children().last().hasClass('active')
-          : false;
+        $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
 
       $('.movies-list-full > div.ml-item').each((i, el) => {
-        const releaseDate = $(el)
-          .find('div.ml-item > div.mli-info > span:nth-child(1)')
-          .text();
+        const releaseDate = $(el).find('div.ml-item > div.mli-info > span:nth-child(1)').text();
         searchResult.results.push({
           id: $(el).find('a').attr('href')?.slice(1)!,
           title: $(el).find('a').attr('title')!,
@@ -95,15 +88,9 @@ class ViewAsian extends MovieParser {
         .get();
       mediaInfo.description = $('.desc').text().trim();
       //   mediaInfo.status = $('.mvic-info p:contains(Status)').text().replace('Status: ', '').trim();
-      mediaInfo.director = $('.mvic-info p:contains(Director)')
-        .text()
-        .replace('Director: ', '')
-        .trim();
+      mediaInfo.director = $('.mvic-info p:contains(Director)').text().replace('Director: ', '').trim();
       mediaInfo.country = $('.mvic-info p:contains(Country) a').text().trim();
-      mediaInfo.releaseDate = $('.mvic-info p:contains(Release)')
-        .text()
-        .replace('Release: ', '')
-        .trim();
+      mediaInfo.releaseDate = $('.mvic-info p:contains(Release)').text().replace('Release: ', '').trim();
 
       mediaInfo.episodes = [];
       $('ul#episodes-sv-1 li').each((i, el) => {
@@ -130,28 +117,19 @@ class ViewAsian extends MovieParser {
       switch (server) {
         case StreamingServers.AsianLoad:
           return {
-            ...(await new AsianLoad(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new AsianLoad(this.proxyConfig, this.adapter).extract(serverUrl)),
           };
         case StreamingServers.MixDrop:
           return {
-            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            ),
+            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
           };
         case StreamingServers.StreamTape:
           return {
-            sources: await new StreamTape(
-              this.proxyConfig,
-              this.adapter
-            ).extract(serverUrl),
+            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
           };
         case StreamingServers.StreamSB:
           return {
-            sources: await new StreamSB(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            ),
+            sources: await new StreamSB(this.proxyConfig, this.adapter).extract(serverUrl),
           };
         default:
           throw new Error('Server not supported');
@@ -162,8 +140,7 @@ class ViewAsian extends MovieParser {
 
     // return episodeId;
     try {
-      if (!episodeId.startsWith(this.baseUrl))
-        episodeId = `${this.baseUrl}/${episodeId}`;
+      if (!episodeId.startsWith(this.baseUrl)) episodeId = `${this.baseUrl}/${episodeId}`;
 
       const { data } = await this.client.get(episodeId);
 
@@ -174,23 +151,19 @@ class ViewAsian extends MovieParser {
         // asianload is the same as the standard server
         case StreamingServers.AsianLoad:
           serverUrl = `https:${$('.anime:contains(Asianload)').attr('data-video')}`;
-          if (!serverUrl.includes('pladrac'))
-            throw new Error('Try another server');
+          if (!serverUrl.includes('pladrac')) throw new Error('Try another server');
           break;
         case StreamingServers.MixDrop:
           serverUrl = $('.mixdrop').attr('data-video') as string;
-          if (!serverUrl.includes('mixdrop'))
-            throw new Error('Try another server');
+          if (!serverUrl.includes('mixdrop')) throw new Error('Try another server');
           break;
         case StreamingServers.StreamTape:
           serverUrl = $('.streamtape').attr('data-video') as string;
-          if (!serverUrl.includes('streamtape'))
-            throw new Error('Try another server');
+          if (!serverUrl.includes('streamtape')) throw new Error('Try another server');
           break;
         case StreamingServers.StreamSB:
           serverUrl = $('.streamsb').attr('data-video') as string;
-          if (!serverUrl.includes('stream'))
-            throw new Error('Try another server');
+          if (!serverUrl.includes('stream')) throw new Error('Try another server');
           break;
       }
 
@@ -200,10 +173,7 @@ class ViewAsian extends MovieParser {
     }
   };
 
-  override fetchEpisodeServers(
-    episodeId: string,
-    ...args: any
-  ): Promise<IEpisodeServer[]> {
+  override fetchEpisodeServers(episodeId: string, ...args: any): Promise<IEpisodeServer[]> {
     throw new Error('Method not implemented.');
   }
 }

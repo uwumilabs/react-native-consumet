@@ -39,15 +39,10 @@ class Anix extends AnimeParser {
   private readonly defaultSort = `&type[]=${this.MediaCategory.MOVIE}&type[]=${this.MediaCategory.TV}&type[]=${this.MediaCategory.ONA}&type[]=${this.MediaCategory.OVA}&type[]=${this.MediaCategory.SPECIAL}&type[]=${this.MediaCategory.TV_SPECIAL}&type[]=${this.MediaCategory.UNCATEGORIZED}&status[]=${MediaStatus.ONGOING}&status[]=${MediaStatus.COMPLETED}`;
   private readonly requestedWith = 'XMLHttpRequest';
 
-  constructor(
-    customBaseURL?: string,
-    proxy?: ProxyConfig,
-    adapter?: AxiosAdapter
-  ) {
+  constructor(customBaseURL?: string, proxy?: ProxyConfig, adapter?: AxiosAdapter) {
     super(proxy, adapter);
     this.baseUrl = customBaseURL
-      ? customBaseURL.startsWith('http://') ||
-        customBaseURL.startsWith('https://')
+      ? customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')
         ? customBaseURL
         : `http://${customBaseURL}`
       : this.baseUrl;
@@ -56,10 +51,7 @@ class Anix extends AnimeParser {
   /**
    * @param page page number (optional)
    */
-  fetchRecentEpisodes = async (
-    page: number = 1,
-    type?: number
-  ): Promise<ISearch<IAnimeResult>> => {
+  fetchRecentEpisodes = async (page: number = 1, type?: number): Promise<ISearch<IAnimeResult>> => {
     try {
       let url = `${this.baseUrl}/filter?${this.defaultSort}&sort=recently_updated&page=${page}`;
       if (type === 1) {
@@ -138,10 +130,7 @@ class Anix extends AnimeParser {
    * @param query Search query
    * @param page Page number (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
       const res = await this.client.get(
         `${this.baseUrl}/filter?keyword=${query}&page=${page}&type[]=${this.MediaCategory.MOVIE}&type[]=${this.MediaCategory.TV}&type[]=${this.MediaCategory.ONA}&type[]=${this.MediaCategory.OVA}&type[]=${this.MediaCategory.SPECIAL}&type[]=${this.MediaCategory.TV_SPECIAL}&type[]=${this.MediaCategory.MUSIC}&type[]=${this.MediaCategory.UNCATEGORIZED}`
@@ -216,14 +205,10 @@ class Anix extends AnimeParser {
       const animeInfo: IAnimeInfo = {
         id: id,
         title: $('.ani-data .maindata .ani-name.d-title')?.text().trim(),
-        englishTitle: $('.ani-data .maindata .ani-name.d-title')
-          ?.attr('data-en')
-          ?.trim(),
+        englishTitle: $('.ani-data .maindata .ani-name.d-title')?.attr('data-en')?.trim(),
         url: `${this.baseUrl}/anime/${id}`,
         image: $('.ani-data .poster img')?.attr('src'),
-        description: $('.ani-data .maindata .description .cts-block div')
-          .text()
-          .trim(),
+        description: $('.ani-data .maindata .description .cts-block div').text().trim(),
         episodes: [],
       };
       $('.episodes .ep-range').each((i, el) => {
@@ -254,8 +239,7 @@ class Anix extends AnimeParser {
         } else if (text.includes('Type: ')) {
           metaData.type = text.replace('Type: ', '');
         } else if (text.includes('Episodes: ')) {
-          animeInfo.totalEpisodes =
-            parseFloat(text.replace('Episodes: ', '')) ?? undefined;
+          animeInfo.totalEpisodes = parseFloat(text.replace('Episodes: ', '')) ?? undefined;
         } else if (text.includes('Country: ')) {
           animeInfo.countryOfOrigin = text.replace('Country: ', '');
         }
@@ -313,14 +297,10 @@ class Anix extends AnimeParser {
       const animeInfo: IAnimeInfo = {
         id: id,
         title: $('.ani-data .maindata .ani-name.d-title')?.text().trim(),
-        englishTitle: $('.ani-data .maindata .ani-name.d-title')
-          ?.attr('data-en')
-          ?.trim(),
+        englishTitle: $('.ani-data .maindata .ani-name.d-title')?.attr('data-en')?.trim(),
         url: `${this.baseUrl}/anime/${id}`,
         image: $('.ani-data .poster img')?.attr('src'),
-        description: $('.ani-data .maindata .description .cts-block div')
-          .text()
-          .trim(),
+        description: $('.ani-data .maindata .description .cts-block div').text().trim(),
         episodes: [],
       };
       $('.episodes .ep-range').each((i, el) => {
@@ -351,8 +331,7 @@ class Anix extends AnimeParser {
         } else if (text.includes('Type: ')) {
           metaData.type = text.replace('Type: ', '');
         } else if (text.includes('Episodes: ')) {
-          animeInfo.totalEpisodes =
-            parseFloat(text.replace('Episodes: ', '')) ?? undefined;
+          animeInfo.totalEpisodes = parseFloat(text.replace('Episodes: ', '')) ?? undefined;
         } else if (text.includes('Country: ')) {
           animeInfo.countryOfOrigin = text.replace('Country: ', '');
         }
@@ -431,9 +410,7 @@ class Anix extends AnimeParser {
             headers: {
               Referer: streamUri.origin,
             },
-            sources: await new VidHide(this.proxyConfig, this.adapter).extract(
-              streamUri
-            ),
+            sources: await new VidHide(this.proxyConfig, this.adapter).extract(streamUri),
           };
         }
         throw new Error('Vidhide server not found');
@@ -444,10 +421,7 @@ class Anix extends AnimeParser {
             headers: {
               Referer: streamUri.origin,
             },
-            sources: await new Mp4Upload(
-              this.proxyConfig,
-              this.adapter
-            ).extract(streamUri),
+            sources: await new Mp4Upload(this.proxyConfig, this.adapter).extract(streamUri),
           };
         }
         throw new Error('Mp4Upload server not found');
@@ -458,9 +432,7 @@ class Anix extends AnimeParser {
             headers: {
               Referer: uri.origin,
             },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(
-              streamUri
-            )),
+            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(streamUri)),
           };
         }
         throw new Error('StreamWish server not found');
@@ -478,10 +450,7 @@ class Anix extends AnimeParser {
             const match = jsonRegex.exec(scriptContent);
 
             if (match && match[0]) {
-              const extractedJson = match[0]
-                .replace('loadIframePlayer(', '')
-                .replace("'", '')
-                .replace("'", '');
+              const extractedJson = match[0].replace('loadIframePlayer(', '').replace("'", '').replace("'", '');
               const data = JSON.parse(extractedJson);
               if (data === undefined || data.length <= 0) {
                 throw new Error('BuiltIn server not found');
@@ -520,10 +489,7 @@ class Anix extends AnimeParser {
               for (const video of videoList ?? []) {
                 if (video.includes('BANDWIDTH')) {
                   const url = video.split('\n')[1];
-                  const quality = video
-                    .split('RESOLUTION=')[1]
-                    .split('\n')[0]
-                    .split('x')[1];
+                  const quality = video.split('RESOLUTION=')[1].split('\n')[0].split('x')[1];
                   const path = defaultUrl.replace(/\/[^/]*\.m3u8$/, '/');
                   episodeSources.sources.push({
                     url: path + url,
@@ -551,10 +517,7 @@ class Anix extends AnimeParser {
    * @param id Anime id
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = async (
-    id: string,
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = async (id: string, episodeId: string): Promise<IEpisodeServer[]> => {
     const url = `${this.baseUrl}/anime/${id}/${episodeId}`;
     const res = await this.client.get(url);
     const $ = load(res.data);
@@ -580,10 +543,7 @@ class Anix extends AnimeParser {
     id: string,
     episodeId: string,
     type?: string
-  ): Promise<
-    | { sub: IEpisodeServer[]; dub: IEpisodeServer[]; raw: IEpisodeServer[] }
-    | IEpisodeServer[]
-  > => {
+  ): Promise<{ sub: IEpisodeServer[]; dub: IEpisodeServer[]; raw: IEpisodeServer[] } | IEpisodeServer[]> => {
     const url = `${this.baseUrl}/anime/${id}/${episodeId}`;
     const res = await this.client.get(url);
     const $ = load(res.data);

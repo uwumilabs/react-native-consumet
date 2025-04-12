@@ -27,24 +27,20 @@ class MegaCloud extends VideoExtractor {
       if (!resp) return extractedData;
 
       if (Array.isArray(resp.sources)) {
-        extractedData.sources = resp.sources.map(
-          (s: { file: any; type: string }) => ({
-            url: s.file,
-            isM3U8: s.type === 'hls',
-            type: s.type,
-          })
-        );
+        extractedData.sources = resp.sources.map((s: { file: any; type: string }) => ({
+          url: s.file,
+          isM3U8: s.type === 'hls',
+          type: s.type,
+        }));
       }
 
       extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
       extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
 
-      extractedData.subtitles = resp.tracks.map(
-        (track: { file: any; label: any; kind: any }) => ({
-          url: track.file,
-          lang: track.label ? track.label : track.kind,
-        })
-      );
+      extractedData.subtitles = resp.tracks.map((track: { file: any; label: any; kind: any }) => ({
+        url: track.file,
+        lang: track.label ? track.label : track.kind,
+      }));
 
       return {
         intro: extractedData.intro,

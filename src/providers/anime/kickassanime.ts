@@ -35,9 +35,7 @@ class KickAssAnime extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     throw new Error('Method not implemented.');
   };
 
@@ -45,9 +43,7 @@ class KickAssAnime extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

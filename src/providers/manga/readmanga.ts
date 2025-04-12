@@ -50,11 +50,9 @@ interface RatingResult {
 class ReadManga extends MangaParser {
   override readonly name = 'ReadManga';
   protected override baseUrl: string = 'https://readmanga.app';
-  protected override logo =
-    'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
+  protected override logo = 'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
   protected override classPath = 'MANGA.ReadManga';
-  protected darkLogo =
-    'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
+  protected darkLogo = 'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
 
   /**
    *
@@ -77,9 +75,7 @@ class ReadManga extends MangaParser {
         hasNextPage: false,
         totalPages: 1,
         totalResults: (data as ReadMangaSearchResult).results.length,
-        results: this.formatSearchResultData(
-          (data as ReadMangaSearchResult).results
-        ),
+        results: this.formatSearchResultData((data as ReadMangaSearchResult).results),
       };
 
       return result;
@@ -90,31 +86,25 @@ class ReadManga extends MangaParser {
 
   fetchNewManga = async (page: number = 1): Promise<ISearch<IMangaResult>> => {
     if (page < 1) {
-      throw new Error(
-        'please provide a page number that is greater than- or equal to 1'
-      );
+      throw new Error('please provide a page number that is greater than- or equal to 1');
     }
 
     try {
-      const { data }: AxiosResponse = await this.client.get(
-        `${this.baseUrl}/ranking/${RankingType.NEW}/${page}`,
-        {
-          headers: {
-            'accept': 'application/json, text/javascript, */*; q=0.01',
-            'accept-language': 'en-US,en;q=0.9',
-            'sec-ch-ua':
-              '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest',
-            'Referer': this.baseUrl,
-            'Referrer-Policy': 'strict-origin-when-cross-origin',
-          },
-        }
-      );
+      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+        headers: {
+          'accept': 'application/json, text/javascript, */*; q=0.01',
+          'accept-language': 'en-US,en;q=0.9',
+          'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'x-requested-with': 'XMLHttpRequest',
+          'Referer': this.baseUrl,
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+        },
+      });
 
       const result = this.getRankingTitleCardData(data, page);
 
@@ -124,35 +114,27 @@ class ReadManga extends MangaParser {
     }
   };
 
-  fetchTopRatedManga = async (
-    page: number = 1
-  ): Promise<ISearch<IMangaResult>> => {
+  fetchTopRatedManga = async (page: number = 1): Promise<ISearch<IMangaResult>> => {
     if (page < 1) {
-      throw new Error(
-        'please provide a page number that is greater than- or equal to 1'
-      );
+      throw new Error('please provide a page number that is greater than- or equal to 1');
     }
 
     try {
-      const { data }: AxiosResponse = await this.client.get(
-        `${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`,
-        {
-          headers: {
-            'accept': 'application/json, text/javascript, */*; q=0.01',
-            'accept-language': 'en-US,en;q=0.9',
-            'sec-ch-ua':
-              '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest',
-            'Referer': this.baseUrl,
-            'Referrer-Policy': 'strict-origin-when-cross-origin',
-          },
-        }
-      );
+      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
+        headers: {
+          'accept': 'application/json, text/javascript, */*; q=0.01',
+          'accept-language': 'en-US,en;q=0.9',
+          'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'x-requested-with': 'XMLHttpRequest',
+          'Referer': this.baseUrl,
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+        },
+      });
 
       const result = this.getRankingTitleCardData(data, page);
 
@@ -168,8 +150,7 @@ class ReadManga extends MangaParser {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
-          'sec-ch-ua':
-            '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+          'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
           'sec-ch-ua-mobile': '?0',
           'sec-ch-ua-platform': '"Windows"',
           'sec-fetch-dest': 'empty',
@@ -183,60 +164,39 @@ class ReadManga extends MangaParser {
       const $: CheerioAPI = load(data);
 
       const dom = $('html');
-      const title = dom
-        .find('.section-header.mb-2 > .section-header-title.me-auto > h2')
-        .text()
-        .trim();
-      const image = dom
-        .find('.novels-detail > .novels-detail-left > img')
-        .attr('src');
+      const title = dom.find('.section-header.mb-2 > .section-header-title.me-auto > h2').text().trim();
+      const image = dom.find('.novels-detail > .novels-detail-left > img').attr('src');
 
       const altTitles = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(1) > div:nth-child(2) > span'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(1) > div:nth-child(2) > span')
         .text()
         .split(',');
       const status = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(2) > div:nth-child(2)'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(2) > div:nth-child(2)')
         .text()
         .trim();
       const genres = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(3) > div:nth-child(2) > a'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(3) > div:nth-child(2) > a')
         .map((index, ele) => $(ele).text().trim())
         .get();
       const type = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(4) > div:nth-child(2) > span'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(4) > div:nth-child(2) > span')
         .text()
         .trim();
       const rating = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(5) > div:nth-child(2) > span'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(5) > div:nth-child(2) > span')
         .text()
         .trim();
       const authors = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(6) > div:nth-child(2) > a'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(6) > div:nth-child(2) > a')
         .map((index, ele) => $(ele).text().trim())
         .get();
       const artists = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(7) > div:nth-child(2)'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(7) > div:nth-child(2)')
         .text()
         .trim();
       const views = dom
-        .find(
-          '.novels-detail > .novels-detail-right > ul > li:nth-child(8) > div:nth-child(2)'
-        )
+        .find('.novels-detail > .novels-detail-right > ul > li:nth-child(8) > div:nth-child(2)')
         .text()
         .trim();
       const description = dom.find('.col-md-12.mb-3 > .empty-box > p').text();
@@ -275,16 +235,13 @@ class ReadManga extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const { data } = await this.client.get(chapterId, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
-          'sec-ch-ua':
-            '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+          'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
           'sec-ch-ua-mobile': '?0',
           'sec-ch-ua-platform': '"Windows"',
           'sec-fetch-dest': 'empty',
@@ -317,10 +274,7 @@ class ReadManga extends MangaParser {
     }
   };
 
-  private getRankingTitleCardData = (
-    text: string,
-    page: number
-  ): ISearch<IMangaResult> => {
+  private getRankingTitleCardData = (text: string, page: number): ISearch<IMangaResult> => {
     const $: CheerioAPI = load(text);
     const dom = $('html');
 
@@ -338,38 +292,15 @@ class ReadManga extends MangaParser {
             .join(' ')
             .trim(),
           status: this.getStatus(
-            $(ele)
-              .find(
-                'div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(1) > span'
-              )
-              .text()
-              .trim()
+            $(ele).find('div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(1) > span').text().trim()
           ),
           categories: $(ele)
-            .find(
-              'div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(2) > a'
-            )
+            .find('div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(2) > a')
             .map((index, str) => $(str).text())
             .get(),
-          type: $(ele)
-            .find(
-              'div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(3) > span'
-            )
-            .text(),
-          views: parseInt(
-            $(ele)
-              .find(
-                'div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(4) > span'
-              )
-              .text()
-          ),
-          rate: parseInt(
-            $(ele)
-              .find(
-                'div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(5) > span'
-              )
-              .text()
-          ),
+          type: $(ele).find('div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(3) > span').text(),
+          views: parseInt($(ele).find('div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(4) > span').text()),
+          rate: parseInt($(ele).find('div:nth-child(2) > div:nth-child(2) > ul > li:nth-child(5) > span').text()),
         };
       })
       .get();
@@ -377,18 +308,13 @@ class ReadManga extends MangaParser {
     const totalPages =
       dom.find('nav.cm-pagination > a:last-child').attr('href') === '#'
         ? page
-        : this.getTotalPages(
-            dom.find('nav.cm-pagination > a:last-child').attr('href') as string,
-            '/'
-          );
+        : this.getTotalPages(dom.find('nav.cm-pagination > a:last-child').attr('href') as string, '/');
 
     const result: ISearch<IMangaResult> = {
       results: titles,
       currentPage: page,
       totalPages: totalPages,
-      hasNextPage: !(
-        dom.find('nav.cm-pagination > a:last-child').attr('href') === '#'
-      ),
+      hasNextPage: !(dom.find('nav.cm-pagination > a:last-child').attr('href') === '#'),
     };
     return result;
   };
@@ -399,9 +325,7 @@ class ReadManga extends MangaParser {
     return parseInt(split[split.length - 1]!);
   };
 
-  private formatSearchResultData = (
-    results: ReadMangaSearchResultData[]
-  ): IMangaResult[] => {
+  private formatSearchResultData = (results: ReadMangaSearchResultData[]): IMangaResult[] => {
     const formattedResults: IMangaResult[] = results.map((result) => {
       const split = result.link.split('/');
       const id = split[split.length - 1];

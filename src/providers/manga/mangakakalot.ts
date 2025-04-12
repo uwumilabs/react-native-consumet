@@ -13,8 +13,7 @@ import {
 class MangaKakalot extends MangaParser {
   override readonly name = 'MangaKakalot';
   protected override baseUrl = 'https://mangakakalot.com';
-  protected override logo =
-    'https://techbigs.com/uploads/2022/1/mangakakalot-apkoptimized.jpg';
+  protected override logo = 'https://techbigs.com/uploads/2022/1/mangakakalot-apkoptimized.jpg';
   protected override classPath = 'MANGA.MangaKakalot';
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
@@ -22,20 +21,14 @@ class MangaKakalot extends MangaParser {
       id: mangaId,
       title: '',
     };
-    const url = mangaId.includes('read')
-      ? this.baseUrl
-      : 'https://chapmanganato.to';
+    const url = mangaId.includes('read') ? this.baseUrl : 'https://chapmanganato.to';
     try {
       const { data } = await this.client.get(`${url}/${mangaId}`);
       const $ = load(data);
 
       if (url.includes('mangakakalot')) {
-        mangaInfo.title = $(
-          'div.manga-info-top > ul > li:nth-child(1) > h1'
-        ).text();
-        mangaInfo.altTitles = $(
-          'div.manga-info-top > ul > li:nth-child(1) > h2'
-        )
+        mangaInfo.title = $('div.manga-info-top > ul > li:nth-child(1) > h1').text();
+        mangaInfo.altTitles = $('div.manga-info-top > ul > li:nth-child(1) > h2')
           .text()
           .replace('Alternative :', '')
           .split(';');
@@ -50,12 +43,7 @@ class MangaKakalot extends MangaParser {
           .map((i, el) => $(el).text())
           .get();
 
-        switch (
-          $('div.manga-info-top > ul > li:nth-child(3)')
-            .text()
-            .replace('Status :', '')
-            .trim()
-        ) {
+        switch ($('div.manga-info-top > ul > li:nth-child(3)').text().replace('Status :', '').trim()) {
           case 'Completed':
             mangaInfo.status = MediaStatus.COMPLETED;
             break;
@@ -66,11 +54,7 @@ class MangaKakalot extends MangaParser {
             mangaInfo.status = MediaStatus.UNKNOWN;
         }
         mangaInfo.views = parseInt(
-          $('div.manga-info-top > ul > li:nth-child(6)')
-            .text()
-            .replace('View : ', '')
-            .replace(/,/g, '')
-            .trim()
+          $('div.manga-info-top > ul > li:nth-child(6)').text().replace('View : ', '').replace(/,/g, '').trim()
         );
         mangaInfo.authors = $('div.manga-info-top > ul > li:nth-child(2) > a')
           .map((i, el) => $(el).text())
@@ -81,20 +65,14 @@ class MangaKakalot extends MangaParser {
             (i, el): IMangaChapter => ({
               id: $(el).find('span > a').attr('href')?.split('chapter/')[1]!,
               title: $(el).find('span > a').text(),
-              views: parseInt(
-                $(el).find('span:nth-child(2)').text()!.replace(/,/g, '').trim()
-              ),
+              views: parseInt($(el).find('span:nth-child(2)').text()!.replace(/,/g, '').trim()),
               releasedDate: $(el).find('span:nth-child(3)').attr('title'),
             })
           )
           .get();
       } else {
-        mangaInfo.title = $(
-          ' div.panel-story-info > div.story-info-right > h1'
-        ).text();
-        mangaInfo.altTitles = $(
-          'div.story-info-right > table > tbody > tr:nth-child(1) > td.table-value > h2'
-        )
+        mangaInfo.title = $(' div.panel-story-info > div.story-info-right > h1').text();
+        mangaInfo.altTitles = $('div.story-info-right > table > tbody > tr:nth-child(1) > td.table-value > h2')
           .text()
           .split(';');
         mangaInfo.description = $('#panel-story-info-description')
@@ -103,22 +81,12 @@ class MangaKakalot extends MangaParser {
           .replace(/\n/g, '')
           .trim();
         mangaInfo.headerForImage = { Referer: 'https://readmanganato.com' };
-        mangaInfo.image = $('div.story-info-left > span.info-image > img').attr(
-          'src'
-        );
-        mangaInfo.genres = $(
-          'div.story-info-right > table > tbody > tr:nth-child(4) > td.table-value > a'
-        )
+        mangaInfo.image = $('div.story-info-left > span.info-image > img').attr('src');
+        mangaInfo.genres = $('div.story-info-right > table > tbody > tr:nth-child(4) > td.table-value > a')
           .map((i, el) => $(el).text())
           .get();
 
-        switch (
-          $(
-            'div.story-info-right > table > tbody > tr:nth-child(3) > td.table-value'
-          )
-            .text()
-            .trim()
-        ) {
+        switch ($('div.story-info-right > table > tbody > tr:nth-child(3) > td.table-value').text().trim()) {
           case 'Completed':
             mangaInfo.status = MediaStatus.COMPLETED;
             break;
@@ -129,34 +97,19 @@ class MangaKakalot extends MangaParser {
             mangaInfo.status = MediaStatus.UNKNOWN;
         }
         mangaInfo.views = parseInt(
-          $('div.story-info-right > div > p:nth-child(2) > span.stre-value')
-            .text()
-            .replace(/,/g, '')
-            .trim()
+          $('div.story-info-right > div > p:nth-child(2) > span.stre-value').text().replace(/,/g, '').trim()
         );
-        mangaInfo.authors = $(
-          'div.story-info-right > table > tbody > tr:nth-child(2) > td.table-value > a'
-        )
+        mangaInfo.authors = $('div.story-info-right > table > tbody > tr:nth-child(2) > td.table-value > a')
           .map((i, el) => $(el).text())
           .get();
 
-        mangaInfo.chapters = $(
-          'div.container-main-left > div.panel-story-chapter-list > ul > li'
-        )
+        mangaInfo.chapters = $('div.container-main-left > div.panel-story-chapter-list > ul > li')
           .map(
             (i, el): IMangaChapter => ({
               id: $(el).find('a').attr('href')?.split(`${mangaId}/`)[1]!,
               title: $(el).find('a').text(),
-              views: parseInt(
-                $(el)
-                  .find('span.chapter-view.text-nowrap')
-                  .text()!
-                  .replace(/,/g, '')
-                  .trim()
-              ),
-              releasedDate: $(el)
-                .find('span.chapter-time.text-nowrap')
-                .attr('title'),
+              views: parseInt($(el).find('span.chapter-view.text-nowrap').text()!.replace(/,/g, '').trim()),
+              releasedDate: $(el).find('span.chapter-time.text-nowrap').attr('title'),
             })
           )
           .get();
@@ -168,10 +121,7 @@ class MangaKakalot extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string,
-    mangaId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string, mangaId: string): Promise<IMangaChapterPage[]> => {
     try {
       const url = chapterId.includes('$$READMANGANATO')
         ? `${this.baseUrl}/chapter/${chapterId}`
@@ -205,9 +155,7 @@ class MangaKakalot extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search/story/${query.replace(/ /g, '_')}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search/story/${query.replace(/ /g, '_')}`);
       const $ = load(data);
 
       const results = $('div.daily-update > div > div')

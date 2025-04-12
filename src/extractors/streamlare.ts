@@ -13,17 +13,12 @@ class StreamLare extends VideoExtractor {
   private readonly USER_AGENT =
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36';
 
-  async extract(
-    videoUrl: URL,
-    userAgent: string = this.USER_AGENT.toString()
-  ): Promise<IVideo[] | ISource> {
+  async extract(videoUrl: URL, userAgent: string = this.USER_AGENT.toString()): Promise<IVideo[] | ISource> {
     const res = await this.client.get(videoUrl.href);
 
     const $ = load(res.data);
 
-    const CSRF_TOKEN = $('head > meta:nth-child(3)')
-      .attr('content')
-      ?.toString();
+    const CSRF_TOKEN = $('head > meta:nth-child(3)').attr('content')?.toString();
 
     const videoId = videoUrl.href.match(this.regex)![1];
 

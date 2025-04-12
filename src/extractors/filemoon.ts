@@ -18,13 +18,11 @@ class Filemoon extends VideoExtractor {
         'Accept':
           'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'Accept-Language': 'en-US,en;q=0.9',
-        'Cookie':
-          'file_id=40342338; aff=23788; ref_url=https%3A%2F%2Fbf0skv.org%2Fe%2Fm0507zf4xqor; lang=1',
+        'Cookie': 'file_id=40342338; aff=23788; ref_url=https%3A%2F%2Fbf0skv.org%2Fe%2Fm0507zf4xqor; lang=1',
         'Priority': 'u=0, i',
         'Referer': videoUrl.origin,
         'Origin': videoUrl.href,
-        'Sec-Ch-Ua':
-          '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
         'Sec-Ch-Ua-Mobile': '?0',
         'Sec-Ch-Ua-Platform': '"Windows"',
         'Sec-Fetch-Dest': 'iframe',
@@ -38,15 +36,9 @@ class Filemoon extends VideoExtractor {
     const { data } = await this.client.get(videoUrl.href, options);
     const $ = load(data);
     try {
-      const { data } = await this.client.get(
-        $('iframe').attr('src')!,
-        options
-      )!;
-      const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
-      );
-      const links =
-        unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
+      const { data } = await this.client.get($('iframe').attr('src')!, options)!;
+      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
+      const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
       const m3u8Link = links[1];
       this.sources.unshift({
         url: m3u8Link,

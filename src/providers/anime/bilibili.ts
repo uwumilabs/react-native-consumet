@@ -26,12 +26,7 @@ class Bilibili extends AnimeParser {
   private locale = 'en_US';
   private sgProxy = 'https://cors.consumet.stream';
 
-  constructor(
-    cookie?: string,
-    locale?: string,
-    proxyConfig?: ProxyConfig,
-    adapter?: AxiosAdapter
-  ) {
+  constructor(cookie?: string, locale?: string, proxyConfig?: ProxyConfig, adapter?: AxiosAdapter) {
     super(proxyConfig, adapter);
     this.locale = locale ?? this.locale;
     if (!cookie) return;
@@ -43,8 +38,7 @@ class Bilibili extends AnimeParser {
       `${this.sgProxy}/${this.apiUrl}/v2/search?keyword=${query}&platform=web&pn=1&ps=20&qid=&s_locale=${this.locale}`,
       { headers: { cookie: this.cookie } }
     );
-    if (!data.data.filter((item: any) => item.module.includes('ogv')).length)
-      return { results: [], totalResults: 0 };
+    if (!data.data.filter((item: any) => item.module.includes('ogv')).length) return { results: [], totalResults: 0 };
 
     const results = data.data.find((item: any) => item.module.includes('ogv'));
 
@@ -104,10 +98,7 @@ class Bilibili extends AnimeParser {
     }
   }
 
-  override async fetchEpisodeSources(
-    episodeId: string,
-    ...args: any
-  ): Promise<ISource> {
+  override async fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource> {
     try {
       const { data } = await this.client.get(
         `${this.sgProxy}/${this.apiUrl}/v2/subtitle?s_locale=${this.locale}&platform=web&episode_id=${episodeId}`,
@@ -134,9 +125,7 @@ class Bilibili extends AnimeParser {
     }
   }
 
-  override async fetchEpisodeServers(
-    episodeId: string
-  ): Promise<IEpisodeServer[]> {
+  override async fetchEpisodeServers(episodeId: string): Promise<IEpisodeServer[]> {
     throw new Error('Method not implemented.');
   }
 }

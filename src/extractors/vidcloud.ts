@@ -1,9 +1,4 @@
-import {
-  VideoExtractor,
-  type IVideo,
-  type ISubtitle,
-  type Intro,
-} from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';
 import Consumet from '../NativeConsumet';
 
@@ -16,11 +11,10 @@ class VidCloud extends VideoExtractor {
     _?: boolean,
     referer: string = 'https://flixhq.to/'
   ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
-    const result: { sources: IVideo[]; subtitles: ISubtitle[]; intro?: Intro } =
-      {
-        sources: [],
-        subtitles: [],
-      };
+    const result: { sources: IVideo[]; subtitles: ISubtitle[]; intro?: Intro } = {
+      sources: [],
+      subtitles: [],
+    };
     try {
       const options = {
         headers: {
@@ -50,12 +44,8 @@ class VidCloud extends VideoExtractor {
         const { data } = await this.client.get(source.file, options);
         const urls = data
           .split('\n')
-          .filter(
-            (line: string) => line.includes('.m3u8') || line.endsWith('m3u8')
-          ) as string[];
-        const qualities = data
-          .split('\n')
-          .filter((line: string) => line.includes('RESOLUTION=')) as string[];
+          .filter((line: string) => line.includes('.m3u8') || line.endsWith('m3u8')) as string[];
+        const qualities = data.split('\n').filter((line: string) => line.includes('RESOLUTION=')) as string[];
 
         const TdArray = qualities.map((s, i) => {
           const f1 = s.split('x')[1];
@@ -76,8 +66,7 @@ class VidCloud extends VideoExtractor {
 
       result.sources.push({
         url: sources[0].file,
-        isM3U8:
-          sources[0].file.includes('.m3u8') || sources[0].file.endsWith('m3u8'),
+        isM3U8: sources[0].file.includes('.m3u8') || sources[0].file.endsWith('m3u8'),
         quality: 'auto',
       });
 

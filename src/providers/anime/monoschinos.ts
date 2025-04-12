@@ -16,8 +16,7 @@ import {
 class MonosChinos extends AnimeParser {
   override readonly name = 'MonosChinos';
   protected override baseUrl = 'https://monoschinos2.com';
-  protected override logo =
-    'https://monoschinos2.com/public/favicon.ico?v=4.57';
+  protected override logo = 'https://monoschinos2.com/public/favicon.ico?v=4.57';
   protected override classPath = 'ANIME.MonosChinos';
 
   /**
@@ -58,10 +57,7 @@ class MonosChinos extends AnimeParser {
    * @param id Anime id
    * @param totalEpisodes how many episodes you want the info of (why? => refer to the docs)
    */
-  override fetchAnimeInfo = async (
-    id: string,
-    totalEpisodes: number = 1000
-  ): Promise<IAnimeInfo> => {
+  override fetchAnimeInfo = async (id: string, totalEpisodes: number = 1000): Promise<IAnimeInfo> => {
     try {
       const url = `${this.baseUrl}/anime/${id}`;
       const res = await this.client.get(url);
@@ -102,13 +98,9 @@ class MonosChinos extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     try {
-      const res = await this.client.get(
-        `https://monoschinos2.com/ver/${episodeId}`
-      );
+      const res = await this.client.get(`https://monoschinos2.com/ver/${episodeId}`);
       const $ = load(res.data);
 
       let decodedUrl;
@@ -122,16 +114,11 @@ class MonosChinos extends AnimeParser {
 
       try {
         decodedUrl = await this.#getServerDecodedUrl($, StreamingServers.Voe);
-        const voeResult = await new Voe().extract(
-          new URL(decodedUrl.replace('voe.sx', 'thomasalthoughhear.com'))
-        );
+        const voeResult = await new Voe().extract(new URL(decodedUrl.replace('voe.sx', 'thomasalthoughhear.com')));
         sources = voeResult.sources;
         subtitles = voeResult?.subtitles;
       } catch (err) {
-        decodedUrl = await this.#getServerDecodedUrl(
-          $,
-          StreamingServers.StreamTape
-        );
+        decodedUrl = await this.#getServerDecodedUrl($, StreamingServers.StreamTape);
         sources = await new StreamTape().extract(new URL(decodedUrl));
         try {
         } catch (err) {
@@ -151,9 +138,7 @@ class MonosChinos extends AnimeParser {
         return $(this).text() === server;
       });
 
-      const res2 = await this.client.get(
-        `https://monoschinos2.com/reproductor?url=${button.attr('data-player')}`
-      );
+      const res2 = await this.client.get(`https://monoschinos2.com/reproductor?url=${button.attr('data-player')}`);
       const $2 = load(res2.data);
       const base64Match = $2.html().match(/atob\("([^"]+)"\)/)!;
 
@@ -167,9 +152,7 @@ class MonosChinos extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

@@ -27,12 +27,9 @@ class AnimePahe extends AnimeParser {
    */
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`,
-        {
-          headers: this.Headers(false),
-        }
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+        headers: this.Headers(false),
+      });
 
       const res = {
         results: data.data.map((item: any) => ({
@@ -55,10 +52,7 @@ class AnimePahe extends AnimeParser {
    * @param id id format id/session
    * @param episodePage Episode page number (optional) default: -1 to get all episodes. number of episode pages can be found in the anime info object
    */
-  override fetchAnimeInfo = async (
-    id: string,
-    episodePage: number = -1
-  ): Promise<IAnimeInfo> => {
+  override fetchAnimeInfo = async (id: string, episodePage: number = -1): Promise<IAnimeInfo> => {
     const animeInfo: IAnimeInfo = {
       id: id,
       title: '',
@@ -90,33 +84,20 @@ class AnimePahe extends AnimeParser {
         default:
           animeInfo.status = MediaStatus.UNKNOWN;
       }
-      animeInfo.type = $('div.anime-info > p:contains("Type:") > a')
-        .text()
-        .trim()
-        .toUpperCase() as MediaFormat;
+      animeInfo.type = $('div.anime-info > p:contains("Type:") > a').text().trim().toUpperCase() as MediaFormat;
       animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")')
         .text()
         .split('to')[0]!
         .replace('Aired:', '')
         .trim();
-      animeInfo.studios = $('div.anime-info > p:contains("Studio:")')
-        .text()
-        .replace('Studio:', '')
-        .trim()
-        .split('\n');
-      animeInfo.totalEpisodes = parseInt(
-        $('div.anime-info > p:contains("Episodes:")')
-          .text()
-          .replace('Episodes:', '')
-      );
+      animeInfo.studios = $('div.anime-info > p:contains("Studio:")').text().replace('Studio:', '').trim().split('\n');
+      animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace('Episodes:', ''));
       animeInfo.recommendations = [];
       $('div.anime-recommendation .col-sm-6').each((i, el) => {
         animeInfo.recommendations?.push({
           id: $(el).find('.col-2 > a').attr('href')?.split('/')[2]!,
           title: $(el).find('.col-2 > a').attr('title')!,
-          image:
-            $(el).find('.col-2 > a > img').attr('src') ||
-            $(el).find('.col-2 > a > img').attr('data-src'),
+          image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
           url: `${this.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
           releaseDate: $(el).find('div.col-9 > a').text().trim(),
           status: $(el).find('div.col-9 > strong').text().trim() as MediaStatus,
@@ -128,9 +109,7 @@ class AnimePahe extends AnimeParser {
         animeInfo.relations?.push({
           id: $(el).find('.col-2 > a').attr('href')?.split('/')[2]!,
           title: $(el).find('.col-2 > a').attr('title')!,
-          image:
-            $(el).find('.col-2 > a > img').attr('src') ||
-            $(el).find('.col-2 > a > img').attr('data-src'),
+          image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
           url: `${this.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
           releaseDate: $(el).find('div.col-9 > a').text().trim(),
           status: $(el).find('div.col-9 > strong').text().trim() as MediaStatus,
@@ -142,12 +121,9 @@ class AnimePahe extends AnimeParser {
       if (episodePage < 0) {
         const {
           data: { last_page, data },
-        } = await this.client.get(
-          `${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`,
-          {
-            headers: this.Headers(id),
-          }
-        );
+        } = await this.client.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
+          headers: this.Headers(id),
+        });
 
         animeInfo.episodePages = last_page;
 
@@ -182,16 +158,11 @@ class AnimePahe extends AnimeParser {
    *
    * @param episodeId episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/play/${episodeId}`,
-        {
-          headers: this.Headers(episodeId.split('/')[0]!),
-        }
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/play/${episodeId}`, {
+        headers: this.Headers(episodeId.split('/')[0]!),
+      });
 
       const $ = load(data);
 
@@ -220,14 +191,10 @@ class AnimePahe extends AnimeParser {
     }
   };
 
-  private fetchEpisodes = async (
-    session: string,
-    page: number
-  ): Promise<IAnimeEpisode[]> => {
-    const res = await this.client.get(
-      `${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`,
-      { headers: this.Headers(session) }
-    );
+  private fetchEpisodes = async (session: string, page: number): Promise<IAnimeEpisode[]> => {
+    const res = await this.client.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
+      headers: this.Headers(session),
+    });
 
     const epData = res.data.data;
 
@@ -249,9 +216,7 @@ class AnimePahe extends AnimeParser {
    * @deprecated
    * @attention AnimePahe doesn't support this method
    */
-  override fetchEpisodeServers = (
-    episodeLink: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeLink: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 
@@ -261,8 +226,7 @@ class AnimePahe extends AnimeParser {
       'accept': 'application/json, text/javascript, */*; q=0.01',
       'Cookie':
         '__ddg8_=t30Kk4WN3QXxGGeS; __ddg10_=1743778081; __ddg9_=103.123.226.218; __ddgid_=UyBX8L5x2N3PVwHQ; __ddgmark_=zzjwIU0XrzYhLZNA; __ddg2_=mYFJpxSZiwbzc2Lj; __ddg1_=dyfub1Uw7hUQG4jJhFzD; XSRF-TOKEN=eyJpdiI6Ii9qdkJOVkdIckU4c3pURnE4UGQwRGc9PSIsInZhbHVlIjoiWFd0L3hJaXA2MmZ4emtuSnFTWFNnemtPaHdwMmpISDkwV2VtVDJ5Tjl1VVFHNEd0aXlPNzRTTkZ4ZXRHUVliZzhWbng1cEV3MjgvMWFtekRETkRpY0pOTE9sNkM3enVVeGxGTExTRzlkZUhmZUtlZVAwRitOYVUvaGdBV0J1a04iLCJtYWMiOiI3OWEwZDZhZmQwMmJhYjZlZmU3MDFiN2EyM2E2ZDU2MjE0YTNhNWI3MGEwZTQzZDEzYTIyMGY4OTVhYWMzYzI0IiwidGFnIjoiIn0%3D; laravel_session=eyJpdiI6Im5jdVZKbjBpck56eEtlWEhzNVFGR0E9PSIsInZhbHVlIjoiWG42MjV4RmVFa1hNcVUvWFFaRDlQdmZsbU53UlMvRUFzL0padFRTcFhSYmhJaWJ5R3RheW11SElCcGl5NkRxUkMwdW8rUTFKMW5qblBRV2xHMmZXZHd3S3dMMExVTHVVamNwZk1IMkJIRmUwcjMrV0VXM2JEcWJZb2FOTXNmaWgiLCJtYWMiOiI3ODk4YWJkYjM0ZGVkZDYzNWUxNWQxMjFhOGZkYWQ3Yzc2ZmIzN2Q1MGUyMjcxMGQxNTU5YTNjNTU3MGE5YTRmIiwidGFnIjoiIn0%3D; latest=6081; res=1080; aud=jpn; av1=0',
-      'sec-ch-ua':
-        '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
+      'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
       'sec-fetch-dest': 'empty',

@@ -11,19 +11,14 @@ function stringToWordArray(input: string) {
 
 function wordArrayToHex(array: Uint32Array, length: number) {
   return Array.from({ length }, (_, i) =>
-    ((array[i >>> 2] >>> (24 - (i % 4) * 8)) & 255)
-      .toString(16)
-      .padStart(2, '0')
+    ((array[i >>> 2] >>> (24 - (i % 4) * 8)) & 255).toString(16).padStart(2, '0')
   ).join('');
 }
 
 const transform = (s = '') => s.substr(0, 48);
 
 function calculateHash(input: string) {
-  return Array.from(input).reduce(
-    (hash, char) => (hash << 5) - hash + char.charCodeAt(0),
-    0
-  );
+  return Array.from(input).reduce((hash, char) => (hash << 5) - hash + char.charCodeAt(0), 0);
 }
 function padString(input: string) {
   const paddingLength = 16 - (input.length % 16);
@@ -35,14 +30,10 @@ function processBlock(n: number[]) {
 
 //? needs to be enhanced
 function encryptBlock(_0x13a508: number[], _0x5baaa1: number) {
-  const [_0x458390, _0x32aa26, _0x53dadc, _0x4810d1, _0x3c0f1b, _0x128bff] =
-    staticData;
+  const [_0x458390, _0x32aa26, _0x53dadc, _0x4810d1, _0x3c0f1b, _0x128bff] = staticData;
   const _0x21ba3f =
-    _0x5baaa1 === 0
-      ? [22039283, 1457920463, 776125350, -1941999367]
-      : _0x13a508.slice(_0x5baaa1 - 4, _0x5baaa1);
-  for (let _0x5b9637 = 0; _0x5b9637 < 4; _0x5b9637++)
-    _0x13a508[_0x5baaa1 + _0x5b9637] ^= _0x21ba3f[_0x5b9637];
+    _0x5baaa1 === 0 ? [22039283, 1457920463, 776125350, -1941999367] : _0x13a508.slice(_0x5baaa1 - 4, _0x5baaa1);
+  for (let _0x5b9637 = 0; _0x5b9637 < 4; _0x5b9637++) _0x13a508[_0x5baaa1 + _0x5b9637] ^= _0x21ba3f[_0x5b9637];
 
   const _0x116405 = 10;
   let _0x4d3231 = _0x13a508[_0x5baaa1] ^ _0x458390[0],
@@ -166,8 +157,5 @@ export default function getKKey({
 
   processBlock(_0x3db385 as number[]);
 
-  return wordArrayToHex(
-    Uint32Array.of(...(_0x3db385 as number[])),
-    _0x2f9d88 as number
-  ).toUpperCase();
+  return wordArrayToHex(Uint32Array.of(...(_0x3db385 as number[])), _0x2f9d88 as number).toUpperCase();
 }

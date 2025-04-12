@@ -13,10 +13,7 @@ abstract class MangaParser extends BaseParser {
    *
    * returns chapter (image links)
    */
-  abstract fetchChapterPages(
-    chapterId: string,
-    ...args: any
-  ): Promise<IMangaChapterPage[]>;
+  abstract fetchChapterPages(chapterId: string, ...args: any): Promise<IMangaChapterPage[]>;
 }
 
 export default MangaParser;

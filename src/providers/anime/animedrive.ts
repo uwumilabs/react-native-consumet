@@ -22,29 +22,21 @@ interface WatchAnime {
 class AnimeDrive extends AnimeParser {
   override readonly name = 'AnimeDrive';
   protected override baseUrl = 'https://animedrive.hu';
-  protected override logo =
-    'https://cdn.rcd.gg/PreMiD/websites/A/AnimeDrive/assets/logo.png';
+  protected override logo = 'https://cdn.rcd.gg/PreMiD/websites/A/AnimeDrive/assets/logo.png';
   protected override classPath = 'ANIME.animedrive';
 
   /**
    * @param query Search query
    * @param page Page number (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
 
       const $ = load(data);
 
       const hasNextPage =
-        $(
-          '.nk-pagination.nk-pagination-center > nav > a.nk-pagination-current-white'
-        ).next('a').length > 0;
+        $('.nk-pagination.nk-pagination-center > nav > a.nk-pagination-current-white').next('a').length > 0;
 
       const searchResults: IAnimeResult[] = [];
 
@@ -55,15 +47,9 @@ class AnimeDrive extends AnimeParser {
             .find('div.card__content > h3.card__title > a')
             .attr('href')
             ?.replace('https://animedrive.hu/anime/?id=', '');
-          const title = $(el)
-            .find('div.card__content > h3.card__title > a')
-            .text();
-          const image = $(el)
-            .find('div.card__cover > div.nk-image-box-1-a > img')
-            .attr('src');
-          const url = $(el)
-            .find('div.card__content > h3.card__title > a')
-            .attr('href');
+          const title = $(el).find('div.card__content > h3.card__title > a').text();
+          const image = $(el).find('div.card__cover > div.nk-image-box-1-a > img').attr('src');
+          const url = $(el).find('div.card__content > h3.card__title > a').attr('href');
           const subOrDub = 'sub'; // there is no hungarian dub for animes sadly
 
           if (id && title && image && url) {
@@ -95,44 +81,23 @@ class AnimeDrive extends AnimeParser {
 
       info.title = $('div.col-sm-12.col-md-8.col-lg-9 > h2').text();
       info.image = $('div.nk-image-box-1-a.col-12 > img').attr('src');
-      info.description = $('div.col-sm-12.col-md-8.col-lg-9 > p.col-12')
-        .text()
-        .trim();
+      info.description = $('div.col-sm-12.col-md-8.col-lg-9 > p.col-12').text().trim();
 
-      const typeText = $('table.animeSpecs.left td:contains("TÍPUS:")')
-        .next('td')
-        .text()
-        .trim();
+      const typeText = $('table.animeSpecs.left td:contains("TÍPUS:")').next('td').text().trim();
       info.type = this.parseType(typeText);
 
-      info.releaseYear = $('table.animeSpecs.left td:contains("KIADÁS:")')
-        .next('td')
-        .text()
-        .trim();
+      info.releaseYear = $('table.animeSpecs.left td:contains("KIADÁS:")').next('td').text().trim();
 
-      const statusText = $('table.animeSpecs.left td:contains("STÁTUSZ:")')
-        .next('td')
-        .text()
-        .trim();
+      const statusText = $('table.animeSpecs.left td:contains("STÁTUSZ:")').next('td').text().trim();
       info.status = this.parseStatus(statusText);
 
-      const totalEpisodesWithSlash = $(
-        'table.animeSpecs.right td:contains("RÉSZEK:")'
-      )
-        .next('td')
-        .text()
-        .trim();
-      const totalEpisodesWithoutSlash = totalEpisodesWithSlash
-        .split('/')[0]!
-        .trim();
+      const totalEpisodesWithSlash = $('table.animeSpecs.right td:contains("RÉSZEK:")').next('td').text().trim();
+      const totalEpisodesWithoutSlash = totalEpisodesWithSlash.split('/')[0]!.trim();
       info.totalEpisodes = parseInt(totalEpisodesWithoutSlash);
       info.url = `${this.baseUrl}/anime/?id=${id}`;
       info.episodes = [];
 
-      const episodes = Array.from(
-        { length: info.totalEpisodes },
-        (_, i) => i + 1
-      );
+      const episodes = Array.from({ length: info.totalEpisodes }, (_, i) => i + 1);
       episodes.forEach((_, i) => {
         info.episodes?.push({
           id: `?id=${id}&ep=${i + 1}`,
@@ -178,32 +143,21 @@ class AnimeDrive extends AnimeParser {
   /**
    * @param page Page number
    */
-  fetchRecentEpisodes = async (
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  fetchRecentEpisodes = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/latest-added?page=${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/latest-added?page=${page}`);
       const $ = load(data);
 
-      const hasNextPage = !$('.pagination > nav > ul > li')
-        .last()
-        .hasClass('disabled');
+      const hasNextPage = !$('.pagination > nav > ul > li').last().hasClass('disabled');
 
       const recentEpisodes: IAnimeResult[] = [];
 
       $('div.film_list-wrap > div').each((i, el) => {
-        const id = $(el)
-          .find('div.film-poster > a')
-          .attr('href')
-          ?.replace('/watch/', '');
+        const id = $(el).find('div.film-poster > a').attr('href')?.replace('/watch/', '');
         const image = $(el).find('div.film-poster > img').attr('data-src');
         const title = $(el).find('div.film-poster > img').attr('alt');
         const url = `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`;
-        const episode = parseInt(
-          $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!
-        );
+        const episode = parseInt($(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!);
         if (id && image && title && url && !isNaN(episode)) {
           recentEpisodes.push({ id, image, title, url, episode });
         }
@@ -223,9 +177,7 @@ class AnimeDrive extends AnimeParser {
    *
    * @param episodeId episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     const headers = {
       'Accept':
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -252,15 +204,12 @@ class AnimeDrive extends AnimeParser {
       const $ = load(response.data);
       const htmlData = response.data;
 
-      const sourcesDataMatch = /sources:\s*\[\s*(.*?)\s*\],?\s*poster:/.exec(
-        htmlData
-      );
+      const sourcesDataMatch = /sources:\s*\[\s*(.*?)\s*\],?\s*poster:/.exec(htmlData);
       const sources: WatchAnime[] = [];
 
       if (sourcesDataMatch) {
         const sourcesData = sourcesDataMatch[1];
-        const sourceRegex =
-          /{\s*src:\s*'(.*?)'.*?type:\s*'(.*?)'.*?size:\s*(\d+),?\s*}/g;
+        const sourceRegex = /{\s*src:\s*'(.*?)'.*?type:\s*'(.*?)'.*?size:\s*(\d+),?\s*}/g;
         let match;
 
         while ((match = sourceRegex.exec(sourcesData!)) !== null) {
@@ -288,9 +237,7 @@ class AnimeDrive extends AnimeParser {
   /**
    * @deprecated Use fetchEpisodeSources instead
    */
-  override fetchEpisodeServers = (
-    _episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (_episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

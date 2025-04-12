@@ -5,9 +5,7 @@ class StreamWish extends VideoExtractor {
   protected override serverName = 'streamwish';
   protected override sources: IVideo[] = [];
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const options = {
         headers: {
@@ -19,8 +17,7 @@ class StreamWish extends VideoExtractor {
           'Priority': 'u=0, i',
           'Origin': videoUrl.origin,
           'Referer': videoUrl.origin,
-          'Sec-Ch-Ua':
-            '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+          'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
           'Sec-Ch-Ua-Mobile': '?0',
           'Sec-Ch-Ua-Platform': 'Windows',
           'Sec-Fetch-Dest': 'document',
@@ -36,8 +33,7 @@ class StreamWish extends VideoExtractor {
       // Code adapted from Zenda-Cross (https://github.com/Zenda-Cross/vega-app/blob/main/src/lib/providers/multi/multiGetStream.ts)
       // Thank you to Zenda-Cross for the original implementation.
 
-      const functionRegex =
-        /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
+      const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
       const match = functionRegex.exec(data);
       let p = '';
       if (match) {
@@ -61,10 +57,7 @@ class StreamWish extends VideoExtractor {
       }
       let link = p.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)![0];
       // console.log('Decoded Links:', link);
-      const subtitleMatches =
-        p?.match(
-          /{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g
-        ) ?? [];
+      const subtitleMatches = p?.match(/{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g) ?? [];
       // console.log(subtitleMatches, 'subtitleMatches');
       const subtitles: ISubtitle[] = subtitleMatches.map((sub) => {
         const lang = sub?.match(/label:"([^"]+)"/)?.[1] ?? '';
@@ -93,10 +86,7 @@ class StreamWish extends VideoExtractor {
       });
 
       try {
-        const m3u8Content = await this.client.get(
-          this.sources[0]!.url,
-          options
-        );
+        const m3u8Content = await this.client.get(this.sources[0]!.url, options);
 
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
@@ -104,10 +94,7 @@ class StreamWish extends VideoExtractor {
             if (!video.includes('m3u8')) continue;
 
             const url = link.split('master.m3u8')[0] + video.split('\n')[1];
-            const quality = video
-              .split('RESOLUTION=')[1]
-              .split(',')[0]
-              .split('x')[1];
+            const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
 
             this.sources.push({
               url: url,

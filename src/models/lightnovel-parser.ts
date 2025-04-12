@@ -6,20 +6,14 @@ abstract class LightNovelParser extends BaseParser {
    *
    * returns lightNovel info (including chapters)
    */
-  protected abstract fetchLightNovelInfo(
-    lightNovelUrl: string,
-    ...args: any
-  ): Promise<unknown>;
+  protected abstract fetchLightNovelInfo(lightNovelUrl: string, ...args: any): Promise<unknown>;
 
   /**
    * takes chapter id
    *
    * returns chapter content (text)
    */
-  protected abstract fetchChapterContent(
-    chapterId: string,
-    ...args: any
-  ): Promise<unknown>;
+  protected abstract fetchChapterContent(chapterId: string, ...args: any): Promise<unknown>;
 }
 
 export default LightNovelParser;

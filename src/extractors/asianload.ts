@@ -12,16 +12,11 @@ class AsianLoad extends VideoExtractor {
     iv: CryptoJS.enc.Utf8.parse('9262859232435825'),
   };
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     const res = await this.client.get(videoUrl.href);
     const $ = load(res.data);
 
-    const encyptedParams = await this.generateEncryptedAjaxParams(
-      $,
-      videoUrl.searchParams.get('id') ?? ''
-    );
+    const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
     const encryptedData = await this.client.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
@@ -34,8 +29,7 @@ class AsianLoad extends VideoExtractor {
 
     const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
 
-    if (!decryptedData.source)
-      throw new Error('No source found. Try a different server.');
+    if (!decryptedData.source) throw new Error('No source found. Try a different server.');
 
     decryptedData.source.forEach((source: any) => {
       this.sources.push({
@@ -63,10 +57,7 @@ class AsianLoad extends VideoExtractor {
       subtitles: subtitles,
     };
   };
-  private generateEncryptedAjaxParams = async (
-    $: CheerioAPI,
-    id: string
-  ): Promise<string> => {
+  private generateEncryptedAjaxParams = async ($: CheerioAPI, id: string): Promise<string> => {
     const encryptedKey = CryptoJS.AES.encrypt(id, this.keys.key, {
       iv: this.keys.iv,
     }).toString();

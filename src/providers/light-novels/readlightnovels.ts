@@ -24,10 +24,7 @@ class ReadLightNovels extends LightNovelParser {
    * @param lightNovelUrl light novel link or id
    * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
    */
-  override fetchLightNovelInfo = async (
-    lightNovelUrl: string,
-    chapterPage: number = -1
-  ): Promise<ILightNovelInfo> => {
+  override fetchLightNovelInfo = async (lightNovelUrl: string, chapterPage: number = -1): Promise<ILightNovelInfo> => {
     if (!lightNovelUrl.startsWith(this.baseUrl)) {
       lightNovelUrl = `${this.baseUrl}/${lightNovelUrl}.html`;
     }
@@ -47,33 +44,19 @@ class ReadLightNovels extends LightNovelParser {
       const $ = load(page.data);
 
       const novelId = parseInt($('#id_post').val() as string);
-      lightNovelInfo.title = $(
-        'div.col-xs-12.col-sm-8.col-md-8.desc > h3'
-      ).text();
-      lightNovelInfo.image = $(
-        'div.col-xs-12.col-sm-4.col-md-4.info-holder > div.books > div > img'
-      ).attr('src');
-      lightNovelInfo.author = $(
-        'div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(1) > a'
-      ).text();
-      lightNovelInfo.genres = $(
-        ' div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(2) > a'
-      )
+      lightNovelInfo.title = $('div.col-xs-12.col-sm-8.col-md-8.desc > h3').text();
+      lightNovelInfo.image = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.books > div > img').attr('src');
+      lightNovelInfo.author = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(1) > a').text();
+      lightNovelInfo.genres = $(' div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(2) > a')
         .map((i, el) => $(el).text())
         .get();
       lightNovelInfo.rating = parseFloat(
-        $(
-          'div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span'
-        ).text()
+        $('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text()
       );
       lightNovelInfo.views = parseInt(
-        $(
-          'div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span'
-        ).text()
+        $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text()
       );
-      lightNovelInfo.description = $(
-        'div.col-xs-12.col-sm-8.col-md-8.desc > div.desc-text > hr'
-      )
+      lightNovelInfo.description = $('div.col-xs-12.col-sm-8.col-md-8.desc > div.desc-text > hr')
         .eq(0)
         .nextUntil('hr')
         .text();
@@ -84,11 +67,7 @@ class ReadLightNovels extends LightNovelParser {
           .filter((x) => !isNaN(x))
       );
 
-      switch (
-        $(
-          'div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span'
-        ).text()
-      ) {
+      switch ($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text()) {
         case 'Completed':
           lightNovelInfo.status = MediaStatus.COMPLETED;
           break;
@@ -103,17 +82,9 @@ class ReadLightNovels extends LightNovelParser {
       lightNovelInfo.pages = pages;
       lightNovelInfo.chapters = [];
       if (chapterPage === -1) {
-        lightNovelInfo.chapters = await this.fetchAllChapters(
-          novelId,
-          pages,
-          lightNovelUrl
-        );
+        lightNovelInfo.chapters = await this.fetchAllChapters(novelId, pages, lightNovelUrl);
       } else {
-        lightNovelInfo.chapters = await this.fetchChapters(
-          novelId,
-          chapterPage,
-          lightNovelUrl
-        );
+        lightNovelInfo.chapters = await this.fetchChapters(novelId, chapterPage, lightNovelUrl);
       }
 
       return lightNovelInfo;
@@ -149,12 +120,7 @@ class ReadLightNovels extends LightNovelParser {
     const $ = load(page.data.list_chap);
 
     for (const chapter of $('ul.list-chapter > li')) {
-      const subId = $(chapter)
-        .find('a')
-        .attr('href')!
-        .split('/')
-        ?.pop()!
-        .replace('.html', '')!;
+      const subId = $(chapter).find('a').attr('href')!.split('/')?.pop()!.replace('.html', '')!;
       const id = $(chapter).find('a').attr('href')!.split('/')[3];
       chapters.push({
         id: `${id}/${subId}`,
@@ -164,19 +130,11 @@ class ReadLightNovels extends LightNovelParser {
     }
     return chapters;
   };
-  private fetchAllChapters = async (
-    novelId: number,
-    pages: number,
-    referer: string
-  ): Promise<any> => {
+  private fetchAllChapters = async (novelId: number, pages: number, referer: string): Promise<any> => {
     const chapters: ILightNovelChapter[] = [];
 
     for (const pageNumber of Array.from({ length: pages }, (_, i) => i + 1)) {
-      const chaptersPage = await this.fetchChapters(
-        novelId,
-        pageNumber,
-        referer
-      );
+      const chaptersPage = await this.fetchChapters(novelId, pageNumber, referer);
       chapters.push(...chaptersPage);
     }
     return chapters;
@@ -186,9 +144,7 @@ class ReadLightNovels extends LightNovelParser {
    *
    * @param chapterId chapter id or url
    */
-  override fetchChapterContent = async (
-    chapterId: string
-  ): Promise<ILightNovelChapterContent> => {
+  override fetchChapterContent = async (chapterId: string): Promise<ILightNovelChapterContent> => {
     if (!chapterId.startsWith(this.baseUrl)) {
       chapterId = `${this.baseUrl}/${chapterId}.html`;
     }
@@ -220,9 +176,7 @@ class ReadLightNovels extends LightNovelParser {
    *
    * @param query search query string
    */
-  override search = async (
-    query: string
-  ): Promise<ISearch<ILightNovelResult>> => {
+  override search = async (query: string): Promise<ISearch<ILightNovelResult>> => {
     const result: ISearch<ILightNovelResult> = { results: [] };
     try {
       const res = await this.client.post(`${this.baseUrl}/?s=${query}`);
@@ -232,11 +186,7 @@ class ReadLightNovels extends LightNovelParser {
         'div.col-xs-12.col-sm-12.col-md-9.col-truyen-main > div:nth-child(1) > div > div:nth-child(2) > div.col-md-3.col-sm-6.col-xs-6.home-truyendecu'
       ).each((i, el) => {
         result.results.push({
-          id: $(el)
-            .find('a')
-            .attr('href')
-            ?.split('/')[3]!
-            .replace('.html', '')!,
+          id: $(el).find('a').attr('href')?.split('/')[3]!.replace('.html', '')!,
           title: $(el).find('a > div > h3').text(),
           url: $(el).find('a').attr('href')!,
           image: $(el).find('a > img').attr('src'),

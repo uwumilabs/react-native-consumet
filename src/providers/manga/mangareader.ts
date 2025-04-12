@@ -12,8 +12,7 @@ import {
 class MangaReader extends MangaParser {
   override readonly name = 'MangaReader';
   protected override baseUrl = 'https://mangareader.to';
-  protected override logo =
-    'https://pbs.twimg.com/profile_images/1437311892905545728/TO0hFfUr_400x400.jpg';
+  protected override logo = 'https://pbs.twimg.com/profile_images/1437311892905545728/TO0hFfUr_400x400.jpg';
   protected override classPath = 'MANGA.MangaReader';
 
   /**
@@ -22,9 +21,7 @@ class MangaReader extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search?keyword=${query}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search?keyword=${query}`);
       const $ = load(data);
 
       const results = $('div.manga_list-sbs div.mls-wrap div.item')
@@ -61,16 +58,9 @@ class MangaReader extends MangaParser {
 
       const container = $('div.container');
 
-      mangaInfo.title = container
-        .find('div.anisc-detail h2.manga-name')
-        .text()
-        .trim();
+      mangaInfo.title = container.find('div.anisc-detail h2.manga-name').text().trim();
       mangaInfo.image = container.find('img.manga-poster-img').attr('src');
-      mangaInfo.description = $('div.modal-body div.description-modal')
-        .text()
-        .split('\n')
-        .join(' ')
-        .trim();
+      mangaInfo.description = $('div.modal-body div.description-modal').text().split('\n').join(' ').trim();
       mangaInfo.genres = container
         .find('div.sort-desc div.genres a')
         .map((i, genre) => $(genre).text().trim())
@@ -82,11 +72,7 @@ class MangaReader extends MangaParser {
           (i, el): IMangaChapter => ({
             id: $(el).find('a').attr('href')?.split('/read/')[1]!,
             title: $(el).find('a').attr('title')!.trim(),
-            chapter: $(el)
-              .find('a span.name')
-              .text()
-              .split('Chapter ')[1]!
-              .split(':')[0],
+            chapter: $(el).find('a span.name').text().split('Chapter ')[1]!.split(':')[0],
           })
         )
         .get();
@@ -97,13 +83,9 @@ class MangaReader extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/read/${chapterId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/read/${chapterId}`);
       const $ = load(data);
 
       const readingId = $('div#wrapper').attr('data-reading-id');
@@ -116,9 +98,7 @@ class MangaReader extends MangaParser {
       const { data: pagesData } = await this.client.get(ajaxURL);
       const $PagesHTML = load(pagesData.html);
 
-      const pagesSelector = $PagesHTML(
-        'div#main-wrapper div.container-reader-chapter div.iv-card'
-      );
+      const pagesSelector = $PagesHTML('div#main-wrapper div.container-reader-chapter div.iv-card');
 
       const pages = pagesSelector
         .map(

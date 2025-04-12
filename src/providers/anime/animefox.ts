@@ -23,10 +23,7 @@ class AnimeFox extends AnimeParser {
    * @param query Search query
    * @param page Page number (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
       const { data } = await this.client.get(
         `${this.baseUrl}/search?keyword=${decodeURIComponent(query)}&page=${page}`
@@ -34,11 +31,7 @@ class AnimeFox extends AnimeParser {
 
       const $ = load(data);
 
-      const hasNextPage = $('.pagination > nav > ul > li')
-        .last()
-        .hasClass('disabled')
-        ? false
-        : true;
+      const hasNextPage = $('.pagination > nav > ul > li').last().hasClass('disabled') ? false : true;
 
       const searchResults: IAnimeResult[] = [];
 
@@ -62,17 +55,12 @@ class AnimeFox extends AnimeParser {
             break;
         }
         searchResults.push({
-          id: $(el)
-            .find('div.film-poster > a')
-            .attr('href')
-            ?.replace('/anime/', '')!,
+          id: $(el).find('div.film-poster > a').attr('href')?.replace('/anime/', '')!,
           title: $(el).find('div.film-poster > img').attr('alt')!,
           type: type,
           image: $(el).find('div.fd-infor > span:nth-child(1)').text()!,
           url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`!,
-          episode: parseInt(
-            $(el).find('div.tick-eps').text().replace('EP', '').trim()
-          )!,
+          episode: parseInt($(el).find('div.tick-eps').text().replace('EP', '').trim())!,
         });
       });
       return {
@@ -99,9 +87,7 @@ class AnimeFox extends AnimeParser {
 
       info.title = $('h2.film-name').attr('data-jname')!;
       info.image = $('img.film-poster-img').attr('data-src')!;
-      info.description = $('div.anisc-info > div:nth-child(1) > div')
-        .text()
-        .trim()!;
+      info.description = $('div.anisc-info > div:nth-child(1) > div').text().trim()!;
       switch ($('div.anisc-info > div:nth-child(8) > a').text().trim()) {
         case 'TV Series':
           info.type = MediaFormat.TV;
@@ -120,9 +106,7 @@ class AnimeFox extends AnimeParser {
           break;
       }
 
-      info.releaseYear = $('div.anisc-info > div:nth-child(7) > a')
-        .text()
-        .trim()!;
+      info.releaseYear = $('div.anisc-info > div:nth-child(7) > a').text().trim()!;
       switch ($('div.anisc-info > div:nth-child(9) > a').text().trim()!) {
         case 'Ongoing':
           info.status = MediaStatus.ONGOING;
@@ -137,23 +121,12 @@ class AnimeFox extends AnimeParser {
           info.status = MediaStatus.UNKNOWN;
           break;
       }
-      info.totalEpisodes = parseInt(
-        $('div.anisc-info > div:nth-child(4) > span:nth-child(2)').text().trim()
-      )!;
+      info.totalEpisodes = parseInt($('div.anisc-info > div:nth-child(4) > span:nth-child(2)').text().trim())!;
       info.url = `${this.baseUrl}/${id}`;
       info.episodes = [];
-      info.hasSub =
-        $('div.anisc-info > div:nth-child(3) > span:nth-child(2)')
-          .text()
-          .trim() === 'Subbed';
-      info.hasDub =
-        $('div.anisc-info > div:nth-child(3) > span:nth-child(2)')
-          .text()
-          .trim() === 'Dubbed';
-      const episodes = Array.from(
-        { length: info.totalEpisodes },
-        (_, i) => i + 1
-      );
+      info.hasSub = $('div.anisc-info > div:nth-child(3) > span:nth-child(2)').text().trim() === 'Subbed';
+      info.hasDub = $('div.anisc-info > div:nth-child(3) > span:nth-child(2)').text().trim() === 'Dubbed';
+      const episodes = Array.from({ length: info.totalEpisodes }, (_, i) => i + 1);
       episodes.forEach((element, i) =>
         info.episodes?.push({
           id: `${id}-episode-${i + 1}`,
@@ -171,35 +144,22 @@ class AnimeFox extends AnimeParser {
   /**
    * @param page Page number
    */
-  fetchRecentEpisodes = async (
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  fetchRecentEpisodes = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/latest-added?page=${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/latest-added?page=${page}`);
       const $ = load(data);
 
-      const hasNextPage = $('.pagination > nav > ul > li')
-        .last()
-        .hasClass('disabled')
-        ? false
-        : true;
+      const hasNextPage = $('.pagination > nav > ul > li').last().hasClass('disabled') ? false : true;
 
       const recentEpisodes: IAnimeResult[] = [];
 
       $('div.film_list-wrap > div').each((i, el) => {
         recentEpisodes.push({
-          id: $(el)
-            .find('div.film-poster > a')
-            .attr('href')
-            ?.replace('/watch/', '')!,
+          id: $(el).find('div.film-poster > a').attr('href')?.replace('/watch/', '')!,
           image: $(el).find('div.film-poster > img').attr('data-src')!,
           title: $(el).find('div.film-poster > img').attr('alt')!,
           url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}!`,
-          episode: parseInt(
-            $(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!
-          )!,
+          episode: parseInt($(el).find('div.tick-eps').text().replace('EP ', '').split('/')[0]!)!,
         });
       });
 
@@ -217,13 +177,9 @@ class AnimeFox extends AnimeParser {
    *
    * @param episodeId episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/watch/${episodeId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/watch/${episodeId}`);
       const $ = load(data);
       const iframe = $('#iframe-to-load').attr('src') || '';
       const streamUrl = `https://goload.io/streaming.php?id=${iframe.split('=')[1]}`;
@@ -239,9 +195,7 @@ class AnimeFox extends AnimeParser {
   /**
    * @deprecated Use fetchEpisodeSources instead
    */
-  override fetchEpisodeServers = (
-    episodeIs: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeIs: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

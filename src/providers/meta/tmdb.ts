@@ -20,14 +20,9 @@ class TMDB extends MovieParser {
   override readonly name = 'TMDB';
   protected override baseUrl = 'https://www.themoviedb.org';
   protected apiUrl = 'https://api.themoviedb.org/3';
-  protected override logo =
-    'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
+  protected override logo = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
   protected override classPath = 'META.TMDB';
-  override supportedTypes = new Set([
-    TvType.MOVIE,
-    TvType.TVSERIES,
-    TvType.ANIME,
-  ]);
+  override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES, TvType.ANIME]);
 
   private provider: MovieParser;
 
@@ -85,8 +80,7 @@ class TMDB extends MovieParser {
             id: result.id,
             title: result?.title || result?.name,
             image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
-            type:
-              result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
+            type: result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
             rating: result?.vote_average || 0,
             releaseDate: `${date.getFullYear()}` || '0',
           };
@@ -108,8 +102,7 @@ class TMDB extends MovieParser {
               id: movie.id,
               title: movie?.title || movie?.name,
               image: `https://image.tmdb.org/t/p/original${movie?.poster_path}`,
-              type:
-                movie.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
+              type: movie.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
               rating: movie?.vote_average || 0,
               releaseDate: `${date.getFullYear()}` || '0',
             };
@@ -131,10 +124,7 @@ class TMDB extends MovieParser {
    * @param query search query
    * @param page page number
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult | IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult | IAnimeResult>> => {
     const searchUrl = `${this.apiUrl}/search/multi?api_key=${this.apiKey}&language=en-US&page=${page}&include_adult=false&query=${query}`;
 
     const search: ISearch<IMovieResult | IAnimeResult> = {
@@ -178,10 +168,7 @@ class TMDB extends MovieParser {
    * @param id media id (anime or movie/tv)
    * @param type movie or tv
    */
-  override fetchMediaInfo = async (
-    mediaId: string,
-    type: string
-  ): Promise<IMovieInfo | IAnimeInfo> => {
+  override fetchMediaInfo = async (mediaId: string, type: string): Promise<IMovieInfo | IAnimeInfo> => {
     type = type.toLowerCase() === 'movie' ? 'movie' : 'tv';
     const infoUrl = `${this.apiUrl}/${type}/${mediaId}?api_key=${this.apiKey}&language=en-US&append_to_response=release_dates,watch/providers,alternative_titles,credits,external_ids,images,keywords,recommendations,reviews,similar,translations,videos&include_image_language=en`;
 
@@ -199,15 +186,11 @@ class TMDB extends MovieParser {
         type: type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
         totalSeasons: data?.number_of_seasons,
         totalEpisodes: data?.number_of_episodes,
-        year: new Date(
-          data?.release_year || data?.first_air_date
-        ).getFullYear(),
+        year: new Date(data?.release_year || data?.first_air_date).getFullYear(),
       });
 
       //fetch media info from provider
-      const InfoFromProvider = await this.provider.fetchMediaInfo(
-        providerId as string
-      );
+      const InfoFromProvider = await this.provider.fetchMediaInfo(providerId as string);
 
       info.id = providerId as string;
 
@@ -215,24 +198,20 @@ class TMDB extends MovieParser {
       if (type === 'movie') info.episodeId = InfoFromProvider?.episodes![0]?.id;
 
       info.title = data?.title || data?.name;
-      info.translations = data?.translations?.translations.map(
-        (translation: any) => ({
-          title: translation.data?.title || data?.name || undefined,
-          description: translation.data?.overview || undefined,
-          language: translation?.english_name || undefined,
-        })
-      );
+      info.translations = data?.translations?.translations.map((translation: any) => ({
+        title: translation.data?.title || data?.name || undefined,
+        description: translation.data?.overview || undefined,
+        language: translation?.english_name || undefined,
+      }));
 
       //images
       info.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
       info.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
-      info.logos = data?.images?.logos.map(
-        (logo: { file_path: string; aspect_ratio: number; width: number }) => ({
-          url: `https://image.tmdb.org/t/p/original${logo.file_path}`,
-          aspectRatio: logo?.aspect_ratio,
-          width: logo?.width,
-        })
-      );
+      info.logos = data?.images?.logos.map((logo: { file_path: string; aspect_ratio: number; width: number }) => ({
+        url: `https://image.tmdb.org/t/p/original${logo.file_path}`,
+        aspectRatio: logo?.aspect_ratio,
+        width: logo?.width,
+      }));
 
       info.type = type === 'movie' ? TvType.MOVIE : TvType.TVSERIES;
       info.rating = data?.vote_average || 0;
@@ -248,9 +227,7 @@ class TMDB extends MovieParser {
       info.writers = data?.credits?.crew
         .filter((crew: { job: string }) => crew.job === 'Screenplay')
         .map((crew: { name: string }) => crew.name);
-      info.actors = data?.credits?.cast.map(
-        (cast: { name: string }) => cast.name
-      );
+      info.actors = data?.credits?.cast.map((cast: { name: string }) => cast.name);
       info.characters = data?.credits?.cast.map((cast: any) => ({
         id: cast.id,
         name: cast.name,
@@ -299,8 +276,7 @@ class TMDB extends MovieParser {
 
       const totalSeasons = (info?.totalSeasons as number) || 0;
       if (type === 'tv' && totalSeasons > 0) {
-        const seasonUrl = (season: string) =>
-          `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
+        const seasonUrl = (season: string) => `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
 
         info.seasons = [];
         const seasons = info.seasons as any[];
@@ -321,25 +297,20 @@ class TMDB extends MovieParser {
           : undefined;
 
         for (let i = 1; i <= totalSeasons; i++) {
-          const { data: seasonData } = await this.client.get(
-            seasonUrl(i.toString())
-          );
+          const { data: seasonData } = await this.client.get(seasonUrl(i.toString()));
 
           //find season in each episode (providerEpisodes)
-          const seasonEpisodes = providerEpisodes?.filter(
-            (episode) => episode.season === i
-          );
+          const seasonEpisodes = providerEpisodes?.filter((episode) => episode.season === i);
           const episodes =
             seasonData?.episodes?.length <= 0
               ? undefined
               : seasonData?.episodes.map((episode: any): IMovieEpisode => {
                   //find episode in each season (seasonEpisodes)
-                  const episodeFromProvider = seasonEpisodes?.find(
-                    (ep) => ep.number === episode.episode_number
-                  );
+                  const episodeFromProvider = seasonEpisodes?.find((ep) => ep.number === episode.episode_number);
 
                   return {
                     id: episodeFromProvider?.id,
+                    uniqueId: `${mediaId}-${type}-s${episode.season_number}-e${episode.episode_number}`,
                     title: episode.name,
                     episode: episode.episode_number,
                     season: episode.season_number,
@@ -364,14 +335,35 @@ class TMDB extends MovieParser {
                   hd: `https://image.tmdb.org/t/p/w780${seasonData.poster_path}`,
                 },
             episodes,
-            isReleased:
-              seasonData?.episodes[0]?.air_date > new Date().toISOString()
-                ? false
-                : true,
+            isReleased: seasonData?.episodes[0]?.air_date > new Date().toISOString() ? false : true,
           });
         }
+      } else {
+        info.seasons = [];
+        info.seasons.push({
+          season: 1,
+          image: !data?.poster_path ? undefined : `https://image.tmdb.org/t/p/w780${data.backdrop_path}`,
+          episodes: [
+            {
+              id: `${mediaId}-${type}-s1-e1`,
+              uniqueId: `${mediaId}-${type}-s1-e1`,
+              title: data.title || data.original_title,
+              episode: 1,
+              season: 1,
+              releaseDate: data.release_date,
+              description: data.overview,
+              img: !data?.backdrop_path
+                ? undefined
+                : {
+                    mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
+                    hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`,
+                  },
+            },
+          ],
+        });
       }
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
 
@@ -397,9 +389,7 @@ class TMDB extends MovieParser {
     //clean title
     title = title.replace(/[^a-zA-Z0-9 ]/g, '').toLowerCase();
 
-    const findMedia = (await this.provider.search(
-      title
-    )) as ISearch<IAnimeResult>;
+    const findMedia = (await this.provider.search(title)) as ISearch<IAnimeResult>;
     if (findMedia.results.length === 0) return '';
 
     // console.log(findMedia.results);
@@ -418,14 +408,8 @@ class TMDB extends MovieParser {
       if (typeof b.title === 'string') secondTitle = b.title as string;
       else secondTitle = (b?.title as string) ?? '';
 
-      const firstRating = compareTwoStrings(
-        targetTitle,
-        firstTitle.toLowerCase()
-      );
-      const secondRating = compareTwoStrings(
-        targetTitle,
-        secondTitle.toLowerCase()
-      );
+      const firstRating = compareTwoStrings(targetTitle, firstTitle.toLowerCase());
+      const secondRating = compareTwoStrings(targetTitle, secondTitle.toLowerCase());
 
       // Sort in descending order
       return secondRating - firstRating;
@@ -433,20 +417,15 @@ class TMDB extends MovieParser {
 
     //remove results that dont match the type
     findMedia.results = findMedia.results.filter((result) => {
-      if (extraData.type === TvType.MOVIE)
-        return (result.type as string) === TvType.MOVIE;
-      else if (extraData.type === TvType.TVSERIES)
-        return (result.type as string) === TvType.TVSERIES;
+      if (extraData.type === TvType.MOVIE) return (result.type as string) === TvType.MOVIE;
+      else if (extraData.type === TvType.TVSERIES) return (result.type as string) === TvType.TVSERIES;
       else return result;
     });
 
     // if extraData contains a year, filter out the results that don't match the year
     if (extraData && extraData.year && extraData.type === TvType.MOVIE) {
       findMedia.results = findMedia.results.filter((result) => {
-        return (
-          String(result.releaseDate).split('-')[0]?.trim() ===
-          String(extraData.year).trim()
-        );
+        return String(result.releaseDate).split('-')[0]?.trim() === String(extraData.year).trim();
       });
     }
 
@@ -454,18 +433,11 @@ class TMDB extends MovieParser {
 
     // Check if the result contains the total number of seasons and compare it to the extraData.
     // Allow for a range of ±2 seasons and ensure that the seasons value is a number.
-    if (
-      extraData &&
-      extraData.totalSeasons &&
-      extraData.type === TvType.TVSERIES
-    ) {
+    if (extraData && extraData.totalSeasons && extraData.type === TvType.TVSERIES) {
       findMedia.results = findMedia.results.filter((result) => {
-        const totalSeasons = (result.seasons as number) || 0;
+        const totalSeasons = (result.season as number) || 0;
         const extraDataSeasons = (extraData.totalSeasons as number) || 0;
-        return (
-          totalSeasons >= extraDataSeasons - 2 &&
-          totalSeasons <= extraDataSeasons + 2
-        );
+        return totalSeasons >= extraDataSeasons - 2 && totalSeasons <= extraDataSeasons + 2;
       });
     }
 
@@ -478,10 +450,7 @@ class TMDB extends MovieParser {
    * @param id media id (anime or movie/tv)
    * @param args optional arguments
    */
-  override fetchEpisodeSources = async (
-    id: string,
-    ...args: any
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (id: string, ...args: any): Promise<ISource> => {
     return this.provider.fetchEpisodeSources(id, ...args);
   };
 
@@ -489,10 +458,7 @@ class TMDB extends MovieParser {
    * @param episodeId episode id
    * @param args optional arguments
    **/
-  override fetchEpisodeServers = async (
-    episodeId: string,
-    ...args: any
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = async (episodeId: string, ...args: any): Promise<IEpisodeServer[]> => {
     return this.provider.fetchEpisodeServers(episodeId, ...args);
   };
 }

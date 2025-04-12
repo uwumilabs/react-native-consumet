@@ -31,10 +31,8 @@ class Anify extends AnimeParser {
       unformat: (episodeId: string) => episodeId.replace('/', ''),
     },
     'zoro': {
-      format: (episodeId: string) =>
-        `watch/${episodeId.replace('$episode$', '?ep=')}`,
-      unformat: (episodeId: string) =>
-        episodeId.replace('?ep=', '$episode$').split('watch/')[1] + '$sub',
+      format: (episodeId: string) => `watch/${episodeId.replace('$episode$', '?ep=')}`,
+      unformat: (episodeId: string) => episodeId.replace('?ep=', '$episode$').split('watch/')[1] + '$sub',
     },
     'animepahe': {
       format: (episodeId: string) => episodeId,
@@ -59,9 +57,7 @@ class Anify extends AnimeParser {
    * @param page Page number (optional)
    */
   rawSearch = async (query: string, page: number = 1): Promise<any> => {
-    const { data } = await this.client.get(
-      `${this.baseUrl}/search/anime/${query}?page=${page}`
-    );
+    const { data } = await this.client.get(`${this.baseUrl}/search/anime/${query}?page=${page}`);
 
     return data.results;
   };
@@ -69,19 +65,14 @@ class Anify extends AnimeParser {
    * @param query Search query
    * @param page Page number (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     const res = {
       currentPage: page,
       hasNextPage: false,
       results: [],
     };
 
-    const { data } = await this.client.get(
-      `${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`
-    );
+    const { data } = await this.client.get(`${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`);
 
     if (data.currentPage !== res.currentPage) res.hasNextPage = true;
 
@@ -133,15 +124,12 @@ class Anify extends AnimeParser {
       title: '',
     };
 
-    const { data } = await this.client
-      .get(`${this.baseUrl}/info/${id}`)
-      .catch(() => {
-        throw new Error('Anime not found. Please use a valid id!');
-      });
+    const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch(() => {
+      throw new Error('Anime not found. Please use a valid id!');
+    });
 
     animeInfo.anilistId = data.id;
-    animeInfo.title =
-      data.title.english ?? data.title.romaji ?? data.title.native;
+    animeInfo.title = data.title.english ?? data.title.romaji ?? data.title.native;
     animeInfo.image = data.coverImage;
     animeInfo.cover = data.bannerImage;
     animeInfo.season = data.season;
@@ -156,21 +144,12 @@ class Anify extends AnimeParser {
     animeInfo.mappings = data.mappings;
     animeInfo.type = data.type as MediaFormat;
     animeInfo.artwork = data.artwork as {
-      type:
-        | 'poster'
-        | 'banner'
-        | 'top_banner'
-        | 'poster'
-        | 'icon'
-        | 'clear_art'
-        | 'clear_logo';
+      type: 'poster' | 'banner' | 'top_banner' | 'poster' | 'icon' | 'clear_art' | 'clear_logo';
       img: string;
       providerId: 'tvdb' | 'kitsu' | 'anilist';
     }[];
 
-    const providerData = data.episodes.data.filter(
-      (e: any) => e.providerId === this.providerId
-    )[0];
+    const providerData = data.episodes.data.filter((e: any) => e.providerId === this.providerId)[0];
 
     animeInfo.episodes = providerData.episodes.map(
       (episode: {
@@ -196,11 +175,9 @@ class Anify extends AnimeParser {
   };
 
   fetchAnimeInfoByIdRaw = async (id: string): Promise<any> => {
-    const { data } = await this.client
-      .get(`${this.baseUrl}/info/${id}`)
-      .catch((err) => {
-        throw new Error("Backup api seems to be down! Can't fetch anime info");
-      });
+    const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch((err) => {
+      throw new Error("Backup api seems to be down! Can't fetch anime info");
+    });
 
     return data;
   };
@@ -217,13 +194,10 @@ class Anify extends AnimeParser {
       title: '',
     };
 
-    const { data } = await this.client.get(
-      `${this.baseUrl}/media?providerId=${providerId}&id=${id}`
-    );
+    const { data } = await this.client.get(`${this.baseUrl}/media?providerId=${providerId}&id=${id}`);
 
     animeInfo.anilistId = data.id;
-    animeInfo.title =
-      data.title.english ?? data.title.romaji ?? data.title.native;
+    animeInfo.title = data.title.english ?? data.title.romaji ?? data.title.native;
     animeInfo.image = data.coverImage;
     animeInfo.cover = data.bannerImage;
     animeInfo.season = data.season;
@@ -238,21 +212,12 @@ class Anify extends AnimeParser {
     animeInfo.mappings = data.mappings;
     animeInfo.type = data.type as MediaFormat;
     animeInfo.artwork = data.artwork as {
-      type:
-        | 'poster'
-        | 'banner'
-        | 'top_banner'
-        | 'poster'
-        | 'icon'
-        | 'clear_art'
-        | 'clear_logo';
+      type: 'poster' | 'banner' | 'top_banner' | 'poster' | 'icon' | 'clear_art' | 'clear_logo';
       img: string;
       providerId: 'tvdb' | 'kitsu' | 'anilist';
     }[];
 
-    const providerData = data.episodes.data.filter(
-      (e: any) => e.providerId === this.providerId
-    )[0];
+    const providerData = data.episodes.data.filter((e: any) => e.providerId === this.providerId)[0];
 
     animeInfo.episodes = providerData.episodes.map(
       (episode: {
@@ -277,16 +242,10 @@ class Anify extends AnimeParser {
     return animeInfo;
   };
 
-  override fetchEpisodeSources = async (
-    episodeId: string,
-    episodeNumber: number,
-    id: number
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string, episodeNumber: number, id: number): Promise<ISource> => {
     try {
       const { data } = await this.client.get(
-        `${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[
-          this.providerId
-        ]!.format(
+        `${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[this.providerId]!.format(
           episodeId
         )}&episodeNumber=${episodeNumber}&id=${id}&subType=sub`
       );

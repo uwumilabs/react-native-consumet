@@ -1,12 +1,7 @@
 import { load } from 'cheerio';
 import axios from 'axios';
 import { getHashFromImage } from '../../utils/utils';
-import {
-  NewsParser,
-  type INewsFeed,
-  Topics,
-  type INewsInfo,
-} from '../../models';
+import { NewsParser, type INewsFeed, Topics, type INewsInfo } from '../../models';
 
 class NewsFeed implements INewsFeed {
   constructor(
@@ -34,19 +29,12 @@ async function scrapNewsInfo(url: string): Promise<INewsInfo> {
   const intro = $('.intro').first().text().trim();
   const description = $('.meat > p').text().trim().split('\n\n').join('\n');
   const time = $('#page-title > small > time').text().trim();
-  const thumbnailSlug = $('.meat > figure.fright')
-    .first()
-    .find('img')
-    .attr('data-src');
+  const thumbnailSlug = $('.meat > figure.fright').first().find('img').attr('data-src');
 
-  const thumbnail = thumbnailSlug
-    ? `https://animenewsnetwork.com${thumbnailSlug}`
-    : 'https://i.imgur.com/KkkVr1g.png';
+  const thumbnail = thumbnailSlug ? `https://animenewsnetwork.com${thumbnailSlug}` : 'https://i.imgur.com/KkkVr1g.png';
 
   const thumbnailHash = getHashFromImage(
-    thumbnailSlug
-      ? `https://animenewsnetwork.com${thumbnailSlug}`
-      : 'https://i.imgur.com/KkkVr1g.png'
+    thumbnailSlug ? `https://animenewsnetwork.com${thumbnailSlug}` : 'https://i.imgur.com/KkkVr1g.png'
   );
 
   return {
@@ -72,20 +60,14 @@ class AnimeNewsNetwork extends NewsParser {
    */
   public fetchNewsFeeds = async (topic?: Topics): Promise<NewsFeed[]> =>
     await axios
-      .get<string>(
-        `${this.baseUrl}/news${topic && Object.values(Topics).includes(topic) ? `/?topic=${topic}` : ''}`
-      )
+      .get<string>(`${this.baseUrl}/news${topic && Object.values(Topics).includes(topic) ? `/?topic=${topic}` : ''}`)
       .then(({ data }) => {
         const $ = load(data);
         const feeds: NewsFeed[] = [];
         $('.herald.box.news').each((i, el) => {
           const thumbnailSlug = $(el).find('.thumbnail').attr('data-src');
-          const thumbnail = thumbnailSlug
-            ? `${this.baseUrl}${thumbnailSlug}`
-            : this.logo;
-          const thumbnailHash = getHashFromImage(
-            thumbnailSlug ? `${this.baseUrl}${thumbnailSlug}` : this.logo
-          );
+          const thumbnail = thumbnailSlug ? `${this.baseUrl}${thumbnailSlug}` : this.logo;
+          const thumbnailHash = getHashFromImage(thumbnailSlug ? `${this.baseUrl}${thumbnailSlug}` : this.logo);
           const title = $(el).find('h3').text().trim();
           const slug = $(el).find('h3 > a').attr('href') || '';
           const url = `${this.baseUrl}${slug}`;
@@ -101,16 +83,7 @@ class AnimeNewsNetwork extends NewsParser {
             full: El.find('.full').text().replace('―', '').trim(),
           };
           feeds.push(
-            new NewsFeed(
-              title,
-              slug.replace('/news/', ''),
-              time,
-              topics,
-              preview,
-              thumbnail,
-              thumbnailHash,
-              url
-            )
+            new NewsFeed(title, slug.replace('/news/', ''), time, topics, preview, thumbnail, thumbnailHash, url)
           );
         });
         return feeds;
@@ -129,11 +102,9 @@ class AnimeNewsNetwork extends NewsParser {
       throw new TypeError(
         `The type of parameter "id" should be of type "string", received type "${typeof id}" instead`
       );
-    return await scrapNewsInfo(`${this.baseUrl}/news/${id}`).catch(
-      (err: Error) => {
-        throw new Error(err.message);
-      }
-    );
+    return await scrapNewsInfo(`${this.baseUrl}/news/${id}`).catch((err: Error) => {
+      throw new Error(err.message);
+    });
   };
 }
 

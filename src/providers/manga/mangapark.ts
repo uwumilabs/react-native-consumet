@@ -16,10 +16,7 @@ class Mangapark extends MangaParser {
     'https://raw.githubusercontent.com/tachiyomiorg/tachiyomi-extensions/repo/icon/tachiyomi-en.mangapark-v1.3.23.png';
   protected override classPath = 'MANGA.Mangapark';
 
-  override fetchMangaInfo = async (
-    mangaId: string,
-    ...args: any
-  ): Promise<IMangaInfo> => {
+  override fetchMangaInfo = async (mangaId: string, ...args: any): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = { id: mangaId, title: '' };
     const url = `${this.baseUrl}/manga/${mangaId}`;
 
@@ -51,12 +48,7 @@ class Mangapark extends MangaParser {
             // Get ch.xyz + chapter title, trim l/t whitespace on latter, concatenate.
             title:
               $(chapter).find('.ml-1.visited.ch').text() +
-              $(chapter)
-                .find(
-                  'div.d-none.d-md-flex.align-items-center.ml-0.ml-md-1.txt'
-                )
-                .text()
-                .trim(),
+              $(chapter).find('div.d-none.d-md-flex.align-items-center.ml-0.ml-md-1.txt').text().trim(),
             // Get 'x time ago' and remove l/t whitespace.
             releaseDate: $(chapter).find('span.time').text().trim(),
           })
@@ -68,10 +60,7 @@ class Mangapark extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string,
-    ...args: any
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string, ...args: any): Promise<IMangaChapterPage[]> => {
     const regex = /var _load_pages = \[(.*)\]/gm;
 
     // Fetches manga with all pages; no /cx/y after.
@@ -81,15 +70,11 @@ class Mangapark extends MangaParser {
       const { data } = await this.client.get(url);
 
       const varLoadPages: string = data.match(regex)[0];
-      const loadPagesJson = JSON.parse(
-        varLoadPages.replace('var _load_pages = ', '')
-      );
+      const loadPagesJson = JSON.parse(varLoadPages.replace('var _load_pages = ', ''));
 
-      const pages: IMangaChapterPage[] = loadPagesJson.map(
-        (page: { n: string; u: string }) => {
-          return { page: page.n, img: page.u };
-        }
-      );
+      const pages: IMangaChapterPage[] = loadPagesJson.map((page: { n: string; u: string }) => {
+        return { page: page.n, img: page.u };
+      });
 
       return pages;
     } catch (err) {
@@ -97,11 +82,7 @@ class Mangapark extends MangaParser {
     }
   };
 
-  override search = async (
-    query: string,
-    page: number = 1,
-    ...args: any[]
-  ): Promise<ISearch<IMangaResult>> => {
+  override search = async (query: string, page: number = 1, ...args: any[]): Promise<ISearch<IMangaResult>> => {
     const url = `${this.baseUrl}/search?q=${query}&page=${page}`;
 
     try {

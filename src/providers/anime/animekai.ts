@@ -28,10 +28,7 @@ class AnimeKai extends AnimeParser {
   constructor(customBaseURL?: string) {
     super(...arguments);
     if (customBaseURL) {
-      if (
-        customBaseURL.startsWith('http://') ||
-        customBaseURL.startsWith('https://')
-      ) {
+      if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
       } else {
         this.baseUrl = `http://${customBaseURL}`;
@@ -45,16 +42,11 @@ class AnimeKai extends AnimeParser {
    * @param query Search query
    * @param page Page number (optional)
    */
-  override search(
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IAnimeResult>> {
+  override search(query: string, page: number = 1): Promise<ISearch<IAnimeResult>> {
     if (page <= 0) {
       page = 1;
     }
-    return this.scrapeCardPage(
-      `${this.baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`
-    );
+    return this.scrapeCardPage(`${this.baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`);
   }
 
   /**
@@ -180,17 +172,13 @@ class AnimeKai extends AnimeParser {
    * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
    * @returns A promise that resolves to an object containing the search results.
    */
-  async fetchSchedule(
-    date: string = new Date().toISOString().split('T')[0]!
-  ): Promise<ISearch<IAnimeResult>> {
+  async fetchSchedule(date: string = new Date().toISOString().split('T')[0]!): Promise<ISearch<IAnimeResult>> {
     try {
       const res: ISearch<IAnimeResult> = {
         results: [],
       };
       const { data } = await this.client.get(
-        `${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(
-          new Date(`${date}T00:00:00Z`).getTime() / 1000
-        )}`,
+        `${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`,
         { headers: this.Headers() }
       );
       const $ = load(data.result);
@@ -226,25 +214,15 @@ class AnimeKai extends AnimeParser {
       $('div.swiper-wrapper > div.swiper-slide').each((i, el) => {
         const card = $(el);
         const titleElement = card.find('div.detail > p.title');
-        const id = card
-          .find('div.swiper-ctrl > a.btn')
-          .attr('href')
-          ?.replace('/watch/', '')!;
+        const id = card.find('div.swiper-ctrl > a.btn').attr('href')?.replace('/watch/', '')!;
         const img = card.attr('style');
         res.results.push({
           id: id!,
           title: titleElement.text(),
           japaneseTitle: titleElement.attr('data-jp'),
-          banner:
-            img?.match(/background-image:\s*url\(["']?(.+?)["']?\)/)?.[1] ||
-            null,
+          banner: img?.match(/background-image:\s*url\(["']?(.+?)["']?\)/)?.[1] || null,
           url: `${this.baseUrl}/watch/${id}`,
-          type: card
-            .find('div.detail > div.info')
-            .children()
-            .eq(-2)
-            .text()
-            .trim() as MediaFormat,
+          type: card.find('div.detail > div.info').children().eq(-2).text().trim() as MediaFormat,
           genres: card
             .find('div.detail > div.info')
             .children()
@@ -253,24 +231,10 @@ class AnimeKai extends AnimeParser {
             .trim()
             .split(',')
             .map((genre) => genre.trim()),
-          releaseDate: card
-            .find('div.detail > div.mics >div:contains("Release")')
-            .children('span')
-            .text()
-            .trim(),
-          quality: card
-            .find('div.detail > div.mics >div:contains("Quality")')
-            .children('span')
-            .text()
-            .trim(),
-          sub:
-            parseInt(
-              card.find('div.detail > div.info > span.sub').text().trim()
-            ) || 0,
-          dub:
-            parseInt(
-              card.find('div.detail > div.info > span.dub').text().trim()
-            ) || 0,
+          releaseDate: card.find('div.detail > div.mics >div:contains("Release")').children('span').text().trim(),
+          quality: card.find('div.detail > div.mics >div:contains("Quality")').children('span').text().trim(),
+          sub: parseInt(card.find('div.detail > div.info > span.sub').text().trim()) || 0,
+          dub: parseInt(card.find('div.detail > div.info > span.dub').text().trim()) || 0,
           description: card.find('div.detail > p.desc').text().trim(),
         });
       });
@@ -304,10 +268,7 @@ class AnimeKai extends AnimeParser {
         const sub = parseInt(card.find('.info span.sub')?.text()) || 0;
         const dub = parseInt(card.find('.info span.dub')?.text()) || 0;
         const episodes =
-          parseInt(
-            card.find('.info').children().eq(-4).text().trim() ??
-              card.find('.info span.sub')?.text()
-          ) || 0;
+          parseInt(card.find('.info').children().eq(-4).text().trim() ?? card.find('.info span.sub')?.text()) || 0;
 
         res.results.push({
           id: id!,
@@ -348,41 +309,25 @@ class AnimeKai extends AnimeParser {
       info.image = $('div.poster > div >img').attr('src');
       info.description = $('.entity-scroll > .desc').text().trim();
       // Movie, TV, OVA, ONA, Special, Music
-      info.type = $('.entity-scroll > .info')
-        .children()
-        .last()
-        .text()
-        .toUpperCase() as MediaFormat;
+      info.type = $('.entity-scroll > .info').children().last().text().toUpperCase() as MediaFormat;
       info.url = `${this.baseUrl}/watch/${id}`;
       info.recommendations = [];
-      $('section.sidebar-section:not(#related-anime) .aitem-col .aitem').each(
-        (i, ele) => {
-          const aTag = $(ele);
-          const id = aTag.attr('href')?.replace('/watch/', '');
-          info.recommendations?.push({
-            id: id!,
-            title: aTag.find('.title').text().trim(),
-            url: `${this.baseUrl}${aTag.attr('href')}`,
-            image: aTag
-              .attr('style')
-              ?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
-            japaneseTitle: aTag.find('.title').attr('data-jp')?.trim(),
-            type: aTag
-              .find('.info')
-              .children()
-              .last()
-              .text()
-              .trim() as MediaFormat,
-            sub: parseInt(aTag.find('.info span.sub')?.text()) || 0,
-            dub: parseInt(aTag.find('.info span.dub')?.text()) || 0,
-            episodes:
-              parseInt(
-                aTag.find('.info').children().eq(-2).text().trim() ??
-                  aTag.find('.info span.sub')?.text()
-              ) || 0,
-          });
-        }
-      );
+      $('section.sidebar-section:not(#related-anime) .aitem-col .aitem').each((i, ele) => {
+        const aTag = $(ele);
+        const id = aTag.attr('href')?.replace('/watch/', '');
+        info.recommendations?.push({
+          id: id!,
+          title: aTag.find('.title').text().trim(),
+          url: `${this.baseUrl}${aTag.attr('href')}`,
+          image: aTag.attr('style')?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
+          japaneseTitle: aTag.find('.title').attr('data-jp')?.trim(),
+          type: aTag.find('.info').children().last().text().trim() as MediaFormat,
+          sub: parseInt(aTag.find('.info span.sub')?.text()) || 0,
+          dub: parseInt(aTag.find('.info span.dub')?.text()) || 0,
+          episodes:
+            parseInt(aTag.find('.info').children().eq(-2).text().trim() ?? aTag.find('.info span.sub')?.text()) || 0,
+        });
+      });
       info.relations = [];
       $('section#related-anime .tab-body .aitem-col').each((i, ele) => {
         const card = $(ele);
@@ -392,24 +337,14 @@ class AnimeKai extends AnimeParser {
           id: id!,
           title: aTag.find('.title').text().trim(),
           url: `${this.baseUrl}${aTag.attr('href')}`,
-          image: aTag
-            .attr('style')
-            ?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
+          image: aTag.attr('style')?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
           japaneseTitle: aTag.find('.title').attr('data-jp')?.trim(),
-          type: card
-            .find('.info')
-            .children()
-            .eq(-2)
-            .text()
-            .trim() as MediaFormat,
+          type: card.find('.info').children().eq(-2).text().trim() as MediaFormat,
           sub: parseInt(card.find('.info span.sub')?.text()) || 0,
           dub: parseInt(card.find('.info span.dub')?.text()) || 0,
           relationType: card.find('.info').children().last().text().trim(),
           episodes:
-            parseInt(
-              card.find('.info').children().eq(-3).text().trim() ??
-                card.find('.info span.sub')?.text()
-            ) || 0,
+            parseInt(card.find('.info').children().eq(-3).text().trim() ?? card.find('.info span.sub')?.text()) || 0,
         });
       });
       const hasSub: boolean = $('.entity-scroll > .info > span.sub').length > 0;
@@ -435,12 +370,7 @@ class AnimeKai extends AnimeParser {
           if (genre !== undefined) info.genres?.push(genre);
         });
 
-      switch (
-        $('.entity-scroll > .detail')
-          .find("div:contains('Status') > span")
-          .text()
-          .trim()
-      ) {
+      switch ($('.entity-scroll > .detail').find("div:contains('Status') > span").text().trim()) {
         case 'Completed':
           info.status = MediaStatus.COMPLETED;
           break;
@@ -455,10 +385,7 @@ class AnimeKai extends AnimeParser {
           break;
       }
 
-      info.season = $('.entity-scroll > .detail')
-        .find("div:contains('Premiered') > span")
-        .text()
-        .trim();
+      info.season = $('.entity-scroll > .detail').find("div:contains('Premiered') > span").text().trim();
 
       const ani_id = $('.rate-box#anime-rating').attr('data-id');
       const episodesAjax = await this.client.get(
@@ -482,12 +409,8 @@ class AnimeKai extends AnimeParser {
         const title = $$(el).children('span').text().trim();
         const url = `${this.baseUrl}/watch/${info.id}${$$(el).attr('href')}ep=${$$(el).attr('num')}`;
         const isFiller = $$(el).hasClass('filler');
-        const isSubbed =
-          number <=
-          (parseInt($('.entity-scroll > .info > span.sub').text().trim()) || 0);
-        const isDubbed =
-          number <=
-          (parseInt($('.entity-scroll > .info > span.dub').text().trim()) || 0);
+        const isSubbed = number <= (parseInt($('.entity-scroll > .info > span.sub').text().trim()) || 0);
+        const isDubbed = number <= (parseInt($('.entity-scroll > .info > span.dub').text().trim()) || 0);
 
         info.episodes?.push({
           id: episodeId,
@@ -523,17 +446,13 @@ class AnimeKai extends AnimeParser {
         case StreamingServers.MegaUp:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
       }
@@ -548,11 +467,7 @@ class AnimeKai extends AnimeParser {
       }
 
       const serverUrl: URL = new URL(servers[i]!.url);
-      const sources = await this.fetchEpisodeSources(
-        serverUrl.href,
-        server,
-        subOrDub
-      );
+      const sources = await this.fetchEpisodeSources(serverUrl.href, server, subOrDub);
       sources.intro = servers[i]?.intro as Intro;
       sources.outro = servers[i]?.outro as Intro;
       return sources;
@@ -564,9 +479,7 @@ class AnimeKai extends AnimeParser {
   /**
    * @param url string
    */
-  private scrapeCardPage = async (
-    url: string
-  ): Promise<ISearch<IAnimeResult>> => {
+  private scrapeCardPage = async (url: string): Promise<ISearch<IAnimeResult>> => {
     try {
       const res: ISearch<IAnimeResult> = {
         currentPage: 0,
@@ -580,23 +493,12 @@ class AnimeKai extends AnimeParser {
       const $ = load(data);
 
       const pagination = $('ul.pagination');
-      res.currentPage =
-        parseInt(
-          pagination.find('.page-item.active span.page-link').text().trim()
-        ) || 0;
-      const nextPage = pagination
-        .find('.page-item.active')
-        .next()
-        .find('a.page-link')
-        .attr('href')
-        ?.split('page=')[1];
+      res.currentPage = parseInt(pagination.find('.page-item.active span.page-link').text().trim()) || 0;
+      const nextPage = pagination.find('.page-item.active').next().find('a.page-link').attr('href')?.split('page=')[1];
       if (nextPage !== undefined && nextPage !== '') {
         res.hasNextPage = true;
       }
-      const totalPages = pagination
-        .find('.page-item:last-child a.page-link')
-        .attr('href')
-        ?.split('page=')[1];
+      const totalPages = pagination.find('.page-item:last-child a.page-link').attr('href')?.split('page=')[1];
       if (totalPages === undefined || totalPages === '') {
         res.totalPages = res.currentPage;
       } else {
@@ -630,8 +532,7 @@ class AnimeKai extends AnimeParser {
           id: id!,
           title: atag.text().trim(),
           url: `${this.baseUrl}${atag.attr('href')}`,
-          image:
-            card.find('img')?.attr('data-src') ?? card.find('img')?.attr('src'),
+          image: card.find('img')?.attr('data-src') ?? card.find('img')?.attr('src'),
           //   duration: card.find('.fdi-duration')?.text(),
           japaneseTitle: card.find('a.title')?.attr('data-jp')?.trim(),
           type: type as MediaFormat,
@@ -639,10 +540,7 @@ class AnimeKai extends AnimeParser {
           sub: parseInt(card.find('.info span.sub')?.text()) || 0,
           dub: parseInt(card.find('.info span.dub')?.text()) || 0,
           episodes:
-            parseInt(
-              card.find('.info').children().eq(-2).text().trim() ??
-                card.find('.info span.sub')?.text()
-            ) || 0, //if no direct episode count, then just use sub count
+            parseInt(card.find('.info').children().eq(-2).text().trim() ?? card.find('.info span.sub')?.text()) || 0, //if no direct episode count, then just use sub count
         });
       });
       return results;
@@ -668,16 +566,13 @@ class AnimeKai extends AnimeParser {
       });
       const $ = load(data.result);
       const servers: IEpisodeServer[] = [];
-      const serverItems = $(
-        `.server-items.lang-group[data-id="${subOrDub}"] .server`
-      );
+      const serverItems = $(`.server-items.lang-group[data-id="${subOrDub}"] .server`);
       await Promise.all(
         serverItems.map(async (i, server) => {
           const id = $(server).attr('data-lid');
-          const { data } = await this.client.get(
-            `${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id!)}`,
-            { headers: this.Headers() }
-          );
+          const { data } = await this.client.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id!)}`, {
+            headers: this.Headers(),
+          });
           const decodedData = JSON.parse(DecodeIframeData(data.result));
           servers.push({
             name: `MegaUp ${$(server).text().trim()}`!, //megaup is the only server for now
@@ -701,8 +596,7 @@ class AnimeKai extends AnimeParser {
 
   private Headers(): Record<string, string> {
     return {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
       'Accept': 'text/html, */*; q=0.01',
       'Accept-Language': 'en-US,en;q=0.5',
       'Sec-GPC': '1',

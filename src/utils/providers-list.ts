@@ -1,12 +1,4 @@
-import {
-  ANIME,
-  MANGA,
-  COMICS,
-  LIGHT_NOVELS,
-  MOVIES,
-  META,
-  NEWS,
-} from '../providers';
+import { ANIME, MANGA, COMICS, LIGHT_NOVELS, MOVIES, META, NEWS } from '../providers';
 
 /**
  * List of providers

@@ -21,11 +21,7 @@ class VizCloud extends VideoExtractor {
     post: [],
   };
 
-  override extract = async (
-    videoUrl: URL,
-    vizCloudHelper: string,
-    apiKey: string
-  ): Promise<IVideo[]> => {
+  override extract = async (videoUrl: URL, vizCloudHelper: string, apiKey: string): Promise<IVideo[]> => {
     const vizID: Array<string> = videoUrl.href.split('/');
     let url;
     if (!vizID.length) {

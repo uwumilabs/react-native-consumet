@@ -19,10 +19,7 @@ class Mangasee123 extends MangaParser {
 
   // private readonly sgProxy = 'https://cors.consumet.stream';
 
-  override fetchMangaInfo = async (
-    mangaId: string,
-    ...args: any
-  ): Promise<IMangaInfo> => {
+  override fetchMangaInfo = async (mangaId: string, ...args: any): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = {
       id: mangaId,
       title: '',
@@ -33,8 +30,7 @@ class Mangasee123 extends MangaParser {
       const { data } = await this.client.get(`${url}/${mangaId}`);
       const $ = load(data);
 
-      const schemaScript = $('body > script:nth-child(15)').get()[0]!
-        .children[0];
+      const schemaScript = $('body > script:nth-child(15)').get()[0]!.children[0];
       if (isText(schemaScript!)) {
         const mainEntity = JSON.parse(schemaScript.data).mainEntity;
 
@@ -47,13 +43,9 @@ class Mangasee123 extends MangaParser {
       mangaInfo.headerForImage = { Referer: this.baseUrl };
       mangaInfo.description = $('.top-5 .Content').text();
 
-      const contentScript = $('body > script:nth-child(16)').get()[0]!
-        .children[0];
+      const contentScript = $('body > script:nth-child(16)').get()[0]!.children[0];
       if (isText(contentScript!)) {
-        const chaptersData = this.processScriptTagVariable(
-          contentScript.data,
-          'vm.Chapters = '
-        );
+        const chaptersData = this.processScriptTagVariable(contentScript.data, 'vm.Chapters = ');
 
         mangaInfo.chapters = chaptersData.map(
           (i: { [x: string]: any }): IMangaChapter => ({
@@ -70,10 +62,7 @@ class Mangasee123 extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string,
-    ...args: any
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string, ...args: any): Promise<IMangaChapterPage[]> => {
     const images: string[] = [];
     const url = `${this.baseUrl}/read-online/${chapterId}-page-1.html`;
 
@@ -81,23 +70,14 @@ class Mangasee123 extends MangaParser {
       const { data } = await this.client.get(`${url}`);
       const $ = load(data);
 
-      const chapterScript = $('body > script:nth-child(19)').get()[0]!
-        .children[0];
+      const chapterScript = $('body > script:nth-child(19)').get()[0]!.children[0];
       if (isText(chapterScript!)) {
-        const curChapter = this.processScriptTagVariable(
-          chapterScript.data,
-          'vm.CurChapter = '
-        );
-        const imageHost = this.processScriptTagVariable(
-          chapterScript.data,
-          'vm.CurPathName = '
-        );
+        const curChapter = this.processScriptTagVariable(chapterScript.data, 'vm.CurChapter = ');
+        const imageHost = this.processScriptTagVariable(chapterScript.data, 'vm.CurPathName = ');
         const curChapterLength = Number(curChapter.Page);
 
         for (let i = 0; i < curChapterLength; i++) {
-          const chapter = this.processChapterForImageUrl(
-            chapterId.replace(/[^0-9.]/g, '')
-          );
+          const chapter = this.processChapterForImageUrl(chapterId.replace(/[^0-9.]/g, ''));
           const page = `${i + 1}`.padStart(3, '0');
           const mangaId = chapterId.split('-chapter-', 1)[0];
           const imagePath = `https://${imageHost}/manga/${mangaId}/${chapter}-${page}.png`;
@@ -120,17 +100,12 @@ class Mangasee123 extends MangaParser {
     }
   };
 
-  override search = async (
-    query: string,
-    ...args: any[]
-  ): Promise<ISearch<IMangaResult>> => {
+  override search = async (query: string, ...args: any[]): Promise<ISearch<IMangaResult>> => {
     const matches = [];
     const sanitizedQuery = query.replace(/\s/g, '').toLowerCase();
 
     try {
-      const { data } = await this.client.get(
-        `https://mangasee123.com/_search.php`
-      );
+      const { data } = await this.client.get(`https://mangasee123.com/_search.php`);
 
       for (const i in data) {
         const sanitizedAlts: string[] = [];
@@ -167,10 +142,7 @@ class Mangasee123 extends MangaParser {
   };
 
   private processScriptTagVariable = (script: string, variable: string) => {
-    const chopFront = script.substring(
-      script.search(variable) + variable.length,
-      script.length
-    );
+    const chopFront = script.substring(script.search(variable) + variable.length, script.length);
     const chapters = JSON.parse(chopFront.substring(0, chopFront.search(';')));
 
     return chapters;

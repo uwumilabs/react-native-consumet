@@ -22,21 +22,14 @@ class MangaHost extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/manga/${mangaId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
       mangaInfo.title = $('article.ejeCg > h1.title').text();
       mangaInfo.altTitles = $('article.ejeCg > h3.subtitle').text();
-      mangaInfo.description = $('div.text > div.paragraph > p')
-        .text()
-        .replace(/\n/g, '')
-        .trim();
+      mangaInfo.description = $('div.text > div.paragraph > p').text().replace(/\n/g, '').trim();
       mangaInfo.headerForImage = { Referer: this.baseUrl };
-      mangaInfo.image = $('div.widget:nth-child(1) > picture > img').attr(
-        'src'
-      );
+      mangaInfo.image = $('div.widget:nth-child(1) > picture > img').attr('src');
       mangaInfo.genres = $('article.ejeCg:nth-child(1) > div.tags > a.tag ')
         .map((i, el) => $(el).text())
         .get();
@@ -52,11 +45,7 @@ class MangaHost extends MangaParser {
           mangaInfo.status = MediaStatus.UNKNOWN;
       }
       mangaInfo.views = parseInt(
-        $('div.classificacao-box-1 > div.text-block-3')
-          .text()
-          .replace(' views', '')
-          .replace(/,/g, '')
-          .trim()
+        $('div.classificacao-box-1 > div.text-block-3').text().replace(' views', '').replace(/,/g, '').trim()
       );
       mangaInfo.authors = $(
         'div.w-col.w-col-6:nth-child(1) > ul.w-list-unstyled:nth-child(1) > li:nth-child(3) > div:nth-child(1)'
@@ -86,18 +75,13 @@ class MangaHost extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    mangaId: string,
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (mangaId: string, chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
       const { data } = await this.client.get(url);
       const $ = load(data);
 
-      const pages = $(
-        'section#imageWrapper > div > div.read-slideshow > a > img'
-      )
+      const pages = $('section#imageWrapper > div > div.read-slideshow > a > img')
         .map(
           (i, el): IMangaChapterPage => ({
             img: $(el).attr('src')!,
@@ -120,9 +104,7 @@ class MangaHost extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/find/${query.replace(/ /g, '+')}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
       const $ = load(data);
 
       const results = $('body > div.w-container > main > table > tbody > tr')
@@ -130,9 +112,7 @@ class MangaHost extends MangaParser {
           (i, row): IMangaResult => ({
             id: $(row).find('td > a.pull-left').attr('href')?.split('/')[4]!,
             title: $(row).find('td > h4.entry-title > a').text(),
-            image: $(row)
-              .find('td > a.pull-left > picture > img.manga')
-              .attr('src'),
+            image: $(row).find('td > a.pull-left > picture > img.manga').attr('src'),
             headerForImage: { Referer: this.baseUrl },
           })
         )

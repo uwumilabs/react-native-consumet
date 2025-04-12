@@ -44,10 +44,7 @@ class VyvyManga extends MangaParser {
   protected override classPath = 'MANGA.VyvyManga';
   protected baseWebsiteUrl = 'https://vyvymanga.net';
 
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMangaResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     if (page < 1) throw new Error('page must be equal to 1 or greater');
 
     try {
@@ -63,17 +60,11 @@ class VyvyManga extends MangaParser {
         .find('.row.book-list > div > div > a')
         .map((index, ele) => {
           return {
-            id: (
-              $(ele)
-                .find('div.comic-image')
-                .attr('data-background-image') as string
-            )
+            id: ($(ele).find('div.comic-image').attr('data-background-image') as string)
               .split('cover/')[1]!
               .split('/')[0]!,
             title: $(ele).find('div.comic-title').text().trim(),
-            image: $(ele)
-              .find('div.comic-image')
-              .attr('data-background-image') as string,
+            image: $(ele).find('div.comic-image').attr('data-background-image') as string,
             lastChapter: $(ele).find('div.comic-image > span').text().trim(),
           };
         })
@@ -111,15 +102,14 @@ class VyvyManga extends MangaParser {
   searchApi = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
       const formattedQuery = query.toLowerCase().split(' ').join('%20');
-      const { data }: { data: VyvyMangaSearchResult } =
-        await this.client.request({
-          method: 'get',
-          url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
-          headers: {
-            Accept: 'application/json, text/javascript, */*; q=0.01',
-            Referer: `${this.baseWebsiteUrl}/`,
-          },
-        });
+      const { data }: { data: VyvyMangaSearchResult } = await this.client.request({
+        method: 'get',
+        url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
+        headers: {
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          Referer: `${this.baseWebsiteUrl}/`,
+        },
+      });
 
       const result = {
         currentPage: 1,
@@ -154,10 +144,7 @@ class VyvyManga extends MangaParser {
       const authors = $(dom.find('.col-md-7 > p:nth-child(2) > a'))
         .map((index, ele) => $(ele).text().trim())
         .get();
-      const status = $(dom.find('div.col-md-7 > p')[1])
-        .find('span:nth-child(3)')
-        .text()
-        .trim() as MediaStatus;
+      const status = $(dom.find('div.col-md-7 > p')[1]).find('span:nth-child(3)').text().trim() as MediaStatus;
       const genres = $(dom.find('div.col-md-7 > p')[2])
         .find('a')
         .map((index, ele) => $(ele).text().trim())
@@ -197,9 +184,7 @@ class VyvyManga extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const { data } = await this.client.get(chapterId);
 
@@ -222,9 +207,7 @@ class VyvyManga extends MangaParser {
     }
   };
 
-  private formatSearchResultData = (
-    searchResultData: VyvyMangaSearchResultData[]
-  ): IMangaResult[] => {
+  private formatSearchResultData = (searchResultData: VyvyMangaSearchResultData[]): IMangaResult[] => {
     return searchResultData.map((ele) => {
       return {
         id: `${ele.id}`,
@@ -235,8 +218,7 @@ class VyvyManga extends MangaParser {
           .map((ele) => ele.trim()),
         description: ele.description,
         image: ele.thumbnail,
-        status:
-          ele.completed === 1 ? MediaStatus.COMPLETED : MediaStatus.ONGOING,
+        status: ele.completed === 1 ? MediaStatus.COMPLETED : MediaStatus.ONGOING,
         score: ele.scored,
         views: ele.viewed,
         votes: ele.voted,

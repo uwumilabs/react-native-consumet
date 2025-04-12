@@ -21,9 +21,7 @@ class AnimeUnity extends AnimeParser {
    */
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     try {
-      const res = await this.client.get(
-        `${this.baseUrl}/archivio?title=${query}`
-      );
+      const res = await this.client.get(`${this.baseUrl}/archivio?title=${query}`);
       const $ = load(res.data);
 
       if (!$) return { results: [] };
@@ -61,10 +59,7 @@ class AnimeUnity extends AnimeParser {
    * @param id Anime id
    * @param page Page number
    */
-  override fetchAnimeInfo = async (
-    id: string,
-    page: number = 1
-  ): Promise<IAnimeInfo> => {
+  override fetchAnimeInfo = async (id: string, page: number = 1): Promise<IAnimeInfo> => {
     const url = `${this.baseUrl}/anime/${id}`;
     const episodesPerPage = 120;
     const lastPageEpisode = page * episodesPerPage;
@@ -75,15 +70,11 @@ class AnimeUnity extends AnimeParser {
       const res = await this.client.get(url);
       const $ = load(res.data);
 
-      const totalEpisodes = parseInt(
-        $('video-player')?.attr('episodes_count') ?? '0'
-      );
+      const totalEpisodes = parseInt($('video-player')?.attr('episodes_count') ?? '0');
       const totalPages = Math.round(totalEpisodes / 120) + 1;
 
       if (page < 1 || page > totalPages)
-        throw new Error(
-          `Argument 'page' for ${id} must be between 1 and ${totalPages}! (You passed ${page})`
-        );
+        throw new Error(`Argument 'page' for ${id} must be between 1 and ${totalPages}! (You passed ${page})`);
 
       const animeInfo: IAnimeInfo = {
         currentPage: page,
@@ -102,9 +93,7 @@ class AnimeUnity extends AnimeParser {
         totalEpisodes: totalEpisodes,
         image: $('img.cover')?.attr('src'),
         // image: $('meta[property="og:image"]')?.attr('content'),
-        cover:
-          $('.banner')?.attr('src') ??
-          $('.banner')?.attr('style')?.replace('background: url(', ''),
+        cover: $('.banner')?.attr('src') ?? $('.banner')?.attr('style')?.replace('background: url(', ''),
         description: $('.description').text().trim(),
         episodes: [],
       };
@@ -134,9 +123,7 @@ class AnimeUnity extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     try {
       const res = await this.client.get(`${this.baseUrl}/anime/${episodeId}`);
       const $ = load(res.data);
@@ -171,10 +158,7 @@ class AnimeUnity extends AnimeParser {
           for (const video of videoList ?? []) {
             if (video.includes('BANDWIDTH')) {
               const url = video.split('\n')[1];
-              const quality = video
-                .split('RESOLUTION=')[1]
-                .split('\n')[0]
-                .split('x')[1];
+              const quality = video.split('RESOLUTION=')[1].split('\n')[0].split('x')[1];
 
               episodeSources.sources.push({
                 url: url,
@@ -207,9 +191,7 @@ class AnimeUnity extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

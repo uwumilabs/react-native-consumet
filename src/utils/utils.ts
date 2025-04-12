@@ -4,25 +4,14 @@ import { load } from 'cheerio';
 
 export const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36';
-export const days = [
-  'Saturday',
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-];
+export const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 export const ANIFY_URL = 'https://anify.eltik.cc';
 
 export const splitAuthor = (authors: string) => {
   const res: string[] = [];
   let eater = '';
   for (let i = 0; i < authors.length; i++) {
-    if (
-      authors[i] === ' ' &&
-      (authors[i - 1] === ',' || authors[i - 1] === ';')
-    ) {
+    if (authors[i] === ' ' && (authors[i - 1] === ',' || authors[i - 1] === ';')) {
       continue;
     }
     if (authors[i] === ',' || authors[i] === ';') {
@@ -77,15 +66,10 @@ export const genElement = (s: string, e: string) => {
   return el;
 };
 
-export const range = ({
-  from = 0,
-  to = 0,
-  step = 1,
-  length = Math.ceil((to - from) / step),
-}) => Array.from({ length }, (_, i) => from + i * step);
+export const range = ({ from = 0, to = 0, step = 1, length = Math.ceil((to - from) / step) }) =>
+  Array.from({ length }, (_, i) => from + i * step);
 
-export const capitalizeFirstLetter = (s: string) =>
-  s?.charAt(0).toUpperCase() + s.slice(1);
+export const capitalizeFirstLetter = (s: string) => s?.charAt(0).toUpperCase() + s.slice(1);
 
 export const getDays = (day1: string, day2: string) => {
   const day1Index = days.indexOf(capitalizeFirstLetter(day1)) - 1;

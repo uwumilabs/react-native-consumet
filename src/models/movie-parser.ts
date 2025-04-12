@@ -1,11 +1,4 @@
-import {
-  BaseParser,
-  TvType,
-  type ISource,
-  type IEpisodeServer,
-  type IMovieInfo,
-  type IAnimeInfo,
-} from '.';
+import { BaseParser, TvType, type ISource, type IEpisodeServer, type IMovieInfo, type IAnimeInfo } from '.';
 
 abstract class MovieParser extends BaseParser {
   /**
@@ -18,30 +11,21 @@ abstract class MovieParser extends BaseParser {
    *
    * returns media info (including episodes)
    */
-  abstract fetchMediaInfo(
-    mediaId: string,
-    type?: string
-  ): Promise<IMovieInfo | IAnimeInfo>;
+  abstract fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo | IAnimeInfo>;
 
   /**
    * takes episode id
    *
    * returns episode sources (video links)
    */
-  abstract fetchEpisodeSources(
-    episodeId: string,
-    ...args: any
-  ): Promise<ISource>;
+  abstract fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
 
   /**
    * takes episode id
    *
    * returns episode servers (video links) available
    */
-  abstract fetchEpisodeServers(
-    episodeId: string,
-    ...args: any
-  ): Promise<IEpisodeServer[]>;
+  abstract fetchEpisodeServers(episodeId: string, ...args: any): Promise<IEpisodeServer[]>;
 }
 
 export default MovieParser;

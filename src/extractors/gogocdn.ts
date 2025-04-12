@@ -16,18 +16,13 @@ class GogoCDN extends VideoExtractor {
 
   private referer: string = '';
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     this.referer = videoUrl.href;
 
     const res = await this.client.get(videoUrl.href);
     const $ = load(res.data);
 
-    const encyptedParams = await this.generateEncryptedAjaxParams(
-      $,
-      videoUrl.searchParams.get('id') ?? ''
-    );
+    const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
     const encryptedData = await this.client.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
@@ -39,23 +34,16 @@ class GogoCDN extends VideoExtractor {
     );
     const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
     // console.log(decryptedData.track.tracks);
-    if (!decryptedData.source)
-      throw new Error('No source found. Try a different server.');
+    if (!decryptedData.source) throw new Error('No source found. Try a different server.');
 
-    const subtitles: ISubtitle[] = decryptedData.track.tracks?.map(
-      (track: any) => ({
-        url: track.file,
-        lang: track.kind,
-      })
-    );
+    const subtitles: ISubtitle[] = decryptedData.track.tracks?.map((track: any) => ({
+      url: track.file,
+      lang: track.kind,
+    }));
 
     if (decryptedData.source[0].file.includes('.m3u8')) {
-      const resResult = await this.client.get(
-        decryptedData.source[0].file.toString()
-      );
-      const resolutions = resResult.data.match(
-        /(RESOLUTION=)(.*)(\s*?)(\s*.*)/g
-      );
+      const resResult = await this.client.get(decryptedData.source[0].file.toString());
+      const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
       resolutions?.forEach((res: string) => {
         const index = decryptedData.source[0].file.lastIndexOf('/');
         const quality = res.split('\n')[0]?.split('x')[1]?.split(',')[0];
@@ -118,10 +106,7 @@ class GogoCDN extends VideoExtractor {
           .split('URI=')[1]
           .replace(/"/g, '');
 
-        const quality = video
-          .split('RESOLUTION=')[1]
-          .split(',')[0]
-          .split('x')[1];
+        const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
 
         this.sources.push({
           url: url,
@@ -138,17 +123,12 @@ class GogoCDN extends VideoExtractor {
     });
   };
 
-  private generateEncryptedAjaxParams = async (
-    $: CheerioAPI,
-    id: string
-  ): Promise<string> => {
+  private generateEncryptedAjaxParams = async ($: CheerioAPI, id: string): Promise<string> => {
     const encryptedKey = CryptoJS.AES.encrypt(id, this.keys.key, {
       iv: this.keys.iv,
     });
 
-    const scriptValue = $("script[data-name='episode']").attr(
-      'data-value'
-    ) as string;
+    const scriptValue = $("script[data-name='episode']").attr('data-value') as string;
 
     const decryptedToken = CryptoJS.AES.decrypt(scriptValue, this.keys.key, {
       iv: this.keys.iv,

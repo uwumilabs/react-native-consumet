@@ -8,9 +8,7 @@ class MixDrop extends VideoExtractor {
     try {
       const { data } = await this.client.get(videoUrl.href);
 
-      const formated = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
-      );
+      const formated = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
 
       const [poster, source] = formated
         .match(/poster="([^"]+)"|wurl="([^"]+)"/g)

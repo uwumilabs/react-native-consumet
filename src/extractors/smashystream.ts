@@ -10,9 +10,7 @@ class SmashyStream extends VideoExtractor {
 
   private readonly host = 'https://embed.smashystream.com';
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const result: {
         source: string;
@@ -91,9 +89,7 @@ class SmashyStream extends VideoExtractor {
     }
   };
 
-  async extractSmashyFfix(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyFfix(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -105,25 +101,19 @@ class SmashyStream extends VideoExtractor {
           referer: url,
         },
       });
-      const config = JSON.parse(
-        res.data.match(/var\s+config\s*=\s*({.*?});/)[1]
-      );
+      const config = JSON.parse(res.data.match(/var\s+config\s*=\s*({.*?});/)[1]);
 
       const files = config.file
         .match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/g)
         .map((entry: { match: (arg0: RegExp) => [string, string, string] }) => {
-          const [, quality, link] = entry.match(
-            /\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/
-          );
+          const [, quality, link] = entry.match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/);
           return { quality, link: link.replace(',', '') };
         });
 
       const vttArray = config.subtitle
         .match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/g)
         .map((entry: { match: (arg0: RegExp) => [string, string, string] }) => {
-          const [, language, link] = entry.match(
-            /\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/
-          );
+          const [, language, link] = entry.match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/);
           return { language, link: link.replace(',', '') };
         });
 
@@ -148,9 +138,7 @@ class SmashyStream extends VideoExtractor {
     }
   }
 
-  async extractSmashyWatchX(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyWatchX(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -173,37 +161,24 @@ class SmashyStream extends VideoExtractor {
       }
 
       const base64EncryptedData = regexMatch[1];
-      const base64DecryptedData = JSON.parse(
-        Buffer.from(base64EncryptedData, 'base64').toString('utf8')
-      );
+      const base64DecryptedData = JSON.parse(Buffer.from(base64EncryptedData, 'base64').toString('utf8'));
 
-      const derivedKey = CryptoJS.PBKDF2(
-        key,
-        CryptoJS.enc.Hex.parse(base64DecryptedData.salt),
-        {
-          keySize: 32 / 4,
-          iterations: base64DecryptedData.iterations,
-          hasher: CryptoJS.algo.SHA512,
-        }
-      );
-      const decipher = CryptoJS.AES.decrypt(
-        base64DecryptedData.ciphertext,
-        derivedKey,
-        {
-          iv: CryptoJS.enc.Hex.parse(base64DecryptedData.iv),
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7,
-        }
-      );
+      const derivedKey = CryptoJS.PBKDF2(key, CryptoJS.enc.Hex.parse(base64DecryptedData.salt), {
+        keySize: 32 / 4,
+        iterations: base64DecryptedData.iterations,
+        hasher: CryptoJS.algo.SHA512,
+      });
+      const decipher = CryptoJS.AES.decrypt(base64DecryptedData.ciphertext, derivedKey, {
+        iv: CryptoJS.enc.Hex.parse(base64DecryptedData.iv),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+      });
       const decrypted = decipher.toString(CryptoJS.enc.Utf8);
 
       const sources = JSON.parse(decrypted.match(/sources: ([^\]]*\])/)![1]!);
       const tracks = JSON.parse(decrypted.match(/tracks: ([^]*?\}\])/)![1]!);
 
-      const subtitles = tracks.filter(
-        (it: { file: string; label: string; kind: string }) =>
-          it.kind === 'captions'
-      );
+      const subtitles = tracks.filter((it: { file: string; label: string; kind: string }) => it.kind === 'captions');
 
       sources.map((source: { file: string; label: string }) => {
         result.sources.push({
@@ -226,9 +201,7 @@ class SmashyStream extends VideoExtractor {
     }
   }
 
-  async extractSmashyNFlim(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyNFlim(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -247,18 +220,14 @@ class SmashyStream extends VideoExtractor {
       const files = config?.file
         .match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/g)
         .map((entry: { match: (arg0: RegExp) => [string, string, string] }) => {
-          const [, quality, link] = entry.match(
-            /\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/
-          );
+          const [, quality, link] = entry.match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/);
           return { quality, link: link.replace(',', '') };
         });
 
       const vttArray = config?.subtitle
         .match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/g)
         .map((entry: { match: (arg0: RegExp) => [string, string, string] }) => {
-          const [, language, link] = entry.match(
-            /\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/
-          );
+          const [, language, link] = entry.match(/\[([^\]]+)\](https?:\/\/\S+?)(?=,\[|$)/);
           return { language, link: link.replace(',', '') };
         });
 
@@ -272,10 +241,7 @@ class SmashyStream extends VideoExtractor {
               .then((res) => console.log(res.status))
               .catch((err) => {
                 if (err.response.status.status !== 200) {
-                  validFiles = validFiles.filter(
-                    (obj: { link: string; quality: string }) =>
-                      obj.link !== source.link
-                  );
+                  validFiles = validFiles.filter((obj: { link: string; quality: string }) => obj.link !== source.link);
                 }
               });
           })
@@ -307,9 +273,7 @@ class SmashyStream extends VideoExtractor {
     }
   }
 
-  async extractSmashyFX(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyFX(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -335,9 +299,7 @@ class SmashyStream extends VideoExtractor {
     }
   }
 
-  async extractSmashyCF(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyCF(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -367,9 +329,7 @@ class SmashyStream extends VideoExtractor {
     }
   }
 
-  async extractSmashyEEMovie(
-    url: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
+  async extractSmashyEEMovie(url: string): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],

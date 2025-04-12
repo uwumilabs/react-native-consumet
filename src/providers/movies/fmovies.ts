@@ -19,20 +19,14 @@ import { StreamTape, VizCloud } from '../../extractors';
 class Fmovies extends MovieParser {
   override readonly name = 'Fmovies';
   protected override baseUrl = 'https://ww4.fmovies.co';
-  protected override logo =
-    'https://s1.bunnycdn.ru/assets/sites/fmovies/logo2.png';
+  protected override logo = 'https://s1.bunnycdn.ru/assets/sites/fmovies/logo2.png';
   protected override classPath = 'MOVIES.Fmovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
 
   private fmoviesResolver = '';
   private apiKey = '';
 
-  constructor(
-    fmoviesResolver?: string,
-    proxyConfig?: ProxyConfig,
-    apiKey?: string,
-    adapter?: AxiosAdapter
-  ) {
+  constructor(fmoviesResolver?: string, proxyConfig?: ProxyConfig, apiKey?: string, adapter?: AxiosAdapter) {
     super(proxyConfig && proxyConfig.url ? proxyConfig : undefined, adapter);
     this.fmoviesResolver = fmoviesResolver ?? this.fmoviesResolver;
     this.apiKey = apiKey ?? this.apiKey;
@@ -43,10 +37,7 @@ class Fmovies extends MovieParser {
    * @param query search query string
    * @param page page number (default 1) (optional)
    */
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const searchResult: ISearch<IMovieResult> = {
       currentPage: page,
       hasNextPage: false,
@@ -56,16 +47,11 @@ class Fmovies extends MovieParser {
       query = query.replace(/[\W_]+/g, '+');
       const vrf = await this.ev(query);
 
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search?keyword=${query}&vrf=${vrf}&page=${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search?keyword=${query}&vrf=${vrf}&page=${page}`);
 
       const $ = load(data);
 
-      searchResult.hasNextPage = $('.pagination')
-        ?.find('.active')
-        .next()
-        .hasClass('disabled');
+      searchResult.hasNextPage = $('.pagination')?.find('.active').next().hasClass('disabled');
 
       $('.filmlist > div.item').each((i, el) => {
         const releaseDate = $(el).find('.meta').text();
@@ -74,16 +60,9 @@ class Fmovies extends MovieParser {
           title: $(el).find('a.title').text()!,
           url: `${this.baseUrl}/${$(el).find('a.title').attr('href')!.slice(1)}`,
           image: $(el).find('img').attr('src'),
-          releaseDate: isNaN(parseInt(releaseDate))
-            ? undefined
-            : parseInt(releaseDate).toString(),
-          seasons: releaseDate.includes('SS')
-            ? parseInt(releaseDate.split('SS')[1]!)
-            : undefined,
-          type:
-            $(el).find('i.type').text() === 'Movie'
-              ? TvType.MOVIE
-              : TvType.TVSERIES,
+          releaseDate: isNaN(parseInt(releaseDate)) ? undefined : parseInt(releaseDate).toString(),
+          seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]!) : undefined,
+          type: $(el).find('i.type').text() === 'Movie' ? TvType.MOVIE : TvType.TVSERIES,
         });
       });
 
@@ -137,18 +116,9 @@ class Fmovies extends MovieParser {
       );
       movieInfo.title = container.find(`h1[itemprop="name"]`).text();
       movieInfo.image = container.find(`img[itemprop="image"]`).attr('src');
-      movieInfo.description = container
-        .find('div[itemprop="description"]')
-        ?.text()
-        ?.trim();
-      movieInfo.type =
-        movieInfo.id.split('/')[0] === 'series'
-          ? TvType.TVSERIES
-          : TvType.MOVIE;
-      movieInfo.releaseDate = container
-        .find('span[itemprop="dateCreated"]')
-        ?.text()
-        ?.trim();
+      movieInfo.description = container.find('div[itemprop="description"]')?.text()?.trim();
+      movieInfo.type = movieInfo.id.split('/')[0] === 'series' ? TvType.TVSERIES : TvType.MOVIE;
+      movieInfo.releaseDate = container.find('span[itemprop="dateCreated"]')?.text()?.trim();
 
       // TODO
       // movieInfo.genres = $('div.row-line:nth-child(2) > a')
@@ -178,12 +148,8 @@ class Fmovies extends MovieParser {
         };
 
         if (movieInfo.type === TvType.TVSERIES) {
-          episode.number = parseInt(
-            $(el).find('a')?.attr('data-kname')!.split('-')[1]!
-          );
-          episode.season = parseInt(
-            $(el).find('a')?.attr('data-kname')!.split('-')[0]!
-          );
+          episode.number = parseInt($(el).find('a')?.attr('data-kname')!.split('-')[1]!);
+          episode.season = parseInt($(el).find('a')?.attr('data-kname')!.split('-')[0]!);
         }
 
         movieInfo.episodes?.push(episode);
@@ -217,11 +183,7 @@ class Fmovies extends MovieParser {
         default:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new VizCloud().extract(
-              serverUrl,
-              this.fmoviesResolver,
-              this.apiKey
-            ),
+            sources: await new VizCloud().extract(serverUrl, this.fmoviesResolver, this.apiKey),
           };
       }
     }
@@ -234,9 +196,7 @@ class Fmovies extends MovieParser {
         throw new Error(`Server ${server} not found`);
       }
 
-      const { data } = await this.client.get(
-        `${this.baseUrl}/ajax/episode/info?id=${selectedServer.url}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/ajax/episode/info?id=${selectedServer.url}`);
 
       const serverUrl: URL = new URL(await this.decrypt(data.url));
 
@@ -251,10 +211,7 @@ class Fmovies extends MovieParser {
    * @param episodeId takes episode link or movie id
    * @param mediaId takes movie link or id (found on movie info object)
    */
-  override fetchEpisodeServers = async (
-    episodeId: string,
-    mediaId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = async (episodeId: string, mediaId: string): Promise<IEpisodeServer[]> => {
     if (!mediaId.startsWith(this.baseUrl)) {
       mediaId = `${this.baseUrl}/${mediaId}`;
     }
@@ -280,9 +237,7 @@ class Fmovies extends MovieParser {
 
       const el = $$(`a[data-kname="${episodeId}"]`);
       try {
-        const serverString: { [key: string]: string } = JSON.parse(
-          el.attr('data-ep')!
-        );
+        const serverString: { [key: string]: string } = JSON.parse(el.attr('data-ep')!);
         for (const serverId in serverString) {
           epsiodeServers.push({
             name: servers[serverId]!,

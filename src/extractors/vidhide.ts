@@ -15,11 +15,8 @@ class VidHide extends VideoExtractor {
         throw new Error('Video not found');
       });
 
-      const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')
-      );
-      const links =
-        unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
+      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
+      const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
       const m3u8Link = links[1];
       const m3u8Content = await this.client.get(m3u8Link, {
         headers: {
@@ -40,10 +37,7 @@ class VidHide extends VideoExtractor {
           if (!video.includes('m3u8')) continue;
 
           const url = video.split('\n')[1];
-          const quality = video
-            .split('RESOLUTION=')[1]
-            ?.split(',')[0]
-            .split('x')[1];
+          const quality = video.split('RESOLUTION=')[1]?.split(',')[0].split('x')[1];
 
           result.sources.push({
             url: `${pathWithoutMaster}/${url}`,

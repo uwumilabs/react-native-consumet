@@ -1,12 +1,7 @@
 import { load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 import { substringAfter, substringBefore } from '../utils';
-import {
-  VideoExtractor,
-  type IVideo,
-  type ISubtitle,
-  type Intro,
-} from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 
 class RapidCloud extends VideoExtractor {
   protected override serverName = 'RapidCloud';
@@ -15,9 +10,7 @@ class RapidCloud extends VideoExtractor {
   private readonly fallbackKey = 'c1d17096f2ca11b7';
   private readonly host = 'https://rapid-cloud.co';
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     const result: {
       sources: IVideo[];
       subtitles: ISubtitle[];
@@ -37,32 +30,18 @@ class RapidCloud extends VideoExtractor {
 
       let res = null;
 
-      res = await this.client.get(
-        `https://${videoUrl.hostname}/embed-2/ajax/e-1/getSources?id=${id}`,
-        options
-      );
+      res = await this.client.get(`https://${videoUrl.hostname}/embed-2/ajax/e-1/getSources?id=${id}`, options);
 
       let {
         data: { sources, tracks, intro, outro, encrypted },
       } = res;
 
-      let decryptKey = await (
-        await this.client.get(
-          'https://raw.githubusercontent.com/cinemaxhq/keys/e1/key'
-        )
-      ).data;
+      let decryptKey = await (await this.client.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
 
-      decryptKey = substringBefore(
-        substringAfter(decryptKey, '"blob-code blob-code-inner js-file-line">'),
-        '</td>'
-      );
+      decryptKey = substringBefore(substringAfter(decryptKey, '"blob-code blob-code-inner js-file-line">'), '</td>');
 
       if (!decryptKey) {
-        decryptKey = await (
-          await this.client.get(
-            'https://raw.githubusercontent.com/cinemaxhq/keys/e1/key'
-          )
-        ).data;
+        decryptKey = await (await this.client.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
       }
 
       if (!decryptKey) decryptKey = this.fallbackKey;
@@ -106,15 +85,10 @@ class RapidCloud extends VideoExtractor {
           const { data } = await this.client.get(source.file, options);
           const m3u8data = data
             .split('\n')
-            .filter(
-              (line: string) =>
-                line.includes('.m3u8') && line.includes('RESOLUTION=')
-            );
+            .filter((line: string) => line.includes('.m3u8') && line.includes('RESOLUTION='));
 
           const secondHalf = m3u8data.map((line: string) =>
-            line
-              .match(/RESOLUTION=.*,(C)|URI=.*/g)
-              ?.map((s: string) => s.split('=')[1])
+            line.match(/RESOLUTION=.*,(C)|URI=.*/g)?.map((s: string) => s.split('=')[1])
           );
 
           const TdArray = secondHalf.map((s: string[]) => {
@@ -134,10 +108,8 @@ class RapidCloud extends VideoExtractor {
         }
       }
 
-      result.intro =
-        intro?.end > 1 ? { start: intro.start, end: intro.end } : undefined;
-      result.outro =
-        outro?.end > 1 ? { start: outro.start, end: outro.end } : undefined;
+      result.intro = intro?.end > 1 ? { start: intro.start, end: intro.end } : undefined;
+      result.outro = outro?.end > 1 ? { start: outro.start, end: outro.end } : undefined;
 
       result.sources.push({
         url: sources[0].file,
@@ -166,24 +138,17 @@ class RapidCloud extends VideoExtractor {
     const uri = new URL(url);
     const domain = uri.protocol + '//' + uri.host;
 
-    const { data } = await this.client.get(
-      `https://www.google.com/recaptcha/api.js?render=${key}`,
-      {
-        headers: {
-          Referer: domain,
-        },
-      }
-    );
+    const { data } = await this.client.get(`https://www.google.com/recaptcha/api.js?render=${key}`, {
+      headers: {
+        Referer: domain,
+      },
+    });
 
-    const v = data
-      ?.substring(data.indexOf('/releases/'), data.lastIndexOf('/recaptcha'))
-      .split('/releases/')[1];
+    const v = data?.substring(data.indexOf('/releases/'), data.lastIndexOf('/recaptcha')).split('/releases/')[1];
 
     //TODO: NEED to fix the co (domain) parameter to work with every domain
     const anchor = `https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=kr42069kr&k=${key}&co=aHR0cHM6Ly9yYXBpZC1jbG91ZC5ydTo0NDM.&v=${v}`;
-    const c = load((await this.client.get(anchor)).data)(
-      '#recaptcha-token'
-    ).attr('value');
+    const c = load((await this.client.get(anchor)).data)('#recaptcha-token').attr('value');
 
     // currently its not returning proper response. not sure why
     const res = await this.client.post(
@@ -203,10 +168,7 @@ class RapidCloud extends VideoExtractor {
       }
     );
 
-    return res.data.substring(
-      res.data.indexOf('rresp","'),
-      res.data.lastIndexOf('",null')
-    );
+    return res.data.substring(res.data.indexOf('rresp","'), res.data.lastIndexOf('",null'));
   };
 
   // private wss = async (): Promise<string> => {

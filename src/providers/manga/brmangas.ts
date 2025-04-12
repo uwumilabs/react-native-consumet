@@ -13,8 +13,7 @@ import {
 class BRMangas extends MangaParser {
   override readonly name = 'BRMangas';
   protected override baseUrl = 'https://www.brmangas.net';
-  protected override logo =
-    'https://www.brmangas.net/wp-content/themes/brmangasnew/images/svg/logo.svg';
+  protected override logo = 'https://www.brmangas.net/wp-content/themes/brmangasnew/images/svg/logo.svg';
   protected override classPath = 'MANGA.BRMangas';
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
@@ -23,14 +22,10 @@ class BRMangas extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/manga/${mangaId}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
-      const title = $(
-        'body > div.scroller-inner > div.wrapper > main > section > div > h1.titulo'
-      ).text();
+      const title = $('body > div.scroller-inner > div.wrapper > main > section > div > h1.titulo').text();
       const descriptionAndAltTitles = $(
         'body > div.scroller-inner > div.wrapper > main > div > div > div.col > div.serie-texto > div > p:nth-child(3)'
       )
@@ -83,9 +78,7 @@ class BRMangas extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const url = `${this.baseUrl}/ler/${chapterId}`;
       const { data } = await this.client.get(url);
@@ -125,14 +118,10 @@ class BRMangas extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/?s=${query.replace(/ /g, '+')}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/?s=${query.replace(/ /g, '+')}`);
       const $ = load(data);
 
-      const results = $(
-        'body > div.scroller-inner > div.wrapper > main > div.container > div.listagem > div.col'
-      )
+      const results = $('body > div.scroller-inner > div.wrapper > main > div.container > div.listagem > div.col')
         .map(
           (i, row): IMangaResult => ({
             id: $(row).find('div.item > a').attr('href')?.split('/')[4]!,

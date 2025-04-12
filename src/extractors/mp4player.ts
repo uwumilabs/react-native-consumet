@@ -6,9 +6,7 @@ class Mp4Player extends VideoExtractor {
 
   private readonly domains = ['mp4player.site'];
 
-  override extract = async (
-    videoUrl: URL
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],
@@ -17,10 +15,7 @@ class Mp4Player extends VideoExtractor {
 
       const response = await this.client.get(videoUrl.href);
 
-      const data = response.data
-        .match(new RegExp('(?<=sniff\\()(.*)(?=\\))'))[0]
-        ?.replace(/\"/g, '')
-        ?.split(',');
+      const data = response.data.match(new RegExp('(?<=sniff\\()(.*)(?=\\))'))[0]?.replace(/\"/g, '')?.split(',');
 
       const link = `https://${videoUrl.host}/m3u8/${data[1]}/${data[2]}/master.txt?s=1&cache=${data[7]}`;
       //const thumbnails = response.data.match(new RegExp('(?<=file":")(.*)(?=","kind)'))[0]?.replace(/\\/g, '');
@@ -37,10 +32,7 @@ class Mp4Player extends VideoExtractor {
         for (const video of videoList ?? []) {
           if (video.includes('BANDWIDTH')) {
             const url = video.split('\n')[1];
-            const quality = video
-              .split('RESOLUTION=')[1]
-              .split('\n')[0]
-              .split('x')[1];
+            const quality = video.split('RESOLUTION=')[1].split('\n')[0].split('x')[1];
 
             result.sources.push({
               url: url,

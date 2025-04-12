@@ -15,8 +15,7 @@ import { StreamTape } from '../../utils';
 class AnimeSaturn extends AnimeParser {
   override readonly name = 'AnimeSaturn';
   protected override baseUrl = 'https://www.animesaturn.tv/';
-  protected override logo =
-    'https://www.animesaturn.tv/immagini/favicon-32x32.png';
+  protected override logo = 'https://www.animesaturn.tv/immagini/favicon-32x32.png';
   protected override classPath = 'ANIME.AnimeSaturn';
 
   /**
@@ -25,9 +24,7 @@ class AnimeSaturn extends AnimeParser {
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     // baseUrl/animelist?search={query}
 
-    const data = await this.client.get(
-      `${this.baseUrl}animelist?search=${query}`
-    );
+    const data = await this.client.get(`${this.baseUrl}animelist?search=${query}`);
 
     const $ = await load(data.data);
 
@@ -67,12 +64,8 @@ class AnimeSaturn extends AnimeParser {
     const info: IAnimeInfo = {
       id,
       title: $('div.container.anime-title-as> b').text(),
-      malID: $('a[href^="https://myanimelist.net/anime/"]')
-        .attr('href')
-        ?.slice(30, -1),
-      alID: $('a[href^="https://anilist.co/anime/"]')
-        .attr('href')
-        ?.slice(25, -1),
+      malID: $('a[href^="https://myanimelist.net/anime/"]').attr('href')?.slice(30, -1),
+      alID: $('a[href^="https://anilist.co/anime/"]').attr('href')?.slice(25, -1),
       genres:
         $('div.container a.badge.badge-light')
           ?.map((i, element): string => {
@@ -83,8 +76,7 @@ class AnimeSaturn extends AnimeParser {
       cover:
         $('div.banner')
           ?.attr('style')
-          ?.match(/background:\s*url\(['"]?([^'")]+)['"]?\)/i)?.[1] ||
-        undefined,
+          ?.match(/background:\s*url\(['"]?([^'")]+)['"]?\)/i)?.[1] || undefined,
       description: $('#full-trama').text(),
       episodes: [],
     };
@@ -96,11 +88,7 @@ class AnimeSaturn extends AnimeParser {
         .find('.bottone-ep')
         .each((i, element) => {
           const link = $(element).attr('href');
-          const episodeNumber = $(element)
-            .text()
-            .trim()
-            .replace('Episodio ', '')
-            .trim();
+          const episodeNumber = $(element).text().trim().replace('Episodio ', '').trim();
 
           episodes.push({
             number: parseInt(episodeNumber),
@@ -118,15 +106,11 @@ class AnimeSaturn extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeSources = async (
-    episodeId: string
-  ): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     const fakeData = await this.client.get(`${this.baseUrl}ep/${episodeId}`);
     const $2 = await load(fakeData.data);
 
-    const serverOneUrl = $2("div > a:contains('Guarda lo streaming')").attr(
-      'href'
-    ); // scrape from server 1 (m3u8 and mp4 urls)
+    const serverOneUrl = $2("div > a:contains('Guarda lo streaming')").attr('href'); // scrape from server 1 (m3u8 and mp4 urls)
     if (serverOneUrl === null) throw new Error('Invalid url');
 
     let data = await this.client.get(serverOneUrl!);
@@ -151,12 +135,7 @@ class AnimeSaturn extends AnimeParser {
 
       scriptText.split('\n').forEach((line) => {
         if (line.includes('file:') && !serverOneSource) {
-          serverOneSource = line
-            .split('file:')[1]!
-            .trim()
-            .replace(/'/g, '')
-            .replace(/,/g, '')
-            .replace(/"/g, '');
+          serverOneSource = line.split('file:')[1]!.trim().replace(/'/g, '').replace(/,/g, '').replace(/"/g, '');
         }
       });
     });
@@ -186,10 +165,7 @@ class AnimeSaturn extends AnimeParser {
     $ = await load(data.data);
 
     const videoUrl = $('.embed-container > iframe').attr('src');
-    const serverTwoSource = await new StreamTape(
-      this.proxyConfig,
-      this.adapter
-    ).extract(new URL(videoUrl!));
+    const serverTwoSource = await new StreamTape(this.proxyConfig, this.adapter).extract(new URL(videoUrl!));
 
     if (!serverTwoSource) throw new Error('Invalid source');
 
@@ -205,9 +181,7 @@ class AnimeSaturn extends AnimeParser {
    *
    * @param episodeId Episode id
    */
-  override fetchEpisodeServers = (
-    episodeId: string
-  ): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> => {
     throw new Error('Method not implemented.');
   };
 }

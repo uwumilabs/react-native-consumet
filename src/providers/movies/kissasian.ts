@@ -19,10 +19,7 @@ class KissAsian extends MovieParser {
   protected override classPath = 'MOVIES.KissAsian';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
 
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMovieResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     try {
       const searchResult: ISearch<IMovieResult> = {
         currentPage: page,
@@ -52,15 +49,8 @@ class KissAsian extends MovieParser {
 
       if (searchResult.results.length === 0) {
         searchResult.results.push({
-          id: response.request.res.responseUrl.replace(
-            /https?:\/\/[^\/]*\/?/i,
-            ''
-          ),
-          title: $('div.content')
-            .first()
-            .find('div.heading > h3')
-            .text()
-            .trim(),
+          id: response.request.res.responseUrl.replace(/https?:\/\/[^\/]*\/?/i, ''),
+          title: $('div.content').first().find('div.heading > h3').text().trim(),
           url: response.request.res.responseUrl,
           image: `${this.baseUrl}${$('div.content').first().find('div.cover > img').attr('src')}`,
         });
@@ -75,8 +65,7 @@ class KissAsian extends MovieParser {
   override fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
     try {
       const realMediaId = mediaId;
-      if (!mediaId.startsWith(this.baseUrl))
-        mediaId = `${this.baseUrl}/${mediaId}`;
+      if (!mediaId.startsWith(this.baseUrl)) mediaId = `${this.baseUrl}/${mediaId}`;
 
       const mediaInfo: IMovieInfo = {
         id: '',
@@ -92,11 +81,7 @@ class KissAsian extends MovieParser {
       const $ = load(data);
 
       mediaInfo.id = realMediaId;
-      mediaInfo.title = $('div.content')
-        .first()
-        .find('div.heading > h3')
-        .text()
-        .trim();
+      mediaInfo.title = $('div.content').first().find('div.heading > h3').text().trim();
       mediaInfo.image = `${this.baseUrl}${$('div.content').first().find('div.cover > img').attr('src')}`;
       mediaInfo.otherNames = $('span:contains(Other name:)')
         .siblings()
@@ -115,19 +100,9 @@ class KissAsian extends MovieParser {
         .siblings('a')
         .map((i, el) => $(el).text()!.trim())
         .get();
-      mediaInfo.country = $('span:contains(Country:)')
-        .siblings('a')
-        .text()
-        .trim();
+      mediaInfo.country = $('span:contains(Country:)').siblings('a').text().trim();
 
-      switch (
-        $('span:contains(Status:)')
-          .parent()
-          .text()
-          .split('Status:')
-          .pop()
-          ?.trim()
-      ) {
+      switch ($('span:contains(Status:)').parent().text().split('Status:').pop()?.trim()) {
         case 'Ongoing':
           mediaInfo.status = MediaStatus.ONGOING;
           break;
@@ -162,9 +137,7 @@ class KissAsian extends MovieParser {
     }
   };
 
-  override async fetchEpisodeServers(
-    episodeId: string
-  ): Promise<IEpisodeServer[]> {
+  override async fetchEpisodeServers(episodeId: string): Promise<IEpisodeServer[]> {
     try {
       const episodeServers: IEpisodeServer[] = [];
 
@@ -182,23 +155,18 @@ class KissAsian extends MovieParser {
 
       await Promise.all(
         $('ul.mirrorTab > li > a.ign').map(async (i, ele) => {
-          const { data } = await this.client.post(
-            `${this.baseUrl}${$(ele).attr('href')}`,
-            {
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-            }
-          );
+          const { data } = await this.client.post(`${this.baseUrl}${$(ele).attr('href')}`, {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          });
 
           const $$ = load(data);
           if ($$('ul.mirrorTab > li > a.actived').text().trim()) {
             const url = $$('iframe#mVideo').attr('src')!;
             episodeServers.push({
               name: $$('ul.mirrorTab > li > a.actived').text().trim(),
-              url: url.startsWith('https')
-                ? url
-                : url.replace('//', 'https://'),
+              url: url.startsWith('https') ? url : url.replace('//', 'https://'),
             });
           }
         })
@@ -235,22 +203,15 @@ class KissAsian extends MovieParser {
       switch (server) {
         case StreamingServers.VidMoly:
           return {
-            sources: await new VidMoly(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            ),
+            sources: await new VidMoly(this.proxyConfig, this.adapter).extract(serverUrl),
           };
         case StreamingServers.StreamWish:
           return {
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(
-              serverUrl
-            )),
+            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
           };
         case StreamingServers.Mp4Upload:
           return {
-            sources: await new Mp4Upload(
-              this.proxyConfig,
-              this.adapter
-            ).extract(serverUrl),
+            sources: await new Mp4Upload(this.proxyConfig, this.adapter).extract(serverUrl),
           };
         default:
           throw new Error('Server not supported');
@@ -259,19 +220,13 @@ class KissAsian extends MovieParser {
 
     try {
       const servers = await this.fetchEpisodeServers(episodeId);
-      const i = servers.findIndex(
-        (s) => s.name.toLowerCase() === server.toLowerCase()
-      );
+      const i = servers.findIndex((s) => s.name.toLowerCase() === server.toLowerCase());
 
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
 
-      const serverUrl: URL = new URL(
-        servers.filter(
-          (s) => s.name.toLowerCase() === server.toLowerCase()
-        )[0]!.url
-      );
+      const serverUrl: URL = new URL(servers.filter((s) => s.name.toLowerCase() === server.toLowerCase())[0]!.url);
 
       return await this.fetchEpisodeSources(serverUrl.href, server);
     } catch (err) {

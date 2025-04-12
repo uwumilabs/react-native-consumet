@@ -12,8 +12,7 @@ import {
 class MangaHere extends MangaParser {
   override readonly name = 'MangaHere';
   protected override baseUrl = 'http://www.mangahere.cc';
-  protected override logo =
-    'https://i.pinimg.com/564x/51/08/62/51086247ed16ff8abae2df0bb06448e4.jpg';
+  protected override logo = 'https://i.pinimg.com/564x/51/08/62/51086247ed16ff8abae2df0bb06448e4.jpg';
   protected override classPath = 'MANGA.MangaHere';
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
@@ -22,14 +21,11 @@ class MangaHere extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/manga/${mangaId}`,
-        {
-          headers: {
-            cookie: 'isAdult=1',
-          },
-        }
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`, {
+        headers: {
+          cookie: 'isAdult=1',
+        },
+      });
 
       const $ = load(data);
 
@@ -51,9 +47,7 @@ class MangaHere extends MangaParser {
           mangaInfo.status = MediaStatus.UNKNOWN;
           break;
       }
-      mangaInfo.rating = parseFloat(
-        $('span.detail-info-right-title-star > span').last().text()
-      );
+      mangaInfo.rating = parseFloat($('span.detail-info-right-title-star > span').last().text());
       mangaInfo.authors = $('p.detail-info-right-say > a')
         .map((i, el) => $(el).attr('title'))
         .get();
@@ -71,9 +65,7 @@ class MangaHere extends MangaParser {
     }
   };
 
-  override fetchChapterPages = async (
-    chapterId: string
-  ): Promise<IMangaChapterPage[]> => {
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     const chapterPages: IMangaChapterPage[] = [];
     const url = `${this.baseUrl}/manga/${chapterId}/1.html`;
 
@@ -87,8 +79,7 @@ class MangaHere extends MangaParser {
       const $ = load(data);
 
       const copyrightHandle =
-        $('p.detail-block-content').text().match('Dear user') ||
-        $('p.detail-block-content').text().match('blocked');
+        $('p.detail-block-content').text().match('Dear user') || $('p.detail-block-content').text().match('blocked');
       if (copyrightHandle) {
         throw Error(copyrightHandle.input?.trim());
       }
@@ -113,17 +104,11 @@ class MangaHere extends MangaParser {
       } else {
         let sKey = this.extractKey(html);
         const chapterIdsl = html.indexOf('chapterid');
-        const chapterId = html
-          .substring(chapterIdsl + 11, html.indexOf(';', chapterIdsl))
-          .trim();
+        const chapterId = html.substring(chapterIdsl + 11, html.indexOf(';', chapterIdsl)).trim();
 
-        const chapterPagesElmnt = $(
-          'body > div:nth-child(6) > div > span'
-        ).children('a');
+        const chapterPagesElmnt = $('body > div:nth-child(6) > div > span').children('a');
 
-        const pages = parseInt(
-          chapterPagesElmnt.last().prev().attr('data-page') ?? '0'
-        );
+        const pages = parseInt(chapterPagesElmnt.last().prev().attr('data-page') ?? '0');
 
         const pageBase = url.substring(0, url.lastIndexOf('/'));
 
@@ -169,22 +154,16 @@ class MangaHere extends MangaParser {
     }
   };
 
-  override search = async (
-    query: string,
-    page: number = 1
-  ): Promise<ISearch<IMangaResult>> => {
+  override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     const searchRes: ISearch<IMangaResult> = {
       currentPage: page,
       results: [],
     };
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/search?title=${query}&page=${page}`
-      );
+      const { data } = await this.client.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
       const $ = load(data);
 
-      searchRes.hasNextPage =
-        $('div.pager-list-left > a.active').next().text() !== '>';
+      searchRes.hasNextPage = $('div.pager-list-left > a.active').next().text() !== '>';
 
       searchRes.results = $('div.container > div > div > ul > li')
         .map(
@@ -195,11 +174,9 @@ class MangaHere extends MangaParser {
             image: $(el).find('a > img').attr('src'),
             description: $(el).find('p').last().text(),
             status:
-              $(el).find('p.manga-list-4-show-tag-list-2 > a').text() ===
-              'Ongoing'
+              $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Ongoing'
                 ? MediaStatus.ONGOING
-                : $(el).find('p.manga-list-4-show-tag-list-2 > a').text() ===
-                    'Completed'
+                : $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Completed'
                   ? MediaStatus.COMPLETED
                   : MediaStatus.UNKNOWN,
           })

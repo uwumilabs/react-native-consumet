@@ -10,15 +10,10 @@ export class MegaUp extends VideoExtractor {
     return n.split('').reverse().join('');
   };
   #base64UrlEncode = (str: string) => {
-    return btoa(str)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/[=]+$/, '');
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
   };
   #substitute = (input: string, keys: string, values: string) => {
-    const map = Object.fromEntries(
-      keys.split('').map((key, i) => [key, values[i] || ''])
-    );
+    const map = Object.fromEntries(keys.split('').map((key, i) => [key, values[i] || '']));
     const a = input
       .split('')
       .map((char) => map[char] || char)
@@ -70,11 +65,7 @@ export class MegaUp extends VideoExtractor {
                     'kOCJnByYmfI',
                     this.#substitute(
                       this.#substitute(
-                        this.#reverseIt(
-                          this.#base64UrlEncode(
-                            this.#transform('0DU8ksIVlFcia2', n)
-                          )
-                        ),
+                        this.#reverseIt(this.#base64UrlEncode(this.#transform('0DU8ksIVlFcia2', n))),
                         '1wctXeHqb2',
                         '1tecHq2Xbw'
                       ),
@@ -108,11 +99,7 @@ export class MegaUp extends VideoExtractor {
                       this.#transform(
                         'sXmH96C4vhRrgi8',
                         this.#base64UrlDecode(
-                          this.#substitute(
-                            this.#base64UrlDecode(n),
-                            'djn5uT7AMR9h',
-                            'hTn79AMjduR5'
-                          )
+                          this.#substitute(this.#base64UrlDecode(n), 'djn5uT7AMR9h', 'hTn79AMjduR5')
                         )
                       )
                     )
@@ -171,9 +158,7 @@ export class MegaUp extends VideoExtractor {
       const url = videoUrl.href.replace(/\/(e|e2)\//, '/media/');
       const res = await this.client.get(url);
 
-      const decrypted = JSON.parse(
-        this.Decode(res.data.result).replace(/\\/g, '')
-      );
+      const decrypted = JSON.parse(this.Decode(res.data.result).replace(/\\/g, ''));
       const data: ISource = {
         sources: decrypted.sources.map((s: { file: string }) => ({
           url: s.file,

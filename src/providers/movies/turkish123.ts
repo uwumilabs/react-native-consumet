@@ -1,12 +1,5 @@
 import { load } from 'cheerio';
-import {
-  type IAnimeInfo,
-  type IEpisodeServer,
-  type IMovieInfo,
-  type ISource,
-  MovieParser,
-  TvType,
-} from '../../models';
+import { type IAnimeInfo, type IEpisodeServer, type IMovieInfo, type ISource, MovieParser, TvType } from '../../models';
 
 export default class Turkish extends MovieParser {
   name: string = 'Turkish123';
@@ -40,10 +33,7 @@ export default class Turkish extends MovieParser {
         .map((_, e) => $(e).text())
         .get();
       info.rating = parseFloat($('.imdb-r').text());
-      info.releaseDate = $('.mvici-right > p:nth-child(3)')
-        .find('a')
-        .first()
-        .text();
+      info.releaseDate = $('.mvici-right > p:nth-child(3)').find('a').first().text();
       info.totalEpisodes = $('.les-content > a').length;
       info.episodes = $('.les-content > a')
         .map((i, e) => ({
@@ -68,9 +58,7 @@ export default class Turkish extends MovieParser {
           'Referer': this.baseUrl,
         },
       });
-      const resp = (
-        await this.client(data.match(/"(https:\/\/tukipasti.com\/t\/.*?)"/)![1])
-      ).data;
+      const resp = (await this.client(data.match(/"(https:\/\/tukipasti.com\/t\/.*?)"/)![1])).data;
       source.sources[0]!.url = resp.match(/var urlPlay = '(.*?)'/)![1];
     } catch (error) {}
     return source;
@@ -95,11 +83,7 @@ export default class Turkish extends MovieParser {
         .not('.ss-bottom')
         .each((_, ele) => {
           result.push({
-            id: $(ele)
-              .find('a')
-              .attr('href')!
-              .replace(this.baseUrl, '')
-              .replace('/', ''),
+            id: $(ele).find('a').attr('href')!.replace(this.baseUrl, '').replace('/', ''),
             image:
               $(ele)
                 .find('a')

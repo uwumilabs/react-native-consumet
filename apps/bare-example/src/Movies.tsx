@@ -1,13 +1,5 @@
 import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
-import {
-  Text,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  SafeAreaView,
-} from 'react-native';
+import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
 interface FetchState {
@@ -87,20 +79,12 @@ export default function Movies() {
           data={state.data}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>
-                {typeof item.title === 'string'
-                  ? item.title
-                  : String(item.title)}
-              </Text>
+              <Text style={styles.itemText}>{typeof item.title === 'string' ? item.title : String(item.title)}</Text>
             </View>
           )}
           keyExtractor={(item) => item.id.toString()}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No sources found</Text>
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={<Text style={styles.emptyText}>No sources found</Text>}
         />
       )}
     </SafeAreaView>
