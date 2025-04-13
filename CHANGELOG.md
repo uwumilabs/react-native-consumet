@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.0 (2025-04-13)
+
+* feat: use cdn for js assets in consumet-module to decrease the size of bundle ([0aea2e4](https://github.com/2004durgesh/react-native-consumet/commit/0aea2e4))
+
 ## v0.3.0 (2025-04-12)
 
 * feat(meta): improve fetchEpisodesListById and tmdb, code format, update base url of zoro ([85d3da7](https://github.com/2004durgesh/react-native-consumet/commit/85d3da7))
