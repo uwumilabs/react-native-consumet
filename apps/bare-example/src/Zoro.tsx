@@ -1,4 +1,4 @@
-import { ANIME, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { ANIME, type IAnimeResult, type ISearch, SubOrSub, StreamingServers } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -11,10 +11,12 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.AnimeKai();
+    const animekai = new ANIME.Zoro();
     const sources = await animekai.search('one piece');
     console.log('sources');
-    const s = await animekai.fetchEpisodeSources('jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH');
+    const s = await animekai.fetchEpisodeSources(
+      'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub',
+      StreamingServers.VidCloud);
     console.log('sources end');
     console.log(s);
     if (!sources || !sources.results) {

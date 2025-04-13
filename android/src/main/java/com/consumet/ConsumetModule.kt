@@ -4,12 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.ConsoleMessage
-import androidx.annotation.NonNull
+import android.webkit.*
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.annotations.ReactModule
@@ -18,11 +13,14 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @ReactModule(name = ConsumetModule.NAME)
-class ConsumetModule(reactContext: ReactApplicationContext) : NativeConsumetSpec(reactContext) {
+class ConsumetModule(private val reactContext: ReactApplicationContext) : NativeConsumetSpec(reactContext), TurboModule {
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private val tag by lazy { javaClass.simpleName }
 
-    class JsInterface(private val latch: CountDownLatch) {
+    class JsInterface(
+        private val latch: CountDownLatch,
+        private val context: ReactApplicationContext
+    ) {
         var result: String? = null
 
         @JavascriptInterface
@@ -31,21 +29,28 @@ class ConsumetModule(reactContext: ReactApplicationContext) : NativeConsumetSpec
             result = response
             latch.countDown()
         }
-    }
 
-    private fun getJsContent(file: String): String {
-        return reactApplicationContext.assets.open(file).bufferedReader().use { it.readText() }
+        @JavascriptInterface
+        fun loadLocalAsset(filename: String): String {
+            return try {
+                context.assets.open(filename).bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                Log.e("ConsumetModule", "Failed to load local asset: $filename", e)
+                "console.error('Failed to load $filename: ${e.message}');"
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun getSources(xrax: String, promise: Promise) {
         val latch = CountDownLatch(1)
         var webView: WebView? = null
-        val jsi = JsInterface(latch)
+        val jsi = JsInterface(latch, reactContext)
 
         handler.post {
-            val webview = WebView(reactApplicationContext)
+            val webview = WebView(reactContext)
             webView = webview
+
             with(webview.settings) {
                 javaScriptEnabled = true
                 domStorageEnabled = true
@@ -59,53 +64,76 @@ class ConsumetModule(reactContext: ReactApplicationContext) : NativeConsumetSpec
 
             webview.webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    Log.d(tag, "onPageFinished $url")
                     super.onPageFinished(view, url)
 
-                    Log.d(tag, "injecting scripts")
-                    // Adjust paths to match your assets folder structure
-                    view?.evaluateJavascript(getJsContent("crypto-js.js")) {}
-                    view?.evaluateJavascript(getJsContent("megacloud.decodedpng.js")) {}
-                    view?.evaluateJavascript(getJsContent("megacloud.getsrcs.js")) {}
+                    val cdnScript = """
+                        (async function() {
+                            async function loadScriptWithFallback(url, localFilename) {
+                                try {
+                                    console.log("Loading from CDN: " + url);
+                                    await new Promise((resolve, reject) => {
+                                        const script = document.createElement('script');
+                                        script.src = url;
+                                        script.onload = () => resolve();
+                                        script.onerror = () => reject(new Error("CDN failed"));
+                                        document.head.appendChild(script);
+                                        setTimeout(() => reject(new Error("CDN timeout")), 5000);
+                                    });
+                                } catch (e) {
+                                    console.warn("Falling back to local asset: " + localFilename);
+                                    const localScript = window.jsinterface.loadLocalAsset(localFilename);
+                                    eval(localScript);
+                                }
+                            }
 
-                    Log.d(tag, "running script")
-                    view?.evaluateJavascript(
-                        "getSources(\"${xrax}\")" +
-                            ".then( s => jsinterface.setResponse( JSON.stringify(s) ) )",
-                    ) {}
+                            try {
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/crypto-js.js", "crypto-js.js");
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/megacloud.decodedpng.js", "megacloud.decodedpng.js");
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/megacloud.getsrcs.js", "megacloud.getsrcs.js");
+
+                                console.log("Calling getSources...");
+                                const result = await getSources("${xrax}");
+                                window.jsinterface.setResponse(JSON.stringify(result));
+                            } catch (err) {
+                                console.error("Execution error:", err);
+                                window.jsinterface.setResponse("ERROR: " + err.message);
+                            }
+                        })();
+                    """.trimIndent()
+
+                    view?.evaluateJavascript(cdnScript, null)
+                }
+
+                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                    Log.e(tag, "WebView error: $errorCode - $description @ $failingUrl")
+                    super.onReceivedError(view, errorCode, description, failingUrl)
                 }
             }
 
             webview.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                    Log.d(
-                        tag,
-                        "Chrome: [${consoleMessage?.messageLevel()}]" +
-                            "${consoleMessage?.message()}" +
-                            " at ${consoleMessage?.lineNumber()}" +
-                            " in ${consoleMessage?.sourceId()}",
-                    )
+                    Log.d(tag, "Console: [${consoleMessage?.messageLevel()}] ${consoleMessage?.message()}")
                     return super.onConsoleMessage(consoleMessage)
                 }
             }
 
             val headers = mapOf("X-Requested-With" to "org.lineageos.jelly")
-            webView?.loadUrl("https://megacloud.tv/about", headers)
+            webview.loadUrl("https://megacloud.tv/about", headers)
         }
 
-        // Run in a separate thread to not block the JS thread
+        // Await result or timeout
         Thread {
             val success = latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)
-            
+
             handler.post {
                 webView?.stopLoading()
                 webView?.destroy()
                 webView = null
-                
+
                 if (success && jsi.result != null) {
                     promise.resolve(jsi.result)
                 } else {
-                    promise.reject("ERROR", "Failed to get sources or timeout")
+                    promise.reject("ERROR", "Failed to get sources or timeout2")
                 }
             }
         }.start()
@@ -113,6 +141,6 @@ class ConsumetModule(reactContext: ReactApplicationContext) : NativeConsumetSpec
 
     companion object {
         const val NAME = "Consumet"
-        private const val TIMEOUT_SEC: Long = 30
+        private const val TIMEOUT_SEC: Long = 90
     }
 }

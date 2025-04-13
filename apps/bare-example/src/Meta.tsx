@@ -21,6 +21,7 @@ const fetchData = async (): Promise<IAnimeEpisode[]> => {
     if (!sources || !sources) {
       throw new Error('Invalid response format from API');
     }
+    // @ts-ignore
     return sources;
   } catch (error) {
     console.log(error);
