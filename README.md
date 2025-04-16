@@ -1,6 +1,6 @@
 # react-native-consumet
 
-React Native library providing access to entertainment media information (anime, movies, manga, etc.) from multiple sources, adapting the Consumet API for mobile applications.
+React Native library providing access to entertainment media information (anime, movies, manga, etc.) from multiple sources, adapting the [Consumet](https://github.com/consumet/consumet.ts) Node Package for mobile applications.
 
 ## Installation
 
@@ -13,8 +13,7 @@ npm install react-native-consumet
 > This library has been primarily tested on Android devices. iOS testing is currently limited due to lack of MacBook access. Some providers (like Zoro, FlixHQ) may not work correctly on iOS. Contributions from developers with iOS testing capabilities are greatly appreciated!
 
 > [!NOTE]
-> I try my best to keep it up to date, but please be aware that the library may not always reflect the latest changes in the Consumet API. If you encounter any issues, feel free to open an issue on GitHub.
-> The library is in its early stages and may not be fully functional. If you encounter any issues, please open an issue on GitHub.
+> This library is actively maintained but may occasionally lag behind the latest Consumet API changes. The project is in early development and some features may be incomplete or require refinement. If you encounter any issues or have suggestions, please open an issue on GitHub.
 
 ## Usage
 
