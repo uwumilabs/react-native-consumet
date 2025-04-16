@@ -8,7 +8,6 @@ import {
   type IAnimeResult,
   type ISource,
   type IAnimeEpisode,
-  SubOrSub,
   type IEpisodeServer,
   Genres,
   MangaParser,
@@ -23,7 +22,6 @@ import {
 import {
   anilistSearchQuery,
   anilistMediaDetailQuery,
-  kitsuSearchQuery,
   anilistTrendingQuery,
   anilistPopularQuery,
   anilistAiringScheduleQuery,
@@ -32,7 +30,6 @@ import {
   anilistSiteStatisticsQuery,
   anilistCharacterQuery,
   anilistStaffInfoQuery,
-  range,
   getDays,
   capitalizeFirstLetter,
 } from '../../utils';

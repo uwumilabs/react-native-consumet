@@ -7,5 +7,6 @@
     "declarationMap": true,
     "emitDeclarationOnly": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude":["apps"]
 }

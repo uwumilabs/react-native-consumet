@@ -12,6 +12,10 @@ npm install react-native-consumet
 > [!IMPORTANT]  
 > This library has been primarily tested on Android devices. iOS testing is currently limited due to lack of MacBook access. Some providers (like Zoro, FlixHQ) may not work correctly on iOS. Contributions from developers with iOS testing capabilities are greatly appreciated!
 
+> [!NOTE]
+> I try my best to keep it up to date, but please be aware that the library may not always reflect the latest changes in the Consumet API. If you encounter any issues, feel free to open an issue on GitHub.
+> The library is in its early stages and may not be fully functional. If you encounter any issues, please open an issue on GitHub.
+
 ## Usage
 
 ```js

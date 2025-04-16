@@ -11,22 +11,23 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.Zoro();
-    const sources = await animekai.search('one piece');
+    const animekai = new ANIME.AnimeKai();
+    const search = await animekai.search('solo leveling');
     console.log('sources');
-    const s = await animekai.fetchEpisodeSources(
-      'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub',
-      StreamingServers.VidCloud);
+    const info = await animekai.fetchAnimeInfo(search?.results[0]!.id);
+    const s =
+      info.episodes &&
+      (await animekai.fetchEpisodeSources(info!.episodes[0]!.id!, StreamingServers.MegaUp, SubOrSub.DUB));
     console.log('sources end');
     console.log(s);
-    if (!sources || !sources.results) {
+    if (!search || !search.results) {
       throw new Error('Invalid response format from API');
     }
     // @ts-ignore
-    return sources;
+    return search;
   } catch (error) {
     console.log(error);
-    throw new Error('Failed to fetch sources');
+    throw new Error('Failed to fetch search');
   }
 };
 

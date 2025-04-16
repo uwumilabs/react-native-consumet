@@ -1,7 +1,5 @@
-import { Text, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import Zoro from './Zoro';
-import Movies from './Movies';
-import Meta from './Meta';
 
 export default function App() {
   return (

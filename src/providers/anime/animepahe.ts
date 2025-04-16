@@ -12,7 +12,6 @@ import {
   MediaFormat,
 } from '../../models';
 import { Kwik } from '../../extractors';
-import { USER_AGENT } from '../../utils';
 
 class AnimePahe extends AnimeParser {
   override readonly name = 'AnimePahe';

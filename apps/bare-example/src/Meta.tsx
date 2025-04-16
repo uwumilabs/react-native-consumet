@@ -1,7 +1,6 @@
-import { META, ANIME, MOVIES, type IAnimeEpisode, type IMovieResult, type ISearch } from 'react-native-consumet';
+import { META, MOVIES, type IAnimeEpisode } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import Zoro from '../../../src/providers/anime/zoro';
 
 interface FetchState {
   data: IAnimeEpisode[];
@@ -12,7 +11,7 @@ interface FetchState {
 const fetchData = async (): Promise<IAnimeEpisode[]> => {
   try {
     const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
-    const sources = await movies.fetchMediaInfo('86031',"tv");
+    const sources = await movies.fetchMediaInfo('86031', 'tv');
     console.log(sources);
     // const s = await movies.fetchEpisodeSources(
     //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
