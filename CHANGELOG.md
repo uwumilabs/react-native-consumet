@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>0.4.1 (2025-04-16)</small>
+
+* fix: enhance megaup extractor with new kaicodex integration ([ccafb22](https://github.com/2004durgesh/react-native-consumet/commit/ccafb22))
+
 ## v0.4.0 (2025-04-13)
 
 * feat: use cdn for js assets in consumet-module to decrease the size of bundle ([0aea2e4](https://github.com/2004durgesh/react-native-consumet/commit/0aea2e4))
