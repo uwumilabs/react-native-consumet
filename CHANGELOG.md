@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>0.4.2 (2025-04-18)</small>
+
+* fix(anilist): optimize episode merging ([bf2df23](https://github.com/2004durgesh/react-native-consumet/commit/bf2df23))
+* docs: update readme [skip ci] ([0b2c15b](https://github.com/2004durgesh/react-native-consumet/commit/0b2c15b))
+
 ## <small>0.4.1 (2025-04-16)</small>
 
 * fix: enhance megaup extractor with new kaicodex integration ([ccafb22](https://github.com/2004durgesh/react-native-consumet/commit/ccafb22))
