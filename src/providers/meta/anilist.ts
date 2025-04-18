@@ -715,10 +715,10 @@ class Anilist extends AnimeParser {
     title.romaji = title.romaji.toLowerCase();
 
     if (title.english === title.romaji) {
-      console.log(
-        'findAnime',
-        await this.findAnimeSlug(title.english, season, startDate, malId, anilistId, externalLinks)
-      );
+      // console.log(
+      //   'findAnime',
+      //   await this.findAnimeSlug(title.english, season, startDate, malId, anilistId, externalLinks)
+      // );
       return (await this.findAnimeSlug(title.english, season, startDate, malId, anilistId, externalLinks)) ?? [];
     }
 
@@ -743,8 +743,8 @@ class Anilist extends AnimeParser {
       anilistId,
       externalLinks
     );
-    console.log('romajiPossibleEpisodes', romajiPossibleEpisodes);
-    console.log('englishPossibleEpisodes', englishPossibleEpisodes);
+    // console.log('romajiPossibleEpisodes', romajiPossibleEpisodes);
+    // console.log('englishPossibleEpisodes', englishPossibleEpisodes);
     return englishPossibleEpisodes ?? [];
   };
 
@@ -835,7 +835,7 @@ class Anilist extends AnimeParser {
     // }
 
     const possibleProviderEpisodes = possibleAnime.episodes as IAnimeEpisode[];
-    console.log('possibleProviderEpisodes', possibleProviderEpisodes);
+    // console.log('possibleProviderEpisodes', possibleProviderEpisodes);
     return possibleProviderEpisodes;
     // if (
     //   typeof possibleProviderEpisodes[0]?.image !== 'undefined' &&
@@ -1369,7 +1369,7 @@ class Anilist extends AnimeParser {
       id,
       Media.externalLinks
     );
-    console.log('fetchDefaultEpisodeList', episodes);
+    // console.log('fetchDefaultEpisodeList', episodes);
     return episodes;
   };
 
@@ -1417,17 +1417,31 @@ class Anilist extends AnimeParser {
           createdAt: item.airDate ?? item.airdate ?? item.airDateUtc,
         }))!;
 
-        function mergeEpisodes(arrayA: any[], arrayB: IAnimeEpisode[]): IAnimeEpisode[] {
-          const mapA = new Map(arrayA.map((item) => [`${item.number}-${item.imageHash}`, item]));
+        function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
+          // Create a map using only episode numbers as keys
+          const normalizedMap = new Map(normalizedEpisodes.map((item) => [item.number, item]));
 
-          return arrayB.map((itemB) => {
-            const key = `${itemB.number}-${itemB.imageHash}`;
-            const itemA = mapA.get(key) || {};
+          // Merge the episodes
+          return providerEpisodes.map((providerEp) => {
+            const normalizedEp = normalizedMap.get(providerEp.number);
+            if (!normalizedEp) return providerEp;
 
-            // Use Object.assign to merge: values from itemA overwrite nulls in itemB
-            return Object.assign({}, itemB, itemA, { url: itemB.url });
+            // Merge the episodes, prioritizing certain fields from each source
+            return {
+              ...providerEp,
+              title: normalizedEp.title || providerEp.title,
+              description: normalizedEp.description || providerEp.description,
+              image: normalizedEp.image || providerEp.image,
+              imageHash: normalizedEp.imageHash || providerEp.imageHash,
+              createdAt: normalizedEp.createdAt || providerEp.createdAt,
+            };
           });
         }
+        // console.log({
+        //   normalizedEpisodes,
+        //   providerEpisodes,
+        //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
+        // });
         possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
         if (!possibleAnimeEpisodes.length) {
           possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media, id);
