@@ -1,6 +1,6 @@
-import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
+import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
 
 interface FetchState {
   data: IMovieResult[];

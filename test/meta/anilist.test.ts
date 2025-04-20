@@ -19,10 +19,18 @@ test('returns a filled object of anime data', async () => {
 test('returns episodes for sub and dub not available', async () => {
   const subData = await anilist.fetchEpisodesListById('949', false);
   expect(subData).not.toBeNull();
+  expect(subData[0]).toHaveProperty('id');
+  expect(subData[0]).toHaveProperty('uniqueId');
+  expect(subData[0]).toHaveProperty('number');
+  expect(subData[0]).toHaveProperty('title');
   expect(subData).not.toEqual([]);
 
   const dubData = await anilist.fetchEpisodesListById('949', true);
   expect(dubData).not.toBeNull();
+  expect(subData[0]).toHaveProperty('id');
+  expect(subData[0]).toHaveProperty('uniqueId');
+  expect(subData[0]).toHaveProperty('number');
+  expect(subData[0]).toHaveProperty('title');
   expect(dubData).not.toEqual([]);
 });
 

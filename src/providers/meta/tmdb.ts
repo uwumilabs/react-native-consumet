@@ -342,7 +342,12 @@ class TMDB extends MovieParser {
         info.seasons = [];
         info.seasons.push({
           season: 1,
-          image: !data?.poster_path ? undefined : `https://image.tmdb.org/t/p/w780${data.backdrop_path}`,
+          image: !data?.poster_path
+            ? undefined
+            : {
+                mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
+                hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`,
+              },
           episodes: [
             {
               id: `${mediaId}-${type}-s1-e1`,

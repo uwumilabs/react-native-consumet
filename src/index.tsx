@@ -66,6 +66,7 @@ import {
   type ITitle,
   MediaFormat,
   type ProxyConfig,
+  type AniZipEpisode,
 } from './models';
 
 export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
@@ -131,4 +132,5 @@ export type {
   FuzzyDate,
   ITitle,
   ProxyConfig,
+  AniZipEpisode,
 };

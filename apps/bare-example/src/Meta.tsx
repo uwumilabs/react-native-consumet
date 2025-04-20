@@ -1,4 +1,4 @@
-import { ANIME, META, MOVIES, type IAnimeEpisode } from 'react-native-consumet';
+import { ANIME, META, type IAnimeEpisode } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 

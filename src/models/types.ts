@@ -127,6 +127,7 @@ export interface IAnimeEpisodeV2 {
 
 export interface IAnimeEpisode {
   id: string;
+  uniqueId?: string;
   number: number;
   title?: string;
   description?: string;
@@ -138,6 +139,25 @@ export interface IAnimeEpisode {
   imageHash?: string;
   releaseDate?: string;
   [x: string]: unknown; // other fields
+}
+
+export interface AniZipEpisode {
+  episodeNumber: number;
+  title: {
+    'ja': string;
+    'en': string;
+    'fr': string;
+    'hu': string;
+    'x-jat': string;
+  };
+  airDate: string;
+  airDateUtc: string;
+  overview: string;
+  image: string;
+  episode: string;
+  airdate: string;
+  rating: string;
+  summary: string;
 }
 
 export interface IEpisodeServer {
@@ -432,6 +452,15 @@ interface INewsFeedPreview {
   full: string;
 }
 
+export interface IMovieSeason {
+  season: number;
+  image?: {
+    mobile?: string;
+    hd?: string;
+  };
+  episodes: IMovieEpisode[];
+}
+
 export interface IMovieInfo extends IMovieResult {
   cover?: string;
   recommendations?: IMovieResult[];
@@ -445,7 +474,7 @@ export interface IMovieInfo extends IMovieResult {
   tags?: string[];
   totalEpisodes?: number;
   trailer?: Trailer;
-  seasons?: { season: number; image?: string; episodes: IMovieEpisode[] }[];
+  seasons?: IMovieSeason[];
   episodes?: IMovieEpisode[];
 }
 

@@ -41,6 +41,7 @@ import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
 import Bilibili from '../anime/bilibili';
 import { ANIFY_URL, compareTwoStrings, getHashFromImage } from '../../utils/utils';
+import type { AniZipEpisode } from '../../models/types';
 
 class Anilist extends AnimeParser {
   override readonly name = 'Anilist';
@@ -68,7 +69,7 @@ class Anilist extends AnimeParser {
     customBaseURL?: string
   ) {
     super(proxyConfig, adapter);
-    this.provider = provider || new Gogoanime(customBaseURL, proxyConfig);
+    this.provider = provider || new Zoro(customBaseURL);
   }
 
   /**
@@ -1407,15 +1408,17 @@ class Anilist extends AnimeParser {
           this.fetchDefaultEpisodeList(Media, id),
         ]);
         //to get the actual episode ids we make use of fetchDefaultEpisodeList
-        const normalizedEpisodes = Object.entries(animeMetaData.episodes)?.map(([key, item]: [any, any]) => ({
-          title: item.title.en,
+        const normalizedEpisodes = (
+          Object.entries(animeMetaData.episodes || {}) as [string, AniZipEpisode & IAnimeEpisode][]
+        ).map(([key, item]) => ({
+          title: item.title.en ?? item.title['x-jat'],
           uniqueId: `${id}$ep=${item.episodeNumber ?? item.episode}`,
           description: item.overview ?? item.summary,
-          number: item.episodeNumber,
+          number: item.episodeNumber ?? parseInt(item.episode),
           image: item.image,
           imageHash: getHashFromImage(item.image),
-          createdAt: item.airDate ?? item.airdate ?? item.airDateUtc,
-        }))!;
+          releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc,
+        }));
 
         function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
           // Create a map using only episode numbers as keys
@@ -1429,11 +1432,12 @@ class Anilist extends AnimeParser {
             // Merge the episodes, prioritizing certain fields from each source
             return {
               ...providerEp,
+              uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
               title: normalizedEp.title || providerEp.title,
               description: normalizedEp.description || providerEp.description,
               image: normalizedEp.image || providerEp.image,
               imageHash: normalizedEp.imageHash || providerEp.imageHash,
-              createdAt: normalizedEp.createdAt || providerEp.createdAt,
+              releaseDate: normalizedEp.releaseDate || providerEp.releaseDate,
             };
           });
         }

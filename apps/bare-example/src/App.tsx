@@ -1,5 +1,4 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import Zoro from './Zoro';
 import Meta from './Meta';
 
 export default function App() {
@@ -8,7 +7,7 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Zoro /> */}
       {/* <Movies/> */}
-      <Meta/>
+      <Meta />
     </SafeAreaView>
   );
 }
