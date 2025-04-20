@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>0.4.3 (2025-04-20)</small>
+
+* feat(animepahe): download links in animepahe ([88712a0](https://github.com/2004durgesh/react-native-consumet/commit/88712a0))
+* fix(anilist): ani-zip interface and some fixings in lib ([9cd439c](https://github.com/2004durgesh/react-native-consumet/commit/9cd439c))
+
 ## <small>0.4.2 (2025-04-18)</small>
 
 * fix(anilist): optimize episode merging ([bf2df23](https://github.com/2004durgesh/react-native-consumet/commit/bf2df23))
