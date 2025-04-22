@@ -81,6 +81,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/jest": "^29.5.5",
     "@types/react": "^19.0.0",
+    "@types/string-similarity": "^4.0.2",
     "babel-jest": "^29.7.0",
     "commitlint": "^19.6.1",
     "del-cli": "^5.1.0",
@@ -180,6 +181,8 @@
     "ascii-url-encoder": "^1.2.0",
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
-    "crypto-js": "^4.2.0"
+    "crypto-js": "^4.2.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "string-similarity": "^4.0.4"
   }
 }

@@ -17,10 +17,11 @@ import {
 
 import { StreamSB, MegaCloud, StreamTape } from '../../utils';
 import { USER_AGENT } from '../../utils';
+import axios from 'axios';
 
 class Zoro extends AnimeParser {
   override readonly name = 'Zoro';
-  protected override baseUrl = 'https://hianimez.to';
+  protected override baseUrl = 'https://hianime.nz';
   protected override logo =
     'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg';
   protected override classPath = 'ANIME.Zoro';
@@ -536,7 +537,7 @@ class Zoro extends AnimeParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/watch/${id}`);
+      const { data } = await axios.get(`${this.baseUrl}/watch/${id}`);
       const $ = load(data);
 
       const { mal_id, anilist_id } = JSON.parse($('#syncData').text());
@@ -583,7 +584,7 @@ class Zoro extends AnimeParser {
       }
 
       // ZORO - PAGE INFO
-      const zInfo = await this.client.get(info.url);
+      const zInfo = await axios.get(info.url);
       const $$$ = load(zInfo.data);
 
       info.genres = [];
@@ -623,34 +624,36 @@ class Zoro extends AnimeParser {
           .trim();
       }
 
-      const episodesAjax = await this.client.get(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
+      const episodesAjax = await axios.get(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
           'Referer': `${this.baseUrl}/watch/${id}`,
         },
       });
-
       const $$ = load(episodesAjax.data.html);
 
-      info.totalEpisodes = $$('div.detail-infor-content > div > a').length;
+      // Pre-calculate values used for all episodes
+      const episodeElements = $$('div.detail-infor-content > div > a');
+      const subCount = parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0;
+      const dubCount = parseInt($('div.film-stats div.tick div.tick-item.tick-dub').text().trim()) || 0;
+
+      info.totalEpisodes = episodeElements.length;
       info.episodes = [];
-      $$('div.detail-infor-content > div > a').each((i, el) => {
-        const episodeId = $$(el).attr('href')?.split('/')[2]?.replace('?ep=', '$episode$')!;
-        const number = parseInt($$(el).attr('data-number')!);
-        const title = $$(el).attr('title');
-        const url = this.baseUrl + $$(el).attr('href');
-        const isFiller = $$(el).hasClass('ssl-item-filler');
-        const isSubbed = number <= (parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0);
-        const isDubbed = number <= (parseInt($('div.film-stats div.tick div.tick-item.tick-dub').text().trim()) || 0);
+
+      // Single pass through episodes
+      episodeElements.each((i, el) => {
+        const $el = $$(el);
+        const href = $el.attr('href') || '';
+        const number = parseInt($el.attr('data-number') || '0');
 
         info.episodes?.push({
-          id: episodeId,
+          id: href.split('/')[2]?.replace('?ep=', '$episode$') || '',
           number: number,
-          title: title,
-          isFiller: isFiller,
-          isSubbed: isSubbed,
-          isDubbed: isDubbed,
-          url: url,
+          title: $el.attr('title'),
+          isFiller: $el.hasClass('ssl-item-filler'),
+          isSubbed: number <= subCount,
+          isDubbed: number <= dubCount,
+          url: this.baseUrl + href,
         });
       });
 
@@ -828,6 +831,7 @@ class Zoro extends AnimeParser {
       }
       return res;
     } catch (err) {
+      console.log(err);
       throw new Error('Something went wrong. Please try again later.');
     }
   };
@@ -867,6 +871,7 @@ class Zoro extends AnimeParser {
       });
       return results;
     } catch (err) {
+      console.log(err);
       throw new Error('Something went wrong. Please try again later.');
     }
   };

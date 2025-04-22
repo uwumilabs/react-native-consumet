@@ -1,4 +1,4 @@
-import { ANIME, META, type IAnimeEpisode } from 'react-native-consumet';
+import { ANIME, META, MOVIES, type IAnimeEpisode } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -10,15 +10,16 @@ interface FetchState {
 
 const fetchData = async (): Promise<IAnimeEpisode[]> => {
   try {
-    // const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
-    // const sources = await movies.fetchMediaInfo('86031', 'tv');
-    // console.log(sources);
-    // const s = await movies.fetchEpisodeSources(
-    //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
-    // );
-    // console.log(s);
-    const anime = new META.Anilist(new ANIME.Zoro());
-    const sources = await anime.fetchEpisodesListById('172019');
+    const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
+    const info = await movies.fetchMediaInfo('86031', 'tv');
+    // const info = await movies.fetchMediaInfo('872585', 'movie');
+    console.log(info);
+    const sources = await movies.fetchEpisodeSources(info.seasons[0].episodes[0].id);
+    // const anime = new META.Anilist(new ANIME.Zoro());
+    // console.time('fetchEpisodesListById');
+    // console.log('Fetching episodes list...');
+    // const sources = await anime.fetchEpisodesListById('21');
+    // console.timeEnd('fetchEpisodesListById');
     console.log(sources);
     if (!sources || !sources) {
       throw new Error('Invalid response format from API');

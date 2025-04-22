@@ -12,7 +12,7 @@ import {
   type IEpisodeServer,
   MediaFormat,
 } from '../../models';
-import { substringAfter, substringBefore, compareTwoStrings, kitsuSearchQuery, range } from '../../utils';
+import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
 import Gogoanime from '../anime/gogoanime';
 import Zoro from '../anime/zoro';
 import Anify from '../anime/anify';
@@ -296,8 +296,8 @@ class Myanimelist extends AnimeParser {
       if (typeof b.title === 'string') secondTitle = b.title as string;
       else secondTitle = b.title.english ?? b.title.romaji ?? '';
 
-      const firstRating = compareTwoStrings(targetTitle, firstTitle.toLowerCase());
-      const secondRating = compareTwoStrings(targetTitle, secondTitle.toLowerCase());
+      const firstRating = calculateStringSimilarity(targetTitle, firstTitle.toLowerCase());
+      const secondRating = calculateStringSimilarity(targetTitle, secondTitle.toLowerCase());
 
       // Sort in descending order
       return secondRating - firstRating;
@@ -350,8 +350,8 @@ class Myanimelist extends AnimeParser {
         sites.sort((a, b) => {
           const targetTitle = malAsyncReq.data.title.toLowerCase();
 
-          const firstRating = compareTwoStrings(targetTitle, a.title.toLowerCase());
-          const secondRating = compareTwoStrings(targetTitle, b.title.toLowerCase());
+          const firstRating = calculateStringSimilarity(targetTitle, a.title.toLowerCase());
+          const secondRating = calculateStringSimilarity(targetTitle, b.title.toLowerCase());
 
           // Sort in descending order
           return secondRating - firstRating;

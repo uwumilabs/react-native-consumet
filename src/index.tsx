@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import Consumet from './NativeConsumet';
 
 export function getSources(s: string): Promise<string> {
@@ -67,6 +68,7 @@ import {
   MediaFormat,
   type ProxyConfig,
   type AniZipEpisode,
+  type IMovieSeason,
 } from './models';
 
 export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
@@ -133,4 +135,5 @@ export type {
   ITitle,
   ProxyConfig,
   AniZipEpisode,
+  IMovieSeason,
 };

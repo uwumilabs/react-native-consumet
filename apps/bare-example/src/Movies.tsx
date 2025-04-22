@@ -11,16 +11,20 @@ interface FetchState {
 const fetchData = async (): Promise<ISearch<IMovieResult>> => {
   try {
     const movies = new MOVIES.MultiMovies();
-    const sources = await movies.search('one piece');
-
+    const search = await movies.search('jujutsu');
+    console.log(search);
+    const info = await movies.fetchMediaInfo(search.results![0]!.id);
+    console.log(info.episodes![0]!.id);
+    const sources = await movies.fetchEpisodeSources('movies/jujutsu-kaisen-0');
+    console.log(sources);
     // const s = await movies.fetchEpisodeSources(
     //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
     // );
     // console.log(s);
-    if (!sources || !sources.results) {
+    if (!search || !search?.results) {
       throw new Error('Invalid response format from API');
     }
-    return sources;
+    return search;
   } catch (error) {
     console.log(error);
     throw new Error('Failed to fetch sources');

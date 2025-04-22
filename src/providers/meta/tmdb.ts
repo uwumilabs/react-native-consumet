@@ -12,7 +12,7 @@ import {
   type IMovieEpisode,
 } from '../../models';
 import type { IPeopleResult } from '../../models/types';
-import { compareTwoStrings } from '../../utils';
+import { calculateStringSimilarity } from '../../utils';
 import FlixHQ from '../movies/flixhq';
 import type { AxiosAdapter } from 'axios';
 
@@ -198,20 +198,10 @@ class TMDB extends MovieParser {
       if (type === 'movie') info.episodeId = InfoFromProvider?.episodes![0]?.id;
 
       info.title = data?.title || data?.name;
-      info.translations = data?.translations?.translations.map((translation: any) => ({
-        title: translation.data?.title || data?.name || undefined,
-        description: translation.data?.overview || undefined,
-        language: translation?.english_name || undefined,
-      }));
 
       //images
       info.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
       info.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
-      info.logos = data?.images?.logos.map((logo: { file_path: string; aspect_ratio: number; width: number }) => ({
-        url: `https://image.tmdb.org/t/p/original${logo.file_path}`,
-        aspectRatio: logo?.aspect_ratio,
-        width: logo?.width,
-      }));
 
       info.type = type === 'movie' ? TvType.MOVIE : TvType.TVSERIES;
       info.rating = data?.vote_average || 0;
@@ -317,7 +307,7 @@ class TMDB extends MovieParser {
                     releaseDate: episode.air_date,
                     description: episode.overview,
                     url: episodeFromProvider?.url || undefined,
-                    img: !episode?.still_path
+                    image: !episode?.still_path
                       ? undefined
                       : {
                           mobile: `https://image.tmdb.org/t/p/w300${episode.still_path}`,
@@ -357,7 +347,7 @@ class TMDB extends MovieParser {
               season: 1,
               releaseDate: data.release_date,
               description: data.overview,
-              img: !data?.backdrop_path
+              image: !data?.backdrop_path
                 ? undefined
                 : {
                     mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
@@ -413,8 +403,8 @@ class TMDB extends MovieParser {
       if (typeof b.title === 'string') secondTitle = b.title as string;
       else secondTitle = (b?.title as string) ?? '';
 
-      const firstRating = compareTwoStrings(targetTitle, firstTitle.toLowerCase());
-      const secondRating = compareTwoStrings(targetTitle, secondTitle.toLowerCase());
+      const firstRating = calculateStringSimilarity(targetTitle, firstTitle.toLowerCase());
+      const secondRating = calculateStringSimilarity(targetTitle, secondTitle.toLowerCase());
 
       // Sort in descending order
       return secondRating - firstRating;

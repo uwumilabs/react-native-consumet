@@ -18,6 +18,7 @@ import {
   type ProxyConfig,
   type ITitle,
   type IStaff,
+  type AniZipEpisode,
 } from '../../models';
 import {
   anilistSearchQuery,
@@ -40,8 +41,7 @@ import AnimeKai from '../anime/animekai';
 import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
 import Bilibili from '../anime/bilibili';
-import { ANIFY_URL, compareTwoStrings, getHashFromImage } from '../../utils/utils';
-import type { AniZipEpisode } from '../../models/types';
+import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 
 class Anilist extends AnimeParser {
   override readonly name = 'Anilist';
@@ -578,18 +578,15 @@ class Anilist extends AnimeParser {
             airDate: item.airDate ?? null,
           }));
           if (!animeInfo.episodes?.length) {
-            animeInfo.episodes = await this.fetchDefaultEpisodeList(
-              {
-                idMal: animeInfo.malId! as number,
-                season: data.data.Media.season,
-                startDate: { year: parseInt(animeInfo.releaseDate!) },
-                title: {
-                  english: animeInfo.title?.english!,
-                  romaji: animeInfo.title?.romaji!,
-                },
+            animeInfo.episodes = await this.fetchDefaultEpisodeList({
+              idMal: animeInfo.malId! as number,
+              season: data.data.Media.season,
+              startDate: { year: parseInt(animeInfo.releaseDate!) },
+              title: {
+                english: animeInfo.title?.english!,
+                romaji: animeInfo.title?.romaji!,
               },
-              id
-            );
+            });
             animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode) => {
               if (!episode.image) {
                 episode.image = animeInfo.image;
@@ -600,18 +597,15 @@ class Anilist extends AnimeParser {
             });
           }
         } catch (err) {
-          animeInfo.episodes = await this.fetchDefaultEpisodeList(
-            {
-              idMal: animeInfo.malId! as number,
-              season: data.data.Media.season,
-              startDate: { year: parseInt(animeInfo.releaseDate!) },
-              title: {
-                english: animeInfo.title?.english!,
-                romaji: animeInfo.title?.romaji!,
-              },
+          animeInfo.episodes = await this.fetchDefaultEpisodeList({
+            idMal: animeInfo.malId! as number,
+            season: data.data.Media.season,
+            startDate: { year: parseInt(animeInfo.releaseDate!) },
+            title: {
+              english: animeInfo.title?.english!,
+              romaji: animeInfo.title?.romaji!,
             },
-            id
-          );
+          });
 
           animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode) => {
             if (!episode.image) {
@@ -625,19 +619,16 @@ class Anilist extends AnimeParser {
           return animeInfo;
         }
       } else
-        animeInfo.episodes = await this.fetchDefaultEpisodeList(
-          {
-            idMal: animeInfo.malId! as number,
-            season: data.data.Media.season,
-            startDate: { year: parseInt(animeInfo.releaseDate!) },
-            title: {
-              english: animeInfo.title?.english!,
-              romaji: animeInfo.title?.romaji!,
-            },
-            externalLinks: data.data.Media.externalLinks.filter((link: any) => link.type === 'STREAMING'),
+        animeInfo.episodes = await this.fetchDefaultEpisodeList({
+          idMal: animeInfo.malId! as number,
+          season: data.data.Media.season,
+          startDate: { year: parseInt(animeInfo.releaseDate!) },
+          title: {
+            english: animeInfo.title?.english!,
+            romaji: animeInfo.title?.romaji!,
           },
-          id
-        );
+          externalLinks: data.data.Media.externalLinks.filter((link: any) => link.type === 'STREAMING'),
+        });
 
       if (fetchFiller) {
         const { data: fillerData } = await this.client.get(
@@ -698,239 +689,6 @@ class Anilist extends AnimeParser {
       return this.provider.fetchEpisodeServers(episodeId);
     } catch (err) {
       throw new Error(`Failed to fetch episode servers from ${this.provider.name}: ${err}`);
-    }
-  };
-
-  private findAnime = async (
-    title: { romaji: string; english: string },
-    season: string,
-    startDate: number,
-    malId: number,
-    anilistId: string,
-    externalLinks?: any
-  ): Promise<IAnimeEpisode[]> => {
-    title.english = title.english ?? title.romaji;
-    title.romaji = title.romaji ?? title.english;
-
-    title.english = title.english.toLowerCase();
-    title.romaji = title.romaji.toLowerCase();
-
-    if (title.english === title.romaji) {
-      // console.log(
-      //   'findAnime',
-      //   await this.findAnimeSlug(title.english, season, startDate, malId, anilistId, externalLinks)
-      // );
-      return (await this.findAnimeSlug(title.english, season, startDate, malId, anilistId, externalLinks)) ?? [];
-    }
-
-    const romajiPossibleEpisodes = await this.findAnimeSlug(
-      title.romaji,
-      season,
-      startDate,
-      malId,
-      anilistId,
-      externalLinks
-    );
-
-    if (romajiPossibleEpisodes) {
-      return romajiPossibleEpisodes;
-    }
-
-    const englishPossibleEpisodes = await this.findAnimeSlug(
-      title.english,
-      season,
-      startDate,
-      malId,
-      anilistId,
-      externalLinks
-    );
-    // console.log('romajiPossibleEpisodes', romajiPossibleEpisodes);
-    // console.log('englishPossibleEpisodes', englishPossibleEpisodes);
-    return englishPossibleEpisodes ?? [];
-  };
-
-  private findAnimeSlug = async (
-    title: string,
-    season: string,
-    startDate: number,
-    malId: number,
-    anilistId: string,
-    externalLinks?: any
-  ): Promise<IAnimeEpisode[] | undefined> => {
-    if (this.provider instanceof Anify) return (await this.provider.fetchAnimeInfo(anilistId)).episodes!;
-
-    const slug = title.replace(/[^0-9a-zA-Z]+/g, ' ');
-
-    let possibleAnime: any | undefined;
-
-    if (malId && !(this.provider instanceof Bilibili)) {
-      const malAsyncReq = await this.client.get(`${this.malSyncUrl}/mal/anime/${malId}`, {
-        validateStatus: () => true,
-      });
-
-      if (malAsyncReq.status === 200) {
-        const sitesT = malAsyncReq.data.Sites as {
-          [k: string]: {
-            [k: string]: { url: string; page: string; title: string };
-          };
-        };
-        let sites = Object.values(sitesT).map((v, i) => {
-          const obj: any = [...Object.values(Object.values(sitesT)[i]!)];
-          const pages = obj.map((v: { page: string; url: string; title: string }) => ({
-            page: v.page,
-            url: v.url,
-            title: v.title,
-          }));
-          return pages;
-        }) as any[];
-
-        sites = sites.flat();
-
-        sites.sort((a, b) => {
-          const targetTitle = malAsyncReq.data.title.toLowerCase();
-
-          const firstRating = compareTwoStrings(targetTitle, a.title.toLowerCase());
-          const secondRating = compareTwoStrings(targetTitle, b.title.toLowerCase());
-
-          // Sort in descending order
-          return secondRating - firstRating;
-        });
-
-        const possibleSource = sites.find((s) => {
-          if (s.page.toLowerCase() === this.provider.name.toLowerCase()) return false;
-        });
-
-        if (possibleSource) {
-          try {
-            possibleAnime = await this.provider.fetchAnimeInfo(new URL(possibleSource.url).pathname.slice(1));
-          } catch (err) {
-            console.error(err);
-            possibleAnime = await this.findAnimeRaw(slug);
-          }
-        } else possibleAnime = await this.findAnimeRaw(slug);
-      } else possibleAnime = await this.findAnimeRaw(slug);
-    } else possibleAnime = await this.findAnimeRaw(slug, externalLinks);
-
-    if (!possibleAnime) return undefined;
-
-    // // To avoid a new request, lets match and see if the anime show found is in sub/dub
-
-    // const expectedType = dub ? SubOrSub.DUB : SubOrSub.SUB;
-
-    // // Have this as a fallback in the meantime for compatibility
-    // if (possibleAnime.subOrDub) {
-    //   if (possibleAnime.subOrDub !== SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
-    //     return undefined;
-    //   }
-    // } else if ((!possibleAnime.hasDub && dub) || (!possibleAnime.hasSub && !dub)) {
-    //   return undefined;
-    // }
-
-    // if (this.provider instanceof Zoro) {
-    //   // Set the correct episode sub/dub request type
-    //   possibleAnime.episodes.forEach((_: any, index: number) => {
-    //     if (possibleAnime.subOrDub === SubOrSub.BOTH) {
-    //       possibleAnime.episodes[index].id = possibleAnime.episodes[index].id.replace(`$both`, dub ? '$dub' : '$sub');
-    //     }
-    //   });
-    // }
-
-    const possibleProviderEpisodes = possibleAnime.episodes as IAnimeEpisode[];
-    // console.log('possibleProviderEpisodes', possibleProviderEpisodes);
-    return possibleProviderEpisodes;
-    // if (
-    //   typeof possibleProviderEpisodes[0]?.image !== 'undefined' &&
-    //   typeof possibleProviderEpisodes[0]?.title !== 'undefined' &&
-    //   typeof possibleProviderEpisodes[0]?.description !== 'undefined'
-    // )
-    //   return possibleProviderEpisodes;
-
-    // const options = {
-    //   headers: { 'Content-Type': 'application/json' },
-    //   query: kitsuSearchQuery(slug),
-    // };
-
-    // const newEpisodeList = await this.findKitsuAnime(possibleProviderEpisodes, options, season, startDate);
-    // return newEpisodeList;
-  };
-
-  private findKitsuAnime = async (
-    possibleProviderEpisodes: IAnimeEpisode[],
-    options: {},
-    season?: string,
-    startDate?: number
-  ) => {
-    try {
-      const kitsuEpisodes = await this.client.post(this.kitsuGraphqlUrl, options);
-      const episodesList = new Map();
-      if (kitsuEpisodes?.data.data) {
-        const { nodes } = kitsuEpisodes.data.data.searchAnimeByTitle;
-
-        if (nodes) {
-          nodes.forEach((node: any) => {
-            if (node.season === season && node.startDate.trim().split('-')[0] === startDate?.toString()) {
-              const episodes = node.episodes.nodes;
-
-              for (const episode of episodes) {
-                const i = episode?.number.toString().replace(/"/g, '');
-
-                let name;
-                let description;
-                let thumbnail;
-
-                let thumbnailHash;
-
-                if (episode?.description?.en)
-                  description = episode?.description.en.toString().replace(/"/g, '').replace('\\n', '\n');
-                if (episode?.thumbnail) {
-                  thumbnail = episode?.thumbnail.original.url.toString().replace(/"/g, '');
-                  thumbnailHash = getHashFromImage(episode?.thumbnail.original.url.toString().replace(/"/g, ''));
-                }
-
-                if (episode) {
-                  if (episode.titles?.canonical) name = episode.titles.canonical.toString().replace(/"/g, '');
-                  episodesList.set(i, {
-                    episodeNum: episode?.number.toString().replace(/"/g, ''),
-                    title: name,
-                    description,
-                    createdAt: episode?.createdAt,
-                    thumbnail,
-                  });
-                  continue;
-                }
-                episodesList.set(i, {
-                  episodeNum: undefined,
-                  title: undefined,
-                  description: undefined,
-                  createdAt: undefined,
-                  thumbnail,
-                  thumbnailHash,
-                });
-              }
-            }
-          });
-        }
-      }
-
-      const newEpisodeList: IAnimeEpisode[] = [];
-      if (possibleProviderEpisodes?.length !== 0) {
-        possibleProviderEpisodes?.forEach((ep: any, i: any) => {
-          const j = (i + 1).toString();
-          newEpisodeList.push({
-            id: ep.id as string,
-            title: ep.title ?? episodesList.get(j)?.title ?? null,
-            image: ep.image ?? episodesList.get(j)?.thumbnail ?? null,
-            imageHash: getHashFromImage(ep.image ?? episodesList.get(j)?.thumbnail ?? null),
-            number: ep.number as number,
-            createdAt: ep.createdAt ?? episodesList.get(j)?.createdAt ?? null,
-            description: ep.description ?? episodesList.get(j)?.description ?? null,
-            url: (ep.url as string) ?? null,
-          });
-        });
-      }
-      return newEpisodeList;
-    } catch (error) {
-      return possibleProviderEpisodes;
     }
   };
 
@@ -1221,48 +979,45 @@ class Anilist extends AnimeParser {
     }
   };
 
-  private findAnimeRaw = async (slug: string, externalLinks?: any) => {
-    const findAnime = (await this.provider.search(slug)) as ISearch<IAnimeResult>;
+  private findAnimeRaw = async (title: ITitle) => {
+    const searchTerm = title?.romaji || title?.english || title?.userPreferred || '';
+    const findAnime = (await this.provider.search(searchTerm)) as ISearch<IAnimeResult>;
 
-    if (findAnime.results.length === 0) return undefined;
-
-    // Sort the retrieved info for more accurate results.
-
-    let topRating = 0;
-
-    findAnime.results.sort((a, b) => {
-      const targetTitle = slug.toLowerCase();
-
-      let firstTitle: string;
-      let secondTitle: string;
-
-      if (typeof a.title === 'string') firstTitle = a.title as string;
-      else firstTitle = a.title.english ?? a.title.romaji ?? '';
-
-      if (typeof b.title === 'string') secondTitle = b.title as string;
-      else secondTitle = b.title.english ?? b.title.romaji ?? '';
-
-      const firstRating = compareTwoStrings(targetTitle, firstTitle.toLowerCase());
-      const secondRating = compareTwoStrings(targetTitle, secondTitle.toLowerCase());
-
-      if (firstRating > topRating) {
-        topRating = firstRating;
-      }
-      if (secondRating > topRating) {
-        topRating = secondRating;
-      }
-
-      // Sort in descending order
-      return secondRating - firstRating;
-    });
-
-    if (topRating >= 0.7) {
-      return await this.provider.fetchAnimeInfo(findAnime.results[0]?.id!);
+    if (!findAnime?.results) {
+      return {} as IAnimeEpisode[];
     }
 
-    return undefined;
-  };
+    // Run similar title searches in parallel
+    const [mappedEng, mappedRom] = await Promise.all([
+      Promise.resolve(findSimilarTitles(title?.english || '', findAnime.results)),
+      Promise.resolve(findSimilarTitles(title?.romaji || '', findAnime.results)),
+    ]);
 
+    // Use Set for efficient deduplication
+    const uniqueResults = Array.from(new Set([...mappedEng, ...mappedRom].map((item) => JSON.stringify(item)))).map(
+      (str) => JSON.parse(str)
+    );
+
+    // Sort by similarity score
+    uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+    const mappings: any = {};
+    for (const obj of uniqueResults) {
+      const match = obj.title.replace(/\(TV\)/g, '').match(/\(([^)0-9]+)\)/);
+      const key = match ? match[1].replace(/\s+/g, '-').toLowerCase() : 'sub';
+
+      if (!mappings[key]) {
+        mappings[key] = obj.id;
+      }
+
+      // Early return if we have both sub and dub
+      if (mappings.sub && mappings.dub) break;
+    }
+    // console.log('mappings', mappings);
+    // console.time('animeinfo');
+    const animeInfo = await this.provider.fetchAnimeInfo(mappings.sub || mappings.dub);
+    // console.timeEnd('animeinfo');
+    return animeInfo.episodes as IAnimeEpisode[];
+  };
   /**
    * @returns a random anime
    */
@@ -1350,26 +1105,16 @@ class Anilist extends AnimeParser {
     }
   };
 
-  private fetchDefaultEpisodeList = async (
-    Media: {
-      idMal: number;
-      title: { english: string; romaji: string };
-      season: string;
-      startDate: { year: number };
-      externalLinks?: any;
-    },
-    id: string
-  ) => {
+  private fetchDefaultEpisodeList = async (Media: {
+    idMal: number;
+    title: { english: string; romaji: string };
+    season: string;
+    startDate: { year: number };
+    externalLinks?: any;
+  }) => {
     let episodes: IAnimeEpisode[] = [];
 
-    episodes = await this.findAnime(
-      { english: Media.title?.english!, romaji: Media.title?.romaji! },
-      Media.season!,
-      Media.startDate.year,
-      Media.idMal as number,
-      id,
-      Media.externalLinks
-    );
+    episodes = await this.findAnimeRaw({ english: Media.title?.english!, romaji: Media.title?.romaji! });
     // console.log('fetchDefaultEpisodeList', episodes);
     return episodes;
   };
@@ -1403,10 +1148,12 @@ class Anilist extends AnimeParser {
       this.provider instanceof AnimePahe
     ) {
       try {
+        console.time('fetchEpisodesListById');
         const [animeMetaData, providerEpisodes] = await Promise.all([
           this.client.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
-          this.fetchDefaultEpisodeList(Media, id),
+          this.fetchDefaultEpisodeList(Media),
         ]);
+        console.timeEnd('fetchEpisodesListById');
         //to get the actual episode ids we make use of fetchDefaultEpisodeList
         const normalizedEpisodes = (
           Object.entries(animeMetaData.episodes || {}) as [string, AniZipEpisode & IAnimeEpisode][]
@@ -1448,7 +1195,7 @@ class Anilist extends AnimeParser {
         // });
         possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
         if (!possibleAnimeEpisodes.length) {
-          possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media, id);
+          possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
           possibleAnimeEpisodes = possibleAnimeEpisodes?.map((episode: IAnimeEpisode) => {
             if (!episode.image) {
               episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
@@ -1461,7 +1208,7 @@ class Anilist extends AnimeParser {
           });
         }
       } catch (err) {
-        possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media, id);
+        possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
 
         possibleAnimeEpisodes = possibleAnimeEpisodes?.map((episode: IAnimeEpisode) => {
           if (!episode.image) {
@@ -1475,7 +1222,7 @@ class Anilist extends AnimeParser {
         });
         return possibleAnimeEpisodes;
       }
-    } else possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media, id);
+    } else possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
 
     if (fetchFiller) {
       const { data: fillerData } = await this.client.get(

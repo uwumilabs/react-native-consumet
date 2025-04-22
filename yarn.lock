@@ -3216,6 +3216,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/string-similarity@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "@types/string-similarity@npm:4.0.2"
+  checksum: f23b4d176de52ba46b47b85c8895b2dc6e09dedf89efcc231cd03736daf0412fdf080bd7ba515a118a8ac0edff499963c3b5cad9dddbff91237f6f6b171c954c
+  languageName: node
+  linkType: hard
+
 "@types/yargs-parser@npm:*":
   version: 21.0.3
   resolution: "@types/yargs-parser@npm:21.0.3"
@@ -4166,7 +4173,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:^5.5.0":
+"buffer@npm:^5.4.3, buffer@npm:^5.5.0":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
   dependencies:
@@ -10760,7 +10767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"punycode@npm:^2.1.0":
+"punycode@npm:^2.1.0, punycode@npm:^2.1.1":
   version: 2.3.1
   resolution: "punycode@npm:2.3.1"
   checksum: bb0a0ceedca4c3c57a9b981b90601579058903c62be23c5e8e843d2c2d4148a3ecf029d5133486fb0e1822b098ba8bba09e89d6b21742d02fa26bda6441a6fb2
@@ -10927,6 +10934,7 @@ __metadata:
     "@types/crypto-js": ^4.2.2
     "@types/jest": ^29.5.5
     "@types/react": ^19.0.0
+    "@types/string-similarity": ^4.0.2
     ascii-url-encoder: ^1.2.0
     axios: ^1.8.4
     babel-jest: ^29.7.0
@@ -10943,7 +10951,9 @@ __metadata:
     react: 19.0.0
     react-native: 0.78.1
     react-native-builder-bob: ^0.38.3
+    react-native-url-polyfill: ^2.0.0
     release-it: ^17.10.0
+    string-similarity: ^4.0.4
     ts-jest: ^29.3.1
     ts-node: ^10.9.2
     turbo: ^1.10.7
@@ -10953,6 +10963,17 @@ __metadata:
     react-native: "*"
   languageName: unknown
   linkType: soft
+
+"react-native-url-polyfill@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "react-native-url-polyfill@npm:2.0.0"
+  dependencies:
+    whatwg-url-without-unicode: 8.0.0-3
+  peerDependencies:
+    react-native: "*"
+  checksum: 1a2e1030a62fd093764b5330ce0ff34d72246e581dd2892cddc347d8621931aeb2c9ea3e054960484a1259230e8461e569e1890f1ff452d3c5c0adef70190fc3
+  languageName: node
+  linkType: hard
 
 "react-native@npm:0.78.1":
   version: 0.78.1
@@ -12020,6 +12041,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"string-similarity@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "string-similarity@npm:4.0.4"
+  checksum: 797b41b24e1eb6b3b0ab896950b58c295a19a82933479c75f7b5279ffb63e0b456a8c8d10329c02f607ca1a50370e961e83d552aa468ff3b0fa15809abc9eff7
+  languageName: node
+  linkType: hard
+
 "string-width-cjs@npm:string-width@^4.2.0, string-width@npm:^4.1.0, string-width@npm:^4.2.0, string-width@npm:^4.2.3":
   version: 4.2.3
   resolution: "string-width@npm:4.2.3"
@@ -12960,10 +12988,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"webidl-conversions@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "webidl-conversions@npm:5.0.0"
+  checksum: ccf1ec2ca7c0b5671e5440ace4a66806ae09c49016ab821481bec0c05b1b82695082dc0a27d1fe9d804d475a408ba0c691e6803fd21be608e710955d4589cd69
+  languageName: node
+  linkType: hard
+
 "whatwg-fetch@npm:^3.0.0":
   version: 3.6.20
   resolution: "whatwg-fetch@npm:3.6.20"
   checksum: c58851ea2c4efe5c2235f13450f426824cf0253c1d45da28f45900290ae602a20aff2ab43346f16ec58917d5562e159cd691efa368354b2e82918c2146a519c5
+  languageName: node
+  linkType: hard
+
+"whatwg-url-without-unicode@npm:8.0.0-3":
+  version: 8.0.0-3
+  resolution: "whatwg-url-without-unicode@npm:8.0.0-3"
+  dependencies:
+    buffer: ^5.4.3
+    punycode: ^2.1.1
+    webidl-conversions: ^5.0.0
+  checksum: 1fe266f7161e0bd961087c1254a5a59d1138c3d402064495eed65e7590d9caed5a1d9acfd6e7a1b0bf0431253b0e637ee3e4ffc08387cd60e0b2ddb9d4687a4b
   languageName: node
   linkType: hard
 

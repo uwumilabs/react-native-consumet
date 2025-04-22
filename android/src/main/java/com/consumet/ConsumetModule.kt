@@ -87,9 +87,9 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) : Native
                             }
 
                             try {
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/crypto-js.js", "crypto-js.js");
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/megacloud.decodedpng.js", "megacloud.decodedpng.js");
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/2004durgesh/react-native-consumet@main/android/src/main/assets/megacloud.getsrcs.js", "megacloud.getsrcs.js");
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/crypto-js.js", "crypto-js.js");
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/megacloud.decodedpng.js", "megacloud.decodedpng.js");
+                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/megacloud.getsrcs.js", "megacloud.getsrcs.js");
 
                                 console.log("Calling getSources...");
                                 const result = await getSources("${xrax}");

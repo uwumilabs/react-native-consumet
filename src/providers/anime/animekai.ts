@@ -15,6 +15,7 @@ import {
 } from '../../models';
 
 import { MegaUp } from '../../utils';
+import axios from 'axios';
 
 const { GenerateToken, DecodeIframeData } = new MegaUp();
 
@@ -299,7 +300,7 @@ class AnimeKai extends AnimeParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/watch/${id}`, {
+      const { data } = await axios.get(`${this.baseUrl}/watch/${id}`, {
         headers: this.Headers(),
       });
       const $ = load(data);
@@ -388,7 +389,7 @@ class AnimeKai extends AnimeParser {
       info.season = $('.entity-scroll > .detail').find("div:contains('Premiered') > span").text().trim();
 
       const ani_id = $('.rate-box#anime-rating').attr('data-id');
-      const episodesAjax = await this.client.get(
+      const episodesAjax = await axios.get(
         `${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id!)}`,
         {
           headers: {
@@ -400,26 +401,28 @@ class AnimeKai extends AnimeParser {
       );
       const $$ = load(episodesAjax.data.result);
 
+      // Pre-calculate values used for all episodes
+      const episodeElements = $$('div.eplist > ul > li > a');
+      const subCount = parseInt($('.entity-scroll > .info > span.sub').text().trim()) || 0;
+      const dubCount = parseInt($('.entity-scroll > .info > span.dub').text().trim()) || 0;
+
       info.totalEpisodes = $$('div.eplist > ul > li').length;
       info.episodes = [];
 
-      $$('div.eplist > ul > li > a').each((i, el) => {
+      episodeElements.each((i, el) => {
+        const $el = $$(el);
+        const href = `${$el.attr('href')}ep=${$el.attr('num')}` || '';
+        const number = parseInt($el.attr('data-number') || '0');
         const episodeId = `${info.id}$ep=${$$(el).attr('num')}$token=${$$(el).attr('token')}`; //appending token to episode id, as it is required to fetch servers keeping the structure same as other providers
-        const number = parseInt($$(el).attr('num')!);
-        const title = $$(el).children('span').text().trim();
-        const url = `${this.baseUrl}/watch/${info.id}${$$(el).attr('href')}ep=${$$(el).attr('num')}`;
-        const isFiller = $$(el).hasClass('filler');
-        const isSubbed = number <= (parseInt($('.entity-scroll > .info > span.sub').text().trim()) || 0);
-        const isDubbed = number <= (parseInt($('.entity-scroll > .info > span.dub').text().trim()) || 0);
 
         info.episodes?.push({
           id: episodeId,
           number: number,
-          title: title,
-          isFiller: isFiller,
-          isSubbed: isSubbed,
-          isDubbed: isDubbed,
-          url: url,
+          title: $el.children('span').text().trim(),
+          isFiller: $el.hasClass('filler'),
+          isSubbed: number <= subCount,
+          isDubbed: number <= dubCount,
+          url: this.baseUrl + href,
         });
       });
 

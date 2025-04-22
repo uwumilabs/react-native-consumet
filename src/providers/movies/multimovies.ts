@@ -13,9 +13,9 @@ import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.guru';
+  protected override baseUrl = 'https://multimovies.digital';
   protected override logo =
-    'https://multimovies.guru/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+    'https://multimovies.digital/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
@@ -383,13 +383,15 @@ class MultiMovies extends MovieParser {
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       };
-
-      const playerRes = await this.client.post(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData, {
-        headers,
+      console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
+      const response = await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+        method: 'POST',
+        headers: headers,
+        body: formData,
       });
-
-      const iframeUrl =
-        playerRes.data?.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.data?.embed_url;
+      const playerRes = await response.json();
+      // console.log('playerRes', playerRes);
+      const iframeUrl = playerRes?.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes?.embed_url;
 
       // Handle non-multimovies case
       if (!iframeUrl.includes('multimovies')) {
@@ -417,12 +419,14 @@ class MultiMovies extends MovieParser {
           headers,
         });
 
+        // console.log('streamResponse', streamResponse.data);
+
         if (!streamResponse.data) {
           throw new Error('No stream data found');
         }
 
         const streamDetails = streamResponse.data;
-        const mresultKeys = new Set(Object.keys(streamDetails.mresult));
+        const mresultKeys = new Set(Object.keys(JSON.parse(atob(streamDetails.mresult))));
         const siteUrlsKeys = new Set(Object.keys(streamDetails.siteUrls));
 
         // Find common keys
@@ -436,19 +440,19 @@ class MultiMovies extends MovieParser {
               streamDetails.siteFriendlyNames[site] === 'StreamHG'
                 ? 'StreamWish'
                 : streamDetails.siteFriendlyNames[site],
-            url: streamDetails.siteUrls[site] + streamDetails.mresult[site],
+            url: streamDetails.siteUrls[site] + JSON.parse(atob(streamDetails.mresult))[site],
           };
         });
 
         return { servers, fileId };
       } else {
-        //@Durgesh
         return {
           servers: [{ name: 'StreamWish', url: iframeUrl }],
           fileId: iframeUrl.split('/').pop() ?? '',
         };
       }
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   }

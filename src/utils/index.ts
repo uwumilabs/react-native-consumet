@@ -30,7 +30,7 @@ import {
   convertDuration,
   substringAfter,
   substringBefore,
-  compareTwoStrings,
+  calculateStringSimilarity,
 } from './utils';
 import {
   anilistSearchQuery,
@@ -88,7 +88,7 @@ export {
   AsianLoad,
   substringAfter,
   substringBefore,
-  compareTwoStrings,
+  calculateStringSimilarity,
   VidMoly,
   getKKey,
   MegaUp,

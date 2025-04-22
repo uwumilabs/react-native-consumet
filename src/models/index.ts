@@ -48,6 +48,7 @@ import {
   type IStaff,
   WatchListType,
   type AniZipEpisode,
+  type IMovieSeason,
 } from './types';
 import { LibgenBookObject, GetComicsComicsObject } from './type-objects';
 
@@ -105,4 +106,5 @@ export type {
   ProxyConfig,
   IStaff,
   AniZipEpisode,
+  IMovieSeason,
 };

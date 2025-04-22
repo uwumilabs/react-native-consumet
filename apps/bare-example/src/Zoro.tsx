@@ -11,13 +11,13 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.AnimeKai();
+    const animekai = new ANIME.Zoro();
     const search = await animekai.search('solo leveling');
     console.log('sources');
-    const info = await animekai.fetchAnimeInfo(search?.results[0]!.id);
-    const s =
-      info.episodes &&
-      (await animekai.fetchEpisodeSources(info!.episodes[0]!.id!, StreamingServers.MegaUp, SubOrSub.DUB));
+    console.time('zoroinfo');
+    const info = await animekai.fetchAnimeInfo('one-piece-100');
+    console.timeEnd('zoroinfo');
+    const s = info.episodes && (await animekai.fetchEpisodeSources(info!.episodes[0]!.id!));
     console.log('sources end');
     console.log(s);
     if (!search || !search.results) {

@@ -392,7 +392,12 @@ export interface IMovieEpisode {
   number?: number;
   season?: number;
   description?: string;
-  image?: string;
+  image?:
+    | string
+    | {
+        mobile?: string;
+        hd?: string;
+      };
   releaseDate?: string;
   [x: string]: unknown; // other fields
 }
