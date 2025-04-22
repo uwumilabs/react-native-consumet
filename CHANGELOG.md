@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (2025-04-22)
+
+* feat: update URL logic for consumet-android, multimovies, zoro ([a1471fe](https://github.com/2004durgesh/react-native-consumet/commit/a1471fe))
+
 ## <small>0.4.3 (2025-04-20)</small>
 
 * feat(animepahe): download links in animepahe ([88712a0](https://github.com/2004durgesh/react-native-consumet/commit/88712a0))
