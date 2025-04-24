@@ -258,7 +258,6 @@ class MultiMovies extends MovieParser {
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
-
       const serverUrl: URL = new URL(servers[i]!.url);
       let fileId = '';
 
@@ -383,7 +382,7 @@ class MultiMovies extends MovieParser {
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       };
-      console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
+      // console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
       const response = await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
         method: 'POST',
         headers: headers,
@@ -399,12 +398,9 @@ class MultiMovies extends MovieParser {
         const redirectResponse = await this.client.head(playerBaseUrl, {
           headers,
         });
-
         // Update base URL if redirect occurred
         if (redirectResponse) {
-          playerBaseUrl =
-            redirectResponse.request._redirectable._options.href.split('/').slice(0, 3).join('/') ||
-            redirectResponse.request.res.responseURL.split('/').slice(0, 3).join('/');
+          playerBaseUrl = redirectResponse.request?.responseURL?.split('/').slice(0, 3).join('/');
         }
         const fileId = iframeUrl.split('/').pop();
 
@@ -414,10 +410,19 @@ class MultiMovies extends MovieParser {
 
         const streamRequestData = new FormData();
         streamRequestData.append('sid', fileId);
-
-        const streamResponse = await this.client.post(`${playerBaseUrl}/embedhelper.php`, streamRequestData, {
-          headers,
-        });
+        // console.log('redirectResponse', playerBaseUrl, streamRequestData);
+        let streamResponse;
+        try {
+          streamResponse = await this.client.post(`${playerBaseUrl}/embedhelper.php`, streamRequestData, {
+            headers,
+          });
+        } catch (_) {
+          // If the embedhelper.php endpoint fails, just return the direct embed URL
+          return {
+            servers: [{ name: 'streamwish', url: `${playerBaseUrl}/embed/${fileId}` }],
+            fileId: iframeUrl.split('/').pop() ?? '',
+          };
+        }
 
         // console.log('streamResponse', streamResponse.data);
 

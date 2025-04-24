@@ -12,12 +12,16 @@ import {
   MediaFormat,
 } from '../../models';
 import { Kwik } from '../../extractors';
+import { bypassDdosGuard } from 'react-native-consumet';
 
 class AnimePahe extends AnimeParser {
   override readonly name = 'AnimePahe';
   protected override baseUrl = 'https://animepahe.ru';
   protected override logo = 'https://animepahe.com/pikacon.ico';
   protected override classPath = 'ANIME.AnimePahe';
+  private ddgCookie: {
+    cookie: string;
+  } | null = null;
 
   // private readonly sgProxy = 'https://cors.consumet.stream';
 
@@ -26,9 +30,37 @@ class AnimePahe extends AnimeParser {
    */
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
-        headers: this.Headers(false),
+      if (!this.ddgCookie) {
+        try {
+          this.ddgCookie = await bypassDdosGuard(this.baseUrl);
+          console.log('DDoS-Guard cookie obtained:', this.ddgCookie);
+        } catch (err) {
+          console.error('Failed to bypass DDoS-Guard:', err);
+          this.ddgCookie = await bypassDdosGuard("https://animepahe.com"); //trying with the other domain
+          console.log('DDoS-Guard cookie obtained:', this.ddgCookie);
+        }
+      }
+      console.log(this.Headers(false));
+      const response = await fetch(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+        headers: {
+          'authority': 'animepahe.ru',
+          'Host': 'animepahe.ru',
+          'accept': 'application/json, text/javascript, */*; q=0.01',
+          'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'x-requested-with': 'XMLHttpRequest',
+          'Referer': 'https://animepahe.ru/',
+          'user-agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+          'Cookie': this.ddgCookie?.cookie || '',
+        },
       });
+      const data= await response.text();
+      console.log(data);
 
       const res = {
         results: data.data.map((item: any) => ({
@@ -228,11 +260,9 @@ class AnimePahe extends AnimeParser {
   };
 
   private Headers(sessionId: string | false) {
-    return {
+    const headers: Record<string, string> = {
       'authority': 'animepahe.ru',
       'accept': 'application/json, text/javascript, */*; q=0.01',
-      'Cookie':
-        '__ddg8_=t30Kk4WN3QXxGGeS; __ddg10_=1743778081; __ddg9_=103.123.226.218; __ddgid_=UyBX8L5x2N3PVwHQ; __ddgmark_=zzjwIU0XrzYhLZNA; __ddg2_=mYFJpxSZiwbzc2Lj; __ddg1_=dyfub1Uw7hUQG4jJhFzD; XSRF-TOKEN=eyJpdiI6Ii9qdkJOVkdIckU4c3pURnE4UGQwRGc9PSIsInZhbHVlIjoiWFd0L3hJaXA2MmZ4emtuSnFTWFNnemtPaHdwMmpISDkwV2VtVDJ5Tjl1VVFHNEd0aXlPNzRTTkZ4ZXRHUVliZzhWbng1cEV3MjgvMWFtekRETkRpY0pOTE9sNkM3enVVeGxGTExTRzlkZUhmZUtlZVAwRitOYVUvaGdBV0J1a04iLCJtYWMiOiI3OWEwZDZhZmQwMmJhYjZlZmU3MDFiN2EyM2E2ZDU2MjE0YTNhNWI3MGEwZTQzZDEzYTIyMGY4OTVhYWMzYzI0IiwidGFnIjoiIn0%3D; laravel_session=eyJpdiI6Im5jdVZKbjBpck56eEtlWEhzNVFGR0E9PSIsInZhbHVlIjoiWG42MjV4RmVFa1hNcVUvWFFaRDlQdmZsbU53UlMvRUFzL0padFRTcFhSYmhJaWJ5R3RheW11SElCcGl5NkRxUkMwdW8rUTFKMW5qblBRV2xHMmZXZHd3S3dMMExVTHVVamNwZk1IMkJIRmUwcjMrV0VXM2JEcWJZb2FOTXNmaWgiLCJtYWMiOiI3ODk4YWJkYjM0ZGVkZDYzNWUxNWQxMjFhOGZkYWQ3Yzc2ZmIzN2Q1MGUyMjcxMGQxNTU5YTNjNTU3MGE5YTRmIiwidGFnIjoiIn0%3D; latest=6081; res=1080; aud=jpn; av1=0',
       'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
@@ -244,6 +274,13 @@ class AnimePahe extends AnimeParser {
       'user-agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     };
+
+    // Add DDoS-Guard cookie if available
+    if (this.ddgCookie) {
+      headers.Cookie = this.ddgCookie.cookie;
+    }
+
+    return headers;
   }
 }
 

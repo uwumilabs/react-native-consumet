@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
+import { MOVIES, StreamingServers, type IMovieResult, type ISearch } from 'react-native-consumet';
 
 interface FetchState {
   data: IMovieResult[];
@@ -11,12 +11,17 @@ interface FetchState {
 const fetchData = async (): Promise<ISearch<IMovieResult>> => {
   try {
     const movies = new MOVIES.MultiMovies();
-    const search = await movies.search('jujutsu');
+    const search = await movies.search('dr. stone');
     console.log(search);
     const info = await movies.fetchMediaInfo(search.results![0]!.id);
     console.log(info.episodes![0]!.id);
-    const sources = await movies.fetchEpisodeSources('movies/jujutsu-kaisen-0');
-    console.log(sources);
+    const sources = await movies.fetchEpisodeSources(
+      info.episodes![0]!.id,
+      info.episodes![0]!.id,
+      StreamingServers.StreamWish
+    );
+    const servers = await movies.fetchEpisodeServers(info.episodes![0]!.id);
+    console.log(sources,servers);
     // const s = await movies.fetchEpisodeSources(
     //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
     // );

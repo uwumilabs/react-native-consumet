@@ -340,13 +340,14 @@ class TMDB extends MovieParser {
               },
           episodes: [
             {
-              id: `${mediaId}-${type}-s1-e1`,
+              id: InfoFromProvider?.episodes![0]?.id!,
               uniqueId: `${mediaId}-${type}-s1-e1`,
               title: data.title || data.original_title,
               episode: 1,
               season: 1,
               releaseDate: data.release_date,
               description: data.overview,
+              url: InfoFromProvider?.episodes![0]?.url,
               image: !data?.backdrop_path
                 ? undefined
                 : {

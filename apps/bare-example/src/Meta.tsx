@@ -1,6 +1,7 @@
 import { ANIME, META, MOVIES, type IAnimeEpisode } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
+import SFlix from '../../../src/providers/movies/sflix';
 
 interface FetchState {
   data: IAnimeEpisode[];
@@ -10,10 +11,10 @@ interface FetchState {
 
 const fetchData = async (): Promise<IAnimeEpisode[]> => {
   try {
-    const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
+    const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.SFlix());
     const info = await movies.fetchMediaInfo('86031', 'tv');
     // const info = await movies.fetchMediaInfo('872585', 'movie');
-    console.log(info);
+    console.log(info, info.seasons[0].episodes[0].id);
     const sources = await movies.fetchEpisodeSources(info.seasons[0].episodes[0].id);
     // const anime = new META.Anilist(new ANIME.Zoro());
     // console.time('fetchEpisodesListById');

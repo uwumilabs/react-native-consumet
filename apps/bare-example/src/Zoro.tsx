@@ -11,15 +11,16 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.Zoro();
+    const animekai = new ANIME.AnimePahe();
     const search = await animekai.search('solo leveling');
-    console.log('sources');
-    console.time('zoroinfo');
-    const info = await animekai.fetchAnimeInfo('one-piece-100');
-    console.timeEnd('zoroinfo');
-    const s = info.episodes && (await animekai.fetchEpisodeSources(info!.episodes[0]!.id!));
-    console.log('sources end');
-    console.log(s);
+    console.log(search);
+    // console.log('sources');
+    // console.time('zoroinfo');
+    // const info = await animekai.fetchAnimeInfo('one-piece-100');
+    // console.timeEnd('zoroinfo');
+    // const s = info.episodes && (await animekai.fetchEpisodeSources(info!.episodes[0]!.id!));
+    // console.log('sources end');
+    // console.log(s);
     if (!search || !search.results) {
       throw new Error('Invalid response format from API');
     }
