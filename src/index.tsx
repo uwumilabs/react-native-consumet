@@ -1,12 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import Consumet from './NativeConsumet';
 
-export function getSources(s: string): Promise<string> {
-  return Consumet.getSources(s);
-}
-export function bypassDdosGuard(url: string): Promise<{ cookie: string }> {
-  return Consumet.bypassDdosGuard(url);
-}
+export const { getSources, bypassDdosGuard, getDdosGuardCookiesWithWebView } = Consumet;
 
 import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META, NEWS } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';

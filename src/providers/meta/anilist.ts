@@ -40,7 +40,6 @@ import Zoro from '../anime/zoro';
 import AnimeKai from '../anime/animekai';
 import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
-import Bilibili from '../anime/bilibili';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 
 class Anilist extends AnimeParser {
@@ -1148,12 +1147,12 @@ class Anilist extends AnimeParser {
       this.provider instanceof AnimePahe
     ) {
       try {
-        console.time('fetchEpisodesListById');
+        // console.time('fetchEpisodesListById');
         const [animeMetaData, providerEpisodes] = await Promise.all([
           this.client.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
           this.fetchDefaultEpisodeList(Media),
         ]);
-        console.timeEnd('fetchEpisodesListById');
+        // console.timeEnd('fetchEpisodesListById');
         //to get the actual episode ids we make use of fetchDefaultEpisodeList
         const normalizedEpisodes = (
           Object.entries(animeMetaData.episodes || {}) as [string, AniZipEpisode & IAnimeEpisode][]

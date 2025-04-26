@@ -9,6 +9,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull  // Updated import
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.regex.Pattern
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.os.Handler
+import android.os.Looper
 
 class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
     private val client = OkHttpClient.Builder().build()
@@ -112,5 +116,27 @@ class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
 
     private fun cookiesToHeaderString(cookies: List<Cookie>): String {
         return cookies.joinToString("; ") { "${it.name}=${it.value}" }
+    }
+
+    fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
+        Handler(Looper.getMainLooper()).post {
+            val webView = WebView(reactContext)
+            webView.settings.javaScriptEnabled = true
+            webView.settings.domStorageEnabled = true
+    
+            webView.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    val cookieManager = android.webkit.CookieManager.getInstance()
+                    val cookie = cookieManager.getCookie(url)
+                    if (!cookie.isNullOrEmpty() && cookie.contains("__ddg2")) {
+                        promise.resolve(cookie)
+                    } else {
+                        promise.reject("COOKIE_ERROR", "No __ddg2 cookie received")
+                    }
+                }
+            }
+    
+            webView.loadUrl(url)
+        }
     }
 }

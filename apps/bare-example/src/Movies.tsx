@@ -21,7 +21,7 @@ const fetchData = async (): Promise<ISearch<IMovieResult>> => {
       StreamingServers.StreamWish
     );
     const servers = await movies.fetchEpisodeServers(info.episodes![0]!.id);
-    console.log(sources,servers);
+    console.log(sources, servers);
     // const s = await movies.fetchEpisodeSources(
     //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
     // );

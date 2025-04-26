@@ -10,20 +10,43 @@ import {
   type IAnimeEpisode,
   type IEpisodeServer,
   MediaFormat,
+  SubOrSub,
 } from '../../models';
 import { Kwik } from '../../extractors';
-import { bypassDdosGuard } from 'react-native-consumet';
+import { bypassDdosGuard, getDdosGuardCookiesWithWebView } from 'react-native-consumet';
 
 class AnimePahe extends AnimeParser {
   override readonly name = 'AnimePahe';
   protected override baseUrl = 'https://animepahe.ru';
   protected override logo = 'https://animepahe.com/pikacon.ico';
   protected override classPath = 'ANIME.AnimePahe';
-  private ddgCookie: {
-    cookie: string;
-  } | null = null;
+  private ddgCookie:
+    | {
+        cookie: string;
+      }
+    | null
+    | string = null;
 
-  // private readonly sgProxy = 'https://cors.consumet.stream';
+  constructor() {
+    super();
+    // Initialize the DDoS-Guard cookie when the instance is created
+    this.initDdgCookie();
+  }
+
+  private async initDdgCookie(): Promise<void> {
+    try {
+      try {
+        this.ddgCookie = await getDdosGuardCookiesWithWebView(this.baseUrl);
+        // console.log('DDoS-Guard cookie obtained (WebView):', this.ddgCookie);
+      } catch (err) {
+        // console.error('Failed to bypass DDoS-Guard with WebView:', err);
+        this.ddgCookie = await bypassDdosGuard(this.baseUrl);
+        // console.log('DDoS-Guard cookie obtained (fallback):', this.ddgCookie);
+      }
+    } catch (error) {
+      console.error('Failed to initialize DDoS-Guard cookie:', error);
+    }
+  }
 
   /**
    * @param query Search query
@@ -31,36 +54,11 @@ class AnimePahe extends AnimeParser {
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     try {
       if (!this.ddgCookie) {
-        try {
-          this.ddgCookie = await bypassDdosGuard(this.baseUrl);
-          console.log('DDoS-Guard cookie obtained:', this.ddgCookie);
-        } catch (err) {
-          console.error('Failed to bypass DDoS-Guard:', err);
-          this.ddgCookie = await bypassDdosGuard("https://animepahe.com"); //trying with the other domain
-          console.log('DDoS-Guard cookie obtained:', this.ddgCookie);
-        }
+        await this.initDdgCookie();
       }
-      console.log(this.Headers(false));
-      const response = await fetch(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
-        headers: {
-          'authority': 'animepahe.ru',
-          'Host': 'animepahe.ru',
-          'accept': 'application/json, text/javascript, */*; q=0.01',
-          'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-requested-with': 'XMLHttpRequest',
-          'Referer': 'https://animepahe.ru/',
-          'user-agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-          'Cookie': this.ddgCookie?.cookie || '',
-        },
+      const { data } = await this.client.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+        headers: this.Headers(false),
       });
-      const data= await response.text();
-      console.log(data);
 
       const res = {
         results: data.data.map((item: any) => ({
@@ -88,8 +86,10 @@ class AnimePahe extends AnimeParser {
       id: id,
       title: '',
     };
-    console.log(`${this.baseUrl}/anime/${id}`, this.Headers(id));
     try {
+      if (!this.ddgCookie) {
+        await this.initDdgCookie();
+      }
       const res = await fetch(`${this.baseUrl}/anime/${id}`, {
         headers: this.Headers(id),
       });
@@ -167,6 +167,8 @@ class AnimePahe extends AnimeParser {
                 title: item.title,
                 image: item.snapshot,
                 duration: item.duration,
+                isSubbed: item.audio === 'jpn' || item.audio === 'eng',
+                isDubbed: item.audio === 'eng',
                 url: `${this.baseUrl}/play/${id}/${item.session}`,
               }) as IAnimeEpisode
           )
@@ -187,10 +189,14 @@ class AnimePahe extends AnimeParser {
 
   /**
    *
-   * @param episodeId episode id
+   * @param episodeId Episode id
+   * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
    */
-  override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string, subOrDub: SubOrSub = SubOrSub.SUB): Promise<ISource> => {
     try {
+      if (!this.ddgCookie) {
+        await this.initDdgCookie();
+      }
       const { data } = await this.client.get(`${this.baseUrl}/play/${episodeId}`, {
         headers: this.Headers(episodeId.split('/')[0]!),
       });
@@ -216,12 +222,28 @@ class AnimePahe extends AnimeParser {
         },
         sources: [],
       };
+
       for (const link of links) {
         const res = await new Kwik(this.proxyConfig).extract(new URL(link.url));
         res[0]!.quality = link.quality;
         res[0]!.isDub = link.audio === 'eng';
-        iSource.sources.push(res[0]!);
+
+        // Only include sources that match the requested SubOrSub type
+        if ((subOrDub === SubOrSub.DUB && res[0]!.isDub) || (subOrDub === SubOrSub.SUB && !res[0]!.isDub)) {
+          iSource.sources.push(res[0]!);
+        }
       }
+
+      // If no sources were found after filtering, include all sources as fallback
+      // if (iSource.sources.length === 0) {
+      //   for (const link of links) {
+      //     const res = await new Kwik(this.proxyConfig).extract(new URL(link.url));
+      //     res[0]!.quality = link.quality;
+      //     res[0]!.isDub = link.audio === 'eng';
+      //     iSource.sources.push(res[0]!);
+      //   }
+      // }
+
       iSource.download = downloads;
 
       return iSource;
@@ -234,7 +256,6 @@ class AnimePahe extends AnimeParser {
     const res = await this.client.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
       headers: this.Headers(session),
     });
-
     const epData = res.data.data;
 
     return [
@@ -245,6 +266,8 @@ class AnimePahe extends AnimeParser {
           title: item.title,
           image: item.snapshot,
           duration: item.duration,
+          isSubbed: item.audio === 'jpn' || item.audio === 'eng',
+          isDubbed: item.audio === 'eng',
           url: `${this.baseUrl}/play/${session}/${item.session}`,
         })
       ),
@@ -270,14 +293,14 @@ class AnimePahe extends AnimeParser {
       'sec-fetch-mode': 'cors',
       'sec-fetch-site': 'same-origin',
       'x-requested-with': 'XMLHttpRequest',
-      'Referer': `${this.baseUrl}/`,
+      'Referer': sessionId ? `${this.baseUrl}/anime/${sessionId}` : `${this.baseUrl}`,
       'user-agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     };
 
-    // Add DDoS-Guard cookie if available
     if (this.ddgCookie) {
-      headers.Cookie = this.ddgCookie.cookie;
+      headers.Cookie =
+        typeof this.ddgCookie === 'object' && this.ddgCookie !== null ? this.ddgCookie.cookie : this.ddgCookie || '';
     }
 
     return headers;

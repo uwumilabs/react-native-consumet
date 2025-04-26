@@ -7,21 +7,22 @@ import android.util.Log
 import android.webkit.*
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @ReactModule(name = ConsumetModule.NAME)
-class ConsumetModule(private val reactContext: ReactApplicationContext) : NativeConsumetSpec(reactContext), TurboModule {
+class ConsumetModule(private val reactContext: ReactApplicationContext) :
+        NativeConsumetSpec(reactContext), TurboModule {
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
 
     class JsInterface(
-        private val latch: CountDownLatch,
-        private val context: ReactApplicationContext
+            private val latch: CountDownLatch,
+            private val context: ReactApplicationContext
     ) {
         var result: String? = null
 
@@ -64,11 +65,13 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) : Native
 
             webview.addJavascriptInterface(jsi, "jsinterface")
 
-            webview.webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
+            webview.webViewClient =
+                    object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            super.onPageFinished(view, url)
 
-                    val cdnScript = """
+                            val cdnScript =
+                                    """
                         (async function() {
                             async function loadScriptWithFallback(url, localFilename) {
                                 try {
@@ -103,21 +106,30 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) : Native
                         })();
                     """.trimIndent()
 
-                    view?.evaluateJavascript(cdnScript, null)
-                }
+                            view?.evaluateJavascript(cdnScript, null)
+                        }
 
-                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                    Log.e(tag, "WebView error: $errorCode - $description @ $failingUrl")
-                    super.onReceivedError(view, errorCode, description, failingUrl)
-                }
-            }
+                        override fun onReceivedError(
+                                view: WebView?,
+                                errorCode: Int,
+                                description: String?,
+                                failingUrl: String?
+                        ) {
+                            Log.e(tag, "WebView error: $errorCode - $description @ $failingUrl")
+                            super.onReceivedError(view, errorCode, description, failingUrl)
+                        }
+                    }
 
-            webview.webChromeClient = object : WebChromeClient() {
-                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                    Log.d(tag, "Console: [${consoleMessage?.messageLevel()}] ${consoleMessage?.message()}")
-                    return super.onConsoleMessage(consoleMessage)
-                }
-            }
+            webview.webChromeClient =
+                    object : WebChromeClient() {
+                        override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                            Log.d(
+                                    tag,
+                                    "Console: [${consoleMessage?.messageLevel()}] ${consoleMessage?.message()}"
+                            )
+                            return super.onConsoleMessage(consoleMessage)
+                        }
+                    }
 
             val headers = mapOf("X-Requested-With" to "org.lineageos.jelly")
             webview.loadUrl("https://megacloud.tv/about", headers)
@@ -125,20 +137,21 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) : Native
 
         // Await result or timeout
         Thread {
-            val success = latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)
+                    val success = latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)
 
-            handler.post {
-                webView?.stopLoading()
-                webView?.destroy()
-                webView = null
+                    handler.post {
+                        webView?.stopLoading()
+                        webView?.destroy()
+                        webView = null
 
-                if (success && jsi.result != null) {
-                    promise.resolve(jsi.result)
-                } else {
-                    promise.reject("ERROR", "Failed to get sources or timeout2")
+                        if (success && jsi.result != null) {
+                            promise.resolve(jsi.result)
+                        } else {
+                            promise.reject("ERROR", "Failed to get sources or timeout2")
+                        }
+                    }
                 }
-            }
-        }.start()
+                .start()
     }
 
     companion object {
@@ -149,5 +162,10 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) : Native
     @ReactMethod
     override fun bypassDdosGuard(url: String, promise: Promise) {
         ddosGuardHelper.bypassDdosGuard(url, promise)
+    }
+
+    @ReactMethod
+    override fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
+        ddosGuardHelper.getDdosGuardCookiesWithWebView(url, promise)
     }
 }
