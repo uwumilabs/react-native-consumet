@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 (2025-04-26)
+
+* feat: enhance ddos guard with webview cookie retrieval and update animepahe integration ([c4d568a](https://github.com/2004durgesh/react-native-consumet/commit/c4d568a))
+* feat: implement DDoS guard bypass functionality and update related modules and fixing id in tmdb ([f630451](https://github.com/2004durgesh/react-native-consumet/commit/f630451))
+
 ## 0.5.0 (2025-04-22)
 
 * feat: update URL logic for consumet-android, multimovies, zoro ([a1471fe](https://github.com/2004durgesh/react-native-consumet/commit/a1471fe))
