@@ -16,9 +16,9 @@ const fetchData = async (): Promise<IAnimeEpisode[]> => {
     // console.log(info, info.seasons[0].episodes[0].id);
     // const sources = await movies.fetchEpisodeSources(info.seasons[0].episodes[0].id);
     const anime = new META.Anilist(new ANIME.AnimePahe());
-    const sources = await anime.search('jujutsu');
+    const sources = await anime.search('the apothecary diaries season 2');
     console.log(sources);
-    const info = await anime.fetchEpisodesListById('21');
+    const info = await anime.fetchEpisodesListById(sources.results[0]?.id!);
     console.log(info);
     if (!sources || !sources) {
       throw new Error('Invalid response format from API');

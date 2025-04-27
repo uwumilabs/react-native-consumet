@@ -1166,16 +1166,40 @@ class Anilist extends AnimeParser {
           releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc,
         }));
 
-        function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
-          // Create a map using only episode numbers as keys
-          const normalizedMap = new Map(normalizedEpisodes.map((item) => [item.number, item]));
+        function isDateClose(date1: string, date2: string, maxDaysDiff = 1) {
+          const d1 = new Date(date1);
+          const d2 = new Date(date2);
+          const diffTime = Math.abs(d1.getTime() - d2.getTime());
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          return diffDays <= maxDaysDiff;
+        }
 
-          // Merge the episodes
-          return providerEpisodes.map((providerEp) => {
-            const normalizedEp = normalizedMap.get(providerEp.number);
+        function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
+          return providerEpisodes.map((providerEp, index) => {
+            let normalizedEp: any = null;
+
+            if (providerEp.releaseDate) {
+              normalizedEp = normalizedEpisodes.find(
+                (normEp) => normEp.releaseDate && isDateClose(normEp.releaseDate, providerEp.releaseDate!)
+              );
+            }
+
+            if (!normalizedEp) {
+              normalizedEp = normalizedEpisodes.find((normEp) => normEp.number === providerEp.number);
+            }
+
+            if (!normalizedEp && providerEp.title) {
+              normalizedEp = normalizedEpisodes.find(
+                (normEp) => normEp.title && providerEp.title && normEp.title.includes(providerEp.title)
+              );
+            }
+
+            if (!normalizedEp && normalizedEpisodes[index]) {
+              normalizedEp = normalizedEpisodes[index];
+            }
+
             if (!normalizedEp) return providerEp;
 
-            // Merge the episodes, prioritizing certain fields from each source
             return {
               ...providerEp,
               uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
@@ -1187,6 +1211,7 @@ class Anilist extends AnimeParser {
             };
           });
         }
+
         // console.log({
         //   normalizedEpisodes,
         //   providerEpisodes,

@@ -387,6 +387,7 @@ export enum TvType {
 
 export interface IMovieEpisode {
   id: string;
+  uniqueId?: string;
   title: string;
   url?: string;
   number?: number;

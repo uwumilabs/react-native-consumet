@@ -169,6 +169,7 @@ class AnimePahe extends AnimeParser {
                 duration: item.duration,
                 isSubbed: item.audio === 'jpn' || item.audio === 'eng',
                 isDubbed: item.audio === 'eng',
+                releaseDate: item.created_at,
                 url: `${this.baseUrl}/play/${id}/${item.session}`,
               }) as IAnimeEpisode
           )
@@ -268,6 +269,7 @@ class AnimePahe extends AnimeParser {
           duration: item.duration,
           isSubbed: item.audio === 'jpn' || item.audio === 'eng',
           isDubbed: item.audio === 'eng',
+          releaseDate: item.created_at,
           url: `${this.baseUrl}/play/${session}/${item.session}`,
         })
       ),
