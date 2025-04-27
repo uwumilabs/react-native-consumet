@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>0.6.1 (2025-04-27)</small>
+
+* fix(anilist | animepahe): enhance episode merging with release date handling ([a2a897a](https://github.com/2004durgesh/react-native-consumet/commit/a2a897a))
+
 ## 0.6.0 (2025-04-26)
 
 * feat: enhance ddos guard with webview cookie retrieval and update animepahe integration ([c4d568a](https://github.com/2004durgesh/react-native-consumet/commit/c4d568a))
