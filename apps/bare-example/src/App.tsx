@@ -1,5 +1,4 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import Zoro from './Zoro';
 import Meta from './Meta';
 
 export default function App() {

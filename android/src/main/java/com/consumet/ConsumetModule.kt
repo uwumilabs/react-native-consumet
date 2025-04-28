@@ -168,4 +168,24 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     override fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
         ddosGuardHelper.getDdosGuardCookiesWithWebView(url, promise)
     }
+
+    @ReactMethod
+    override fun makePostRequestWithOkHttp(
+            url: String,
+            postBody: String,
+            mimeType: String,
+            promise: Promise
+    ) {
+        ddosGuardHelper.makePostRequestWithOkHttp(url, postBody, mimeType, promise)
+    }
+
+    @ReactMethod
+override fun makePostRequestWithWebView(
+    url: String,
+    postBody: String,
+    mimeType: String,
+    promise: Promise
+) {
+    ddosGuardHelper.makePostRequestWithWebView(url, postBody, mimeType, promise)
+}
 }

@@ -1,7 +1,13 @@
 import 'react-native-url-polyfill/auto';
 import Consumet from './NativeConsumet';
 
-export const { getSources, bypassDdosGuard, getDdosGuardCookiesWithWebView } = Consumet;
+export const {
+  getSources,
+  bypassDdosGuard,
+  getDdosGuardCookiesWithWebView,
+  makePostRequestWithOkHttp,
+  makePostRequestWithWebView,
+} = Consumet;
 
 import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META, NEWS } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';

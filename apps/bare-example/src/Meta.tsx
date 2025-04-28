@@ -1,4 +1,10 @@
-import { ANIME, META, type IAnimeEpisode } from 'react-native-consumet';
+import {
+  ANIME,
+  makePostRequestWithOkHttp,
+  META,
+  type IAnimeEpisode,
+  makePostRequestWithWebView,
+} from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -15,6 +21,27 @@ const fetchData = async (): Promise<IAnimeEpisode[]> => {
     // // const info = await movies.fetchMediaInfo('872585', 'movie');
     // console.log(info, info.seasons[0].episodes[0].id);
     // const sources = await movies.fetchEpisodeSources(info.seasons[0].episodes[0].id);
+    function formDataToUrlEncoded(formData: Record<string, string>): string {
+      return Object.entries(formData)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+    }
+
+    const formData = {
+      verify: 'b1cb573393b9b084d415e2ae31ba7cbb::1b11712471e5641658d201c060300ea7::1745856533::ni',
+    };
+    const cookie = await makePostRequestWithOkHttp(
+      'https://netfree2.cc/mobile/verify2.php',
+      formDataToUrlEncoded(formData),
+      'application/x-www-form-urlencoded'
+    );
+    console.log(cookie);
+    const cookie1 = await makePostRequestWithWebView(
+      'https://netfree2.cc/mobile/verify2.php',
+      formDataToUrlEncoded(formData),
+      'application/x-www-form-urlencoded'
+    );
+    console.log(cookie1);
     const anime = new META.Anilist(new ANIME.AnimePahe());
     const sources = await anime.search('the apothecary diaries season 2');
     console.log(sources);
