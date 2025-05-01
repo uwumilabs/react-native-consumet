@@ -1,6 +1,12 @@
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, StreamingServers, type IMovieResult, type ISearch } from 'react-native-consumet';
+import {
+  makeGetRequestWithWebView,
+  MOVIES,
+  StreamingServers,
+  type IMovieResult,
+  type ISearch,
+} from 'react-native-consumet';
 
 interface FetchState {
   data: IMovieResult[];
@@ -10,18 +16,15 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IMovieResult>> => {
   try {
-    const movies = new MOVIES.MultiMovies();
+    const movies = new MOVIES.NetflixMirror();
     const search = await movies.search('dr. stone');
     console.log(search);
     const info = await movies.fetchMediaInfo(search.results![0]!.id);
-    console.log(info.episodes![0]!.id);
-    const sources = await movies.fetchEpisodeSources(
-      info.episodes![0]!.id,
-      info.episodes![0]!.id,
-      StreamingServers.StreamWish
-    );
-    const servers = await movies.fetchEpisodeServers(info.episodes![0]!.id);
-    console.log(sources, servers);
+    console.log(info, info.episodes![0]!.id);
+
+    const sources = await movies.fetchEpisodeSources("81144552", "81144552");
+    // const servers = await movies.fetchEpisodeServers(info.episodes![0]!.id);
+    console.log(sources);
     // const s = await movies.fetchEpisodeSources(
     //   'jujutsu-kaisen-season-2-73v2$ep=1$token=OoS5tu7k4wasmn8Q2cmH'
     // );

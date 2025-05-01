@@ -1166,26 +1166,35 @@ class Anilist extends AnimeParser {
           releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc,
         }));
 
-        function isDateClose(date1: string, date2: string, maxDaysDiff = 1) {
-          const d1 = new Date(date1);
-          const d2 = new Date(date2);
-          const diffTime = Math.abs(d1.getTime() - d2.getTime());
-          const diffDays = diffTime / (1000 * 60 * 60 * 24);
-          return diffDays <= maxDaysDiff;
-        }
-
         function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
+          const numberMap = new Map<number, any>();
+          const dateMap = new Map<number, any>();
+
+          normalizedEpisodes.forEach((ep) => {
+            if (ep.number) numberMap.set(ep.number, ep);
+            if (ep.releaseDate) {
+              const ts = new Date(ep.releaseDate).getTime();
+              dateMap.set(ts, ep);
+            }
+          });
+
           return providerEpisodes.map((providerEp, index) => {
             let normalizedEp: any = null;
 
             if (providerEp.releaseDate) {
-              normalizedEp = normalizedEpisodes.find(
-                (normEp) => normEp.releaseDate && isDateClose(normEp.releaseDate, providerEp.releaseDate!)
-              );
+              const ts = new Date(providerEp.releaseDate).getTime();
+              // Find dates within 1 day range
+              for (let [normTs, normEp] of dateMap) {
+                if (Math.abs(ts - normTs) <= 86400000) {
+                  // 1 day in ms
+                  normalizedEp = normEp;
+                  break;
+                }
+              }
             }
 
-            if (!normalizedEp) {
-              normalizedEp = normalizedEpisodes.find((normEp) => normEp.number === providerEp.number);
+            if (!normalizedEp && providerEp.number != null) {
+              normalizedEp = numberMap.get(providerEp.number);
             }
 
             if (!normalizedEp && providerEp.title) {
@@ -1202,6 +1211,7 @@ class Anilist extends AnimeParser {
 
             return {
               ...providerEp,
+              number: normalizedEp.number || providerEp.number,
               uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
               title: normalizedEp.title || providerEp.title,
               description: normalizedEp.description || providerEp.description,
@@ -1212,11 +1222,11 @@ class Anilist extends AnimeParser {
           });
         }
 
-        // console.log({
-        //   normalizedEpisodes,
-        //   providerEpisodes,
-        //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
-        // });
+        console.log({
+          normalizedEpisodes,
+          providerEpisodes,
+          merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
+        });
         possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
         if (!possibleAnimeEpisodes.length) {
           possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);

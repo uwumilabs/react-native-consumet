@@ -8,6 +8,7 @@ import android.webkit.*
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
 import java.util.concurrent.CountDownLatch
@@ -170,22 +171,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    override fun makePostRequestWithOkHttp(
-            url: String,
-            postBody: String,
-            mimeType: String,
-            promise: Promise
-    ) {
-        ddosGuardHelper.makePostRequestWithOkHttp(url, postBody, mimeType, promise)
+    override fun makeGetRequestWithWebView(url: String, headers: ReadableMap, promise: Promise) {
+        ddosGuardHelper.makeGetRequestWithWebView(url, headers, promise)
     }
-
-    @ReactMethod
-override fun makePostRequestWithWebView(
-    url: String,
-    postBody: String,
-    mimeType: String,
-    promise: Promise
-) {
-    ddosGuardHelper.makePostRequestWithWebView(url, postBody, mimeType, promise)
-}
 }

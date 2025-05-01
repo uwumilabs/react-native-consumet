@@ -29,7 +29,6 @@ class AnimePahe extends AnimeParser {
 
   constructor() {
     super();
-    // Initialize the DDoS-Guard cookie when the instance is created
     this.initDdgCookie();
   }
 

@@ -1,13 +1,14 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import Meta from './Meta';
+import Movies from './Movies';
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Zoro /> */}
-      {/* <Movies /> */}
-      <Meta />
+      <Movies />
+      {/* <Meta /> */}
     </SafeAreaView>
   );
 }
