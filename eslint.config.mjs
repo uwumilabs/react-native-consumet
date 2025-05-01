@@ -62,6 +62,7 @@ export default defineConfig([
       '.expo-shared/',
       '.vscode/',
       '.android/',
+      '.yarn/',
       'android/**/*',
       'ios/**/*',
       '.ios/',
@@ -85,7 +86,7 @@ export default defineConfig([
       'jest.config.*',
 
       // Configuration Files
-      '*.config.js',
+      '*.config.*',
       'metro.config.js',
       'babel.config.js',
       'tscconfig.json',

@@ -23,5 +23,5 @@ export default {
   Turkish,
   SFlix,
   MultiMovies,
-  NetflixMirror
+  NetflixMirror,
 };

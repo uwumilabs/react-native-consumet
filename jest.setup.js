@@ -28,3 +28,7 @@ jest.mock('react-native', () => {
 
 // Mock any other modules you need
 jest.mock('react-native/Libraries/EventEmitter/NativeEventEmitter');
+jest.mock('react-native-url-polyfill/auto', () => {
+  global.URL = require('url').URL;
+  return {};
+});

@@ -1,5 +1,4 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import Meta from './Meta';
 import Movies from './Movies';
 
 export default function App() {

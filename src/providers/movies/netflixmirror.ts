@@ -1,4 +1,3 @@
-import { load } from 'cheerio';
 import {
   MovieParser,
   TvType,
@@ -47,8 +46,8 @@ class NetflixMirror extends MovieParser {
 
   private Headers() {
     const headers: Record<string, string> = {
-      authority: 'netfree2.cc',
-      accept: 'application/json, text/javascript, */*; q=0.01',
+      'authority': 'netfree2.cc',
+      'accept': 'application/json, text/javascript, */*; q=0.01',
       'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
@@ -56,7 +55,7 @@ class NetflixMirror extends MovieParser {
       'sec-fetch-mode': 'cors',
       'sec-fetch-site': 'same-origin',
       'x-requested-with': 'XMLHttpRequest',
-      Referer: `${this.baseUrl}/mobile/home`,
+      'Referer': `${this.baseUrl}/mobile/home`,
       'user-agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     };
@@ -246,8 +245,7 @@ class NetflixMirror extends MovieParser {
       data[0].sources?.map((source: any) => {
         sources.sources.push({
           url: `${this.baseUrl}${source.file.replace(/%3A%3Asu/g, '%3A%3Ani').replace(/::su/g, '::ni')}`,
-          quality:
-            source.label === 'Auto' ? source.label.toLowerCase() : source.file.match(/[?&]q=([^&]+)/)?.[1],
+          quality: source.label === 'Auto' ? source.label.toLowerCase() : source.file.match(/[?&]q=([^&]+)/)?.[1],
           isM3U8: source.file.includes('.m3u8'),
         });
       });

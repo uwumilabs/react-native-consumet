@@ -1,10 +1,4 @@
-import {
-  ANIME,
-  makePostRequestWithOkHttp,
-  META,
-  type IAnimeEpisode,
-  makePostRequestWithWebView,
-} from 'react-native-consumet';
+import { ANIME, META, type IAnimeEpisode } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -21,7 +15,7 @@ const fetchData = async (): Promise<IAnimeEpisode[]> => {
     // // const info = await movies.fetchMediaInfo('872585', 'movie');
     // console.log(info, info.seasons[0].episodes[0].id);
     // const sources = await movies.fetchEpisodeSources(info.seasons[0].episodes[0].id);
-    
+
     const anime = new META.Anilist(new ANIME.AnimePahe());
     const sources = await anime.search('the apothecary diaries season 2');
     console.log(sources);

@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>0.6.2 (2025-05-01)</small>
+
+* feat: add cookie fetching methods for netflix-mirror requests ([87fef82](https://github.com/2004durgesh/react-native-consumet/commit/87fef82))
+* feat(netflixmirror): new movie provider ([5292387](https://github.com/2004durgesh/react-native-consumet/commit/5292387))
+
 ## <small>0.6.1 (2025-04-27)</small>
 
 * fix(anilist | animepahe): enhance episode merging with release date handling ([a2a897a](https://github.com/2004durgesh/react-native-consumet/commit/a2a897a))
