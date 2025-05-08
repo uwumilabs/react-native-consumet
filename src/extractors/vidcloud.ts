@@ -1,6 +1,6 @@
 import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';
-import Consumet from '../NativeConsumet';
+import { getSources } from '../NativeConsumet';
 
 class VidCloud extends VideoExtractor {
   protected override serverName = 'VidCloud';
@@ -26,7 +26,7 @@ class VidCloud extends VideoExtractor {
 
       const regex = /\/([^\/?]+)(?=\?)/;
       const xrax = videoUrl.toString().match(regex)?.[1];
-      const jsonResponse = await Consumet.getSources(xrax!);
+      const jsonResponse = await getSources(videoUrl.href, referer);
       const res = JSON.parse(jsonResponse);
       const sources = res.sources;
 

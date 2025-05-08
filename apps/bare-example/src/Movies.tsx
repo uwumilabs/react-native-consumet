@@ -10,13 +10,13 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IMovieResult>> => {
   try {
-    const movies = new MOVIES.NetflixMirror();
+    const movies = new MOVIES.HiMovies();
     const search = await movies.search('jujutsu kaisen');
     console.log(search);
     const info = await movies.fetchMediaInfo(search.results![0]!.id);
     console.log(info, info.episodes![0]!.id);
 
-    const sources = await movies.fetchEpisodeSources('81144552', '81144552');
+    const sources = await movies.fetchEpisodeSources(info.episodes![0]!.id, info.id);
     // const servers = await movies.fetchEpisodeServers(info.episodes![0]!.id);
     console.log(sources);
     // const s = await movies.fetchEpisodeSources(

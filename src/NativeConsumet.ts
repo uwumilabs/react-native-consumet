@@ -2,7 +2,7 @@ import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
-  getSources(xrax: string): Promise<string>;
+  getSources(embedUrl: string, site: string): Promise<string>;
   bypassDdosGuard(url: string): Promise<{ cookie: string }>;
   getDdosGuardCookiesWithWebView(url: string): Promise<string>;
   makeGetRequestWithWebView(
@@ -16,4 +16,11 @@ export interface Spec extends TurboModule {
   }>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('Consumet');
+const NativeConsumet = TurboModuleRegistry.getEnforcing<Spec>('Consumet');
+
+export const bypassDdosGuard = NativeConsumet.bypassDdosGuard;
+export const getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
+export const makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
+export const getSources = NativeConsumet.getSources;
+
+export default NativeConsumet;

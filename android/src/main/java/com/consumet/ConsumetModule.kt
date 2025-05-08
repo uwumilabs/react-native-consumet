@@ -21,10 +21,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
 
-    class JsInterface(
-            private val latch: CountDownLatch,
-            private val context: ReactApplicationContext
-    ) {
+    class JsInterface(private val latch: CountDownLatch) {
         var result: String? = null
 
         @JavascriptInterface
@@ -33,28 +30,21 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
             result = response
             latch.countDown()
         }
+    }
 
-        @JavascriptInterface
-        fun loadLocalAsset(filename: String): String {
-            return try {
-                context.assets.open(filename).bufferedReader().use { it.readText() }
-            } catch (e: Exception) {
-                Log.e("ConsumetModule", "Failed to load local asset: $filename", e)
-                "console.error('Failed to load $filename: ${e.message}');"
-            }
-        }
+    private fun getJsContent(file: String): String {
+        return reactApplicationContext.assets.open(file).bufferedReader().use { it.readText() }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun getSources(xrax: String, promise: Promise) {
+    override fun getSources(embedUrl: String, site: String, promise: Promise) {
         val latch = CountDownLatch(1)
         var webView: WebView? = null
-        val jsi = JsInterface(latch, reactContext)
+        val jsi = JsInterface(latch)
 
         handler.post {
-            val webview = WebView(reactContext)
+            val webview = WebView(reactApplicationContext)
             webView = webview
-
             with(webview.settings) {
                 javaScriptEnabled = true
                 domStorageEnabled = true
@@ -69,55 +59,20 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
             webview.webViewClient =
                     object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
+                            Log.d(tag, "onPageFinished $url")
                             super.onPageFinished(view, url)
 
-                            val cdnScript =
-                                    """
-                        (async function() {
-                            async function loadScriptWithFallback(url, localFilename) {
-                                try {
-                                    console.log("Loading from CDN: " + url);
-                                    await new Promise((resolve, reject) => {
-                                        const script = document.createElement('script');
-                                        script.src = url;
-                                        script.onload = () => resolve();
-                                        script.onerror = () => reject(new Error("CDN failed"));
-                                        document.head.appendChild(script);
-                                        setTimeout(() => reject(new Error("CDN timeout")), 5000);
-                                    });
-                                } catch (e) {
-                                    console.warn("Falling back to local asset: " + localFilename);
-                                    const localScript = window.jsinterface.loadLocalAsset(localFilename);
-                                    eval(localScript);
-                                }
-                            }
+                            Log.d(tag, "injecting scripts")
+                            // Adjust paths to match your assets folder structure
+                            view?.evaluateJavascript(getJsContent("crypto-js.js")) {}
+                            view?.evaluateJavascript(getJsContent("megacloud.decodedpng.js")) {}
+                            view?.evaluateJavascript(getJsContent("megacloud.getsrcs.js")) {}
 
-                            try {
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/crypto-js.js", "crypto-js.js");
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/megacloud.decodedpng.js", "megacloud.decodedpng.js");
-                                await loadScriptWithFallback("https://cdn.jsdelivr.net/gh/Kohi-den/extensions-source@main/lib/megacloud-extractor/src/main/assets/megacloud.getsrcs.js", "megacloud.getsrcs.js");
-
-                                console.log("Calling getSources...");
-                                const result = await getSources("${xrax}");
-                                window.jsinterface.setResponse(JSON.stringify(result));
-                            } catch (err) {
-                                console.error("Execution error:", err);
-                                window.jsinterface.setResponse("ERROR: " + err.message);
-                            }
-                        })();
-                    """.trimIndent()
-
-                            view?.evaluateJavascript(cdnScript, null)
-                        }
-
-                        override fun onReceivedError(
-                                view: WebView?,
-                                errorCode: Int,
-                                description: String?,
-                                failingUrl: String?
-                        ) {
-                            Log.e(tag, "WebView error: $errorCode - $description @ $failingUrl")
-                            super.onReceivedError(view, errorCode, description, failingUrl)
+                            Log.d(tag, "running script")
+                            view?.evaluateJavascript(
+                                    "getSources(\"${embedUrl}\",\"${site}\")" +
+                                            ".then( s => jsinterface.setResponse( JSON.stringify(s) ) )",
+                            ) {}
                         }
                     }
 
@@ -126,17 +81,30 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
                         override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                             Log.d(
                                     tag,
-                                    "Console: [${consoleMessage?.messageLevel()}] ${consoleMessage?.message()}"
+                                    "Chrome: [${consoleMessage?.messageLevel()}]" +
+                                            "${consoleMessage?.message()}" +
+                                            " at ${consoleMessage?.lineNumber()}" +
+                                            " in ${consoleMessage?.sourceId()}",
                             )
                             return super.onConsoleMessage(consoleMessage)
                         }
                     }
 
+            Log.d(tag, "loading url: $embedUrl")
+            val regex = Regex("https://[a-zA-Z0-9.]*")
+            val extractedBase = regex.find(embedUrl)?.value ?: embedUrl
+            val baseUrl =
+                    if (extractedBase.contains("mega", ignoreCase = true)) {
+                        "https://megacloud.tv"
+                    } else {
+                        extractedBase
+                    }
+            Log.d(tag, "baseUrl: $baseUrl")
             val headers = mapOf("X-Requested-With" to "org.lineageos.jelly")
-            webview.loadUrl("https://megacloud.tv/about", headers)
+            webView?.loadUrl(baseUrl, headers)
         }
 
-        // Await result or timeout
+        // Run in a separate thread to not block the JS thread
         Thread {
                     val success = latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)
 
@@ -148,7 +116,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
                         if (success && jsi.result != null) {
                             promise.resolve(jsi.result)
                         } else {
-                            promise.reject("ERROR", "Failed to get sources or timeout2")
+                            promise.reject("ERROR", "Failed to get sources or timeout")
                         }
                     }
                 }

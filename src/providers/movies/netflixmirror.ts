@@ -8,7 +8,7 @@ import {
   type ISearch,
   type IMovieEpisode,
 } from '../../models';
-import { makeGetRequestWithWebView } from '../../index';
+import { makeGetRequestWithWebView } from '../../NativeConsumet';
 class NetflixMirror extends MovieParser {
   override readonly name = 'NetflixMirror';
   protected override baseUrl = 'https://netfree2.cc';

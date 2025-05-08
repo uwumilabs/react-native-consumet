@@ -13,7 +13,7 @@ import {
   SubOrSub,
 } from '../../models';
 import { Kwik } from '../../extractors';
-import { bypassDdosGuard, getDdosGuardCookiesWithWebView } from 'react-native-consumet';
+import { bypassDdosGuard, getDdosGuardCookiesWithWebView } from '../../NativeConsumet';
 
 class AnimePahe extends AnimeParser {
   override readonly name = 'AnimePahe';
