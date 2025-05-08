@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0 (2025-05-08)
+
+* feat: refactor getSources method, add HiMovies provider, and update MegaUp decryption ([22efedb](https://github.com/2004durgesh/react-native-consumet/commit/22efedb))
+
 ## <small>0.6.2 (2025-05-01)</small>
 
 * feat: add cookie fetching methods for netflix-mirror requests ([87fef82](https://github.com/2004durgesh/react-native-consumet/commit/87fef82))
