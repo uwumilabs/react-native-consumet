@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>0.7.1 (2025-06-10)</small>
+
+* fix(multimovies | streamwish): add referrer in stremwish to get the hls links properly ([5671864](https://github.com/2004durgesh/react-native-consumet/commit/5671864))
+
 ## 0.7.0 (2025-05-08)
 
 * feat: refactor getSources method, add HiMovies provider, and update MegaUp decryption ([22efedb](https://github.com/2004durgesh/react-native-consumet/commit/22efedb))
