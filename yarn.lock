@@ -10915,6 +10915,7 @@ __metadata:
     react-native: 0.78.1
     react-native-builder-bob: ^0.38.3
     react-native-consumet: "workspace:^"
+    react-native-video: ^6.14.0
   languageName: unknown
   linkType: soft
 
@@ -10972,6 +10973,16 @@ __metadata:
   peerDependencies:
     react-native: "*"
   checksum: 1a2e1030a62fd093764b5330ce0ff34d72246e581dd2892cddc347d8621931aeb2c9ea3e054960484a1259230e8461e569e1890f1ff452d3c5c0adef70190fc3
+  languageName: node
+  linkType: hard
+
+"react-native-video@npm:^6.14.0":
+  version: 6.14.0
+  resolution: "react-native-video@npm:6.14.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3da3ccab377cf84926725be5263eeeba0d45368ef522de993331d9f7bb8ea6cbe9dd4cf9240901595910c3e150bda30fe9456382d58b556018e00dac33ee89bc
   languageName: node
   linkType: hard
 

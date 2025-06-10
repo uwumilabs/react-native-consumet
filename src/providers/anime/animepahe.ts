@@ -72,6 +72,7 @@ class AnimePahe extends AnimeParser {
 
       return res;
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   };

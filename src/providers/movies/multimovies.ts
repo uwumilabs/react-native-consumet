@@ -13,9 +13,9 @@ import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.digital';
+  protected override baseUrl = 'https://multimovies.email';
   protected override logo =
-    'https://multimovies.digital/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+    'https://multimovies.email/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
@@ -227,8 +227,8 @@ class MultiMovies extends MovieParser {
         case StreamingServers.StreamWish:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
-            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
+            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+            download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '',
           };
         case StreamingServers.StreamTape:
           return {
@@ -254,10 +254,10 @@ class MultiMovies extends MovieParser {
     try {
       const servers = await this.fetchEpisodeServers(episodeId);
       const i = servers.findIndex((s) => s.name.toLowerCase() === server.toLowerCase());
-
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
+
       const serverUrl: URL = new URL(servers[i]!.url);
       let fileId = '';
 
@@ -268,6 +268,7 @@ class MultiMovies extends MovieParser {
       // fileId to be used for download link
       return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, fileId);
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -283,9 +284,9 @@ class MultiMovies extends MovieParser {
 
     try {
       const { servers } = await this.getServer(episodeId);
-
       return servers;
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -394,10 +395,17 @@ class MultiMovies extends MovieParser {
 
       // Handle non-multimovies case
       if (!iframeUrl.includes('multimovies')) {
+        if (iframeUrl.includes('dhcplay')) {
+          return {
+            servers: [{ name: 'StreamWish', url: iframeUrl }],
+            fileId: iframeUrl.split('/').pop() ?? '',
+          };
+        }
         let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
         const redirectResponse = await this.client.head(playerBaseUrl, {
           headers,
         });
+
         // Update base URL if redirect occurred
         if (redirectResponse) {
           playerBaseUrl = redirectResponse.request?.responseURL?.split('/').slice(0, 3).join('/');
@@ -410,27 +418,18 @@ class MultiMovies extends MovieParser {
 
         const streamRequestData = new FormData();
         streamRequestData.append('sid', fileId);
-        // console.log('redirectResponse', playerBaseUrl, streamRequestData);
-        let streamResponse;
-        try {
-          streamResponse = await this.client.post(`${playerBaseUrl}/embedhelper.php`, streamRequestData, {
-            headers,
-          });
-        } catch (_) {
-          // If the embedhelper.php endpoint fails, just return the direct embed URL
-          return {
-            servers: [{ name: 'streamwish', url: `${playerBaseUrl}/embed/${fileId}` }],
-            fileId: iframeUrl.split('/').pop() ?? '',
-          };
-        }
-
-        // console.log('streamResponse', streamResponse.data);
-
-        if (!streamResponse.data) {
+        
+        const streamResponse = await fetch(`${playerBaseUrl}/embedhelper.php`, {
+          headers: headers,
+          body: streamRequestData,
+          method: 'POST',
+        });
+        const streamResponseData = await streamResponse.json();
+        if (!streamResponseData) {
           throw new Error('No stream data found');
         }
 
-        const streamDetails = streamResponse.data;
+        const streamDetails = streamResponseData;
         const mresultKeys = new Set(Object.keys(JSON.parse(atob(streamDetails.mresult))));
         const siteUrlsKeys = new Set(Object.keys(streamDetails.siteUrls));
 

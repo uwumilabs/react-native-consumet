@@ -5,7 +5,10 @@ class StreamWish extends VideoExtractor {
   protected override serverName = 'streamwish';
   protected override sources: IVideo[] = [];
 
-  override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  override extract = async (
+    videoUrl: URL,
+    referrer?: string
+  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const options = {
         headers: {
@@ -16,7 +19,7 @@ class StreamWish extends VideoExtractor {
           'Cache-Control': 'max-age=0',
           'Priority': 'u=0, i',
           'Origin': videoUrl.origin,
-          'Referer': videoUrl.origin,
+          'Referer': referrer ?? videoUrl.origin,
           'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
           'Sec-Ch-Ua-Mobile': '?0',
           'Sec-Ch-Ua-Platform': 'Windows',
@@ -32,7 +35,6 @@ class StreamWish extends VideoExtractor {
 
       // Code adapted from Zenda-Cross (https://github.com/Zenda-Cross/vega-app/blob/main/src/lib/providers/multi/multiGetStream.ts)
       // Thank you to Zenda-Cross for the original implementation.
-
       const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
       const match = functionRegex.exec(data);
       let p = '';

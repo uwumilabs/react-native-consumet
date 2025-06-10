@@ -15,6 +15,7 @@ import type { IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import FlixHQ from '../movies/flixhq';
 import type { AxiosAdapter } from 'axios';
+import HiMovies from '../movies/himovies';
 
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
@@ -33,7 +34,7 @@ class TMDB extends MovieParser {
     adapter?: AxiosAdapter
   ) {
     super(proxyConfig, adapter);
-    this.provider = provider || new FlixHQ();
+    this.provider = provider || new HiMovies();
   }
 
   /**

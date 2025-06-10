@@ -11,7 +11,7 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.AnimeKai();
+    const animekai = new ANIME.AnimePahe();
     const search = await animekai.search('solo leveling');
     console.log(search);
     const info = await animekai.fetchAnimeInfo(search.results[0]!.id);
@@ -29,7 +29,7 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   }
 };
 
-export default function Zoro() {
+export default function Anime() {
   const [state, setState] = useState<FetchState>({
     data: [],
     isLoading: true,

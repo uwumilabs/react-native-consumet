@@ -36,6 +36,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
         return reactApplicationContext.assets.open(file).bufferedReader().use { it.readText() }
     }
 
+    @ReactMethod
     @SuppressLint("SetJavaScriptEnabled")
     override fun getSources(embedUrl: String, site: String, promise: Promise) {
         val latch = CountDownLatch(1)
