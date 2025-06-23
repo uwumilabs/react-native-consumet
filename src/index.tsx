@@ -25,6 +25,7 @@ import {
   VidHide,
   Voe,
   MegaUp,
+  Luffy,
 } from './extractors';
 import {
   type IProviderStats,
@@ -99,6 +100,7 @@ export {
   MegaCloud,
   VidHide,
   Voe,
+  Luffy
 };
 export type {
   IProviderStats,

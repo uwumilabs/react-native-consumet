@@ -7,7 +7,7 @@ class StreamWish extends VideoExtractor {
 
   override extract = async (
     videoUrl: URL,
-    referrer?: string
+    referer?: string
   ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
       const options = {
@@ -19,7 +19,7 @@ class StreamWish extends VideoExtractor {
           'Cache-Control': 'max-age=0',
           'Priority': 'u=0, i',
           'Origin': videoUrl.origin,
-          'Referer': referrer ?? videoUrl.origin,
+          'Referer': referer ?? videoUrl.origin,
           'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
           'Sec-Ch-Ua-Mobile': '?0',
           'Sec-Ch-Ua-Platform': 'Windows',

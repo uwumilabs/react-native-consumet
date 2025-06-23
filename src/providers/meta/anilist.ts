@@ -1222,11 +1222,11 @@ class Anilist extends AnimeParser {
           });
         }
 
-        console.log({
-          normalizedEpisodes,
-          providerEpisodes,
-          merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
-        });
+        // console.log({
+        //   normalizedEpisodes,
+        //   providerEpisodes,
+        //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
+        // });
         possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
         if (!possibleAnimeEpisodes.length) {
           possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);

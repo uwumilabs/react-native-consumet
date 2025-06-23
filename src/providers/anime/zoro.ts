@@ -21,7 +21,7 @@ import axios from 'axios';
 
 class Zoro extends AnimeParser {
   override readonly name = 'Zoro';
-  protected override baseUrl = 'https://hianime.nz';
+  protected override baseUrl = 'https://hianime.to';
   protected override logo =
     'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg';
   protected override classPath = 'ANIME.Zoro';
@@ -677,7 +677,6 @@ class Zoro extends AnimeParser {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
       switch (server) {
-        case StreamingServers.VidStreaming:
         case StreamingServers.VidCloud:
           return {
             headers: { Referer: serverUrl.href },

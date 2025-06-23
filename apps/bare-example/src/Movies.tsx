@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
+import { MOVIES, StreamingServers, type IMovieResult, type ISearch } from 'react-native-consumet';
 import Video from 'react-native-video';
 
 interface FetchState {
@@ -25,7 +25,7 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.MultiMovies();
+    const movies = new MOVIES.HiMovies();
     const search = await movies.search('jujutsu');
     console.log('Search Results:', search);
 
@@ -41,9 +41,9 @@ const fetchData = async (): Promise<{
     let videoUrl: string | null = null;
     if (info.episodes && info.episodes.length > 0) {
       const firstEpisodeId = info.episodes[0]!.id;
-      const servers = await movies.fetchEpisodeServers(firstEpisodeId);
+      const servers = await movies.fetchEpisodeServers(firstEpisodeId,info.id);
       console.log('Episode Servers:', servers);
-      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
+      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id,StreamingServers.UpCloud);
       console.log('Episode Sources:', sources);
 
       if (sources.sources && sources.sources.length > 0) {

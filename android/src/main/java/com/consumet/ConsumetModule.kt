@@ -20,109 +20,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
-
-    class JsInterface(private val latch: CountDownLatch) {
-        var result: String? = null
-
-        @JavascriptInterface
-        fun setResponse(response: String) {
-            Log.d("ConsumetModule", "script result: $response")
-            result = response
-            latch.countDown()
-        }
-    }
-
-    private fun getJsContent(file: String): String {
-        return reactApplicationContext.assets.open(file).bufferedReader().use { it.readText() }
-    }
-
-    @ReactMethod
-    @SuppressLint("SetJavaScriptEnabled")
-    override fun getSources(embedUrl: String, site: String, promise: Promise) {
-        val latch = CountDownLatch(1)
-        var webView: WebView? = null
-        val jsi = JsInterface(latch)
-
-        handler.post {
-            val webview = WebView(reactApplicationContext)
-            webView = webview
-            with(webview.settings) {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                databaseEnabled = true
-                useWideViewPort = false
-                loadWithOverviewMode = false
-                userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
-
-            webview.addJavascriptInterface(jsi, "jsinterface")
-
-            webview.webViewClient =
-                    object : WebViewClient() {
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            Log.d(tag, "onPageFinished $url")
-                            super.onPageFinished(view, url)
-
-                            Log.d(tag, "injecting scripts")
-                            // Adjust paths to match your assets folder structure
-                            view?.evaluateJavascript(getJsContent("crypto-js.js")) {}
-                            view?.evaluateJavascript(getJsContent("megacloud.decodedpng.js")) {}
-                            view?.evaluateJavascript(getJsContent("megacloud.getsrcs.js")) {}
-
-                            Log.d(tag, "running script")
-                            view?.evaluateJavascript(
-                                    "getSources(\"${embedUrl}\",\"${site}\")" +
-                                            ".then( s => jsinterface.setResponse( JSON.stringify(s) ) )",
-                            ) {}
-                        }
-                    }
-
-            webview.webChromeClient =
-                    object : WebChromeClient() {
-                        override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                            Log.d(
-                                    tag,
-                                    "Chrome: [${consoleMessage?.messageLevel()}]" +
-                                            "${consoleMessage?.message()}" +
-                                            " at ${consoleMessage?.lineNumber()}" +
-                                            " in ${consoleMessage?.sourceId()}",
-                            )
-                            return super.onConsoleMessage(consoleMessage)
-                        }
-                    }
-
-            Log.d(tag, "loading url: $embedUrl")
-            val regex = Regex("https://[a-zA-Z0-9.]*")
-            val extractedBase = regex.find(embedUrl)?.value ?: embedUrl
-            val baseUrl =
-                    if (extractedBase.contains("mega", ignoreCase = true)) {
-                        "https://megacloud.tv"
-                    } else {
-                        extractedBase
-                    }
-            Log.d(tag, "baseUrl: $baseUrl")
-            val headers = mapOf("X-Requested-With" to "org.lineageos.jelly")
-            webView?.loadUrl(baseUrl, headers)
-        }
-
-        // Run in a separate thread to not block the JS thread
-        Thread {
-                    val success = latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)
-
-                    handler.post {
-                        webView?.stopLoading()
-                        webView?.destroy()
-                        webView = null
-
-                        if (success && jsi.result != null) {
-                            promise.resolve(jsi.result)
-                        } else {
-                            promise.reject("ERROR", "Failed to get sources or timeout")
-                        }
-                    }
-                }
-                .start()
-    }
+    private val deobfuscator by lazy { DeobfuscatorModule(reactContext) }
 
     companion object {
         const val NAME = "Consumet"
@@ -142,5 +40,10 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     override fun makeGetRequestWithWebView(url: String, headers: ReadableMap, promise: Promise) {
         ddosGuardHelper.makeGetRequestWithWebView(url, headers, promise)
+    }
+
+    @ReactMethod
+    override fun deobfuscateScript(source: String, promise: Promise) {
+        deobfuscator.deobfuscateScript(source, promise)
     }
 }

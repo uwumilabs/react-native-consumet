@@ -11,7 +11,7 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.AnimePahe();
+    const animekai = new ANIME.Zoro();
     const search = await animekai.search('solo leveling');
     console.log(search);
     const info = await animekai.fetchAnimeInfo(search.results[0]!.id);
@@ -25,7 +25,7 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
     return search;
   } catch (error) {
     console.log(error);
-    throw new Error('Failed to fetch search');
+    // throw new Error('Failed to fetch search');
   }
 };
 
