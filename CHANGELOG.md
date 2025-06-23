@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>0.7.2 (2025-06-23)</small>
+
+* feat: add Luffy extractor, AnimeOwl provider, and deobfuscator; fix Megacloud/Vidcloud ([08ba6bd](https://github.com/2004durgesh/react-native-consumet/commit/08ba6bd))
+
 ## <small>0.7.1 (2025-06-10)</small>
 
 * fix(multimovies | streamwish): add referrer in stremwish to get the hls links properly ([5671864](https://github.com/2004durgesh/react-native-consumet/commit/5671864))
