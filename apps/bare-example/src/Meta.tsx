@@ -11,15 +11,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  MOVIES,
-  ANIME,
-  META,
-  type IMovieResult,
-  type ISearch,
-  type IAnimeEpisode,
-  type IAnimeResult,
-} from 'react-native-consumet';
+import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult } from 'react-native-consumet';
 import Video from 'react-native-video';
 
 // Get screen width for responsive video player
@@ -63,8 +55,8 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiMovies());
-      const search = await movies.search('the legend of hanuman');
+      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.HiMovies());
+      const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
 
       if (!search || !search.results || search.results.length === 0) {
@@ -110,8 +102,8 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AnimePahe());
-      const searchResult = await anime.search('the apothecary diaries season 2');
+      const anime = new META.Anilist(new ANIME.AnimeOwl());
+      const searchResult = await anime.search('wind breaker season 2');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {
@@ -225,7 +217,7 @@ export default function Meta() {
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
-                      onLoad={(e) => console.log('Video Loaded (Movies)',e)}
+                      onLoad={(e) => console.log('Video Loaded (Movies)', e)}
                       onError={(e) => console.log('Video Error (Movies):', e)}
                       poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
                       posterResizeMode="cover"

@@ -28,7 +28,7 @@ class Voe extends VideoExtractor {
       }
 
       function rot13(input: string): string {
-        return input.replace(/[a-zA-Z]/g, c => {
+        return input.replace(/[a-zA-Z]/g, (c) => {
           const base = c <= 'Z' ? 65 : 97;
           return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
         });
@@ -49,7 +49,7 @@ class Voe extends VideoExtractor {
       }
 
       function charShift(input: string, shift: number): string {
-        return [...input].map(c => String.fromCharCode(c.charCodeAt(0) - shift)).join('');
+        return [...input].map((c) => String.fromCharCode(c.charCodeAt(0) - shift)).join('');
       }
 
       function reverse(input: string): string {
@@ -69,7 +69,7 @@ class Voe extends VideoExtractor {
       const $ = load(res.data);
       const scriptContent = $('script').html();
       const pageUrl = scriptContent
-        ? scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? ''
+        ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
         : '';
 
       const { data } = await this.client.get(pageUrl);

@@ -19,6 +19,7 @@ class Luffy extends VideoExtractor {
         this.sources.push({
           quality: item.url.match(/[?&]resolution=([^&]+)/)?.[1],
           url: item.url + jwt,
+          isM3U8: item.url.includes('.m3u8'),
         });
       });
 

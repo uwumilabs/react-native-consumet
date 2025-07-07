@@ -1,15 +1,13 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import Movies from './Movies';
 import Meta from './Meta';
-import Anime from './Anime';
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Anime /> */}
-      <Movies />
-      {/* <Meta /> */}
+      {/* <Movies /> */}
+      <Meta />
     </SafeAreaView>
   );
 }

@@ -41,7 +41,7 @@ class AnimeOwl extends AnimeParser {
    * @param page Page number (optional)
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
 
@@ -91,7 +91,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchTopAiring(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/trending?page=${page}`);
@@ -100,7 +100,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchRecentlyUpdated(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/recent-episode/sub?page=${page}`);
@@ -109,7 +109,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchMovie(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/type/movie?page=${page}`);
@@ -118,7 +118,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchTV(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/type/tv?page=${page}`);
@@ -127,7 +127,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchOVA(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/type/ova?page=${page}`);
@@ -136,7 +136,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchONA(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/type/ona?page=${page}`);
@@ -145,7 +145,7 @@ class AnimeOwl extends AnimeParser {
    * @param page number
    */
   fetchSpecial(page: number = 1): Promise<ISearch<IAnimeResult>> {
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/type/special?page=${page}`);
@@ -172,7 +172,7 @@ class AnimeOwl extends AnimeParser {
     if (genre == '') {
       throw new Error('genre is empty');
     }
-    if (0 >= page) {
+    if (page <= 0) {
       page = 1;
     }
     return this.scrapeCardPage(`${this.baseUrl}/genre/${genre}?page=${page}`);
@@ -345,7 +345,7 @@ class AnimeOwl extends AnimeParser {
       for (const dub of dubEpisodes) {
         if (groupedMap.has(dub.title!)) {
           const entry = groupedMap.get(dub.title!)!;
-          entry.id = `${entry.id}&${dub.id}`; //combining the sub and dub episode ids
+          entry.id = `${entry.id}$${dub.id}`; //combining the sub and dub episode ids
           entry.isDubbed = true;
         } else {
           groupedMap.set(dub.title!, {
@@ -380,7 +380,7 @@ class AnimeOwl extends AnimeParser {
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
-      
+
       switch (server) {
         case StreamingServers.Luffy:
           return {
@@ -488,8 +488,9 @@ class AnimeOwl extends AnimeParser {
     episodeId: string,
     subOrDub: SubOrSub = SubOrSub.SUB
   ): Promise<IEpisodeServer[]> => {
-    const subEpisodeId = episodeId.split('$')[1]!.split('&')[0];
-    const dubEpisodeId = episodeId.split('&')[1];
+    const parts = episodeId.split('$');
+    const subEpisodeId = parts[1];
+    const dubEpisodeId = parts[2];
     const id = episodeId.split('$')[0];
     const { data } = await this.client.get(`${this.baseUrl}/anime/${id}`);
     const $ = load(data);
@@ -515,7 +516,7 @@ class AnimeOwl extends AnimeParser {
 
     const { data: server } = await this.client.get(`${this.baseUrl}${directLink}`);
     const servers: IEpisodeServer[] = [];
-    server['luffy']?.map((item: any) => {
+    server.luffy?.map((item: any) => {
       servers.push({
         name: 'luffy',
         url: `${this.baseUrl}${directLink!}`,
@@ -553,12 +554,12 @@ class AnimeOwl extends AnimeParser {
   };
 }
 
-(async () => {
-  const animeowl = new AnimeOwl();
-  const search = await animeowl.fetchSpotlight();
-  const info = await animeowl.fetchAnimeInfo(search.results[0]!.id);
-  // const sources = await animeowl.fetchEpisodeSources(info.episodes![0].id,StreamingServers.Luffy, SubOrSub.DUB);
-  // console.log(info);
-})();
+// (async () => {
+//   const animeowl = new AnimeOwl();
+//   const search = await animeowl.fetchSpotlight();
+//   const info = await animeowl.fetchAnimeInfo(search.results[0]!.id);
+//   // const sources = await animeowl.fetchEpisodeSources(info.episodes![0].id,StreamingServers.Luffy, SubOrSub.DUB);
+//   // console.log(info);
+// })();
 
 export default AnimeOwl;

@@ -1,4 +1,4 @@
-import { ANIME, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { ANIME, SubOrSub, type IAnimeResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -11,12 +11,12 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.Zoro();
+    const animekai = new ANIME.AnimeOwl();
     const search = await animekai.search('solo leveling');
     console.log(search);
     const info = await animekai.fetchAnimeInfo(search.results[0]!.id);
     console.log(info);
-    const s = info.episodes && (await animekai.fetchEpisodeSources(info.episodes[0]!.id));
+    const s = info.episodes && (await animekai.fetchEpisodeSources(info.episodes[0]!.id, undefined, SubOrSub.DUB));
     console.log('sources end');
     console.log(s);
     if (!search || !search.results) {
@@ -25,7 +25,7 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
     return search;
   } catch (error) {
     console.log(error);
-    // throw new Error('Failed to fetch search');
+    throw new Error('Failed to fetch search');
   }
 };
 

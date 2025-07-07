@@ -1,6 +1,5 @@
 import { type ISource, type IVideo, VideoExtractor } from '../../models';
-import CryptoJS from 'crypto-js';
-import { USER_AGENT } from '../../utils';
+import { getSources } from './megacloud.getsrcs';
 
 class MegaCloud extends VideoExtractor {
   protected override serverName = 'MegaCloud';
@@ -20,41 +19,22 @@ class MegaCloud extends VideoExtractor {
         },
         sources: [],
       };
-      const regex = /\/([^\/?]+)(?=\?)/;
-      const xrax = embedIframeURL.toString().match(regex)?.[1];
-      const basePath = embedIframeURL.pathname.split('/').slice(0, 4).join('/');
-      const url = `${embedIframeURL.origin}${basePath}/getSources?id=${xrax}`;
-
-      const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
-      //gets the base64 encoded string from the URL and key in parallel
-      const [{ data }, { data: key }] = await Promise.all([
-        this.client.get(url, {
-          headers: {
-            'User-Agent': USER_AGENT,
-            'Referer': referer,
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        }),
-        this.client.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'),
-      ]);
-
-      const sources = CryptoJS.AES.decrypt(data.sources, key[getKeyType]).toString(CryptoJS.enc.Utf8);
-      const resp = JSON.parse(sources);
+      const resp = await getSources(embedIframeURL, referer);
 
       if (!resp) return extractedData;
 
-      if (Array.isArray(resp)) {
-        extractedData.sources = resp.map((s: { file: any; type: string }) => ({
+      if (Array.isArray(resp.sources)) {
+        extractedData.sources = resp.sources.map((s: { file: any; type: string }) => ({
           url: s.file,
           isM3U8: s.type === 'hls',
           type: s.type,
         }));
       }
 
-      extractedData.intro = data.intro ? data.intro : extractedData.intro;
-      extractedData.outro = data.outro ? data.outro : extractedData.outro;
+      extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
+      extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
 
-      extractedData.subtitles = data.tracks.map((track: { file: any; label: any; kind: any }) => ({
+      extractedData.subtitles = resp.tracks.map((track: { file: any; label: any; kind: any }) => ({
         url: track.file,
         lang: track.label ? track.label : track.kind,
       }));

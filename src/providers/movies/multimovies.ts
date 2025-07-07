@@ -13,9 +13,9 @@ import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.email';
+  protected override baseUrl = 'https://multimovies.agency';
   protected override logo =
-    'https://multimovies.email/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+    'https://multimovies.agency/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
@@ -418,7 +418,7 @@ class MultiMovies extends MovieParser {
 
         const streamRequestData = new FormData();
         streamRequestData.append('sid', fileId);
-        
+
         const streamResponse = await fetch(`${playerBaseUrl}/embedhelper.php`, {
           headers: headers,
           body: streamRequestData,

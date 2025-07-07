@@ -1,6 +1,6 @@
 import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';
-import CryptoJS from 'crypto-js';
+import { getSources } from './megacloud/megacloud.getsrcs';
 
 class VidCloud extends VideoExtractor {
   protected override serverName = 'VidCloud';
@@ -24,30 +24,9 @@ class VidCloud extends VideoExtractor {
         },
       };
 
-      const regex = /\/([^\/?]+)(?=\?)/;
-      const xrax = videoUrl.toString().match(regex)?.[1];
-      const basePath = videoUrl.pathname.split('/').slice(0, 4).join('/');
-      const url = `${videoUrl.origin}${basePath}/getSources?id=${xrax}`;
+      const resp = await getSources(videoUrl, referer);
 
-      const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
-
-      //gets the base64 encoded string from the URL and key in parallel
-      const [{ data }, { data: key }] = await Promise.all([
-        this.client.get(url, {
-          headers: {
-            'User-Agent': USER_AGENT,
-            'Referer': referer,
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        }),
-        this.client.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'),
-      ]);
-
-      const sources = CryptoJS.AES.decrypt(data.sources, key[getKeyType]).toString(CryptoJS.enc.Utf8);
-      const resp = JSON.parse(sources);
-
-
-      for (const source of resp) {
+      for (const source of resp.sources) {
         const { data } = await this.client.get(source.file, options);
         const urls = data
           .split('\n')
@@ -72,12 +51,12 @@ class VidCloud extends VideoExtractor {
       }
 
       result.sources.push({
-        url: resp[0].file,
-        isM3U8: resp[0].file.includes('.m3u8') || resp[0].file.endsWith('m3u8'),
+        url: resp.sources.file,
+        isM3U8: resp.sources.file.includes('.m3u8') || resp.sources.file.endsWith('m3u8'),
         quality: 'auto',
       });
 
-      result.subtitles = data.tracks.map((s: any) => ({
+      result.subtitles = resp.tracks.map((s: any) => ({
         url: s.file,
         lang: s.label ? s.label : 'Default (maybe)',
       }));

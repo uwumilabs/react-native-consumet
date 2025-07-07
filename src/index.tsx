@@ -100,7 +100,7 @@ export {
   MegaCloud,
   VidHide,
   Voe,
-  Luffy
+  Luffy,
 };
 export type {
   IProviderStats,
