@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0 (2025-07-07)
+
+* feat(provider): update anime and movie providers ([7b898ba](https://github.com/2004durgesh/react-native-consumet/commit/7b898ba))
+
 ## <small>0.7.2 (2025-06-23)</small>
 
 * feat: add Luffy extractor, AnimeOwl provider, and deobfuscator; fix Megacloud/Vidcloud ([08ba6bd](https://github.com/2004durgesh/react-native-consumet/commit/08ba6bd))
