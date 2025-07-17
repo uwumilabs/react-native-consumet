@@ -13,7 +13,12 @@
         "apps/bare-example/android",
         "!apps/bare-example/android/.gradle",
         "!apps/bare-example/android/build",
-        "!apps/bare-example/android/app/build"
+        "!apps/bare-example/android/app/build",
+        "apps/expo-example/package.json",
+        "apps/expo-example/android",
+        "!apps/expo-example/android/.gradle",
+        "!apps/expo-example/android/build",
+        "!apps/expo-example/android/app/build"
       ],
       "outputs": []
     },
@@ -28,7 +33,11 @@
         "apps/bare-example/package.json",
         "apps/bare-example/ios",
         "!apps/bare-example/ios/build",
-        "!apps/bare-example/ios/Pods"
+        "!apps/bare-example/ios/Pods",
+        "apps/expo-example/package.json",
+        "apps/expo-example/ios",
+        "!apps/expo-example/ios/build",
+        "!apps/expo-example/ios/Pods"
       ],
       "outputs": []
     }

@@ -25,7 +25,7 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.HiMovies();
+    const movies = new MOVIES.NetflixMirror();
     const search = await movies.search('squid game season 2');
     console.log('Search Results:', search);
 

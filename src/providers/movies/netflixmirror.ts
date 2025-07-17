@@ -11,8 +11,8 @@ import {
 import { makeGetRequestWithWebView } from '../../NativeConsumet';
 class NetflixMirror extends MovieParser {
   override readonly name = 'NetflixMirror';
-  protected override baseUrl = 'https://netfree2.cc';
-  protected override logo = 'https://netfree2.cc//mobile/img/nf2/icon_x192.png';
+  protected override baseUrl = 'https://a.netfree2.cc';
+  protected override logo = 'https://a.netfree2.cc//mobile/img/nf2/icon_x192.png';
   protected override classPath = 'MOVIES.NetflixMirror';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   private nfCookie: null | string = 'hd=on;';

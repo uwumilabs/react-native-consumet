@@ -41,7 +41,8 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-consumet-bare-example",
+    "bare-example": "yarn workspace react-native-consumet-bare-example",
+    "expo-example": "yarn workspace react-native-consumet-expo-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",

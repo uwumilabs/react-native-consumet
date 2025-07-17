@@ -26,6 +26,7 @@
     "@react-native/metro-config": "0.78.1",
     "@react-native/typescript-config": "0.78.1",
     "@types/react": "^19.0.0",
+    "babel-plugin-react-native-web": "^0.20.0",
     "react-native-builder-bob": "^0.38.3"
   },
   "engines": {

@@ -20,7 +20,7 @@ const { width } = Dimensions.get('window');
 // --- Main App Component ---
 export default function Meta() {
   // State to manage which tab is active
-  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('movies');
+  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('anime');
 
   // --- State for Movies Tab ---
   interface MovieFetchState {
@@ -103,7 +103,7 @@ export default function Meta() {
   const fetchAnimeData = async () => {
     try {
       const anime = new META.Anilist(new ANIME.AnimeOwl());
-      const searchResult = await anime.search('wind breaker season 2');
+      const searchResult = await anime.search('sakamoto days part 2');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {

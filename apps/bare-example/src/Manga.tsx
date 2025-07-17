@@ -1,22 +1,22 @@
-import { ANIME, SubOrSub, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { MANGA, SubOrSub, type IMangaResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
 // ZNsenNosoJNT
 interface FetchState {
-  data: IAnimeResult[];
+  data: IMangaResult[];
   isLoading: boolean;
   error: string | null | Error;
 }
 
-const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
+const fetchData = async (): Promise<ISearch<IMangaResult>> => {
   try {
-    const animekai = new ANIME.AnimeOwl();
+    const animekai = new MANGA.MangaDex();
     const search = await animekai.search('sakamoto days');
     console.log(search);
-    const info = await animekai.fetchAnimeInfo(search.results[0]!.id);
+    const info = await animekai.fetchMangaInfo(search.results[0]!.id);
     console.log(info);
-    const s = info.episodes && (await animekai.fetchEpisodeSources(info.episodes[0]!.id, undefined,SubOrSub.DUB));
+    const s = info.chapters && (await animekai.fetchChapterPages(info.chapters[0]!.id));
     console.log('sources end');
     console.log(s);
     if (!search || !search.results) {
@@ -29,7 +29,7 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   }
 };
 
-export default function Anime() {
+export default function Manga() {
   const [state, setState] = useState<FetchState>({
     data: [],
     isLoading: true,

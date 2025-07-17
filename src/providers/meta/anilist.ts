@@ -40,6 +40,7 @@ import Zoro from '../anime/zoro';
 import AnimeKai from '../anime/animekai';
 import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
+import AnimeOwl from '../anime/animeowl';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 
 class Anilist extends AnimeParser {
@@ -1144,7 +1145,8 @@ class Anilist extends AnimeParser {
       this.provider instanceof Zoro ||
       this.provider instanceof Gogoanime ||
       this.provider instanceof AnimeKai ||
-      this.provider instanceof AnimePahe
+      this.provider instanceof AnimePahe ||
+      this.provider instanceof AnimeOwl
     ) {
       try {
         // console.time('fetchEpisodesListById');
@@ -1169,6 +1171,7 @@ class Anilist extends AnimeParser {
         function mergeEpisodes(normalizedEpisodes: any[], providerEpisodes: IAnimeEpisode[]): IAnimeEpisode[] {
           const numberMap = new Map<number, any>();
           const dateMap = new Map<number, any>();
+          const usedNormalized = new Set<string>();
 
           normalizedEpisodes.forEach((ep) => {
             if (ep.number) numberMap.set(ep.number, ep);
@@ -1181,30 +1184,40 @@ class Anilist extends AnimeParser {
           return providerEpisodes.map((providerEp, index) => {
             let normalizedEp: any = null;
 
+            const matchIfNotUsed = (ep: any) => ep && !usedNormalized.has(ep.uniqueId);
+
+            // Match by release date (within ±1 day)
             if (providerEp.releaseDate) {
               const ts = new Date(providerEp.releaseDate).getTime();
-              // Find dates within 1 day range
               for (let [normTs, normEp] of dateMap) {
-                if (Math.abs(ts - normTs) <= 86400000) {
-                  // 1 day in ms
+                if (Math.abs(ts - normTs) <= 86400000 && matchIfNotUsed(normEp)) {
                   normalizedEp = normEp;
                   break;
                 }
               }
             }
 
+            // Match by episode number
             if (!normalizedEp && providerEp.number != null) {
-              normalizedEp = numberMap.get(providerEp.number);
+              const ep = numberMap.get(providerEp.number);
+              if (matchIfNotUsed(ep)) normalizedEp = ep;
             }
 
+            // Match by title similarity
             if (!normalizedEp && providerEp.title) {
               normalizedEp = normalizedEpisodes.find(
-                (normEp) => normEp.title && providerEp.title && normEp.title.includes(providerEp.title)
+                (normEp) => matchIfNotUsed(normEp) && normEp.title?.includes(providerEp.title)
               );
             }
 
-            if (!normalizedEp && normalizedEpisodes[index]) {
+            // Fallback to same index
+            if (!normalizedEp && matchIfNotUsed(normalizedEpisodes[index])) {
               normalizedEp = normalizedEpisodes[index];
+            }
+
+            // Mark this normalized episode as used
+            if (normalizedEp) {
+              usedNormalized.add(normalizedEp.uniqueId);
             }
 
             if (!normalizedEp) return providerEp;
@@ -1222,11 +1235,11 @@ class Anilist extends AnimeParser {
           });
         }
 
-        // console.log({
-        //   normalizedEpisodes,
-        //   providerEpisodes,
-        //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
-        // });
+        console.log({
+          normalizedEpisodes,
+          providerEpisodes,
+          merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
+        });
         possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
         if (!possibleAnimeEpisodes.length) {
           possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
