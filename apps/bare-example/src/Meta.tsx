@@ -42,11 +42,13 @@ export default function Meta() {
     data: IAnimeEpisode[];
     isLoading: boolean;
     error: string | null | Error;
+    videoSource: string | null;
   }
   const [animeState, setAnimeState] = useState<AnimeFetchState>({
     data: [],
     isLoading: true,
     error: null,
+    videoSource: null,
   });
   const [animeRefreshing, setAnimeRefreshing] = useState(false);
 
@@ -64,6 +66,7 @@ export default function Meta() {
       }
 
       const firstMovie = search.results[0]!;
+      console.log('First Movie:', firstMovie);
       const info = await movies.fetchMediaInfo(firstMovie.id!, firstMovie?.type as string);
       console.log('Movie Info:', info);
 
@@ -102,8 +105,8 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AnimeOwl());
-      const searchResult = await anime.search('sakamoto days part 2');
+      const anime = new META.Anilist(new ANIME.Zoro());
+      const searchResult = await anime.search('sakamoto days');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {
@@ -117,10 +120,25 @@ export default function Meta() {
         throw new Error('No episodes found for the selected anime');
       }
 
+      let videoUrl: string | null = null;
+      if (animeEpisodes && animeEpisodes.length > 0) {
+        const firstEpisodeId = animeEpisodes![0]?.id;
+        const sources = await anime.fetchEpisodeSources(firstEpisodeId!);
+        console.log('Anime Episode Sources:', sources);
+
+        if (sources.sources && sources.sources.length > 0) {
+          const highestQualitySource = sources.sources.reduce((prev, current) =>
+            (prev.quality || 0) > (current.quality || 0) ? prev : current
+          );
+          videoUrl = highestQualitySource.url;
+        }
+      }
+
       setAnimeState({
         data: animeEpisodes || [],
         isLoading: false,
         error: null,
+        videoSource: videoUrl,
       });
     } catch (error: unknown) {
       console.error('Error in fetchAnimeData:', error);
@@ -224,7 +242,7 @@ export default function Meta() {
                     />
                   </View>
                 )}
-                <Text style={styles.listTitle}>Search Results for "flight"</Text>
+                <Text style={styles.listTitle}>Search Results for "squid game"</Text>
                 <FlatList
                   data={movieState.data}
                   renderItem={({ item }) => (
@@ -267,7 +285,21 @@ export default function Meta() {
               </View>
             ) : (
               <View style={styles.contentContainer}>
-                <Text style={styles.listTitle}>Episodes for "The Apothecary Diaries Season 2"</Text>
+                {animeState.videoSource && (
+                  <View style={styles.videoPlayerContainer}>
+                    <Video
+                      source={{ uri: animeState.videoSource }}
+                      style={styles.videoPlayer}
+                      controls={true}
+                      resizeMode="contain"
+                      onLoad={(e) => console.log('Video Loaded (Anime)', e)}
+                      onError={(e) => console.log('Video Error (Anime):', e)}
+                      poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
+                      posterResizeMode="cover"
+                    />
+                  </View>
+                )}
+                <Text style={styles.listTitle}>Episodes for "Sakamoto Days"</Text>
                 <FlatList
                   data={animeState.data}
                   renderItem={({ item }) => (

@@ -29,6 +29,13 @@ class MegaCloud extends VideoExtractor {
           isM3U8: s.type === 'hls',
           type: s.type,
         }));
+      } else {
+        extractedData.sources = [
+          {
+            url: resp.sources,
+            isM3U8: resp.sources.includes('.m3u8'),
+          },
+        ];
       }
 
       extractedData.intro = resp.intro ? resp.intro : extractedData.intro;

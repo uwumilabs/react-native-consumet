@@ -11,7 +11,7 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.AnimeOwl();
+    const animekai = new ANIME.Zoro();
     const search = await animekai.search('sakamoto days');
     console.log(search);
     const info = await animekai.fetchAnimeInfo(search.results[0]!.id);

@@ -58,8 +58,20 @@ class MultiStream extends MovieParser {
       search.totalResults = data.total_results;
       search.totalPages = data.total_pages;
 
-      data.results.forEach((result: any) => {
+      const moviePromises = data.results.map(async (result: any) => {
         const date = new Date(result?.release_date || result?.first_air_date);
+
+        let totalSeasons = undefined;
+        if (result.media_type === 'tv') {
+          try {
+            const { data: tvData } = await this.client.get(
+              `${this.apiUrl}/tv/${result.id}?api_key=${this.apiKey}&language=en-US`
+            );
+            totalSeasons = tvData.number_of_seasons;
+          } catch (err) {
+            // Continue without seasons data if request fails
+          }
+        }
 
         const movie: IMovieResult = {
           id: `${result.id}$${result.media_type}`,
@@ -68,10 +80,13 @@ class MultiStream extends MovieParser {
           type: result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
           rating: result?.vote_average || 0,
           releaseDate: `${date.getFullYear()}` || '0',
+          seasons: totalSeasons,
         };
 
-        return search.results.push(movie);
+        return movie;
       });
+
+      search.results = await Promise.all(moviePromises);
 
       return search;
     } catch (err) {
