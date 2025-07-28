@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0 (2025-07-28)
+
+* fix(ci): fix type definition error in vidcloud.ts that caused ci to fail ([8897ee3](https://github.com/2004durgesh/react-native-consumet/commit/8897ee3))
+* fix(megacloud): improve the scraper and remove log statements ([5c3a58c](https://github.com/2004durgesh/react-native-consumet/commit/5c3a58c))
+* feat(multistream): implement multistream provider ([0a0cd6b](https://github.com/2004durgesh/react-native-consumet/commit/0a0cd6b))
+* fix(anilist | animepahe): fix the normalized episode merging issue ([37a8615](https://github.com/2004durgesh/react-native-consumet/commit/37a8615))
+
 ## 0.8.0 (2025-07-07)
 
 * feat(provider): update anime and movie providers ([7b898ba](https://github.com/2004durgesh/react-native-consumet/commit/7b898ba))
