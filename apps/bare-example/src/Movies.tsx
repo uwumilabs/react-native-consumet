@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, type IMovieResult, type ISearch } from 'react-native-consumet';
+import { MOVIES, StreamingServers, type IMovieResult, type ISearch } from 'react-native-consumet';
 import Video from 'react-native-video';
 
 interface FetchState {
@@ -25,8 +25,8 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.NetflixMirror();
-    const search = await movies.search('squid game season 2');
+    const movies = new MOVIES.MultiStream();
+    const search = await movies.search('jurassic park');
     console.log('Search Results:', search);
 
     if (!search || !search.results || search.results.length === 0) {
@@ -42,7 +42,7 @@ const fetchData = async (): Promise<{
       const firstEpisodeId = info.episodes[0]!.id;
       const servers = await movies.fetchEpisodeServers(firstEpisodeId, info.id);
       console.log('Episode Servers:', servers);
-      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
+      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id,'CloudStream Pro');
       console.log('Episode Sources:', sources);
 
       if (sources.sources && sources.sources.length > 0) {

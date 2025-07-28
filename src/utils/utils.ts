@@ -305,35 +305,71 @@ export function stringSearch(string: string, pattern: string): number {
   return count;
 }
 
-export function parseUrl(url: string): {
-  href: string;
-  origin: string;
-  pathname: string;
-  hostname: string;
-  search: string;
-  hash: string;
-} {
-  // Simple URL parser for React Native
-  try {
-    const match = url.match(/^(https?:\/\/[^\/]+)(\/[^?#]*)?(\?[^#]*)?(#.*)?$/);
-    if (!match) throw new Error(`Invalid URL: ${url}`);
 
-    const origin = match[1] || '';
-    const pathname = match[2] || '/';
-    const search = match[3] || '';
-    const hash = match[4] || '';
-
-    return {
-      href: url,
-      origin,
-      pathname,
-      hostname: origin.replace(/^https?:\/\//, ''),
-      search,
-      hash,
-    };
-  } catch (e) {
-    console.error(`Error parsing URL: ${url}`, e);
-    // Return a minimal object with href to prevent crashes
-    return { href: url, origin: '', pathname: '', hostname: '', search: '', hash: '' };
-  }
+interface FilterOptions {
+  timeout?: number;
+  headers?: Record<string, string>;
+  indicators?: string[];
+  concurrency?: number;
 }
+
+export const filterValidM3U8 = async (m3u8Links: string[], options: FilterOptions = {}): Promise<string[]> => {
+  const {
+    timeout = 10000,
+    headers = {},
+    indicators = ['#EXT', '#EXTINF', '#EXT-X-', '#EXTM3U'],
+    concurrency = 10,
+  } = options;
+
+  const validLinks: string[] = [];
+  let index = 0;
+
+  const next = async (): Promise<void> => {
+    while (index < m3u8Links.length) {
+      const currentIndex = index++;
+      const url = m3u8Links[currentIndex]!;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            ...headers,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          // console.warn(`❌ HTTP error (${response.status}) for ${url}`);
+          continue;
+        }
+
+        // Optional shortcut: skip non-M3U8 content types
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('application/vnd.apple.mpegurl') && !contentType.includes('mpegurl')) {
+          // console.info(`⚠️ Skipping non-M3U8 type: ${url}`);
+          continue;
+        }
+
+        const content = await response.text();
+        if (indicators.some((ind) => content.includes(ind))) {
+          validLinks.push(url);
+        } else {
+          // console.info(`⚠️ No M3U8 indicators found in: ${url}`);
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+        // console.warn(`⚠️ Failed to validate M3U8 (${url}): ${reason}`);
+      }
+    }
+  };
+
+  // Run N concurrent validators
+  await Promise.all(Array.from({ length: concurrency }, () => next()));
+  return validLinks;
+};

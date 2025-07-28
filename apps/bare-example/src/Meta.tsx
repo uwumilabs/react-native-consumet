@@ -20,7 +20,7 @@ const { width } = Dimensions.get('window');
 // --- Main App Component ---
 export default function Meta() {
   // State to manage which tab is active
-  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('anime');
+  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('movies');
 
   // --- State for Movies Tab ---
   interface MovieFetchState {
@@ -55,7 +55,7 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.HiMovies());
+      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiStream());
       const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
 
