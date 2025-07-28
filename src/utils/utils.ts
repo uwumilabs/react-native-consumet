@@ -305,7 +305,6 @@ export function stringSearch(string: string, pattern: string): number {
   return count;
 }
 
-
 interface FilterOptions {
   timeout?: number;
   headers?: Record<string, string>;
