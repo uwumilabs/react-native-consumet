@@ -51,9 +51,10 @@ class HiMovies extends MovieParser {
       searchResult.hasNextPage =
         $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
 
+      const initialResults: IMovieResult[] = [];
       $('.film_list-wrap > div.flw-item').each((i, el) => {
         const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-        searchResult.results.push({
+        initialResults.push({
           id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
           title: $(el).find('div.film-detail > h2 > a').attr('title')!,
           url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
@@ -66,6 +67,23 @@ class HiMovies extends MovieParser {
               : TvType.TVSERIES,
         });
       });
+
+      // Fetch media info for all results in parallel
+      const mediaInfoPromises = initialResults.map(async (result) => {
+        try {
+          const mediaInfo = await this.fetchMediaInfo(result.id);
+          if (mediaInfo.releaseDate) {
+            const year = new Date(mediaInfo.releaseDate).getFullYear();
+            result.releaseDate = year.toString();
+          }
+          return result;
+        } catch (err) {
+          // Return original result if fetchMediaInfo fails
+          return result;
+        }
+      });
+
+      searchResult.results = await Promise.all(mediaInfoPromises);
 
       return searchResult;
     } catch (err) {

@@ -57,7 +57,7 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.MultiStream());
+      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.HiMovies());
       const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
 

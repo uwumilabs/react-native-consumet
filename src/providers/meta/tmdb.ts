@@ -186,7 +186,7 @@ class TMDB extends MovieParser {
         type: type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
         totalSeasons: data?.number_of_seasons,
         totalEpisodes: data?.number_of_episodes,
-        year: new Date(data?.release_year || data?.first_air_date).getFullYear(),
+        year: new Date(data?.release_year || data?.first_air_date || data?.release_date).getFullYear(),
       });
 
       //fetch media info from provider
@@ -419,7 +419,7 @@ class TMDB extends MovieParser {
     });
 
     // if extraData contains a year, filter out the results that don't match the year
-    if (extraData && extraData.year && extraData.type === TvType.MOVIE) {
+    if (extraData && extraData.year) {
       findMedia.results = findMedia.results.filter((result) => {
         return String(result.releaseDate).split('-')[0]?.trim() === String(extraData.year).trim();
       });
