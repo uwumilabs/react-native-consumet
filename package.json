@@ -34,6 +34,7 @@
     "!android/gradlew",
     "!android/gradlew.bat",
     "!android/local.properties",
+    "!dist",
     "!**/__tests__",
     "!**/test",
     "!**/__fixtures__",
@@ -43,11 +44,13 @@
   "scripts": {
     "bare-example": "yarn workspace react-native-consumet-bare-example",
     "expo-example": "yarn workspace react-native-consumet-expo-example",
+    "build": "tsc -p tsconfig.dist.json",
+    "build:clean": "del-cli dist && yarn build",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build lib \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
-    "prepare": "bob build",
+    "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
+    "prepare": "bob build && yarn build",
     "release": "release-it",
     "prettier": "prettier --write \"**/*.{js,ts,tsx,json}\""
   },

@@ -1,0 +1,1 @@
+{"version":3,"file":"mixdrop.d.ts","sourceRoot":"","sources":["../../src/extractors/mixdrop.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,KAAK,MAAM,EAAE,MAAM,WAAW,CAAC;AAExD,cAAM,OAAQ,SAAQ,cAAc;IAClC,UAAmB,UAAU,SAAa;IAC1C,UAAmB,OAAO,EAAE,MAAM,EAAE,CAAM;IAEjC,OAAO,GAAU,UAAU,GAAG,KAAG,OAAO,CAAC,MAAM,EAAE,CAAC,CAqBzD;CACH;AACD,eAAe,OAAO,CAAC"}

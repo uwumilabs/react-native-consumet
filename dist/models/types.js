@@ -1,0 +1,115 @@
+import {} from './base-types';
+export var MediaFormat;
+(function (MediaFormat) {
+    MediaFormat["TV"] = "TV";
+    MediaFormat["TV_SHORT"] = "TV_SHORT";
+    MediaFormat["TV_SPECIAL"] = "TV_SPECIAL";
+    MediaFormat["MOVIE"] = "MOVIE";
+    MediaFormat["SPECIAL"] = "SPECIAL";
+    MediaFormat["OVA"] = "OVA";
+    MediaFormat["ONA"] = "ONA";
+    MediaFormat["MUSIC"] = "MUSIC";
+    MediaFormat["MANGA"] = "MANGA";
+    MediaFormat["NOVEL"] = "NOVEL";
+    MediaFormat["ONE_SHOT"] = "ONE_SHOT";
+    MediaFormat["PV"] = "PV";
+    MediaFormat["COMIC"] = "COMIC";
+})(MediaFormat || (MediaFormat = {}));
+export var StreamingServers;
+(function (StreamingServers) {
+    StreamingServers["AsianLoad"] = "asianload";
+    StreamingServers["GogoCDN"] = "gogocdn";
+    StreamingServers["StreamSB"] = "streamsb";
+    StreamingServers["MixDrop"] = "mixdrop";
+    StreamingServers["Mp4Upload"] = "mp4upload";
+    StreamingServers["UpCloud"] = "upcloud";
+    StreamingServers["VidCloud"] = "vidcloud";
+    StreamingServers["StreamTape"] = "streamtape";
+    StreamingServers["VizCloud"] = "vizcloud";
+    // same as vizcloud
+    StreamingServers["MyCloud"] = "mycloud";
+    StreamingServers["Filemoon"] = "filemoon";
+    StreamingServers["VidStreaming"] = "vidstreaming";
+    StreamingServers["BuiltIn"] = "builtin";
+    StreamingServers["SmashyStream"] = "smashystream";
+    StreamingServers["StreamHub"] = "streamhub";
+    StreamingServers["StreamWish"] = "streamwish";
+    StreamingServers["VidHide"] = "vidhide";
+    StreamingServers["VidMoly"] = "vidmoly";
+    StreamingServers["Voe"] = "voe";
+    StreamingServers["MegaUp"] = "megaup";
+    StreamingServers["MegaCloud"] = "megacloud";
+    StreamingServers["Luffy"] = "luffy";
+    StreamingServers["Multi"] = "multi";
+})(StreamingServers || (StreamingServers = {}));
+export var MediaStatus;
+(function (MediaStatus) {
+    MediaStatus["ONGOING"] = "Ongoing";
+    MediaStatus["COMPLETED"] = "Completed";
+    MediaStatus["HIATUS"] = "Hiatus";
+    MediaStatus["CANCELLED"] = "Cancelled";
+    MediaStatus["NOT_YET_AIRED"] = "Not yet aired";
+    MediaStatus["UNKNOWN"] = "Unknown";
+})(MediaStatus || (MediaStatus = {}));
+export var WatchListType;
+(function (WatchListType) {
+    WatchListType["WATCHING"] = "watching";
+    WatchListType["ONHOLD"] = "on-hold";
+    WatchListType["PLAN_TO_WATCH"] = "plan to watch";
+    WatchListType["DROPPED"] = "dropped";
+    WatchListType["COMPLETED"] = "completed";
+    WatchListType["NONE"] = "none";
+})(WatchListType || (WatchListType = {}));
+export var SubOrSub;
+(function (SubOrSub) {
+    SubOrSub["SUB"] = "sub";
+    SubOrSub["DUB"] = "dub";
+    SubOrSub["BOTH"] = "both";
+})(SubOrSub || (SubOrSub = {}));
+/**
+ * Used **only** for movie/tvshow providers
+ */
+export var TvType;
+(function (TvType) {
+    TvType["TVSERIES"] = "TV Series";
+    TvType["MOVIE"] = "Movie";
+    TvType["ANIME"] = "Anime";
+    TvType["PEOPLE"] = "People";
+})(TvType || (TvType = {}));
+export var Genres;
+(function (Genres) {
+    Genres["ACTION"] = "Action";
+    Genres["ADVENTURE"] = "Adventure";
+    Genres["CARS"] = "Cars";
+    Genres["COMEDY"] = "Comedy";
+    Genres["DRAMA"] = "Drama";
+    Genres["FANTASY"] = "Fantasy";
+    Genres["HORROR"] = "Horror";
+    Genres["MAHOU_SHOUJO"] = "Mahou Shoujo";
+    Genres["MECHA"] = "Mecha";
+    Genres["MUSIC"] = "Music";
+    Genres["MYSTERY"] = "Mystery";
+    Genres["PSYCHOLOGICAL"] = "Psychological";
+    Genres["ROMANCE"] = "Romance";
+    Genres["SCI_FI"] = "Sci-Fi";
+    Genres["SLICE_OF_LIFE"] = "Slice of Life";
+    Genres["SPORTS"] = "Sports";
+    Genres["SUPERNATURAL"] = "Supernatural";
+    Genres["THRILLER"] = "Thriller";
+})(Genres || (Genres = {}));
+export var Topics;
+(function (Topics) {
+    Topics["ANIME"] = "anime";
+    Topics["ANIMATION"] = "animation";
+    Topics["MANGA"] = "manga";
+    Topics["GAMES"] = "games";
+    Topics["NOVELS"] = "novels";
+    Topics["LIVE_ACTION"] = "live-action";
+    Topics["COVID_19"] = "covid-19";
+    Topics["INDUSTRY"] = "industry";
+    Topics["MUSIC"] = "music";
+    Topics["PEOPLE"] = "people";
+    Topics["MERCH"] = "merch";
+    Topics["EVENTS"] = "events";
+})(Topics || (Topics = {}));
+//# sourceMappingURL=types.js.map

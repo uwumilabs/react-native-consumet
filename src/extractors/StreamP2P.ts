@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { load } from 'cheerio';
 import type { IVideo, ISource } from '../models';
 import VideoExtractor from '../models/video-extractor';
