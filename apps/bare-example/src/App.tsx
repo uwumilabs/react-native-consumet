@@ -3,15 +3,17 @@ import Meta from './Meta';
 import Anime from './Anime';
 import Manga from './Manga';
 import Movies from './Movies';
+import Ext from './Ext';
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Anime /> */}
-      <Movies />
+      {/* <Movies /> */}
+      {/* <Ext/> */}
       {/* <Manga/> */}
-      {/* <Meta /> */}
+      <Meta />
     </SafeAreaView>
   );
 }

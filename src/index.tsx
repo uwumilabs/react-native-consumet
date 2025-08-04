@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 
-import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META, NEWS } from './providers';
+import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import {
   AsianLoad,
@@ -68,7 +68,7 @@ import {
   type IMovieSeason,
 } from './models';
 
-export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
+export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META };
 export { PROVIDERS_LIST };
 export {
   Topics,

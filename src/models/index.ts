@@ -1,13 +1,11 @@
 import BaseProvider from './base-provider';
 import BaseParser from './base-parser';
 import AnimeParser from './anime-parser';
-import BookParser from './book-parser';
 import ComicParser from './comic-parser';
 import VideoExtractor from './video-extractor';
 import MangaParser from './manga-parser';
 import LightNovelParser from './lightnovel-parser';
 import MovieParser from './movie-parser';
-import NewsParser from './news-parser';
 import {
   type IProviderStats,
   type ISearch,
@@ -56,7 +54,6 @@ export {
   BaseProvider,
   BaseParser,
   AnimeParser,
-  BookParser,
   VideoExtractor,
   LibgenBookObject,
   StreamingServers,
@@ -64,7 +61,6 @@ export {
   SubOrSub,
   LightNovelParser,
   MangaParser,
-  NewsParser,
   ComicParser,
   GetComicsComicsObject,
   TvType,
