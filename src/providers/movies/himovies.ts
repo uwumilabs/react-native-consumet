@@ -207,21 +207,21 @@ class HiMovies extends MovieParser {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
       switch (server) {
-        case StreamingServers.MegaCloud:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
-          };
+        // case StreamingServers.MegaCloud:
+        //   return {
+        //     headers: { Referer: serverUrl.href },
+        //     ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+        //   };
         case StreamingServers.UpCloud:
           return {
             headers: { Referer: serverUrl.href },
             ...(await new VidCloud(this.proxyConfig, this.adapter).extract(serverUrl, undefined, this.baseUrl)),
           };
         default:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
-          };
+          // return {
+          //   headers: { Referer: serverUrl.href },
+          //   ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+          // };
       }
     }
 

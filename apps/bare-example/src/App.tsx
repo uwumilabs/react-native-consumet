@@ -11,9 +11,9 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Anime /> */}
       {/* <Movies /> */}
-      {/* <Ext/> */}
+      <Ext/>
       {/* <Manga/> */}
-      <Meta />
+      {/* <Meta /> */}
     </SafeAreaView>
   );
 }

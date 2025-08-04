@@ -1,32 +1,18 @@
-import Gogoanime from './gogoanime';
 import AnimePahe from './animepahe';
 import Zoro from './zoro';
-import AnimeFox from './animefox';
 import AnimeDrive from './animedrive';
 import Anify from './anify';
-import Bilibili from './bilibili';
 import Marin from './marin';
-import AnimeSaturn from './animesaturn';
 import AnimeUnity from './animeunity';
-import MonosChinos from './monoschinos';
-import Anix from './anix';
 import AnimeKai from './animekai';
-import AnimeOwl from './animeowl';
 declare const _default: {
-    Gogoanime: typeof Gogoanime;
     AnimePahe: typeof AnimePahe;
     Zoro: typeof Zoro;
-    AnimeFox: typeof AnimeFox;
     AnimeDrive: typeof AnimeDrive;
     Anify: typeof Anify;
-    Bilibili: typeof Bilibili;
     Marin: typeof Marin;
-    AnimeSaturn: typeof AnimeSaturn;
     AnimeUnity: typeof AnimeUnity;
-    MonosChinos: typeof MonosChinos;
-    Anix: typeof Anix;
     AnimeKai: typeof AnimeKai;
-    AnimeOwl: typeof AnimeOwl;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map

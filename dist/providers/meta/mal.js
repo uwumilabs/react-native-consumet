@@ -1,10 +1,8 @@
 import { load } from 'cheerio';
 import { AnimeParser, MediaStatus, SubOrSub, MediaFormat, } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
-import Gogoanime from '../anime/gogoanime';
 import Zoro from '../anime/zoro';
 import Anify from '../anime/anify';
-import Bilibili from '../anime/bilibili';
 import { ANIFY_URL } from '../../utils/utils';
 class Myanimelist extends AnimeParser {
     /**
@@ -92,7 +90,7 @@ class Myanimelist extends AnimeParser {
                 const animeInfo = await this.fetchMalInfoById(animeId);
                 const titleWithLanguages = animeInfo?.title;
                 let fillerEpisodes;
-                if ((this.provider instanceof Zoro || this.provider instanceof Gogoanime) &&
+                if (this.provider instanceof Zoro &&
                     !dub &&
                     (animeInfo.status === MediaStatus.ONGOING ||
                         range({ from: 2000, to: new Date().getFullYear() + 1 }).includes(animeInfo.startDate?.year))) {
@@ -192,56 +190,7 @@ class Myanimelist extends AnimeParser {
             // console.log({ title });
             const slug = title?.replace(/[^0-9a-zA-Z]+/g, ' ');
             let possibleAnime;
-            if (malId && !(this.provider instanceof Bilibili)) {
-                const malAsyncReq = await this.client({
-                    method: 'GET',
-                    url: `${this.malSyncUrl}/mal/anime/${malId}`,
-                    validateStatus: () => true,
-                });
-                if (malAsyncReq.status === 200) {
-                    const sitesT = malAsyncReq.data.Sites;
-                    let sites = Object.values(sitesT).map((v, i) => {
-                        const obj = [...Object.values(Object.values(sitesT)[i])];
-                        const pages = obj.map((v) => ({
-                            page: v.page,
-                            url: v.url,
-                            title: v.title,
-                        }));
-                        return pages;
-                    });
-                    sites = sites.flat();
-                    sites.sort((a, b) => {
-                        const targetTitle = malAsyncReq.data.title.toLowerCase();
-                        const firstRating = calculateStringSimilarity(targetTitle, a.title.toLowerCase());
-                        const secondRating = calculateStringSimilarity(targetTitle, b.title.toLowerCase());
-                        // Sort in descending order
-                        return secondRating - firstRating;
-                    });
-                    const possibleSource = sites.find((s) => {
-                        if (s.page.toLowerCase() === this.provider.name.toLowerCase())
-                            if (this.provider instanceof Gogoanime)
-                                return dub ? s.title.toLowerCase().includes('dub') : !s.title.toLowerCase().includes('dub');
-                            else
-                                return true;
-                        return false;
-                    });
-                    if (possibleSource) {
-                        try {
-                            possibleAnime = await this.provider.fetchAnimeInfo(possibleSource.url.split('/').pop());
-                        }
-                        catch (err) {
-                            console.error(err);
-                            possibleAnime = await this.findAnimeRaw(slug);
-                        }
-                    }
-                    else
-                        possibleAnime = await this.findAnimeRaw(slug);
-                }
-                else
-                    possibleAnime = await this.findAnimeRaw(slug);
-            }
-            else
-                possibleAnime = await this.findAnimeRaw(slug, externalLinks);
+            possibleAnime = await this.findAnimeRaw(slug, externalLinks);
             // To avoid a new request, lets match and see if the anime show found is in sub/dub
             const expectedType = dub ? SubOrSub.DUB : SubOrSub.SUB;
             if (possibleAnime.subOrDub !== SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
@@ -506,7 +455,7 @@ class Myanimelist extends AnimeParser {
             // }
             return animeInfo;
         };
-        this.provider = provider || new Gogoanime();
+        this.provider = provider || new Zoro();
     }
     malStatusToMediaStatus(status) {
         if (status === 'currently airing')

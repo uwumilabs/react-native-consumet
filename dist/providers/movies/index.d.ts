@@ -1,28 +1,10 @@
 import DramaCool from './dramacool';
-import FlixHQ from './flixhq';
-import Fmovies from './fmovies';
-import Goku from './goku';
-import KissAsian from './kissasian';
-import MovieHdWatch from './moviehdwatch';
-import SmashyStream from './smashystream';
-import Turkish from './turkish123';
-import ViewAsian from './viewAsian';
-import SFlix from './sflix';
 import MultiMovies from './multimovies';
 import NetflixMirror from './netflixmirror';
 import HiMovies from './himovies';
 import MultiStream from './multistream';
 declare const _default: {
     DramaCool: typeof DramaCool;
-    FlixHQ: typeof FlixHQ;
-    Fmovies: typeof Fmovies;
-    Goku: typeof Goku;
-    KissAsian: typeof KissAsian;
-    MovieHdWatch: typeof MovieHdWatch;
-    SmashyStream: typeof SmashyStream;
-    ViewAsian: typeof ViewAsian;
-    Turkish: typeof Turkish;
-    SFlix: typeof SFlix;
     MultiMovies: typeof MultiMovies;
     NetflixMirror: typeof NetflixMirror;
     HiMovies: typeof HiMovies;

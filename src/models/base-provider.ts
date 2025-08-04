@@ -1,7 +1,6 @@
 import { type IProviderStats } from '.';
-import Proxy from './proxy';
 
-abstract class BaseProvider extends Proxy {
+abstract class BaseProvider {
   /**
    * Name of the provider
    */

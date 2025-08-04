@@ -1,25 +1,21 @@
 import { VideoExtractor } from '../../models';
 import { getSources } from './megacloud.getsrcs';
-class MegaCloud extends VideoExtractor {
-    constructor() {
-        super(...arguments);
+export class MegaCloud extends VideoExtractor {
+    constructor(ctx) {
+        super();
         this.serverName = 'MegaCloud';
         this.sources = [];
+        this.ctx = ctx;
     }
     async extract(embedIframeURL, referer = 'https://hianime.to') {
+        const { axios, logger } = this.ctx;
+        const extractedData = {
+            subtitles: [],
+            intro: { start: 0, end: 0 },
+            outro: { start: 0, end: 0 },
+            sources: [],
+        };
         try {
-            const extractedData = {
-                subtitles: [],
-                intro: {
-                    start: 0,
-                    end: 0,
-                },
-                outro: {
-                    start: 0,
-                    end: 0,
-                },
-                sources: [],
-            };
             const resp = await getSources(embedIframeURL, referer);
             if (!resp)
                 return extractedData;
@@ -38,23 +34,20 @@ class MegaCloud extends VideoExtractor {
                     },
                 ];
             }
-            extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
-            extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
-            extractedData.subtitles = resp.tracks.map((track) => ({
-                url: track.file,
-                lang: track.label ? track.label : track.kind,
-            }));
-            return {
-                intro: extractedData.intro,
-                outro: extractedData.outro,
-                sources: extractedData.sources,
-                subtitles: extractedData.subtitles,
-            };
+            extractedData.intro = resp.intro ?? extractedData.intro;
+            extractedData.outro = resp.outro ?? extractedData.outro;
+            extractedData.subtitles =
+                resp.tracks?.map((track) => ({
+                    url: track.file,
+                    lang: track.label || track.kind,
+                })) ?? [];
+            logger?.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
+            return extractedData;
         }
         catch (err) {
+            logger?.error('[MegaCloud] Extraction error', err);
             throw err;
         }
     }
 }
-export default MegaCloud;
 //# sourceMappingURL=index.js.map

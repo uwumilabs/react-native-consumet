@@ -2,13 +2,11 @@ var _a;
 import axios, {} from 'axios';
 import { AnimeParser, MediaStatus, Genres, MangaParser, } from '../../models';
 import { anilistSearchQuery, anilistMediaDetailQuery, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistCharacterQuery, anilistStaffInfoQuery, getDays, capitalizeFirstLetter, } from '../../utils';
-import Gogoanime from '../anime/gogoanime';
 import Anify from '../anime/anify';
 import Zoro from '../anime/zoro';
 import AnimeKai from '../anime/animekai';
 import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
-import AnimeOwl from '../anime/animeowl';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 class Anilist extends AnimeParser {
     /**
@@ -466,7 +464,7 @@ class Anilist extends AnimeParser {
                         item.node.coverImage.medium),
                     rating: item.node.meanScore,
                 }));
-                if (this.provider instanceof Zoro || this.provider instanceof Gogoanime) {
+                if (this.provider instanceof Zoro) {
                     try {
                         const anifyInfo = await new Anify(this.proxyConfig, this.adapter, this.provider.name.toLowerCase()).fetchAnimeInfo(id);
                         animeInfo.mappings = anifyInfo.mappings;
@@ -969,11 +967,7 @@ class Anilist extends AnimeParser {
             const { data: { data: { Media }, }, } = await this.client.post(this.anilistGraphqlUrl, options);
             let possibleAnimeEpisodes = [];
             let fillerEpisodes = [];
-            if (this.provider instanceof Zoro ||
-                this.provider instanceof Gogoanime ||
-                this.provider instanceof AnimeKai ||
-                this.provider instanceof AnimePahe ||
-                this.provider instanceof AnimeOwl) {
+            if (this.provider instanceof Zoro || this.provider instanceof AnimeKai || this.provider instanceof AnimePahe) {
                 try {
                     // console.time('fetchEpisodesListById');
                     const [animeMetaData, providerEpisodes] = await Promise.all([

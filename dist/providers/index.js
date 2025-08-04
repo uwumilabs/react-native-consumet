@@ -4,6 +4,5 @@ import LIGHT_NOVELS from './light-novels';
 import COMICS from './comics';
 import MOVIES from './movies';
 import META from './meta';
-import NEWS from './news';
-export { ANIME, MANGA, COMICS, LIGHT_NOVELS, MOVIES, META, NEWS };
+export { ANIME, MANGA, COMICS, LIGHT_NOVELS, MOVIES, META };
 //# sourceMappingURL=index.js.map

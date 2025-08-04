@@ -6,6 +6,8 @@ import VideoExtractor from './video-extractor';
 import MangaParser from './manga-parser';
 import LightNovelParser from './lightnovel-parser';
 import MovieParser from './movie-parser';
+import type { ExtractorContext } from './extractor-context';
+import type { ProviderContext } from './provider-context';
 import {
   type IProviderStats,
   type ISearch,
@@ -103,4 +105,6 @@ export type {
   IStaff,
   AniZipEpisode,
   IMovieSeason,
+  ExtractorContext,
+  ProviderContext,
 };

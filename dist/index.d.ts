@@ -1,9 +1,9 @@
 import 'react-native-url-polyfill/auto';
-import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META, NEWS } from './providers';
+import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import { AsianLoad, BilibiliExtractor, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Upload, RapidCloud, SmashyStream, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidCloud, VidMoly, VizCloud, Mp4Player, MegaCloud, VidHide, Voe, MegaUp, Luffy } from './extractors';
 import { type IProviderStats, type ISearch, type IAnimeEpisode, type IAnimeInfo, type IAnimeResult, type IEpisodeServer, type IVideo, type LibgenBook, StreamingServers, MediaStatus, SubOrSub, type IMangaResult, type IMangaChapter, type IMangaInfo, type ILightNovelResult, type ILightNovelInfo, type ILightNovelChapter, type ILightNovelChapterContent, type GetComicsComics, type ComicRes, type IMangaChapterPage, TvType, type IMovieEpisode, type IMovieInfo, type ISource, type ISubtitle, type IMovieResult, type Intro, Genres, type INewsFeed, Topics, type INewsInfo, type FuzzyDate, type ITitle, MediaFormat, type ProxyConfig, type AniZipEpisode, type IMovieSeason } from './models';
-export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META, NEWS };
+export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META };
 export { PROVIDERS_LIST };
 export { Topics, Genres, SubOrSub, StreamingServers, MediaStatus, TvType, MediaFormat, GogoCDN, StreamSB, VidCloud, MixDrop, Kwik, RapidCloud, StreamTape, StreamLare, StreamHub, SmashyStream, VizCloud, AsianLoad, BilibiliExtractor, Filemoon, Mp4Upload, StreamWish, VidMoly, MegaUp, Mp4Player, MegaCloud, VidHide, Voe, Luffy, };
 export type { IProviderStats, IAnimeEpisode, IAnimeInfo, IAnimeResult, IEpisodeServer, IVideo, LibgenBook, IMangaResult, IMangaChapter, IMangaInfo, ILightNovelResult, ILightNovelInfo, ILightNovelChapter, ILightNovelChapterContent, GetComicsComics, ComicRes, ISearch, IMangaChapterPage, IMovieEpisode, IMovieInfo, ISource, ISubtitle, IMovieResult, Intro, INewsFeed, INewsInfo, FuzzyDate, ITitle, ProxyConfig, AniZipEpisode, IMovieSeason, };
