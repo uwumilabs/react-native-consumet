@@ -10,12 +10,13 @@ import {
   type ISearch,
 } from '../../models';
 import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
+import { USER_AGENT } from '../../utils';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.agency';
+  protected override baseUrl = 'https://multimovies.asia';
   protected override logo =
-    'https://multimovies.agency/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+    'https://multimovies.asia/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
@@ -30,6 +31,8 @@ class MultiMovies extends MovieParser {
       this.baseUrl = this.baseUrl;
     }
   }
+  private proxiedBaseUrl = 'https://m3u8proxy.durgeshdwivedi81.workers.dev/v2?url=' + encodeURIComponent(this.baseUrl);
+  private customProxyUrl = 'https://m3u8proxy.durgeshdwivedi81.workers.dev/v2?url=';
   /**
    *
    * @param query search query string
@@ -44,9 +47,9 @@ class MultiMovies extends MovieParser {
     try {
       let url;
       if (page === 1) {
-        url = `${this.baseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
+        url = `${this.proxiedBaseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
       } else {
-        url = `${this.baseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
+        url = `${this.proxiedBaseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
       }
       const { data } = await this.client.get(url);
       const $ = load(data);
@@ -99,11 +102,23 @@ class MultiMovies extends MovieParser {
    * @param mediaId media link or id
    */
   override fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
-    if (!mediaId.startsWith(this.baseUrl)) {
-      mediaId = `${this.baseUrl}/${mediaId}`;
+    if (!mediaId.startsWith(this.proxiedBaseUrl)) {
+      mediaId = `${this.proxiedBaseUrl}/${mediaId}`;
     }
+
+    // Extract the clean media ID from the proxied URL
+    let cleanId = mediaId;
+    if (mediaId.includes('?url=')) {
+      // If it's a proxied URL, extract the original URL and then get the path
+      const originalUrl = decodeURIComponent(mediaId.split('?url=')[1]!);
+      cleanId = originalUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
+    } else {
+      // If it's not proxied, clean it normally
+      cleanId = mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
+    }
+
     const movieInfo: IMovieInfo = {
-      id: mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '')!,
+      id: cleanId,
       title: '',
       url: mediaId,
     };
@@ -259,14 +274,14 @@ class MultiMovies extends MovieParser {
       }
 
       const serverUrl: URL = new URL(servers[i]!.url);
-      let fileId = '';
+      let extractedFileId = '';
 
       if (!episodeId.startsWith('http')) {
         const { fileId: id } = await this.getServer(`${this.baseUrl}/${episodeId}`);
-        fileId = id ?? '';
+        extractedFileId = id ?? '';
       }
-      // fileId to be used for download link
-      return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, fileId);
+      // extractedFileId to be used for download link
+      return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, extractedFileId);
     } catch (err) {
       console.log(err);
       throw new Error((err as Error).message);
@@ -298,7 +313,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/trending/page/${page}/`);
+      const { data } = await this.client.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
       const $ = load(data);
       const navSelector = 'div.pagination';
 
@@ -331,7 +346,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}/page/${page}`);
+      const { data } = await this.client.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
 
       const $ = load(data);
       const navSelector = 'div.pagination';
@@ -359,10 +374,12 @@ class MultiMovies extends MovieParser {
   };
 
   private async getServer(url: string): Promise<{ servers: IEpisodeServer[]; fileId: string }> {
+    console.log(`Fetching server for URL: ${url}`);
     try {
-      const { data } = await this.client.get(url);
+      console.log('step1');
+      const { data } = await this.client.get(this.customProxyUrl + url);
       const $ = load(data);
-
+      console.log('step2');
       // Extract player config
       const playerConfig = {
         postId: $('#player-option-1').attr('data-post'),
@@ -381,10 +398,10 @@ class MultiMovies extends MovieParser {
       formData.append('type', playerConfig.type);
 
       const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': USER_AGENT,
       };
-      // console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
-      const response = await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+      console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
+      const response = await fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
         method: 'POST',
         headers: headers,
         body: formData,
@@ -443,7 +460,9 @@ class MultiMovies extends MovieParser {
             name:
               streamDetails.siteFriendlyNames[site] === 'StreamHG'
                 ? 'StreamWish'
-                : streamDetails.siteFriendlyNames[site],
+                : streamDetails.siteFriendlyNames[site] === 'EarnVids'
+                  ? 'VidHide'
+                  : streamDetails.siteFriendlyNames[site],
             url: streamDetails.siteUrls[site] + JSON.parse(atob(streamDetails.mresult))[site],
           };
         });
