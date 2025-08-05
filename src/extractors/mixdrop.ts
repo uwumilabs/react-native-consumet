@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import { VideoExtractor, type IVideo } from '../models';
 
 class MixDrop extends VideoExtractor {

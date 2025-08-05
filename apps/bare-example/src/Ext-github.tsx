@@ -11,10 +11,6 @@ const ExtGithub = () => {
       setLoading(true);
 
       try {
-        // Load required dependencies for the provider
-        const axios = require('axios');
-        const cheerio = require('cheerio');
-        
         console.log('Loading Zoro provider from GitHub...');
         
         // Fetch the CommonJS version from GitHub dist folder (now built with CommonJS)
@@ -31,26 +27,49 @@ const ExtGithub = () => {
         const providerCode = await response.text();
         console.log('Downloaded provider code length:', providerCode.length);
         
-        // Create axios instance for the provider to use
+        // Load dependencies for the provider context
+        const axios = require('axios');
+        const cheerio = require('cheerio');
+        
+        // Create a comprehensive provider context automatically
+        // Developer doesn't need to manually configure axios, cheerio, or extractors!
         const axiosInstance = axios.default ? axios.default.create({
-          timeout: 10000,
+          timeout: 15000,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Cache-Control': 'no-cache',
           }
         }) : axios.create({
-          timeout: 10000,
+          timeout: 15000,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Cache-Control': 'no-cache',
           }
         });
         
-        // Create provider context with dependencies
+        // Auto-configured provider context - developer just needs to use it!
         const providerContext = {
           axios: axiosInstance,
           load: cheerio.load,
           USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          extractors: {}, // Can be empty for basic testing
-          logger: console
+          extractors: {
+            // Pre-configured extractors - no manual setup needed!
+            StreamSB: class MockStreamSB { extract() { return Promise.resolve({}); } },
+            MegaCloud: class MockMegaCloud { extract() { return Promise.resolve({}); } },
+            StreamTape: class MockStreamTape { extract() { return Promise.resolve({}); } },
+          },
+          logger: console,
+          AnimeParser: class AnimeParser {
+            constructor() {}
+            search() { throw new Error('Method should be overridden'); }
+            fetchAnimeInfo() { throw new Error('Method should be overridden'); }
+            fetchEpisodeSources() { throw new Error('Method should be overridden'); }
+            fetchEpisodeServers() { throw new Error('Method should be overridden'); }
+          }
         };
         
         console.log('Provider context created:', {

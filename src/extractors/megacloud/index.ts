@@ -1,4 +1,3 @@
-import axios from "axios";
 import { VideoExtractor, type ExtractorContext, type IVideo, type ISource } from '../../models';
 import { getSources } from './megacloud.getsrcs';
 

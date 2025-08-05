@@ -1,4 +1,3 @@
-import axios from "axios";
 import ReadLightNovels from './readlightnovels';
 import NovelUpdates from './novelupdates';
 

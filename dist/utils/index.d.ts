@@ -4,4 +4,6 @@ import { anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, anilistT
 import { parsePostInfo } from './getComics';
 import getKKey from '../extractors/kisskh/kkey';
 export { USER_AGENT, GogoCDN, StreamSB, StreamHub, splitAuthor, floorID, formatTitle, parsePostInfo, genElement, capitalizeFirstLetter, VidCloud, MixDrop, Kwik, anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, range, RapidCloud, MegaCloud, StreamTape, VizCloud, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistStaffInfoQuery, Filemoon, anilistCharacterQuery, getDays, days, isJson, convertDuration, AsianLoad, substringAfter, substringBefore, calculateStringSimilarity, VidMoly, getKKey, MegaUp, };
+export { createProviderContext, createProviderContextWithAxios, createReactNativeProviderContext, } from './create-provider-context';
+export { evaluateProviderCode, loadProviderFromURL, createProviderFromURL, loadMultipleProviders, validateProviderModule, clearExtensionCache, getCachedExtensions, testProviderURL, type ProviderModule, type ExtensionConfig, } from './extension-utils';
 //# sourceMappingURL=index.d.ts.map

@@ -38,7 +38,7 @@ class MultiStream extends models_1.MovieParser {
                 search.totalPages = data.total_pages;
                 const moviePromises = data.results.map(async (result) => {
                     const date = new Date(result?.release_date || result?.first_air_date);
-                    let totalSeasons = undefined;
+                    let totalSeasons;
                     if (result.media_type === 'tv') {
                         try {
                             const { data: tvData } = await axios_1.default.get(`${this.apiUrl}/tv/${result.id}?api_key=${this.apiKey}&language=en-US`);

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 import { USER_AGENT } from '../utils';
 

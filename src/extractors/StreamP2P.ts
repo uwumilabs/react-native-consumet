@@ -1,6 +1,5 @@
 // @ts-nocheck
-import axios from "axios";
-import { load } from 'cheerio';
+import axios from 'axios';
 import type { IVideo, ISource } from '../models';
 import VideoExtractor from '../models/video-extractor';
 import { USER_AGENT } from '../utils';

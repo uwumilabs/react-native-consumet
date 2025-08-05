@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import type { IEpisodeServer, ISource, ISubtitle, IVideo } from '../../../models';
 import { USER_AGENT } from '../../../utils';
 import { filterValidM3U8 } from '../../../utils/utils';

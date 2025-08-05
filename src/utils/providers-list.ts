@@ -1,4 +1,3 @@
-import axios from "axios";
 import { ANIME, MANGA, COMICS, LIGHT_NOVELS, MOVIES, META } from '../providers';
 
 /**

@@ -1,5 +1,4 @@
-import axios from "axios";
-import { load } from 'cheerio';
+import axios from 'axios';
 
 import {
   MovieParser,
@@ -11,7 +10,6 @@ import {
   type IMovieResult,
   type ISearch,
 } from '../../../models';
-import { MegaCloud, MixDrop, VidCloud } from '../../../extractors';
 import { getMultiServers, getMultiSources } from './utils';
 
 class MultiStream extends MovieParser {
@@ -62,7 +60,7 @@ class MultiStream extends MovieParser {
       const moviePromises = data.results.map(async (result: any) => {
         const date = new Date(result?.release_date || result?.first_air_date);
 
-        let totalSeasons = undefined;
+        let totalSeasons;
         if (result.media_type === 'tv') {
           try {
             const { data: tvData } = await axios.get(

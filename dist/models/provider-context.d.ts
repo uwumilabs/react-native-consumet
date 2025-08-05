@@ -25,7 +25,8 @@ export interface ProviderContext {
     axios: AxiosInstance;
     load: (html: string) => CheerioAPI;
     USER_AGENT: string;
-    AnimeParser: typeof AnimeParser | typeof MovieParser;
+    AnimeParser: typeof AnimeParser;
+    MovieParser: typeof MovieParser;
     extractors: ExtractorRegistry;
     logger?: {
         log: (...args: any[]) => void;

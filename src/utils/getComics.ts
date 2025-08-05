@@ -1,4 +1,3 @@
-import axios from "axios";
 export const parsePostInfo = (post: string) => {
   let year = '';
   let size = '';

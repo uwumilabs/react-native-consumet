@@ -1,5 +1,4 @@
 // @ts-nocheck
-import axios from "axios";
 import staticData from './staticdata';
 
 function stringToWordArray(input: string) {

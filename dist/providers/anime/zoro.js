@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Zoro = void 0;
 exports.createZoro = createZoro;
 const models_1 = require("../../models");
-// import { StreamSB, MegaCloud, StreamTape } from '../../utils';
+const create_provider_context_1 = require("../../utils/create-provider-context");
 function createZoro(ctx) {
-    const { load, extractors, axios } = ctx;
+    const { load, extractors, axios, AnimeParser } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
-    class ZoroImpl extends models_1.AnimeParser {
+    class ZoroImpl extends AnimeParser {
         constructor(customBaseURL) {
             super();
             this.name = 'Zoro';
@@ -833,18 +833,8 @@ function createZoro(ctx) {
 class Zoro extends models_1.AnimeParser {
     constructor(customBaseURL) {
         super();
-        // Create default context for backward compatibility
-        const defaultContext = {
-            axios: require('axios'),
-            load: require('cheerio').load,
-            USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            AnimeParser: require('../../models').AnimeParser,
-            extractors: {
-                StreamSB: require('../../extractors').StreamSB,
-                MegaCloud: require('../../extractors').MegaCloud,
-                StreamTape: require('../../extractors').StreamTape,
-            },
-        };
+        // Use the context factory to create a complete context with all defaults
+        const defaultContext = (0, create_provider_context_1.createProviderContext)();
         this.instance = createZoro(defaultContext);
         if (customBaseURL) {
             this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { VideoExtractor, type IVideo } from '../models';
 
 class Kwik extends VideoExtractor {

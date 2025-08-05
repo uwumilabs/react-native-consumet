@@ -1,4 +1,3 @@
-import axios from "axios";
 import MangaDex from './mangadex';
 import ComicK from './comick';
 import MangaHere from './mangahere';

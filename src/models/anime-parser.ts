@@ -1,4 +1,3 @@
-import axios from "axios";
 import { BaseParser, type IAnimeInfo, type ISource, type IEpisodeServer } from '.';
 
 abstract class AnimeParser extends BaseParser {

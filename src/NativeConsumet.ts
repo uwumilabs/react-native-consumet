@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 

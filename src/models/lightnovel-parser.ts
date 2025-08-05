@@ -1,4 +1,3 @@
-import axios from "axios";
 import { BaseParser } from '.';
 
 abstract class LightNovelParser extends BaseParser {

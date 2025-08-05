@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   GogoCDN,
   StreamSB,
@@ -90,3 +89,24 @@ export {
   getKKey,
   MegaUp,
 };
+
+// Export provider context utilities
+export {
+  createProviderContext,
+  createProviderContextWithAxios,
+  createReactNativeProviderContext,
+} from './create-provider-context';
+
+// Export extension utilities
+export {
+  evaluateProviderCode,
+  loadProviderFromURL,
+  createProviderFromURL,
+  loadMultipleProviders,
+  validateProviderModule,
+  clearExtensionCache,
+  getCachedExtensions,
+  testProviderURL,
+  type ProviderModule,
+  type ExtensionConfig,
+} from './extension-utils';

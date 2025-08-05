@@ -1,4 +1,3 @@
-import axios from "axios";
 import AsianLoad from './asianload';
 import Filemoon from './filemoon';
 import GogoCDN from './gogocdn';

@@ -1,4 +1,3 @@
-import axios from "axios";
 import ANIME from './anime';
 import MANGA from './manga';
 import LIGHT_NOVELS from './light-novels';

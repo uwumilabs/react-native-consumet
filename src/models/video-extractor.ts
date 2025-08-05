@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { IVideo, ISource } from '.';
 
 abstract class VideoExtractor {

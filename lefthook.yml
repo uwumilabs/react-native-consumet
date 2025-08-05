@@ -6,7 +6,7 @@ pre-commit:
       glob: '*.{js,ts,jsx,tsx,json,md,html,css}'
       run: |
         echo "Running ESLint..."
-        npx eslint --fix {staged_files} && yarn lint
+        npx eslint --fix . {staged_files} && yarn lint --fix .
         echo "ESLint completed ✅"
     format:
       glob: '*.{js,ts,jsx,tsx,json}'

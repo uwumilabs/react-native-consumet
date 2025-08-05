@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import { load } from 'cheerio';
 
 import { AsianLoad, MixDrop, StreamSB, StreamTape, StreamWish, VidHide } from '../../extractors';

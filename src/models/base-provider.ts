@@ -1,4 +1,3 @@
-import axios from "axios";
 import { type IProviderStats } from '.';
 
 abstract class BaseProvider {

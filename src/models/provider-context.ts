@@ -1,5 +1,4 @@
-import axios from "axios";
-import type { AxiosInstance, AxiosStatic } from 'axios';
+import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
@@ -34,7 +33,8 @@ export interface ProviderContext {
   axios: AxiosInstance;
   load: (html: string) => CheerioAPI;
   USER_AGENT: string;
-  AnimeParser: typeof AnimeParser | typeof MovieParser;
+  AnimeParser: typeof AnimeParser;
+  MovieParser: typeof MovieParser;
   extractors: ExtractorRegistry;
   logger?: {
     log: (...args: any[]) => void;

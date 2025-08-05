@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import { encode } from 'ascii-url-encoder';
 import { AxiosError, type AxiosResponse } from 'axios';
 

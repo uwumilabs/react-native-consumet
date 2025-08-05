@@ -1,4 +1,3 @@
-import axios from "axios";
 import { type Book, type Hashes } from './base-types';
 
 export interface IProviderStats {

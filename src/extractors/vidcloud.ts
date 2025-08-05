@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 // @ts-nocheck
 import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';

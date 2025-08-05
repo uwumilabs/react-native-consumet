@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -11,7 +11,7 @@ import {
   type IMovieResult,
   type ISearch,
 } from '../../models';
-import { MegaCloud, VidCloud } from '../../extractors';
+import { VidCloud } from '../../extractors';
 
 class HiMovies extends MovieParser {
   override readonly name = 'HiMovies';

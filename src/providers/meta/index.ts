@@ -1,4 +1,3 @@
-import axios from "axios";
 import Anilist from './anilist';
 import Myanimelist from './mal';
 import TMDB from './tmdb';

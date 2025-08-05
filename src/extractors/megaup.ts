@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 //extractor for https://animekai.to
 
 // Keys required for the decryption to work are loaded dynamically from
@@ -13,8 +13,7 @@ export class MegaUp extends VideoExtractor {
   private megaKeys: string[] = [];
   private kaiKeysReady: Promise<void>;
 
-  constructor(
-  ) {
+  constructor() {
     super();
     this.kaiKeysReady = this.loadKAIKEYS();
   }
