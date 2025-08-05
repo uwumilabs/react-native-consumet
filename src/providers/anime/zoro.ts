@@ -17,7 +17,7 @@ import {
 import { createProviderContext } from '../../utils/create-provider-context';
 
 export function createZoro(ctx: ProviderContext): AnimeParser {
-  const { load, extractors, axios, AnimeParser } = ctx;
+  const { load, extractors } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
 
   class ZoroImpl extends AnimeParser {
@@ -307,7 +307,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
     async fetchGenres(): Promise<string[]> {
       try {
         const res: string[] = [];
-        const { data } = await axios.get(`${this.baseUrl}/home`);
+        const response = await fetch(`${this.baseUrl}/home`);
+        const data = await response.text();
         const $ = load(data);
 
         const sideBar = $('#main-sidebar');
@@ -344,9 +345,9 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         const res: ISearch<IAnimeResult> = {
           results: [],
         };
-        const {
-          data: { html },
-        } = await axios.get(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
+        const response = await fetch(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
+        const responseData = await response.json();
+        const { html } = responseData;
         const $ = load(html);
 
         $('li').each((i, ele) => {
@@ -375,7 +376,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
     async fetchSpotlight(): Promise<ISearch<IAnimeResult>> {
       try {
         const res: ISearch<IAnimeResult> = { results: [] };
-        const { data } = await axios.get(`${this.baseUrl}/home`);
+        const response = await fetch(`${this.baseUrl}/home`);
+        const data = await response.text();
         const $ = load(data);
 
         $('#slider div.swiper-wrapper div.swiper-slide').each((i, el) => {
@@ -414,8 +416,9 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
     async fetchSearchSuggestions(query: string): Promise<ISearch<IAnimeResult>> {
       try {
         const encodedQuery = encodeURIComponent(query);
-        const { data } = await axios.get(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
-        const $ = load(data.html);
+        const response = await fetch(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
+        const responseData = await response.json();
+        const $ = load(responseData.html);
         const res: ISearch<IAnimeResult> = {
           results: [],
         };
@@ -461,11 +464,12 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           throw new Error('Invalid session ID');
         }
         const res: IAnimeEpisode[] = [];
-        const { data } = await axios.get(`${this.baseUrl}/user/continue-watching`, {
+        const response = await fetch(`${this.baseUrl}/user/continue-watching`, {
           headers: {
             Cookie: `connect.sid=${connectSid}`,
           },
         });
+        const data = await response.text();
         const $ = load(data);
         $('.flw-item').each((i, ele) => {
           const card = $(ele);
@@ -538,7 +542,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         title: '',
       };
       try {
-        const { data } = await axios.get(`${this.baseUrl}/watch/${id}`);
+        const response = await fetch(`${this.baseUrl}/watch/${id}`);
+        const data = await response.text();
         const $ = load(data);
 
         const { mal_id, anilist_id } = JSON.parse($('#syncData').text());
@@ -585,8 +590,9 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         }
 
         // ZORO - PAGE INFO
-        const zInfo = await axios.get(info.url);
-        const $$$ = load(zInfo.data);
+        const zInfoResponse = await fetch(info.url!);
+        const zInfoData = await zInfoResponse.text();
+        const $$$ = load(zInfoData);
 
         info.genres = [];
         $$$('.item.item-list')
@@ -625,13 +631,14 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
             .trim();
         }
 
-        const episodesAjax = await axios.get(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
+        const episodesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Referer': `${this.baseUrl}/watch/${id}`,
           },
         });
-        const $$ = load(episodesAjax.data.html);
+        const episodesData = await episodesResponse.json();
+        const $$ = load(episodesData.html);
 
         // Pre-calculate values used for all episodes
         const episodeElements = $$('div.detail-infor-content > div > a');
@@ -682,7 +689,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
             return {
               headers: { Referer: serverUrl.href },
               ...(await new MegaCloud({
-                axios: ctx.axios as any,
+                axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,
                 logger: ctx.logger,
@@ -696,7 +703,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
                 'User-Agent': ctx.USER_AGENT!,
               },
               sources: await new StreamSB({
-                axios: ctx.axios as any,
+                axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,
                 logger: ctx.logger,
@@ -709,7 +716,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
             return {
               headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT! },
               sources: await new StreamTape({
-                axios: ctx.axios as any,
+                axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,
                 logger: ctx.logger,
@@ -720,7 +727,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
             return {
               headers: { Referer: serverUrl.href },
               ...(await new MegaCloud({
-                axios: ctx.axios as any,
+                axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,
                 logger: ctx.logger,
@@ -739,9 +746,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
       episodeId = `${this.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
 
       try {
-        const { data } = await ctx.axios.get(
-          `${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`
-        );
+        const response = await fetch(`${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
+        const data = await response.json();
 
         const $ = load(data.html);
 
@@ -781,9 +787,9 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           throw new Error("Couldn't find server. Try another server");
         }
 
-        const {
-          data: { link },
-        } = await ctx.axios.get(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
+        const sourcesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
+        const sourcesData = await sourcesResponse.json();
+        const { link } = sourcesData;
 
         return await this.fetchEpisodeSources(link, server, SubOrSub.SUB);
       } catch (err) {
@@ -793,11 +799,12 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
 
     public verifyLoginState = async (connectSid: string): Promise<boolean> => {
       try {
-        const { data } = await ctx.axios.get(`${this.baseUrl}/ajax/login-state`, {
+        const response = await fetch(`${this.baseUrl}/ajax/login-state`, {
           headers: {
             Cookie: `connect.sid=${connectSid}`,
           },
         });
+        const data = await response.json();
         return data.is_login;
       } catch (err) {
         return false;
@@ -830,7 +837,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           totalPages: 0,
           results: [],
         };
-        const { data } = await ctx.axios.get(url, headers);
+        const response = await fetch(url, headers);
+        const data = await response.text();
         const $ = load(data);
 
         const pagination = $('ul.pagination');

@@ -42,7 +42,7 @@ const ExtGithub = () => {
                 url: "https://github.com/uwumilabs"
               },
               category: "anime",
-              main: "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js",
+              main: "https://github.com/uwumilabs/react-native-consumet/blob/native-executor/dist/providers/anime/zoro.js",
               factories: ["createZoro"],
               minConsumetVersion: "0.9.0",
               tags: ["anime", "streaming", "subbed", "dubbed", "popular"],
