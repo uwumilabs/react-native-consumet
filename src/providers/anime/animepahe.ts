@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -55,7 +56,7 @@ class AnimePahe extends AnimeParser {
       if (!this.ddgCookie) {
         await this.initDdgCookie();
       }
-      const { data } = await this.client.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+      const { data } = await axios.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
         headers: this.Headers(false),
       });
 
@@ -152,7 +153,7 @@ class AnimePahe extends AnimeParser {
       if (episodePage < 0) {
         const {
           data: { last_page, data },
-        } = await this.client.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
+        } = await axios.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
           headers: this.Headers(id),
         });
 
@@ -198,7 +199,7 @@ class AnimePahe extends AnimeParser {
       if (!this.ddgCookie) {
         await this.initDdgCookie();
       }
-      const { data } = await this.client.get(`${this.baseUrl}/play/${episodeId}`, {
+      const { data } = await axios.get(`${this.baseUrl}/play/${episodeId}`, {
         headers: this.Headers(episodeId.split('/')[0]!),
       });
 
@@ -225,7 +226,7 @@ class AnimePahe extends AnimeParser {
       };
 
       for (const link of links) {
-        const res = await new Kwik(this.proxyConfig).extract(new URL(link.url));
+        const res = await new Kwik().extract(new URL(link.url));
         res[0]!.quality = link.quality;
         res[0]!.isDub = link.audio === 'eng';
 
@@ -254,7 +255,7 @@ class AnimePahe extends AnimeParser {
   };
 
   private fetchEpisodes = async (session: string, page: number): Promise<IAnimeEpisode[]> => {
-    const res = await this.client.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
+    const res = await axios.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
       headers: this.Headers(session),
     });
     const epData = res.data.data;

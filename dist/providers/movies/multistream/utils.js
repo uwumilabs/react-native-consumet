@@ -1,8 +1,17 @@
-import axios from 'axios';
-import { USER_AGENT } from '../../../utils';
-import { filterValidM3U8 } from '../../../utils/utils';
-import { load } from 'cheerio';
-export async function getRiveSourcesAndServers(id) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRiveSourcesAndServers = getRiveSourcesAndServers;
+exports.getVidsrcSourcesAndServers = getVidsrcSourcesAndServers;
+exports.getMultiServers = getMultiServers;
+exports.getMultiSources = getMultiSources;
+const axios_1 = __importDefault(require("axios"));
+const utils_1 = require("../../../utils");
+const utils_2 = require("../../../utils/utils");
+const cheerio_1 = require("cheerio");
+async function getRiveSourcesAndServers(id) {
     const parts = id.split('$');
     const [tmdbId, type, episode, season] = parts;
     const secret = generateSecretKey(Number(tmdbId));
@@ -46,11 +55,11 @@ export async function getRiveSourcesAndServers(id) {
     await Promise.all(riveServers.map(async (server) => {
         // console.log('Rive: ' + url + server);
         try {
-            const res = await axios.get(url + server, {
+            const res = await axios_1.default.get(url + server, {
                 timeout: 4000,
                 headers: {
                     'Referer': baseUrl,
-                    'User-Agent': USER_AGENT,
+                    'User-Agent': utils_1.USER_AGENT,
                 },
             });
             if (res.data?.data?.captions) {
@@ -79,7 +88,7 @@ export async function getRiveSourcesAndServers(id) {
             return null;
         }
     }));
-    const validUrls = await filterValidM3U8(sources.map((s) => s.url));
+    const validUrls = await (0, utils_2.filterValidM3U8)(sources.map((s) => s.url));
     return {
         sources: sources.filter((source) => validUrls.includes(source.url)),
         subtitles: subtitles.filter((sub) => sub.url && sub.lang),
@@ -256,7 +265,7 @@ function generateSecretKey(id) {
         console.error('Error fetching data:', e);
     }
 }
-export async function getVidsrcSourcesAndServers(id) {
+async function getVidsrcSourcesAndServers(id) {
     const parts = id.split('$');
     const [tmdbId, type, episode, season] = parts;
     const baseURL = 'https://vidsrc.xyz/embed/';
@@ -271,7 +280,7 @@ export async function getVidsrcSourcesAndServers(id) {
         : `${baseURL}movie?tmdb=${tmdbId}`;
     try {
         // Step 1: Fetch embed iframe
-        const { data: html1 } = await axios.get(url, { headers });
+        const { data: html1 } = await axios_1.default.get(url, { headers });
         const match1 = html1.match(/src="(.*?)"/)?.[1];
         if (!match1)
             throw new Error('No source iframe found');
@@ -282,7 +291,7 @@ export async function getVidsrcSourcesAndServers(id) {
             : match1.startsWith('/embed')
                 ? baseURL.split('/embed')[0] + match1
                 : 'https:' + match1;
-        const $ = load(html1);
+        const $ = (0, cheerio_1.load)(html1);
         $('.serversList .server').each((i, el) => {
             const name = $(el).text().trim();
             const hash = $(el).attr('data-hash');
@@ -292,7 +301,7 @@ export async function getVidsrcSourcesAndServers(id) {
         await Promise.all(allUrlRCP.map(async ({ name, url: rcpUrl }) => {
             try {
                 // console.log(`Fetching RCP for ${name} from ${rcpUrl}`);
-                const { data: html2 } = await axios.get(rcpUrl, {
+                const { data: html2 } = await axios_1.default.get(rcpUrl, {
                     headers: { ...headers, Referer: url },
                 });
                 // console.log(`Found RCP for ${name}: ${html2}`);
@@ -302,7 +311,7 @@ export async function getVidsrcSourcesAndServers(id) {
                 const urlPRORCP = rcpUrl.split('rcp')[0] + match2;
                 // Step 3: Fetch M3U8 file URL
                 // console.log(`Fetching M3U8 for ${name} from ${urlPRORCP}`);
-                const { data: html3 } = await axios.get(urlPRORCP, {
+                const { data: html3 } = await axios_1.default.get(urlPRORCP, {
                     headers: { ...headers, Referer: rcpUrl },
                 });
                 const match3 = html3.match(/file:\s*['"]([^'"]+\.m3u8)['"]/)?.[1];
@@ -335,7 +344,7 @@ export async function getVidsrcSourcesAndServers(id) {
         throw new Error(`Failed to fetch Vidsrc stream: ${error.message}`);
     }
 }
-export async function getMultiServers(id) {
+async function getMultiServers(id) {
     try {
         const servers = [];
         const [{ servers: riveServers }, { servers: vidsrcServers }] = await Promise.all([
@@ -349,7 +358,7 @@ export async function getMultiServers(id) {
         throw new Error(`Failed to fetch Multistream servers: ${error.message}`);
     }
 }
-export async function getMultiSources(id, server) {
+async function getMultiSources(id, server) {
     try {
         const [{ servers: _, ...riveSources }, { servers: __, ...vidsrcSources }] = await Promise.all([
             getRiveSourcesAndServers(id),

@@ -66,7 +66,7 @@ class Anilist extends AnimeParser {
     adapter?: AxiosAdapter,
     customBaseURL?: string
   ) {
-    super(proxyConfig, adapter);
+    super();
     this.provider = provider || new Zoro(customBaseURL);
   }
 
@@ -85,7 +85,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+      let { data, status } = await axios.post(this.anilistGraphqlUrl, options, {
         validateStatus: () => true,
       });
 
@@ -229,7 +229,7 @@ class Anilist extends AnimeParser {
     }
 
     try {
-      let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+      let { data, status } = await axios.post(this.anilistGraphqlUrl, options, {
         validateStatus: () => true,
       });
 
@@ -342,7 +342,7 @@ class Anilist extends AnimeParser {
 
     let fillerEpisodes: { 'number': string; 'filler-bool': boolean }[];
     try {
-      let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+      let { data, status } = await axios.post(this.anilistGraphqlUrl, options, {
         validateStatus: () => true,
       });
 
@@ -561,7 +561,7 @@ class Anilist extends AnimeParser {
         try {
           const anifyInfo = await new Anify(
             this.proxyConfig,
-            this.adapter,
+            undefined,
             this.provider.name.toLowerCase() as 'gogoanime' | 'zoro' | 'animepahe' | '9anime'
           ).fetchAnimeInfo(id);
           animeInfo.mappings = anifyInfo.mappings;
@@ -629,7 +629,7 @@ class Anilist extends AnimeParser {
         });
 
       if (fetchFiller) {
-        const { data: fillerData } = await this.client.get(
+        const { data: fillerData } = await axios.get(
           `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeInfo.malId}.json`,
           { validateStatus: () => true }
         );
@@ -704,7 +704,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+      const { data } = await axios.post(this.anilistGraphqlUrl, options);
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -775,7 +775,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+      const { data } = await axios.post(this.anilistGraphqlUrl, options);
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -866,7 +866,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+      const { data } = await axios.post(this.anilistGraphqlUrl, options);
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -933,7 +933,7 @@ class Anilist extends AnimeParser {
       query: anilistGenresQuery(genres, page, perPage),
     };
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+      const { data } = await axios.post(this.anilistGraphqlUrl, options);
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -1031,14 +1031,14 @@ class Anilist extends AnimeParser {
     try {
       // const {
       //   data: { data },
-      // } = await this.client.post(this.anilistGraphqlUrl, options);
+      // } = await axios.post(this.anilistGraphqlUrl, options);
 
       // const selectedAnime = Math.floor(
       //   Math.random() * data.SiteStatistics.anime.nodes[data.SiteStatistics.anime.nodes.length - 1].count
       // );
       // const { results } = await this.advancedSearch(undefined, 'ANIME', Math.ceil(selectedAnime / 50), 50);
 
-      const { data: data } = await this.client.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
+      const { data: data } = await axios.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
 
       const ids = data?.trim().split('\n');
       const selectedAnime = Math.floor(Math.random() * ids.length);
@@ -1059,7 +1059,7 @@ class Anilist extends AnimeParser {
     perPage: number = 25
   ): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(`${this.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
+      const { data } = await axios.get(`${this.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
 
       const results: IAnimeInfo[] = data?.map((item: any) => {
         return {
@@ -1135,7 +1135,7 @@ class Anilist extends AnimeParser {
       data: {
         data: { Media },
       },
-    } = await this.client.post(this.anilistGraphqlUrl, options);
+    } = await axios.post(this.anilistGraphqlUrl, options);
 
     let possibleAnimeEpisodes: IAnimeEpisode[] = [];
     let fillerEpisodes: { 'number': string; 'filler-bool': boolean }[] = [];
@@ -1143,7 +1143,7 @@ class Anilist extends AnimeParser {
       try {
         // console.time('fetchEpisodesListById');
         const [animeMetaData, providerEpisodes] = await Promise.all([
-          this.client.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
+          axios.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
           this.fetchDefaultEpisodeList(Media),
         ]);
         // console.timeEnd('fetchEpisodesListById');
@@ -1264,7 +1264,7 @@ class Anilist extends AnimeParser {
     } else possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
 
     if (fetchFiller) {
-      const { data: fillerData } = await this.client.get(
+      const { data: fillerData } = await axios.get(
         `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${Media.idMal}.json`,
         {
           validateStatus: () => true,
@@ -1320,7 +1320,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options).catch(() => {
+      const { data } = await axios.post(this.anilistGraphqlUrl, options).catch(() => {
         throw new Error('Media not found');
       });
       animeInfo.malId = data.data.Media.idMal;
@@ -1543,7 +1543,7 @@ class Anilist extends AnimeParser {
     };
 
     try {
-      const { data } = await this.client.post(this.anilistGraphqlUrl, options).catch((err) => {
+      const { data } = await axios.post(this.anilistGraphqlUrl, options).catch((err) => {
         throw new Error((err as Error).message);
       });
       const staff = data.data.Staff;
@@ -1593,7 +1593,7 @@ class Anilist extends AnimeParser {
         data: {
           data: { Character },
         },
-      } = await this.client.post(this.anilistGraphqlUrl, options);
+      } = await axios.post(this.anilistGraphqlUrl, options);
 
       const height = Character.description.match(/__Height:__(.*)/)?.[1].trim();
       const weight = Character.description.match(/__Weight:__(.*)/)?.[1].trim();
@@ -2018,7 +2018,7 @@ class Anilist extends AnimeParser {
     let possibleManga: any;
 
     if (malId) {
-      const malAsyncReq = await this.client.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
+      const malAsyncReq = await axios.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
         validateStatus: () => true,
       });
 

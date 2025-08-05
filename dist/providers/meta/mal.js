@@ -1,10 +1,16 @@
-import { load } from 'cheerio';
-import { AnimeParser, MediaStatus, SubOrSub, MediaFormat, } from '../../models';
-import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
-import Zoro from '../anime/zoro';
-import Anify from '../anime/anify';
-import { ANIFY_URL } from '../../utils/utils';
-class Myanimelist extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+const utils_1 = require("../../utils");
+const zoro_1 = __importDefault(require("../anime/zoro"));
+const anify_1 = __importDefault(require("../anime/anify"));
+const utils_2 = require("../../utils/utils");
+class Myanimelist extends models_1.AnimeParser {
     /**
      * This class maps myanimelist to kitsu with any other anime provider.
      * kitsu is used for episode images, titles and description.
@@ -19,20 +25,20 @@ class Myanimelist extends AnimeParser {
         this.anilistGraphqlUrl = 'https://graphql.anilist.co';
         this.kitsuGraphqlUrl = 'https://kitsu.app/api/graphql';
         this.malSyncUrl = 'https://api.malsync.moe';
-        this.anifyUrl = ANIFY_URL;
+        this.anifyUrl = utils_2.ANIFY_URL;
         this.search = async (query, page = 1) => {
             const searchResults = {
                 currentPage: page,
                 results: [],
             };
-            const { data } = await this.client.request({
+            const { data } = await axios_1.default.request({
                 method: 'get',
                 url: `https://myanimelist.net/anime.php?q=${query}&cat=anime&show=${50 * (page - 1)}`,
                 headers: {
                     'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35',
                 },
             });
-            const $ = load(data);
+            const $ = (0, cheerio_1.load)(data);
             const pages = $('.normal_header').find('span').children();
             const maxPage = parseInt(pages.last().text());
             const hasNextPage = page < maxPage;
@@ -55,25 +61,25 @@ class Myanimelist extends AnimeParser {
                         description: description,
                         totalEpisodes: parseInt(episodeCount),
                         type: type === 'TV'
-                            ? MediaFormat.TV
+                            ? models_1.MediaFormat.TV
                             : type === 'TV_SHORT'
-                                ? MediaFormat.TV_SHORT
+                                ? models_1.MediaFormat.TV_SHORT
                                 : type === 'MOVIE'
-                                    ? MediaFormat.MOVIE
+                                    ? models_1.MediaFormat.MOVIE
                                     : type === 'SPECIAL'
-                                        ? MediaFormat.SPECIAL
+                                        ? models_1.MediaFormat.SPECIAL
                                         : type === 'OVA'
-                                            ? MediaFormat.OVA
+                                            ? models_1.MediaFormat.OVA
                                             : type === 'ONA'
-                                                ? MediaFormat.ONA
+                                                ? models_1.MediaFormat.ONA
                                                 : type === 'MUSIC'
-                                                    ? MediaFormat.MUSIC
+                                                    ? models_1.MediaFormat.MUSIC
                                                     : type === 'MANGA'
-                                                        ? MediaFormat.MANGA
+                                                        ? models_1.MediaFormat.MANGA
                                                         : type === 'NOVEL'
-                                                            ? MediaFormat.NOVEL
+                                                            ? models_1.MediaFormat.NOVEL
                                                             : type === 'ONE_SHOT'
-                                                                ? MediaFormat.ONE_SHOT
+                                                                ? models_1.MediaFormat.ONE_SHOT
                                                                 : undefined,
                     });
                 }
@@ -90,12 +96,12 @@ class Myanimelist extends AnimeParser {
                 const animeInfo = await this.fetchMalInfoById(animeId);
                 const titleWithLanguages = animeInfo?.title;
                 let fillerEpisodes;
-                if (this.provider instanceof Zoro &&
+                if (this.provider instanceof zoro_1.default &&
                     !dub &&
-                    (animeInfo.status === MediaStatus.ONGOING ||
-                        range({ from: 2000, to: new Date().getFullYear() + 1 }).includes(animeInfo.startDate?.year))) {
+                    (animeInfo.status === models_1.MediaStatus.ONGOING ||
+                        (0, utils_1.range)({ from: 2000, to: new Date().getFullYear() + 1 }).includes(animeInfo.startDate?.year))) {
                     try {
-                        animeInfo.episodes = (await new Anify(this.proxyConfig, this.adapter, this.provider.name.toLowerCase()).fetchAnimeInfo(animeId)).episodes?.map((item) => ({
+                        animeInfo.episodes = (await new anify_1.default(undefined, undefined, this.provider.name.toLowerCase()).fetchAnimeInfo(animeId)).episodes?.map((item) => ({
                             id: item.slug,
                             title: item.title,
                             description: item.description,
@@ -123,7 +129,7 @@ class Myanimelist extends AnimeParser {
                         titleWithLanguages?.native ||
                         titleWithLanguages?.userPreferred, animeInfo.season, animeInfo.startDate?.year, animeId, dub);
                 if (fetchFiller) {
-                    const { data: fillerData } = await this.client({
+                    const { data: fillerData } = await (0, axios_1.default)({
                         baseURL: `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeId}.json`,
                         method: 'GET',
                         validateStatus: () => true,
@@ -151,8 +157,8 @@ class Myanimelist extends AnimeParser {
         };
         this.fetchEpisodeSources = async (episodeId, ...args) => {
             try {
-                if (episodeId.includes('/') && this.provider instanceof Anify)
-                    return new Anify().fetchEpisodeSources(episodeId, args[0], args[1]);
+                if (episodeId.includes('/') && this.provider instanceof anify_1.default)
+                    return new anify_1.default().fetchEpisodeSources(episodeId, args[0], args[1]);
                 return this.provider.fetchEpisodeSources(episodeId, ...args);
             }
             catch (err) {
@@ -176,8 +182,8 @@ class Myanimelist extends AnimeParser {
                     secondTitle = b.title;
                 else
                     secondTitle = b.title.english ?? b.title.romaji ?? '';
-                const firstRating = calculateStringSimilarity(targetTitle, firstTitle.toLowerCase());
-                const secondRating = calculateStringSimilarity(targetTitle, secondTitle.toLowerCase());
+                const firstRating = (0, utils_1.calculateStringSimilarity)(targetTitle, firstTitle.toLowerCase());
+                const secondRating = (0, utils_1.calculateStringSimilarity)(targetTitle, secondTitle.toLowerCase());
                 // Sort in descending order
                 return secondRating - firstRating;
             });
@@ -185,21 +191,21 @@ class Myanimelist extends AnimeParser {
             return (await this.provider.fetchAnimeInfo(findAnime.results[0].id));
         };
         this.findAnimeSlug = async (title, season, startDate, malId, dub, externalLinks) => {
-            if (this.provider instanceof Anify)
+            if (this.provider instanceof anify_1.default)
                 return (await this.provider.fetchAnimeInfo(malId)).episodes;
             // console.log({ title });
             const slug = title?.replace(/[^0-9a-zA-Z]+/g, ' ');
             let possibleAnime;
             possibleAnime = await this.findAnimeRaw(slug, externalLinks);
             // To avoid a new request, lets match and see if the anime show found is in sub/dub
-            const expectedType = dub ? SubOrSub.DUB : SubOrSub.SUB;
-            if (possibleAnime.subOrDub !== SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
+            const expectedType = dub ? models_1.SubOrSub.DUB : models_1.SubOrSub.SUB;
+            if (possibleAnime.subOrDub !== models_1.SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
                 return [];
             }
-            if (this.provider instanceof Zoro) {
+            if (this.provider instanceof zoro_1.default) {
                 // Set the correct episode sub/dub request type
                 possibleAnime.episodes.forEach((_, index) => {
-                    if (possibleAnime.subOrDub === SubOrSub.BOTH) {
+                    if (possibleAnime.subOrDub === models_1.SubOrSub.BOTH) {
                         possibleAnime.episodes[index].id = possibleAnime.episodes[index].id.replace(`$both`, dub ? '$dub' : '$sub');
                     }
                 });
@@ -211,13 +217,13 @@ class Myanimelist extends AnimeParser {
                 return possibleProviderEpisodes;
             const options = {
                 headers: { 'Content-Type': 'application/json' },
-                query: kitsuSearchQuery(slug),
+                query: (0, utils_1.kitsuSearchQuery)(slug),
             };
             const newEpisodeList = await this.findKitsuAnime(possibleProviderEpisodes, options, season, startDate);
             return newEpisodeList;
         };
         this.findKitsuAnime = async (possibleProviderEpisodes, options, season, startDate) => {
-            const kitsuEpisodes = await this.client.post(this.kitsuGraphqlUrl, options);
+            const kitsuEpisodes = await axios_1.default.post(this.kitsuGraphqlUrl, options);
             const episodesList = new Map();
             if (kitsuEpisodes?.data.data) {
                 const { nodes } = kitsuEpisodes.data.data.searchAnimeByTitle;
@@ -282,14 +288,14 @@ class Myanimelist extends AnimeParser {
                 id: id,
                 title: '',
             };
-            const { data } = await this.client.request({
+            const { data } = await axios_1.default.request({
                 method: 'GET',
                 url: `https://myanimelist.net/anime/${id}`,
                 headers: {
                     'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35',
                 },
             });
-            const $ = load(data);
+            const $ = (0, cheerio_1.load)(data);
             const episodes = [];
             const desc = $('[itemprop="description"]').first().text();
             const imageElem = $('[itemprop="image"]').first();
@@ -330,9 +336,9 @@ class Myanimelist extends AnimeParser {
                 const style = $(teaserDOM).attr('style');
                 if (teaserURL) {
                     animeInfo.trailer = {
-                        id: substringAfter(teaserURL, 'embed/').split('?')[0],
+                        id: (0, utils_1.substringAfter)(teaserURL, 'embed/').split('?')[0],
                         site: 'https://youtube.com/watch?v=',
-                        thumbnail: style ? substringBefore(substringAfter(style, "url('"), "'") : '',
+                        thumbnail: style ? (0, utils_1.substringBefore)((0, utils_1.substringAfter)(style, "url('"), "'") : '',
                     };
                 }
             }
@@ -401,7 +407,7 @@ class Myanimelist extends AnimeParser {
             description.forEach((elem) => {
                 const text = $(elem).text().toLowerCase().trim();
                 const key = text.split(':')[0];
-                const value = substringAfter(text, `${key}:`).trim();
+                const value = (0, utils_1.substringAfter)(text, `${key}:`).trim();
                 switch (key) {
                     case 'status':
                         animeInfo.status = this.malStatusToMediaStatus(value);
@@ -455,20 +461,20 @@ class Myanimelist extends AnimeParser {
             // }
             return animeInfo;
         };
-        this.provider = provider || new Zoro();
+        this.provider = provider || new zoro_1.default();
     }
     malStatusToMediaStatus(status) {
         if (status === 'currently airing')
-            return MediaStatus.ONGOING;
+            return models_1.MediaStatus.ONGOING;
         else if (status === 'finished airing')
-            return MediaStatus.COMPLETED;
+            return models_1.MediaStatus.COMPLETED;
         else if (status === 'not yet aired')
-            return MediaStatus.NOT_YET_AIRED;
-        return MediaStatus.UNKNOWN;
+            return models_1.MediaStatus.NOT_YET_AIRED;
+        return models_1.MediaStatus.UNKNOWN;
     }
     async populateEpisodeList(episodes, url, count = 1) {
         try {
-            const { data } = await this.client.request({
+            const { data } = await axios_1.default.request({
                 method: 'get',
                 url: `${url}?p=${count}`,
                 headers: {
@@ -476,7 +482,7 @@ class Myanimelist extends AnimeParser {
                 },
             });
             let hasEpisodes = false;
-            const $ = load(data);
+            const $ = (0, cheerio_1.load)(data);
             for (const elem of $('.video-list').toArray()) {
                 const href = $(elem).attr('href');
                 const image = $(elem).find('img').attr('data-src');
@@ -509,7 +515,7 @@ class Myanimelist extends AnimeParser {
         return this.provider.fetchEpisodeServers(episodeId);
     }
 }
-export default Myanimelist;
+exports.default = Myanimelist;
 // (async () => {
 //   const mal = new Myanimelist();
 //   // const search = await mal.search('one piece');

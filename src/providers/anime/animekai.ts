@@ -27,7 +27,7 @@ class AnimeKai extends AnimeParser {
   protected override classPath = 'ANIME.AnimeKai';
 
   constructor(customBaseURL?: string) {
-    super(...arguments);
+    super();
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
@@ -139,7 +139,7 @@ class AnimeKai extends AnimeParser {
   async fetchGenres(): Promise<string[]> {
     try {
       const res: string[] = [];
-      const { data } = await this.client.get(`${this.baseUrl}/home`, {
+      const { data } = await axios.get(`${this.baseUrl}/home`, {
         headers: this.Headers(),
       });
       const $ = load(data);
@@ -178,7 +178,7 @@ class AnimeKai extends AnimeParser {
       const res: ISearch<IAnimeResult> = {
         results: [],
       };
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`,
         { headers: this.Headers() }
       );
@@ -207,7 +207,7 @@ class AnimeKai extends AnimeParser {
   async fetchSpotlight(): Promise<ISearch<IAnimeResult>> {
     try {
       const res: ISearch<IAnimeResult> = { results: [] };
-      const { data } = await this.client.get(`${this.baseUrl}/home`, {
+      const { data } = await axios.get(`${this.baseUrl}/home`, {
         headers: this.Headers(),
       });
       const $ = load(data);
@@ -248,10 +248,9 @@ class AnimeKai extends AnimeParser {
 
   async fetchSearchSuggestions(query: string): Promise<ISearch<IAnimeResult>> {
     try {
-      const { data } = await this.client.get(
-        `${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`,
-        { headers: this.Headers() }
-      );
+      const { data } = await axios.get(`${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`, {
+        headers: this.Headers(),
+      });
       const $ = load(data.result.html);
       const res: ISearch<IAnimeResult> = {
         results: [],
@@ -449,13 +448,13 @@ class AnimeKai extends AnimeParser {
         case StreamingServers.MegaUp:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+            ...(await new MegaUp().extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+            ...(await new MegaUp().extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
       }
@@ -490,7 +489,7 @@ class AnimeKai extends AnimeParser {
         totalPages: 0,
         results: [],
       };
-      const { data } = await this.client.get(url, {
+      const { data } = await axios.get(url, {
         headers: this.Headers(),
       });
       const $ = load(data);
@@ -564,7 +563,7 @@ class AnimeKai extends AnimeParser {
         episodeId.split('$token=')[1]!
       )}`;
     try {
-      const { data } = await this.client.get(episodeId, {
+      const { data } = await axios.get(episodeId, {
         headers: this.Headers(),
       });
       const $ = load(data.result);
@@ -573,7 +572,7 @@ class AnimeKai extends AnimeParser {
       await Promise.all(
         serverItems.map(async (i, server) => {
           const id = $(server).attr('data-lid');
-          const { data } = await this.client.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id!)}`, {
+          const { data } = await axios.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id!)}`, {
             headers: this.Headers(),
           });
           const decodedData = JSON.parse(Decode(data.result));

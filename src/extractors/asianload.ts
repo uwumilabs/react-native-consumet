@@ -1,3 +1,4 @@
+import axios from "axios";
 import { type CheerioAPI, load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 
@@ -13,12 +14,12 @@ class AsianLoad extends VideoExtractor {
   };
 
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
-    const res = await this.client.get(videoUrl.href);
+    const res = await axios.get(videoUrl.href);
     const $ = load(res.data);
 
     const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
-    const encryptedData = await this.client.get(
+    const encryptedData = await axios.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
       {
         headers: {

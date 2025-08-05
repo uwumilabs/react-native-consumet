@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo } from '../models';
 
 class Mp4Upload extends VideoExtractor {
@@ -6,7 +7,7 @@ class Mp4Upload extends VideoExtractor {
 
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await this.client.get(videoUrl.href);
+      const { data } = await axios.get(videoUrl.href);
 
       const playerSrc = data.match(/(?<=player\.src\()\s*{\s*type:\s*"[^"]+",\s*src:\s*"([^"]+)"\s*}\s*(?=\);)/s);
       const streamUrl = playerSrc[1];

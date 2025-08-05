@@ -1,7 +1,12 @@
-import { load } from 'cheerio';
-import axios, {} from 'axios';
-import { AnimeParser, MediaStatus, MediaFormat, } from '../../models';
-class AnimeDrive extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cheerio_1 = require("cheerio");
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+class AnimeDrive extends models_1.AnimeParser {
     constructor() {
         super(...arguments);
         this.name = 'AnimeDrive';
@@ -14,8 +19,8 @@ class AnimeDrive extends AnimeParser {
          */
         this.search = async (query, page = 1) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const hasNextPage = $('.nk-pagination.nk-pagination-center > nav > a.nk-pagination-current-white').next('a').length > 0;
                 const searchResults = [];
                 $('div.row.row--grid .card')
@@ -52,8 +57,8 @@ class AnimeDrive extends AnimeParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/anime/?id=${id}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/anime/?id=${id}`);
+                const $ = (0, cheerio_1.load)(data);
                 info.title = $('div.col-sm-12.col-md-8.col-lg-9 > h2').text();
                 info.image = $('div.nk-image-box-1-a.col-12 > img').attr('src');
                 info.description = $('div.col-sm-12.col-md-8.col-lg-9 > p.col-12').text().trim();
@@ -87,8 +92,8 @@ class AnimeDrive extends AnimeParser {
          */
         this.fetchRecentEpisodes = async (page = 1) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/latest-added?page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/latest-added?page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const hasNextPage = !$('.pagination > nav > ul > li').last().hasClass('disabled');
                 const recentEpisodes = [];
                 $('div.film_list-wrap > div').each((i, el) => {
@@ -131,8 +136,8 @@ class AnimeDrive extends AnimeParser {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             };
             try {
-                const response = await axios.get(`https://player.animedrive.hu/player_v1.5.php${episodeId}`, { headers });
-                const $ = load(response.data);
+                const response = await axios_1.default.get(`https://player.animedrive.hu/player_v1.5.php${episodeId}`, { headers });
+                const $ = (0, cheerio_1.load)(response.data);
                 const htmlData = response.data;
                 const sourcesDataMatch = /sources:\s*\[\s*(.*?)\s*\],?\s*poster:/.exec(htmlData);
                 const sources = [];
@@ -170,29 +175,29 @@ class AnimeDrive extends AnimeParser {
     parseType(typeText) {
         switch (typeText) {
             case 'Sorozat':
-                return MediaFormat.TV;
+                return models_1.MediaFormat.TV;
             case 'Film':
-                return MediaFormat.MOVIE;
+                return models_1.MediaFormat.MOVIE;
             case 'Special':
-                return MediaFormat.SPECIAL;
+                return models_1.MediaFormat.SPECIAL;
             case 'OVA':
-                return MediaFormat.OVA;
+                return models_1.MediaFormat.OVA;
             default:
-                return MediaFormat.TV;
+                return models_1.MediaFormat.TV;
         }
     }
     parseStatus(statusText) {
         switch (statusText) {
             case 'Fut':
-                return MediaStatus.ONGOING;
+                return models_1.MediaStatus.ONGOING;
             case 'Befejezett':
-                return MediaStatus.COMPLETED;
+                return models_1.MediaStatus.COMPLETED;
             case 'Hamarosan':
-                return MediaStatus.NOT_YET_AIRED;
+                return models_1.MediaStatus.NOT_YET_AIRED;
             default:
-                return MediaStatus.UNKNOWN;
+                return models_1.MediaStatus.UNKNOWN;
         }
     }
 }
-export default AnimeDrive;
+exports.default = AnimeDrive;
 //# sourceMappingURL=animedrive.js.map

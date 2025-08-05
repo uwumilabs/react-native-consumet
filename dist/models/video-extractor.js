@@ -1,5 +1,6 @@
-import Proxy from '../models/proxy';
-class VideoExtractor extends Proxy {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+class VideoExtractor {
 }
-export default VideoExtractor;
+exports.default = VideoExtractor;
 //# sourceMappingURL=video-extractor.js.map

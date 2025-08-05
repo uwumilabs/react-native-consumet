@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -48,7 +49,7 @@ class Myanimelist extends AnimeParser {
 
   private async populateEpisodeList(episodes: IAnimeEpisode[], url: string, count: number = 1): Promise<void> {
     try {
-      const { data } = await this.client.request({
+      const { data } = await axios.request({
         method: 'get',
         url: `${url}?p=${count}`,
         headers: {
@@ -94,7 +95,7 @@ class Myanimelist extends AnimeParser {
       results: [],
     };
 
-    const { data } = await this.client.request({
+    const { data } = await axios.request({
       method: 'get',
       url: `https://myanimelist.net/anime.php?q=${query}&cat=anime&show=${50 * (page - 1)}`,
       headers: {
@@ -182,8 +183,8 @@ class Myanimelist extends AnimeParser {
         try {
           animeInfo.episodes = (
             await new Anify(
-              this.proxyConfig,
-              this.adapter,
+              undefined,
+              undefined,
               this.provider.name.toLowerCase() as 'gogoanime' | 'zoro' | '9anime' | 'animepahe'
             ).fetchAnimeInfo(animeId)
           ).episodes?.map((item: any) => ({
@@ -227,7 +228,7 @@ class Myanimelist extends AnimeParser {
         );
 
       if (fetchFiller) {
-        const { data: fillerData } = await this.client({
+        const { data: fillerData } = await axios({
           baseURL: `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeId}.json`,
           method: 'GET',
           validateStatus: () => true,
@@ -364,7 +365,7 @@ class Myanimelist extends AnimeParser {
     season?: string,
     startDate?: number
   ) => {
-    const kitsuEpisodes = await this.client.post(this.kitsuGraphqlUrl, options);
+    const kitsuEpisodes = await axios.post(this.kitsuGraphqlUrl, options);
     const episodesList = new Map();
     if (kitsuEpisodes?.data.data) {
       const { nodes } = kitsuEpisodes.data.data.searchAnimeByTitle;
@@ -435,7 +436,7 @@ class Myanimelist extends AnimeParser {
       title: '',
     };
 
-    const { data } = await this.client.request({
+    const { data } = await axios.request({
       method: 'GET',
       url: `https://myanimelist.net/anime/${id}`,
       headers: {

@@ -31,7 +31,7 @@ class AnimeDrive extends AnimeParser {
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
 
       const $ = load(data);
 
@@ -76,7 +76,7 @@ class AnimeDrive extends AnimeParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/anime/?id=${id}`);
+      const { data } = await axios.get(`${this.baseUrl}/anime/?id=${id}`);
       const $ = load(data);
 
       info.title = $('div.col-sm-12.col-md-8.col-lg-9 > h2').text();
@@ -145,7 +145,7 @@ class AnimeDrive extends AnimeParser {
    */
   fetchRecentEpisodes = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/latest-added?page=${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/latest-added?page=${page}`);
       const $ = load(data);
 
       const hasNextPage = !$('.pagination > nav > ul > li').last().hasClass('disabled');

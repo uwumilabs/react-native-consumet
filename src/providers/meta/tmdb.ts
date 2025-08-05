@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   type ISearch,
   type IAnimeInfo,
@@ -32,7 +33,7 @@ class TMDB extends MovieParser {
     proxyConfig?: ProxyConfig,
     adapter?: AxiosAdapter
   ) {
-    super(proxyConfig, adapter);
+    super();
     this.provider = provider || new HiMovies();
   }
 
@@ -63,7 +64,7 @@ class TMDB extends MovieParser {
     };
 
     try {
-      const { data } = await this.client.get(trendingUrl);
+      const { data } = await axios.get(trendingUrl);
 
       if (data.results.length < 1) return result;
 
@@ -134,7 +135,7 @@ class TMDB extends MovieParser {
     };
 
     try {
-      const { data } = await this.client.get(searchUrl);
+      const { data } = await axios.get(searchUrl);
 
       if (data.results.length < 1) return search;
 
@@ -179,7 +180,7 @@ class TMDB extends MovieParser {
 
     try {
       //request api to get media info from tmdb
-      const { data } = await this.client.get(infoUrl);
+      const { data } = await axios.get(infoUrl);
 
       //get provider id from title and year (if available) to get the correct provider id for the movie/tv series (e.g. flixhq)
       const providerId = await this.findIdFromTitle(data?.title || data?.name, {
@@ -287,7 +288,7 @@ class TMDB extends MovieParser {
           : undefined;
 
         for (let i = 1; i <= totalSeasons; i++) {
-          const { data: seasonData } = await this.client.get(seasonUrl(i.toString()));
+          const { data: seasonData } = await axios.get(seasonUrl(i.toString()));
 
           //find season in each episode (providerEpisodes)
           const seasonEpisodes = providerEpisodes?.filter((episode) => episode.season === i);

@@ -1,28 +1,31 @@
-import { ANIME, MANGA, COMICS, LIGHT_NOVELS, MOVIES, META } from '../providers';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PROVIDERS_LIST = void 0;
+const providers_1 = require("../providers");
 /**
  * List of providers
  *
  * add new providers here (order does not matter)
  */
-export const PROVIDERS_LIST = {
-    ANIME: [new ANIME.AnimePahe(), new ANIME.Anify(), new ANIME.Zoro(), new ANIME.Marin(), new ANIME.AnimeKai()],
+exports.PROVIDERS_LIST = {
+    ANIME: [new providers_1.ANIME.AnimePahe(), new providers_1.ANIME.Anify(), new providers_1.ANIME.Zoro(), new providers_1.ANIME.Marin(), new providers_1.ANIME.AnimeKai()],
     MANGA: [
-        new MANGA.MangaDex(),
-        new MANGA.MangaHere(),
-        new MANGA.MangaKakalot(),
-        new MANGA.Mangapark(),
-        new MANGA.MangaPill(),
-        new MANGA.MangaReader(),
-        new MANGA.Mangasee123(),
-        new MANGA.ComicK(),
-        new MANGA.FlameScans(),
-        new MANGA.MangaHost(),
-        new MANGA.BRMangas(),
+        new providers_1.MANGA.MangaDex(),
+        new providers_1.MANGA.MangaHere(),
+        new providers_1.MANGA.MangaKakalot(),
+        new providers_1.MANGA.Mangapark(),
+        new providers_1.MANGA.MangaPill(),
+        new providers_1.MANGA.MangaReader(),
+        new providers_1.MANGA.Mangasee123(),
+        new providers_1.MANGA.ComicK(),
+        new providers_1.MANGA.FlameScans(),
+        new providers_1.MANGA.MangaHost(),
+        new providers_1.MANGA.BRMangas(),
     ],
-    COMICS: [new COMICS.GetComics()],
-    LIGHT_NOVELS: [new LIGHT_NOVELS.ReadLightNovels()],
-    MOVIES: [new MOVIES.DramaCool(), new MOVIES.MultiMovies(), new MOVIES.NetflixMirror(), new MOVIES.HiMovies()],
-    META: [new META.Anilist(), new META.TMDB(), new META.Myanimelist()],
+    COMICS: [new providers_1.COMICS.GetComics()],
+    LIGHT_NOVELS: [new providers_1.LIGHT_NOVELS.ReadLightNovels()],
+    MOVIES: [new providers_1.MOVIES.DramaCool(), new providers_1.MOVIES.MultiMovies(), new providers_1.MOVIES.NetflixMirror(), new providers_1.MOVIES.HiMovies()],
+    META: [new providers_1.META.Anilist(), new providers_1.META.TMDB(), new providers_1.META.Myanimelist()],
     OTHERS: [],
 };
 //# sourceMappingURL=providers-list.js.map

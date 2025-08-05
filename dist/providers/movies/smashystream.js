@@ -22,16 +22,16 @@ class SmashyStream extends MovieParser {
                 if (season) {
                     url = `${this.baseUrl}/playere.php?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
                 }
-                const { data } = await this.client.get(url);
+                const { data } = await axios.get(url);
                 const $ = load(data);
                 await Promise.all($('div#_default-servers a.server')
                     .map(async (i, el) => {
-                    const streamLink = $(el).attr('data-id') ?? '';
-                    epsiodeServers.push({
-                        name: $(el).text().replace(/  +/g, ' ').trim(),
-                        url: streamLink,
-                    });
-                })
+                        const streamLink = $(el).attr('data-id') ?? '';
+                        epsiodeServers.push({
+                            name: $(el).text().replace(/  +/g, ' ').trim(),
+                            url: streamLink,
+                        });
+                    })
                     .get());
                 return epsiodeServers;
             }

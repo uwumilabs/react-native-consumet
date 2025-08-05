@@ -15,10 +15,16 @@ pre-commit:
         npx prettier --write {staged_files} && yarn prettier
         echo "Prettier formatting completed ✅"
     types:
-      glob: '*.{js,ts,jsx,tsx}' # Fixed the glob pattern spacing
+      glob: '*.{js,ts,jsx,tsx}'
       run: |
         echo "Running TypeScript check..."
         npx tsc --noEmit && yarn typecheck
+        echo "TypeScript check completed ✅"
+    prepare:
+      glob: '*.{js,ts,jsx,tsx}'
+      run: |
+        echo "Running TypeScript check..."
+        yarn prepare
         echo "TypeScript check completed ✅"
 commit-msg:
   parallel: true

@@ -1,9 +1,14 @@
-import CryptoJS from 'crypto-js';
-import { VideoExtractor } from '../models';
-import { load } from 'cheerio';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const crypto_js_1 = __importDefault(require("crypto-js"));
+const models_1 = require("../models");
+const cheerio_1 = require("cheerio");
 // Copied form https://github.com/JorrinKievit/restreamer/blob/main/src/main/extractors/smashystream.ts/smashystream.ts
 // Thanks Jorrin Kievit
-class SmashyStream extends VideoExtractor {
+class SmashyStream extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'SmashyStream';
@@ -12,8 +17,8 @@ class SmashyStream extends VideoExtractor {
         this.extract = async (videoUrl) => {
             try {
                 const result = [];
-                const { data } = await this.client.get(videoUrl.href);
-                const $ = load(data);
+                const { data } = await axios.get(videoUrl.href);
+                const $ = (0, cheerio_1.load)(data);
                 const sourceUrls = $('.dropdown-menu a[data-id]')
                     .map((_, el) => $(el).attr('data-id'))
                     .get()
@@ -80,7 +85,7 @@ class SmashyStream extends VideoExtractor {
                 sources: [],
                 subtitles: [],
             };
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
@@ -124,7 +129,7 @@ class SmashyStream extends VideoExtractor {
                 subtitles: [],
             };
             const key = '4VqE3#N7zt&HEP^a';
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
@@ -136,17 +141,17 @@ class SmashyStream extends VideoExtractor {
             }
             const base64EncryptedData = regexMatch[1];
             const base64DecryptedData = JSON.parse(Buffer.from(base64EncryptedData, 'base64').toString('utf8'));
-            const derivedKey = CryptoJS.PBKDF2(key, CryptoJS.enc.Hex.parse(base64DecryptedData.salt), {
+            const derivedKey = crypto_js_1.default.PBKDF2(key, crypto_js_1.default.enc.Hex.parse(base64DecryptedData.salt), {
                 keySize: 32 / 4,
                 iterations: base64DecryptedData.iterations,
-                hasher: CryptoJS.algo.SHA512,
+                hasher: crypto_js_1.default.algo.SHA512,
             });
-            const decipher = CryptoJS.AES.decrypt(base64DecryptedData.ciphertext, derivedKey, {
-                iv: CryptoJS.enc.Hex.parse(base64DecryptedData.iv),
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7,
+            const decipher = crypto_js_1.default.AES.decrypt(base64DecryptedData.ciphertext, derivedKey, {
+                iv: crypto_js_1.default.enc.Hex.parse(base64DecryptedData.iv),
+                mode: crypto_js_1.default.mode.CBC,
+                padding: crypto_js_1.default.pad.Pkcs7,
             });
-            const decrypted = decipher.toString(CryptoJS.enc.Utf8);
+            const decrypted = decipher.toString(crypto_js_1.default.enc.Utf8);
             const sources = JSON.parse(decrypted.match(/sources: ([^\]]*\])/)[1]);
             const tracks = JSON.parse(decrypted.match(/tracks: ([^]*?\}\])/)[1]);
             const subtitles = tracks.filter((it) => it.kind === 'captions');
@@ -175,7 +180,7 @@ class SmashyStream extends VideoExtractor {
                 sources: [],
                 subtitles: [],
             };
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
@@ -197,7 +202,7 @@ class SmashyStream extends VideoExtractor {
             let validFiles = files;
             if (files) {
                 await Promise.all(files?.map(async (source) => {
-                    await this.client
+                    await axios
                         .head(source.link)
                         .then((res) => console.log(res.status))
                         .catch((err) => {
@@ -236,7 +241,7 @@ class SmashyStream extends VideoExtractor {
                 sources: [],
                 subtitles: [],
             };
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
@@ -258,13 +263,13 @@ class SmashyStream extends VideoExtractor {
                 sources: [],
                 subtitles: [],
             };
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
             });
             const file = res.data.match(/file:\s*"([^"]+)"/)[1];
-            const fileRes = await this.client.head(file);
+            const fileRes = await axios.head(file);
             if (fileRes.status !== 200 || fileRes.data.includes('404')) {
                 return result;
             }
@@ -286,7 +291,7 @@ class SmashyStream extends VideoExtractor {
                 sources: [],
                 subtitles: [],
             };
-            const res = await this.client.get(url, {
+            const res = await axios.get(url, {
                 headers: {
                     referer: url,
                 },
@@ -303,5 +308,5 @@ class SmashyStream extends VideoExtractor {
         }
     }
 }
-export default SmashyStream;
+exports.default = SmashyStream;
 //# sourceMappingURL=smashystream.js.map

@@ -4,6 +4,7 @@ import Anime from './Anime';
 import Manga from './Manga';
 import Movies from './Movies';
 import Ext from './Ext';
+import ExtGithub from './Ext-github';
 
 export default function App() {
   return (
@@ -11,7 +12,8 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Anime /> */}
       {/* <Movies /> */}
-      <Ext/>
+      {/* <Ext/> */}
+      <ExtGithub/>
       {/* <Manga/> */}
       {/* <Meta /> */}
     </SafeAreaView>

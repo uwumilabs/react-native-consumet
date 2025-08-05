@@ -1,5 +1,11 @@
-import { VideoExtractor } from '../models';
-class Mp4Player extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../models");
+class Mp4Player extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'mp4player';
@@ -11,11 +17,11 @@ class Mp4Player extends VideoExtractor {
                     sources: [],
                     subtitles: [],
                 };
-                const response = await this.client.get(videoUrl.href);
+                const response = await axios_1.default.get(videoUrl.href);
                 const data = response.data.match(new RegExp('(?<=sniff\\()(.*)(?=\\))'))[0]?.replace(/\"/g, '')?.split(',');
                 const link = `https://${videoUrl.host}/m3u8/${data[1]}/${data[2]}/master.txt?s=1&cache=${data[7]}`;
                 //const thumbnails = response.data.match(new RegExp('(?<=file":")(.*)(?=","kind)'))[0]?.replace(/\\/g, '');
-                const m3u8Content = await this.client.get(link, {
+                const m3u8Content = await axios_1.default.get(link, {
                     headers: {
                         accept: '*/*',
                         referer: videoUrl.href,
@@ -43,5 +49,5 @@ class Mp4Player extends VideoExtractor {
         };
     }
 }
-export default Mp4Player;
+exports.default = Mp4Player;
 //# sourceMappingURL=mp4player.js.map

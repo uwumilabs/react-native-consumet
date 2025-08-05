@@ -1,11 +1,21 @@
-import { compareTwoStrings } from 'string-similarity';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.filterValidM3U8 = exports.getHashFromImage = exports.substringBeforeLast = exports.substringAfterLast = exports.substringBefore = exports.substringAfter = exports.calculateStringSimilarity = exports.isJson = exports.getDays = exports.capitalizeFirstLetter = exports.range = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.ANIFY_URL = exports.days = exports.USER_AGENT = void 0;
+exports.convertDuration = convertDuration;
+exports.findSimilarTitles = findSimilarTitles;
+exports.cleanTitle = cleanTitle;
+exports.removeSpecialChars = removeSpecialChars;
+exports.transformSpecificVariations = transformSpecificVariations;
+exports.sanitizeTitle = sanitizeTitle;
+exports.stringSearch = stringSearch;
+const string_similarity_1 = require("string-similarity");
 // import sharp from 'sharp';
-import { load } from 'cheerio';
+const cheerio_1 = require("cheerio");
 // import * as blurhash from 'blurhash';
-export const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36';
-export const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-export const ANIFY_URL = 'https://anify.eltik.cc';
-export const splitAuthor = (authors) => {
+exports.USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36';
+exports.days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+exports.ANIFY_URL = 'https://anify.eltik.cc';
+const splitAuthor = (authors) => {
     const res = [];
     let eater = '';
     for (let i = 0; i < authors.length; i++) {
@@ -22,7 +32,8 @@ export const splitAuthor = (authors) => {
     res.push(eater);
     return res;
 };
-export const floorID = (id) => {
+exports.splitAuthor = splitAuthor;
+const floorID = (id) => {
     let imp = '';
     for (let i = 0; i < id?.length - 3; i++) {
         imp += id[i];
@@ -30,14 +41,16 @@ export const floorID = (id) => {
     const idV = parseInt(imp);
     return idV * 1000;
 };
-export const formatTitle = (title) => {
+exports.floorID = floorID;
+const formatTitle = (title) => {
     const result = title.replace(/[0-9]/g, '');
     return result.trim();
 };
-export const genElement = (s, e) => {
+exports.formatTitle = formatTitle;
+const genElement = (s, e) => {
     if (s === '')
         return;
-    const $ = load(e);
+    const $ = (0, cheerio_1.load)(e);
     let i = 0;
     let str = '';
     let el = $();
@@ -61,11 +74,14 @@ export const genElement = (s, e) => {
     el = $(el).children(str);
     return el;
 };
-export const range = ({ from = 0, to = 0, step = 1, length = Math.ceil((to - from) / step) }) => Array.from({ length }, (_, i) => from + i * step);
-export const capitalizeFirstLetter = (s) => s?.charAt(0).toUpperCase() + s.slice(1);
-export const getDays = (day1, day2) => {
-    const day1Index = days.indexOf(capitalizeFirstLetter(day1)) - 1;
-    const day2Index = days.indexOf(capitalizeFirstLetter(day2)) - 1;
+exports.genElement = genElement;
+const range = ({ from = 0, to = 0, step = 1, length = Math.ceil((to - from) / step) }) => Array.from({ length }, (_, i) => from + i * step);
+exports.range = range;
+const capitalizeFirstLetter = (s) => s?.charAt(0).toUpperCase() + s.slice(1);
+exports.capitalizeFirstLetter = capitalizeFirstLetter;
+const getDays = (day1, day2) => {
+    const day1Index = exports.days.indexOf((0, exports.capitalizeFirstLetter)(day1)) - 1;
+    const day2Index = exports.days.indexOf((0, exports.capitalizeFirstLetter)(day2)) - 1;
     const now = new Date();
     const day1Date = new Date();
     const day2Date = new Date();
@@ -75,7 +91,8 @@ export const getDays = (day1, day2) => {
     day2Date.setHours(0, 0, 0, 0);
     return [day1Date.getTime() / 1000, day2Date.getTime() / 1000];
 };
-export const isJson = (str) => {
+exports.getDays = getDays;
+const isJson = (str) => {
     try {
         JSON.parse(str);
     }
@@ -84,7 +101,8 @@ export const isJson = (str) => {
     }
     return true;
 };
-export function convertDuration(milliseconds) {
+exports.isJson = isJson;
+function convertDuration(milliseconds) {
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -92,7 +110,7 @@ export function convertDuration(milliseconds) {
     minutes = minutes % 60;
     return `PT${hours}H${minutes}M${seconds}S`;
 }
-export const calculateStringSimilarity = (first, second) => {
+const calculateStringSimilarity = (first, second) => {
     first = first.replace(/\s+/g, '');
     second = second.replace(/\s+/g, '');
     if (first === second)
@@ -116,22 +134,27 @@ export const calculateStringSimilarity = (first, second) => {
     }
     return (2.0 * intersectionSize) / (first.length + second.length - 2);
 };
-export const substringAfter = (str, toFind) => {
+exports.calculateStringSimilarity = calculateStringSimilarity;
+const substringAfter = (str, toFind) => {
     const index = str.indexOf(toFind);
     return index === -1 ? '' : str.substring(index + toFind.length);
 };
-export const substringBefore = (str, toFind) => {
+exports.substringAfter = substringAfter;
+const substringBefore = (str, toFind) => {
     const index = str.indexOf(toFind);
     return index === -1 ? '' : str.substring(0, index);
 };
-export const substringAfterLast = (str, toFind) => {
+exports.substringBefore = substringBefore;
+const substringAfterLast = (str, toFind) => {
     const index = str.lastIndexOf(toFind);
     return index === -1 ? '' : str.substring(index + toFind.length);
 };
-export const substringBeforeLast = (str, toFind) => {
+exports.substringAfterLast = substringAfterLast;
+const substringBeforeLast = (str, toFind) => {
     const index = str.lastIndexOf(toFind);
     return index === -1 ? '' : str.substring(0, index);
 };
+exports.substringBeforeLast = substringBeforeLast;
 // const generateHash = async (url: string) => {
 //   let returnedBuffer;
 //   const response = await fetch(url);
@@ -142,7 +165,7 @@ export const substringBeforeLast = (str, toFind) => {
 //   // });
 //   return blurhash.encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
 // };
-export const getHashFromImage = (url) => {
+const getHashFromImage = (url) => {
     if (url?.length === 0) {
         return '';
     }
@@ -152,8 +175,9 @@ export const getHashFromImage = (url) => {
         return 'hash';
     }
 };
+exports.getHashFromImage = getHashFromImage;
 // Function to find similar titles
-export function findSimilarTitles(inputTitle, titles) {
+function findSimilarTitles(inputTitle, titles) {
     const results = [];
     titles?.forEach((titleObj) => {
         const title = cleanTitle(titleObj?.title
@@ -161,7 +185,7 @@ export function findSimilarTitles(inputTitle, titles) {
             ?.replace(/\([^\)]*\)/g, '')
             .trim() || '');
         // Calculate similarity score between inputTitle and title
-        const similarity = compareTwoStrings(cleanTitle(inputTitle?.toLowerCase() || ''), title);
+        const similarity = (0, string_similarity_1.compareTwoStrings)(cleanTitle(inputTitle?.toLowerCase() || ''), title);
         if (similarity > 0.6) {
             results.push({ ...titleObj, similarity });
         }
@@ -207,7 +231,7 @@ function romanToArabic(roman) {
     }
     return result;
 }
-export function cleanTitle(title) {
+function cleanTitle(title) {
     if (!title)
         return '';
     return transformSpecificVariations(removeSpecialChars(title
@@ -220,7 +244,7 @@ export function cleanTitle(title) {
         .replaceAll('"', '')
         .trimEnd()));
 }
-export function removeSpecialChars(title) {
+function removeSpecialChars(title) {
     if (!title)
         return '';
     return title
@@ -228,12 +252,12 @@ export function removeSpecialChars(title) {
         .replaceAll(/[^A-Za-z0-9\-= ]/gim, '')
         .replaceAll('  ', ' ');
 }
-export function transformSpecificVariations(title) {
+function transformSpecificVariations(title) {
     if (!title)
         return '';
     return title.replaceAll('yuu', 'yu').replaceAll(' ou', ' oh');
 }
-export function sanitizeTitle(title) {
+function sanitizeTitle(title) {
     let resTitle = title.replace(/ *(\(dub\)|\(sub\)|\(uncensored\)|\(uncut\)|\(subbed\)|\(dubbed\))/i, '');
     resTitle = resTitle.replace(/ *\([^)]+audio\)/i, '');
     resTitle = resTitle.replace(/ BD( |$)/i, '');
@@ -242,7 +266,7 @@ export function sanitizeTitle(title) {
     resTitle = resTitle.substring(0, 99); // truncate
     return resTitle;
 }
-export function stringSearch(string, pattern) {
+function stringSearch(string, pattern) {
     let count = 0;
     string = string.toLowerCase();
     pattern = pattern.toLowerCase();
@@ -258,7 +282,7 @@ export function stringSearch(string, pattern) {
     }
     return count;
 }
-export const filterValidM3U8 = async (m3u8Links, options = {}) => {
+const filterValidM3U8 = async (m3u8Links, options = {}) => {
     const { timeout = 10000, headers = {}, indicators = ['#EXT', '#EXTINF', '#EXT-X-', '#EXTM3U'], concurrency = 10, } = options;
     const validLinks = [];
     let index = 0;
@@ -306,4 +330,5 @@ export const filterValidM3U8 = async (m3u8Links, options = {}) => {
     await Promise.all(Array.from({ length: concurrency }, () => next()));
     return validLinks;
 };
+exports.filterValidM3U8 = filterValidM3U8;
 //# sourceMappingURL=utils.js.map

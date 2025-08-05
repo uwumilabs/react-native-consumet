@@ -1,20 +1,26 @@
-import { load } from 'cheerio';
-import CryptoJS from 'crypto-js';
-import { VideoExtractor } from '../models';
-class AsianLoad extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const crypto_js_1 = __importDefault(require("crypto-js"));
+const models_1 = require("../models");
+class AsianLoad extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'asianload';
         this.sources = [];
         this.keys = {
-            key: CryptoJS.enc.Utf8.parse('93422192433952489752342908585752'),
-            iv: CryptoJS.enc.Utf8.parse('9262859232435825'),
+            key: crypto_js_1.default.enc.Utf8.parse('93422192433952489752342908585752'),
+            iv: crypto_js_1.default.enc.Utf8.parse('9262859232435825'),
         };
         this.extract = async (videoUrl) => {
-            const res = await this.client.get(videoUrl.href);
-            const $ = load(res.data);
+            const res = await axios_1.default.get(videoUrl.href);
+            const $ = (0, cheerio_1.load)(res.data);
             const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
-            const encryptedData = await this.client.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
+            const encryptedData = await axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -44,22 +50,22 @@ class AsianLoad extends VideoExtractor {
             };
         };
         this.generateEncryptedAjaxParams = async ($, id) => {
-            const encryptedKey = CryptoJS.AES.encrypt(id, this.keys.key, {
+            const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
                 iv: this.keys.iv,
             }).toString();
             const scriptValue = $("script[data-name='crypto']").data().value;
-            const decryptedToken = CryptoJS.AES.decrypt(scriptValue, this.keys.key, {
+            const decryptedToken = crypto_js_1.default.AES.decrypt(scriptValue, this.keys.key, {
                 iv: this.keys.iv,
-            }).toString(CryptoJS.enc.Utf8);
+            }).toString(crypto_js_1.default.enc.Utf8);
             return `id=${encryptedKey}&alias=${decryptedToken}`;
         };
         this.decryptAjaxData = async (encryptedData) => {
-            const decryptedData = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedData, this.keys.key, {
+            const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.key, {
                 iv: this.keys.iv,
             }));
             return JSON.parse(decryptedData);
         };
     }
 }
-export default AsianLoad;
+exports.default = AsianLoad;
 //# sourceMappingURL=asianload.js.map

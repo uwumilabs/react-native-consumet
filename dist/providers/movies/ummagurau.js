@@ -15,13 +15,13 @@ class Ummangurau extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+                const { data } = await axios.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
                 const $ = load(data);
                 searchResult.hasNextPage =
                     $("nav[area-label='Page navigation']").html() === null
                         ? false
                         : page <
-                            Number($("nav ul li a[title='Last']").attr('href')[$("nav ul li a[title='Last']").attr('href').length - 1]);
+                        Number($("nav ul li a[title='Last']").attr('href')[$("nav ul li a[title='Last']").attr('href').length - 1]);
                 $('div.flw-item').each((i, e) => {
                     searchResult.results.push({
                         id: `${$(e).find('a.film-poster-ahref')?.attr('href')?.slice(1)}`,
@@ -47,7 +47,7 @@ class Ummangurau extends MovieParser {
                 url: mediaId,
             };
             try {
-                const { data } = await this.client.get(mediaId);
+                const { data } = await axios.get(mediaId);
                 const $ = load(data);
                 movieInfo.title = `${$('.heading-name a').text()}`;
                 movieInfo.image = `${$('img.film-poster-img').attr('src')}`;

@@ -44,7 +44,7 @@ class Anix extends AnimeParser {
                 else if (type === 4) {
                     url += `&${this.MediaRegion.DUB}`;
                 }
-                const res = await this.client.get(url);
+                const res = await axios.get(url);
                 const $ = load(res.data);
                 const recentEpisodes = [];
                 $('.basic.ani.content-item .piece').each((i, el) => {
@@ -107,7 +107,7 @@ class Anix extends AnimeParser {
          */
         this.search = async (query, page = 1) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/filter?keyword=${query}&page=${page}&type[]=${this.MediaCategory.MOVIE}&type[]=${this.MediaCategory.TV}&type[]=${this.MediaCategory.ONA}&type[]=${this.MediaCategory.OVA}&type[]=${this.MediaCategory.SPECIAL}&type[]=${this.MediaCategory.TV_SPECIAL}&type[]=${this.MediaCategory.MUSIC}&type[]=${this.MediaCategory.UNCATEGORIZED}`);
+                const res = await axios.get(`${this.baseUrl}/filter?keyword=${query}&page=${page}&type[]=${this.MediaCategory.MOVIE}&type[]=${this.MediaCategory.TV}&type[]=${this.MediaCategory.ONA}&type[]=${this.MediaCategory.OVA}&type[]=${this.MediaCategory.SPECIAL}&type[]=${this.MediaCategory.TV_SPECIAL}&type[]=${this.MediaCategory.MUSIC}&type[]=${this.MediaCategory.UNCATEGORIZED}`);
                 const $ = load(res.data);
                 let hasNextPage = $('.pagination').length > 0;
                 if (hasNextPage) {
@@ -170,7 +170,7 @@ class Anix extends AnimeParser {
         this.fetchAnimeInfo = async (id) => {
             const url = `${this.baseUrl}/anime/${id}/ep-1`;
             try {
-                const res = await this.client.get(url);
+                const res = await axios.get(url);
                 const $ = load(res.data);
                 const animeInfo = {
                     id: id,
@@ -185,12 +185,12 @@ class Anix extends AnimeParser {
                     $(el)
                         .find('div')
                         .each((i, el) => {
-                        animeInfo.episodes?.push({
-                            id: $(el).find('a').attr('href')?.split('/')[3],
-                            number: parseFloat($(el).find(`a`).text()),
-                            url: `${this.baseUrl}${$(el).find(`a`).attr('href')?.trim()}`,
+                            animeInfo.episodes?.push({
+                                id: $(el).find('a').attr('href')?.split('/')[3],
+                                number: parseFloat($(el).find(`a`).text()),
+                                url: `${this.baseUrl}${$(el).find(`a`).attr('href')?.trim()}`,
+                            });
                         });
-                    });
                 });
                 const metaData = { status: '', type: '' };
                 $('.metadata .limiter div').each((i, el) => {
@@ -199,11 +199,11 @@ class Anix extends AnimeParser {
                         $(el)
                             .find('span a')
                             .each((i, el) => {
-                            if (animeInfo.genres === undefined) {
-                                animeInfo.genres = [];
-                            }
-                            animeInfo.genres.push($(el).attr('title'));
-                        });
+                                if (animeInfo.genres === undefined) {
+                                    animeInfo.genres = [];
+                                }
+                                animeInfo.genres.push($(el).attr('title'));
+                            });
                     }
                     else if (text.includes('Status: ')) {
                         metaData.status = text.replace('Status: ', '');
@@ -263,7 +263,7 @@ class Anix extends AnimeParser {
         this.fetchRandomAnimeInfo = async () => {
             const url = `${this.baseUrl}/random`;
             try {
-                const res = await this.client.get(url);
+                const res = await axios.get(url);
                 const $ = load(res.data);
                 const id = $('.content .tmp_alias')?.attr('value');
                 const animeInfo = {
@@ -279,12 +279,12 @@ class Anix extends AnimeParser {
                     $(el)
                         .find('div')
                         .each((i, el) => {
-                        animeInfo.episodes?.push({
-                            id: $(el).find('a').attr('href')?.split('/')[3],
-                            number: parseFloat($(el).find(`a`).text()),
-                            url: `${this.baseUrl}${$(el).find(`a`).attr('href')?.trim()}`,
+                            animeInfo.episodes?.push({
+                                id: $(el).find('a').attr('href')?.split('/')[3],
+                                number: parseFloat($(el).find(`a`).text()),
+                                url: `${this.baseUrl}${$(el).find(`a`).attr('href')?.trim()}`,
+                            });
                         });
-                    });
                 });
                 const metaData = { status: '', type: '' };
                 $('.metadata .limiter div').each((i, el) => {
@@ -293,11 +293,11 @@ class Anix extends AnimeParser {
                         $(el)
                             .find('span a')
                             .each((i, el) => {
-                            if (animeInfo.genres === undefined) {
-                                animeInfo.genres = [];
-                            }
-                            animeInfo.genres.push($(el).attr('title'));
-                        });
+                                if (animeInfo.genres === undefined) {
+                                    animeInfo.genres = [];
+                                }
+                                animeInfo.genres.push($(el).attr('title'));
+                            });
                     }
                     else if (text.includes('Status: ')) {
                         metaData.status = text.replace('Status: ', '');
@@ -364,14 +364,14 @@ class Anix extends AnimeParser {
         this.fetchEpisodeSources = async (id, episodeId, server = StreamingServers.BuiltIn, type = '') => {
             const url = `${this.baseUrl}/anime/${id}/${episodeId}`;
             const uri = new URL(url);
-            const res = await this.client.get(url);
+            const res = await axios.get(url);
             const $ = load(res.data);
             const servers = new Map();
             $($('.ani-server-type-pad')[0])
                 .find('.server')
                 .each((i, el) => {
-                servers.set($(el).text().trim(), $(el).attr('data-video'));
-            });
+                    servers.set($(el).text().trim(), $(el).attr('data-video'));
+                });
             switch (server) {
                 case StreamingServers.VidHide:
                     if (servers.get('Vidhide') !== undefined) {
@@ -451,7 +451,7 @@ class Anix extends AnimeParser {
                                     Referer: url,
                                 },
                             };
-                            const m3u8Content = await this.client.get(defaultUrl, options);
+                            const m3u8Content = await axios.get(defaultUrl, options);
                             if (m3u8Content.data.includes('EXTM3U')) {
                                 const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
                                 for (const video of videoList ?? []) {
@@ -487,17 +487,17 @@ class Anix extends AnimeParser {
          */
         this.fetchEpisodeServers = async (id, episodeId) => {
             const url = `${this.baseUrl}/anime/${id}/${episodeId}`;
-            const res = await this.client.get(url);
+            const res = await axios.get(url);
             const $ = load(res.data);
             const servers = [];
             $($('.ani-server-type-pad')[0])
                 .find('.server')
                 .each((i, el) => {
-                servers.push({
-                    name: $(el).text().trim(),
-                    url: $(el).attr('data-video'),
+                    servers.push({
+                        name: $(el).text().trim(),
+                        url: $(el).attr('data-video'),
+                    });
                 });
-            });
             return servers;
         };
         /**
@@ -508,7 +508,7 @@ class Anix extends AnimeParser {
          */
         this.fetchEpisodeServerType = async (id, episodeId, type) => {
             const url = `${this.baseUrl}/anime/${id}/${episodeId}`;
-            const res = await this.client.get(url);
+            const res = await axios.get(url);
             const $ = load(res.data);
             const subs = [];
             const dubs = [];
@@ -517,21 +517,21 @@ class Anix extends AnimeParser {
                 $(element)
                     .find('.server')
                     .each((i, el) => {
-                    const serverData = {
-                        name: $(el).text().trim(),
-                        url: $(el).attr('data-video'),
-                    };
-                    const dataType = $(el).attr('data-typesv').split('-')[0];
-                    if (dataType === 'SUB') {
-                        subs.push(serverData);
-                    }
-                    else if (dataType === 'DUB') {
-                        dubs.push(serverData);
-                    }
-                    else if (dataType === 'RAW') {
-                        raw.push(serverData);
-                    }
-                });
+                        const serverData = {
+                            name: $(el).text().trim(),
+                            url: $(el).attr('data-video'),
+                        };
+                        const dataType = $(el).attr('data-typesv').split('-')[0];
+                        if (dataType === 'SUB') {
+                            subs.push(serverData);
+                        }
+                        else if (dataType === 'DUB') {
+                            dubs.push(serverData);
+                        }
+                        else if (dataType === 'RAW') {
+                            raw.push(serverData);
+                        }
+                    });
             });
             if (!type) {
                 return { sub: subs, dub: dubs, raw: raw };

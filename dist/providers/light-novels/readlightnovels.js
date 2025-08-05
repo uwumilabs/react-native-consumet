@@ -1,8 +1,14 @@
-import { load } from 'cheerio';
-import FormData from 'form-data';
-import { LightNovelParser, MediaStatus, } from '../../models';
-import { USER_AGENT } from '../../utils';
-class ReadLightNovels extends LightNovelParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const form_data_1 = __importDefault(require("form-data"));
+const models_1 = require("../../models");
+const utils_1 = require("../../utils");
+class ReadLightNovels extends models_1.LightNovelParser {
     constructor() {
         super(...arguments);
         this.name = 'Read Light Novels';
@@ -24,12 +30,12 @@ class ReadLightNovels extends LightNovelParser {
                 url: lightNovelUrl,
             };
             try {
-                const page = await this.client.get(lightNovelUrl, {
+                const page = await axios_1.default.get(lightNovelUrl, {
                     headers: {
                         Referer: lightNovelUrl,
                     },
                 });
-                const $ = load(page.data);
+                const $ = (0, cheerio_1.load)(page.data);
                 const novelId = parseInt($('#id_post').val());
                 lightNovelInfo.title = $('div.col-xs-12.col-sm-8.col-md-8.desc > h3').text();
                 lightNovelInfo.image = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.books > div > img').attr('src');
@@ -49,13 +55,13 @@ class ReadLightNovels extends LightNovelParser {
                     .filter((x) => !isNaN(x)));
                 switch ($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text()) {
                     case 'Completed':
-                        lightNovelInfo.status = MediaStatus.COMPLETED;
+                        lightNovelInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'On Going':
-                        lightNovelInfo.status = MediaStatus.ONGOING;
+                        lightNovelInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     default:
-                        lightNovelInfo.status = MediaStatus.UNKNOWN;
+                        lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
                         break;
                 }
                 lightNovelInfo.pages = pages;
@@ -74,12 +80,12 @@ class ReadLightNovels extends LightNovelParser {
         };
         this.fetchChapters = async (novelId, chapterPage, referer) => {
             const chapters = [];
-            const bodyFormData = new FormData();
+            const bodyFormData = new form_data_1.default();
             bodyFormData.append('action', 'tw_ajax');
             bodyFormData.append('type', 'pagination');
             bodyFormData.append('page', chapterPage);
             bodyFormData.append('id', novelId);
-            const page = await this.client({
+            const page = await (0, axios_1.default)({
                 method: 'post',
                 url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
                 data: bodyFormData,
@@ -87,10 +93,10 @@ class ReadLightNovels extends LightNovelParser {
                     'referer': referer,
                     'content-type': 'multipart/form-data',
                     'origin': this.baseUrl,
-                    'user-agent': USER_AGENT,
+                    'user-agent': utils_1.USER_AGENT,
                 },
             });
-            const $ = load(page.data.list_chap);
+            const $ = (0, cheerio_1.load)(page.data.list_chap);
             for (const chapter of $('ul.list-chapter > li')) {
                 const subId = $(chapter).find('a').attr('href').split('/')?.pop().replace('.html', '');
                 const id = $(chapter).find('a').attr('href').split('/')[3];
@@ -124,8 +130,8 @@ class ReadLightNovels extends LightNovelParser {
                 text: '',
             };
             try {
-                const page = await this.client.get(chapterId);
-                const $ = load(page.data);
+                const page = await axios_1.default.get(chapterId);
+                const $ = (0, cheerio_1.load)(page.data);
                 contents.novelTitle = $('.truyen-title').text();
                 contents.chapterTitle = $('.chapter-title').text();
                 for (const line of $('div.chapter-content > p')) {
@@ -146,8 +152,8 @@ class ReadLightNovels extends LightNovelParser {
         this.search = async (query) => {
             const result = { results: [] };
             try {
-                const res = await this.client.post(`${this.baseUrl}/?s=${query}`);
-                const $ = load(res.data);
+                const res = await axios_1.default.post(`${this.baseUrl}/?s=${query}`);
+                const $ = (0, cheerio_1.load)(res.data);
                 $('div.col-xs-12.col-sm-12.col-md-9.col-truyen-main > div:nth-child(1) > div > div:nth-child(2) > div.col-md-3.col-sm-6.col-xs-6.home-truyendecu').each((i, el) => {
                     result.results.push({
                         id: $(el).find('a').attr('href')?.split('/')[3].replace('.html', ''),
@@ -164,7 +170,7 @@ class ReadLightNovels extends LightNovelParser {
         };
     }
 }
-export default ReadLightNovels;
+exports.default = ReadLightNovels;
 // (async () => {
 //   const ln = new ReadLightNovels();
 //   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');

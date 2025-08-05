@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
-class MangaHere extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class MangaHere extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'MangaHere';
@@ -13,12 +19,12 @@ class MangaHere extends MangaParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`, {
                     headers: {
                         cookie: 'isAdult=1',
                     },
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 mangaInfo.title = $('span.detail-info-right-title-font').text();
                 mangaInfo.description = $('div.detail-info-right > p.fullcontent').text();
                 mangaInfo.headers = { Referer: this.baseUrl };
@@ -28,13 +34,13 @@ class MangaHere extends MangaParser {
                     .get();
                 switch ($('span.detail-info-right-title-tip').text()) {
                     case 'Ongoing':
-                        mangaInfo.status = MediaStatus.ONGOING;
+                        mangaInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'Completed':
-                        mangaInfo.status = MediaStatus.COMPLETED;
+                        mangaInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     default:
-                        mangaInfo.status = MediaStatus.UNKNOWN;
+                        mangaInfo.status = models_1.MediaStatus.UNKNOWN;
                         break;
                 }
                 mangaInfo.rating = parseFloat($('span.detail-info-right-title-star > span').last().text());
@@ -58,12 +64,12 @@ class MangaHere extends MangaParser {
             const chapterPages = [];
             const url = `${this.baseUrl}/manga/${chapterId}/1.html`;
             try {
-                const { data } = await this.client.get(url, {
+                const { data } = await axios_1.default.get(url, {
                     headers: {
                         cookie: 'isAdult=1',
                     },
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const copyrightHandle = $('p.detail-block-content').text().match('Dear user') || $('p.detail-block-content').text().match('blocked');
                 if (copyrightHandle) {
                     throw Error(copyrightHandle.input?.trim());
@@ -93,7 +99,7 @@ class MangaHere extends MangaParser {
                     for (let i = 1; i <= pages; i++) {
                         const pageLink = `${pageBase}/chapterfun.ashx?cid=${chapterId}&page=${i}&key=${sKey}`;
                         for (let j = 1; j <= 3; j++) {
-                            const { data } = await this.client.get(pageLink, {
+                            const { data } = await axios_1.default.get(pageLink, {
                                 headers: {
                                     'Referer': url,
                                     'X-Requested-With': 'XMLHttpRequest',
@@ -132,8 +138,8 @@ class MangaHere extends MangaParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 searchRes.hasNextPage = $('div.pager-list-left > a.active').next().text() !== '>';
                 searchRes.results = $('div.container > div > div > ul > li')
                     .map((i, el) => ({
@@ -143,10 +149,10 @@ class MangaHere extends MangaParser {
                     image: $(el).find('a > img').attr('src'),
                     description: $(el).find('p').last().text(),
                     status: $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Ongoing'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Completed'
-                            ? MediaStatus.COMPLETED
-                            : MediaStatus.UNKNOWN,
+                            ? models_1.MediaStatus.COMPLETED
+                            : models_1.MediaStatus.UNKNOWN,
                 }))
                     .get();
                 return searchRes;
@@ -170,5 +176,5 @@ class MangaHere extends MangaParser {
         };
     }
 }
-export default MangaHere;
+exports.default = MangaHere;
 //# sourceMappingURL=mangahere.js.map

@@ -1,7 +1,13 @@
-import { load } from 'cheerio';
-import { isText } from 'domhandler';
-import { MangaParser, } from '../../models';
-class Mangasee123 extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const domhandler_1 = require("domhandler");
+const models_1 = require("../../models");
+class Mangasee123 extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'MangaSee';
@@ -16,10 +22,10 @@ class Mangasee123 extends MangaParser {
             };
             const url = `${this.baseUrl}/manga`;
             try {
-                const { data } = await this.client.get(`${url}/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${url}/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 const schemaScript = $('body > script:nth-child(15)').get()[0].children[0];
-                if (isText(schemaScript)) {
+                if ((0, domhandler_1.isText)(schemaScript)) {
                     const mainEntity = JSON.parse(schemaScript.data).mainEntity;
                     mangaInfo.title = mainEntity.name;
                     mangaInfo.altTitles = mainEntity.alternateName;
@@ -29,7 +35,7 @@ class Mangasee123 extends MangaParser {
                 mangaInfo.headerForImage = { Referer: this.baseUrl };
                 mangaInfo.description = $('.top-5 .Content').text();
                 const contentScript = $('body > script:nth-child(16)').get()[0].children[0];
-                if (isText(contentScript)) {
+                if ((0, domhandler_1.isText)(contentScript)) {
                     const chaptersData = this.processScriptTagVariable(contentScript.data, 'vm.Chapters = ');
                     mangaInfo.chapters = chaptersData.map((i) => ({
                         id: `${mangaId}-chapter-${this.processChapterNumber(i.Chapter)}`,
@@ -47,10 +53,10 @@ class Mangasee123 extends MangaParser {
             const images = [];
             const url = `${this.baseUrl}/read-online/${chapterId}-page-1.html`;
             try {
-                const { data } = await this.client.get(`${url}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${url}`);
+                const $ = (0, cheerio_1.load)(data);
                 const chapterScript = $('body > script:nth-child(19)').get()[0].children[0];
-                if (isText(chapterScript)) {
+                if ((0, domhandler_1.isText)(chapterScript)) {
                     const curChapter = this.processScriptTagVariable(chapterScript.data, 'vm.CurChapter = ');
                     const imageHost = this.processScriptTagVariable(chapterScript.data, 'vm.CurPathName = ');
                     const curChapterLength = Number(curChapter.Page);
@@ -77,7 +83,7 @@ class Mangasee123 extends MangaParser {
             const matches = [];
             const sanitizedQuery = query.replace(/\s/g, '').toLowerCase();
             try {
-                const { data } = await this.client.get(`https://mangasee123.com/_search.php`);
+                const { data } = await axios_1.default.get(`https://mangasee123.com/_search.php`);
                 for (const i in data) {
                     const sanitizedAlts = [];
                     const item = data[i];
@@ -136,5 +142,5 @@ class Mangasee123 extends MangaParser {
 //   console.log(chapterPages);
 //   console.log(mediaInfo, mangaInfo);
 // })();
-export default Mangasee123;
+exports.default = Mangasee123;
 //# sourceMappingURL=mangasee123.js.map

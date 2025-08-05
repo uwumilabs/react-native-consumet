@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   GogoCDN,
   StreamSB,
@@ -9,13 +10,10 @@ import {
   StreamTape,
   VizCloud,
   Filemoon,
-  BilibiliExtractor,
   AsianLoad,
-  SmashyStream,
   StreamHub,
   VidMoly,
   MegaUp,
-  Luffy,
 } from '../extractors';
 import {
   USER_AGENT,
@@ -53,7 +51,6 @@ export {
   USER_AGENT,
   GogoCDN,
   StreamSB,
-  SmashyStream,
   StreamHub,
   splitAuthor,
   floorID,
@@ -85,7 +82,6 @@ export {
   days,
   isJson,
   convertDuration,
-  BilibiliExtractor,
   AsianLoad,
   substringAfter,
   substringBefore,
@@ -93,5 +89,4 @@ export {
   VidMoly,
   getKKey,
   MegaUp,
-  Luffy,
 };

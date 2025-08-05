@@ -1,4 +1,5 @@
 // @ts-nocheck
+import axios from "axios";
 import { load } from 'cheerio';
 import type { IVideo, ISource } from '../models';
 import VideoExtractor from '../models/video-extractor';
@@ -26,7 +27,7 @@ class StreamP2P extends VideoExtractor {
     const password = 'kiemtienmua911ca';
     const iv = '1234567890oiuytr';
     try {
-      const { data: encryptedHex } = await this.client.get(api, { headers });
+      const { data: encryptedHex } = await axios.get(api, { headers });
 
       // Convert hex to WordArray
       const encryptedData = CryptoJS.enc.Hex.parse(encryptedHex);

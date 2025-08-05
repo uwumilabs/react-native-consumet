@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 import FormData from 'form-data';
 
@@ -35,7 +36,7 @@ class ReadLightNovels extends LightNovelParser {
     };
 
     try {
-      const page = await this.client.get(lightNovelUrl, {
+      const page = await axios.get(lightNovelUrl, {
         headers: {
           Referer: lightNovelUrl,
         },
@@ -105,7 +106,7 @@ class ReadLightNovels extends LightNovelParser {
     bodyFormData.append('page', chapterPage);
     bodyFormData.append('id', novelId);
 
-    const page = await this.client({
+    const page = await axios({
       method: 'post',
       url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
       data: bodyFormData,
@@ -155,7 +156,7 @@ class ReadLightNovels extends LightNovelParser {
     };
 
     try {
-      const page = await this.client.get(chapterId);
+      const page = await axios.get(chapterId);
       const $ = load(page.data);
 
       contents.novelTitle = $('.truyen-title').text();
@@ -179,7 +180,7 @@ class ReadLightNovels extends LightNovelParser {
   override search = async (query: string): Promise<ISearch<ILightNovelResult>> => {
     const result: ISearch<ILightNovelResult> = { results: [] };
     try {
-      const res = await this.client.post(`${this.baseUrl}/?s=${query}`);
+      const res = await axios.post(`${this.baseUrl}/?s=${query}`);
       const $ = load(res.data);
 
       $(

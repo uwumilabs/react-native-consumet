@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const staticData = [
     [
         1332468387, -1641050960, 2136896045, -1629555948, 1399201960, -850809832, -1307058635, 751381793, -1933648423,
@@ -140,5 +142,5 @@ const staticData = [
         176, 84, 187, 22,
     ],
 ];
-export default staticData;
+exports.default = staticData;
 //# sourceMappingURL=staticdata.js.map

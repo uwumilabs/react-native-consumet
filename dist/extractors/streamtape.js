@@ -1,16 +1,22 @@
-import { load } from 'cheerio';
-import { VideoExtractor } from '../models';
-class StreamTape extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../models");
+class StreamTape extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'StreamTape';
         this.sources = [];
         this.extract = async (videoUrl) => {
             try {
-                const { data } = await this.client.get(videoUrl.href).catch(() => {
+                const { data } = await axios_1.default.get(videoUrl.href).catch(() => {
                     throw new Error('Video not found');
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 let [fh, sh] = $.html()
                     ?.match(/robotlink'\).innerHTML = (.*)'/)[1]
                     .split("+ ('");
@@ -29,5 +35,5 @@ class StreamTape extends VideoExtractor {
         };
     }
 }
-export default StreamTape;
+exports.default = StreamTape;
 //# sourceMappingURL=streamtape.js.map

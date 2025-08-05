@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import { VideoExtractor, type IVideo } from '../models';
@@ -8,7 +9,7 @@ class StreamTape extends VideoExtractor {
 
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await this.client.get(videoUrl.href).catch(() => {
+      const { data } = await axios.get(videoUrl.href).catch(() => {
         throw new Error('Video not found');
       });
 

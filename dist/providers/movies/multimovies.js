@@ -1,15 +1,21 @@
-import { load } from 'cheerio';
-import { MovieParser, TvType, StreamingServers, } from '../../models';
-import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
-import { USER_AGENT } from '../../utils';
-class MultiMovies extends MovieParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+const extractors_1 = require("../../extractors");
+const utils_1 = require("../../utils");
+class MultiMovies extends models_1.MovieParser {
     constructor(customBaseURL) {
-        super(...arguments);
+        super();
         this.name = 'MultiMovies';
         this.baseUrl = 'https://multimovies.asia';
         this.logo = 'https://multimovies.asia/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
         this.classPath = 'MOVIES.MultiMovies';
-        this.supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+        this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         this.proxiedBaseUrl = 'https://m3u8proxy.durgeshdwivedi81.workers.dev/v2?url=' + encodeURIComponent(this.baseUrl);
         this.customProxyUrl = 'https://m3u8proxy.durgeshdwivedi81.workers.dev/v2?url=';
         /**
@@ -31,8 +37,8 @@ class MultiMovies extends MovieParser {
                 else {
                     url = `${this.proxiedBaseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
                 }
-                const { data } = await this.client.get(url);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(url);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pagination';
                 searchResult.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
                 const articles = $('.search-page .result-item article').toArray();
@@ -59,7 +65,7 @@ class MultiMovies extends MovieParser {
                         releaseDate: $(el).find('.meta .year').text().trim(),
                         season: seasonSet.size,
                         description: $(el).find('.contenido p').text().trim(),
-                        type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
+                        type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/') ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                     });
                 }));
                 return searchResult;
@@ -93,8 +99,8 @@ class MultiMovies extends MovieParser {
                 url: mediaId,
             };
             try {
-                const { data } = await this.client.get(mediaId);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(mediaId);
+                const $ = (0, cheerio_1.load)(data);
                 const recommendationsArray = [];
                 $('div#single_relacionados  article').each((i, el) => {
                     recommendationsArray.push({
@@ -106,15 +112,15 @@ class MultiMovies extends MovieParser {
                         title: $(el).find('a img').attr('alt'),
                         image: $(el).find('a img').attr('data-src') ?? $(el).find('a img').attr('src'),
                         type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/')
-                            ? TvType.TVSERIES
-                            : (TvType.MOVIE ?? null),
+                            ? models_1.TvType.TVSERIES
+                            : (models_1.TvType.MOVIE ?? null),
                     });
                 });
                 movieInfo.cover = $('div#info .galeria').first().find('.g-item a').attr('href')?.trim() ?? '';
                 movieInfo.title = $('.sheader > .data > h1').text();
                 movieInfo.image = $('.sheader > .poster > img').attr('src') ?? $('.sheader > .poster > img').attr('data-src');
                 movieInfo.description = $('div#info div[itemprop="description"] p').text();
-                movieInfo.type = movieInfo.id.split('/')[0] === 'tvshows' ? TvType.TVSERIES : TvType.MOVIE;
+                movieInfo.type = movieInfo.id.split('/')[0] === 'tvshows' ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE;
                 movieInfo.releaseDate = $('.sheader > .data > .extra > span.date').text().trim();
                 movieInfo.trailer = {
                     id: $('div#trailer .embed  iframe').attr('data-litespeed-src')?.split('embed/')[1]?.split('?')[0] ??
@@ -142,7 +148,7 @@ class MultiMovies extends MovieParser {
                 movieInfo.duration = $('.sheader > .data > .extra > span.runtime').text();
                 movieInfo.rating = parseFloat($('.starstruck-rating span.dt_rating_vgs[itemprop="ratingValue"]').text());
                 movieInfo.recommendations = recommendationsArray;
-                if (movieInfo.type === TvType.TVSERIES) {
+                if (movieInfo.type === models_1.TvType.TVSERIES) {
                     movieInfo.episodes = [];
                     $('#seasons .se-c').each((i, el) => {
                         const seasonNumber = parseInt($(el).find('.se-t').text().trim());
@@ -189,38 +195,38 @@ class MultiMovies extends MovieParser {
          * @param server server type (default `StreamWish`) (optional)
          */
         this.fetchEpisodeSources = async (episodeId, mediaId, //just placeholder for compatibility with tmdb
-        server = StreamingServers.StreamWish, fileId) => {
+        server = models_1.StreamingServers.StreamWish, fileId) => {
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
-                    case StreamingServers.MixDrop:
+                    case models_1.StreamingServers.MixDrop:
                         return {
                             headers: { Referer: serverUrl.href },
-                            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.MixDrop().extract(serverUrl),
                             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
                         };
-                    case StreamingServers.StreamWish:
+                    case models_1.StreamingServers.StreamWish:
                         return {
                             headers: { Referer: serverUrl.href },
-                            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+                            ...(await new extractors_1.StreamWish().extract(serverUrl, this.baseUrl)),
                             download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '',
                         };
-                    case StreamingServers.StreamTape:
+                    case models_1.StreamingServers.StreamTape:
                         return {
                             headers: { Referer: serverUrl.href },
-                            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.StreamTape().extract(serverUrl),
                             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
                         };
-                    case StreamingServers.VidHide:
+                    case models_1.StreamingServers.VidHide:
                         return {
                             headers: { Referer: serverUrl.href },
-                            sources: await new VidHide(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.VidHide().extract(serverUrl),
                             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
                         };
                     default:
                         return {
                             headers: { Referer: serverUrl.href },
-                            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
+                            ...(await new extractors_1.StreamWish().extract(serverUrl)),
                             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
                         };
                 }
@@ -269,8 +275,8 @@ class MultiMovies extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pagination';
                 result.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
                 $('.items > article')
@@ -280,7 +286,7 @@ class MultiMovies extends MovieParser {
                         title: $(el).find('div.data > h3').text() ?? '',
                         url: $(el).find('div.poster > a').attr('href'),
                         image: $(el).find('div.poster > img').attr('data-src') ?? '',
-                        type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
+                        type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                         rating: $(el).find('div.poster > div.rating').text() ?? '',
                         releaseDate: $(el).find('div.data > span').text() ?? '',
                     };
@@ -300,8 +306,8 @@ class MultiMovies extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pagination';
                 result.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
                 $('.items > article')
@@ -311,7 +317,7 @@ class MultiMovies extends MovieParser {
                         title: $(el).find('div.data > h3').text() ?? '',
                         url: $(el).find('div.poster > a').attr('href'),
                         image: $(el).find('div.poster > img').attr('data-src') ?? '',
-                        type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
+                        type: $(el).find('div.poster > a').attr('href')?.includes('/movies/') ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                         rating: $(el).find('div.poster > div.rating').text() ?? '',
                         releaseDate: $(el).find('div.data > span').text() ?? '',
                     };
@@ -340,8 +346,8 @@ class MultiMovies extends MovieParser {
         console.log(`Fetching server for URL: ${url}`);
         try {
             console.log('step1');
-            const { data } = await this.client.get(this.customProxyUrl + url);
-            const $ = load(data);
+            const { data } = await axios_1.default.get(this.customProxyUrl + url);
+            const $ = (0, cheerio_1.load)(data);
             console.log('step2');
             // Extract player config
             const playerConfig = {
@@ -358,7 +364,7 @@ class MultiMovies extends MovieParser {
             formData.append('nume', playerConfig.nume);
             formData.append('type', playerConfig.type);
             const headers = {
-                'User-Agent': USER_AGENT,
+                'User-Agent': utils_1.USER_AGENT,
             };
             console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
             const response = await fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
@@ -378,7 +384,7 @@ class MultiMovies extends MovieParser {
                     };
                 }
                 let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
-                const redirectResponse = await this.client.head(playerBaseUrl, {
+                const redirectResponse = await axios_1.default.head(playerBaseUrl, {
                     headers,
                 });
                 // Update base URL if redirect occurred
@@ -441,5 +447,5 @@ class MultiMovies extends MovieParser {
 //   // const genre = await movie.fetchByGenre('action');
 //   console.log(search);
 // })();
-export default MultiMovies;
+exports.default = MultiMovies;
 //# sourceMappingURL=multimovies.js.map

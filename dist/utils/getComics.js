@@ -1,4 +1,7 @@
-export const parsePostInfo = (post) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.parsePostInfo = void 0;
+const parsePostInfo = (post) => {
     let year = '';
     let size = '';
     let description = '';
@@ -43,4 +46,5 @@ export const parsePostInfo = (post) => {
     description = description.substring(0, description.length - 12);
     return { year, size, description };
 };
+exports.parsePostInfo = parsePostInfo;
 //# sourceMappingURL=getComics.js.map

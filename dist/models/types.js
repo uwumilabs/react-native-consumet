@@ -1,5 +1,7 @@
-import {} from './base-types';
-export var MediaFormat;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Topics = exports.Genres = exports.TvType = exports.SubOrSub = exports.WatchListType = exports.MediaStatus = exports.StreamingServers = exports.MediaFormat = void 0;
+var MediaFormat;
 (function (MediaFormat) {
     MediaFormat["TV"] = "TV";
     MediaFormat["TV_SHORT"] = "TV_SHORT";
@@ -14,8 +16,8 @@ export var MediaFormat;
     MediaFormat["ONE_SHOT"] = "ONE_SHOT";
     MediaFormat["PV"] = "PV";
     MediaFormat["COMIC"] = "COMIC";
-})(MediaFormat || (MediaFormat = {}));
-export var StreamingServers;
+})(MediaFormat || (exports.MediaFormat = MediaFormat = {}));
+var StreamingServers;
 (function (StreamingServers) {
     StreamingServers["AsianLoad"] = "asianload";
     StreamingServers["GogoCDN"] = "gogocdn";
@@ -41,8 +43,8 @@ export var StreamingServers;
     StreamingServers["MegaCloud"] = "megacloud";
     StreamingServers["Luffy"] = "luffy";
     StreamingServers["Multi"] = "multi";
-})(StreamingServers || (StreamingServers = {}));
-export var MediaStatus;
+})(StreamingServers || (exports.StreamingServers = StreamingServers = {}));
+var MediaStatus;
 (function (MediaStatus) {
     MediaStatus["ONGOING"] = "Ongoing";
     MediaStatus["COMPLETED"] = "Completed";
@@ -50,8 +52,8 @@ export var MediaStatus;
     MediaStatus["CANCELLED"] = "Cancelled";
     MediaStatus["NOT_YET_AIRED"] = "Not yet aired";
     MediaStatus["UNKNOWN"] = "Unknown";
-})(MediaStatus || (MediaStatus = {}));
-export var WatchListType;
+})(MediaStatus || (exports.MediaStatus = MediaStatus = {}));
+var WatchListType;
 (function (WatchListType) {
     WatchListType["WATCHING"] = "watching";
     WatchListType["ONHOLD"] = "on-hold";
@@ -59,24 +61,24 @@ export var WatchListType;
     WatchListType["DROPPED"] = "dropped";
     WatchListType["COMPLETED"] = "completed";
     WatchListType["NONE"] = "none";
-})(WatchListType || (WatchListType = {}));
-export var SubOrSub;
+})(WatchListType || (exports.WatchListType = WatchListType = {}));
+var SubOrSub;
 (function (SubOrSub) {
     SubOrSub["SUB"] = "sub";
     SubOrSub["DUB"] = "dub";
     SubOrSub["BOTH"] = "both";
-})(SubOrSub || (SubOrSub = {}));
+})(SubOrSub || (exports.SubOrSub = SubOrSub = {}));
 /**
  * Used **only** for movie/tvshow providers
  */
-export var TvType;
+var TvType;
 (function (TvType) {
     TvType["TVSERIES"] = "TV Series";
     TvType["MOVIE"] = "Movie";
     TvType["ANIME"] = "Anime";
     TvType["PEOPLE"] = "People";
-})(TvType || (TvType = {}));
-export var Genres;
+})(TvType || (exports.TvType = TvType = {}));
+var Genres;
 (function (Genres) {
     Genres["ACTION"] = "Action";
     Genres["ADVENTURE"] = "Adventure";
@@ -96,8 +98,8 @@ export var Genres;
     Genres["SPORTS"] = "Sports";
     Genres["SUPERNATURAL"] = "Supernatural";
     Genres["THRILLER"] = "Thriller";
-})(Genres || (Genres = {}));
-export var Topics;
+})(Genres || (exports.Genres = Genres = {}));
+var Topics;
 (function (Topics) {
     Topics["ANIME"] = "anime";
     Topics["ANIMATION"] = "animation";
@@ -111,5 +113,5 @@ export var Topics;
     Topics["PEOPLE"] = "people";
     Topics["MERCH"] = "merch";
     Topics["EVENTS"] = "events";
-})(Topics || (Topics = {}));
+})(Topics || (exports.Topics = Topics = {}));
 //# sourceMappingURL=types.js.map

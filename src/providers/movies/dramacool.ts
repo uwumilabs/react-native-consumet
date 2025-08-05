@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import { AsianLoad, MixDrop, StreamSB, StreamTape, StreamWish, VidHide } from '../../extractors';
@@ -30,7 +31,7 @@ class DramaCool extends MovieParser {
         results: [],
       };
 
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `${this.baseUrl}/search?type=drama&keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`
       );
 
@@ -72,7 +73,7 @@ class DramaCool extends MovieParser {
         title: '',
       };
 
-      const { data } = await this.client.get(mediaId);
+      const { data } = await axios.get(mediaId);
       const $ = load(data);
 
       mediaInfo.id = realMediaId;
@@ -177,7 +178,7 @@ class DramaCool extends MovieParser {
 
       episodeId = `${this.baseUrl}/${episodeId}`;
 
-      const { data } = await this.client.get(episodeId);
+      const { data } = await axios.get(episodeId);
       const $ = load(data);
 
       // keeping the old code future reference
@@ -195,7 +196,7 @@ class DramaCool extends MovieParser {
 
       const standardServer = $('div.anime_muti_link > ul > li.standard').attr('data-video')!;
       const url = standardServer.startsWith('//') ? standardServer?.replace('//', 'https://') : standardServer;
-      const { data: servers } = await this.client.get(url);
+      const { data: servers } = await axios.get(url);
       const $$ = load(servers);
       $$('div#list-server-more > ul > li').each((i, el) => {
         let name = $$(el).attr('data-provider')!;
@@ -226,33 +227,33 @@ class DramaCool extends MovieParser {
         case StreamingServers.AsianLoad:
           return {
             headers: { Referer: serverUrl.origin },
-            ...(await new AsianLoad(this.proxyConfig, this.adapter).extract(serverUrl)),
+            ...(await new AsianLoad().extract(serverUrl)),
             download: this.downloadLink(episodeId),
           };
         case StreamingServers.MixDrop:
           return {
             headers: { Referer: serverUrl.origin },
-            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new MixDrop().extract(serverUrl),
           };
         case StreamingServers.StreamTape:
           return {
             headers: { Referer: serverUrl.origin },
-            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new StreamTape().extract(serverUrl),
           };
         case StreamingServers.StreamSB:
           return {
             headers: { Referer: serverUrl.origin },
-            sources: await new StreamSB(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new StreamSB().extract(serverUrl),
           };
         case StreamingServers.StreamWish:
           return {
             headers: { Referer: serverUrl.origin },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
+            ...(await new StreamWish().extract(serverUrl)),
           };
         case StreamingServers.VidHide:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new VidHide(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new VidHide().extract(serverUrl),
           };
         default:
           throw new Error('Server not supported');
@@ -289,7 +290,7 @@ class DramaCool extends MovieParser {
   fetchSpotlight = async (): Promise<ISearch<IMovieResult>> => {
     try {
       const results: ISearch<IMovieResult> = { results: [] };
-      const { data } = await this.client.get(`${this.baseUrl}`);
+      const { data } = await axios.get(`${this.baseUrl}`);
 
       const $ = load(data);
 
@@ -316,7 +317,7 @@ class DramaCool extends MovieParser {
     isMovies: boolean = false
   ): Promise<ISearch<IMovieResult>> {
     try {
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
       const $ = load(data);
       const results: ISearch<IMovieResult> = {
         currentPage: page,

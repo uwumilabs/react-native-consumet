@@ -1,8 +1,11 @@
-import { TurboModuleRegistry } from 'react-native';
-const NativeConsumet = TurboModuleRegistry.getEnforcing('Consumet');
-export const bypassDdosGuard = NativeConsumet.bypassDdosGuard;
-export const getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
-export const makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
-export const deobfuscateScript = NativeConsumet.deobfuscateScript;
-export default NativeConsumet;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deobfuscateScript = exports.makeGetRequestWithWebView = exports.getDdosGuardCookiesWithWebView = exports.bypassDdosGuard = void 0;
+const react_native_1 = require("react-native");
+const NativeConsumet = react_native_1.TurboModuleRegistry.getEnforcing('Consumet');
+exports.bypassDdosGuard = NativeConsumet.bypassDdosGuard;
+exports.getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
+exports.makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
+exports.deobfuscateScript = NativeConsumet.deobfuscateScript;
+exports.default = NativeConsumet;
 //# sourceMappingURL=NativeConsumet.js.map

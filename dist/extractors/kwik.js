@@ -1,5 +1,7 @@
-import { VideoExtractor } from '../models';
-class Kwik extends VideoExtractor {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const models_1 = require("../models");
+class Kwik extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'kwik';
@@ -24,5 +26,5 @@ class Kwik extends VideoExtractor {
         };
     }
 }
-export default Kwik;
+exports.default = Kwik;
 //# sourceMappingURL=kwik.js.map

@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
-class FlameScans extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class FlameScans extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'FlameScans';
@@ -14,8 +20,8 @@ class FlameScans extends MangaParser {
          */
         this.search = async (query) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/series/?title=${query.replace(/ /g, '%20')}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/series/?title=${query.replace(/ /g, '%20')}`);
+                const $ = (0, cheerio_1.load)(data);
                 const searchMangaSelector = '.utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx';
                 const results = $(searchMangaSelector)
                     .map((i, el) => ({
@@ -38,8 +44,8 @@ class FlameScans extends MangaParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 // base from https://github.com/tachiyomiorg/tachiyomi-extensions/blob/661311c13b3b550e3fa906c1130b77a037ef7a11/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mangathemesia/MangaThemesia.kt#L233
                 const seriesTitleSelector = 'h1.entry-title';
                 const seriesArtistSelector = ".infotable tr:icontains('artist') td:last-child, .tsinfo .imptdt:icontains('artist') i, .fmed b:icontains('artist')+span, span:icontains('artist')";
@@ -66,16 +72,16 @@ class FlameScans extends MangaParser {
                     .get();
                 switch ($(seriesStatusSelector).text().trim()) {
                     case 'Completed':
-                        mangaInfo.status = MediaStatus.COMPLETED;
+                        mangaInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'Ongoing':
-                        mangaInfo.status = MediaStatus.ONGOING;
+                        mangaInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'Dropped':
-                        mangaInfo.status = MediaStatus.CANCELLED;
+                        mangaInfo.status = models_1.MediaStatus.CANCELLED;
                         break;
                     default:
-                        mangaInfo.status = MediaStatus.UNKNOWN;
+                        mangaInfo.status = models_1.MediaStatus.UNKNOWN;
                         break;
                 }
                 mangaInfo.authors = $(seriesAuthorSelector).text().replace('-', '').trim()
@@ -100,8 +106,8 @@ class FlameScans extends MangaParser {
         };
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/${chapterId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/${chapterId}`);
+                const $ = (0, cheerio_1.load)(data);
                 const pageSelector = 'div#readerarea img, #readerarea div.figure_container div.composed_figure';
                 const pages = $(pageSelector)
                     .map((i, el) => ({
@@ -118,5 +124,5 @@ class FlameScans extends MangaParser {
         };
     }
 }
-export default FlameScans;
+exports.default = FlameScans;
 //# sourceMappingURL=flamescans.js.map

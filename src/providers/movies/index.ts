@@ -1,3 +1,4 @@
+import axios from "axios";
 import DramaCool from './dramacool';
 import MultiMovies from './multimovies';
 import NetflixMirror from './netflixmirror';

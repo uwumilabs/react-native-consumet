@@ -1,3 +1,4 @@
+import axios from "axios";
 import { BaseParser, type IMangaInfo, type IMangaChapterPage } from '.';
 
 abstract class MangaParser extends BaseParser {

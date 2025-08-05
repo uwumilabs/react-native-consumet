@@ -1,6 +1,9 @@
-import { VideoExtractor } from '../../models';
-import { getSources } from './megacloud.getsrcs';
-export class MegaCloud extends VideoExtractor {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MegaCloud = void 0;
+const models_1 = require("../../models");
+const megacloud_getsrcs_1 = require("./megacloud.getsrcs");
+class MegaCloud extends models_1.VideoExtractor {
     constructor(ctx) {
         super();
         this.serverName = 'MegaCloud';
@@ -16,7 +19,7 @@ export class MegaCloud extends VideoExtractor {
             sources: [],
         };
         try {
-            const resp = await getSources(embedIframeURL, referer);
+            const resp = await (0, megacloud_getsrcs_1.getSources)(embedIframeURL, referer);
             if (!resp)
                 return extractedData;
             if (Array.isArray(resp.sources)) {
@@ -50,4 +53,5 @@ export class MegaCloud extends VideoExtractor {
         }
     }
 }
+exports.MegaCloud = MegaCloud;
 //# sourceMappingURL=index.js.map

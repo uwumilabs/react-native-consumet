@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import { type IVideo, VideoExtractor, type ISubtitle } from '../models';
@@ -65,14 +66,14 @@ class Voe extends VideoExtractor {
         }
       }
 
-      const res = await this.client.get(videoUrl.href);
+      const res = await axios.get(videoUrl.href);
       const $ = load(res.data);
       const scriptContent = $('script').html();
       const pageUrl = scriptContent
         ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
         : '';
 
-      const { data } = await this.client.get(pageUrl);
+      const { data } = await axios.get(pageUrl);
       const $$ = load(data);
       const encodedString = $$('script[type="application/json"]').html()?.trim() || '';
       const jsonData = decryptF7(encodedString);

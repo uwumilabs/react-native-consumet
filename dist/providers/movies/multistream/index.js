@@ -1,17 +1,21 @@
-import { load } from 'cheerio';
-import { MovieParser, TvType, StreamingServers, } from '../../../models';
-import { MegaCloud, MixDrop, VidCloud } from '../../../extractors';
-import { getMultiServers, getMultiSources } from './utils';
-class MultiStream extends MovieParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../../models");
+const utils_1 = require("./utils");
+class MultiStream extends models_1.MovieParser {
     constructor(customBaseURL) {
-        super(...arguments);
+        super();
         this.name = 'MultiStream';
         this.baseUrl = 'https://rivestream.org';
         this.apiUrl = 'https://api.themoviedb.org/3';
         this.apiKey = '5201b54eb0968700e693a30576d7d4dc';
         this.logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
         this.classPath = 'MOVIES.MultiStream';
-        this.supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+        this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         /**
          *
          * @param query search query string
@@ -25,7 +29,7 @@ class MultiStream extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(searchUrl);
+                const { data } = await axios_1.default.get(searchUrl);
                 if (data.results.length < 1)
                     return search;
                 search.hasNextPage = page + 1 <= data.total_pages;
@@ -37,7 +41,7 @@ class MultiStream extends MovieParser {
                     let totalSeasons = undefined;
                     if (result.media_type === 'tv') {
                         try {
-                            const { data: tvData } = await this.client.get(`${this.apiUrl}/tv/${result.id}?api_key=${this.apiKey}&language=en-US`);
+                            const { data: tvData } = await axios_1.default.get(`${this.apiUrl}/tv/${result.id}?api_key=${this.apiKey}&language=en-US`);
                             totalSeasons = tvData.number_of_seasons;
                         }
                         catch (err) {
@@ -48,7 +52,7 @@ class MultiStream extends MovieParser {
                         id: `${result.id}$${result.media_type}`,
                         title: result?.title || result?.name,
                         image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
-                        type: result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
+                        type: result.media_type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                         rating: result?.vote_average || 0,
                         releaseDate: `${date.getFullYear()}` || '0',
                         seasons: totalSeasons,
@@ -76,11 +80,11 @@ class MultiStream extends MovieParser {
             mediaId = parts[0];
             const infoUrl = `${this.apiUrl}/${type}/${parts[0]}?api_key=${this.apiKey}&language=en-US&append_to_response=release_dates,images,recommendations,credits,videos`;
             try {
-                const { data } = await this.client.get(infoUrl);
+                const { data } = await axios_1.default.get(infoUrl);
                 movieInfo.title = data?.title || data?.name;
                 movieInfo.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
                 movieInfo.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
-                movieInfo.type = type === 'movie' ? TvType.MOVIE : TvType.TVSERIES;
+                movieInfo.type = type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES;
                 movieInfo.rating = data?.vote_average || 0;
                 movieInfo.releaseDate = data?.release_date || data?.first_air_date;
                 movieInfo.description = data?.overview;
@@ -108,15 +112,15 @@ class MultiStream extends MovieParser {
                                 id: result.id,
                                 title: result.title || result.name,
                                 image: `https://image.tmdb.org/t/p/original${result.poster_path}`,
-                                type: type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
+                                type: type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                                 rating: result.vote_average || 0,
                                 releaseDate: result.release_date || result.first_air_date,
                             };
                         });
-                if (movieInfo.type === TvType.TVSERIES) {
+                if (movieInfo.type === models_1.TvType.TVSERIES) {
                     movieInfo.episodes = [];
                     for (let i = 1; i <= data?.number_of_seasons; i++) {
-                        const { data } = await this.client.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
+                        const { data } = await axios_1.default.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
                         data.episodes.map((item) => {
                             const episode = {
                                 id: `${mediaId}$tv$${item.episode_number}$${item.season_number}$${item.id}`,
@@ -157,7 +161,7 @@ class MultiStream extends MovieParser {
          */
         this.fetchEpisodeSources = async (episodeId, mediaId, server) => {
             const firstServer = (await this.fetchEpisodeServers(episodeId, mediaId))[0].name;
-            return await getMultiSources(episodeId, server ? server : firstServer);
+            return await (0, utils_1.getMultiSources)(episodeId, server ? server : firstServer);
         };
         /**
          *
@@ -166,7 +170,7 @@ class MultiStream extends MovieParser {
          */
         this.fetchEpisodeServers = async (episodeId, mediaId) => {
             try {
-                const servers = await getMultiServers(episodeId);
+                const servers = await (0, utils_1.getMultiServers)(episodeId);
                 return servers;
             }
             catch (err) {
@@ -200,5 +204,5 @@ class MultiStream extends MovieParser {
 //   );
 //   console.log(genre);
 // })();
-export default MultiStream;
+exports.default = MultiStream;
 //# sourceMappingURL=index.js.map

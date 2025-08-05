@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -21,7 +22,7 @@ class Mangapark extends MangaParser {
     const url = `${this.baseUrl}/manga/${mangaId}`;
 
     try {
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
       const $ = load(data);
 
       mangaInfo.title = $('div.pb-1.mb-2.line-b-f.hd h2 a').text();
@@ -67,7 +68,7 @@ class Mangapark extends MangaParser {
     const url = `${this.baseUrl}/manga/${chapterId}`;
 
     try {
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
 
       const varLoadPages: string = data.match(regex)[0];
       const loadPagesJson = JSON.parse(varLoadPages.replace('var _load_pages = ', ''));
@@ -86,7 +87,7 @@ class Mangapark extends MangaParser {
     const url = `${this.baseUrl}/search?q=${query}&page=${page}`;
 
     try {
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
       const $ = load(data);
 
       const results: IMangaResult[] = $('.item')

@@ -1,3 +1,4 @@
+import axios from "axios";
 // @ts-nocheck
 import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';
@@ -33,7 +34,7 @@ class VidCloud extends VideoExtractor {
 
       if (Array.isArray(resp.sources)) {
         for (const source of resp.sources) {
-          const { data } = await this.client.get(source.file, options);
+          const { data } = await axios.get(source.file, options);
           const urls = data
             .split('\n')
             .filter((line: string) => line.includes('.m3u8') || line.endsWith('m3u8')) as string[];

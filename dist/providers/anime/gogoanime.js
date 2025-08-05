@@ -22,7 +22,7 @@ class Gogoanime extends AnimeParser {
                 results: [],
             };
             try {
-                const res = await this.client.get(`${this.baseUrl}/filter.html?keyword=${encodeURIComponent(query)}&page=${page}`);
+                const res = await axios.get(`${this.baseUrl}/filter.html?keyword=${encodeURIComponent(query)}&page=${page}`);
                 const $ = load(res.data);
                 searchResult.hasNextPage = $('div.anime_name.new_series > div > div > ul > li.selected').next().length > 0;
                 $('div.last_episodes > ul > li').each((i, el) => {
@@ -56,7 +56,7 @@ class Gogoanime extends AnimeParser {
                 totalEpisodes: 0,
             };
             try {
-                const res = await this.client.get(id);
+                const res = await axios.get(id);
                 const $ = load(res.data);
                 animeInfo.id = new URL(id).pathname.split('/')[2];
                 animeInfo.title = $('section.content_left > div.main_body > div:nth-child(2) > div.anime_info_body_bg > h1')
@@ -94,7 +94,7 @@ class Gogoanime extends AnimeParser {
                 const ep_end = $('#episode_page > li').last().find('a').attr('ep_end');
                 const movie_id = $('#movie_id').attr('value');
                 const alias = $('#alias_anime').attr('value');
-                const html = await this.client.get(`${this.ajaxUrl}/load-list-episode?ep_start=${ep_start}&ep_end=${ep_end}&id=${movie_id}&default_ep=${0}&alias=${alias}`);
+                const html = await axios.get(`${this.ajaxUrl}/load-list-episode?ep_start=${ep_start}&ep_end=${ep_end}&id=${movie_id}&default_ep=${0}&alias=${alias}`);
                 const $$ = load(html.data);
                 animeInfo.episodes = [];
                 $$('#episode_related > li').each((i, el) => {
@@ -162,7 +162,7 @@ class Gogoanime extends AnimeParser {
                 }
             }
             try {
-                const res = await this.client.get(`${this.baseUrl}/${episodeId}`);
+                const res = await axios.get(`${this.baseUrl}/${episodeId}`);
                 const $ = load(res.data);
                 let serverUrl;
                 switch (server) {
@@ -203,7 +203,7 @@ class Gogoanime extends AnimeParser {
             try {
                 if (!episodeId.startsWith(this.baseUrl))
                     episodeId = `${this.baseUrl}/${episodeId}`;
-                const res = await this.client.get(episodeId);
+                const res = await axios.get(episodeId);
                 const $ = load(res.data);
                 const servers = [];
                 $('div.anime_video_body > div.anime_muti_link > ul > li').each((i, el) => {
@@ -229,7 +229,7 @@ class Gogoanime extends AnimeParser {
             try {
                 if (!episodeId.startsWith(this.baseUrl))
                     episodeId = `${this.baseUrl}/${episodeId}`;
-                const res = await this.client.get(episodeId);
+                const res = await axios.get(episodeId);
                 const $ = load(res.data);
                 return $('#wrapper_bg > section > section.content_left > div:nth-child(1) > div.anime_video_body > div.anime_video_body_cate > div.anime-info > a').attr('href').split('/')[2];
             }
@@ -243,7 +243,7 @@ class Gogoanime extends AnimeParser {
          */
         this.fetchRecentEpisodes = async (page = 1, type = 1) => {
             try {
-                const res = await this.client.get(`${this.ajaxUrl}/page-recent-release.html?page=${page}&type=${type}`);
+                const res = await axios.get(`${this.ajaxUrl}/page-recent-release.html?page=${page}&type=${type}`);
                 const $ = load(res.data);
                 const recentEpisodes = [];
                 $('div.last_episodes.loaddub > ul > li').each((i, el) => {
@@ -269,7 +269,7 @@ class Gogoanime extends AnimeParser {
         };
         this.fetchGenreInfo = async (genre, page = 1) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
+                const res = await axios.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
                 const $ = load(res.data);
                 const genreInfo = [];
                 $('div.last_episodes > ul > li').each((i, elem) => {
@@ -295,7 +295,7 @@ class Gogoanime extends AnimeParser {
         };
         this.fetchTopAiring = async (page = 1) => {
             try {
-                const res = await this.client.get(`${this.ajaxUrl}/page-recent-release-ongoing.html?page=${page}`);
+                const res = await axios.get(`${this.ajaxUrl}/page-recent-release-ongoing.html?page=${page}`);
                 const $ = load(res.data);
                 const topAiring = [];
                 $('div.added_series_body.popular > ul > li').each((i, el) => {
@@ -325,7 +325,7 @@ class Gogoanime extends AnimeParser {
         };
         this.fetchRecentMovies = async (page = 1) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/anime-movies.html?aph&page=${page}`);
+                const res = await axios.get(`${this.baseUrl}/anime-movies.html?aph&page=${page}`);
                 const $ = load(res.data);
                 const recentMovies = [];
                 $('div.last_episodes > ul > li').each((i, el) => {
@@ -354,7 +354,7 @@ class Gogoanime extends AnimeParser {
         };
         this.fetchPopular = async (page = 1) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/popular.html?page=${page}`);
+                const res = await axios.get(`${this.baseUrl}/popular.html?page=${page}`);
                 const $ = load(res.data);
                 const recentMovies = [];
                 $('div.last_episodes > ul > li').each((i, el) => {
@@ -385,11 +385,11 @@ class Gogoanime extends AnimeParser {
             const genres = [];
             let res = null;
             try {
-                res = await this.client.get(`${this.baseUrl}/home.html`);
+                res = await axios.get(`${this.baseUrl}/home.html`);
             }
             catch (err) {
                 try {
-                    res = await this.client.get(`${this.baseUrl}/`);
+                    res = await axios.get(`${this.baseUrl}/`);
                 }
                 catch (error) {
                     throw new Error('Something went wrong. Please try again later.');
@@ -420,7 +420,7 @@ class Gogoanime extends AnimeParser {
                     '03AFcWeA5zy7DBK82U_tctVKelJ6L2duTWac5at2zXjHLX8XqUm8tI6NKWMxGd2gjh1vi2hnEyRhVgbMhdb9WjexRsJkxTt-C-_iIIZ5yC3E5I19G5Q0buSTcIQIZS6tskrz-mDn-d37aWxAJtqbg0Yoo1XsdVc5Yf4sB-9iQxQK-W_9YLep_QaAz8uL17gMMlCz5WZM3dbBEEGmk_qPbJu_pZ8kk-lFPDzd6iBobcpyIDRZgTgD4bYUnby5WZc11i00mrRiRS3m-qSY0lprGaBqoyY1BbRkQZ25AGPp5al4kSwBZqpcVgLrs3bjdo8XVWAe73_XLa8HhqLWbz_m5Ebyl5F9awwL7w4qikGj-AK7v2G8pgjT22kDLIeenQ_ss4jYpmSzgnuTItur9pZVzpPkpqs4mzr6y274AmJjzppRTDH4VFtta_E02-R7Hc1rUD2kCYt9BqsD7kDjmetnvLtBm97q5XgBS8rQfeH4P-xqiTAsJwXlcrPybSjnwPEptqYCPX5St_BSj4NQfSuzZowXu_qKsP4hAaE9L2W36MvqePPlEm6LChBT3tnqUwcEYNe5k7lkAAbunxx8q_X5Q3iEdcFqt9_0GWHebRBd5abEbjbmoqqCoQeZt7AUvkXCRfBDne-bf25ypyTtwgyuvYMYXau3zGUjgPUO9WIotZwyKyrYmjsZJ7TiM';
             let res = null;
             try {
-                res = await this.client.get(`${baseUrl}?id=${animeID}&captcha_v3=${captchaToken}`);
+                res = await axios.get(`${baseUrl}?id=${animeID}&captcha_v3=${captchaToken}`);
             }
             catch (err) {
                 throw new Error('Something went wrong. Please try again later.');
@@ -443,7 +443,7 @@ class Gogoanime extends AnimeParser {
             const animeList = [];
             let res = null;
             try {
-                res = await this.client.get(`${this.baseUrl}/anime-list.html?page=${page}`);
+                res = await axios.get(`${this.baseUrl}/anime-list.html?page=${page}`);
                 const $ = load(res.data);
                 $('.anime_list_body .listing li').each((_index, element) => {
                     const genres = [];

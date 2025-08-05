@@ -17,7 +17,7 @@ class AnimeOwl extends AnimeParser {
             if (page <= 0) {
                 page = 1;
             }
-            const { data } = await this.client.post(`${this.apiUrl}/advance-search`, {
+            const { data } = await axios.post(`${this.apiUrl}/advance-search`, {
                 clicked: false,
                 limit: 24,
                 page: page - 1,
@@ -64,7 +64,7 @@ class AnimeOwl extends AnimeParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/anime/${id.split('$')[0]}`);
+                const { data } = await axios.get(`${this.baseUrl}/anime/${id.split('$')[0]}`);
                 const $ = load(data);
                 info.title = $('h1.anime-name').text();
                 info.japaneseTitle = $('h2.anime-romaji').text();
@@ -94,10 +94,10 @@ class AnimeOwl extends AnimeParser {
                 $('div.genre')
                     .find('a')
                     .each(function () {
-                    const genre = $(this).text().trim();
-                    if (genre != undefined)
-                        info.genres?.push(genre);
-                });
+                        const genre = $(this).text().trim();
+                        if (genre != undefined)
+                            info.genres?.push(genre);
+                    });
                 switch ($('div.status > span').text().trim()) {
                     case 'Finished Airing':
                         info.status = MediaStatus.COMPLETED;
@@ -214,7 +214,7 @@ class AnimeOwl extends AnimeParser {
                     totalPages: 0,
                     results: [],
                 };
-                const { data } = await this.client.get(url, headers);
+                const { data } = await axios.get(url, headers);
                 const $ = load(data);
                 const pagination = $('ul.pagination');
                 res.currentPage = parseInt(pagination.find('li.page-item.active')?.text()) || 1;
@@ -277,22 +277,22 @@ class AnimeOwl extends AnimeParser {
             const subEpisodeId = parts[1];
             const dubEpisodeId = parts[2];
             const id = episodeId.split('$')[0];
-            const { data } = await this.client.get(`${this.baseUrl}/anime/${id}`);
+            const { data } = await axios.get(`${this.baseUrl}/anime/${id}`);
             const $ = load(data);
             const subEpisode = this.parseEpisodes($, '#anime-cover-sub-content .episode-node', SubOrSub.SUB).filter((item) => item.id === subEpisodeId);
             const dubEpisode = this.parseEpisodes($, '#anime-cover-dub-content .episode-node', SubOrSub.DUB).filter((item) => item.id === dubEpisodeId);
             let directLink = '';
             if (subOrDub === SubOrSub.SUB) {
-                const { data: intermediary } = await this.client.get(subEpisode[0].url);
+                const { data: intermediary } = await axios.get(subEpisode[0].url);
                 const $ = load(intermediary);
                 directLink = $('button#hot-anime-tab')?.attr('data-source');
             }
             if (subOrDub === SubOrSub.DUB) {
-                const { data: intermediary } = await this.client.get(dubEpisode[0].url);
+                const { data: intermediary } = await axios.get(dubEpisode[0].url);
                 const $ = load(intermediary);
                 directLink = $('button#hot-anime-tab')?.attr('data-source');
             }
-            const { data: server } = await this.client.get(`${this.baseUrl}${directLink}`);
+            const { data: server } = await axios.get(`${this.baseUrl}${directLink}`);
             const servers = [];
             server.luffy?.map((item) => {
                 servers.push({
@@ -305,24 +305,24 @@ class AnimeOwl extends AnimeParser {
         this.parseEpisodes = ($, selector, subOrDub) => {
             return $(selector)
                 .map((idx, el) => {
-                const $el = $(el);
-                const title = $el.attr('title') ?? '';
-                const id = $el.attr('id') ?? '';
-                const url = $el.attr('href')?.startsWith('http') ? $el.attr('href') : $el.prop('href');
-                const episodeNumber = Number(title);
-                // Skip if the episode number is a float
-                if (!Number.isInteger(episodeNumber)) {
-                    return null;
-                }
-                return {
-                    id: id,
-                    number: parseInt(title),
-                    title: `Ep-${title}`,
-                    url: url || '',
-                    isSubbed: subOrDub === SubOrSub.SUB,
-                    isDubbed: subOrDub === SubOrSub.DUB,
-                };
-            })
+                    const $el = $(el);
+                    const title = $el.attr('title') ?? '';
+                    const id = $el.attr('id') ?? '';
+                    const url = $el.attr('href')?.startsWith('http') ? $el.attr('href') : $el.prop('href');
+                    const episodeNumber = Number(title);
+                    // Skip if the episode number is a float
+                    if (!Number.isInteger(episodeNumber)) {
+                        return null;
+                    }
+                    return {
+                        id: id,
+                        number: parseInt(title),
+                        title: `Ep-${title}`,
+                        url: url || '',
+                        isSubbed: subOrDub === SubOrSub.SUB,
+                        isDubbed: subOrDub === SubOrSub.DUB,
+                    };
+                })
                 .get()
                 .filter(Boolean);
         };
@@ -404,7 +404,7 @@ class AnimeOwl extends AnimeParser {
     async fetchGenres() {
         try {
             const res = [];
-            const { data } = await this.client.get(`${this.baseUrl}/home`);
+            const { data } = await axios.get(`${this.baseUrl}/home`);
             const $ = load(data);
             $('.nav-genre > .sidebar-grid a').each((i, el) => {
                 res.push($(el).text().trim().toLowerCase());
@@ -430,7 +430,7 @@ class AnimeOwl extends AnimeParser {
     async fetchSpotlight() {
         try {
             const res = { results: [] };
-            const { data } = await this.client.get(`${this.baseUrl}/home`);
+            const { data } = await axios.get(`${this.baseUrl}/home`);
             const $ = load(data);
             $('.carousel-inner > .carousel-item').each((i, el) => {
                 const card = $(el);
@@ -465,7 +465,7 @@ class AnimeOwl extends AnimeParser {
     async fetchSearchSuggestions(query) {
         try {
             const encodedQuery = encodeURIComponent(query);
-            const { data } = await this.client.get(`${this.apiUrl}/live-search/${encodedQuery}`);
+            const { data } = await axios.get(`${this.apiUrl}/live-search/${encodedQuery}`);
             const res = {
                 results: [],
             };

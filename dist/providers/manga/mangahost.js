@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
-class MangaHost extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class MangaHost extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'MangaHost';
@@ -13,8 +19,8 @@ class MangaHost extends MangaParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 mangaInfo.title = $('article.ejeCg > h1.title').text();
                 mangaInfo.altTitles = $('article.ejeCg > h3.subtitle').text();
                 mangaInfo.description = $('div.text > div.paragraph > p').text().replace(/\n/g, '').trim();
@@ -25,13 +31,13 @@ class MangaHost extends MangaParser {
                     .get();
                 switch ($('h3.subtitle > strong').text()) {
                     case 'Completo':
-                        mangaInfo.status = MediaStatus.COMPLETED;
+                        mangaInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'Ativo':
-                        mangaInfo.status = MediaStatus.ONGOING;
+                        mangaInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     default:
-                        mangaInfo.status = MediaStatus.UNKNOWN;
+                        mangaInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 mangaInfo.views = parseInt($('div.classificacao-box-1 > div.text-block-3').text().replace(' views', '').replace(/,/g, '').trim());
                 mangaInfo.authors = $('div.w-col.w-col-6:nth-child(1) > ul.w-list-unstyled:nth-child(1) > li:nth-child(3) > div:nth-child(1)')
@@ -60,8 +66,8 @@ class MangaHost extends MangaParser {
         this.fetchChapterPages = async (mangaId, chapterId) => {
             try {
                 const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
-                const { data } = await this.client.get(url);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(url);
+                const $ = (0, cheerio_1.load)(data);
                 const pages = $('section#imageWrapper > div > div.read-slideshow > a > img')
                     .map((i, el) => ({
                     img: $(el).attr('src'),
@@ -82,8 +88,8 @@ class MangaHost extends MangaParser {
          */
         this.search = async (query) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
+                const $ = (0, cheerio_1.load)(data);
                 const results = $('body > div.w-container > main > table > tbody > tr')
                     .map((i, row) => ({
                     id: $(row).find('td > a.pull-left').attr('href')?.split('/')[4],
@@ -102,5 +108,5 @@ class MangaHost extends MangaParser {
         };
     }
 }
-export default MangaHost;
+exports.default = MangaHost;
 //# sourceMappingURL=mangahost.js.map

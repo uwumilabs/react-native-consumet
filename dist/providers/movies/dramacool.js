@@ -1,14 +1,20 @@
-import { load } from 'cheerio';
-import { AsianLoad, MixDrop, StreamSB, StreamTape, StreamWish, VidHide } from '../../extractors';
-import { MediaStatus, MovieParser, StreamingServers, TvType, } from '../../models';
-class DramaCool extends MovieParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const extractors_1 = require("../../extractors");
+const models_1 = require("../../models");
+class DramaCool extends models_1.MovieParser {
     constructor() {
         super(...arguments);
         this.name = 'DramaCool';
         this.baseUrl = 'https://dramacool.bg';
         this.logo = 'https://play-lh.googleusercontent.com/IaCb2JXII0OV611MQ-wSA8v_SAs9XF6E3TMDiuxGGXo4wp9bI60GtDASIqdERSTO5XU';
         this.classPath = 'MOVIES.DramaCool';
-        this.supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+        this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         this.search = async (query, page = 1) => {
             try {
                 const searchResult = {
@@ -17,8 +23,8 @@ class DramaCool extends MovieParser {
                     hasNextPage: false,
                     results: [],
                 };
-                const { data } = await this.client.get(`${this.baseUrl}/search?type=drama&keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search?type=drama&keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'ul.pagination';
                 searchResult.hasNextPage =
                     $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('selected') : false;
@@ -55,8 +61,8 @@ class DramaCool extends MovieParser {
                     id: '',
                     title: '',
                 };
-                const { data } = await this.client.get(mediaId);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(mediaId);
+                const $ = (0, cheerio_1.load)(data);
                 mediaInfo.id = realMediaId;
                 const duration = $('div.details div.info p:contains("Duration:")').first().text().trim();
                 if (duration !== '')
@@ -64,13 +70,13 @@ class DramaCool extends MovieParser {
                 const status = $('div.details div.info p:contains("Status:")').find('a').first().text().trim();
                 switch (status) {
                     case 'Ongoing':
-                        mediaInfo.status = MediaStatus.ONGOING;
+                        mediaInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'Completed':
-                        mediaInfo.status = MediaStatus.COMPLETED;
+                        mediaInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     default:
-                        mediaInfo.status = MediaStatus.UNKNOWN;
+                        mediaInfo.status = models_1.MediaStatus.UNKNOWN;
                         break;
                 }
                 mediaInfo.genres = [];
@@ -131,40 +137,40 @@ class DramaCool extends MovieParser {
                 throw new Error(err.message);
             }
         };
-        this.fetchEpisodeSources = async (episodeId, server = StreamingServers.AsianLoad) => {
+        this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.AsianLoad) => {
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
-                    case StreamingServers.AsianLoad:
+                    case models_1.StreamingServers.AsianLoad:
                         return {
                             headers: { Referer: serverUrl.origin },
-                            ...(await new AsianLoad(this.proxyConfig, this.adapter).extract(serverUrl)),
+                            ...(await new extractors_1.AsianLoad().extract(serverUrl)),
                             download: this.downloadLink(episodeId),
                         };
-                    case StreamingServers.MixDrop:
+                    case models_1.StreamingServers.MixDrop:
                         return {
                             headers: { Referer: serverUrl.origin },
-                            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.MixDrop().extract(serverUrl),
                         };
-                    case StreamingServers.StreamTape:
+                    case models_1.StreamingServers.StreamTape:
                         return {
                             headers: { Referer: serverUrl.origin },
-                            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.StreamTape().extract(serverUrl),
                         };
-                    case StreamingServers.StreamSB:
+                    case models_1.StreamingServers.StreamSB:
                         return {
                             headers: { Referer: serverUrl.origin },
-                            sources: await new StreamSB(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.StreamSB().extract(serverUrl),
                         };
-                    case StreamingServers.StreamWish:
+                    case models_1.StreamingServers.StreamWish:
                         return {
                             headers: { Referer: serverUrl.origin },
-                            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
+                            ...(await new extractors_1.StreamWish().extract(serverUrl)),
                         };
-                    case StreamingServers.VidHide:
+                    case models_1.StreamingServers.VidHide:
                         return {
                             headers: { Referer: serverUrl.href },
-                            sources: await new VidHide(this.proxyConfig, this.adapter).extract(serverUrl),
+                            sources: await new extractors_1.VidHide().extract(serverUrl),
                         };
                     default:
                         throw new Error('Server not supported');
@@ -196,8 +202,8 @@ class DramaCool extends MovieParser {
         this.fetchSpotlight = async () => {
             try {
                 const results = { results: [] };
-                const { data } = await this.client.get(`${this.baseUrl}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}`);
+                const $ = (0, cheerio_1.load)(data);
                 $('div.ls-slide').each((i, el) => {
                     results.results.push({
                         id: $(el).find('a').attr('href')?.slice(1),
@@ -232,8 +238,8 @@ class DramaCool extends MovieParser {
         try {
             const episodeServers = [];
             episodeId = `${this.baseUrl}/${episodeId}`;
-            const { data } = await this.client.get(episodeId);
-            const $ = load(data);
+            const { data } = await axios_1.default.get(episodeId);
+            const $ = (0, cheerio_1.load)(data);
             // keeping the old code future reference
             // $('div.anime_muti_link > ul > li').map(async (i, ele) => {
             //   const url = $(ele).attr('data-video')!;
@@ -248,13 +254,13 @@ class DramaCool extends MovieParser {
             // });
             const standardServer = $('div.anime_muti_link > ul > li.standard').attr('data-video');
             const url = standardServer.startsWith('//') ? standardServer?.replace('//', 'https://') : standardServer;
-            const { data: servers } = await this.client.get(url);
-            const $$ = load(servers);
+            const { data: servers } = await axios_1.default.get(url);
+            const $$ = (0, cheerio_1.load)(servers);
             $$('div#list-server-more > ul > li').each((i, el) => {
                 let name = $$(el).attr('data-provider');
                 const server = $$(el).attr('data-video');
                 if (name.includes('serverwithtoken')) {
-                    name = StreamingServers.AsianLoad;
+                    name = models_1.StreamingServers.AsianLoad;
                 }
                 if (server) {
                     episodeServers.push({
@@ -271,8 +277,8 @@ class DramaCool extends MovieParser {
     }
     async fetchData(url, page, isTvShow = false, isMovies = false) {
         try {
-            const { data } = await this.client.get(url);
-            const $ = load(data);
+            const { data } = await axios_1.default.get(url);
+            const $ = (0, cheerio_1.load)(data);
             const results = {
                 currentPage: page,
                 totalPages: page,
@@ -326,5 +332,5 @@ class DramaCool extends MovieParser {
 //   // const l = await dramaCool.fetchMediaInfo('drama-detail/squid-games-2021-hd');
 //   console.log(m,l);
 // })();
-export default DramaCool;
+exports.default = DramaCool;
 //# sourceMappingURL=dramacool.js.map

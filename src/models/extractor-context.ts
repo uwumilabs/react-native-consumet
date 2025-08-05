@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { AxiosStatic } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 

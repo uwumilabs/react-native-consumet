@@ -1,6 +1,7 @@
 import { load } from 'cheerio';
 import type { IVideo, ISource } from '../models';
 import VideoExtractor from '../models/video-extractor';
+import axios from 'axios';
 
 class StreamLare extends VideoExtractor {
   protected serverName: string = 'StreamLare';
@@ -14,7 +15,7 @@ class StreamLare extends VideoExtractor {
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36';
 
   async extract(videoUrl: URL, userAgent: string = this.USER_AGENT.toString()): Promise<IVideo[] | ISource> {
-    const res = await this.client.get(videoUrl.href);
+    const res = await axios.get(videoUrl.href);
 
     const $ = load(res.data);
 
@@ -26,7 +27,7 @@ class StreamLare extends VideoExtractor {
       throw new Error('Video id not matched!');
     }
 
-    const POST = await this.client.post(
+    const POST = await axios.post(
       this.host + '/api/video/stream/get',
       {
         id: videoId,

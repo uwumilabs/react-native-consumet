@@ -1,1 +1,1 @@
-{"version":3,"file":"video-extractor.js","sourceRoot":"","sources":["../../src/models/video-extractor.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,MAAM,iBAAiB,CAAC;AAEpC,MAAe,cAAe,SAAQ,KAAK;CAiB1C;AAED,eAAe,cAAc,CAAC"}
+{"version":3,"file":"video-extractor.js","sourceRoot":"","sources":["../../src/models/video-extractor.ts"],"names":[],"mappings":";;AAGA,MAAe,cAAc;CAiB5B;AAED,kBAAe,cAAc,CAAC"}

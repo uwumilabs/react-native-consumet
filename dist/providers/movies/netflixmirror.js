@@ -1,13 +1,19 @@
-import { MovieParser, TvType, } from '../../models';
-import { makeGetRequestWithWebView } from '../../NativeConsumet';
-class NetflixMirror extends MovieParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+const NativeConsumet_1 = require("../../NativeConsumet");
+class NetflixMirror extends models_1.MovieParser {
     constructor(customBaseURL) {
-        super(...arguments);
+        super();
         this.name = 'NetflixMirror';
         this.baseUrl = 'https://a.netfree2.cc';
         this.logo = 'https://a.netfree2.cc//mobile/img/nf2/icon_x192.png';
         this.classPath = 'MOVIES.NetflixMirror';
-        this.supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+        this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         this.nfCookie = 'hd=on;';
         /**
          *
@@ -21,7 +27,7 @@ class NetflixMirror extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/search.php?s=${encodeURI(query)}`, {
+                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/search.php?s=${encodeURI(query)}`, {
                     headers: this.Headers(),
                 });
                 const basicResults = data.searchResult || [];
@@ -31,14 +37,14 @@ class NetflixMirror extends MovieParser {
                 const detailedResults = await Promise.all(basicResults.map(async (item) => {
                     try {
                         // Fetch additional details for each item
-                        const detailResponse = await this.client.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${item.id}`, {
+                        const detailResponse = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${item.id}`, {
                             headers: this.Headers(),
                         });
                         return {
                             id: item.id,
                             title: item.t,
                             image: `https://imgcdn.media/poster/v/${item.id}.jpg`,
-                            type: detailResponse.data.type === 't' ? TvType.TVSERIES : TvType.MOVIE,
+                            type: detailResponse.data.type === 't' ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE,
                             releaseDate: detailResponse.data.year,
                             seasons: detailResponse.data.season?.length ?? undefined,
                         };
@@ -70,18 +76,18 @@ class NetflixMirror extends MovieParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${mediaId}`, {
+                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${mediaId}`, {
                     headers: this.Headers(),
                 });
                 movieInfo.cover = `https://imgcdn.media/poster/h/${mediaId}.jpg`;
                 movieInfo.title = data.title;
                 movieInfo.image = `https://imgcdn.media/poster/v/${mediaId}.jpg`;
                 movieInfo.description = data.desc?.trim() ?? '';
-                movieInfo.type = data.type === 't' ? TvType.TVSERIES : TvType.MOVIE;
+                movieInfo.type = data.type === 't' ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE;
                 movieInfo.releaseDate = data.year;
                 movieInfo.genres = data.genre?.split(',').map((genre) => genre?.trim()) ?? [];
                 movieInfo.duration = data.runtime;
-                if (movieInfo.type === TvType.TVSERIES) {
+                if (movieInfo.type === models_1.TvType.TVSERIES) {
                     movieInfo.episodes = await this.fetchAllEpisodesOrdered(data.season, mediaId);
                 }
                 else {
@@ -110,10 +116,10 @@ class NetflixMirror extends MovieParser {
                 if (!this.nfCookie) {
                     await this.initCookie();
                 }
-                await makeGetRequestWithWebView(`https://netfree2.cc/mobile/playlist.php?id=${episodeId}&tm=${Math.round(new Date().getTime() / 1000)}`, {
+                await (0, NativeConsumet_1.makeGetRequestWithWebView)(`https://netfree2.cc/mobile/playlist.php?id=${episodeId}&tm=${Math.round(new Date().getTime() / 1000)}`, {
                     Cookie: this.nfCookie,
                 });
-                const { data } = await this.client.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/playlist.php?id=${episodeId}`, {
+                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/playlist.php?id=${episodeId}`, {
                     headers: this.Headers(),
                 });
                 const sources = {
@@ -162,7 +168,7 @@ class NetflixMirror extends MovieParser {
     }
     async initCookie() {
         try {
-            const { data } = await this.client.get('https://raw.githubusercontent.com/2004durgesh/nfmirror-cookies/refs/heads/main/captured-cookies.json');
+            const { data } = await axios_1.default.get('https://raw.githubusercontent.com/2004durgesh/nfmirror-cookies/refs/heads/main/captured-cookies.json');
             for (const cookie of data.cookiesByDomain['.netfree2.cc']) {
                 this.nfCookie += `${cookie.name}=${cookie.value.replace('%3A%3Asu', '%3A%3Ani')};`;
             }
@@ -195,7 +201,7 @@ class NetflixMirror extends MovieParser {
         let episodes = [];
         while (true) {
             const url = `https://netfree2.cc/mobile/episodes.php?s=${seasonId}&series=${seriesId}&page=${page}`;
-            const { data } = await this.client.get(url);
+            const { data } = await axios_1.default.get(url);
             if (data.episodes?.length) {
                 episodes.push(...data.episodes.map((episode) => ({
                     id: episode.id,
@@ -230,5 +236,5 @@ class NetflixMirror extends MovieParser {
 //   // const genre = await movie.fetchByGenre('action');
 //   console.log(search);
 // })();
-export default NetflixMirror;
+exports.default = NetflixMirror;
 //# sourceMappingURL=netflixmirror.js.map

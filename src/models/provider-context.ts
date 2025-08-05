@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { AxiosInstance, AxiosStatic } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 import type AnimeParser from './anime-parser';

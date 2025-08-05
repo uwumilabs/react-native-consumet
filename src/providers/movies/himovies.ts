@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -19,7 +20,7 @@ class HiMovies extends MovieParser {
   protected override classPath = 'MOVIES.HiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
-    super(...arguments);
+    super();
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
@@ -43,7 +44,7 @@ class HiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
 
       const $ = load(data);
 
@@ -106,7 +107,7 @@ class HiMovies extends MovieParser {
       url: mediaId,
     };
     try {
-      const { data } = await this.client.get(mediaId);
+      const { data } = await axios.get(mediaId);
       const $ = load(data);
       const recommendationsArray: IMovieResult[] = [];
 
@@ -150,7 +151,7 @@ class HiMovies extends MovieParser {
         `${this.baseUrl}/ajax/${type === 'movie' ? type : ``}${isSeasons ? 'season/list' : 'season/episodes'}/${id}`;
 
       if (movieInfo.type === TvType.TVSERIES) {
-        const { data } = await this.client.get(ajaxReqUrl(uid, 'tv', true));
+        const { data } = await axios.get(ajaxReqUrl(uid, 'tv', true));
         const $$ = load(data);
         const seasonsIds = $$('.dropdown-menu > a')
           .map((i, el) => $(el).attr('data-id'))
@@ -159,7 +160,7 @@ class HiMovies extends MovieParser {
         movieInfo.episodes = [];
         let season = 1;
         for (const id of seasonsIds) {
-          const { data } = await this.client.get(ajaxReqUrl(id, 'season'));
+          const { data } = await axios.get(ajaxReqUrl(id, 'season'));
           const $$$ = load(data);
 
           $$$('.nav > li')
@@ -215,13 +216,13 @@ class HiMovies extends MovieParser {
         case StreamingServers.UpCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new VidCloud(this.proxyConfig, this.adapter).extract(serverUrl, undefined, this.baseUrl)),
+            ...(await new VidCloud().extract(serverUrl, undefined, this.baseUrl)),
           };
         default:
-          // return {
-          //   headers: { Referer: serverUrl.href },
-          //   ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
-          // };
+        // return {
+        //   headers: { Referer: serverUrl.href },
+        //   ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
+        // };
       }
     }
 
@@ -234,7 +235,7 @@ class HiMovies extends MovieParser {
         throw new Error(`Server ${server} not found`);
       }
 
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `${this.baseUrl}/ajax/episode/sources/${servers[i]!.url.split('.').slice(-1).shift()}`
       );
 
@@ -259,7 +260,7 @@ class HiMovies extends MovieParser {
       episodeId = `${this.baseUrl}/ajax/episode/list/${episodeId}`;
     }
     try {
-      const { data } = await this.client.get(episodeId);
+      const { data } = await axios.get(episodeId);
       const $ = load(data);
 
       const servers = $('ul.nav > li')
@@ -282,7 +283,7 @@ class HiMovies extends MovieParser {
 
   fetchRecentMovies = async (): Promise<IMovieResult[]> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/home`);
+      const { data } = await axios.get(`${this.baseUrl}/home`);
       const $ = load(data);
 
       const movies = $(
@@ -313,7 +314,7 @@ class HiMovies extends MovieParser {
 
   fetchRecentTvShows = async (): Promise<IMovieResult[]> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/home`);
+      const { data } = await axios.get(`${this.baseUrl}/home`);
       const $ = load(data);
 
       const tvshows = $(
@@ -344,7 +345,7 @@ class HiMovies extends MovieParser {
 
   fetchTrendingMovies = async (): Promise<IMovieResult[]> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/home`);
+      const { data } = await axios.get(`${this.baseUrl}/home`);
       const $ = load(data);
 
       const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
@@ -373,7 +374,7 @@ class HiMovies extends MovieParser {
 
   fetchTrendingTvShows = async (): Promise<IMovieResult[]> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/home`);
+      const { data } = await axios.get(`${this.baseUrl}/home`);
       const $ = load(data);
 
       const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
@@ -409,7 +410,7 @@ class HiMovies extends MovieParser {
     const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
 
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/country/${country}/?page=${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/country/${country}/?page=${page}`);
       const $ = load(data);
 
       result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
@@ -456,7 +457,7 @@ class HiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
 
       const $ = load(data);
 

@@ -1,8 +1,13 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-nocheck
-import { load } from 'cheerio';
-import VideoExtractor from '../models/video-extractor';
-import { USER_AGENT } from '../utils';
-class StreamP2P extends VideoExtractor {
+const axios_1 = __importDefault(require("axios"));
+const video_extractor_1 = __importDefault(require("../models/video-extractor"));
+const utils_1 = require("../utils");
+class StreamP2P extends video_extractor_1.default {
     constructor() {
         super(...arguments);
         this.serverName = 'StreamP2P';
@@ -12,7 +17,7 @@ class StreamP2P extends VideoExtractor {
     async extract(videoUrl) {
         const headers = {
             'Referer': this.host,
-            'User-Agent': USER_AGENT,
+            'User-Agent': utils_1.USER_AGENT,
         };
         // Extract video ID from URL fragment
         const videoId = videoUrl.href.split('#')[1];
@@ -22,7 +27,7 @@ class StreamP2P extends VideoExtractor {
         const password = 'kiemtienmua911ca';
         const iv = '1234567890oiuytr';
         try {
-            const { data: encryptedHex } = await this.client.get(api, { headers });
+            const { data: encryptedHex } = await axios_1.default.get(api, { headers });
             // Convert hex to WordArray
             const encryptedData = CryptoJS.enc.Hex.parse(encryptedHex);
             // Key and IV as WordArrays
@@ -47,5 +52,5 @@ class StreamP2P extends VideoExtractor {
         }
     }
 }
-export default StreamP2P;
+exports.default = StreamP2P;
 //# sourceMappingURL=StreamP2P.js.map

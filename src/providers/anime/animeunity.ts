@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -21,7 +22,7 @@ class AnimeUnity extends AnimeParser {
    */
   override search = async (query: string): Promise<ISearch<IAnimeResult>> => {
     try {
-      const res = await this.client.get(`${this.baseUrl}/archivio?title=${query}`);
+      const res = await axios.get(`${this.baseUrl}/archivio?title=${query}`);
       const $ = load(res.data);
 
       if (!$) return { results: [] };
@@ -67,7 +68,7 @@ class AnimeUnity extends AnimeParser {
     const url2 = `${this.baseUrl}/info_api/${id}/1?start_range=${firstPageEpisode}&end_range=${lastPageEpisode}`;
 
     try {
-      const res = await this.client.get(url);
+      const res = await axios.get(url);
       const $ = load(res.data);
 
       const totalEpisodes = parseInt($('video-player')?.attr('episodes_count') ?? '0');
@@ -102,7 +103,7 @@ class AnimeUnity extends AnimeParser {
       // const items = JSON.parse("" + $('video-player').attr('episodes') + "")
 
       // fetch episodes method 2 (all pages can be fetched)
-      const res2 = await this.client.get(url2);
+      const res2 = await axios.get(url2);
       const items = res2.data.episodes;
 
       for (const i in items) {
@@ -125,7 +126,7 @@ class AnimeUnity extends AnimeParser {
    */
   override fetchEpisodeSources = async (episodeId: string): Promise<ISource> => {
     try {
-      const res = await this.client.get(`${this.baseUrl}/anime/${episodeId}`);
+      const res = await axios.get(`${this.baseUrl}/anime/${episodeId}`);
       const $ = load(res.data);
 
       const episodeSources: ISource = {
@@ -135,7 +136,7 @@ class AnimeUnity extends AnimeParser {
       const streamUrl = $('video-player').attr('embed_url');
 
       if (streamUrl) {
-        const res = await this.client.get(streamUrl);
+        const res = await axios.get(streamUrl);
         const $ = load(res.data);
 
         const domain = $('script:contains("window.video")')
@@ -151,7 +152,7 @@ class AnimeUnity extends AnimeParser {
         const defaultUrl = `${domain}${
           domain?.includes('?') ? '&' : '?'
         }token=${token}&referer=&expires=${expires}&h=1`;
-        const m3u8Content = await this.client.get(defaultUrl);
+        const m3u8Content = await axios.get(defaultUrl);
 
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');

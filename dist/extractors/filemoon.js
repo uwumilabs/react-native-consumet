@@ -1,10 +1,16 @@
-import { load } from 'cheerio';
-import { VideoExtractor } from '../models';
-import { USER_AGENT } from '../utils';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../models");
+const utils_1 = require("../utils");
 /**
  * work in progress
  */
-class Filemoon extends VideoExtractor {
+class Filemoon extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'Filemoon';
@@ -25,14 +31,14 @@ class Filemoon extends VideoExtractor {
                     'Sec-Fetch-Dest': 'iframe',
                     'Sec-Fetch-Mode': 'navigate',
                     'Sec-Fetch-Site': 'cross-site',
-                    'User-Agent': USER_AGENT,
+                    'User-Agent': utils_1.USER_AGENT,
                     'Access-Control-Allow-Origin': '*',
                 },
             };
-            const { data } = await this.client.get(videoUrl.href, options);
-            const $ = load(data);
+            const { data } = await axios_1.default.get(videoUrl.href, options);
+            const $ = (0, cheerio_1.load)(data);
             try {
-                const { data } = await this.client.get($('iframe').attr('src'), options);
+                const { data } = await axios_1.default.get($('iframe').attr('src'), options);
                 const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)[2].replace('eval', ''));
                 const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
                 const m3u8Link = links[1];
@@ -49,5 +55,5 @@ class Filemoon extends VideoExtractor {
         };
     }
 }
-export default Filemoon;
+exports.default = Filemoon;
 //# sourceMappingURL=filemoon.js.map

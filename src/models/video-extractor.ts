@@ -1,7 +1,7 @@
+import axios from "axios";
 import type { IVideo, ISource } from '.';
-import Proxy from '../models/proxy';
 
-abstract class VideoExtractor extends Proxy {
+abstract class VideoExtractor {
   /**
    * The server name of the video provider
    */

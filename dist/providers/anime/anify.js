@@ -1,13 +1,19 @@
-import { AnimeParser, MediaStatus, MediaFormat, } from '../../models';
-import { ANIFY_URL } from '../../utils/utils';
-class Anify extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+const utils_1 = require("../../utils/utils");
+class Anify extends models_1.AnimeParser {
     constructor(proxyConfig, adapter, providerId = 'gogoanime') {
-        super(proxyConfig, adapter);
+        super();
         this.proxyConfig = proxyConfig;
         this.adapter = adapter;
         this.providerId = providerId;
         this.name = 'Anify';
-        this.baseUrl = ANIFY_URL;
+        this.baseUrl = utils_1.ANIFY_URL;
         this.classPath = 'ANIME.Anify';
         this.actions = {
             'gogoanime': {
@@ -32,7 +38,7 @@ class Anify extends AnimeParser {
          * @param page Page number (optional)
          */
         this.rawSearch = async (query, page = 1) => {
-            const { data } = await this.client.get(`${this.baseUrl}/search/anime/${query}?page=${page}`);
+            const { data } = await axios_1.default.get(`${this.baseUrl}/search/anime/${query}?page=${page}`);
             return data.results;
         };
         /**
@@ -45,7 +51,7 @@ class Anify extends AnimeParser {
                 hasNextPage: false,
                 results: [],
             };
-            const { data } = await this.client.get(`${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`);
+            const { data } = await axios_1.default.get(`${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`);
             if (data.currentPage !== res.currentPage)
                 res.hasNextPage = true;
             res.results = data?.results.map((anime) => ({
@@ -72,7 +78,7 @@ class Anify extends AnimeParser {
                 id: id,
                 title: '',
             };
-            const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch(() => {
+            const { data } = await axios_1.default.get(`${this.baseUrl}/info/${id}`).catch(() => {
                 throw new Error('Anime not found. Please use a valid id!');
             });
             animeInfo.anilistId = data.id;
@@ -104,7 +110,7 @@ class Anify extends AnimeParser {
             return animeInfo;
         };
         this.fetchAnimeInfoByIdRaw = async (id) => {
-            const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch((err) => {
+            const { data } = await axios_1.default.get(`${this.baseUrl}/info/${id}`).catch((err) => {
                 throw new Error("Backup api seems to be down! Can't fetch anime info");
             });
             return data;
@@ -117,7 +123,7 @@ class Anify extends AnimeParser {
                 id: id,
                 title: '',
             };
-            const { data } = await this.client.get(`${this.baseUrl}/media?providerId=${providerId}&id=${id}`);
+            const { data } = await axios_1.default.get(`${this.baseUrl}/media?providerId=${providerId}&id=${id}`);
             animeInfo.anilistId = data.id;
             animeInfo.title = data.title.english ?? data.title.romaji ?? data.title.native;
             animeInfo.image = data.coverImage;
@@ -148,7 +154,7 @@ class Anify extends AnimeParser {
         };
         this.fetchEpisodeSources = async (episodeId, episodeNumber, id) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[this.providerId].format(episodeId)}&episodeNumber=${episodeNumber}&id=${id}&subType=sub`);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[this.providerId].format(episodeId)}&episodeNumber=${episodeNumber}&id=${id}&subType=sub`);
                 return data;
             }
             catch (err) {
@@ -163,7 +169,7 @@ class Anify extends AnimeParser {
         throw new Error('Method not implemented.');
     }
 }
-export default Anify;
+exports.default = Anify;
 // (async () => {
 //   const anify = new Anify();
 //   const res = await anify.fetchAnimeInfo('1');

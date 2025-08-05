@@ -1,11 +1,16 @@
-import { load } from 'cheerio';
-import { AnimeParser, StreamingServers, MediaFormat, SubOrSub, MediaStatus, } from '../../models';
-import { MegaUp } from '../../utils';
-import axios from 'axios';
-const { GenerateToken, DecodeIframeData, Decode } = new MegaUp();
-class AnimeKai extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+const utils_1 = require("../../utils");
+const axios_1 = __importDefault(require("axios"));
+const { GenerateToken, DecodeIframeData, Decode } = new utils_1.MegaUp();
+class AnimeKai extends models_1.AnimeParser {
     constructor(customBaseURL) {
-        super(...arguments);
+        super();
         this.name = 'AnimeKai';
         this.baseUrl = 'https://animekai.to';
         this.logo = 'https://animekai.to/assets/uploads/37585a39fe8c8d8fafaa2c7bfbf5374ecac859ea6a0288a6da2c61f5.png';
@@ -19,10 +24,10 @@ class AnimeKai extends AnimeParser {
                 title: '',
             };
             try {
-                const { data } = await axios.get(`${this.baseUrl}/watch/${id}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/watch/${id}`, {
                     headers: this.Headers(),
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 info.title = $('.entity-scroll > .title').text();
                 info.japaneseTitle = $('.entity-scroll > .title').attr('data-jp')?.trim();
                 info.image = $('div.poster > div >img').attr('src');
@@ -67,15 +72,15 @@ class AnimeKai extends AnimeParser {
                 const hasSub = $('.entity-scroll > .info > span.sub').length > 0;
                 const hasDub = $('.entity-scroll > .info > span.dub').length > 0;
                 if (hasSub) {
-                    info.subOrDub = SubOrSub.SUB;
+                    info.subOrDub = models_1.SubOrSub.SUB;
                     info.hasSub = hasSub;
                 }
                 if (hasDub) {
-                    info.subOrDub = SubOrSub.DUB;
+                    info.subOrDub = models_1.SubOrSub.DUB;
                     info.hasDub = hasDub;
                 }
                 if (hasSub && hasDub) {
-                    info.subOrDub = SubOrSub.BOTH;
+                    info.subOrDub = models_1.SubOrSub.BOTH;
                 }
                 info.genres = [];
                 $('.entity-scroll > .detail')
@@ -87,28 +92,28 @@ class AnimeKai extends AnimeParser {
                 });
                 switch ($('.entity-scroll > .detail').find("div:contains('Status') > span").text().trim()) {
                     case 'Completed':
-                        info.status = MediaStatus.COMPLETED;
+                        info.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'Releasing':
-                        info.status = MediaStatus.ONGOING;
+                        info.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'Not yet aired':
-                        info.status = MediaStatus.NOT_YET_AIRED;
+                        info.status = models_1.MediaStatus.NOT_YET_AIRED;
                         break;
                     default:
-                        info.status = MediaStatus.UNKNOWN;
+                        info.status = models_1.MediaStatus.UNKNOWN;
                         break;
                 }
                 info.season = $('.entity-scroll > .detail').find("div:contains('Premiered') > span").text().trim();
                 const ani_id = $('.rate-box#anime-rating').attr('data-id');
-                const episodesAjax = await axios.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id)}`, {
+                const episodesAjax = await axios_1.default.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id)}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Referer': `${this.baseUrl}/watch/${id}`,
                         ...this.Headers(),
                     },
                 });
-                const $$ = load(episodesAjax.data.result);
+                const $$ = (0, cheerio_1.load)(episodesAjax.data.result);
                 // Pre-calculate values used for all episodes
                 const episodeElements = $$('div.eplist > ul > li > a');
                 const subCount = parseInt($('.entity-scroll > .info > span.sub').text().trim()) || 0;
@@ -142,20 +147,20 @@ class AnimeKai extends AnimeParser {
          * @param server server type (default `VidCloud`) (optional)
          * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = async (episodeId, server = StreamingServers.MegaUp, subOrDub = SubOrSub.SUB) => {
+        this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.MegaUp, subOrDub = models_1.SubOrSub.SUB) => {
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
-                    case StreamingServers.MegaUp:
+                    case models_1.StreamingServers.MegaUp:
                         return {
                             headers: { Referer: serverUrl.href },
-                            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+                            ...(await new utils_1.MegaUp().extract(serverUrl)),
                             download: serverUrl.href.replace(/\/e\//, '/download/'),
                         };
                     default:
                         return {
                             headers: { Referer: serverUrl.href },
-                            ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+                            ...(await new utils_1.MegaUp().extract(serverUrl)),
                             download: serverUrl.href.replace(/\/e\//, '/download/'),
                         };
                 }
@@ -187,10 +192,10 @@ class AnimeKai extends AnimeParser {
                     totalPages: 0,
                     results: [],
                 };
-                const { data } = await this.client.get(url, {
+                const { data } = await axios_1.default.get(url, {
                     headers: this.Headers(),
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const pagination = $('ul.pagination');
                 res.currentPage = parseInt(pagination.find('.page-item.active span.page-link').text().trim()) || 0;
                 const nextPage = pagination.find('.page-item.active').next().find('a.page-link').attr('href')?.split('page=')[1];
@@ -251,19 +256,19 @@ class AnimeKai extends AnimeParser {
          * @param episodeId Episode id
          * @param subOrDub sub or dub (default `sub`) (optional)
          */
-        this.fetchEpisodeServers = async (episodeId, subOrDub = SubOrSub.SUB) => {
+        this.fetchEpisodeServers = async (episodeId, subOrDub = models_1.SubOrSub.SUB) => {
             if (!episodeId.startsWith(this.baseUrl + '/ajax'))
                 episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(episodeId.split('$token=')[1])}`;
             try {
-                const { data } = await this.client.get(episodeId, {
+                const { data } = await axios_1.default.get(episodeId, {
                     headers: this.Headers(),
                 });
-                const $ = load(data.result);
+                const $ = (0, cheerio_1.load)(data.result);
                 const servers = [];
                 const serverItems = $(`.server-items.lang-group[data-id="${subOrDub}"] .server`);
                 await Promise.all(serverItems.map(async (i, server) => {
                     const id = $(server).attr('data-lid');
-                    const { data } = await this.client.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id)}`, {
+                    const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id)}`, {
                         headers: this.Headers(),
                     });
                     const decodedData = JSON.parse(Decode(data.result));
@@ -392,10 +397,10 @@ class AnimeKai extends AnimeParser {
     async fetchGenres() {
         try {
             const res = [];
-            const { data } = await this.client.get(`${this.baseUrl}/home`, {
+            const { data } = await axios_1.default.get(`${this.baseUrl}/home`, {
                 headers: this.Headers(),
             });
-            const $ = load(data);
+            const $ = (0, cheerio_1.load)(data);
             const sideBar = $('#menu');
             sideBar.find('ul.c4 li a').each((i, ele) => {
                 const genres = $(ele);
@@ -429,8 +434,8 @@ class AnimeKai extends AnimeParser {
             const res = {
                 results: [],
             };
-            const { data } = await this.client.get(`${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`, { headers: this.Headers() });
-            const $ = load(data.result);
+            const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`, { headers: this.Headers() });
+            const $ = (0, cheerio_1.load)(data.result);
             $('ul.collapsed li').each((i, ele) => {
                 const card = $(ele);
                 const titleElement = card.find('span.title');
@@ -452,10 +457,10 @@ class AnimeKai extends AnimeParser {
     async fetchSpotlight() {
         try {
             const res = { results: [] };
-            const { data } = await this.client.get(`${this.baseUrl}/home`, {
+            const { data } = await axios_1.default.get(`${this.baseUrl}/home`, {
                 headers: this.Headers(),
             });
-            const $ = load(data);
+            const $ = (0, cheerio_1.load)(data);
             $('div.swiper-wrapper > div.swiper-slide').each((i, el) => {
                 const card = $(el);
                 const titleElement = card.find('div.detail > p.title');
@@ -491,8 +496,10 @@ class AnimeKai extends AnimeParser {
     }
     async fetchSearchSuggestions(query) {
         try {
-            const { data } = await this.client.get(`${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`, { headers: this.Headers() });
-            const $ = load(data.result.html);
+            const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`, {
+                headers: this.Headers(),
+            });
+            const $ = (0, cheerio_1.load)(data.result.html);
             const res = {
                 results: [],
             };
@@ -552,5 +559,5 @@ class AnimeKai extends AnimeParser {
 //   const sources = await animekai.fetchEpisodeSources(info?.episodes![0]?.id!);
 //   console.log(sources);
 // })();
-export default AnimeKai;
+exports.default = AnimeKai;
 //# sourceMappingURL=animekai.js.map

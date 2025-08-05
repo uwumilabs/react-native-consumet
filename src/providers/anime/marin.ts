@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   AnimeParser,
   type ISearch,
@@ -19,7 +20,7 @@ class Marin extends AnimeParser {
   private async getToken(): Promise<string[]> {
     const token: string[] = [];
 
-    const response = await this.client.get('https://marin.moe/anime', {
+    const response = await axios.get('https://marin.moe/anime', {
       headers: {
         Referer: 'https://marin.moe/anime',
         Cookie: '__ddg1_=;__ddg2_=;',
@@ -36,7 +37,7 @@ class Marin extends AnimeParser {
     const token = await this.getToken();
     let data;
     try {
-      const response = await this.client.post(
+      const response = await axios.post(
         'https://marin.moe/anime',
         {
           page: page,
@@ -94,7 +95,7 @@ class Marin extends AnimeParser {
     const token = await this.getToken();
     let data;
     try {
-      const response = await this.client.post(
+      const response = await axios.post(
         'https://marin.moe/anime',
         {
           page: page,
@@ -152,7 +153,7 @@ class Marin extends AnimeParser {
     const token = await this.getToken();
     let data;
     try {
-      const response = await this.client.post(
+      const response = await axios.post(
         `https://marin.moe/anime/${id}`,
         {},
         {
@@ -181,7 +182,7 @@ class Marin extends AnimeParser {
     let episodes: any[] = data.props.episode_list.data;
     if (data.props.anime.last_episode > 36) {
       for (let index = 2; index < data.props.anime.last_episode / 36; index++) {
-        const response = await this.client.post(
+        const response = await axios.post(
           `https://marin.moe/anime/${id}`,
           { filter: { episodes: true, specials: true }, eps_page: index },
           {
@@ -255,7 +256,7 @@ class Marin extends AnimeParser {
     const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]!.split(';')[0]}; marin_session=${token[0]!.split(';')[0]};`;
     let data;
     try {
-      const response = await this.client.post(
+      const response = await axios.post(
         `https://marin.moe/anime/${id}`,
         {},
         {

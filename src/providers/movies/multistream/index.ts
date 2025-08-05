@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import {
@@ -22,7 +23,7 @@ class MultiStream extends MovieParser {
   protected override classPath = 'MOVIES.MultiStream';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
-    super(...arguments);
+    super();
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
@@ -49,7 +50,7 @@ class MultiStream extends MovieParser {
     };
 
     try {
-      const { data } = await this.client.get(searchUrl);
+      const { data } = await axios.get(searchUrl);
 
       if (data.results.length < 1) return search;
 
@@ -64,7 +65,7 @@ class MultiStream extends MovieParser {
         let totalSeasons = undefined;
         if (result.media_type === 'tv') {
           try {
-            const { data: tvData } = await this.client.get(
+            const { data: tvData } = await axios.get(
               `${this.apiUrl}/tv/${result.id}?api_key=${this.apiKey}&language=en-US`
             );
             totalSeasons = tvData.number_of_seasons;
@@ -108,7 +109,7 @@ class MultiStream extends MovieParser {
     mediaId = parts[0]!;
     const infoUrl = `${this.apiUrl}/${type}/${parts[0]}?api_key=${this.apiKey}&language=en-US&append_to_response=release_dates,images,recommendations,credits,videos`;
     try {
-      const { data } = await this.client.get(infoUrl);
+      const { data } = await axios.get(infoUrl);
       movieInfo.title = data?.title || data?.name;
       movieInfo.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
       movieInfo.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
@@ -151,7 +152,7 @@ class MultiStream extends MovieParser {
       if (movieInfo.type === TvType.TVSERIES) {
         movieInfo.episodes = [];
         for (let i = 1; i <= data?.number_of_seasons; i++) {
-          const { data } = await this.client.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
+          const { data } = await axios.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
           data.episodes.map((item: any) => {
             const episode = {
               id: `${mediaId}$tv$${item.episode_number}$${item.season_number}$${item.id}`,

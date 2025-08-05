@@ -1,13 +1,18 @@
-import DramaCool from './dramacool';
-import MultiMovies from './multimovies';
-import NetflixMirror from './netflixmirror';
-import HiMovies from './himovies';
-import MultiStream from './multistream';
-export default {
-    DramaCool,
-    MultiMovies,
-    NetflixMirror,
-    HiMovies,
-    MultiStream,
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const dramacool_1 = __importDefault(require("./dramacool"));
+const multimovies_1 = __importDefault(require("./multimovies"));
+const netflixmirror_1 = __importDefault(require("./netflixmirror"));
+const himovies_1 = __importDefault(require("./himovies"));
+const multistream_1 = __importDefault(require("./multistream"));
+exports.default = {
+    DramaCool: dramacool_1.default,
+    MultiMovies: multimovies_1.default,
+    NetflixMirror: netflixmirror_1.default,
+    HiMovies: himovies_1.default,
+    MultiStream: multistream_1.default,
 };
 //# sourceMappingURL=index.js.map

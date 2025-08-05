@@ -1,8 +1,13 @@
-import { encode } from 'ascii-url-encoder';
-import { AxiosError } from 'axios';
-import { MangaParser, MediaStatus, } from '../../models';
-import { capitalizeFirstLetter, substringBefore } from '../../utils';
-class MangaDex extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const ascii_url_encoder_1 = require("ascii-url-encoder");
+const models_1 = require("../../models");
+const utils_1 = require("../../utils");
+class MangaDex extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'MangaDex';
@@ -12,7 +17,7 @@ class MangaDex extends MangaParser {
         this.apiUrl = 'https://api.mangadex.org';
         this.fetchMangaInfo = async (mangaId) => {
             try {
-                const { data } = await this.client.get(`${this.apiUrl}/manga/${mangaId}`);
+                const { data } = await axios_1.default.get(`${this.apiUrl}/manga/${mangaId}`);
                 const mangaInfo = {
                     id: data.data.id,
                     title: data.data.attributes.title.en,
@@ -24,7 +29,7 @@ class MangaDex extends MangaParser {
                     themes: data.data.attributes.tags
                         .filter((tag) => tag.attributes.group === 'theme')
                         .map((tag) => tag.attributes.name.en),
-                    status: capitalizeFirstLetter(data.data.attributes.status),
+                    status: (0, utils_1.capitalizeFirstLetter)(data.data.attributes.status),
                     releaseDate: data.data.attributes.year,
                     chapters: [],
                 };
@@ -54,12 +59,12 @@ class MangaDex extends MangaParser {
          */
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const res = await this.client.get(`${this.apiUrl}/at-home/server/${chapterId}`);
+                const res = await axios_1.default.get(`${this.apiUrl}/at-home/server/${chapterId}`);
                 const pages = [];
                 for (const id of res.data.chapter.data) {
                     pages.push({
                         img: `${res.data.baseUrl}/data/${res.data.chapter.hash}/${id}`,
-                        page: parseInt(substringBefore(id, '-').replace(/[^0-9.]/g, '')),
+                        page: parseInt((0, utils_1.substringBefore)(id, '-').replace(/[^0-9.]/g, '')),
                     });
                 }
                 return pages;
@@ -81,7 +86,7 @@ class MangaDex extends MangaParser {
             if (limit * (page - 1) >= 10000)
                 throw new Error('not enough results');
             try {
-                const res = await this.client.get(`${this.apiUrl}/manga?limit=${limit}&title=${encode(query)}&limit=${limit}&offset=${limit * (page - 1)}&order[relevance]=desc`);
+                const res = await axios_1.default.get(`${this.apiUrl}/manga?limit=${limit}&title=${(0, ascii_url_encoder_1.encode)(query)}&limit=${limit}&offset=${limit * (page - 1)}&order[relevance]=desc`);
                 if (res.data.result === 'ok') {
                     const results = {
                         currentPage: page,
@@ -119,7 +124,7 @@ class MangaDex extends MangaParser {
         };
         this.fetchRandom = async () => {
             try {
-                const res = await this.client.get(`${this.apiUrl}/manga/random`);
+                const res = await axios_1.default.get(`${this.apiUrl}/manga/random`);
                 if (res.data.result === 'ok') {
                     const results = {
                         currentPage: 1,
@@ -158,7 +163,7 @@ class MangaDex extends MangaParser {
             if (limit * (page - 1) >= 10000)
                 throw new Error('not enough results');
             try {
-                const res = await this.client.get(`${this.apiUrl}/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
+                const res = await axios_1.default.get(`${this.apiUrl}/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
                 if (res.data.result === 'ok') {
                     const results = {
                         currentPage: page,
@@ -199,7 +204,7 @@ class MangaDex extends MangaParser {
             if (limit * (page - 1) >= 10000)
                 throw new Error('not enough results');
             try {
-                const res = await this.client.get(`${this.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`);
+                const res = await axios_1.default.get(`${this.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`);
                 if (res.data.result === 'ok') {
                     const results = {
                         currentPage: page,
@@ -240,7 +245,7 @@ class MangaDex extends MangaParser {
             if (limit * (page - 1) >= 10000)
                 throw new Error('not enough results');
             try {
-                const res = await this.client.get(`${this.apiUrl}/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
+                const res = await axios_1.default.get(`${this.apiUrl}/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
                 if (res.data.result === 'ok') {
                     const results = {
                         currentPage: page,
@@ -277,11 +282,11 @@ class MangaDex extends MangaParser {
             if (res?.data?.offset + 96 >= res?.data?.total) {
                 return [];
             }
-            const response = await this.client.get(`${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`);
+            const response = await axios_1.default.get(`${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`);
             return [...response.data.data, ...(await this.fetchAllChapters(mangaId, offset + 96, response))];
         };
         this.fetchCoverImage = async (coverId) => {
-            const { data } = await this.client.get(`${this.apiUrl}/cover/${coverId}`);
+            const { data } = await axios_1.default.get(`${this.apiUrl}/cover/${coverId}`);
             const fileName = data.data.attributes.fileName;
             return fileName;
         };
@@ -294,5 +299,5 @@ class MangaDex extends MangaParser {
 //   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
 //   console.log(chapterPages);
 // })();
-export default MangaDex;
+exports.default = MangaDex;
 //# sourceMappingURL=mangadex.js.map

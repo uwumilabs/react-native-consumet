@@ -1,14 +1,19 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var _a;
-import axios, {} from 'axios';
-import { AnimeParser, MediaStatus, Genres, MangaParser, } from '../../models';
-import { anilistSearchQuery, anilistMediaDetailQuery, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistCharacterQuery, anilistStaffInfoQuery, getDays, capitalizeFirstLetter, } from '../../utils';
-import Anify from '../anime/anify';
-import Zoro from '../anime/zoro';
-import AnimeKai from '../anime/animekai';
-import AnimePahe from '../anime/animepahe';
-import Mangasee123 from '../manga/mangasee123';
-import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
-class Anilist extends AnimeParser {
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+const utils_1 = require("../../utils");
+const anify_1 = __importDefault(require("../anime/anify"));
+const zoro_1 = __importDefault(require("../anime/zoro"));
+const animekai_1 = __importDefault(require("../anime/animekai"));
+const animepahe_1 = __importDefault(require("../anime/animepahe"));
+const mangasee123_1 = __importDefault(require("../manga/mangasee123"));
+const utils_2 = require("../../utils/utils");
+class Anilist extends models_1.AnimeParser {
     /**
      * This class maps anilist to kitsu with any other anime provider.
      * kitsu is used for episode images, titles and description.
@@ -17,7 +22,7 @@ class Anilist extends AnimeParser {
      * @param adapter axios adapter (optional)
      */
     constructor(provider, proxyConfig, adapter, customBaseURL) {
-        super(proxyConfig, adapter);
+        super();
         this.proxyConfig = proxyConfig;
         this.name = 'Anilist';
         this.baseUrl = 'https://anilist.co';
@@ -26,7 +31,7 @@ class Anilist extends AnimeParser {
         this.anilistGraphqlUrl = 'https://graphql.anilist.co';
         this.kitsuGraphqlUrl = 'https://kitsu.io/api/graphql';
         this.malSyncUrl = 'https://api.malsync.moe';
-        this.anifyUrl = ANIFY_URL;
+        this.anifyUrl = utils_2.ANIFY_URL;
         /**
          * @param query Search query
          * @param page Page number (optional)
@@ -38,14 +43,14 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistSearchQuery(query, page, perPage),
+                query: (0, utils_1.anilistSearchQuery)(query, page, perPage),
             };
             try {
-                let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+                let { data, status } = await axios_1.default.post(this.anilistGraphqlUrl, options, {
                     validateStatus: () => true,
                 });
                 if (status >= 500 || status === 429)
-                    data = await new Anify().rawSearch(query, page);
+                    data = await new anify_1.default().rawSearch(query, page);
                 const res = {
                     currentPage: data.data.Page?.pageInfo?.currentPage ?? data.meta?.currentPage,
                     hasNextPage: data.data.Page?.pageInfo?.hasNextPage ?? data.meta?.currentPage !== data.meta?.lastPage,
@@ -61,20 +66,20 @@ class Anilist extends AnimeParser {
                             }
                             : item.title.romaji,
                         status: item.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : item.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : item.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : item.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : item.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         image: item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium,
-                        imageHash: getHashFromImage(item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium),
                         cover: item.bannerImage,
-                        coverHash: getHashFromImage(item.bannerImage),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage),
                         popularity: item.popularity,
                         description: item.description,
                         rating: item.averageScore,
@@ -90,20 +95,20 @@ class Anilist extends AnimeParser {
                             malId: item.mappings.mal,
                             title: item.title,
                             status: item.status === 'RELEASING'
-                                ? MediaStatus.ONGOING
+                                ? models_1.MediaStatus.ONGOING
                                 : item.status === 'FINISHED'
-                                    ? MediaStatus.COMPLETED
+                                    ? models_1.MediaStatus.COMPLETED
                                     : item.status === 'NOT_YET_RELEASED'
-                                        ? MediaStatus.NOT_YET_AIRED
+                                        ? models_1.MediaStatus.NOT_YET_AIRED
                                         : item.status === 'CANCELLED'
-                                            ? MediaStatus.CANCELLED
+                                            ? models_1.MediaStatus.CANCELLED
                                             : item.status === 'HIATUS'
-                                                ? MediaStatus.HIATUS
-                                                : MediaStatus.UNKNOWN,
+                                                ? models_1.MediaStatus.HIATUS
+                                                : models_1.MediaStatus.UNKNOWN,
                             image: item.coverImage ?? item.bannerImage,
-                            imageHash: getHashFromImage(item.coverImage ?? item.bannerImage),
+                            imageHash: (0, utils_2.getHashFromImage)(item.coverImage ?? item.bannerImage),
                             cover: item.bannerImage,
-                            coverHash: getHashFromImage(item.bannerImage),
+                            coverHash: (0, utils_2.getHashFromImage)(item.bannerImage),
                             popularity: item.popularity,
                             description: item.description,
                             rating: item.averageScore,
@@ -141,7 +146,7 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistAdvancedQuery(),
+                query: (0, utils_1.anilistAdvancedQuery)(),
                 variables: {
                     search: query,
                     type: type,
@@ -158,19 +163,19 @@ class Anilist extends AnimeParser {
             };
             if (genres) {
                 genres.forEach((genre) => {
-                    if (!Object.values(Genres).includes(genre)) {
+                    if (!Object.values(models_1.Genres).includes(genre)) {
                         throw new Error(`genre ${genre} is not valid`);
                     }
                 });
             }
             try {
-                let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+                let { data, status } = await axios_1.default.post(this.anilistGraphqlUrl, options, {
                     validateStatus: () => true,
                 });
                 if (status >= 500 && !query)
                     throw new Error('No results found');
                 if (status >= 500)
-                    data = await new Anify().rawSearch(query, page);
+                    data = await new anify_1.default().rawSearch(query, page);
                 const res = {
                     currentPage: data.data?.Page?.pageInfo?.currentPage ?? data.meta?.currentPage,
                     hasNextPage: data.data?.Page?.pageInfo?.hasNextPage ?? data.meta?.currentPage !== data.meta?.lastPage,
@@ -190,20 +195,20 @@ class Anilist extends AnimeParser {
                         }
                         : item.title.romaji,
                     status: item.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     image: item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                    imageHash: getHashFromImage(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                     cover: item.bannerImage,
-                    coverHash: getHashFromImage(item.bannerImage),
+                    coverHash: (0, utils_2.getHashFromImage)(item.bannerImage),
                     popularity: item.popularity,
                     totalEpisodes: item.episodes ?? item.nextAiringEpisode?.episode - 1,
                     currentEpisode: item.nextAiringEpisode?.episode - 1 || item.episodes,
@@ -220,20 +225,20 @@ class Anilist extends AnimeParser {
                         malId: item.mappings.mal,
                         title: item.title,
                         status: item.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : item.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : item.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : item.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : item.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         image: item.coverImage ?? item.bannerImage,
-                        imageHash: getHashFromImage(item.coverImage ?? item.bannerImage),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage ?? item.bannerImage),
                         cover: item.bannerImage,
-                        coverHash: getHashFromImage(item.bannerImage),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage),
                         popularity: item.popularity,
                         description: item.description,
                         rating: item.averageScore,
@@ -265,11 +270,11 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistMediaDetailQuery(id),
+                query: (0, utils_1.anilistMediaDetailQuery)(id),
             };
             let fillerEpisodes;
             try {
-                let { data, status } = await this.client.post(this.anilistGraphqlUrl, options, {
+                let { data, status } = await axios_1.default.post(this.anilistGraphqlUrl, options, {
                     validateStatus: () => true,
                 });
                 if (status === 404)
@@ -280,7 +285,7 @@ class Anilist extends AnimeParser {
                 if (status !== 200 && status < 429)
                     throw Error('Media not found. If the problem persists, please contact the developer');
                 if (status >= 500)
-                    data = await new Anify().fetchAnimeInfoByIdRaw(id);
+                    data = await new anify_1.default().fetchAnimeInfoByIdRaw(id);
                 animeInfo.malId = data.data?.Media?.idMal ?? data?.mappings?.mal;
                 animeInfo.title = data.data.Media
                     ? {
@@ -299,7 +304,7 @@ class Anilist extends AnimeParser {
                         id: data.data.Media.trailer.id,
                         site: data.data.Media.trailer?.site,
                         thumbnail: data.data.Media.trailer?.thumbnail,
-                        thumbnailHash: getHashFromImage(data.data.Media.trailer?.thumbnail),
+                        thumbnailHash: (0, utils_2.getHashFromImage)(data.data.Media.trailer?.thumbnail),
                     };
                 }
                 animeInfo.image =
@@ -308,7 +313,7 @@ class Anilist extends AnimeParser {
                         data.data?.Media?.coverImage?.medium ??
                         data.coverImage ??
                         data.bannerImage;
-                animeInfo.imageHash = getHashFromImage(data.data?.Media?.coverImage?.extraLarge ??
+                animeInfo.imageHash = (0, utils_2.getHashFromImage)(data.data?.Media?.coverImage?.extraLarge ??
                     data.data?.Media?.coverImage?.large ??
                     data.data?.Media?.coverImage?.medium ??
                     data.coverImage ??
@@ -316,26 +321,26 @@ class Anilist extends AnimeParser {
                 animeInfo.popularity = data.data?.Media?.popularity ?? data?.popularity;
                 animeInfo.color = data.data?.Media?.coverImage?.color ?? data?.color;
                 animeInfo.cover = data.data?.Media?.bannerImage ?? data?.bannerImage ?? animeInfo.image;
-                animeInfo.coverHash = getHashFromImage(data.data?.Media?.bannerImage ?? data?.bannerImage ?? animeInfo.image);
+                animeInfo.coverHash = (0, utils_2.getHashFromImage)(data.data?.Media?.bannerImage ?? data?.bannerImage ?? animeInfo.image);
                 animeInfo.description = data.data?.Media?.description ?? data?.description;
                 switch (data.data?.Media?.status ?? data?.status) {
                     case 'RELEASING':
-                        animeInfo.status = MediaStatus.ONGOING;
+                        animeInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'FINISHED':
-                        animeInfo.status = MediaStatus.COMPLETED;
+                        animeInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'NOT_YET_RELEASED':
-                        animeInfo.status = MediaStatus.NOT_YET_AIRED;
+                        animeInfo.status = models_1.MediaStatus.NOT_YET_AIRED;
                         break;
                     case 'CANCELLED':
-                        animeInfo.status = MediaStatus.CANCELLED;
+                        animeInfo.status = models_1.MediaStatus.CANCELLED;
                         break;
                     case 'HIATUS':
-                        animeInfo.status = MediaStatus.HIATUS;
+                        animeInfo.status = models_1.MediaStatus.HIATUS;
                         break;
                     default:
-                        animeInfo.status = MediaStatus.UNKNOWN;
+                        animeInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 animeInfo.releaseDate = data.data?.Media?.startDate?.year ?? data.year;
                 animeInfo.startDate = {
@@ -374,28 +379,28 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.mediaRecommendation?.title?.userPreferred,
                     },
                     status: item.node.mediaRecommendation?.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.mediaRecommendation?.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.mediaRecommendation?.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.mediaRecommendation?.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.mediaRecommendation?.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     episodes: item.node.mediaRecommendation?.episodes,
                     image: item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium,
-                    imageHash: getHashFromImage(item.node.mediaRecommendation?.coverImage?.extraLarge ??
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium),
                     cover: item.node.mediaRecommendation?.bannerImage ??
                         item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium,
-                    coverHash: getHashFromImage(item.node.mediaRecommendation?.bannerImage ??
+                    coverHash: (0, utils_2.getHashFromImage)(item.node.mediaRecommendation?.bannerImage ??
                         item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium),
@@ -413,7 +418,7 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.name.userPreferred,
                     },
                     image: item.node.image.large ?? item.node.image.medium,
-                    imageHash: getHashFromImage(item.node.image.large ?? item.node.image.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.image.large ?? item.node.image.medium),
                     voiceActors: item.voiceActors.map((voiceActor) => ({
                         id: voiceActor.id,
                         language: voiceActor.languageV2,
@@ -425,7 +430,7 @@ class Anilist extends AnimeParser {
                             userPreferred: voiceActor.name.userPreferred,
                         },
                         image: voiceActor.image.large ?? voiceActor.image.medium,
-                        imageHash: getHashFromImage(voiceActor.image.large ?? voiceActor.image.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(voiceActor.image.large ?? voiceActor.image.medium),
                     })),
                 }));
                 animeInfo.relations = data.data?.Media?.relations?.edges?.map((item) => ({
@@ -439,34 +444,34 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.title.userPreferred,
                     },
                     status: item.node.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     episodes: item.node.episodes,
                     image: item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium,
-                    imageHash: getHashFromImage(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
                     color: item.node.coverImage?.color,
                     type: item.node.format,
                     cover: item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium,
-                    coverHash: getHashFromImage(item.node.bannerImage ??
+                    coverHash: (0, utils_2.getHashFromImage)(item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium),
                     rating: item.node.meanScore,
                 }));
-                if (this.provider instanceof Zoro) {
+                if (this.provider instanceof zoro_1.default) {
                     try {
-                        const anifyInfo = await new Anify(this.proxyConfig, this.adapter, this.provider.name.toLowerCase()).fetchAnimeInfo(id);
+                        const anifyInfo = await new anify_1.default(this.proxyConfig, undefined, this.provider.name.toLowerCase()).fetchAnimeInfo(id);
                         animeInfo.mappings = anifyInfo.mappings;
                         animeInfo.artwork = anifyInfo.artwork;
                         animeInfo.episodes = anifyInfo.episodes?.map((item) => ({
@@ -475,7 +480,7 @@ class Anilist extends AnimeParser {
                             description: item.description,
                             number: item.number,
                             image: item.image,
-                            imageHash: getHashFromImage(item.image),
+                            imageHash: (0, utils_2.getHashFromImage)(item.image),
                             airDate: item.airDate ?? null,
                         }));
                         if (!animeInfo.episodes?.length) {
@@ -529,7 +534,7 @@ class Anilist extends AnimeParser {
                         externalLinks: data.data.Media.externalLinks.filter((link) => link.type === 'STREAMING'),
                     });
                 if (fetchFiller) {
-                    const { data: fillerData } = await this.client.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeInfo.malId}.json`, { validateStatus: () => true });
+                    const { data: fillerData } = await axios_1.default.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeInfo.malId}.json`, { validateStatus: () => true });
                     if (!fillerData.toString().startsWith('404')) {
                         fillerEpisodes = [];
                         fillerEpisodes?.push(...fillerData.episodes);
@@ -558,8 +563,8 @@ class Anilist extends AnimeParser {
          */
         this.fetchEpisodeSources = async (episodeId, ...args) => {
             try {
-                if (this.provider instanceof Anify)
-                    return new Anify().fetchEpisodeSources(episodeId, args[0], args[1]);
+                if (this.provider instanceof anify_1.default)
+                    return new anify_1.default().fetchEpisodeSources(episodeId, args[0], args[1]);
                 return this.provider.fetchEpisodeSources(episodeId, ...args);
             }
             catch (err) {
@@ -588,10 +593,10 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistTrendingQuery(page, perPage),
+                query: (0, utils_1.anilistTrendingQuery)(page, perPage),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options);
                 const res = {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -607,27 +612,27 @@ class Anilist extends AnimeParser {
                             }
                             : item.title.romaji,
                         image: item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        imageHash: getHashFromImage(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         trailer: {
                             id: item.trailer?.id,
                             site: item.trailer?.site,
                             thumbnail: item.trailer?.thumbnail,
-                            thumbnailHash: getHashFromImage(item.trailer?.thumbnail),
+                            thumbnailHash: (0, utils_2.getHashFromImage)(item.trailer?.thumbnail),
                         },
                         description: item.description,
                         status: item.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : item.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : item.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : item.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : item.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         cover: item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        coverHash: getHashFromImage(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         rating: item.averageScore,
                         releaseDate: item.seasonYear,
                         color: item.coverImage?.color,
@@ -654,10 +659,10 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistPopularQuery(page, perPage),
+                query: (0, utils_1.anilistPopularQuery)(page, perPage),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options);
                 const res = {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -673,27 +678,27 @@ class Anilist extends AnimeParser {
                             }
                             : item.title.romaji,
                         image: item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        imageHash: getHashFromImage(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         trailer: {
                             id: item.trailer?.id,
                             site: item.trailer?.site,
                             thumbnail: item.trailer?.thumbnail,
-                            thumbnailHash: getHashFromImage(item.trailer?.thumbnail),
+                            thumbnailHash: (0, utils_2.getHashFromImage)(item.trailer?.thumbnail),
                         },
                         description: item.description,
                         status: item.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : item.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : item.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : item.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : item.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         cover: item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        coverHash: getHashFromImage(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         rating: item.averageScore,
                         releaseDate: item.seasonYear,
                         color: item.coverImage?.color,
@@ -721,7 +726,7 @@ class Anilist extends AnimeParser {
         this.fetchAiringSchedule = async (page = 1, perPage = 20, weekStart = (new Date().getDay() + 1) % 7, weekEnd = (new Date().getDay() + 7) % 7, notYetAired = false) => {
             let day1, day2;
             if (typeof weekStart === 'string' && typeof weekEnd === 'string')
-                [day1, day2] = getDays(capitalizeFirstLetter(weekStart.toLowerCase()), capitalizeFirstLetter(weekEnd.toLowerCase()));
+                [day1, day2] = (0, utils_1.getDays)((0, utils_1.capitalizeFirstLetter)(weekStart.toLowerCase()), (0, utils_1.capitalizeFirstLetter)(weekEnd.toLowerCase()));
             else if (typeof weekStart === 'number' && typeof weekEnd === 'number')
                 [day1, day2] = [weekStart, weekEnd];
             else
@@ -731,10 +736,10 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistAiringScheduleQuery(page, perPage, day1, day2, notYetAired),
+                query: (0, utils_1.anilistAiringScheduleQuery)(page, perPage, day1, day2, notYetAired),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options);
                 const res = {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -753,13 +758,13 @@ class Anilist extends AnimeParser {
                             : item.media.title.romaji,
                         country: item.media.countryOfOrigin,
                         image: item.media.coverImage.extraLarge ?? item.media.coverImage.large ?? item.media.coverImage.medium,
-                        imageHash: getHashFromImage(item.media.coverImage.extraLarge ?? item.media.coverImage.large ?? item.media.coverImage.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.media.coverImage.extraLarge ?? item.media.coverImage.large ?? item.media.coverImage.medium),
                         description: item.media.description,
                         cover: item.media.bannerImage ??
                             item.media.coverImage.extraLarge ??
                             item.media.coverImage.large ??
                             item.media.coverImage.medium,
-                        coverHash: getHashFromImage(item.media.bannerImage ??
+                        coverHash: (0, utils_2.getHashFromImage)(item.media.bannerImage ??
                             item.media.coverImage.extraLarge ??
                             item.media.coverImage.large ??
                             item.media.coverImage.medium),
@@ -786,17 +791,17 @@ class Anilist extends AnimeParser {
             if (genres.length === 0)
                 throw new Error('No genres specified');
             for (const genre of genres)
-                if (!Object.values(Genres).includes(genre))
+                if (!Object.values(models_1.Genres).includes(genre))
                     throw new Error('Invalid genre');
             const options = {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistGenresQuery(genres, page, perPage),
+                query: (0, utils_1.anilistGenresQuery)(genres, page, perPage),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options);
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options);
                 const res = {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -812,16 +817,16 @@ class Anilist extends AnimeParser {
                             }
                             : item.title.romaji,
                         image: item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        imageHash: getHashFromImage(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         trailer: {
                             id: item.trailer?.id,
                             site: item.trailer?.site,
                             thumbnail: item.trailer?.thumbnail,
-                            thumbnailHash: getHashFromImage(item.trailer?.thumbnail),
+                            thumbnailHash: (0, utils_2.getHashFromImage)(item.trailer?.thumbnail),
                         },
                         description: item.description,
                         cover: item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium,
-                        coverHash: getHashFromImage(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage ?? item.coverImage.extraLarge ?? item.coverImage.large ?? item.coverImage.medium),
                         rating: item.averageScore,
                         releaseDate: item.seasonYear,
                         color: item.coverImage?.color,
@@ -845,8 +850,8 @@ class Anilist extends AnimeParser {
             }
             // Run similar title searches in parallel
             const [mappedEng, mappedRom] = await Promise.all([
-                Promise.resolve(findSimilarTitles(title?.english || '', findAnime.results)),
-                Promise.resolve(findSimilarTitles(title?.romaji || '', findAnime.results)),
+                Promise.resolve((0, utils_2.findSimilarTitles)(title?.english || '', findAnime.results)),
+                Promise.resolve((0, utils_2.findSimilarTitles)(title?.romaji || '', findAnime.results)),
             ]);
             // Use Set for efficient deduplication
             const uniqueResults = Array.from(new Set([...mappedEng, ...mappedRom].map((item) => JSON.stringify(item)))).map((str) => JSON.parse(str));
@@ -878,17 +883,17 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistSiteStatisticsQuery(),
+                query: (0, utils_1.anilistSiteStatisticsQuery)(),
             };
             try {
                 // const {
                 //   data: { data },
-                // } = await this.client.post(this.anilistGraphqlUrl, options);
+                // } = await axios.post(this.anilistGraphqlUrl, options);
                 // const selectedAnime = Math.floor(
                 //   Math.random() * data.SiteStatistics.anime.nodes[data.SiteStatistics.anime.nodes.length - 1].count
                 // );
                 // const { results } = await this.advancedSearch(undefined, 'ANIME', Math.ceil(selectedAnime / 50), 50);
-                const { data: data } = await this.client.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
+                const { data: data } = await axios_1.default.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
                 const ids = data?.trim().split('\n');
                 const selectedAnime = Math.floor(Math.random() * ids.length);
                 return await this.fetchAnimeInfo(ids[selectedAnime]);
@@ -904,7 +909,7 @@ class Anilist extends AnimeParser {
          */
         this.fetchRecentEpisodes = async (provider = 'gogoanime', page = 1, perPage = 25) => {
             try {
-                const { data } = await this.client.get(`${this.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
+                const { data } = await axios_1.default.get(`${this.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
                 const results = data?.map((item) => {
                     return {
                         id: item.id.toString(),
@@ -916,7 +921,7 @@ class Anilist extends AnimeParser {
                             // userPreferred: (_f = item.title) === null || _f === void 0 ? void 0 : _f.userPreferred,
                         },
                         image: item.coverImage ?? item.bannerImage,
-                        imageHash: getHashFromImage(item.coverImage ?? item.bannerImage),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage ?? item.bannerImage),
                         rating: item.averageScore,
                         color: item.anime?.color,
                         episodeId: `${provider === 'gogoanime'
@@ -964,14 +969,14 @@ class Anilist extends AnimeParser {
                 },
                 query: `query($id: Int = ${id}){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
             };
-            const { data: { data: { Media }, }, } = await this.client.post(this.anilistGraphqlUrl, options);
+            const { data: { data: { Media }, }, } = await axios_1.default.post(this.anilistGraphqlUrl, options);
             let possibleAnimeEpisodes = [];
             let fillerEpisodes = [];
-            if (this.provider instanceof Zoro || this.provider instanceof AnimeKai || this.provider instanceof AnimePahe) {
+            if (this.provider instanceof zoro_1.default || this.provider instanceof animekai_1.default || this.provider instanceof animepahe_1.default) {
                 try {
                     // console.time('fetchEpisodesListById');
                     const [animeMetaData, providerEpisodes] = await Promise.all([
-                        this.client.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
+                        axios_1.default.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then((res) => res.data),
                         this.fetchDefaultEpisodeList(Media),
                     ]);
                     // console.timeEnd('fetchEpisodesListById');
@@ -982,7 +987,7 @@ class Anilist extends AnimeParser {
                         description: item.overview ?? item.summary,
                         number: item.episodeNumber ?? parseInt(item.episode),
                         image: item.image,
-                        imageHash: getHashFromImage(item.image),
+                        imageHash: (0, utils_2.getHashFromImage)(item.image),
                         releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc,
                     }));
                     function mergeEpisodes(normalizedEpisodes, providerEpisodes) {
@@ -1053,7 +1058,7 @@ class Anilist extends AnimeParser {
                         possibleAnimeEpisodes = possibleAnimeEpisodes?.map((episode) => {
                             if (!episode.image) {
                                 episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-                                episode.imageHash = getHashFromImage(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
+                                episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
                             }
                             return episode;
                         });
@@ -1064,7 +1069,7 @@ class Anilist extends AnimeParser {
                     possibleAnimeEpisodes = possibleAnimeEpisodes?.map((episode) => {
                         if (!episode.image) {
                             episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-                            episode.imageHash = getHashFromImage(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
+                            episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
                         }
                         return episode;
                     });
@@ -1074,7 +1079,7 @@ class Anilist extends AnimeParser {
             else
                 possibleAnimeEpisodes = await this.fetchDefaultEpisodeList(Media);
             if (fetchFiller) {
-                const { data: fillerData } = await this.client.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${Media.idMal}.json`, {
+                const { data: fillerData } = await axios_1.default.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${Media.idMal}.json`, {
                     validateStatus: () => true,
                 });
                 if (!fillerData.toString().startsWith('404')) {
@@ -1085,7 +1090,7 @@ class Anilist extends AnimeParser {
             possibleAnimeEpisodes = possibleAnimeEpisodes?.map((episode) => {
                 if (!episode.image) {
                     episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-                    episode.imageHash = getHashFromImage(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
+                    episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
                 }
                 if (fetchFiller && fillerEpisodes?.length > 0 && fillerEpisodes?.length >= Media.episodes) {
                     if (fillerEpisodes[episode.number - 1])
@@ -1109,10 +1114,10 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistMediaDetailQuery(id),
+                query: (0, utils_1.anilistMediaDetailQuery)(id),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options).catch(() => {
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options).catch(() => {
                     throw new Error('Media not found');
                 });
                 animeInfo.malId = data.data.Media.idMal;
@@ -1127,7 +1132,7 @@ class Anilist extends AnimeParser {
                         id: data.data.Media.trailer?.id,
                         site: data.data.Media.trailer?.site,
                         thumbnail: data.data.Media.trailer?.thumbnail,
-                        thumbnailHash: getHashFromImage(data.data.Media.trailer?.thumbnail),
+                        thumbnailHash: (0, utils_2.getHashFromImage)(data.data.Media.trailer?.thumbnail),
                     };
                 }
                 animeInfo.synonyms = data.data.Media.synonyms;
@@ -1136,28 +1141,28 @@ class Anilist extends AnimeParser {
                 animeInfo.countryOfOrigin = data.data.Media.countryOfOrigin;
                 animeInfo.image =
                     data.data.Media.coverImage.extraLarge ?? data.data.Media.coverImage.large ?? data.data.Media.coverImage.medium;
-                animeInfo.imageHash = getHashFromImage(data.data.Media.coverImage.extraLarge ?? data.data.Media.coverImage.large ?? data.data.Media.coverImage.medium);
+                animeInfo.imageHash = (0, utils_2.getHashFromImage)(data.data.Media.coverImage.extraLarge ?? data.data.Media.coverImage.large ?? data.data.Media.coverImage.medium);
                 animeInfo.cover = data.data.Media.bannerImage ?? animeInfo.image;
-                animeInfo.coverHash = getHashFromImage(data.data.Media.bannerImage ?? animeInfo.image);
+                animeInfo.coverHash = (0, utils_2.getHashFromImage)(data.data.Media.bannerImage ?? animeInfo.image);
                 animeInfo.description = data.data.Media.description;
                 switch (data.data.Media.status) {
                     case 'RELEASING':
-                        animeInfo.status = MediaStatus.ONGOING;
+                        animeInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'FINISHED':
-                        animeInfo.status = MediaStatus.COMPLETED;
+                        animeInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'NOT_YET_RELEASED':
-                        animeInfo.status = MediaStatus.NOT_YET_AIRED;
+                        animeInfo.status = models_1.MediaStatus.NOT_YET_AIRED;
                         break;
                     case 'CANCELLED':
-                        animeInfo.status = MediaStatus.CANCELLED;
+                        animeInfo.status = models_1.MediaStatus.CANCELLED;
                         break;
                     case 'HIATUS':
-                        animeInfo.status = MediaStatus.HIATUS;
+                        animeInfo.status = models_1.MediaStatus.HIATUS;
                         break;
                     default:
-                        animeInfo.status = MediaStatus.UNKNOWN;
+                        animeInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 animeInfo.releaseDate = data.data.Media.startDate.year;
                 if (data.data.Media.nextAiringEpisode?.airingAt)
@@ -1197,21 +1202,21 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.mediaRecommendation.title.userPreferred,
                     },
                     status: item.node.mediaRecommendation.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.mediaRecommendation.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.mediaRecommendation.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.mediaRecommendation.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.mediaRecommendation.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     episodes: item.node.mediaRecommendation.episodes,
                     image: item.node.mediaRecommendation.coverImage.extraLarge ??
                         item.node.mediaRecommendation.coverImage.large ??
                         item.node.mediaRecommendation.coverImage.medium,
-                    imageHash: getHashFromImage(item.node.mediaRecommendation.coverImage.extraLarge ??
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.mediaRecommendation.coverImage.extraLarge ??
                         item.node.mediaRecommendation.coverImage.large ??
                         item.node.mediaRecommendation.coverImage.medium),
                     cover: item.node.mediaRecommendation.bannerImage ??
@@ -1236,7 +1241,7 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.name.userPreferred,
                     },
                     image: item.node.image.large ?? item.node.image.medium,
-                    imageHash: getHashFromImage(item.node.image.large ?? item.node.image.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.image.large ?? item.node.image.medium),
                     voiceActors: item.voiceActors.map((voiceActor) => ({
                         id: voiceActor.id,
                         language: voiceActor.languageV2,
@@ -1248,7 +1253,7 @@ class Anilist extends AnimeParser {
                             userPreferred: voiceActor.name.userPreferred,
                         },
                         image: voiceActor.image.large ?? voiceActor.image.medium,
-                        imageHash: getHashFromImage(voiceActor.image.large ?? voiceActor.image.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(voiceActor.image.large ?? voiceActor.image.medium),
                     })),
                 }));
                 animeInfo.color = data.data.Media.coverImage?.color;
@@ -1263,24 +1268,24 @@ class Anilist extends AnimeParser {
                         userPreferred: item.node.title.userPreferred,
                     },
                     status: item.node.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     episodes: item.node.episodes,
                     image: item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium,
-                    imageHash: getHashFromImage(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
                     cover: item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium,
-                    coverHash: getHashFromImage(item.node.bannerImage ??
+                    coverHash: (0, utils_2.getHashFromImage)(item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium),
@@ -1308,10 +1313,10 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistStaffInfoQuery(id),
+                query: (0, utils_1.anilistStaffInfoQuery)(id),
             };
             try {
-                const { data } = await this.client.post(this.anilistGraphqlUrl, options).catch((err) => {
+                const { data } = await axios_1.default.post(this.anilistGraphqlUrl, options).catch((err) => {
                     throw new Error(err.message);
                 });
                 const staff = data.data.Staff;
@@ -1347,13 +1352,13 @@ class Anilist extends AnimeParser {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistCharacterQuery(),
+                query: (0, utils_1.anilistCharacterQuery)(),
                 variables: {
                     id: id,
                 },
             };
             try {
-                const { data: { data: { Character }, }, } = await this.client.post(this.anilistGraphqlUrl, options);
+                const { data: { data: { Character }, }, } = await axios_1.default.post(this.anilistGraphqlUrl, options);
                 const height = Character.description.match(/__Height:__(.*)/)?.[1].trim();
                 const weight = Character.description.match(/__Weight:__(.*)/)?.[1].trim();
                 const hairColor = Character.description.match(/__Hair Color:__(.*)/)?.[1].trim();
@@ -1401,7 +1406,7 @@ class Anilist extends AnimeParser {
                         alternativeSpoiler: Character.name?.alternativeSpoiler,
                     },
                     image: Character.image?.large ?? Character.image?.medium,
-                    imageHash: getHashFromImage(Character.image?.large ?? Character.image?.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(Character.image?.large ?? Character.image?.medium),
                     description: Character.description,
                     gender: Character.gender,
                     dateOfBirth: {
@@ -1437,19 +1442,19 @@ class Anilist extends AnimeParser {
                             userPreferred: v.node.title?.userPreferred,
                         },
                         status: v.node.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : v.node.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : v.node.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : v.node.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : v.node.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         episodes: v.node.episodes,
                         image: v.node.coverImage?.extraLarge ?? v.node.coverImage?.large ?? v.node.coverImage?.medium,
-                        imageHash: getHashFromImage(v.node.coverImage?.extraLarge ?? v.node.coverImage?.large ?? v.node.coverImage?.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(v.node.coverImage?.extraLarge ?? v.node.coverImage?.large ?? v.node.coverImage?.medium),
                         rating: v.node.averageScore,
                         releaseDate: v.node.startDate?.year,
                         type: v.node.format,
@@ -1466,7 +1471,7 @@ class Anilist extends AnimeParser {
             const slug = title.replace(/[^0-9a-zA-Z]+/g, ' ');
             let possibleManga;
             if (malId) {
-                const malAsyncReq = await this.client.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
+                const malAsyncReq = await axios_1.default.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
                     validateStatus: () => true,
                 });
                 if (malAsyncReq.status === 200) {
@@ -1519,7 +1524,7 @@ class Anilist extends AnimeParser {
             const englishPossibleEpisodes = this.findMangaSlug(provider, title.english, malId);
             return englishPossibleEpisodes;
         };
-        this.provider = provider || new Zoro(customBaseURL);
+        this.provider = provider || new zoro_1.default(customBaseURL);
     }
 }
 _a = Anilist;
@@ -1548,10 +1553,10 @@ Anilist.Manga = class Manga {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistSearchQuery(query, page, perPage, 'MANGA'),
+                query: (0, utils_1.anilistSearchQuery)(query, page, perPage, 'MANGA'),
             };
             try {
-                const { data } = await axios.post(new _a().anilistGraphqlUrl, options);
+                const { data } = await axios_1.default.post(new _a().anilistGraphqlUrl, options);
                 const res = {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -1567,20 +1572,20 @@ Anilist.Manga = class Manga {
                             }
                             : item.title.romaji,
                         status: item.status === 'RELEASING'
-                            ? MediaStatus.ONGOING
+                            ? models_1.MediaStatus.ONGOING
                             : item.status === 'FINISHED'
-                                ? MediaStatus.COMPLETED
+                                ? models_1.MediaStatus.COMPLETED
                                 : item.status === 'NOT_YET_RELEASED'
-                                    ? MediaStatus.NOT_YET_AIRED
+                                    ? models_1.MediaStatus.NOT_YET_AIRED
                                     : item.status === 'CANCELLED'
-                                        ? MediaStatus.CANCELLED
+                                        ? models_1.MediaStatus.CANCELLED
                                         : item.status === 'HIATUS'
-                                            ? MediaStatus.HIATUS
-                                            : MediaStatus.UNKNOWN,
+                                            ? models_1.MediaStatus.HIATUS
+                                            : models_1.MediaStatus.UNKNOWN,
                         image: item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium,
-                        imageHash: getHashFromImage(item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium),
+                        imageHash: (0, utils_2.getHashFromImage)(item.coverImage?.extraLarge ?? item.coverImage?.large ?? item.coverImage?.medium),
                         cover: item.bannerImage,
-                        coverHash: getHashFromImage(item.bannerImage),
+                        coverHash: (0, utils_2.getHashFromImage)(item.bannerImage),
                         popularity: item.popularity,
                         description: item.description,
                         rating: item.averageScore,
@@ -1617,10 +1622,10 @@ Anilist.Manga = class Manga {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                query: anilistMediaDetailQuery(id),
+                query: (0, utils_1.anilistMediaDetailQuery)(id),
             };
             try {
-                const { data } = await axios.post(new _a().anilistGraphqlUrl, options).catch((err) => {
+                const { data } = await axios_1.default.post(new _a().anilistGraphqlUrl, options).catch((err) => {
                     throw new Error('Media not found');
                 });
                 mangaInfo.malId = data.data.Media.idMal;
@@ -1635,37 +1640,37 @@ Anilist.Manga = class Manga {
                         id: data.data.Media.trailer.id,
                         site: data.data.Media.trailer?.site,
                         thumbnail: data.data.Media.trailer?.thumbnail,
-                        thumbnailHash: getHashFromImage(data.data.Media.trailer?.thumbnail),
+                        thumbnailHash: (0, utils_2.getHashFromImage)(data.data.Media.trailer?.thumbnail),
                     };
                 }
                 mangaInfo.image =
                     data.data.Media.coverImage.extraLarge ??
                         data.data.Media.coverImage.large ??
                         data.data.Media.coverImage.medium;
-                mangaInfo.imageHash = getHashFromImage(data.data.Media.coverImage.extraLarge ?? data.data.Media.coverImage.large ?? data.data.Media.coverImage.medium);
+                mangaInfo.imageHash = (0, utils_2.getHashFromImage)(data.data.Media.coverImage.extraLarge ?? data.data.Media.coverImage.large ?? data.data.Media.coverImage.medium);
                 mangaInfo.popularity = data.data.Media.popularity;
                 mangaInfo.color = data.data.Media.coverImage?.color;
                 mangaInfo.cover = data.data.Media.bannerImage ?? mangaInfo.image;
-                mangaInfo.coverHash = getHashFromImage(data.data.Media.bannerImage ?? mangaInfo.image);
+                mangaInfo.coverHash = (0, utils_2.getHashFromImage)(data.data.Media.bannerImage ?? mangaInfo.image);
                 mangaInfo.description = data.data.Media.description;
                 switch (data.data.Media.status) {
                     case 'RELEASING':
-                        mangaInfo.status = MediaStatus.ONGOING;
+                        mangaInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'FINISHED':
-                        mangaInfo.status = MediaStatus.COMPLETED;
+                        mangaInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     case 'NOT_YET_RELEASED':
-                        mangaInfo.status = MediaStatus.NOT_YET_AIRED;
+                        mangaInfo.status = models_1.MediaStatus.NOT_YET_AIRED;
                         break;
                     case 'CANCELLED':
-                        mangaInfo.status = MediaStatus.CANCELLED;
+                        mangaInfo.status = models_1.MediaStatus.CANCELLED;
                         break;
                     case 'HIATUS':
-                        mangaInfo.status = MediaStatus.HIATUS;
+                        mangaInfo.status = models_1.MediaStatus.HIATUS;
                         break;
                     default:
-                        mangaInfo.status = MediaStatus.UNKNOWN;
+                        mangaInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 mangaInfo.releaseDate = data.data.Media.startDate.year;
                 mangaInfo.startDate = {
@@ -1693,28 +1698,28 @@ Anilist.Manga = class Manga {
                         userPreferred: item.node.mediaRecommendation?.title?.userPreferred,
                     },
                     status: item.node.mediaRecommendation?.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.mediaRecommendation?.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.mediaRecommendation?.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.mediaRecommendation?.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.mediaRecommendation?.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     chapters: item.node.mediaRecommendation?.chapters,
                     image: item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium,
-                    imageHash: getHashFromImage(item.node.mediaRecommendation?.coverImage?.extraLarge ??
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium),
                     cover: item.node.mediaRecommendation?.bannerImage ??
                         item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium,
-                    coverHash: getHashFromImage(item.node.mediaRecommendation?.bannerImage ??
+                    coverHash: (0, utils_2.getHashFromImage)(item.node.mediaRecommendation?.bannerImage ??
                         item.node.mediaRecommendation?.coverImage?.extraLarge ??
                         item.node.mediaRecommendation?.coverImage?.large ??
                         item.node.mediaRecommendation?.coverImage?.medium),
@@ -1732,7 +1737,7 @@ Anilist.Manga = class Manga {
                         userPreferred: item.node.name.userPreferred,
                     },
                     image: item.node.image.large ?? item.node.image.medium,
-                    imageHash: getHashFromImage(item.node.image.large ?? item.node.image.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.image.large ?? item.node.image.medium),
                 }));
                 mangaInfo.relations = data.data.Media.relations.edges.map((item) => ({
                     id: item.node.id,
@@ -1745,26 +1750,26 @@ Anilist.Manga = class Manga {
                         userPreferred: item.node.title.userPreferred,
                     },
                     status: item.node.status === 'RELEASING'
-                        ? MediaStatus.ONGOING
+                        ? models_1.MediaStatus.ONGOING
                         : item.node.status === 'FINISHED'
-                            ? MediaStatus.COMPLETED
+                            ? models_1.MediaStatus.COMPLETED
                             : item.node.status === 'NOT_YET_RELEASED'
-                                ? MediaStatus.NOT_YET_AIRED
+                                ? models_1.MediaStatus.NOT_YET_AIRED
                                 : item.node.status === 'CANCELLED'
-                                    ? MediaStatus.CANCELLED
+                                    ? models_1.MediaStatus.CANCELLED
                                     : item.node.status === 'HIATUS'
-                                        ? MediaStatus.HIATUS
-                                        : MediaStatus.UNKNOWN,
+                                        ? models_1.MediaStatus.HIATUS
+                                        : models_1.MediaStatus.UNKNOWN,
                     chapters: item.node.chapters,
                     image: item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium,
-                    imageHash: getHashFromImage(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
+                    imageHash: (0, utils_2.getHashFromImage)(item.node.coverImage.extraLarge ?? item.node.coverImage.large ?? item.node.coverImage.medium),
                     color: item.node.coverImage?.color,
                     type: item.node.format,
                     cover: item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium,
-                    coverHash: getHashFromImage(item.node.bannerImage ??
+                    coverHash: (0, utils_2.getHashFromImage)(item.node.bannerImage ??
                         item.node.coverImage.extraLarge ??
                         item.node.coverImage.large ??
                         item.node.coverImage.medium),
@@ -1781,7 +1786,7 @@ Anilist.Manga = class Manga {
                 throw Error(error.message);
             }
         };
-        this.provider = provider || new Mangasee123();
+        this.provider = provider || new mangasee123_1.default();
     }
 };
 // (async () => {
@@ -1791,5 +1796,5 @@ Anilist.Manga = class Manga {
 //   const sources = await ani.fetchEpisodeSources(anime.episodes![0]!.id, anime.episodes![0]!.number, anime.id);
 //   console.log(sources);
 // })();
-export default Anilist;
+exports.default = Anilist;
 //# sourceMappingURL=anilist.js.map

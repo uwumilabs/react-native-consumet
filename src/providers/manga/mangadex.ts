@@ -1,3 +1,4 @@
+import axios from "axios";
 import { encode } from 'ascii-url-encoder';
 import { AxiosError, type AxiosResponse } from 'axios';
 
@@ -21,7 +22,7 @@ class MangaDex extends MangaParser {
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data } = await this.client.get(`${this.apiUrl}/manga/${mangaId}`);
+      const { data } = await axios.get(`${this.apiUrl}/manga/${mangaId}`);
       const mangaInfo: IMangaInfo = {
         id: data.data.id,
         title: data.data.attributes.title.en,
@@ -67,7 +68,7 @@ class MangaDex extends MangaParser {
    */
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const res = await this.client.get(`${this.apiUrl}/at-home/server/${chapterId}`);
+      const res = await axios.get(`${this.apiUrl}/at-home/server/${chapterId}`);
       const pages: { img: string; page: number }[] = [];
 
       for (const id of res.data.chapter.data) {
@@ -93,7 +94,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await this.client.get(
+      const res = await axios.get(
         `${this.apiUrl}/manga?limit=${limit}&title=${encode(query)}&limit=${limit}&offset=${
           limit * (page - 1)
         }&order[relevance]=desc`
@@ -140,7 +141,7 @@ class MangaDex extends MangaParser {
   };
   fetchRandom = async (): Promise<ISearch<IMangaResult>> => {
     try {
-      const res = await this.client.get(`${this.apiUrl}/manga/random`);
+      const res = await axios.get(`${this.apiUrl}/manga/random`);
 
       if (res.data.result === 'ok') {
         const results: ISearch<IMangaResult> = {
@@ -178,7 +179,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await this.client.get(
+      const res = await axios.get(
         `${
           this.apiUrl
         }/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${
@@ -226,7 +227,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await this.client.get(
+      const res = await axios.get(
         `${this.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`
       );
 
@@ -271,7 +272,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await this.client.get(
+      const res = await axios.get(
         `${
           this.apiUrl
         }/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${
@@ -319,7 +320,7 @@ class MangaDex extends MangaParser {
       return [];
     }
 
-    const response = await this.client.get(
+    const response = await axios.get(
       `${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`
     );
 
@@ -327,7 +328,7 @@ class MangaDex extends MangaParser {
   };
 
   private fetchCoverImage = async (coverId: string): Promise<string> => {
-    const { data } = await this.client.get(`${this.apiUrl}/cover/${coverId}`);
+    const { data } = await axios.get(`${this.apiUrl}/cover/${coverId}`);
 
     const fileName = data.data.attributes.fileName;
 

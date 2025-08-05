@@ -1,12 +1,18 @@
-import { VideoExtractor } from '../models';
-class MixDrop extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../models");
+class MixDrop extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'MixDrop';
         this.sources = [];
         this.extract = async (videoUrl) => {
             try {
-                const { data } = await this.client.get(videoUrl.href);
+                const { data } = await axios_1.default.get(videoUrl.href);
                 const formated = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)[2].replace('eval', ''));
                 const [poster, source] = formated
                     .match(/poster="([^"]+)"|wurl="([^"]+)"/g)
@@ -25,5 +31,5 @@ class MixDrop extends VideoExtractor {
         };
     }
 }
-export default MixDrop;
+exports.default = MixDrop;
 //# sourceMappingURL=mixdrop.js.map

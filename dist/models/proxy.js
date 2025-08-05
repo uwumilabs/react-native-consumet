@@ -1,5 +1,11 @@
-import axios, {} from 'axios';
-export class Proxy {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Proxy = void 0;
+const axios_1 = __importDefault(require("axios"));
+class Proxy {
     constructor(proxyConfig, adapter) {
         this.proxyConfig = proxyConfig;
         this.adapter = adapter;
@@ -22,7 +28,7 @@ export class Proxy {
         };
         this.toMap = (arr) => arr.map((v, i) => [i, v]);
         // Create client with optimized defaults for React Native
-        this.client = axios.create({
+        axios_1.default = axios_1.default.create({
             // Increase timeout for mobile networks
             timeout: 15000,
             // Add headers only once here
@@ -33,7 +39,7 @@ export class Proxy {
         });
         // Apply adapter if provided
         if (adapter)
-            this.client.defaults.adapter = adapter;
+            axios_1.default.defaults.adapter = adapter;
         // Set up interceptor only once
         this.setupInterceptor();
         // Apply proxy if provided
@@ -42,7 +48,7 @@ export class Proxy {
     }
     setupInterceptor() {
         // Set the interceptor once during initialization
-        this.client.interceptors.request.use((config) => {
+        axios_1.default.interceptors.request.use((config) => {
             // Only modify URL if we have a proxy
             if (this.proxyUrl) {
                 config.url = `${this.proxyUrl}${config?.url || ''}`;
@@ -94,8 +100,9 @@ export class Proxy {
      * Set or Change the axios adapter
      */
     setAxiosAdapter(adapter) {
-        this.client.defaults.adapter = adapter;
+        axios_1.default.defaults.adapter = adapter;
     }
 }
-export default Proxy;
+exports.Proxy = Proxy;
+exports.default = Proxy;
 //# sourceMappingURL=proxy.js.map

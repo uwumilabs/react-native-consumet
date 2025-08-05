@@ -1,6 +1,7 @@
-import {} from './base-types';
-import {} from './types';
-export class LibgenBookObject {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GetComicsComicsObject = exports.LibgenBookObject = void 0;
+class LibgenBookObject {
     constructor() {
         this.title = '';
         this.authors = [];
@@ -23,6 +24,7 @@ export class LibgenBookObject {
         this.hashes = new HashesObject();
     }
 }
+exports.LibgenBookObject = LibgenBookObject;
 class HashesObject {
     constructor() {
         this.AICH = '';
@@ -34,7 +36,7 @@ class HashesObject {
         this.TTH = '';
     }
 }
-export class GetComicsComicsObject {
+class GetComicsComicsObject {
     constructor() {
         this.image = '';
         this.title = '';
@@ -51,4 +53,5 @@ export class GetComicsComicsObject {
         this.readOnline = '';
     }
 }
+exports.GetComicsComicsObject = GetComicsComicsObject;
 //# sourceMappingURL=type-objects.js.map

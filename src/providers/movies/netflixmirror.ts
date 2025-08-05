@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   MovieParser,
   TvType,
@@ -18,7 +19,7 @@ class NetflixMirror extends MovieParser {
   private nfCookie: null | string = 'hd=on;';
 
   constructor(customBaseURL?: string) {
-    super(...arguments);
+    super();
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
@@ -33,7 +34,7 @@ class NetflixMirror extends MovieParser {
 
   private async initCookie(): Promise<void> {
     try {
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         'https://raw.githubusercontent.com/2004durgesh/nfmirror-cookies/refs/heads/main/captured-cookies.json'
       );
       for (const cookie of data.cookiesByDomain['.netfree2.cc']) {
@@ -79,7 +80,7 @@ class NetflixMirror extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${
           this.baseUrl
         }/mobile/search.php?s=${encodeURI(query)}`,
@@ -97,7 +98,7 @@ class NetflixMirror extends MovieParser {
         basicResults.map(async (item: any) => {
           try {
             // Fetch additional details for each item
-            const detailResponse = await this.client.get(
+            const detailResponse = await axios.get(
               `https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${item.id}`,
               {
                 headers: this.Headers(),
@@ -138,7 +139,7 @@ class NetflixMirror extends MovieParser {
 
     while (true) {
       const url = `https://netfree2.cc/mobile/episodes.php?s=${seasonId}&series=${seriesId}&page=${page}`;
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
 
       if (data.episodes?.length) {
         episodes.push(
@@ -180,7 +181,7 @@ class NetflixMirror extends MovieParser {
       title: '',
     };
     try {
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${mediaId}`,
         {
           headers: this.Headers(),
@@ -232,7 +233,7 @@ class NetflixMirror extends MovieParser {
           Cookie: this.nfCookie!,
         }
       );
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/playlist.php?id=${episodeId}`,
         {
           headers: this.Headers(),

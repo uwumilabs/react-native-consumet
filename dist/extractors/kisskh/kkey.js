@@ -1,5 +1,10 @@
-// @ts-nocheck
-import staticData from './staticdata';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = getKKey;
+const staticdata_1 = __importDefault(require("./staticdata"));
 function stringToWordArray(input) {
     const wordArray = [];
     for (let i = 0; i < input.length; i++) {
@@ -24,7 +29,7 @@ function processBlock(n) {
 }
 //? needs to be enhanced
 function encryptBlock(_0x13a508, _0x5baaa1) {
-    const [_0x458390, _0x32aa26, _0x53dadc, _0x4810d1, _0x3c0f1b, _0x128bff] = staticData;
+    const [_0x458390, _0x32aa26, _0x53dadc, _0x4810d1, _0x3c0f1b, _0x128bff] = staticdata_1.default;
     const _0x21ba3f = _0x5baaa1 === 0 ? [22039283, 1457920463, 776125350, -1941999367] : _0x13a508.slice(_0x5baaa1 - 4, _0x5baaa1);
     for (let _0x5b9637 = 0; _0x5b9637 < 4; _0x5b9637++)
         _0x13a508[_0x5baaa1 + _0x5b9637] ^= _0x21ba3f[_0x5b9637];
@@ -106,7 +111,7 @@ function encryptBlock(_0x13a508, _0x5baaa1) {
  * @see https://kisskh.co/common.js?v=9082123
  * @see https://kisskh.co/502.065066555371fb02
  */
-export default function getKKey({ id, subOrVid, hash = 'mg3c3b04ba', version = '2.8.10', viGuid = '62f176f3bb1b5b8e70e39932ad34a0c7', subGuid = 'VgV52sWhwvBSf8BsM3BRY9weWiiCbtGp', platformVer = '4830201', }) {
+function getKKey({ id, subOrVid, hash = 'mg3c3b04ba', version = '2.8.10', viGuid = '62f176f3bb1b5b8e70e39932ad34a0c7', subGuid = 'VgV52sWhwvBSf8BsM3BRY9weWiiCbtGp', platformVer = '4830201', }) {
     const data = [
         '',
         id,

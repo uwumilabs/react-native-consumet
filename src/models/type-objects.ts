@@ -1,3 +1,4 @@
+import axios from "axios";
 import { type Hashes } from './base-types';
 import { type GetComicsComics, type LibgenBook } from './types';
 

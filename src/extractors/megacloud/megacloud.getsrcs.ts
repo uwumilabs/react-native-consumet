@@ -1,6 +1,6 @@
+import axios from "axios";
 import CryptoJS from 'crypto-js';
 import { USER_AGENT } from '../../utils/utils';
-import axios from 'axios';
 import { load } from 'cheerio';
 
 /**

@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   AnimeParser,
   type ISearch,

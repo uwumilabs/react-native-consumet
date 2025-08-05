@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
-class BRMangas extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class BRMangas extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'BRMangas';
@@ -13,8 +19,8 @@ class BRMangas extends MangaParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 const title = $('body > div.scroller-inner > div.wrapper > main > section > div > h1.titulo').text();
                 const descriptionAndAltTitles = $('body > div.scroller-inner > div.wrapper > main > div > div > div.col > div.serie-texto > div > p:nth-child(3)')
                     .text()
@@ -29,7 +35,7 @@ class BRMangas extends MangaParser {
                     .slice(11)
                     .split(',')
                     .map((genre) => genre.trim());
-                mangaInfo.status = MediaStatus.UNKNOWN;
+                mangaInfo.status = models_1.MediaStatus.UNKNOWN;
                 mangaInfo.views = null;
                 mangaInfo.authors = [
                     $('body > div.scroller-inner > div.wrapper > main > div > div > div.serie-geral > div.infoall > div.serie-infos > ul > li:nth-child(2)')
@@ -56,8 +62,8 @@ class BRMangas extends MangaParser {
         this.fetchChapterPages = async (chapterId) => {
             try {
                 const url = `${this.baseUrl}/ler/${chapterId}`;
-                const { data } = await this.client.get(url);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(url);
+                const $ = (0, cheerio_1.load)(data);
                 const script = $('script');
                 const pageURLs = JSON.parse(script
                     .filter((i, el) => $(el).text().includes('imageArray'))
@@ -84,8 +90,8 @@ class BRMangas extends MangaParser {
          */
         this.search = async (query) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/?s=${query.replace(/ /g, '+')}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/?s=${query.replace(/ /g, '+')}`);
+                const $ = (0, cheerio_1.load)(data);
                 const results = $('body > div.scroller-inner > div.wrapper > main > div.container > div.listagem > div.col')
                     .map((i, row) => ({
                     id: $(row).find('div.item > a').attr('href')?.split('/')[4],
@@ -104,5 +110,5 @@ class BRMangas extends MangaParser {
         };
     }
 }
-export default BRMangas;
+exports.default = BRMangas;
 //# sourceMappingURL=brmangas.js.map

@@ -1,3 +1,4 @@
+import axios from "axios";
 import AnimePahe from './animepahe';
 import Zoro from './zoro';
 import AnimeDrive from './animedrive';

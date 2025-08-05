@@ -1,5 +1,11 @@
-import { VideoExtractor } from '../models';
-class StreamHub extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../models");
+class StreamHub extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'StreamHub';
@@ -10,12 +16,12 @@ class StreamHub extends VideoExtractor {
                     sources: [],
                     subtitles: [],
                 };
-                const { data } = await this.client.get(videoUrl.href).catch(() => {
+                const { data } = await axios_1.default.get(videoUrl.href).catch(() => {
                     throw new Error('Video not found');
                 });
                 const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)[2].replace('eval', ''));
                 const links = unpackedData.match(new RegExp('sources:\\[\\{src:"(.*?)"')) ?? [];
-                const m3u8Content = await this.client.get(links[1], {
+                const m3u8Content = await axios_1.default.get(links[1], {
                     headers: {
                         Referer: links[1],
                     },
@@ -47,5 +53,5 @@ class StreamHub extends VideoExtractor {
         };
     }
 }
-export default StreamHub;
+exports.default = StreamHub;
 //# sourceMappingURL=streamhub.js.map

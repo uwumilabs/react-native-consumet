@@ -19,7 +19,7 @@ class MonosChinos extends AnimeParser {
          */
         this.search = async (query) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/buscar?q=${query}`);
+                const res = await axios.get(`${this.baseUrl}/buscar?q=${query}`);
                 const $ = load(res.data);
                 if (!$)
                     return { results: [] };
@@ -49,7 +49,7 @@ class MonosChinos extends AnimeParser {
         this.fetchAnimeInfo = async (id, totalEpisodes = 1000) => {
             try {
                 const url = `${this.baseUrl}/anime/${id}`;
-                const res = await this.client.get(url);
+                const res = await axios.get(url);
                 const $ = load(res.data);
                 const animeInfo = {
                     id: id,
@@ -84,7 +84,7 @@ class MonosChinos extends AnimeParser {
          */
         this.fetchEpisodeSources = async (episodeId) => {
             try {
-                const res = await this.client.get(`https://monoschinos2.com/ver/${episodeId}`);
+                const res = await axios.get(`https://monoschinos2.com/ver/${episodeId}`);
                 const $ = load(res.data);
                 let decodedUrl;
                 let sources;
@@ -119,7 +119,7 @@ class MonosChinos extends AnimeParser {
                 const button = $('button').filter(function () {
                     return $(this).text() === server;
                 });
-                const res2 = await this.client.get(`https://monoschinos2.com/reproductor?url=${button.attr('data-player')}`);
+                const res2 = await axios.get(`https://monoschinos2.com/reproductor?url=${button.attr('data-player')}`);
                 const $2 = load(res2.data);
                 const base64Match = $2.html().match(/atob\("([^"]+)"\)/);
                 return Buffer.from(base64Match[1], 'base64').toString('utf-8');
@@ -140,9 +140,9 @@ class MonosChinos extends AnimeParser {
 _MonosChinos_getServerDecodedUrl = new WeakMap();
 export default MonosChinos;
 // FILEMOON EXTRACTION TEST
-// const res3 = await this.client.get(decodedUrl);
+// const res3 = await axios.get(decodedUrl);
 // const $3 = load(res3.data);
-// const res4 = await this.client.get($3('iframe').attr('src')!);
+// const res4 = await axios.get($3('iframe').attr('src')!);
 // const $4 = load(res4.data);
 // const data = $4('script').last().html()?.split('image|')[1].split('|file')[0].split('|')!;
 // const strangeVal = $4('script')
@@ -163,9 +163,9 @@ export default MonosChinos;
 //   additionalData[0]
 // }&e=${data[5]}&f=${additionalData[1]}&${data[4]}=${strangeVal}&${data[3]}=${data[2]}&${data[1]}=${
 //   data[0]
-// }`;      const res3 = await this.client.get(decodedUrl);
+// }`;      const res3 = await axios.get(decodedUrl);
 // const $3 = load(res3.data);
-// const res4 = await this.client.get($3('iframe').attr('src')!);
+// const res4 = await axios.get($3('iframe').attr('src')!);
 // const $4 = load(res4.data);
 // const data = $4('script').last().html()?.split('image|')[1].split('|file')[0].split('|')!;
 // const strangeVal = $4('script')

@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { AnimeParser, SubOrSub, } from '../../models';
-class AnimeUnity extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class AnimeUnity extends models_1.AnimeParser {
     constructor() {
         super(...arguments);
         this.name = 'AnimeUnity';
@@ -12,8 +18,8 @@ class AnimeUnity extends AnimeParser {
          */
         this.search = async (query) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/archivio?title=${query}`);
-                const $ = load(res.data);
+                const res = await axios_1.default.get(`${this.baseUrl}/archivio?title=${query}`);
+                const $ = (0, cheerio_1.load)(res.data);
                 if (!$)
                     return { results: [] };
                 const items = JSON.parse('' + $('archivio').attr('records') + '');
@@ -30,7 +36,7 @@ class AnimeUnity extends AnimeParser {
                         cover: items[i].imageurl_cover,
                         rating: parseFloat(items[i].score),
                         releaseDate: items[i].date,
-                        subOrDub: `${items[i].dub ? SubOrSub.DUB : SubOrSub.SUB}`,
+                        subOrDub: `${items[i].dub ? models_1.SubOrSub.DUB : models_1.SubOrSub.SUB}`,
                     });
                 }
                 return searchResult;
@@ -50,8 +56,8 @@ class AnimeUnity extends AnimeParser {
             const firstPageEpisode = lastPageEpisode - 119;
             const url2 = `${this.baseUrl}/info_api/${id}/1?start_range=${firstPageEpisode}&end_range=${lastPageEpisode}`;
             try {
-                const res = await this.client.get(url);
-                const $ = load(res.data);
+                const res = await axios_1.default.get(url);
+                const $ = (0, cheerio_1.load)(res.data);
                 const totalEpisodes = parseInt($('video-player')?.attr('episodes_count') ?? '0');
                 const totalPages = Math.round(totalEpisodes / 120) + 1;
                 if (page < 1 || page > totalPages)
@@ -79,7 +85,7 @@ class AnimeUnity extends AnimeParser {
                 // fetch episodes method 1 (only first page can be fetchedd)
                 // const items = JSON.parse("" + $('video-player').attr('episodes') + "")
                 // fetch episodes method 2 (all pages can be fetched)
-                const res2 = await this.client.get(url2);
+                const res2 = await axios_1.default.get(url2);
                 const items = res2.data.episodes;
                 for (const i in items) {
                     animeInfo.episodes?.push({
@@ -100,15 +106,15 @@ class AnimeUnity extends AnimeParser {
          */
         this.fetchEpisodeSources = async (episodeId) => {
             try {
-                const res = await this.client.get(`${this.baseUrl}/anime/${episodeId}`);
-                const $ = load(res.data);
+                const res = await axios_1.default.get(`${this.baseUrl}/anime/${episodeId}`);
+                const $ = (0, cheerio_1.load)(res.data);
                 const episodeSources = {
                     sources: [],
                 };
                 const streamUrl = $('video-player').attr('embed_url');
                 if (streamUrl) {
-                    const res = await this.client.get(streamUrl);
-                    const $ = load(res.data);
+                    const res = await axios_1.default.get(streamUrl);
+                    const $ = (0, cheerio_1.load)(res.data);
                     const domain = $('script:contains("window.video")')
                         .text()
                         ?.match(/url: '(.*)'/)[1];
@@ -119,7 +125,7 @@ class AnimeUnity extends AnimeParser {
                         .text()
                         ?.match(/expires': '(.*)'/)[1];
                     const defaultUrl = `${domain}${domain?.includes('?') ? '&' : '?'}token=${token}&referer=&expires=${expires}&h=1`;
-                    const m3u8Content = await this.client.get(defaultUrl);
+                    const m3u8Content = await axios_1.default.get(defaultUrl);
                     if (m3u8Content.data.includes('EXTM3U')) {
                         const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
                         for (const video of videoList ?? []) {
@@ -159,7 +165,7 @@ class AnimeUnity extends AnimeParser {
         };
     }
 }
-export default AnimeUnity;
+exports.default = AnimeUnity;
 /**
  * old episode sources fetching method, keep it here.
  */

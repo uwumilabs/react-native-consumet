@@ -1,11 +1,15 @@
-import { StreamingServers, MediaFormat, SubOrSub, MediaStatus, WatchListType, AnimeParser, } from '../../models';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Zoro = void 0;
+exports.createZoro = createZoro;
+const models_1 = require("../../models");
 // import { StreamSB, MegaCloud, StreamTape } from '../../utils';
-export function createZoro(ctx) {
+function createZoro(ctx) {
     const { load, extractors, axios } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
-    class ZoroImpl extends AnimeParser {
+    class ZoroImpl extends models_1.AnimeParser {
         constructor(customBaseURL) {
-            super(...arguments);
+            super();
             this.name = 'Zoro';
             this.baseUrl = 'https://hianime.to';
             this.logo = 'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg';
@@ -52,15 +56,15 @@ export function createZoro(ctx) {
                     const hasSub = $('div.film-stats div.tick div.tick-item.tick-sub').length > 0;
                     const hasDub = $('div.film-stats div.tick div.tick-item.tick-dub').length > 0;
                     if (hasSub) {
-                        info.subOrDub = SubOrSub.SUB;
+                        info.subOrDub = models_1.SubOrSub.SUB;
                         info.hasSub = hasSub;
                     }
                     if (hasDub) {
-                        info.subOrDub = SubOrSub.DUB;
+                        info.subOrDub = models_1.SubOrSub.DUB;
                         info.hasDub = hasDub;
                     }
                     if (hasSub && hasDub) {
-                        info.subOrDub = SubOrSub.BOTH;
+                        info.subOrDub = models_1.SubOrSub.BOTH;
                     }
                     // ZORO - PAGE INFO
                     const zInfo = await axios.get(info.url);
@@ -75,16 +79,16 @@ export function createZoro(ctx) {
                     });
                     switch ($$$('.item.item-title').find("span.item-head:contains('Status')").next('span.name').text().trim()) {
                         case 'Finished Airing':
-                            info.status = MediaStatus.COMPLETED;
+                            info.status = models_1.MediaStatus.COMPLETED;
                             break;
                         case 'Currently Airing':
-                            info.status = MediaStatus.ONGOING;
+                            info.status = models_1.MediaStatus.ONGOING;
                             break;
                         case 'Not yet aired':
-                            info.status = MediaStatus.NOT_YET_AIRED;
+                            info.status = models_1.MediaStatus.NOT_YET_AIRED;
                             break;
                         default:
-                            info.status = MediaStatus.UNKNOWN;
+                            info.status = models_1.MediaStatus.UNKNOWN;
                             break;
                     }
                     info.season = $$$('.item.item-title')
@@ -139,11 +143,11 @@ export function createZoro(ctx) {
              * @param server server type (default `VidCloud`) (optional)
              * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
              */
-            this.fetchEpisodeSources = async (episodeId, server = StreamingServers.VidCloud, subOrDub = SubOrSub.SUB) => {
+            this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.VidCloud, subOrDub = models_1.SubOrSub.SUB) => {
                 if (episodeId.startsWith('http')) {
                     const serverUrl = new URL(episodeId);
                     switch (server) {
-                        case StreamingServers.VidCloud:
+                        case models_1.StreamingServers.VidCloud:
                             return {
                                 headers: { Referer: serverUrl.href },
                                 ...(await new MegaCloud({
@@ -153,7 +157,7 @@ export function createZoro(ctx) {
                                     logger: ctx.logger,
                                 }).extract(serverUrl, this.baseUrl)),
                             };
-                        case StreamingServers.StreamSB:
+                        case models_1.StreamingServers.StreamSB:
                             return {
                                 headers: {
                                     'Referer': serverUrl.href,
@@ -167,7 +171,7 @@ export function createZoro(ctx) {
                                     logger: ctx.logger,
                                 }).extract(serverUrl, true),
                             };
-                        case StreamingServers.StreamTape:
+                        case models_1.StreamingServers.StreamTape:
                             if (!StreamTape) {
                                 throw new Error('StreamTape extractor is not available');
                             }
@@ -181,7 +185,7 @@ export function createZoro(ctx) {
                                 }).extract(serverUrl),
                             };
                         default:
-                        case StreamingServers.VidCloud:
+                        case models_1.StreamingServers.VidCloud:
                             return {
                                 headers: { Referer: serverUrl.href },
                                 ...(await new MegaCloud({
@@ -212,24 +216,24 @@ export function createZoro(ctx) {
                     let serverId = '';
                     try {
                         switch (server) {
-                            case StreamingServers.VidCloud:
+                            case models_1.StreamingServers.VidCloud:
                                 serverId = this.retrieveServerId($, 1, subOrDub);
                                 // zoro's vidcloud server is rapidcloud
                                 if (!serverId)
                                     throw new Error('RapidCloud not found');
                                 break;
-                            case StreamingServers.VidStreaming:
+                            case models_1.StreamingServers.VidStreaming:
                                 serverId = this.retrieveServerId($, 4, subOrDub);
                                 // zoro's vidcloud server is rapidcloud
                                 if (!serverId)
                                     throw new Error('vidtreaming not found');
                                 break;
-                            case StreamingServers.StreamSB:
+                            case models_1.StreamingServers.StreamSB:
                                 serverId = this.retrieveServerId($, 5, subOrDub);
                                 if (!serverId)
                                     throw new Error('StreamSB not found');
                                 break;
-                            case StreamingServers.StreamTape:
+                            case models_1.StreamingServers.StreamTape:
                                 serverId = this.retrieveServerId($, 3, subOrDub);
                                 if (!serverId)
                                     throw new Error('StreamTape not found');
@@ -240,7 +244,7 @@ export function createZoro(ctx) {
                         throw new Error("Couldn't find server. Try another server");
                     }
                     const { data: { link }, } = await ctx.axios.get(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
-                    return await this.fetchEpisodeSources(link, server, SubOrSub.SUB);
+                    return await this.fetchEpisodeSources(link, server, models_1.SubOrSub.SUB);
                 }
                 catch (err) {
                     throw err;
@@ -335,7 +339,7 @@ export function createZoro(ctx) {
                             url: `${this.baseUrl}${atag.attr('href')}`,
                             image: card.find('img')?.attr('data-src'),
                             duration: card.find('.fdi-duration')?.text(),
-                            watchList: watchList || WatchListType.NONE,
+                            watchList: watchList || models_1.WatchListType.NONE,
                             japaneseTitle: atag.attr('data-jname'),
                             type: type,
                             nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
@@ -802,19 +806,19 @@ export function createZoro(ctx) {
             }
             let type = 0;
             switch (sortListType) {
-                case WatchListType.WATCHING:
+                case models_1.WatchListType.WATCHING:
                     type = 1;
                     break;
-                case WatchListType.ONHOLD:
+                case models_1.WatchListType.ONHOLD:
                     type = 2;
                     break;
-                case WatchListType.PLAN_TO_WATCH:
+                case models_1.WatchListType.PLAN_TO_WATCH:
                     type = 3;
                     break;
-                case WatchListType.DROPPED:
+                case models_1.WatchListType.DROPPED:
                     type = 4;
                     break;
-                case WatchListType.COMPLETED:
+                case models_1.WatchListType.COMPLETED:
                     type = 5;
                     break;
             }
@@ -826,7 +830,7 @@ export function createZoro(ctx) {
     return new ZoroImpl();
 }
 // Backward compatibility wrapper class
-export class Zoro extends AnimeParser {
+class Zoro extends models_1.AnimeParser {
     constructor(customBaseURL) {
         super();
         // Create default context for backward compatibility
@@ -954,7 +958,8 @@ export class Zoro extends AnimeParser {
         return this.instance.scrapeCard(...args);
     }
 }
-export default Zoro;
+exports.Zoro = Zoro;
+exports.default = Zoro;
 // (async () => {
 //   const zoro = new Zoro();
 //   const anime = await zoro.search('Dandadan');

@@ -1,6 +1,12 @@
-import { VideoExtractor } from '../models';
-import { USER_AGENT } from '../utils';
-class StreamWish extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../models");
+const utils_1 = require("../utils");
+class StreamWish extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'streamwish';
@@ -24,10 +30,10 @@ class StreamWish extends VideoExtractor {
                         'Sec-Fetch-Site': 'none',
                         'Sec-Fetch-User': '?1',
                         'Upgrade-Insecure-Requests': '1',
-                        'User-Agent': USER_AGENT,
+                        'User-Agent': utils_1.USER_AGENT,
                     },
                 };
-                const { data } = await this.client.get(videoUrl.href, options);
+                const { data } = await axios_1.default.get(videoUrl.href, options);
                 // Code adapted from Zenda-Cross (https://github.com/Zenda-Cross/vega-app/blob/main/src/lib/providers/multi/multiGetStream.ts)
                 // Thank you to Zenda-Cross for the original implementation.
                 const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
@@ -81,7 +87,7 @@ class StreamWish extends VideoExtractor {
                     isM3U8: link.includes('.m3u8'),
                 });
                 try {
-                    const m3u8Content = await this.client.get(this.sources[0].url, options);
+                    const m3u8Content = await axios_1.default.get(this.sources[0].url, options);
                     if (m3u8Content.data.includes('EXTM3U')) {
                         const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
                         for (const video of videoList ?? []) {
@@ -109,5 +115,5 @@ class StreamWish extends VideoExtractor {
         };
     }
 }
-export default StreamWish;
+exports.default = StreamWish;
 //# sourceMappingURL=streamwish.js.map

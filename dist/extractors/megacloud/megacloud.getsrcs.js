@@ -1,11 +1,16 @@
-import CryptoJS from 'crypto-js';
-import { USER_AGENT } from '../../utils/utils';
-import axios from 'axios';
-import { load } from 'cheerio';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSources = getSources;
+const axios_1 = __importDefault(require("axios"));
+const utils_1 = require("../../utils/utils");
+const cheerio_1 = require("cheerio");
 /**
  * Thanks to https://github.com/yogesh-hacker for the original implementation.
  */
-export async function getSources(embed_url, site) {
+async function getSources(embed_url, site) {
     const regex = /\/([^\/?]+)(?=\?)/;
     const xrax = embed_url.toString().match(regex)?.[1];
     const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
@@ -18,10 +23,10 @@ export async function getSources(embed_url, site) {
         'Accept': '*/*',
         'X-Requested-With': 'XMLHttpRequest',
         'Referer': site,
-        'User-Agent': USER_AGENT,
+        'User-Agent': utils_1.USER_AGENT,
     };
     try {
-        const { data: keyData } = await axios.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
+        const { data: keyData } = await axios_1.default.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
         key = keyData;
     }
     catch (err) {
@@ -32,8 +37,8 @@ export async function getSources(embed_url, site) {
     let videoTag;
     let embedRes;
     try {
-        embedRes = await axios.get(embed_url.href, { headers });
-        const $ = load(embedRes.data);
+        embedRes = await axios_1.default.get(embed_url.href, { headers });
+        const $ = (0, cheerio_1.load)(embedRes.data);
         videoTag = $('#megacloud-player');
     }
     catch (error) {
@@ -55,7 +60,7 @@ export async function getSources(embed_url, site) {
     if (!nonce)
         return console.error('❌ Nonce not found!');
     const fileId = videoTag.attr('data-id');
-    const { data: encryptedResData } = await axios.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
+    const { data: encryptedResData } = await axios_1.default.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
         headers,
     });
     // console.log(
@@ -73,7 +78,7 @@ export async function getSources(embed_url, site) {
             nonce: nonce,
             secret: key[getKeyType],
         });
-        const decodeRes = await axios.get(`${decodeUrl}?${params.toString()}`);
+        const decodeRes = await axios_1.default.get(`${decodeUrl}?${params.toString()}`);
         videoUrl = decodeRes.data.match(/"file":"(.*?)"/)?.[1]?.replace(/\\\//g, '/') || '';
         // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
     }

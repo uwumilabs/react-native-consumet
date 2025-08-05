@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 
 import { VideoExtractor, type IVideo } from '../models';
@@ -33,10 +34,10 @@ class Filemoon extends VideoExtractor {
       },
     };
 
-    const { data } = await this.client.get(videoUrl.href, options);
+    const { data } = await axios.get(videoUrl.href, options);
     const $ = load(data);
     try {
-      const { data } = await this.client.get($('iframe').attr('src')!, options)!;
+      const { data } = await axios.get($('iframe').attr('src')!, options)!;
       const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
       const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
       const m3u8Link = links[1];

@@ -16,7 +16,7 @@ class ViewAsian extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/movie/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+                const { data } = await axios.get(`${this.baseUrl}/movie/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
                 const $ = load(data);
                 const navSelector = 'div#pagination > nav:nth-child(1) > ul:nth-child(1)';
                 searchResult.hasNextPage =
@@ -52,7 +52,7 @@ class ViewAsian extends MovieParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(mediaId);
+                const { data } = await axios.get(mediaId);
                 const $ = load(data);
                 mediaInfo.id = realMediaId;
                 mediaInfo.title = $('.detail-mod h3').text();
@@ -115,7 +115,7 @@ class ViewAsian extends MovieParser {
             try {
                 if (!episodeId.startsWith(this.baseUrl))
                     episodeId = `${this.baseUrl}/${episodeId}`;
-                const { data } = await this.client.get(episodeId);
+                const { data } = await axios.get(episodeId);
                 const $ = load(data);
                 let serverUrl = '';
                 switch (server) {

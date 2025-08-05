@@ -1,6 +1,12 @@
-import { MangaParser, MediaStatus, } from '../../models';
-import { load } from 'cheerio';
-class VyvyManga extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+const cheerio_1 = require("cheerio");
+class VyvyManga extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'Vyvymanga';
@@ -13,8 +19,8 @@ class VyvyManga extends MangaParser {
                 throw new Error('page must be equal to 1 or greater');
             try {
                 const formattedQuery = query.trim().toLowerCase().split(' ').join('+');
-                const { data } = await this.client.get(`${this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const result = dom
                     .find('.row.book-list > div > div > a')
@@ -56,7 +62,7 @@ class VyvyManga extends MangaParser {
         this.searchApi = async (query) => {
             try {
                 const formattedQuery = query.toLowerCase().split(' ').join('%20');
-                const { data } = await this.client.request({
+                const { data } = await axios_1.default.request({
                     method: 'get',
                     url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
                     headers: {
@@ -79,7 +85,7 @@ class VyvyManga extends MangaParser {
         };
         this.fetchMangaInfo = async (mangaId) => {
             try {
-                const { data } = await this.client.request({
+                const { data } = await axios_1.default.request({
                     method: 'get',
                     url: `${this.baseUrl}/manga-detail/${mangaId}?userid=`,
                     headers: {
@@ -87,7 +93,7 @@ class VyvyManga extends MangaParser {
                         Referer: `${this.baseWebsiteUrl}/`,
                     },
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const title = dom.find('.img-manga').attr('title');
                 const img = dom.find('.img-manga').attr('src');
@@ -132,8 +138,8 @@ class VyvyManga extends MangaParser {
         };
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const { data } = await this.client.get(chapterId);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(chapterId);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const images = dom
                     .find('.vview.carousel-inner > div > img')
@@ -161,7 +167,7 @@ class VyvyManga extends MangaParser {
                         .map((ele) => ele.trim()),
                     description: ele.description,
                     image: ele.thumbnail,
-                    status: ele.completed === 1 ? MediaStatus.COMPLETED : MediaStatus.ONGOING,
+                    status: ele.completed === 1 ? models_1.MediaStatus.COMPLETED : models_1.MediaStatus.ONGOING,
                     score: ele.scored,
                     views: ele.viewed,
                     votes: ele.voted,
@@ -172,5 +178,5 @@ class VyvyManga extends MangaParser {
         };
     }
 }
-export default VyvyManga;
+exports.default = VyvyManga;
 //# sourceMappingURL=vyvymanga.js.map

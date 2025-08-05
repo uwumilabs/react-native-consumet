@@ -1,1 +1,1 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src/providers/light-novels/index.ts"],"names":[],"mappings":"AAAA,OAAO,eAAe,MAAM,mBAAmB,CAAC;AAChD,OAAO,YAAY,MAAM,gBAAgB,CAAC;AAE1C,eAAe,EAAE,eAAe,EAAE,YAAY,EAAE,CAAC"}
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src/providers/light-novels/index.ts"],"names":[],"mappings":";;;;;AACA,wEAAgD;AAChD,kEAA0C;AAE1C,kBAAe,EAAE,eAAe,EAAf,yBAAe,EAAE,YAAY,EAAZ,sBAAY,EAAE,CAAC"}

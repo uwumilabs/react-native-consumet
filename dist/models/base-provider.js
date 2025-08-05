@@ -1,8 +1,7 @@
-import {} from '.';
-import Proxy from './proxy';
-class BaseProvider extends Proxy {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+class BaseProvider {
     constructor() {
-        super(...arguments);
         /**
          * Most providers are english based, but if the provider is not english based override this value.
          * must be in [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) format
@@ -37,5 +36,5 @@ class BaseProvider extends Proxy {
         };
     }
 }
-export default BaseProvider;
+exports.default = BaseProvider;
 //# sourceMappingURL=base-provider.js.map

@@ -1,5 +1,11 @@
-import { VideoExtractor } from '../models';
-class VizCloud extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../models");
+class VizCloud extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'VizCloud';
@@ -22,7 +28,7 @@ class VizCloud extends VideoExtractor {
             else {
                 url = `${vizCloudHelper}/vizcloud?query=${encodeURIComponent(vizID.pop() ?? '')}&apikey=${apiKey}`;
             }
-            const { data } = await this.client.get(url);
+            const { data } = await axios_1.default.get(url);
             if (!data.data?.media)
                 throw new Error('Video not found');
             this.sources = [
@@ -34,7 +40,7 @@ class VizCloud extends VideoExtractor {
                 })),
             ];
             const main = this.sources[this.sources.length - 1].url;
-            const req = await this.client({
+            const req = await (0, axios_1.default)({
                 method: 'get',
                 url: main,
                 headers: { referer: 'https://9anime.to' },
@@ -54,5 +60,5 @@ class VizCloud extends VideoExtractor {
         };
     }
 }
-export default VizCloud;
+exports.default = VizCloud;
 //# sourceMappingURL=vizcloud.js.map

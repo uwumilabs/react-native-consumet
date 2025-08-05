@@ -21,7 +21,7 @@ class SFlix extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+                const { data } = await axios.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
                 const $ = load(data);
                 const navSelector = 'div.pre-pagination:nth-child(3) > nav:nth-child(1) > ul:nth-child(1)';
                 searchResult.hasNextPage =
@@ -60,7 +60,7 @@ class SFlix extends MovieParser {
                 url: mediaId,
             };
             try {
-                const { data } = await this.client.get(mediaId);
+                const { data } = await axios.get(mediaId);
                 const $ = load(data);
                 const recommendationsArray = [];
                 $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item').each((i, el) => {
@@ -116,7 +116,7 @@ class SFlix extends MovieParser {
                 movieInfo.recommendations = recommendationsArray;
                 const ajaxReqUrl = (id, type, isSeasons = false) => `${this.baseUrl}/ajax/${type === 'movie' ? type : `v2/${type}`}/${isSeasons ? 'seasons' : 'episodes'}/${id}`;
                 if (movieInfo.type === TvType.TVSERIES) {
-                    const { data } = await this.client.get(ajaxReqUrl(uid, 'tv', true));
+                    const { data } = await axios.get(ajaxReqUrl(uid, 'tv', true));
                     const $$ = load(data);
                     const seasonsIds = $$('.dropdown-menu > a')
                         .map((i, el) => $(el).attr('data-id'))
@@ -124,20 +124,20 @@ class SFlix extends MovieParser {
                     movieInfo.episodes = [];
                     let season = 1;
                     for (const id of seasonsIds) {
-                        const { data } = await this.client.get(ajaxReqUrl(id, 'season'));
+                        const { data } = await axios.get(ajaxReqUrl(id, 'season'));
                         const $$$ = load(data);
                         $$$('.swiper-container > .swiper-wrapper > .swiper-slide')
                             .map((i, el) => {
-                            const episode = {
-                                id: $$$(el).find('div.flw-item').attr('id').split('-')[1],
-                                image: $$$(el).find('div.flw-item > a > img').attr('src'),
-                                title: $$$(el).find('div.flw-item > a > img').attr('title'),
-                                number: parseInt($$$(el).find('div.flw-item > a > img').attr('title').split(':')[0].slice(8).trim()),
-                                season: season,
-                                url: `${this.baseUrl}/ajax/v2/episode/servers/${$$$(el).find('div.flw-item').attr('id').split('-')[1]}`,
-                            };
-                            movieInfo.episodes?.push(episode);
-                        })
+                                const episode = {
+                                    id: $$$(el).find('div.flw-item').attr('id').split('-')[1],
+                                    image: $$$(el).find('div.flw-item > a > img').attr('src'),
+                                    title: $$$(el).find('div.flw-item > a > img').attr('title'),
+                                    number: parseInt($$$(el).find('div.flw-item > a > img').attr('title').split(':')[0].slice(8).trim()),
+                                    season: season,
+                                    url: `${this.baseUrl}/ajax/v2/episode/servers/${$$$(el).find('div.flw-item').attr('id').split('-')[1]}`,
+                                };
+                                movieInfo.episodes?.push(episode);
+                            })
                             .get();
                         season++;
                     }
@@ -196,7 +196,7 @@ class SFlix extends MovieParser {
                 if (i === -1) {
                     throw new Error(`Server ${server} not found`);
                 }
-                const { data } = await this.client.get(`${this.baseUrl}/ajax/get_link/${servers[i].url.split('.').slice(-1).shift()}`);
+                const { data } = await axios.get(`${this.baseUrl}/ajax/get_link/${servers[i].url.split('.').slice(-1).shift()}`);
                 const serverUrl = new URL(data.link);
                 return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);
             }
@@ -216,18 +216,18 @@ class SFlix extends MovieParser {
             else
                 episodeId = `${this.baseUrl}/ajax/movie/episodes/${episodeId}`;
             try {
-                const { data } = await this.client.get(episodeId);
+                const { data } = await axios.get(episodeId);
                 const $ = load(data);
                 const servers = $('.ulclear > li')
                     .map((i, el) => {
-                    const server = {
-                        name: mediaId.includes('movie')
-                            ? $(el).find('a').find('span').text().trim().toLowerCase()
-                            : $(el).find('a').find('span').text().trim().toLowerCase(),
-                        url: `${this.baseUrl}/${mediaId}.${!mediaId.includes('movie') ? $(el).find('a').attr('data-id') : $(el).find('a').attr('data-id')}`.replace(!mediaId.includes('movie') ? /\/tv\// : /\/movie\//, !mediaId.includes('movie') ? '/watch-tv/' : '/watch-movie/'),
-                    };
-                    return server;
-                })
+                        const server = {
+                            name: mediaId.includes('movie')
+                                ? $(el).find('a').find('span').text().trim().toLowerCase()
+                                : $(el).find('a').find('span').text().trim().toLowerCase(),
+                            url: `${this.baseUrl}/${mediaId}.${!mediaId.includes('movie') ? $(el).find('a').attr('data-id') : $(el).find('a').attr('data-id')}`.replace(!mediaId.includes('movie') ? /\/tv\// : /\/movie\//, !mediaId.includes('movie') ? '/watch-tv/' : '/watch-movie/'),
+                        };
+                        return server;
+                    })
                     .get();
                 return servers;
             }
@@ -237,22 +237,22 @@ class SFlix extends MovieParser {
         };
         this.fetchRecentMovies = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
+                const { data } = await axios.get(`${this.baseUrl}/home`);
                 const $ = load(data);
                 const movies = $('section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                     .map((i, el) => {
-                    const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
-                    const movie = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
-                        title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-                        rating: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text() || null,
-                        type: TvType.MOVIE,
-                    };
-                    return movie;
-                })
+                        const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
+                        const movie = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
+                            title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
+                            rating: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text() || null,
+                            type: TvType.MOVIE,
+                        };
+                        return movie;
+                    })
                     .get();
                 return movies;
             }
@@ -262,21 +262,21 @@ class SFlix extends MovieParser {
         };
         this.fetchRecentTvShows = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
+                const { data } = await axios.get(`${this.baseUrl}/home`);
                 const $ = load(data);
                 const tvshows = $('section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                     .map((i, el) => {
-                    const tvshow = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
-                        title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] || null,
-                        latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] || null,
-                        type: TvType.TVSERIES,
-                    };
-                    return tvshow;
-                })
+                        const tvshow = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
+                            title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] || null,
+                            latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] || null,
+                            type: TvType.TVSERIES,
+                        };
+                        return tvshow;
+                    })
                     .get();
                 return tvshows;
             }
@@ -286,22 +286,22 @@ class SFlix extends MovieParser {
         };
         this.fetchTrendingMovies = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
+                const { data } = await axios.get(`${this.baseUrl}/home`);
                 const $ = load(data);
                 const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
                     .map((i, el) => {
-                    const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
-                    const movie = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
-                        title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-                        rating: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text() || null,
-                        type: TvType.MOVIE,
-                    };
-                    return movie;
-                })
+                        const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
+                        const movie = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
+                            title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
+                            rating: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text() || null,
+                            type: TvType.MOVIE,
+                        };
+                        return movie;
+                    })
                     .get();
                 return movies;
             }
@@ -311,21 +311,21 @@ class SFlix extends MovieParser {
         };
         this.fetchTrendingTvShows = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
+                const { data } = await axios.get(`${this.baseUrl}/home`);
                 const $ = load(data);
                 const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
                     .map((i, el) => {
-                    const tvshow = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
-                        title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] || null,
-                        latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] || null,
-                        type: TvType.TVSERIES,
-                    };
-                    return tvshow;
-                })
+                        const tvshow = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1),
+                            title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] || null,
+                            latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] || null,
+                            type: TvType.TVSERIES,
+                        };
+                        return tvshow;
+                    })
                     .get();
                 return tvshows;
             }
@@ -341,32 +341,32 @@ class SFlix extends MovieParser {
             };
             const navSelector = 'div.pre-pagination:nth-child(3) > nav:nth-child(1) > ul:nth-child(1)';
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/country/${country}/?page=${page}`);
+                const { data } = await axios.get(`${this.baseUrl}/country/${country}/?page=${page}`);
                 const $ = load(data);
                 result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
                 $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
                     .each((i, el) => {
-                    const resultItem = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
-                        title: $(el).find('div.film-detail > h2.film-name > a').attr('title') ?? '',
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        type: $(el).find('div.film-poster > a').attr('href')?.slice(1).split('/')[0].toLowerCase() === 'movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
-                    };
-                    const season = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] ?? null;
-                    const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] ?? null;
-                    if (resultItem.type === TvType.TVSERIES) {
-                        resultItem.season = season;
-                        resultItem.latestEpisode = latestEpisode;
-                    }
-                    else {
-                        resultItem.rating = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-                        resultItem.releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
-                    }
-                    result.results.push(resultItem);
-                })
+                        const resultItem = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
+                            title: $(el).find('div.film-detail > h2.film-name > a').attr('title') ?? '',
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            type: $(el).find('div.film-poster > a').attr('href')?.slice(1).split('/')[0].toLowerCase() === 'movie'
+                                ? TvType.MOVIE
+                                : TvType.TVSERIES,
+                        };
+                        const season = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] ?? null;
+                        const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] ?? null;
+                        if (resultItem.type === TvType.TVSERIES) {
+                            resultItem.season = season;
+                            resultItem.latestEpisode = latestEpisode;
+                        }
+                        else {
+                            resultItem.rating = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
+                            resultItem.releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
+                        }
+                        result.results.push(resultItem);
+                    })
                     .get();
                 return result;
             }
@@ -381,33 +381,33 @@ class SFlix extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
+                const { data } = await axios.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
                 const $ = load(data);
                 const navSelector = 'div.pre-pagination:nth-child(3) > nav:nth-child(1) > ul:nth-child(1)';
                 result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
                 $('.film_list-wrap > div.flw-item')
                     .each((i, el) => {
-                    const resultItem = {
-                        id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
-                        title: $(el).find('div.film-detail > h2.film-name > a').attr('title') ?? '',
-                        url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                        image: $(el).find('div.film-poster > img').attr('data-src'),
-                        type: $(el).find('div.film-poster > a').attr('href')?.slice(1).split('/')[0].toLowerCase() === 'movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
-                    };
-                    const season = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] ?? null;
-                    const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] ?? null;
-                    if (resultItem.type === TvType.TVSERIES) {
-                        resultItem.season = season;
-                        resultItem.latestEpisode = latestEpisode;
-                    }
-                    else {
-                        resultItem.rating = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-                        resultItem.releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
-                    }
-                    result.results.push(resultItem);
-                })
+                        const resultItem = {
+                            id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
+                            title: $(el).find('div.film-detail > h2.film-name > a').attr('title') ?? '',
+                            url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                            image: $(el).find('div.film-poster > img').attr('data-src'),
+                            type: $(el).find('div.film-poster > a').attr('href')?.slice(1).split('/')[0].toLowerCase() === 'movie'
+                                ? TvType.MOVIE
+                                : TvType.TVSERIES,
+                        };
+                        const season = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[0] ?? null;
+                        const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().split(':')[1] ?? null;
+                        if (resultItem.type === TvType.TVSERIES) {
+                            resultItem.season = season;
+                            resultItem.latestEpisode = latestEpisode;
+                        }
+                        else {
+                            resultItem.rating = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
+                            resultItem.releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text();
+                        }
+                        result.results.push(resultItem);
+                    })
                     .get();
                 return result;
             }
@@ -418,7 +418,7 @@ class SFlix extends MovieParser {
         this.fetchSpotlight = async () => {
             try {
                 const results = { results: [] };
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
+                const { data } = await axios.get(`${this.baseUrl}/home`);
                 const $ = load(data);
                 $('div.swiper-slide').each((i, el) => {
                     results.results.push({

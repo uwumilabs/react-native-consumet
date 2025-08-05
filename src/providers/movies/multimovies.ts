@@ -1,3 +1,4 @@
+import axios from "axios";
 import { load } from 'cheerio';
 import {
   MovieParser,
@@ -20,7 +21,7 @@ class MultiMovies extends MovieParser {
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
-    super(...arguments);
+    super();
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;
@@ -51,7 +52,7 @@ class MultiMovies extends MovieParser {
       } else {
         url = `${this.proxiedBaseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
       }
-      const { data } = await this.client.get(url);
+      const { data } = await axios.get(url);
       const $ = load(data);
 
       const navSelector = 'div.pagination';
@@ -123,7 +124,7 @@ class MultiMovies extends MovieParser {
       url: mediaId,
     };
     try {
-      const { data } = await this.client.get(mediaId);
+      const { data } = await axios.get(mediaId);
       const $ = load(data);
       const recommendationsArray: IMovieResult[] = [];
 
@@ -236,31 +237,31 @@ class MultiMovies extends MovieParser {
         case StreamingServers.MixDrop:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new MixDrop(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new MixDrop().extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.StreamWish:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+            ...(await new StreamWish().extract(serverUrl, this.baseUrl)),
             download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '',
           };
         case StreamingServers.StreamTape:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new StreamTape(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new StreamTape().extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.VidHide:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new VidHide(this.proxyConfig, this.adapter).extract(serverUrl),
+            sources: await new VidHide().extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new StreamWish(this.proxyConfig, this.adapter).extract(serverUrl)),
+            ...(await new StreamWish().extract(serverUrl)),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
       }
@@ -313,7 +314,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
+      const { data } = await axios.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
       const $ = load(data);
       const navSelector = 'div.pagination';
 
@@ -346,7 +347,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await this.client.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
+      const { data } = await axios.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
 
       const $ = load(data);
       const navSelector = 'div.pagination';
@@ -377,7 +378,7 @@ class MultiMovies extends MovieParser {
     console.log(`Fetching server for URL: ${url}`);
     try {
       console.log('step1');
-      const { data } = await this.client.get(this.customProxyUrl + url);
+      const { data } = await axios.get(this.customProxyUrl + url);
       const $ = load(data);
       console.log('step2');
       // Extract player config
@@ -419,7 +420,7 @@ class MultiMovies extends MovieParser {
           };
         }
         let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
-        const redirectResponse = await this.client.head(playerBaseUrl, {
+        const redirectResponse = await axios.head(playerBaseUrl, {
           headers,
         });
 

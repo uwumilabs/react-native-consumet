@@ -1,6 +1,8 @@
-import { convertDuration } from '../utils/utils';
-import { VideoExtractor } from '../models';
-class BilibiliExtractor extends VideoExtractor {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = require("../utils/utils");
+const models_1 = require("../models");
+class BilibiliExtractor extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'Bilibili';
@@ -10,7 +12,7 @@ class BilibiliExtractor extends VideoExtractor {
                 .filter((video) => video.video_resource.url)
                 .map((video) => video.video_resource);
             const audios = data.audio_resource;
-            const duration = convertDuration(data.duration);
+            const duration = (0, utils_1.convertDuration)(data.duration);
             const dash = `<?xml version="1.0"?>
 <MPD xmlns="urn:mpeg💨schema:mpd:2011" profiles="urn:mpeg💨profile:isoff-on-demand:2011" minBufferTime="PT1M" type="static" mediaPresentationDuration="${duration}">
     <Period duration="${duration}">
@@ -60,5 +62,5 @@ class BilibiliExtractor extends VideoExtractor {
         };
     }
 }
-export default BilibiliExtractor;
+exports.default = BilibiliExtractor;
 //# sourceMappingURL=bilibili.js.map

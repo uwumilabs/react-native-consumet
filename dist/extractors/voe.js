@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { VideoExtractor } from '../models';
-class Voe extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../models");
+class Voe extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
         this.serverName = 'voe';
@@ -57,14 +63,14 @@ class Voe extends VideoExtractor {
                         return '';
                     }
                 }
-                const res = await this.client.get(videoUrl.href);
-                const $ = load(res.data);
+                const res = await axios_1.default.get(videoUrl.href);
+                const $ = (0, cheerio_1.load)(res.data);
                 const scriptContent = $('script').html();
                 const pageUrl = scriptContent
                     ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
                     : '';
-                const { data } = await this.client.get(pageUrl);
-                const $$ = load(data);
+                const { data } = await axios_1.default.get(pageUrl);
+                const $$ = (0, cheerio_1.load)(data);
                 const encodedString = $$('script[type="application/json"]').html()?.trim() || '';
                 const jsonData = decryptF7(encodedString);
                 let url = jsonData.source;
@@ -89,5 +95,5 @@ class Voe extends VideoExtractor {
         };
     }
 }
-export default Voe;
+exports.default = Voe;
 //# sourceMappingURL=voe.js.map

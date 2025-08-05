@@ -1,8 +1,10 @@
-import { AnimeParser, } from '../../models';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const models_1 = require("../../models");
 /**
  * @attention Cloudflare bypass is **REQUIRED**.
  */
-class KickAssAnime extends AnimeParser {
+class KickAssAnime extends models_1.AnimeParser {
     constructor() {
         super(...arguments);
         this.name = 'KickAssAnime';
@@ -37,5 +39,5 @@ class KickAssAnime extends AnimeParser {
         };
     }
 }
-export default KickAssAnime;
+exports.default = KickAssAnime;
 //# sourceMappingURL=kickassanime.js.map

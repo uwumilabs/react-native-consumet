@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 
 class Mp4Player extends VideoExtractor {
@@ -13,14 +14,14 @@ class Mp4Player extends VideoExtractor {
         subtitles: [],
       };
 
-      const response = await this.client.get(videoUrl.href);
+      const response = await axios.get(videoUrl.href);
 
       const data = response.data.match(new RegExp('(?<=sniff\\()(.*)(?=\\))'))[0]?.replace(/\"/g, '')?.split(',');
 
       const link = `https://${videoUrl.host}/m3u8/${data[1]}/${data[2]}/master.txt?s=1&cache=${data[7]}`;
       //const thumbnails = response.data.match(new RegExp('(?<=file":")(.*)(?=","kind)'))[0]?.replace(/\\/g, '');
 
-      const m3u8Content = await this.client.get(link, {
+      const m3u8Content = await axios.get(link, {
         headers: {
           accept: '*/*',
           referer: videoUrl.href,

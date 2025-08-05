@@ -17,7 +17,7 @@ class Bilibili extends AnimeParser {
         this.cookie = cookie;
     }
     async search(query) {
-        const { data } = await this.client.get(`${this.sgProxy}/${this.apiUrl}/v2/search?keyword=${query}&platform=web&pn=1&ps=20&qid=&s_locale=${this.locale}`, { headers: { cookie: this.cookie } });
+        const { data } = await axios.get(`${this.sgProxy}/${this.apiUrl}/v2/search?keyword=${query}&platform=web&pn=1&ps=20&qid=&s_locale=${this.locale}`, { headers: { cookie: this.cookie } });
         if (!data.data.filter((item) => item.module.includes('ogv')).length)
             return { results: [], totalResults: 0 };
         const results = data.data.find((item) => item.module.includes('ogv'));
@@ -35,7 +35,7 @@ class Bilibili extends AnimeParser {
     }
     async fetchAnimeInfo(id) {
         try {
-            const { data } = await this.client.get(`${this.sgProxy}/https://app.biliintl.com/intl/gateway/v2/ogv/view/app/season2?locale=${this.locale}&platform=android&season_id=${id}`, { headers: { cookie: this.cookie } });
+            const { data } = await axios.get(`${this.sgProxy}/https://app.biliintl.com/intl/gateway/v2/ogv/view/app/season2?locale=${this.locale}&platform=android&season_id=${id}`, { headers: { cookie: this.cookie } });
             let counter = 1;
             const episodes = data.data.sections.section.flatMap((section) => section.ep_details.map((ep) => ({
                 id: ep.episode_id.toString(),
@@ -69,8 +69,8 @@ class Bilibili extends AnimeParser {
     }
     async fetchEpisodeSources(episodeId, ...args) {
         try {
-            const { data } = await this.client.get(`${this.sgProxy}/${this.apiUrl}/v2/subtitle?s_locale=${this.locale}&platform=web&episode_id=${episodeId}`, { headers: { cookie: this.cookie } });
-            const ss = await this.client.get(`${this.sgProxy}/${this.apiUrl}/playurl?s_locale=${this.locale}&platform=web&ep_id=${episodeId}`, { headers: { cookie: this.cookie } });
+            const { data } = await axios.get(`${this.sgProxy}/${this.apiUrl}/v2/subtitle?s_locale=${this.locale}&platform=web&episode_id=${episodeId}`, { headers: { cookie: this.cookie } });
+            const ss = await axios.get(`${this.sgProxy}/${this.apiUrl}/playurl?s_locale=${this.locale}&platform=web&ep_id=${episodeId}`, { headers: { cookie: this.cookie } });
             const sources = await new BilibiliExtractor().extract(episodeId);
             return {
                 sources: sources.sources,

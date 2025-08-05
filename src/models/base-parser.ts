@@ -1,3 +1,4 @@
+import axios from "axios";
 import { BaseProvider } from '.';
 
 abstract class BaseParser extends BaseProvider {

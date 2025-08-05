@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 
 class VidHide extends VideoExtractor {
@@ -11,14 +12,14 @@ class VidHide extends VideoExtractor {
         subtitles: [],
       };
 
-      const { data } = await this.client.get(videoUrl.href).catch(() => {
+      const { data } = await axios.get(videoUrl.href).catch(() => {
         throw new Error('Video not found');
       });
 
       const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
       const links = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g) ?? [];
       const m3u8Link = links[0];
-      const m3u8Content = await this.client.get(m3u8Link, {
+      const m3u8Content = await axios.get(m3u8Link, {
         headers: {
           Referer: m3u8Link,
         },

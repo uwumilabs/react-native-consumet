@@ -1,11 +1,17 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
 var RankingType;
 (function (RankingType) {
     RankingType["TOPRATED"] = "top-rated";
     RankingType["NEW"] = "new";
 })(RankingType || (RankingType = {}));
-class ReadManga extends MangaParser {
+class ReadManga extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'ReadManga';
@@ -19,7 +25,7 @@ class ReadManga extends MangaParser {
          */
         this.search = async (query) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
                     headers: {
                         Referer: this.baseUrl,
                     },
@@ -42,7 +48,7 @@ class ReadManga extends MangaParser {
                 throw new Error('please provide a page number that is greater than- or equal to 1');
             }
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -69,7 +75,7 @@ class ReadManga extends MangaParser {
                 throw new Error('please provide a page number that is greater than- or equal to 1');
             }
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -93,7 +99,7 @@ class ReadManga extends MangaParser {
         };
         this.fetchMangaInfo = async (mangaId) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/${mangaId}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -108,7 +114,7 @@ class ReadManga extends MangaParser {
                         'Referrer-Policy': 'strict-origin-when-cross-origin',
                     },
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const title = dom.find('.section-header.mb-2 > .section-header-title.me-auto > h2').text().trim();
                 const image = dom.find('.novels-detail > .novels-detail-left > img').attr('src');
@@ -179,7 +185,7 @@ class ReadManga extends MangaParser {
         };
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const { data } = await this.client.get(chapterId, {
+                const { data } = await axios_1.default.get(chapterId, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -194,7 +200,7 @@ class ReadManga extends MangaParser {
                         'Referrer-Policy': 'strict-origin-when-cross-origin',
                     },
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const imageSources = dom
                     .find('.chapter-detail-novel-big-image.text-center > img')
@@ -213,7 +219,7 @@ class ReadManga extends MangaParser {
             }
         };
         this.getRankingTitleCardData = (text, page) => {
-            const $ = load(text);
+            const $ = (0, cheerio_1.load)(text);
             const dom = $('html');
             const titles = dom
                 .find('.category-items.ranking-category.cm-list > ul > li')
@@ -269,21 +275,21 @@ class ReadManga extends MangaParser {
         };
         this.getStatus = (statusStr) => {
             switch (statusStr) {
-                case MediaStatus.CANCELLED:
-                    return MediaStatus.CANCELLED;
-                case MediaStatus.COMPLETED:
-                    return MediaStatus.COMPLETED;
-                case MediaStatus.HIATUS:
-                    return MediaStatus.HIATUS;
-                case MediaStatus.NOT_YET_AIRED:
-                    return MediaStatus.NOT_YET_AIRED;
-                case MediaStatus.ONGOING:
-                    return MediaStatus.ONGOING;
+                case models_1.MediaStatus.CANCELLED:
+                    return models_1.MediaStatus.CANCELLED;
+                case models_1.MediaStatus.COMPLETED:
+                    return models_1.MediaStatus.COMPLETED;
+                case models_1.MediaStatus.HIATUS:
+                    return models_1.MediaStatus.HIATUS;
+                case models_1.MediaStatus.NOT_YET_AIRED:
+                    return models_1.MediaStatus.NOT_YET_AIRED;
+                case models_1.MediaStatus.ONGOING:
+                    return models_1.MediaStatus.ONGOING;
                 default:
-                    return MediaStatus.UNKNOWN;
+                    return models_1.MediaStatus.UNKNOWN;
             }
         };
     }
 }
-export default ReadManga;
+exports.default = ReadManga;
 //# sourceMappingURL=readmanga.js.map

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { type CheerioAPI, load } from 'cheerio';
 
 import {
@@ -19,7 +20,7 @@ class AsuraScans extends MangaParser {
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/${mangaId}`);
+      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/${mangaId}`);
       const $: CheerioAPI = load(data);
 
       const dom = $('html');
@@ -88,7 +89,7 @@ class AsuraScans extends MangaParser {
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/series/${chapterId}`);
+      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/series/${chapterId}`);
       const chapMatch = data.replace(/\\/g, '').match(/pages.*:(\[{['"]order["'].*?}\])/);
       if (!chapMatch) throw new Error('Parsing error');
       const chap: { order: string; url: string }[] = JSON.parse(chapMatch[1]);
@@ -110,9 +111,7 @@ class AsuraScans extends MangaParser {
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     try {
       const formattedQuery = encodeURI(query.toLowerCase());
-      const { data }: AxiosResponse = await this.client.get(
-        `${this.baseUrl}/series?page=${page}&name=${formattedQuery}`
-      );
+      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
 
       const $: CheerioAPI = load(data);
       const dom = $('html');

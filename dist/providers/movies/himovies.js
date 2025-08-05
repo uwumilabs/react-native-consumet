@@ -1,14 +1,20 @@
-import { load } from 'cheerio';
-import { MovieParser, TvType, StreamingServers, } from '../../models';
-import { MegaCloud, VidCloud } from '../../extractors';
-class HiMovies extends MovieParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+const extractors_1 = require("../../extractors");
+class HiMovies extends models_1.MovieParser {
     constructor(customBaseURL) {
-        super(...arguments);
+        super();
         this.name = 'HiMovies';
         this.baseUrl = 'https://himovies.sx';
         this.logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
         this.classPath = 'MOVIES.HiMovies';
-        this.supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+        this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         /**
          *
          * @param query search query string
@@ -21,8 +27,8 @@ class HiMovies extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
                 searchResult.hasNextPage =
                     $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
@@ -37,8 +43,8 @@ class HiMovies extends MovieParser {
                         releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                         seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]) : undefined,
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     });
                 });
                 // Fetch media info for all results in parallel
@@ -77,8 +83,8 @@ class HiMovies extends MovieParser {
                 url: mediaId,
             };
             try {
-                const { data } = await this.client.get(mediaId);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(mediaId);
+                const $ = (0, cheerio_1.load)(data);
                 const recommendationsArray = [];
                 $('section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item').each((i, el) => {
                     recommendationsArray.push({
@@ -87,8 +93,8 @@ class HiMovies extends MovieParser {
                         image: $(el).find('div.film-poster > img').attr('data-src'),
                         duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text().replace('m', '') ?? null,
                         type: $(el).find('div.film-detail > div.fd-infor > span.fdi-type').text() === 'TV'
-                            ? TvType.TVSERIES
-                            : (TvType.MOVIE ?? null),
+                            ? models_1.TvType.TVSERIES
+                            : (models_1.TvType.MOVIE ?? null),
                     });
                 });
                 const uid = $('.detail_page-watch').attr('data-id');
@@ -96,7 +102,7 @@ class HiMovies extends MovieParser {
                 movieInfo.title = $('.heading-name > a:nth-child(1)').text();
                 movieInfo.image = $('.film-poster > img:nth-child(1)').attr('src');
                 movieInfo.description = $('.description').text().trim();
-                movieInfo.type = movieInfo.id.includes('tv/') ? TvType.TVSERIES : TvType.MOVIE;
+                movieInfo.type = movieInfo.id.includes('tv/') ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE;
                 movieInfo.releaseDate = $('div.row-line:contains(Released:)').text().replace('Released:', '').trim();
                 movieInfo.genres = $('div.row-line:contains(Genre:) a')
                     .map((i, el) => $(el).text().split('&'))
@@ -115,17 +121,17 @@ class HiMovies extends MovieParser {
                 movieInfo.rating = parseFloat($('.dp-i-stats > span.item:nth-child(3)').text().replace('IMDB:', '').trim());
                 movieInfo.recommendations = recommendationsArray;
                 const ajaxReqUrl = (id, type, isSeasons = false) => `${this.baseUrl}/ajax/${type === 'movie' ? type : ``}${isSeasons ? 'season/list' : 'season/episodes'}/${id}`;
-                if (movieInfo.type === TvType.TVSERIES) {
-                    const { data } = await this.client.get(ajaxReqUrl(uid, 'tv', true));
-                    const $$ = load(data);
+                if (movieInfo.type === models_1.TvType.TVSERIES) {
+                    const { data } = await axios_1.default.get(ajaxReqUrl(uid, 'tv', true));
+                    const $$ = (0, cheerio_1.load)(data);
                     const seasonsIds = $$('.dropdown-menu > a')
                         .map((i, el) => $(el).attr('data-id'))
                         .get();
                     movieInfo.episodes = [];
                     let season = 1;
                     for (const id of seasonsIds) {
-                        const { data } = await this.client.get(ajaxReqUrl(id, 'season'));
-                        const $$$ = load(data);
+                        const { data } = await axios_1.default.get(ajaxReqUrl(id, 'season'));
+                        const $$$ = (0, cheerio_1.load)(data);
                         $$$('.nav > li')
                             .map((i, el) => {
                             const episode = {
@@ -163,7 +169,7 @@ class HiMovies extends MovieParser {
          * @param mediaId media id
          * @param server server type (default `MegaCloud`) (optional)
          */
-        this.fetchEpisodeSources = async (episodeId, mediaId, server = StreamingServers.MegaCloud) => {
+        this.fetchEpisodeSources = async (episodeId, mediaId, server = models_1.StreamingServers.MegaCloud) => {
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
@@ -172,15 +178,15 @@ class HiMovies extends MovieParser {
                     //     headers: { Referer: serverUrl.href },
                     //     ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
                     //   };
-                    case StreamingServers.UpCloud:
+                    case models_1.StreamingServers.UpCloud:
                         return {
                             headers: { Referer: serverUrl.href },
-                            ...(await new VidCloud(this.proxyConfig, this.adapter).extract(serverUrl, undefined, this.baseUrl)),
+                            ...(await new extractors_1.VidCloud().extract(serverUrl, undefined, this.baseUrl)),
                         };
                     default:
                     // return {
                     //   headers: { Referer: serverUrl.href },
-                    //   ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
+                    //   ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
                     // };
                 }
             }
@@ -190,7 +196,7 @@ class HiMovies extends MovieParser {
                 if (i === -1) {
                     throw new Error(`Server ${server} not found`);
                 }
-                const { data } = await this.client.get(`${this.baseUrl}/ajax/episode/sources/${servers[i].url.split('.').slice(-1).shift()}`);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/episode/sources/${servers[i].url.split('.').slice(-1).shift()}`);
                 const serverUrl = new URL(data.link);
                 return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);
             }
@@ -212,8 +218,8 @@ class HiMovies extends MovieParser {
                 episodeId = `${this.baseUrl}/ajax/episode/list/${episodeId}`;
             }
             try {
-                const { data } = await this.client.get(episodeId);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(episodeId);
+                const $ = (0, cheerio_1.load)(data);
                 const servers = $('ul.nav > li')
                     .map((i, el) => {
                     const server = {
@@ -231,8 +237,8 @@ class HiMovies extends MovieParser {
         };
         this.fetchRecentMovies = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/home`);
+                const $ = (0, cheerio_1.load)(data);
                 const movies = $('section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                     .map((i, el) => {
                     const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
@@ -244,8 +250,8 @@ class HiMovies extends MovieParser {
                         releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                         duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     return movie;
                 })
@@ -258,8 +264,8 @@ class HiMovies extends MovieParser {
         };
         this.fetchRecentTvShows = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/home`);
+                const $ = (0, cheerio_1.load)(data);
                 const tvshows = $('section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                     .map((i, el) => {
                     const tvshow = {
@@ -270,8 +276,8 @@ class HiMovies extends MovieParser {
                         season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
                         latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     return tvshow;
                 })
@@ -284,8 +290,8 @@ class HiMovies extends MovieParser {
         };
         this.fetchTrendingMovies = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/home`);
+                const $ = (0, cheerio_1.load)(data);
                 const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
                     .map((i, el) => {
                     const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
@@ -297,8 +303,8 @@ class HiMovies extends MovieParser {
                         releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                         duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     return movie;
                 })
@@ -311,8 +317,8 @@ class HiMovies extends MovieParser {
         };
         this.fetchTrendingTvShows = async () => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/home`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/home`);
+                const $ = (0, cheerio_1.load)(data);
                 const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
                     .map((i, el) => {
                     const tvshow = {
@@ -323,8 +329,8 @@ class HiMovies extends MovieParser {
                         season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
                         latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     return tvshow;
                 })
@@ -343,8 +349,8 @@ class HiMovies extends MovieParser {
             };
             const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/country/${country}/?page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/country/${country}/?page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
                 $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
                     .each((i, el) => {
@@ -354,8 +360,8 @@ class HiMovies extends MovieParser {
                         url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                         image: $(el).find('div.film-poster > img').attr('data-src'),
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     const season = $(el)
                         .find('div.film-detail > div.fd-infor > span:nth-child(1)')
@@ -363,7 +369,7 @@ class HiMovies extends MovieParser {
                         .replace('SS', '')
                         .trim();
                     const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-                    if (resultItem.type === TvType.TVSERIES) {
+                    if (resultItem.type === models_1.TvType.TVSERIES) {
                         resultItem.season = season;
                         resultItem.latestEpisode = latestEpisode;
                     }
@@ -387,8 +393,8 @@ class HiMovies extends MovieParser {
                 results: [],
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
+                const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
                 result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
                 $('.film_list-wrap > div.flw-item')
@@ -399,8 +405,8 @@ class HiMovies extends MovieParser {
                         url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                         image: $(el).find('div.film-poster > img').attr('data-src'),
                         type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                            ? TvType.MOVIE
-                            : TvType.TVSERIES,
+                            ? models_1.TvType.MOVIE
+                            : models_1.TvType.TVSERIES,
                     };
                     const season = $(el)
                         .find('div.film-detail > div.fd-infor > span:nth-child(1)')
@@ -408,7 +414,7 @@ class HiMovies extends MovieParser {
                         .replace('SS', '')
                         .trim();
                     const latestEpisode = $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-                    if (resultItem.type === TvType.TVSERIES) {
+                    if (resultItem.type === models_1.TvType.TVSERIES) {
                         resultItem.season = season;
                         resultItem.latestEpisode = latestEpisode;
                     }
@@ -446,5 +452,5 @@ class HiMovies extends MovieParser {
 //   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
 //   console.log(genre);
 // })();
-export default HiMovies;
+exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map

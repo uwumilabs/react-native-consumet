@@ -1,6 +1,11 @@
-import axios, { AxiosError } from 'axios';
-import { MangaParser, MediaStatus, } from '../../models';
-class ComicK extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
+class ComicK extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'ComicK';
@@ -24,7 +29,7 @@ class ComicK extends MangaParser {
                     altTitles: data.md_titles ? data.md_titles.map((title) => title.title) : [],
                     description: data.desc,
                     genres: data.md_comic_md_genres?.map((genre) => genre.md_genres.name),
-                    status: (data.status ?? 0 === 0) ? MediaStatus.ONGOING : MediaStatus.COMPLETED,
+                    status: (data.status ?? 0 === 0) ? models_1.MediaStatus.ONGOING : models_1.MediaStatus.COMPLETED,
                     image: `https://meo.comick.pictures${data.md_covers ? data.md_covers[0].b2key : ''}`,
                     malId: data.links?.mal,
                     links: links,
@@ -116,7 +121,7 @@ class ComicK extends MangaParser {
         };
     }
     _axios() {
-        return axios.create({
+        return axios_1.default.create({
             baseURL: this.apiUrl,
             headers: {
                 'User-Agent': 'Mozilla/5.0',
@@ -141,5 +146,5 @@ class ComicK extends MangaParser {
 //   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
 //   console.log(chapterPages);
 // })();
-export default ComicK;
+exports.default = ComicK;
 //# sourceMappingURL=comick.js.map

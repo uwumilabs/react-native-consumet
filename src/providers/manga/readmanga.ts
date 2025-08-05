@@ -1,3 +1,4 @@
+import axios from "axios";
 import { type CheerioAPI, load } from 'cheerio';
 import {
   type IMangaChapter,
@@ -61,7 +62,7 @@ class ReadManga extends MangaParser {
 
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data }: AxiosResponse = await this.client.get(
+      const { data }: AxiosResponse = await axios.get(
         `${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`,
         {
           headers: {
@@ -90,7 +91,7 @@ class ReadManga extends MangaParser {
     }
 
     try {
-      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -120,7 +121,7 @@ class ReadManga extends MangaParser {
     }
 
     try {
-      const { data }: AxiosResponse = await this.client.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
+      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -146,7 +147,7 @@ class ReadManga extends MangaParser {
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data } = await this.client.get(`${this.baseUrl}/${mangaId}`, {
+      const { data } = await axios.get(`${this.baseUrl}/${mangaId}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -237,7 +238,7 @@ class ReadManga extends MangaParser {
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await this.client.get(chapterId, {
+      const { data } = await axios.get(chapterId, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',

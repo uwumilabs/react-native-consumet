@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   AnimeParser,
   type ISearch,
@@ -49,7 +50,7 @@ class Anify extends AnimeParser {
     protected adapter?: AxiosAdapter,
     protected providerId: ProviderId = 'gogoanime'
   ) {
-    super(proxyConfig, adapter);
+    super();
   }
 
   /**
@@ -57,7 +58,7 @@ class Anify extends AnimeParser {
    * @param page Page number (optional)
    */
   rawSearch = async (query: string, page: number = 1): Promise<any> => {
-    const { data } = await this.client.get(`${this.baseUrl}/search/anime/${query}?page=${page}`);
+    const { data } = await axios.get(`${this.baseUrl}/search/anime/${query}?page=${page}`);
 
     return data.results;
   };
@@ -72,7 +73,7 @@ class Anify extends AnimeParser {
       results: [],
     };
 
-    const { data } = await this.client.get(`${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`);
+    const { data } = await axios.get(`${this.baseUrl}/search-advanced?type=anime&query=${query}&page=${page}`);
 
     if (data.currentPage !== res.currentPage) res.hasNextPage = true;
 
@@ -124,7 +125,7 @@ class Anify extends AnimeParser {
       title: '',
     };
 
-    const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch(() => {
+    const { data } = await axios.get(`${this.baseUrl}/info/${id}`).catch(() => {
       throw new Error('Anime not found. Please use a valid id!');
     });
 
@@ -175,7 +176,7 @@ class Anify extends AnimeParser {
   };
 
   fetchAnimeInfoByIdRaw = async (id: string): Promise<any> => {
-    const { data } = await this.client.get(`${this.baseUrl}/info/${id}`).catch((err) => {
+    const { data } = await axios.get(`${this.baseUrl}/info/${id}`).catch((err) => {
       throw new Error("Backup api seems to be down! Can't fetch anime info");
     });
 
@@ -194,7 +195,7 @@ class Anify extends AnimeParser {
       title: '',
     };
 
-    const { data } = await this.client.get(`${this.baseUrl}/media?providerId=${providerId}&id=${id}`);
+    const { data } = await axios.get(`${this.baseUrl}/media?providerId=${providerId}&id=${id}`);
 
     animeInfo.anilistId = data.id;
     animeInfo.title = data.title.english ?? data.title.romaji ?? data.title.native;
@@ -244,7 +245,7 @@ class Anify extends AnimeParser {
 
   override fetchEpisodeSources = async (episodeId: string, episodeNumber: number, id: number): Promise<ISource> => {
     try {
-      const { data } = await this.client.get(
+      const { data } = await axios.get(
         `${this.baseUrl}/sources?providerId=${this.providerId}&watchId=${this.actions[this.providerId]!.format(
           episodeId
         )}&episodeNumber=${episodeNumber}&id=${id}&subType=sub`

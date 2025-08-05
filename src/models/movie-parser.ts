@@ -1,3 +1,4 @@
+import axios from "axios";
 import { BaseParser, TvType, type ISource, type IEpisodeServer, type IMovieInfo, type IAnimeInfo } from '.';
 
 abstract class MovieParser extends BaseParser {

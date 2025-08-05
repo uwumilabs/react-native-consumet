@@ -1,5 +1,7 @@
-import { BaseParser } from '.';
-class MangaParser extends BaseParser {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const _1 = require(".");
+class MangaParser extends _1.BaseParser {
 }
-export default MangaParser;
+exports.default = MangaParser;
 //# sourceMappingURL=manga-parser.js.map

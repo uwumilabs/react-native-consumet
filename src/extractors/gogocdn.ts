@@ -1,3 +1,4 @@
+import axios from "axios";
 import { type CheerioAPI, load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 
@@ -19,12 +20,12 @@ class GogoCDN extends VideoExtractor {
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     this.referer = videoUrl.href;
 
-    const res = await this.client.get(videoUrl.href);
+    const res = await axios.get(videoUrl.href);
     const $ = load(res.data);
 
     const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
-    const encryptedData = await this.client.get(
+    const encryptedData = await axios.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
       {
         headers: {
@@ -42,7 +43,7 @@ class GogoCDN extends VideoExtractor {
     }));
 
     if (decryptedData.source[0].file.includes('.m3u8')) {
-      const resResult = await this.client.get(decryptedData.source[0].file.toString());
+      const resResult = await axios.get(decryptedData.source[0].file.toString());
       const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
       resolutions?.forEach((res: string) => {
         const index = decryptedData.source[0].file.lastIndexOf('/');
@@ -87,7 +88,7 @@ class GogoCDN extends VideoExtractor {
 
   private addSources = async (source: any) => {
     if (source.file.includes('m3u8')) {
-      const m3u8Urls = await this.client
+      const m3u8Urls = await axios
         .get(source.file, {
           headers: {
             'Referer': this.referer,

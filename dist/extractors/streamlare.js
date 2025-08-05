@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import VideoExtractor from '../models/video-extractor';
-class StreamLare extends VideoExtractor {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cheerio_1 = require("cheerio");
+const video_extractor_1 = __importDefault(require("../models/video-extractor"));
+const axios_1 = __importDefault(require("axios"));
+class StreamLare extends video_extractor_1.default {
     constructor() {
         super(...arguments);
         this.serverName = 'StreamLare';
@@ -10,14 +16,14 @@ class StreamLare extends VideoExtractor {
         this.USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36';
     }
     async extract(videoUrl, userAgent = this.USER_AGENT.toString()) {
-        const res = await this.client.get(videoUrl.href);
-        const $ = load(res.data);
+        const res = await axios_1.default.get(videoUrl.href);
+        const $ = (0, cheerio_1.load)(res.data);
         const CSRF_TOKEN = $('head > meta:nth-child(3)').attr('content')?.toString();
         const videoId = videoUrl.href.match(this.regex)[1];
         if (videoId === undefined) {
             throw new Error('Video id not matched!');
         }
-        const POST = await this.client.post(this.host + '/api/video/stream/get', {
+        const POST = await axios_1.default.post(this.host + '/api/video/stream/get', {
             id: videoId,
         }, {
             headers: {
@@ -41,5 +47,5 @@ class StreamLare extends VideoExtractor {
         return result;
     }
 }
-export default StreamLare;
+exports.default = StreamLare;
 //# sourceMappingURL=streamlare.js.map

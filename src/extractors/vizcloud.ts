@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo } from '../models';
 
 class VizCloud extends VideoExtractor {
@@ -30,7 +31,7 @@ class VizCloud extends VideoExtractor {
       url = `${vizCloudHelper}/vizcloud?query=${encodeURIComponent(vizID.pop() ?? '')}&apikey=${apiKey}`;
     }
 
-    const { data } = await this.client.get(url);
+    const { data } = await axios.get(url);
     if (!data.data?.media) throw new Error('Video not found');
 
     this.sources = [
@@ -43,7 +44,7 @@ class VizCloud extends VideoExtractor {
     ];
 
     const main = this.sources[this.sources.length - 1]!.url;
-    const req = await this.client({
+    const req = await axios({
       method: 'get',
       url: main,
       headers: { referer: 'https://9anime.to' },

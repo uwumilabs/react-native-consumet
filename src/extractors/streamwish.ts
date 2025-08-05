@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 import { USER_AGENT } from '../utils';
 
@@ -31,7 +32,7 @@ class StreamWish extends VideoExtractor {
           'User-Agent': USER_AGENT,
         },
       };
-      const { data } = await this.client.get(videoUrl.href, options);
+      const { data } = await axios.get(videoUrl.href, options);
 
       // Code adapted from Zenda-Cross (https://github.com/Zenda-Cross/vega-app/blob/main/src/lib/providers/multi/multiGetStream.ts)
       // Thank you to Zenda-Cross for the original implementation.
@@ -88,7 +89,7 @@ class StreamWish extends VideoExtractor {
       });
 
       try {
-        const m3u8Content = await this.client.get(this.sources[0]!.url, options);
+        const m3u8Content = await axios.get(this.sources[0]!.url, options);
 
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');

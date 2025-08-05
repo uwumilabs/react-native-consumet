@@ -4,14 +4,12 @@ import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import {
   AsianLoad,
-  BilibiliExtractor,
   Filemoon,
   GogoCDN,
   Kwik,
   MixDrop,
   Mp4Upload,
   RapidCloud,
-  SmashyStream,
   StreamHub,
   StreamLare,
   StreamSB,
@@ -25,7 +23,6 @@ import {
   VidHide,
   Voe,
   MegaUp,
-  Luffy,
 } from './extractors';
 import {
   type IProviderStats,
@@ -87,10 +84,8 @@ export {
   StreamTape,
   StreamLare,
   StreamHub,
-  SmashyStream,
   VizCloud,
   AsianLoad,
-  BilibiliExtractor,
   Filemoon,
   Mp4Upload,
   StreamWish,
@@ -100,7 +95,6 @@ export {
   MegaCloud,
   VidHide,
   Voe,
-  Luffy,
 };
 export type {
   IProviderStats,

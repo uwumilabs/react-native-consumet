@@ -1,3 +1,4 @@
+import axios from "axios";
 import { VideoExtractor, type IVideo } from '../models';
 
 class MixDrop extends VideoExtractor {
@@ -6,7 +7,7 @@ class MixDrop extends VideoExtractor {
 
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await this.client.get(videoUrl.href);
+      const { data } = await axios.get(videoUrl.href);
 
       const formated = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
 

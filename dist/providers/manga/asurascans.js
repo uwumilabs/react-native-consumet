@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, MediaStatus, } from '../../models';
-class AsuraScans extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class AsuraScans extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'AsuraScans';
@@ -9,8 +15,8 @@ class AsuraScans extends MangaParser {
         this.classPath = 'MANGA.AsuraScans';
         this.fetchMangaInfo = async (mangaId) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const topInfoWrapper = dom.find('.relative.col-span-12.space-y-3.px-6');
                 const info = {
@@ -68,7 +74,7 @@ class AsuraScans extends MangaParser {
         };
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/series/${chapterId}`);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/series/${chapterId}`);
                 const chapMatch = data.replace(/\\/g, '').match(/pages.*:(\[{['"]order["'].*?}\])/);
                 if (!chapMatch)
                     throw new Error('Parsing error');
@@ -89,8 +95,8 @@ class AsuraScans extends MangaParser {
         this.search = async (query, page = 1) => {
             try {
                 const formattedQuery = encodeURI(query.toLowerCase());
-                const { data } = await this.client.get(`${this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
+                const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const results = dom
                     .find('.grid.grid-cols-2.gap-3.p-4 > a')
@@ -124,15 +130,15 @@ class AsuraScans extends MangaParser {
     determineMediaState(state) {
         switch (state.toLowerCase().trim()) {
             case 'completed':
-                return MediaStatus.COMPLETED;
+                return models_1.MediaStatus.COMPLETED;
             case 'ongoing':
-                return MediaStatus.ONGOING;
+                return models_1.MediaStatus.ONGOING;
             case 'dropped':
-                return MediaStatus.CANCELLED;
+                return models_1.MediaStatus.CANCELLED;
             default:
-                return MediaStatus.UNKNOWN;
+                return models_1.MediaStatus.UNKNOWN;
         }
     }
 }
-export default AsuraScans;
+exports.default = AsuraScans;
 //# sourceMappingURL=asurascans.js.map

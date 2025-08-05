@@ -1,8 +1,14 @@
-import { AnimeParser, } from '../../models';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const models_1 = require("../../models");
 /**
  * @attention Cloudflare bypass is **REQUIRED**.
  */
-class Marin extends AnimeParser {
+class Marin extends models_1.AnimeParser {
     constructor() {
         super(...arguments);
         this.name = 'Marin';
@@ -13,7 +19,7 @@ class Marin extends AnimeParser {
             const token = await this.getToken();
             let data;
             try {
-                const response = await this.client.post('https://marin.moe/anime', {
+                const response = await axios_1.default.post('https://marin.moe/anime', {
                     page: page,
                     sort: 'rel-d',
                     filter: {
@@ -66,7 +72,7 @@ class Marin extends AnimeParser {
             const token = await this.getToken();
             let data;
             try {
-                const response = await this.client.post('https://marin.moe/anime', {
+                const response = await axios_1.default.post('https://marin.moe/anime', {
                     page: page,
                     sort: 'az-a',
                     filter: {
@@ -119,7 +125,7 @@ class Marin extends AnimeParser {
             const token = await this.getToken();
             let data;
             try {
-                const response = await this.client.post(`https://marin.moe/anime/${id}`, {}, {
+                const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
                     headers: {
                         'Origin': 'https://marin.moe/',
                         'Referer': `https://marin.moe/anime/${id}`,
@@ -140,7 +146,7 @@ class Marin extends AnimeParser {
             let episodes = data.props.episode_list.data;
             if (data.props.anime.last_episode > 36) {
                 for (let index = 2; index < data.props.anime.last_episode / 36; index++) {
-                    const response = await this.client.post(`https://marin.moe/anime/${id}`, { filter: { episodes: true, specials: true }, eps_page: index }, {
+                    const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, { filter: { episodes: true, specials: true }, eps_page: index }, {
                         headers: {
                             'Origin': 'https://marin.moe/',
                             'Referer': `https://marin.moe/anime/${id}`,
@@ -203,7 +209,7 @@ class Marin extends AnimeParser {
             const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${token[0].split(';')[0]};`;
             let data;
             try {
-                const response = await this.client.post(`https://marin.moe/anime/${id}`, {}, {
+                const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
                     headers: {
                         'Origin': 'https://marin.moe/',
                         'Referer': `https://marin.moe/anime/${id}`,
@@ -248,7 +254,7 @@ class Marin extends AnimeParser {
     }
     async getToken() {
         const token = [];
-        const response = await this.client.get('https://marin.moe/anime', {
+        const response = await axios_1.default.get('https://marin.moe/anime', {
             headers: {
                 Referer: 'https://marin.moe/anime',
                 Cookie: '__ddg1_=;__ddg2_=;',
@@ -259,7 +265,7 @@ class Marin extends AnimeParser {
         return token;
     }
 }
-export default Marin;
+exports.default = Marin;
 // (async () => {
 //   const marin = new Marin();
 //   const search = await marin.search('vermeil in gold');

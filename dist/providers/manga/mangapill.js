@@ -1,6 +1,12 @@
-import { load } from 'cheerio';
-import { MangaParser, } from '../../models';
-class MangaPill extends MangaParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class MangaPill extends models_1.MangaParser {
     constructor() {
         super(...arguments);
         this.name = 'MangaPill';
@@ -13,8 +19,8 @@ class MangaPill extends MangaParser {
          */
         this.search = async (query) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
+                const $ = (0, cheerio_1.load)(data);
                 const results = $('div.container div.my-3.justify-end > div')
                     .map((i, el) => ({
                     id: $(el).find('a').attr('href')?.split('/manga/')[1],
@@ -37,8 +43,8 @@ class MangaPill extends MangaParser {
                 title: '',
             };
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/manga/${mangaId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const $ = (0, cheerio_1.load)(data);
                 mangaInfo.title = $('div.container div.my-3 div.flex-col div.mb-3 h1').text().trim();
                 mangaInfo.description = $('div.container div.my-3  div.flex-col p.text--secondary').text().split('\n').join(' ');
                 mangaInfo.releaseDate = $('div.container div.my-3 div.flex-col div.gap-3.mb-3 div:contains("Year")')
@@ -65,8 +71,8 @@ class MangaPill extends MangaParser {
         };
         this.fetchChapterPages = async (chapterId) => {
             try {
-                const { data } = await this.client.get(`${this.baseUrl}/chapters/${chapterId}`);
-                const $ = load(data);
+                const { data } = await axios_1.default.get(`${this.baseUrl}/chapters/${chapterId}`);
+                const $ = (0, cheerio_1.load)(data);
                 const chapterSelector = $('chapter-page');
                 const pages = chapterSelector
                     .map((i, el) => ({
@@ -89,5 +95,5 @@ class MangaPill extends MangaParser {
 //   const pages = await manga.fetchChapterPages(info.chapters![0].id);
 //   console.log(pages);
 // })();
-export default MangaPill;
+exports.default = MangaPill;
 //# sourceMappingURL=mangapill.js.map

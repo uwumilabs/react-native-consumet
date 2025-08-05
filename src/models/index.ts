@@ -1,3 +1,4 @@
+import axios from "axios";
 import BaseProvider from './base-provider';
 import BaseParser from './base-parser';
 import AnimeParser from './anime-parser';

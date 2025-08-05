@@ -1,11 +1,10 @@
+import axios from "axios";
 //extractor for https://animekai.to
 
 // Keys required for the decryption to work are loaded dynamically from
 // https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json
 
 import { type ISource, type IVideo, VideoExtractor } from '../models';
-import type { AxiosAdapter } from 'axios';
-import type { ProxyConfig } from '../models/types';
 
 export class MegaUp extends VideoExtractor {
   protected serverName: string = 'MegaUp';
@@ -15,17 +14,15 @@ export class MegaUp extends VideoExtractor {
   private kaiKeysReady: Promise<void>;
 
   constructor(
-    protected proxyConfig?: ProxyConfig,
-    protected adapter?: AxiosAdapter
   ) {
-    super(proxyConfig, adapter);
+    super();
     this.kaiKeysReady = this.loadKAIKEYS();
   }
 
   private async loadKAIKEYS(): Promise<void> {
     const extraction_keys = 'https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json';
 
-    const response = await this.client.get(extraction_keys);
+    const response = await axios.get(extraction_keys);
     const keys = await response.data;
 
     for (var i = 0; i < keys.kai.length; i++) {
@@ -90,7 +87,7 @@ export class MegaUp extends VideoExtractor {
       await this.kaiKeysReady;
 
       const url = videoUrl.href.replace(/\/(e|e2)\//, '/media/');
-      const res = await this.client.get(url);
+      const res = await axios.get(url);
       const decrypted = JSON.parse(this.DecodeIframeData(res.data.result).replace(/\\/g, ''));
       const data: ISource = {
         sources: decrypted.sources.map((s: { file: string }) => ({

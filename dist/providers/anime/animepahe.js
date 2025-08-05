@@ -1,8 +1,14 @@
-import { load } from 'cheerio';
-import { AnimeParser, MediaStatus, MediaFormat, SubOrSub, } from '../../models';
-import { Kwik } from '../../extractors';
-import { bypassDdosGuard, getDdosGuardCookiesWithWebView } from '../../NativeConsumet';
-class AnimePahe extends AnimeParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __importDefault(require("axios"));
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+const extractors_1 = require("../../extractors");
+const NativeConsumet_1 = require("../../NativeConsumet");
+class AnimePahe extends models_1.AnimeParser {
     constructor() {
         super();
         this.name = 'AnimePahe';
@@ -18,7 +24,7 @@ class AnimePahe extends AnimeParser {
                 if (!this.ddgCookie) {
                     await this.initDdgCookie();
                 }
-                const { data } = await this.client.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
                     headers: this.Headers(false),
                 });
                 const res = {
@@ -55,7 +61,7 @@ class AnimePahe extends AnimeParser {
                     headers: this.Headers(id),
                 });
                 const data = await res.text();
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 animeInfo.title = $('div.title-wrapper > h1 > span').first().text();
                 animeInfo.image = $('div.anime-poster a').attr('href');
                 animeInfo.cover = `https:${$('div.anime-cover').attr('data-src')}`;
@@ -66,13 +72,13 @@ class AnimePahe extends AnimeParser {
                 animeInfo.hasSub = true;
                 switch ($('div.anime-info p:icontains("Status:") a').text().trim()) {
                     case 'Currently Airing':
-                        animeInfo.status = MediaStatus.ONGOING;
+                        animeInfo.status = models_1.MediaStatus.ONGOING;
                         break;
                     case 'Finished Airing':
-                        animeInfo.status = MediaStatus.COMPLETED;
+                        animeInfo.status = models_1.MediaStatus.COMPLETED;
                         break;
                     default:
-                        animeInfo.status = MediaStatus.UNKNOWN;
+                        animeInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 animeInfo.type = $('div.anime-info > p:contains("Type:") > a').text().trim().toUpperCase();
                 animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")')
@@ -107,7 +113,7 @@ class AnimePahe extends AnimeParser {
                 });
                 animeInfo.episodes = [];
                 if (episodePage < 0) {
-                    const { data: { last_page, data }, } = await this.client.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
+                    const { data: { last_page, data }, } = await axios_1.default.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
                         headers: this.Headers(id),
                     });
                     animeInfo.episodePages = last_page;
@@ -140,15 +146,15 @@ class AnimePahe extends AnimeParser {
          * @param episodeId Episode id
          * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = async (episodeId, subOrDub = SubOrSub.SUB) => {
+        this.fetchEpisodeSources = async (episodeId, subOrDub = models_1.SubOrSub.SUB) => {
             try {
                 if (!this.ddgCookie) {
                     await this.initDdgCookie();
                 }
-                const { data } = await this.client.get(`${this.baseUrl}/play/${episodeId}`, {
+                const { data } = await axios_1.default.get(`${this.baseUrl}/play/${episodeId}`, {
                     headers: this.Headers(episodeId.split('/')[0]),
                 });
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 const links = $('div#resolutionMenu > button').map((i, el) => ({
                     url: $(el).attr('data-src'),
                     quality: $(el).text(),
@@ -167,11 +173,11 @@ class AnimePahe extends AnimeParser {
                     sources: [],
                 };
                 for (const link of links) {
-                    const res = await new Kwik(this.proxyConfig).extract(new URL(link.url));
+                    const res = await new extractors_1.Kwik().extract(new URL(link.url));
                     res[0].quality = link.quality;
                     res[0].isDub = link.audio === 'eng';
                     // Only include sources that match the requested SubOrSub type
-                    if ((subOrDub === SubOrSub.DUB && res[0].isDub) || (subOrDub === SubOrSub.SUB && !res[0].isDub)) {
+                    if ((subOrDub === models_1.SubOrSub.DUB && res[0].isDub) || (subOrDub === models_1.SubOrSub.SUB && !res[0].isDub)) {
                         iSource.sources.push(res[0]);
                     }
                 }
@@ -192,7 +198,7 @@ class AnimePahe extends AnimeParser {
             }
         };
         this.fetchEpisodes = async (session, page) => {
-            const res = await this.client.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
+            const res = await axios_1.default.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
                 headers: this.Headers(session),
             });
             const epData = res.data.data;
@@ -222,12 +228,12 @@ class AnimePahe extends AnimeParser {
     async initDdgCookie() {
         try {
             try {
-                this.ddgCookie = await getDdosGuardCookiesWithWebView(this.baseUrl);
+                this.ddgCookie = await (0, NativeConsumet_1.getDdosGuardCookiesWithWebView)(this.baseUrl);
                 // console.log('DDoS-Guard cookie obtained (WebView):', this.ddgCookie);
             }
             catch (err) {
                 // console.error('Failed to bypass DDoS-Guard with WebView:', err);
-                this.ddgCookie = await bypassDdosGuard(this.baseUrl);
+                this.ddgCookie = await (0, NativeConsumet_1.bypassDdosGuard)(this.baseUrl);
                 // console.log('DDoS-Guard cookie obtained (fallback):', this.ddgCookie);
             }
         }
@@ -256,7 +262,7 @@ class AnimePahe extends AnimeParser {
         return headers;
     }
 }
-export default AnimePahe;
+exports.default = AnimePahe;
 // (async () => {
 //   const animepahe = new AnimePahe();
 //   const anime = await animepahe.search('Classroom of the elite');

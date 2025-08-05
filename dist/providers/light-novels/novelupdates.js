@@ -1,6 +1,8 @@
-import { load } from 'cheerio';
-import { LightNovelParser, MediaStatus, } from '../../models';
-class NovelUpdates extends LightNovelParser {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const cheerio_1 = require("cheerio");
+const models_1 = require("../../models");
+class NovelUpdates extends models_1.LightNovelParser {
     constructor() {
         super(...arguments);
         this.name = 'NovelUpdates';
@@ -28,7 +30,7 @@ class NovelUpdates extends LightNovelParser {
                         Referer: lightNovelUrl,
                     },
                 });
-                const $ = load(await page.text());
+                const $ = (0, cheerio_1.load)(await page.text());
                 if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
                     throw new Error('Client is blocked from accessing the site.');
                 }
@@ -43,13 +45,13 @@ class NovelUpdates extends LightNovelParser {
                 lightNovelInfo.description = $('div#editdescription').text()?.trim();
                 const status = $('div#editstatus').text()?.trim();
                 if (status.includes('Complete')) {
-                    lightNovelInfo.status = MediaStatus.COMPLETED;
+                    lightNovelInfo.status = models_1.MediaStatus.COMPLETED;
                 }
                 else if (status.includes('Ongoing')) {
-                    lightNovelInfo.status = MediaStatus.ONGOING;
+                    lightNovelInfo.status = models_1.MediaStatus.ONGOING;
                 }
                 else {
-                    lightNovelInfo.status = MediaStatus.UNKNOWN;
+                    lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 const postId = $('input#mypostid').attr('value');
                 lightNovelInfo.chapters = await this.fetchChapters(postId);
@@ -71,7 +73,7 @@ class NovelUpdates extends LightNovelParser {
                 },
                 body: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`,
             })).text()).substring(1);
-            const $ = load(chapterData);
+            const $ = (0, cheerio_1.load)(chapterData);
             $('li.sp_li_chp a[data-id]').each((index, el) => {
                 const id = $(el).attr('data-id');
                 const title = $(el).find('span').text();
@@ -99,7 +101,7 @@ class NovelUpdates extends LightNovelParser {
             try {
                 const page = await fetch(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
                 const data = await page.text();
-                const $ = load(data);
+                const $ = (0, cheerio_1.load)(data);
                 contents.novelTitle = $('title').text();
                 contents.chapterTitle = $('title').text();
                 contents.text = data;
@@ -121,7 +123,7 @@ class NovelUpdates extends LightNovelParser {
                         Referer: this.baseUrl,
                     },
                 });
-                const $ = load(await res.text());
+                const $ = (0, cheerio_1.load)(await res.text());
                 $('div.search_main_box_nu').each((i, el) => {
                     result.results.push({
                         id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1].split('/')[0],
@@ -138,7 +140,7 @@ class NovelUpdates extends LightNovelParser {
         };
     }
 }
-export default NovelUpdates;
+exports.default = NovelUpdates;
 // (async () => {
 //   const ln = new ReadLightNovels();
 //   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');

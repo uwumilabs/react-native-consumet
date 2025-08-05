@@ -13,7 +13,7 @@ class AnimeSaturn extends AnimeParser {
          */
         this.search = async (query) => {
             // baseUrl/animelist?search={query}
-            const data = await this.client.get(`${this.baseUrl}animelist?search=${query}`);
+            const data = await axios.get(`${this.baseUrl}animelist?search=${query}`);
             const $ = await load(data.data);
             if (!$)
                 return { results: [] };
@@ -38,7 +38,7 @@ class AnimeSaturn extends AnimeParser {
          * @param id Anime id
          */
         this.fetchAnimeInfo = async (id) => {
-            const data = await this.client.get(`${this.baseUrl}anime/${id}`);
+            const data = await axios.get(`${this.baseUrl}anime/${id}`);
             const $ = await load(data.data);
             const info = {
                 id,
@@ -47,8 +47,8 @@ class AnimeSaturn extends AnimeParser {
                 alID: $('a[href^="https://anilist.co/anime/"]').attr('href')?.slice(25, -1),
                 genres: $('div.container a.badge.badge-light')
                     ?.map((i, element) => {
-                    return $(element).text();
-                })
+                        return $(element).text();
+                    })
                     .toArray() ?? undefined,
                 image: $('img.img-fluid')?.attr('src') || undefined,
                 cover: $('div.banner')
@@ -62,13 +62,13 @@ class AnimeSaturn extends AnimeParser {
                 $(element)
                     .find('.bottone-ep')
                     .each((i, element) => {
-                    const link = $(element).attr('href');
-                    const episodeNumber = $(element).text().trim().replace('Episodio ', '').trim();
-                    episodes.push({
-                        number: parseInt(episodeNumber),
-                        id: link?.split('/')?.pop() ?? '',
+                        const link = $(element).attr('href');
+                        const episodeNumber = $(element).text().trim().replace('Episodio ', '').trim();
+                        episodes.push({
+                            number: parseInt(episodeNumber),
+                            id: link?.split('/')?.pop() ?? '',
+                        });
                     });
-                });
             });
             info.episodes = episodes.sort((a, b) => a.number - b.number);
             return info;
@@ -78,12 +78,12 @@ class AnimeSaturn extends AnimeParser {
          * @param episodeId Episode id
          */
         this.fetchEpisodeSources = async (episodeId) => {
-            const fakeData = await this.client.get(`${this.baseUrl}ep/${episodeId}`);
+            const fakeData = await axios.get(`${this.baseUrl}ep/${episodeId}`);
             const $2 = await load(fakeData.data);
             const serverOneUrl = $2("div > a:contains('Guarda lo streaming')").attr('href'); // scrape from server 1 (m3u8 and mp4 urls)
             if (serverOneUrl === null)
                 throw new Error('Invalid url');
-            let data = await this.client.get(serverOneUrl);
+            let data = await axios.get(serverOneUrl);
             let $ = await load(data.data);
             const sources = {
                 headers: {},
@@ -122,7 +122,7 @@ class AnimeSaturn extends AnimeParser {
             }
             // STREAMTAPE
             const serverTwoUrl = serverOneUrl + '&server=1'; // scrape from server 2 (streamtape)
-            data = await this.client.get(serverTwoUrl);
+            data = await axios.get(serverTwoUrl);
             $ = await load(data.data);
             const videoUrl = $('.embed-container > iframe').attr('src');
             const serverTwoSource = await new StreamTape(this.proxyConfig, this.adapter).extract(new URL(videoUrl));
