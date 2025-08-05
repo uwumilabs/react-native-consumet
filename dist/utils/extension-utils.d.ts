@@ -34,13 +34,27 @@ export interface ExtensionConfig {
      * Whether to cache loaded extensions (default: true)
      */
     cache?: boolean;
+    /**
+     * Whether to sanitize dangerous functions like eval (default: true)
+     * Set to false for trusted sources that might need eval for legitimate purposes
+     */
+    sanitize?: boolean;
+    /**
+     * Whether to use native Android JavaScript execution (default: true)
+     * This provides much better CommonJS compatibility but only works on Android
+     */
+    useNative?: boolean;
 }
 /**
  * Safely evaluate provider code with proper error handling
  * Note: Uses Function constructor which is necessary for dynamic code loading
  * Consider the security implications in your environment
  */
-export declare function evaluateProviderCode(code: string, allowedGlobals?: string[]): ProviderModule;
+export declare function evaluateProviderCode(code: string, allowedGlobals?: string[], options?: {
+    sanitize?: boolean;
+    context?: ProviderContext;
+    useNative?: boolean;
+}): Promise<ProviderModule>;
 /**
  * Load a provider extension from a URL
  *

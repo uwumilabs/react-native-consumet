@@ -44,12 +44,16 @@ export interface ProviderContextConfig {
  */
 export declare function createProviderContext(config?: ProviderContextConfig): ProviderContext;
 /**
+ * Creates a React Native optimized provider context
+ * This version is specifically tuned for React Native environments
+ *
+ * @param config Optional configuration to override defaults
+ * @returns Complete ProviderContext optimized for React Native
+ */
+export declare function createReactNativeProviderContext(config?: ProviderContextConfig): ProviderContext;
+/**
  * Quick helper to create a context with just custom axios
  */
 export declare function createProviderContextWithAxios(axiosInstance: any): ProviderContext;
-/**
- * Quick helper to create a context for React Native environments
- */
-export declare function createReactNativeProviderContext(config?: ProviderContextConfig): ProviderContext;
 export default createProviderContext;
 //# sourceMappingURL=create-provider-context.d.ts.map

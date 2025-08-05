@@ -1,9 +1,7 @@
 package com.consumet
 
-import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.*
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -11,8 +9,6 @@ import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @ReactModule(name = ConsumetModule.NAME)
 class ConsumetModule(private val reactContext: ReactApplicationContext) :
@@ -21,6 +17,8 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
     private val deobfuscator by lazy { DeobfuscatorModule(reactContext) }
+    private val jsEvaluator by lazy { JavaScriptEvaluator(reactContext) }
+    private val moduleExecutor by lazy { NativeModuleExecutor(reactContext) }
 
     companion object {
         const val NAME = "Consumet"
@@ -45,5 +43,36 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     override fun deobfuscateScript(source: String, promise: Promise) {
         deobfuscator.deobfuscateScript(source, promise)
+    }
+
+    @ReactMethod
+    override fun evaluateJavaScript(code: String, context: String, promise: Promise) {
+        jsEvaluator.evaluateJavaScript(code, context, promise)
+    }
+
+    @ReactMethod
+    override fun loadNativeModule(
+            moduleId: String,
+            code: String,
+            context: String,
+            promise: Promise
+    ) {
+        moduleExecutor.loadModule(moduleId, code, context, promise)
+    }
+
+    @ReactMethod
+    override fun executeModuleFunction(
+            moduleId: String,
+            functionName: String,
+            argsJson: String,
+            promise: Promise
+    ) {
+        moduleExecutor.executeFunction(moduleId, functionName, argsJson, promise)
+    }
+
+    @ReactMethod
+    override fun unloadNativeModule(moduleId: String, promise: Promise) {
+        moduleExecutor.unloadModule(moduleId)
+        promise.resolve(null)
     }
 }

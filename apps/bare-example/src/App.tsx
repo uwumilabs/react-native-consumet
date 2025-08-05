@@ -5,6 +5,7 @@ import Manga from './Manga';
 import Movies from './Movies';
 import Ext from './Ext';
 import ExtGithub from './Ext-github';
+import ExtensionDemo from './ExtensionDemo';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       {/* <Anime /> */}
       {/* <Movies /> */}
       {/* <Ext/> */}
+      {/* <ExtensionDemo/> */}
       <ExtGithub/>
       {/* <Manga/> */}
       {/* <Meta /> */}

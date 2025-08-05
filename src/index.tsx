@@ -3,6 +3,30 @@ import 'react-native-url-polyfill/auto';
 import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import {
+  evaluateProviderCode,
+  loadProviderFromURL,
+  createProviderFromURL,
+  loadMultipleProviders,
+  validateProviderModule,
+  clearExtensionCache,
+  getCachedExtensions,
+  testProviderURL,
+  type ProviderModule,
+  type ExtensionConfig,
+  createProviderContext,
+  createProviderContextWithAxios,
+  createReactNativeProviderContext,
+  ExtensionRegistryManager,
+  createExtensionManager,
+  setupDefaultExtensionManager,
+  DEFAULT_REGISTRIES,
+  type ExtensionManifest,
+  type ExtensionRegistry,
+  type ExtensionInstallResult,
+  type ExtensionSearchFilters,
+} from './utils';
+import { createZoro } from './providers/anime/zoro';
+import {
   AsianLoad,
   Filemoon,
   GogoCDN,
@@ -128,4 +152,29 @@ export type {
   ProxyConfig,
   AniZipEpisode,
   IMovieSeason,
+};
+
+export {
+  evaluateProviderCode,
+  loadProviderFromURL,
+  createProviderFromURL,
+  loadMultipleProviders,
+  validateProviderModule,
+  clearExtensionCache,
+  getCachedExtensions,
+  testProviderURL,
+  type ProviderModule,
+  type ExtensionConfig,
+  createProviderContext,
+  createProviderContextWithAxios,
+  createReactNativeProviderContext,
+  createZoro,
+  ExtensionRegistryManager,
+  createExtensionManager,
+  setupDefaultExtensionManager,
+  DEFAULT_REGISTRIES,
+  type ExtensionManifest,
+  type ExtensionRegistry,
+  type ExtensionInstallResult,
+  type ExtensionSearchFilters,
 };

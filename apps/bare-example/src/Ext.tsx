@@ -11,80 +11,84 @@ const Ext = () => {
       setLoading(true);
 
       try {
-        // Load required dependencies
-        const axios = require('axios');
-        const cheerio = require('cheerio');
+        console.log('Testing local provider with new utilities...');
         
-        console.log('Axios loaded:', axios);
-        console.log('Axios default:', axios.default);
-        console.log('Axios.create:', typeof axios.create);
+        // Import the new utility functions and provider context
+        const { 
+          createProviderContext,
+          createReactNativeProviderContext 
+        } = require('../../../lib/commonjs/utils/index.js');
         
-        // Try different axios import patterns for React Native compatibility
-        const axiosInstance = axios.default ? axios.default.create({
-          timeout: 10000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        }) : axios.create({
-          timeout: 10000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
-        
-        // Create provider context with dependencies
-        const providerContext = {
-          axios: axiosInstance,
-          load: cheerio.load,
-          USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          extractors: {}, // Can be empty for basic testing
-          logger: console
-        };
-        
-        console.log('Provider context created:', {
-          hasAxios: !!providerContext.axios,
-          hasGet: typeof providerContext.axios.get,
-          hasLoad: typeof providerContext.load,
-          hasExtractors: !!providerContext.extractors
-        });
-
-        // Test both factory function and backward compatibility
+        // Import the local provider module directly
         const ZoroModule = require('../../../lib/commonjs/providers/anime/zoro.js');
-        
-        console.log('Loaded Zoro Module:', ZoroModule);
-        console.log('Available exports:', Object.keys(ZoroModule));
+        console.log(ZoroModule)
+        console.log('Loaded Zoro Module:', {
+          hasCreateZoro: typeof ZoroModule.createZoro,
+          hasDefault: !!ZoroModule.default,
+          exports: Object.keys(ZoroModule)
+        });
 
-        // Test factory function if available
+        // Test both factory function and context utilities
         let provider;
+        
         if (ZoroModule.createZoro && typeof ZoroModule.createZoro === 'function') {
-          console.log('Using factory function createZoro...');
-          console.log('Passing context with axios:', typeof providerContext.axios);
-          console.log('Axios has get method:', typeof providerContext.axios.get);
-          provider = ZoroModule.createZoro(providerContext);
-          console.log('Created provider via factory:', provider);
+          console.log('Using factory function with createProviderContext...');
+          
+          // Create provider context with all defaults (axios, extractors, etc.)
+          const context = createProviderContext();
+          console.log('Provider context created with defaults:', {
+            hasAxios: !!context.axios,
+            hasLoad: typeof context.load,
+            hasExtractors: !!context.extractors,
+            extractorCount: Object.keys(context.extractors).length,
+            hasAnimeParser: !!context.AnimeParser,
+            hasMovieParser: !!context.MovieParser
+          });
+          
+          provider = ZoroModule.createZoro(context);
+          console.log('Created provider via factory with full context:', {
+            hasSearch: typeof provider.search,
+            hasFetchAnimeInfo: typeof provider.fetchAnimeInfo,
+            hasFetchEpisodeSources: typeof provider.fetchEpisodeSources
+          });
         } else {
           // Fallback to class-based approach
           console.log('Using backward compatibility class...');
           const ZoroClass = ZoroModule.default || ZoroModule;
           provider = new ZoroClass();
-          console.log('Created provider via class:', provider);
+          console.log('Created provider via class:', {
+            hasSearch: typeof provider.search
+          });
         }
 
-        if (provider && typeof provider.search === 'function') {
-          console.log('Calling search method...');
-          const data = await provider.search('Naruto');
-          console.log('Search results:', data);
-          setResults(data?.results || []);
-        } else {
-          console.error('Provider or search method not found:', { 
-            provider: !!provider, 
-            search: typeof provider?.search 
-          });
-          Alert.alert('Error', 'Search function not found in provider');
+        // Test different search scenarios
+        console.log('Testing search functionality...');
+        
+        const searchQueries = ['Naruto', 'One Piece'];
+        
+        for (const query of searchQueries) {
+          try {
+            console.log(`Searching for "${query}"...`);
+            const data = await provider.search(query);
+            console.log(`Search results for "${query}":`, {
+              hasResults: !!data?.results,
+              resultCount: data?.results?.length || 0,
+              currentPage: data?.currentPage,
+              hasNextPage: data?.hasNextPage
+            });
+            
+            if (data?.results?.length > 0) {
+              setResults(data.results);
+              break; // Use first successful result
+            }
+          } catch (searchErr) {
+            console.warn(`Search failed for "${query}":`, searchErr.message);
+          }
         }
+        
       } catch (err: any) {
         console.error('Provider error:', err);
-        Alert.alert('Search Error', err.message);
+        Alert.alert('Provider Error', err.message);
       }
 
       setLoading(false);
@@ -95,20 +99,39 @@ const Ext = () => {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Zoro Extension (Factory Function Test)</Text>
+      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>
+        Zoro Extension (Local + New Utils)
+      </Text>
+      <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
+        Using createProviderContext utility with factory function pattern
+      </Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#666" />
+        <View style={{ alignItems: 'center', marginTop: 20 }}>
+          <ActivityIndicator size="large" color="#666" />
+          <Text style={{ marginTop: 10, color: '#888' }}>
+            Testing provider with new utilities...
+          </Text>
+        </View>
       ) : results.length > 0 ? (
-        results.map((item, idx) => (
-          <View key={idx} style={{ marginBottom: 12 }}>
-            <Text style={{ fontWeight: 'bold' }}>{item.title || 'No Title'}</Text>
-            <Text style={{ color: '#888' }}>{item.id}</Text>
-            {item.type && <Text style={{ color: '#666' }}>Type: {item.type}</Text>}
-            {item.url && <Text style={{ color: '#666', fontSize: 12 }}>{item.url}</Text>}
-          </View>
-        ))
+        <>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#27ae60' }}>
+            ✅ Local provider working! Found {results.length} results:
+          </Text>
+          {results.map((item, idx) => (
+            <View key={idx} style={{ marginBottom: 12, backgroundColor: '#f0f8ff', padding: 12, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#3498db' }}>
+              <Text style={{ fontWeight: 'bold', color: '#2c3e50' }}>{item.title || 'No Title'}</Text>
+              <Text style={{ color: '#888', fontSize: 12 }}>{item.id}</Text>
+              {item.type && <Text style={{ color: '#666', fontSize: 12 }}>Type: {item.type}</Text>}
+              {item.url && <Text style={{ color: '#3498db', fontSize: 10 }}>{item.url}</Text>}
+            </View>
+          ))}
+        </>
       ) : (
-        <Text>No results found.</Text>
+        <View style={{ alignItems: 'center', marginTop: 40 }}>
+          <Text style={{ color: '#e74c3c', fontSize: 16 }}>
+            Provider loaded but no results found.
+          </Text>
+        </View>
       )}
     </ScrollView>
   );

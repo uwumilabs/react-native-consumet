@@ -42,8 +42,8 @@
     "!**/.*"
   ],
   "scripts": {
-    "bare-example": "yarn workspace react-native-consumet-bare-example",
-    "expo-example": "yarn workspace react-native-consumet-expo-example",
+    "example:bare": "yarn workspace react-native-consumet-bare-example",
+    "example:expo": "yarn workspace react-native-consumet-expo-example",
     "build": "tsc -p tsconfig.dist.json",
     "build:clean": "del-cli dist && yarn build",
     "test": "jest",

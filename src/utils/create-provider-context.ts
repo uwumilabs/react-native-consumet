@@ -4,7 +4,28 @@ import type { ProviderContext } from '../models/provider-context';
 import { AnimeParser, MovieParser } from '../models';
 
 // Import extractors
-import { StreamSB, MegaCloud, StreamTape } from '../extractors';
+import {
+  AsianLoad,
+  Filemoon,
+  GogoCDN,
+  Kwik,
+  MixDrop,
+  Mp4Player,
+  Mp4Upload,
+  RapidCloud,
+  MegaCloud,
+  StreamHub,
+  StreamLare,
+  StreamSB,
+  StreamTape,
+  StreamWish,
+  VidCloud,
+  VidMoly,
+  VizCloud,
+  VidHide,
+  Voe,
+  MegaUp,
+} from '../extractors';
 
 /**
  * Configuration options for creating a provider context
@@ -73,10 +94,26 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
 
   // Default extractors - all the important ones pre-configured
   const defaultExtractors = {
-    StreamSB: StreamSB,
+    AsianLoad: AsianLoad,
+    Filemoon: Filemoon,
+    GogoCDN: GogoCDN,
+    Kwik: Kwik,
+    MixDrop: MixDrop,
+    Mp4Player: Mp4Player,
+    Mp4Upload: Mp4Upload,
+    RapidCloud: RapidCloud,
     MegaCloud: MegaCloud,
+    StreamHub: StreamHub,
+    StreamLare: StreamLare,
+    StreamSB: StreamSB,
     StreamTape: StreamTape,
-    // Add more extractors as they become available
+    StreamWish: StreamWish,
+    VidCloud: VidCloud,
+    VidMoly: VidMoly,
+    VizCloud: VizCloud,
+    VidHide: VidHide,
+    Voe: Voe,
+    MegaUp: MegaUp,
   };
 
   // Default logger
@@ -99,32 +136,46 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
 }
 
 /**
- * Quick helper to create a context with just custom axios
- */
-export function createProviderContextWithAxios(axiosInstance: any): ProviderContext {
-  return createProviderContext({ axios: axiosInstance });
-}
-
-/**
- * Quick helper to create a context for React Native environments
+ * Creates a React Native optimized provider context
+ * This version is specifically tuned for React Native environments
+ *
+ * @param config Optional configuration to override defaults
+ * @returns Complete ProviderContext optimized for React Native
  */
 export function createReactNativeProviderContext(config: ProviderContextConfig = {}): ProviderContext {
-  // React Native optimized axios settings
-  const rnAxios = axios.create({
-    timeout: 20000, // Longer timeout for mobile networks
+  // React Native specific axios configuration
+  const reactNativeAxios = axios.create({
+    timeout: 30000, // Longer timeout for mobile networks
     headers: {
       'User-Agent':
         config.userAgent ||
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Upgrade-Insecure-Requests': '1',
     },
   });
 
   return createProviderContext({
     ...config,
-    axios: config.axios || rnAxios,
+    axios: config.axios || reactNativeAxios,
+    userAgent:
+      config.userAgent ||
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
   });
+}
+
+/**
+ * Quick helper to create a context with just custom axios
+ */
+export function createProviderContextWithAxios(axiosInstance: any): ProviderContext {
+  return createProviderContext({ axios: axiosInstance });
 }
 
 export default createProviderContext;

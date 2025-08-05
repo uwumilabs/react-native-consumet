@@ -86,7 +86,7 @@ export {
   substringBefore,
   calculateStringSimilarity,
   VidMoly,
-  getKKey,
+  // getKKey,
   MegaUp,
 };
 
@@ -110,3 +110,19 @@ export {
   type ProviderModule,
   type ExtensionConfig,
 } from './extension-utils';
+
+// Export extension registry system
+export {
+  ExtensionRegistryManager,
+  createExtensionManager,
+  setupDefaultExtensionManager,
+  DEFAULT_REGISTRIES,
+} from './extension-registry';
+
+// Export extension manifest types
+export type {
+  ExtensionManifest,
+  ExtensionRegistry,
+  ExtensionInstallResult,
+  ExtensionSearchFilters,
+} from '../models/extension-manifest';
