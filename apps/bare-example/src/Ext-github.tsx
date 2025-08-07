@@ -42,7 +42,7 @@ const ExtGithub = () => {
                 url: "https://github.com/uwumilabs"
               },
               category: "anime",
-              main: "https://github.com/uwumilabs/react-native-consumet/blob/native-executor/dist/providers/anime/zoro.js",
+              main: "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/providers/anime/zoro.js",
               factories: ["createZoro"],
               minConsumetVersion: "0.9.0",
               tags: ["anime", "streaming", "subbed", "dubbed", "popular"],
@@ -64,30 +64,20 @@ const ExtGithub = () => {
         console.log(`Loading provider from: ${githubUrl}`);
         setExtensionInfo(zoroExtension);
         
-        let provider;
+        // Direct load from GitHub URL - BADA BOOM! 💥
+        // NO LOCAL FALLBACK - Registry or throw error!
+        const context = createReactNativeProviderContext();
+        const module = await loadProviderFromURL(githubUrl, { 
+          context,
+          useNative: true // Enable native Android JavaScript evaluation!
+        });
+        console.log('Loaded module:', module);
         
-        try {
-          // Direct load from GitHub URL - BADA BOOM! 💥
-          const context = createReactNativeProviderContext();
-          const module = await loadProviderFromURL(githubUrl, { 
-            context,
-            useNative: true // Enable native Android JavaScript evaluation!
-          });
-          console.log('Loaded module:', module);
-          // Create provider instance
-          provider = module.createZoro(context);
-          console.log('Provider created successfully:',provider);
-          console.log('✅ Provider loaded directly from GitHub using native evaluation!');
-          setProviderSource(`GitHub Native (${zoroExtension.name} v${zoroExtension.version})`);
-          
-        } catch (urlError) {
-          console.warn('GitHub URL failed, falling back to local version:', urlError.message);
-          
-          // Fallback to local provider
-          const context = createReactNativeProviderContext();
-          provider = createZoro(context);
-          setProviderSource('Local (Built-in)');
-        }
+        // Create provider instance
+        const provider = module.createZoro(context);
+        console.log('Provider created successfully:', provider);
+        console.log('✅ Provider loaded directly from GitHub using native evaluation!');
+        setProviderSource(`GitHub Native (${zoroExtension.name} v${zoroExtension.version})`);
         
         console.log('Provider created successfully:', {
           hasSearch: typeof provider.search,
@@ -97,12 +87,21 @@ const ExtGithub = () => {
 
         // Test the search functionality
         console.log('Searching for "Naruto" using provider...');
-        const data = await provider.search('sakamoto days');
-        console.log('Search completed:', {
-          hasResults: !!data?.results,
-          resultCount: data?.results?.length || 0,
-          currentPage: data?.currentPage,
-          hasNextPage: data?.hasNextPage
+        // const data = await provider.search('Naruto');
+        // console.log('Search completed:', {
+        //   hasResults: !!data?.results,
+        //   resultCount: data?.results?.length || 0,
+        //   currentPage: data?.currentPage,
+        //   hasNextPage: data?.hasNextPage
+        // });
+        
+        // Also test fetchAnimeInfo
+        const mediaInfo = await provider.fetchAnimeInfo("jujutsu-kaisen-0-movie-17763");
+        console.log('Media info fetched:', {
+          title: mediaInfo.title,
+          id: mediaInfo.id,
+          type: mediaInfo.type,
+          url: mediaInfo.url
         });
         
         setResults(data?.results || []);

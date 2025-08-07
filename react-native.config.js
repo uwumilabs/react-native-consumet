@@ -9,4 +9,17 @@ module.exports = {
       },
     },
   },
+  dependencies: {
+    'nodejs-mobile-react-native': {
+      platforms: {
+        android: {
+          sourceDir: '../node_modules/nodejs-mobile-react-native/android',
+          cmakeListsPath: '../node_modules/nodejs-mobile-react-native/android/CMakeLists.txt',
+        },
+        ios: {
+          podspecPath: '../node_modules/nodejs-mobile-react-native/ios/NodeMobile.podspec',
+        },
+      },
+    },
+  },
 };

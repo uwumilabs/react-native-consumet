@@ -1,8 +1,6 @@
 import type { ProviderContext } from '../models/provider-context';
 import { createProviderContext } from './create-provider-context';
-import { SubOrSub, StreamingServers, MediaStatus, WatchListType } from '../models';
-import { evaluateJavaScript, loadNativeModule, executeModuleFunction } from '../NativeConsumet';
-import { loadProviderFromURLNative } from './native-provider-module';
+import { loadProviderFromCodeNode, loadProviderFromURLNode } from './node-provider-module';
 
 /**
  * Provider module interface that extensions should export
@@ -56,10 +54,10 @@ export interface ExtensionConfig {
   sanitize?: boolean;
 
   /**
-   * Whether to use native Android JavaScript execution (default: true)
-   * This provides much better CommonJS compatibility but only works on Android
+   * Whether to use Node.js runtime (default: true)
+   * This provides full Node.js environment with native fetch support
    */
-  useNative?: boolean;
+  useNodeJS?: boolean;
 }
 
 /**
@@ -68,192 +66,49 @@ export interface ExtensionConfig {
 const extensionCache = new Map<string, ProviderModule>();
 
 /**
- * Create a require function that maps module paths to context objects
- * This approach is much cleaner than hardcoding all the types and values inline
- */
-function createRequireFunction(context: ProviderContext) {
-  return (modulePath: string) => {
-    // Map common require paths to context objects
-    const moduleMap: Record<string, any> = {
-      'axios': context.axios,
-      'cheerio': { load: context.load },
-      '../../models': {
-        AnimeParser: context.AnimeParser,
-        MovieParser: context.MovieParser,
-        SubOrSub,
-        StreamingServers,
-        MediaStatus,
-        WatchListType,
-      },
-      '../../extractors': context.extractors,
-      '../../utils': context.extractors, // Some modules might import utils as extractors
-      '../../utils/create-provider-context': {
-        createProviderContext: () => context,
-      },
-      // Direct extractor imports
-      '../../extractors/asianload': context.extractors.AsianLoad,
-      '../../extractors/filemoon': context.extractors.Filemoon,
-      '../../extractors/gogocdn': context.extractors.GogoCDN,
-      '../../extractors/kwik': context.extractors.Kwik,
-      '../../extractors/mixdrop': context.extractors.MixDrop,
-      '../../extractors/mp4player': context.extractors.Mp4Player,
-      '../../extractors/mp4upload': context.extractors.Mp4Upload,
-      '../../extractors/rapidcloud': context.extractors.RapidCloud,
-      '../../extractors/megacloud': context.extractors.MegaCloud,
-      '../../extractors/streamhub': context.extractors.StreamHub,
-      '../../extractors/streamlare': context.extractors.StreamLare,
-      '../../extractors/streamsb': context.extractors.StreamSB,
-      '../../extractors/streamtape': context.extractors.StreamTape,
-      '../../extractors/streamwish': context.extractors.StreamWish,
-      '../../extractors/vidcloud': context.extractors.VidCloud,
-      '../../extractors/vidmoly': context.extractors.VidMoly,
-      '../../extractors/vizcloud': context.extractors.VizCloud,
-      '../../extractors/vidhide': context.extractors.VidHide,
-      '../../extractors/voe': context.extractors.Voe,
-      '../../extractors/megaup': context.extractors.MegaUp,
-    };
-
-    const result = moduleMap[modulePath];
-    if (result) {
-      return result;
-    }
-
-    // Handle dynamic paths or unknown modules gracefully
-    console.warn(`Unknown require: ${modulePath}`);
-    return {};
-  };
-}
-
-/**
  * Safely evaluate provider code with proper error handling
  * Note: Uses Function constructor which is necessary for dynamic code loading
  * Consider the security implications in your environment
  */
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
+
 export async function evaluateProviderCode(
   code: string,
-  allowedGlobals: string[] = ['console', 'Promise', 'URL', 'fetch'],
-  options: { sanitize?: boolean; context?: ProviderContext; useNative?: boolean } = {}
+  _allowedGlobals: string[] = ['console', 'Promise', 'URL', 'fetch'],
+  options: { sanitize?: boolean; context?: ProviderContext; useNodeJS?: boolean } = {}
 ): Promise<ProviderModule> {
-  const { sanitize = false, context, useNative = true } = options; // Default to using native evaluation when available
+  const { context, useNodeJS = true } = options;
 
   try {
     console.log('Raw code preview:', code.substring(0, 500) + '...');
 
-    // Try native Android JavaScript evaluation first (much more reliable)
-    if (useNative && typeof evaluateJavaScript === 'function' && context) {
-      try {
-        console.log('Using native Android JavaScript evaluation...');
-        const contextJson = JSON.stringify({
-          // Minimal context info for native side
-          userAgent: context.USER_AGENT,
-          hasExtractors: !!context.extractors,
-        });
+    // Use Node.js runtime only
+    if (useNodeJS && context) {
+      console.log('🚀 Using Node.js runtime for provider execution...');
 
-        const nativeResult = await evaluateJavaScript(code, contextJson);
-        console.log('Native evaluation succeeded!', nativeResult);
+      // Try to extract a factory function name from the code
+      // Look for common patterns like "createProvider", "createAnimeProvider", etc.
+      const factoryMatch = code.match(/(?:module\.exports\.)?(\w*create\w*Provider|\w*Provider|default)/g);
+      const factoryName = factoryMatch ? factoryMatch[0].replace('module.exports.', '') : 'default';
 
-        const parsed = JSON.parse(nativeResult);
-        if (parsed.success && parsed.exportKeys && parsed.exportKeys.length > 0) {
-          // Native evaluation confirmed the code is valid and has exports
-          // Now re-evaluate in our JS context to get the actual functions
-          console.log('Native validation passed, re-evaluating in JS context for function access...');
+      console.log(`📦 Detected factory function: ${factoryName}`);
 
-          // Fall through to manual evaluation below, but we know it should work
-        } else {
-          throw new Error(parsed.error || 'Native evaluation found no exports');
-        }
-      } catch (nativeError) {
-        console.warn('Native evaluation failed, falling back to manual eval:', nativeError);
-        // Fall through to manual evaluation
-      }
+      const provider = await loadProviderFromCodeNode(code, factoryName, context);
+
+      // Wrap in a module-like structure
+      const nodeModuleWrapper: ProviderModule = {};
+      nodeModuleWrapper[factoryName] = () => provider;
+      nodeModuleWrapper.default = () => provider;
+
+      console.log('✅ Node.js runtime evaluation succeeded!');
+      return nodeModuleWrapper;
     }
 
-    // Create a proper CommonJS environment that matches Node.js behavior
-    const moduleEnv = {
-      module: { exports: {} },
-      exports: {},
-      require: context ? createRequireFunction(context) : () => ({}),
-      console,
-      Object,
-      Promise,
-      URL,
-      fetch: globalThis.fetch,
-      globalThis,
-      global: globalThis,
-      // Add common Node.js globals that might be expected
-      Buffer: globalThis.Buffer || undefined,
-      process: globalThis.process || { env: {} },
-      __dirname: '/',
-      __filename: '/zoro.js',
-    };
-
-    // Link exports properly (this is critical!)
-    moduleEnv.exports = moduleEnv.module.exports;
-
-    // For React Native/trusted sources, use direct eval with proper CommonJS wrapper
-    // This mimics exactly what Node.js does when it loads a module
-    try {
-      // Pre-process the code to handle Object.defineProperty patterns
-      let processedCode = code;
-
-      // Handle Object.defineProperty(exports, "__esModule", { value: true }); pattern
-      processedCode = processedCode.replace(
-        /Object\.defineProperty\(exports,\s*['"]\s*__esModule\s*['"],\s*\{\s*value:\s*true\s*\}\s*\);?/g,
-        'exports.__esModule = true;'
-      );
-
-      // Handle other Object.defineProperty patterns for exports
-      processedCode = processedCode.replace(
-        /Object\.defineProperty\(exports,\s*['"]([^'"]+)['"],\s*\{[^}]*\}\s*\);?/g,
-        '// Object.defineProperty handled'
-      );
-
-      const wrappedCode = `
-        (function(exports, require, module, __filename, __dirname, console, Object, Promise, URL, fetch, globalThis, global, Buffer, process) {
-          ${processedCode}
-          return module.exports;
-        })
-      `;
-
-      console.log('Using direct eval approach (Node.js-like) with preprocessed code...');
-
-      // This is exactly how Node.js evaluates modules internally
-      // eslint-disable-next-line no-eval
-      const moduleFunction = eval(wrappedCode);
-
-      const result = moduleFunction(
-        moduleEnv.exports, // exports
-        moduleEnv.require, // require
-        moduleEnv.module, // module
-        moduleEnv.__filename, // __filename
-        moduleEnv.__dirname, // __dirname
-        moduleEnv.console, // console
-        moduleEnv.Object, // Object
-        moduleEnv.Promise, // Promise
-        moduleEnv.URL, // URL
-        moduleEnv.fetch, // fetch
-        moduleEnv.globalThis, // globalThis
-        moduleEnv.global, // global
-        moduleEnv.Buffer, // Buffer
-        moduleEnv.process // process
-      );
-
-      console.log('Direct eval succeeded! Result keys:', Object.keys(result || {}));
-      console.log('Result type:', typeof result);
-      console.log('Has createZoro:', typeof result?.createZoro);
-
-      if (!result || typeof result !== 'object') {
-        throw new Error('Provider code must export an object with provider factory functions');
-      }
-
-      return result;
-    } catch (evalError) {
-      console.error('Direct eval failed:', evalError);
-      throw evalError; // Don't fall back, we want to see the real error
-    }
+    // If Node.js is disabled or no context, throw error
+    throw new Error(
+      'Node.js runtime is required for provider execution. Please ensure useNodeJS is true and context is provided.'
+    );
   } catch (error) {
-    console.error('Full evaluation error:', error);
+    console.error('Node.js evaluation error:', error);
     throw new Error(`Failed to evaluate provider code: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -277,83 +132,39 @@ export async function evaluateProviderCode(
  * ```
  */
 export async function loadProviderFromURL(url: string, config: ExtensionConfig = {}): Promise<ProviderModule> {
-  const {
-    fetch: customFetch = globalThis.fetch,
-    timeout = 10000,
-    headers = {},
-    cache = true,
-    sanitize = true,
-    useNative = true,
-  } = config;
-
-  // Check if fetch is available
-  if (!customFetch) {
-    throw new Error('Fetch function not available. Please provide a custom fetch function in the config.');
-  }
+  const { cache = true, useNodeJS = true } = config;
 
   // Check cache first
   if (cache && extensionCache.has(url)) {
     return extensionCache.get(url)!;
   }
 
-  // Try native loading first if requested and available
-  if (useNative && typeof loadNativeModule === 'function' && config.context) {
-    try {
-      console.log('🚀 Using native Android module loading for maximum CommonJS compatibility...');
+  // Use Node.js runtime only
+  if (useNodeJS && config.context) {
+    console.log('🚀 Using Node.js runtime for maximum compatibility and native fetch support...');
 
-      const provider = await loadProviderFromURLNative(url, 'createZoro', config.context);
+    const provider = await loadProviderFromURLNode(url, 'createZoro', config.context);
 
-      // Create a wrapper that looks like a traditional module
-      const module = {
-        createZoro: () => provider,
-        // Add other potential factory functions
-        default: provider,
-      };
-
-      // Cache the result
-      if (cache) {
-        extensionCache.set(url, module);
-      }
-
-      console.log('✅ Native module loading succeeded!');
-      return module;
-    } catch (nativeError) {
-      console.warn('⚠️ Native loading failed, falling back to JavaScript evaluation:', nativeError);
-      // Fall through to traditional loading
-    }
-  }
-
-  try {
-    // Create timeout promise
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`Extension loading timeout after ${timeout}ms`)), timeout);
-    });
-
-    // Fetch the provider code
-    const fetchPromise = customFetch(url).then((response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
-      }
-      return response.text();
-    });
-
-    const code = await Promise.race([fetchPromise, timeoutPromise]);
-
-    // Evaluate the code with sanitization option and context
-    const module = evaluateProviderCode(code, ['console', 'Promise', 'URL', 'fetch'], {
-      sanitize,
-      context: config.context || createProviderContext(),
-    });
+    // Create a wrapper that looks like a traditional module
+    const module = {
+      createZoro: () => provider,
+      createProvider: () => provider,
+      default: provider,
+    };
 
     // Cache the result
     if (cache) {
       extensionCache.set(url, module);
     }
 
+    console.log('✅ Node.js runtime loading succeeded! Provider functions available.');
     return module;
-  } catch (error) {
-    throw new Error(`Failed to load provider from ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+
+  // If Node.js is disabled or no context, throw error
+  throw new Error(
+    'Node.js runtime is required for provider loading. Please ensure useNodeJS is true and context is provided.'
+  );
 }
 
 /**

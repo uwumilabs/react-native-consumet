@@ -23,11 +23,43 @@ class NativeProviderModule {
                 userAgent: context.USER_AGENT,
                 hasExtractors: !!context.extractors,
             });
+            console.log('🔧 Loading native module with ID:', this.moduleId);
             const result = await (0, NativeConsumet_1.loadNativeModule)(this.moduleId, code, contextJson);
+            console.log('🔧 Raw native module load result:', result);
             const moduleInfo = JSON.parse(result);
+            console.log('🔧 Parsed module info:', moduleInfo);
             if (moduleInfo.success) {
                 this.isLoaded = true;
-                this.availableFunctions = moduleInfo.exportKeys || [];
+                // Parse the exportKeys properly - it should be a JSON string
+                let exportKeys = [];
+                try {
+                    if (typeof moduleInfo.exportKeys === 'string') {
+                        // If it's a JSON string, parse it
+                        if (moduleInfo.exportKeys.startsWith('[') && moduleInfo.exportKeys.endsWith(']')) {
+                            exportKeys = JSON.parse(moduleInfo.exportKeys);
+                        }
+                        else {
+                            // If it's a plain string, try to split it
+                            exportKeys = moduleInfo.exportKeys
+                                .split(',')
+                                .map((key) => key.trim())
+                                .filter((key) => key.length > 0);
+                        }
+                    }
+                    else if (Array.isArray(moduleInfo.exportKeys)) {
+                        exportKeys = moduleInfo.exportKeys;
+                    }
+                    else {
+                        console.warn('🔧 Unexpected exportKeys format:', typeof moduleInfo.exportKeys, moduleInfo.exportKeys);
+                        exportKeys = [];
+                    }
+                }
+                catch (parseError) {
+                    console.error('🔧 Failed to parse exportKeys:', parseError);
+                    console.log('🔧 Raw exportKeys value:', moduleInfo.exportKeys);
+                    exportKeys = [];
+                }
+                this.availableFunctions = exportKeys;
                 console.log(`✅ Native module ${this.moduleId} loaded successfully with functions:`, this.availableFunctions);
             }
             else {
@@ -46,30 +78,62 @@ class NativeProviderModule {
         if (!this.isLoaded) {
             throw new Error(`Module ${this.moduleId} is not loaded`);
         }
+        console.log('🏭 Creating provider with factory:', factoryName);
+        console.log('🏭 Available functions:', this.availableFunctions);
         if (!this.availableFunctions.includes(factoryName)) {
             throw new Error(`Function ${factoryName} not found in module. Available: ${this.availableFunctions.join(', ')}`);
         }
         try {
             // Execute the factory function with context
             const argsJson = JSON.stringify([context]);
+            console.log('🏭 Executing factory function with args:', argsJson.substring(0, 200) + '...');
             const result = await (0, NativeConsumet_1.executeModuleFunction)(this.moduleId, factoryName, argsJson);
-            const executionResult = JSON.parse(result);
-            if (executionResult.success) {
-                // The result is the provider instance created by the factory
-                const providerInstance = executionResult.result;
-                console.log('✅ Provider instance created successfully:', {
-                    hasSearch: typeof providerInstance?.search,
-                    type: typeof providerInstance,
-                    keys: Object.keys(providerInstance || {}),
-                    allPropertyNames: Object.getOwnPropertyNames(providerInstance || {}),
-                    methods: Object.getOwnPropertyNames(providerInstance || {}).filter((key) => typeof providerInstance[key] === 'function'),
-                });
-                // Create a proxy that routes method calls to the native provider instance
-                return this.createProviderProxy(providerInstance);
+            console.log('🏭 Raw factory result:', result);
+            let executionResult;
+            let providerRef;
+            try {
+                executionResult = JSON.parse(result);
+                console.log('🏭 Parsed factory result:', executionResult);
+                // Check if it's a wrapped success result or direct provider reference
+                if (executionResult.success !== undefined) {
+                    // It's wrapped in { success: true, result: ... }
+                    if (executionResult.success) {
+                        providerRef = executionResult.result;
+                    }
+                    else {
+                        throw new Error(executionResult.error || 'Factory function execution failed');
+                    }
+                }
+                else if (executionResult._isProviderReference) {
+                    // It's a direct provider reference object
+                    providerRef = executionResult;
+                }
+                else {
+                    // Unexpected format
+                    throw new Error('Unexpected factory result format');
+                }
             }
-            else {
-                throw new Error(executionResult.error || 'Factory function execution failed');
+            catch (parseError) {
+                console.error('🏭 Failed to parse factory result:', parseError);
+                throw new Error('Failed to parse factory execution result');
             }
+            // Verify this is a provider reference
+            if (!providerRef._isProviderReference || !providerRef._providerId) {
+                console.error('🏭 Invalid provider reference:', providerRef);
+                throw new Error('Invalid provider reference received from QuickJS');
+            }
+            console.log('✅ Provider reference received:', {
+                isReference: providerRef._isProviderReference,
+                providerId: providerRef._providerId,
+                availableMethods: providerRef._availableMethods,
+                availableMethodsCount: providerRef._availableMethods?.length || 0,
+                name: providerRef.name,
+                baseUrl: providerRef.baseUrl,
+            });
+            // Create a proxy that routes method calls to the native provider instance
+            const proxiedProvider = this.createProviderProxy(providerRef);
+            console.log('🎯 Created proxied provider with ID:', providerRef._providerId);
+            return proxiedProvider;
         }
         catch (error) {
             console.error(`❌ Failed to create provider with ${factoryName}:`, error);
@@ -79,12 +143,72 @@ class NativeProviderModule {
     /**
      * Create a proxy that routes method calls to the native provider instance
      */
-    createProviderProxy(providerData) {
-        return new Proxy(providerData, {
+    createProviderProxy(providerRef) {
+        // For provider references, we need to create a proxy that routes all method calls to QuickJS
+        if (providerRef._isProviderReference) {
+            const providerId = providerRef._providerId;
+            const availableMethods = providerRef._availableMethods || [];
+            console.log('🎯 Creating proxy for provider reference:', providerId);
+            console.log('🎯 Available methods:', availableMethods);
+            // Create a base object with the provider properties
+            const baseProvider = {
+                name: providerRef.name,
+                baseUrl: providerRef.baseUrl,
+                logo: providerRef.logo,
+                classPath: providerRef.classPath,
+                _providerId: providerId,
+                _isProviderReference: true,
+            };
+            return new Proxy(baseProvider, {
+                get: (target, prop) => {
+                    // Return data properties directly using Object.getOwnPropertyDescriptor to avoid proxy recursion
+                    const descriptor = Object.getOwnPropertyDescriptor(target, prop);
+                    if (descriptor && typeof prop === 'string' && descriptor.value !== undefined) {
+                        return descriptor.value;
+                    }
+                    // Handle special properties that shouldn't be proxied
+                    if (typeof prop === 'string') {
+                        if (prop === 'then' ||
+                            prop === 'catch' ||
+                            prop === 'finally' ||
+                            prop.startsWith('_') ||
+                            prop === 'constructor' ||
+                            prop === 'valueOf' ||
+                            prop === 'toString' ||
+                            prop === 'toJSON' ||
+                            prop === 'hasOwnProperty' ||
+                            prop === 'isPrototypeOf' ||
+                            prop === 'propertyIsEnumerable' ||
+                            prop === 'toLocaleString' ||
+                            typeof prop === 'symbol') {
+                            return Reflect.get(target, prop, target);
+                        }
+                        // For provider methods, return a function that routes to QuickJS
+                        if (availableMethods.includes(prop)) {
+                            return (...args) => {
+                                console.log(`🎯 Proxying method call: ${prop}`);
+                                // Pass the provider ID as the first argument to identify the provider in QuickJS
+                                return this.executeProviderMethod(prop, [{ _providerId: providerId }, ...args]);
+                            };
+                        }
+                        // For unknown methods, still try to execute them (in case they exist but weren't detected)
+                        return (...args) => {
+                            console.log(`🎯 Attempting unknown method call: ${prop}`);
+                            return this.executeProviderMethod(prop, [{ _providerId: providerId }, ...args]);
+                        };
+                    }
+                    return Reflect.get(target, prop, target);
+                },
+            });
+        }
+        // Fallback to original proxy logic for non-reference objects
+        return new Proxy(providerRef, {
             get: (target, prop) => {
-                // For data properties that exist on target, return directly
-                if (typeof target[prop] !== 'undefined' && typeof target[prop] !== 'function') {
-                    return target[prop];
+                // For data properties that exist on target, return directly using Object.getOwnPropertyDescriptor
+                // to avoid triggering the proxy recursively
+                const descriptor = Object.getOwnPropertyDescriptor(target, prop);
+                if (descriptor && typeof descriptor.value !== 'function') {
+                    return descriptor.value;
                 }
                 // Handle special properties and methods that shouldn't be proxied
                 if (typeof prop === 'string') {
@@ -102,14 +226,16 @@ class NativeProviderModule {
                         prop === 'propertyIsEnumerable' ||
                         prop === 'toLocaleString' ||
                         typeof prop === 'symbol') {
-                        return target[prop];
+                        // Use Reflect.get to avoid proxy recursion
+                        return Reflect.get(target, prop, target);
                     }
                     // For provider methods that should be executed on the native side
                     return (...args) => {
                         return this.executeProviderMethod(prop, args);
                     };
                 }
-                return target[prop];
+                // Use Reflect.get for other cases to avoid proxy recursion
+                return Reflect.get(target, prop, target);
             },
         });
     }
@@ -119,10 +245,13 @@ class NativeProviderModule {
     async executeProviderMethod(methodName, args) {
         try {
             console.log(`🔍 Executing method ${methodName} with args:`, args);
+            console.log(`🔍 Module loaded: ${this.isLoaded}, Available functions: ${this.availableFunctions.length}`);
             const argsJson = JSON.stringify(args);
+            console.log(`🔍 Serialized args:`, argsJson.substring(0, 200) + '...');
             const result = await (0, NativeConsumet_1.executeModuleFunction)(this.moduleId, methodName, argsJson);
             console.log(`📋 Raw result from native execution:`, result);
             const executionResult = JSON.parse(result);
+            console.log(`📋 Parsed execution result:`, executionResult);
             if (executionResult.success) {
                 console.log(`✅ Method ${methodName} executed successfully:`, executionResult.result);
                 return executionResult.result;

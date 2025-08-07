@@ -17,8 +17,6 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
     private val deobfuscator by lazy { DeobfuscatorModule(reactContext) }
-    private val jsEvaluator by lazy { JavaScriptEvaluator(reactContext) }
-    private val moduleExecutor by lazy { NativeModuleExecutor(reactContext) }
 
     companion object {
         const val NAME = "Consumet"
@@ -48,31 +46,5 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     override fun evaluateJavaScript(code: String, context: String, promise: Promise) {
         jsEvaluator.evaluateJavaScript(code, context, promise)
-    }
-
-    @ReactMethod
-    override fun loadNativeModule(
-            moduleId: String,
-            code: String,
-            context: String,
-            promise: Promise
-    ) {
-        moduleExecutor.loadModule(moduleId, code, context, promise)
-    }
-
-    @ReactMethod
-    override fun executeModuleFunction(
-            moduleId: String,
-            functionName: String,
-            argsJson: String,
-            promise: Promise
-    ) {
-        moduleExecutor.executeFunction(moduleId, functionName, argsJson, promise)
-    }
-
-    @ReactMethod
-    override fun unloadNativeModule(moduleId: String, promise: Promise) {
-        moduleExecutor.unloadModule(moduleId)
-        promise.resolve(null)
     }
 }

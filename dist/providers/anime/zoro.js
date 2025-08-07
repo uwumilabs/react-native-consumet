@@ -5,9 +5,9 @@ exports.createZoro = createZoro;
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
 function createZoro(ctx) {
-    const { load, extractors, axios, AnimeParser } = ctx;
+    const { load, extractors } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
-    class ZoroImpl extends AnimeParser {
+    class ZoroImpl extends models_1.AnimeParser {
         constructor(customBaseURL) {
             super();
             this.name = 'Zoro';
@@ -23,7 +23,8 @@ function createZoro(ctx) {
                     title: '',
                 };
                 try {
-                    const { data } = await axios.get(`${this.baseUrl}/watch/${id}`);
+                    const response = await fetch(`${this.baseUrl}/watch/${id}`);
+                    const data = await response.text();
                     const $ = load(data);
                     const { mal_id, anilist_id } = JSON.parse($('#syncData').text());
                     info.malID = Number(mal_id);
@@ -67,8 +68,9 @@ function createZoro(ctx) {
                         info.subOrDub = models_1.SubOrSub.BOTH;
                     }
                     // ZORO - PAGE INFO
-                    const zInfo = await axios.get(info.url);
-                    const $$$ = load(zInfo.data);
+                    const zInfoResponse = await fetch(info.url);
+                    const zInfoData = await zInfoResponse.text();
+                    const $$$ = load(zInfoData);
                     info.genres = [];
                     $$$('.item.item-list')
                         .find('a')
@@ -103,13 +105,14 @@ function createZoro(ctx) {
                             .text()
                             .trim();
                     }
-                    const episodesAjax = await axios.get(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
+                    const episodesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Referer': `${this.baseUrl}/watch/${id}`,
                         },
                     });
-                    const $$ = load(episodesAjax.data.html);
+                    const episodesData = await episodesResponse.json();
+                    const $$ = load(episodesData.html);
                     // Pre-calculate values used for all episodes
                     const episodeElements = $$('div.detail-infor-content > div > a');
                     const subCount = parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0;
@@ -151,7 +154,7 @@ function createZoro(ctx) {
                             return {
                                 headers: { Referer: serverUrl.href },
                                 ...(await new MegaCloud({
-                                    axios: ctx.axios,
+                                    axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
                                     logger: ctx.logger,
@@ -165,7 +168,7 @@ function createZoro(ctx) {
                                     'User-Agent': ctx.USER_AGENT,
                                 },
                                 sources: await new StreamSB({
-                                    axios: ctx.axios,
+                                    axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
                                     logger: ctx.logger,
@@ -178,7 +181,7 @@ function createZoro(ctx) {
                             return {
                                 headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT },
                                 sources: await new StreamTape({
-                                    axios: ctx.axios,
+                                    axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
                                     logger: ctx.logger,
@@ -189,7 +192,7 @@ function createZoro(ctx) {
                             return {
                                 headers: { Referer: serverUrl.href },
                                 ...(await new MegaCloud({
-                                    axios: ctx.axios,
+                                    axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
                                     logger: ctx.logger,
@@ -205,7 +208,8 @@ function createZoro(ctx) {
                 // subOrDub = episodeId.split('$')?.pop() === 'dub' ? 'dub' : 'sub';
                 episodeId = `${this.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
                 try {
-                    const { data } = await ctx.axios.get(`${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
+                    const response = await fetch(`${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
+                    const data = await response.json();
                     const $ = load(data.html);
                     /**
                      * vidtreaming -> 4
@@ -243,7 +247,9 @@ function createZoro(ctx) {
                     catch (err) {
                         throw new Error("Couldn't find server. Try another server");
                     }
-                    const { data: { link }, } = await ctx.axios.get(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
+                    const sourcesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
+                    const sourcesData = await sourcesResponse.json();
+                    const { link } = sourcesData;
                     return await this.fetchEpisodeSources(link, server, models_1.SubOrSub.SUB);
                 }
                 catch (err) {
@@ -252,11 +258,12 @@ function createZoro(ctx) {
             };
             this.verifyLoginState = async (connectSid) => {
                 try {
-                    const { data } = await ctx.axios.get(`${this.baseUrl}/ajax/login-state`, {
+                    const response = await fetch(`${this.baseUrl}/ajax/login-state`, {
                         headers: {
                             Cookie: `connect.sid=${connectSid}`,
                         },
                     });
+                    const data = await response.json();
                     return data.is_login;
                 }
                 catch (err) {
@@ -288,7 +295,11 @@ function createZoro(ctx) {
                         totalPages: 0,
                         results: [],
                     };
-                    const { data } = await ctx.axios.get(url, headers);
+                    const response = await fetch(url, headers);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+                    }
+                    const data = await response.text();
                     const $ = load(data);
                     const pagination = $('ul.pagination');
                     res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
@@ -312,8 +323,8 @@ function createZoro(ctx) {
                     return res;
                 }
                 catch (err) {
-                    console.log(err);
-                    throw new Error('Something went wrong. Please try again later.');
+                    console.error('scrapeCardPage error:', err);
+                    throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
                 }
             };
             /**
@@ -622,7 +633,11 @@ function createZoro(ctx) {
         async fetchGenres() {
             try {
                 const res = [];
-                const { data } = await axios.get(`${this.baseUrl}/home`);
+                const response = await fetch(`${this.baseUrl}/home`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} ${response.statusText} for ${this.baseUrl}/home`);
+                }
+                const data = await response.text();
                 const $ = load(data);
                 const sideBar = $('#main-sidebar');
                 sideBar.find('ul.sb-genre-list li a').each((i, ele) => {
@@ -632,7 +647,8 @@ function createZoro(ctx) {
                 return res;
             }
             catch (err) {
-                throw new Error('Something went wrong. Please try again later.');
+                console.error('fetchGenres error:', err);
+                throw new Error(`Failed to fetch genres: ${err instanceof Error ? err.message : 'Unknown error'}`);
             }
         }
         /**
@@ -657,7 +673,9 @@ function createZoro(ctx) {
                 const res = {
                     results: [],
                 };
-                const { data: { html }, } = await axios.get(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
+                const response = await fetch(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
+                const responseData = await response.json();
+                const { html } = responseData;
                 const $ = load(html);
                 $('li').each((i, ele) => {
                     const card = $(ele);
@@ -683,7 +701,8 @@ function createZoro(ctx) {
         async fetchSpotlight() {
             try {
                 const res = { results: [] };
-                const { data } = await axios.get(`${this.baseUrl}/home`);
+                const response = await fetch(`${this.baseUrl}/home`);
+                const data = await response.text();
                 const $ = load(data);
                 $('#slider div.swiper-wrapper div.swiper-slide').each((i, el) => {
                     const card = $(el);
@@ -719,8 +738,9 @@ function createZoro(ctx) {
         async fetchSearchSuggestions(query) {
             try {
                 const encodedQuery = encodeURIComponent(query);
-                const { data } = await axios.get(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
-                const $ = load(data.html);
+                const response = await fetch(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
+                const responseData = await response.json();
+                const $ = load(responseData.html);
                 const res = {
                     results: [],
                 };
@@ -763,11 +783,12 @@ function createZoro(ctx) {
                     throw new Error('Invalid session ID');
                 }
                 const res = [];
-                const { data } = await axios.get(`${this.baseUrl}/user/continue-watching`, {
+                const response = await fetch(`${this.baseUrl}/user/continue-watching`, {
                     headers: {
                         Cookie: `connect.sid=${connectSid}`,
                     },
                 });
+                const data = await response.text();
                 const $ = load(data);
                 $('.flw-item').each((i, ele) => {
                     const card = $(ele);

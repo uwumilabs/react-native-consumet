@@ -308,6 +308,11 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
       try {
         const res: string[] = [];
         const response = await fetch(`${this.baseUrl}/home`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText} for ${this.baseUrl}/home`);
+        }
+
         const data = await response.text();
         const $ = load(data);
 
@@ -319,7 +324,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
 
         return res;
       } catch (err) {
-        throw new Error('Something went wrong. Please try again later.');
+        console.error('fetchGenres error:', err);
+        throw new Error(`Failed to fetch genres: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }
     /**
@@ -838,6 +844,11 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           results: [],
         };
         const response = await fetch(url, headers);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+        }
+
         const data = await response.text();
         const $ = load(data);
 
@@ -862,8 +873,8 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         }
         return res;
       } catch (err) {
-        console.log(err);
-        throw new Error('Something went wrong. Please try again later.');
+        console.error('scrapeCardPage error:', err);
+        throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     };
 

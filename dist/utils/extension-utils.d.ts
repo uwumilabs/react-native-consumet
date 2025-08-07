@@ -40,20 +40,20 @@ export interface ExtensionConfig {
      */
     sanitize?: boolean;
     /**
-     * Whether to use native Android JavaScript execution (default: true)
-     * This provides much better CommonJS compatibility but only works on Android
+     * Whether to use Node.js runtime (default: true)
+     * This provides full Node.js environment with native fetch support
      */
-    useNative?: boolean;
+    useNodeJS?: boolean;
 }
 /**
  * Safely evaluate provider code with proper error handling
  * Note: Uses Function constructor which is necessary for dynamic code loading
  * Consider the security implications in your environment
  */
-export declare function evaluateProviderCode(code: string, allowedGlobals?: string[], options?: {
+export declare function evaluateProviderCode(code: string, _allowedGlobals?: string[], options?: {
     sanitize?: boolean;
     context?: ProviderContext;
-    useNative?: boolean;
+    useNodeJS?: boolean;
 }): Promise<ProviderModule>;
 /**
  * Load a provider extension from a URL

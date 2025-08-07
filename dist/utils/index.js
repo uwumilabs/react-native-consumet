@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCachedExtensions = exports.clearExtensionCache = exports.validateProviderModule = exports.loadMultipleProviders = exports.createProviderFromURL = exports.loadProviderFromURL = exports.evaluateProviderCode = exports.createReactNativeProviderContext = exports.createProviderContextWithAxios = exports.createProviderContext = exports.MegaUp = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.parsePostInfo = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
-exports.DEFAULT_REGISTRIES = exports.setupDefaultExtensionManager = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.testProviderURL = void 0;
+exports.NodeProviderModule = exports.DEFAULT_REGISTRIES = exports.setupDefaultExtensionManager = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.testProviderURL = void 0;
 const extractors_1 = require("../extractors");
 Object.defineProperty(exports, "GogoCDN", { enumerable: true, get: function () { return extractors_1.GogoCDN; } });
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
@@ -67,4 +67,7 @@ Object.defineProperty(exports, "ExtensionRegistryManager", { enumerable: true, g
 Object.defineProperty(exports, "createExtensionManager", { enumerable: true, get: function () { return extension_registry_1.createExtensionManager; } });
 Object.defineProperty(exports, "setupDefaultExtensionManager", { enumerable: true, get: function () { return extension_registry_1.setupDefaultExtensionManager; } });
 Object.defineProperty(exports, "DEFAULT_REGISTRIES", { enumerable: true, get: function () { return extension_registry_1.DEFAULT_REGISTRIES; } });
+// Export Node.js runtime testing utilities
+var node_provider_module_1 = require("./node-provider-module");
+Object.defineProperty(exports, "NodeProviderModule", { enumerable: true, get: function () { return node_provider_module_1.NodeProviderModule; } });
 //# sourceMappingURL=index.js.map

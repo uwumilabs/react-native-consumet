@@ -7,4 +7,5 @@ export { createProviderContext, createProviderContextWithAxios, createReactNativ
 export { evaluateProviderCode, loadProviderFromURL, createProviderFromURL, loadMultipleProviders, validateProviderModule, clearExtensionCache, getCachedExtensions, testProviderURL, type ProviderModule, type ExtensionConfig, } from './extension-utils';
 export { ExtensionRegistryManager, createExtensionManager, setupDefaultExtensionManager, DEFAULT_REGISTRIES, } from './extension-registry';
 export type { ExtensionManifest, ExtensionRegistry, ExtensionInstallResult, ExtensionSearchFilters, } from '../models/extension-manifest';
+export { NodeProviderModule } from './node-provider-module';
 //# sourceMappingURL=index.d.ts.map

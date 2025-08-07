@@ -126,3 +126,6 @@ export type {
   ExtensionInstallResult,
   ExtensionSearchFilters,
 } from '../models/extension-manifest';
+
+// Export Node.js runtime testing utilities
+export { NodeProviderModule } from './node-provider-module';
