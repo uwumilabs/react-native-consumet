@@ -32,7 +32,7 @@ export interface ExtractorRegistry {
     RapidCloud: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL, referer?: string) => Promise<any>;
     };
-    MegaCloud: new (ctx: ExtractorContext) => {
+    MegaCloud: (ctx?: ExtractorContext) => {
         extract: (url: URL, referer?: string) => Promise<any>;
     };
     StreamHub: new (proxyConfig?: any, adapter?: any) => {
@@ -50,7 +50,7 @@ export interface ExtractorRegistry {
     StreamWish: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
     };
-    VidCloud: new (proxyConfig?: any, adapter?: any) => {
+    VidCloud: (ctx?: ExtractorContext) => {
         extract: (url: URL, referer?: string) => Promise<any>;
     };
     VidMoly: new (proxyConfig?: any, adapter?: any) => {

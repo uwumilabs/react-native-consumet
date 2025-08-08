@@ -7,6 +7,7 @@ import LightNovelParser from './lightnovel-parser';
 import MovieParser from './movie-parser';
 import type { ExtractorContext } from './extractor-context';
 import type { ProviderContext } from './provider-context';
+import type { ExtensionManifest, ProviderType } from './extension-manifest';
 import {
   type IProviderStats,
   type ISearch,
@@ -96,4 +97,6 @@ export type {
   IMovieSeason,
   ExtractorContext,
   ProviderContext,
+  ExtensionManifest,
+  ProviderType
 };

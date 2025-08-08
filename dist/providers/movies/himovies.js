@@ -9,7 +9,7 @@ const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 function createHiMovies(ctx) {
     const { load, extractors } = ctx;
-    const { VidCloud } = extractors;
+    const { VidCloud, MegaCloud } = extractors;
     class HiMoviesImpl extends models_1.MovieParser {
         constructor(customBaseURL) {
             super();
@@ -176,21 +176,21 @@ function createHiMovies(ctx) {
                 if (episodeId.startsWith('http')) {
                     const serverUrl = new URL(episodeId);
                     switch (server) {
-                        // case StreamingServers.MegaCloud:
-                        //   return {
-                        //     headers: { Referer: serverUrl.href },
-                        //     ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
-                        //   };
+                        case models_1.StreamingServers.MegaCloud:
+                            return {
+                                headers: { Referer: serverUrl.href },
+                                ...(await MegaCloud().extract(serverUrl, this.baseUrl)),
+                            };
                         case models_1.StreamingServers.UpCloud:
                             return {
                                 headers: { Referer: serverUrl.href },
-                                ...(await new VidCloud().extract(serverUrl, this.baseUrl)),
+                                ...(await VidCloud().extract(serverUrl, this.baseUrl)),
                             };
                         default:
-                        // return {
-                        //   headers: { Referer: serverUrl.href },
-                        //   ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
-                        // };
+                            return {
+                                headers: { Referer: serverUrl.href },
+                                ...(await MegaCloud().extract(serverUrl, this.baseUrl)),
+                            };
                     }
                 }
                 try {
@@ -204,7 +204,6 @@ function createHiMovies(ctx) {
                     return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);
                 }
                 catch (err) {
-                    console.log(err, 'err');
                     throw new Error(err.message);
                 }
             };
@@ -482,74 +481,23 @@ class HiMovies extends models_1.MovieParser {
     search(...args) {
         return this.instance.search(...args);
     }
-    fetchAdvancedSearch(...args) {
-        return this.instance.fetchAdvancedSearch(...args);
+    fetchRecentMovies() {
+        return this.instance.fetchRecentMovies();
     }
-    fetchTopAiring(...args) {
-        return this.instance.fetchTopAiring(...args);
+    fetchRecentTvShows() {
+        return this.instance.fetchRecentTvShows();
     }
-    fetchMostPopular(...args) {
-        return this.instance.fetchMostPopular(...args);
+    fetchTrendingMovies() {
+        return this.instance.fetchTrendingMovies();
     }
-    fetchMostFavorite(...args) {
-        return this.instance.fetchMostFavorite(...args);
+    fetchTrendingTvShows() {
+        return this.instance.fetchTrendingTvShows();
     }
-    fetchLatestCompleted(...args) {
-        return this.instance.fetchLatestCompleted(...args);
+    fetchByCountry(...args) {
+        return this.instance.fetchByCountry(...args);
     }
-    fetchRecentlyUpdated(...args) {
-        return this.instance.fetchRecentlyUpdated(...args);
-    }
-    fetchRecentlyAdded(...args) {
-        return this.instance.fetchRecentlyAdded(...args);
-    }
-    fetchTopUpcoming(...args) {
-        return this.instance.fetchTopUpcoming(...args);
-    }
-    fetchStudio(...args) {
-        return this.instance.fetchStudio(...args);
-    }
-    fetchSubbedAnime(...args) {
-        return this.instance.fetchSubbedAnime(...args);
-    }
-    fetchDubbedAnime(...args) {
-        return this.instance.fetchDubbedAnime(...args);
-    }
-    fetchMovie(...args) {
-        return this.instance.fetchMovie(...args);
-    }
-    fetchTV(...args) {
-        return this.instance.fetchTV(...args);
-    }
-    fetchOVA(...args) {
-        return this.instance.fetchOVA(...args);
-    }
-    fetchONA(...args) {
-        return this.instance.fetchONA(...args);
-    }
-    fetchSpecial(...args) {
-        return this.instance.fetchSpecial(...args);
-    }
-    fetchGenres(...args) {
-        return this.instance.fetchGenres(...args);
-    }
-    genreSearch(...args) {
-        return this.instance.genreSearch(...args);
-    }
-    fetchSchedule(...args) {
-        return this.instance.fetchSchedule(...args);
-    }
-    fetchSpotlight(...args) {
-        return this.instance.fetchSpotlight(...args);
-    }
-    fetchSearchSuggestions(...args) {
-        return this.instance.fetchSearchSuggestions(...args);
-    }
-    fetchContinueWatching(...args) {
-        return this.instance.fetchContinueWatching(...args);
-    }
-    fetchWatchList(...args) {
-        return this.instance.fetchWatchList(...args);
+    fetchByGenre(...args) {
+        return this.instance.fetchByGenre(...args);
     }
     fetchMediaInfo(...args) {
         return this.instance.fetchAnimeInfo(...args);

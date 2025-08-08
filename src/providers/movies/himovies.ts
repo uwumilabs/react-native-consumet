@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { load } from 'cheerio';
 
 import {
   MovieParser,
@@ -16,7 +15,7 @@ import { createProviderContext } from '../../utils';
 
 export function createHiMovies(ctx: ProviderContext): MovieParser {
   const { load, extractors } = ctx;
-  const { VidCloud } = extractors;
+  const { VidCloud, MegaCloud } = extractors;
 
   class HiMoviesImpl extends MovieParser {
     override readonly name = 'HiMovies';
@@ -213,21 +212,21 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
       if (episodeId.startsWith('http')) {
         const serverUrl = new URL(episodeId);
         switch (server) {
-          // case StreamingServers.MegaCloud:
-          //   return {
-          //     headers: { Referer: serverUrl.href },
-          //     ...(await new MegaCloud(this.proxyConfig, this.adapter).extract(serverUrl, this.baseUrl)),
-          //   };
+          case StreamingServers.MegaCloud:
+            return {
+              headers: { Referer: serverUrl.href },
+              ...(await MegaCloud().extract(serverUrl, this.baseUrl)),
+            };
           case StreamingServers.UpCloud:
             return {
               headers: { Referer: serverUrl.href },
-              ...(await new VidCloud().extract(serverUrl, this.baseUrl)),
+              ...(await VidCloud().extract(serverUrl, this.baseUrl)),
             };
           default:
-          // return {
-          //   headers: { Referer: serverUrl.href },
-          //   ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
-          // };
+            return {
+              headers: { Referer: serverUrl.href },
+              ...(await MegaCloud().extract(serverUrl, this.baseUrl)),
+            };
         }
       }
 
@@ -248,7 +247,6 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
 
         return await this.fetchEpisodeSources(serverUrl.href, mediaId, server);
       } catch (err) {
-        console.log(err, 'err');
         throw new Error((err as Error).message);
       }
     };
@@ -549,74 +547,23 @@ class HiMovies extends MovieParser {
   search(...args: any[]) {
     return this.instance.search(...args);
   }
-  fetchAdvancedSearch(...args: any[]) {
-    return this.instance.fetchAdvancedSearch(...args);
+  fetchRecentMovies() {
+    return this.instance.fetchRecentMovies();
   }
-  fetchTopAiring(...args: any[]) {
-    return this.instance.fetchTopAiring(...args);
+  fetchRecentTvShows() {
+    return this.instance.fetchRecentTvShows();
   }
-  fetchMostPopular(...args: any[]) {
-    return this.instance.fetchMostPopular(...args);
+  fetchTrendingMovies() {
+    return this.instance.fetchTrendingMovies();
   }
-  fetchMostFavorite(...args: any[]) {
-    return this.instance.fetchMostFavorite(...args);
+  fetchTrendingTvShows() {
+    return this.instance.fetchTrendingTvShows();
   }
-  fetchLatestCompleted(...args: any[]) {
-    return this.instance.fetchLatestCompleted(...args);
+  fetchByCountry(...args: any[]) {
+    return this.instance.fetchByCountry(...args);
   }
-  fetchRecentlyUpdated(...args: any[]) {
-    return this.instance.fetchRecentlyUpdated(...args);
-  }
-  fetchRecentlyAdded(...args: any[]) {
-    return this.instance.fetchRecentlyAdded(...args);
-  }
-  fetchTopUpcoming(...args: any[]) {
-    return this.instance.fetchTopUpcoming(...args);
-  }
-  fetchStudio(...args: any[]) {
-    return this.instance.fetchStudio(...args);
-  }
-  fetchSubbedAnime(...args: any[]) {
-    return this.instance.fetchSubbedAnime(...args);
-  }
-  fetchDubbedAnime(...args: any[]) {
-    return this.instance.fetchDubbedAnime(...args);
-  }
-  fetchMovie(...args: any[]) {
-    return this.instance.fetchMovie(...args);
-  }
-  fetchTV(...args: any[]) {
-    return this.instance.fetchTV(...args);
-  }
-  fetchOVA(...args: any[]) {
-    return this.instance.fetchOVA(...args);
-  }
-  fetchONA(...args: any[]) {
-    return this.instance.fetchONA(...args);
-  }
-  fetchSpecial(...args: any[]) {
-    return this.instance.fetchSpecial(...args);
-  }
-  fetchGenres(...args: any[]) {
-    return this.instance.fetchGenres(...args);
-  }
-  genreSearch(...args: any[]) {
-    return this.instance.genreSearch(...args);
-  }
-  fetchSchedule(...args: any[]) {
-    return this.instance.fetchSchedule(...args);
-  }
-  fetchSpotlight(...args: any[]) {
-    return this.instance.fetchSpotlight(...args);
-  }
-  fetchSearchSuggestions(...args: any[]) {
-    return this.instance.fetchSearchSuggestions(...args);
-  }
-  fetchContinueWatching(...args: any[]) {
-    return this.instance.fetchContinueWatching(...args);
-  }
-  fetchWatchList(...args: any[]) {
-    return this.instance.fetchWatchList(...args);
+  fetchByGenre(...args: any[]) {
+    return this.instance.fetchByGenre(...args);
   }
   fetchMediaInfo(...args: any[]) {
     return this.instance.fetchAnimeInfo(...args);
@@ -628,7 +575,6 @@ class HiMovies extends MovieParser {
     return this.instance.fetchEpisodeServers(...args);
   }
 }
-
 
 // (async () => {
 //   const movie = new HiMovies();

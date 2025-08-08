@@ -56,7 +56,7 @@ export interface ExtractorRegistry {
   ) => {
     extract: (url: URL, referer?: string) => Promise<any>;
   };
-  MegaCloud: new (ctx: ExtractorContext) => {
+  MegaCloud: (ctx?: ExtractorContext) => {
     extract: (url: URL, referer?: string) => Promise<any>;
   };
   StreamHub: new (
@@ -89,10 +89,7 @@ export interface ExtractorRegistry {
   ) => {
     extract: (url: URL) => Promise<any>;
   };
-  VidCloud: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  VidCloud: (ctx?: ExtractorContext) => {
     extract: (url: URL, referer?: string) => Promise<any>;
   };
   VidMoly: new (

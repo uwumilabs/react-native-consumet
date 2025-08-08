@@ -1,3 +1,4 @@
+export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta';
 /**
  * Extension manifest interface for defining extension metadata
  */
@@ -17,7 +18,7 @@ export interface ExtensionManifest {
         url?: string;
     };
     /** Extension category */
-    category: 'anime' | 'movies' | 'manga' | 'light-novels' | 'books' | 'news' | 'meta' | 'other';
+    category: ProviderType;
     /** Main entry point URL or file path */
     main: string;
     /** Factory function name exported by this extension */

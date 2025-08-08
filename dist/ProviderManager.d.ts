@@ -1,79 +1,143 @@
 import { type ProviderContextConfig } from './utils/create-provider-context';
 import type { ProviderContext } from './models/provider-context';
-import { type IAnimeInfo, type IAnimeResult, type IMovieResult, type ISearch, type ISource } from './models';
+import { type IAnimeInfo, type IAnimeResult, type IMovieResult, type IMovieInfo, type ISearch, type ISource, type IEpisodeServer, TvType } from './models';
+import type { ExtensionManifest, ProviderType } from './models/extension-manifest';
 /**
- * Personal Provider Manager for Zoro
- *
- * Features:
- * - Loads and executes zoro.js provider code
- * - Provides direct access to all original zoro methods
- * - Includes standardized API for compatibility
- * - Uses your project's context utilities
- * - Supports both React Native and Node.js environments
+ * Base provider interface with required methods for extensions
  */
+interface BaseProviderInstance {
+    name: string;
+    baseUrl: string;
+    logo: string;
+    classPath: string;
+    search(query: string, page?: number): Promise<ISearch<any>>;
+    fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>;
+    fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>;
+    fetchSpotlight?(...args: any[]): Promise<ISearch<any>>;
+}
+/**
+ * Anime provider interface
+ */
+interface AnimeProviderInstance extends BaseProviderInstance {
+    search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
+    fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
+    fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
+}
+/**
+ * Movie provider interface
+ */
+interface MovieProviderInstance extends BaseProviderInstance {
+    search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
+    fetchMediaInfo(mediaId: string): Promise<IMovieInfo>;
+    fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
+    supportedTypes: Set<TvType>;
+}
 export declare class ProviderManager {
-    private zoroProviderCode;
-    private zoroInstance;
     private providerContext;
-    private isInitialized;
-    private customModels;
+    private loadedExtensions;
+    private extensionManifest;
     constructor(config?: ProviderContextConfig);
     /**
-     * Load zoro.js provider code from file or URL
+     * Load and parse the registry
      */
-    loadProviderCode(source: string): Promise<void>;
+    private loadRegistry;
     /**
-     * Load provider code directly from a string
+     * Get all available extensions
      */
-    loadProviderCodeFromString(code: string): void;
+    getAvailableExtensions(): ExtensionManifest[];
     /**
-     * Set custom models directly (avoids need to rewrite types/enums)
-     * Use this to pass your actual models folder content
+     * Get extensions by category
      */
-    setCustomModels(customModels: Record<string, any>): void;
+    getExtensionsByCategory(category: ProviderType): ExtensionManifest[];
     /**
-     * Load models from your models folder automatically
+     * Get extension metadata by ID
      */
-    loadModelsFromPath(modelsPath?: string): Promise<void>; /**
-     * Create execution context with all necessary dependencies
+    getExtensionMetadata(extensionId: string): ExtensionManifest | null;
+    /**
+     * Load provider code from file path or URL (for testing purposes)
+     *
+     * @param source - File path (e.g., './dist/providers/anime/zoro.js') or URL
+     * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
+     * @param extensionId - Optional custom extension ID for caching
+     */
+    loadProviderCode(source: string, factoryName: string, extensionId?: string): Promise<AnimeProviderInstance | MovieProviderInstance>;
+    /**
+     * Load an extension by ID from the registry
+     */
+    loadExtension(extensionId: string): Promise<BaseProviderInstance>;
+    /**
+     * Execute provider code directly with minimal metadata (for testing)
+     */
+    private executeProviderCodeDirect;
+    /**
+     * Execute provider code and create instance (registry-based)
+     */
+    private executeProviderCode;
+    /**
+     * Create execution context for provider code
      */
     private createExecutionContext;
     /**
-     * Create models mock for zoro.js - now using actual imported models
+     * Create models context
      */
-    private createModelsMock;
+    private createModelsContext;
     /**
-     * Create __awaiter helper for older compiled code
+     * Create __awaiter helper for compatibility
      */
     private createAwaiterHelper;
     /**
-     * Execute provider code and initialize zoro instance
+     * Validate provider instance based on category
      */
-    initializeProvider(): Promise<void>;
+    private validateProviderInstance;
     /**
-     * Ensure provider is initialized
+     * Get a type-safe anime provider
      */
-    private ensureInitialized;
+    getAnimeProvider(extensionId: string): Promise<AnimeProviderInstance>;
     /**
-     * Search for anime using zoro's search method
+     * Get a type-safe movie provider
      */
-    search(query: string, page?: number): Promise<ISearch<IAnimeResult | IMovieResult>>;
+    getMovieProvider(extensionId: string): Promise<MovieProviderInstance>;
     /**
-     * Get detailed anime information
+     * Get any provider (use with caution - prefer typed methods)
      */
-    fetchAnimeInfo(id: string): Promise<IAnimeInfo>;
+    getProvider(extensionId: string): Promise<BaseProviderInstance>;
     /**
-     * Get episode streaming sources
-     */
-    fetchEpisodeSources(episodeId: string, server?: string, subOrDub?: string): Promise<ISource>;
-    /**
-     * Get provider context
+     * Get the provider context
      */
     getProviderContext(): ProviderContext;
     /**
-     * Check if provider is ready
+     * Get registry metadata
      */
-    isReady(): boolean;
+    getRegistryMetadata(): {
+        name: string;
+        description: string;
+        version: string;
+        lastUpdated: string;
+        url: string;
+    };
+    /**
+     * Search across all loaded providers of a specific category
+     */
+    searchAcrossProviders(category: ProviderType, query: string, page?: number): Promise<Array<{
+        extensionId: string;
+        results: ISearch<any>;
+    }>>;
+    /**
+     * Load provider code from string (for testing purposes)
+     */
+    loadProviderCodeFromString(code: string, factoryName: string, extensionId?: string): Promise<AnimeProviderInstance | MovieProviderInstance>;
+    /**
+     * Convenience method to load Zoro provider (for testing)
+     */
+    loadZoro(source?: string): Promise<AnimeProviderInstance>;
+    /**
+     * Convenience method to load HiMovies provider (for testing)
+     */
+    loadHiMovies(source?: string): Promise<MovieProviderInstance>;
+    /**
+     * Auto-detect and load any provider from file (for testing)
+     */
+    loadAnyProvider(source: string, extensionId?: string): Promise<BaseProviderInstance>;
 }
 export default ProviderManager;
 //# sourceMappingURL=ProviderManager.d.ts.map

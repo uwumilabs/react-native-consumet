@@ -2,123 +2,289 @@
 
 import createProviderContext, { type ProviderContextConfig } from './utils/create-provider-context';
 import type { ProviderContext } from './models/provider-context';
-// Import actual models instead of mocking them
 import {
-  AnimeParser,
-  MovieParser,
   type IAnimeInfo,
   type IAnimeResult,
   type IMovieResult,
+  type IMovieInfo,
   type ISearch,
   type ISource,
+  type IEpisodeServer,
+  TvType,
 } from './models';
 
-// Provider execution context for running zoro.js code
-interface ExecutionContext {
-  exports: any;
-  require: (module: string) => any;
-  module: { exports: any };
-  console: Console;
-  Promise: PromiseConstructor;
-  Object: ObjectConstructor;
-  fetch: (url: string, options?: any) => Promise<any>;
-  __awaiter?: any;
+// Import the registry
+import registry from './registry.json';
+import type { ExtensionManifest, ProviderType } from './models/extension-manifest';
+
+/**
+ * Base provider interface with required methods for extensions
+ */
+interface BaseProviderInstance {
+  name: string;
+  baseUrl: string;
+  logo: string;
+  classPath: string;
+  search(query: string, page?: number): Promise<ISearch<any>>;
+  fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>;
+  fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>;
+  fetchSpotlight?(...args: any[]): Promise<ISearch<any>>;
 }
 
 /**
- * Personal Provider Manager for Zoro
- *
- * Features:
- * - Loads and executes zoro.js provider code
- * - Provides direct access to all original zoro methods
- * - Includes standardized API for compatibility
- * - Uses your project's context utilities
- * - Supports both React Native and Node.js environments
+ * Anime provider interface
  */
+interface AnimeProviderInstance extends BaseProviderInstance {
+  search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
+  fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
+  fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
+}
+
+/**
+ * Movie provider interface
+ */
+interface MovieProviderInstance extends BaseProviderInstance {
+  search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
+  fetchMediaInfo(mediaId: string): Promise<IMovieInfo>;
+  fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
+  supportedTypes: Set<TvType>;
+}
+
 export class ProviderManager {
-  private zoroProviderCode: string | null = null;
-  private zoroInstance: any = null;
   private providerContext: ProviderContext;
-  private isInitialized = false;
-  private customModels: Record<string, any> | null = null;
+  private loadedExtensions = new Map<string, any>();
+  private extensionManifest = new Map<string, ExtensionManifest>();
 
   constructor(config: ProviderContextConfig = {}) {
-    // Create provider context using your utilities
     this.providerContext = createProviderContext(config);
-    console.log('🚀 Personal Zoro Provider Manager initialized');
+    this.loadRegistry();
+    console.log('🚀 Registry-based Provider Manager initialized');
   }
 
   /**
-   * Load zoro.js provider code from file or URL
+   * Load and parse the registry
    */
-  async loadProviderCode(source: string): Promise<void> {
+  private loadRegistry(): void {
     try {
-      console.log('📥 Loading zoro provider code from:', source);
+      registry.extensions.forEach((extension) => {
+        this.extensionManifest.set(extension.id, extension as ExtensionManifest);
+      });
+      console.log(`📚 Loaded ${registry.extensions.length} extensions from registry`);
+    } catch (error) {
+      console.error('❌ Failed to load registry:', error);
+    }
+  }
+
+  /**
+   * Get all available extensions
+   */
+  getAvailableExtensions(): ExtensionManifest[] {
+    return Array.from(this.extensionManifest.values());
+  }
+
+  /**
+   * Get extensions by category
+   */
+  getExtensionsByCategory(category: ProviderType): ExtensionManifest[] {
+    return this.getAvailableExtensions().filter((ext) => ext.category === category);
+  }
+
+  /**
+   * Get extension metadata by ID
+   */
+  getExtensionMetadata(extensionId: string): ExtensionManifest | null {
+    return this.extensionManifest.get(extensionId) || null;
+  }
+
+  /**
+   * Load provider code from file path or URL (for testing purposes)
+   *
+   * @param source - File path (e.g., './dist/providers/anime/zoro.js') or URL
+   * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
+   * @param extensionId - Optional custom extension ID for caching
+   */
+  async loadProviderCode(
+    source: string,
+    factoryName: string,
+    extensionId: string = `custom-${factoryName}-${Date.now()}`
+  ): Promise<AnimeProviderInstance | MovieProviderInstance> {
+    try {
+      console.log(`📥 Loading provider code from: ${source}`);
+
+      let providerCode: string;
 
       if (source.startsWith('http')) {
-        // Load from URL (GitHub, etc.)
+        // Load from URL
         const response = await fetch(source);
-        this.zoroProviderCode = await response.text();
+        if (!response.ok) {
+          throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
+        }
+        providerCode = await response.text();
         console.log('✅ Provider code loaded from URL');
       } else {
         // Load from file system
         const fs = require('fs');
-        this.zoroProviderCode = fs.readFileSync(source, 'utf-8');
+        providerCode = fs.readFileSync(source, 'utf-8');
         console.log('✅ Provider code loaded from file');
       }
 
-      console.log('📦 Provider code size:', this.zoroProviderCode?.length || 0, 'characters');
+      // Execute the provider code
+      const providerInstance = await this.executeProviderCodeDirect(providerCode, factoryName);
+
+      // Cache the loaded extension
+      this.loadedExtensions.set(extensionId, providerInstance);
+
+      console.log(`✅ Provider '${factoryName}' loaded successfully`);
+      console.log(`📦 Provider code size: ${providerCode.length} characters`);
+      // @ts-ignore
+      return providerInstance;
     } catch (error) {
-      console.error('❌ Failed to load provider code:', error);
-      throw new Error(`Failed to load provider code: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ Failed to load provider code from ${source}:`, error);
+      throw error;
     }
   }
 
   /**
-   * Load provider code directly from a string
+   * Load an extension by ID from the registry
    */
-  loadProviderCodeFromString(code: string): void {
+  async loadExtension(extensionId: string): Promise<BaseProviderInstance> {
+    const metadata = this.getExtensionMetadata(extensionId);
+    if (!metadata) {
+      throw new Error(`Extension '${extensionId}' not found in registry`);
+    }
+
+    // Check if already loaded
+    if (this.loadedExtensions.has(extensionId)) {
+      console.log(`📦 Extension '${extensionId}' already loaded`);
+      return this.loadedExtensions.get(extensionId);
+    }
+
     try {
-      console.log('📥 Loading zoro provider code from string...');
-      this.zoroProviderCode = code;
-      console.log('✅ Provider code loaded from string');
-      console.log('📦 Provider code size:', this.zoroProviderCode?.length || 0, 'characters');
+      console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
+
+      // Load the provider code
+      const response = await fetch(metadata.main);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
+      }
+      const providerCode = await response.text();
+
+      // Execute the provider code
+      const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
+
+      // Cache the loaded extension
+      this.loadedExtensions.set(extensionId, providerInstance);
+
+      console.log(`✅ Extension '${extensionId}' loaded successfully`);
+      return providerInstance;
     } catch (error) {
-      console.error('❌ Failed to load provider code from string:', error);
-      throw new Error(
-        `Failed to load provider code from string: ${error instanceof Error ? error.message : String(error)}`
+      console.error(`❌ Failed to load extension '${extensionId}':`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute provider code directly with minimal metadata (for testing)
+   */
+  private async executeProviderCodeDirect(code: string, factoryName: string): Promise<BaseProviderInstance> {
+    const context = this.createExecutionContext();
+
+    try {
+      // Create and execute the provider code
+      const executeFunction = new Function(
+        'context',
+        `
+        const exports = context.exports;
+        const require = context.require;
+        const module = context.module;
+        const console = context.console;
+        const Promise = context.Promise;
+        const Object = context.Object;
+        const fetch = context.fetch;
+        const __awaiter = context.__awaiter;
+        
+        ${code}
+        
+        return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+        `
       );
-    }
-  }
 
-  /**
-   * Set custom models directly (avoids need to rewrite types/enums)
-   * Use this to pass your actual models folder content
-   */
-  setCustomModels(customModels: Record<string, any>): void {
-    console.log('🔧 Setting custom models...');
-    this.customModels = customModels;
-    console.log('✅ Custom models set:', Object.keys(customModels));
-  }
+      const result = executeFunction(context);
+      const factory = result[factoryName];
 
-  /**
-   * Load models from your models folder automatically
-   */
-  async loadModelsFromPath(modelsPath: string = './models'): Promise<void> {
-    try {
-      console.log('📂 Loading models from:', modelsPath);
-      const models = require(modelsPath);
-      this.setCustomModels(models);
-      console.log('✅ Models loaded successfully from path');
+      if (!factory || typeof factory !== 'function') {
+        throw new Error(`Factory function '${factoryName}' not found in provider code`);
+      }
+
+      const instance = factory(this.providerContext);
+
+      // Basic validation for required methods
+      const requiredMethods = ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'];
+      for (const method of requiredMethods) {
+        if (typeof instance[method] !== 'function') {
+          console.warn(`⚠️ Provider missing method: ${method}`);
+        }
+      }
+
+      return instance;
     } catch (error) {
-      console.warn('⚠️ Could not load models from path, using fallback models');
-      console.error('Models loading error:', error);
+      throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
     }
-  } /**
-   * Create execution context with all necessary dependencies
+  }
+
+  /**
+   * Execute provider code and create instance (registry-based)
    */
-  private createExecutionContext(): ExecutionContext {
-    const models = this.createModelsMock();
+  private async executeProviderCode(
+    code: string,
+    factoryName: string,
+    metadata: ExtensionManifest
+  ): Promise<BaseProviderInstance> {
+    const context = this.createExecutionContext();
+
+    try {
+      // Create and execute the provider code
+      const executeFunction = new Function(
+        'context',
+        `
+        const exports = context.exports;
+        const require = context.require;
+        const module = context.module;
+        const console = context.console;
+        const Promise = context.Promise;
+        const Object = context.Object;
+        const fetch = context.fetch;
+        const __awaiter = context.__awaiter;
+        
+        ${code}
+        
+        return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+        `
+      );
+
+      const result = executeFunction(context);
+      const factory = result[factoryName];
+
+      if (!factory || typeof factory !== 'function') {
+        throw new Error(`Factory function '${factoryName}' not found in extension`);
+      }
+
+      const instance = factory(this.providerContext);
+
+      // Validate the instance has required methods
+      this.validateProviderInstance(instance, metadata.category);
+
+      return instance;
+    } catch (error) {
+      throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Create execution context for provider code
+   */
+  private createExecutionContext() {
+    const models = this.createModelsContext();
 
     const mocks: Record<string, any> = {
       'cheerio': { load: this.providerContext.load },
@@ -132,9 +298,12 @@ export class ProviderManager {
       '../../utils/create-provider-context.js': {
         createProviderContext: () => this.providerContext,
       },
+      '../../utils': {
+        createProviderContext: () => this.providerContext,
+      },
     };
 
-    // Create a proper fetch function using axios
+    // Create fetch function using axios
     const customFetch = async (url: string, options: any = {}) => {
       try {
         const response = await this.providerContext.axios({
@@ -154,16 +323,13 @@ export class ProviderManager {
           json: async () => (typeof response.data === 'string' ? JSON.parse(response.data) : response.data),
         };
       } catch (error: any) {
-        console.error('Custom fetch error:', error);
         throw new Error(`fetch failed: ${error.message || error}`);
       }
     };
 
     return {
       exports: {},
-      require: (module: string) => {
-        return mocks[module] || {};
-      },
+      require: (module: string) => mocks[module] || {},
       module: { exports: {} },
       console,
       Promise,
@@ -174,44 +340,33 @@ export class ProviderManager {
   }
 
   /**
-   * Create models mock for zoro.js - now using actual imported models
+   * Create models context
    */
-  private createModelsMock() {
-    // Use custom models if set, otherwise try to import, fallback to defaults
-    if (this.customModels) {
-      console.log('📦 Using custom models provided');
-      return this.customModels;
-    }
-
-    // Try to import models dynamically
-    let models: any = {};
-    try {
-      models = require('./models');
-      console.log('📦 Using imported models from ./models');
-    } catch (error) {
-      console.warn('⚠️ Could not import models, using provider context models');
-    }
-
+  private createModelsContext() {
     return {
-      // Use actual model classes from your project
-      AnimeParser: models.AnimeParser || this.providerContext.AnimeParser,
-      MovieParser: models.MovieParser || this.providerContext.MovieParser,
-
-      // Import actual enums/constants if they exist
-      SubOrSub: models.SubOrSub || { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
-      StreamingServers: models.StreamingServers || {
+      AnimeParser: this.providerContext.AnimeParser,
+      MovieParser: this.providerContext.MovieParser,
+      MangaParser: this.providerContext.MangaParser,
+      SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
+      StreamingServers: {
         VidCloud: 'vidcloud',
         StreamSB: 'streamsb',
         StreamTape: 'streamtape',
         VidStreaming: 'vidstreaming',
+        MegaCloud: 'megacloud',
       },
-      MediaStatus: models.MediaStatus || {
+      MediaStatus: {
         COMPLETED: 'completed',
         ONGOING: 'ongoing',
         NOT_YET_AIRED: 'not_yet_aired',
         UNKNOWN: 'unknown',
       },
-      WatchListType: models.WatchListType || {
+      TvType: {
+        MOVIE: 'movie',
+        TVSERIES: 'tvseries',
+        ANIME: 'anime',
+      },
+      WatchListType: {
         WATCHING: 'watching',
         COMPLETED: 'completed',
         ONHOLD: 'onhold',
@@ -219,25 +374,18 @@ export class ProviderManager {
         PLAN_TO_WATCH: 'plan_to_watch',
         NONE: 'none',
       },
-
-      // Include any other models that might be needed
-      ...models, // Spread all models for completeness
     };
   }
 
   /**
-   * Create __awaiter helper for older compiled code
+   * Create __awaiter helper for compatibility
    */
   private createAwaiterHelper() {
     return (thisArg: any, _arguments: any, P: any, generator: any) => {
       function adopt(value: any) {
-        return value instanceof P
-          ? value
-          : new P(function (resolve: any) {
-              resolve(value);
-            });
+        return value instanceof P ? value : new P((resolve: any) => resolve(value));
       }
-      return new (P || (P = Promise))(function (resolve: any, reject: any) {
+      return new (P || (P = Promise))((resolve: any, reject: any) => {
         function fulfilled(value: any) {
           try {
             step(generator.next(value));
@@ -261,131 +409,185 @@ export class ProviderManager {
   }
 
   /**
-   * Execute provider code and initialize zoro instance
+   * Validate provider instance based on category
    */
-  async initializeProvider(): Promise<void> {
-    if (!this.zoroProviderCode) {
-      throw new Error('Provider code not loaded. Call loadProviderCode() first.');
-    }
+  private validateProviderInstance(instance: any, category: ProviderType): void {
+    const requiredMethods = ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'];
 
-    try {
-      console.log('🔄 Initializing zoro provider...');
-
-      const context = this.createExecutionContext();
-
-      // Create and execute the provider code
-      const executeFunction = new Function(
-        'context',
-        `
-        const exports = context.exports;
-        const require = context.require;
-        const module = context.module;
-        const console = context.console;
-        const Promise = context.Promise;
-        const Object = context.Object;
-        const fetch = context.fetch;
-        const __awaiter = context.__awaiter;
-        
-        ${this.zoroProviderCode}
-        
-        return { exports, createZoro: typeof createZoro !== 'undefined' ? createZoro : exports.createZoro };
-        `
-      );
-
-      const result = executeFunction(context);
-
-      // Create zoro instance
-      if (result.createZoro && typeof result.createZoro === 'function') {
-        this.zoroInstance = result.createZoro(this.providerContext);
-        console.log('✅ Zoro provider initialized successfully');
-      } else {
-        throw new Error('createZoro function not found in provider code');
+    for (const method of requiredMethods) {
+      if (typeof instance[method] !== 'function') {
+        throw new Error(`Provider missing required method: ${method}`);
       }
+    }
 
-      this.isInitialized = true;
-    } catch (error) {
-      console.error('❌ Failed to initialize provider:', error);
-      throw new Error(`Provider initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+    // Category-specific validation
+    if (category === 'anime' && typeof instance.fetchAnimeInfo !== 'function') {
+      throw new Error('Anime provider missing fetchAnimeInfo method');
+    }
+
+    if (category === 'movies' && typeof instance.fetchMediaInfo !== 'function') {
+      throw new Error('Movie provider missing fetchMediaInfo method');
     }
   }
 
   /**
-   * Ensure provider is initialized
+   * Get a type-safe anime provider
    */
-  private ensureInitialized(): void {
-    if (!this.isInitialized || !this.zoroInstance) {
-      throw new Error('Provider not initialized. Call initializeProvider() first.');
+  async getAnimeProvider(extensionId: string): Promise<AnimeProviderInstance> {
+    const metadata = this.getExtensionMetadata(extensionId);
+    if (!metadata) {
+      throw new Error(`Extension '${extensionId}' not found`);
     }
+
+    if (metadata.category !== 'anime') {
+      throw new Error(`Extension '${extensionId}' is not an anime provider`);
+    }
+
+    const instance = await this.loadExtension(extensionId);
+    return instance as AnimeProviderInstance;
   }
 
-  // ==========================================
-  // ORIGINAL ZORO METHODS - DIRECT ACCESS
-  // ==========================================
-
   /**
-   * Search for anime using zoro's search method
+   * Get a type-safe movie provider
    */
-  async search(query: string, page: number = 1): Promise<ISearch<IAnimeResult | IMovieResult>> {
-    this.ensureInitialized();
-    try {
-      console.log(`🔍 Searching for: "${query}" (page ${page})`);
-      const result = await this.zoroInstance.search(query, page);
-      console.log(`✅ Found ${result?.results?.length || 0} results`);
-      return result;
-    } catch (error) {
-      console.error('❌ Search failed:', error);
-      throw error;
+  async getMovieProvider(extensionId: string): Promise<MovieProviderInstance> {
+    const metadata = this.getExtensionMetadata(extensionId);
+    if (!metadata) {
+      throw new Error(`Extension '${extensionId}' not found`);
     }
+
+    if (metadata.category !== 'movies') {
+      throw new Error(`Extension '${extensionId}' is not a movie provider`);
+    }
+
+    const instance = await this.loadExtension(extensionId);
+    return instance as MovieProviderInstance;
   }
 
   /**
-   * Get detailed anime information
+   * Get any provider (use with caution - prefer typed methods)
    */
-  async fetchAnimeInfo(id: string): Promise<IAnimeInfo> {
-    this.ensureInitialized();
-    try {
-      console.log(`📺 Fetching anime info for: ${id}`);
-      const result = await this.zoroInstance.fetchAnimeInfo(id);
-      console.log(`✅ Got anime info: ${result?.title} (${result?.totalEpisodes} episodes)`);
-      return result;
-    } catch (error) {
-      console.error('❌ Fetch anime info failed:', error);
-      throw error;
-    }
+  async getProvider(extensionId: string): Promise<BaseProviderInstance> {
+    return await this.loadExtension(extensionId);
   }
 
   /**
-   * Get episode streaming sources
-   */
-  async fetchEpisodeSources(
-    episodeId: string,
-    server: string = 'VidCloud',
-    subOrDub: string = 'sub'
-  ): Promise<ISource> {
-    this.ensureInitialized();
-    try {
-      console.log(`🎬 Fetching episode sources: ${episodeId} (${server}, ${subOrDub})`);
-      const result = await this.zoroInstance.fetchEpisodeSources(episodeId, server, subOrDub);
-      console.log(`✅ Got ${result?.sources?.length || 0} sources`);
-      return result;
-    } catch (error) {
-      console.error('❌ Fetch episode sources failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get provider context
+   * Get the provider context
    */
   getProviderContext(): ProviderContext {
     return this.providerContext;
   }
 
   /**
-   * Check if provider is ready
+   * Get registry metadata
    */
-  isReady(): boolean {
-    return this.isInitialized && !!this.zoroInstance;
+  getRegistryMetadata() {
+    return registry.metadata;
+  }
+
+  /**
+   * Search across all loaded providers of a specific category
+   */
+  async searchAcrossProviders(
+    category: ProviderType,
+    query: string,
+    page?: number
+  ): Promise<Array<{ extensionId: string; results: ISearch<any> }>> {
+    const extensions = this.getExtensionsByCategory(category);
+    const searchPromises = extensions.map(async (ext) => {
+      try {
+        const provider = await this.loadExtension(ext.id);
+        const results = await provider.search(query, page);
+        return { extensionId: ext.id, results };
+      } catch (error) {
+        console.error(`Search failed for ${ext.id}:`, error);
+        return { extensionId: ext.id, results: { currentPage: page || 1, hasNextPage: false, results: [] } };
+      }
+    });
+
+    return Promise.all(searchPromises);
+  }
+
+  /**
+   * Load provider code from string (for testing purposes)
+   */
+  async loadProviderCodeFromString(
+    code: string,
+    factoryName: string,
+    extensionId: string = `string-${factoryName}-${Date.now()}`
+  ): Promise<AnimeProviderInstance | MovieProviderInstance> {
+    try {
+      console.log(`📥 Loading provider code from string: ${factoryName}`);
+      console.log(`📦 Provider code size: ${code.length} characters`);
+
+      // Execute the provider code
+      const providerInstance = await this.executeProviderCodeDirect(code, factoryName);
+
+      // Cache the loaded extension
+      this.loadedExtensions.set(extensionId, providerInstance);
+
+      console.log(`✅ Provider '${factoryName}' loaded successfully from string`);
+      // @ts-ignore
+      return providerInstance;
+    } catch (error) {
+      console.error(`❌ Failed to load provider code from string:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Convenience method to load Zoro provider (for testing)
+   */
+  async loadZoro(source?: string): Promise<AnimeProviderInstance> {
+    const defaultSource = './dist/providers/anime/zoro.js';
+    return this.loadProviderCode(source || defaultSource, 'createZoro', 'zoro-test') as Promise<AnimeProviderInstance>;
+  }
+
+  /**
+   * Convenience method to load HiMovies provider (for testing)
+   */
+  async loadHiMovies(source?: string): Promise<MovieProviderInstance> {
+    const defaultSource = './dist/providers/movies/himovies.js';
+    return this.loadProviderCode(
+      source || defaultSource,
+      'createHiMovies',
+      'himovies-test'
+    ) as Promise<MovieProviderInstance>;
+  }
+
+  /**
+   * Auto-detect and load any provider from file (for testing)
+   */
+  async loadAnyProvider(source: string, extensionId?: string): Promise<BaseProviderInstance> {
+    try {
+      console.log(`🔍 Auto-detecting provider from: ${source}`);
+
+      let providerCode: string;
+      if (source.startsWith('http')) {
+        const response = await fetch(source);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
+        }
+        providerCode = await response.text();
+      } else {
+        const fs = require('fs');
+        providerCode = fs.readFileSync(source, 'utf-8');
+      }
+
+      // Try to detect factory function name
+      const factoryMatches = providerCode.match(/(?:function\s+|const\s+|export\s+(?:function\s+)?)(create\w+)/g);
+      if (!factoryMatches || factoryMatches.length === 0) {
+        throw new Error('No factory function found (looking for createXxx pattern)');
+      }
+
+      const factoryName = factoryMatches[0].replace(/(?:function\s+|const\s+|export\s+(?:function\s+)?)/, '');
+      console.log(`🎯 Detected factory function: ${factoryName}`);
+
+      return this.loadProviderCode(source, factoryName, extensionId);
+    } catch (error) {
+      console.error(`❌ Failed to auto-load provider from ${source}:`, error);
+      throw error;
+    }
   }
 }
 

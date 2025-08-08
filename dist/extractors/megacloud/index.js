@@ -11,7 +11,7 @@ class MegaCloud extends models_1.VideoExtractor {
         this.ctx = ctx;
     }
     async extract(embedIframeURL, referer = 'https://hianime.to') {
-        const { axios, logger } = this.ctx;
+        const { logger } = this.ctx;
         const extractedData = {
             subtitles: [],
             intro: { start: 0, end: 0 },
@@ -19,7 +19,7 @@ class MegaCloud extends models_1.VideoExtractor {
             sources: [],
         };
         try {
-            const resp = await (0, megacloud_getsrcs_1.getSources)(embedIframeURL, referer);
+            const resp = await (0, megacloud_getsrcs_1.getSources)(embedIframeURL, referer, this.ctx);
             if (!resp)
                 return extractedData;
             if (Array.isArray(resp.sources)) {
@@ -29,14 +29,12 @@ class MegaCloud extends models_1.VideoExtractor {
                     type: s.type,
                 }));
             }
-            else {
-                extractedData.sources = [
-                    {
-                        url: resp.sources,
-                        isM3U8: resp.sources.includes('.m3u8'),
-                    },
-                ];
-            }
+            extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
+            extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
+            extractedData.subtitles = resp.tracks.map((track) => ({
+                url: track.file,
+                lang: track.label ? track.label : track.kind,
+            }));
             extractedData.intro = resp.intro ?? extractedData.intro;
             extractedData.outro = resp.outro ?? extractedData.outro;
             extractedData.subtitles =

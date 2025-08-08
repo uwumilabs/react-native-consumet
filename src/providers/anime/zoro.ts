@@ -694,7 +694,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           case StreamingServers.VidCloud:
             return {
               headers: { Referer: serverUrl.href },
-              ...(await new MegaCloud({
+              ...(await MegaCloud({
                 axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,
@@ -732,7 +732,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
           case StreamingServers.VidCloud:
             return {
               headers: { Referer: serverUrl.href },
-              ...(await new MegaCloud({
+              ...(await MegaCloud({
                 axios: fetch as any,
                 load,
                 USER_AGENT: ctx.USER_AGENT,

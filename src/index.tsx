@@ -8,17 +8,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 
 // Utils (execution, dynamic loading, validation, contexts, and extension registry)
-import {
-  createProviderContext,
-  ExtensionRegistryManager,
-  createExtensionManager,
-  DEFAULT_REGISTRY,
-  type ExtensionManifest,
-  type ExtensionRegistry,
-  type ExtensionInstallResult,
-  type ExtensionSearchFilters,
-} from './utils';
-
+import { createProviderContext, ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY } from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -154,6 +144,3 @@ export type {
 
 // Utils: functions, contexts, and extension registry (runtime values)
 export { createProviderContext, ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY };
-
-// Utils: exported types (compile-time only)
-export type { ExtensionManifest, ExtensionRegistry, ExtensionInstallResult, ExtensionSearchFilters };

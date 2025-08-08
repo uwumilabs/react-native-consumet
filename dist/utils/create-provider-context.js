@@ -29,6 +29,19 @@ function createProviderContext(config = {}) {
             'Pragma': 'no-cache',
         },
     });
+    // Default logger
+    const defaultLogger = {
+        log: console.log,
+        error: console.error,
+    };
+    // Create extractor context for passing to context-aware extractors
+    const extractorContext = {
+        axios: config.axios || defaultAxios,
+        load: config.load || cheerio_1.load,
+        USER_AGENT: config.userAgent ||
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        logger: config.logger || defaultLogger,
+    };
     // Default extractors - all the important ones pre-configured
     const defaultExtractors = {
         AsianLoad: extractors_1.AsianLoad,
@@ -39,23 +52,18 @@ function createProviderContext(config = {}) {
         Mp4Player: extractors_1.Mp4Player,
         Mp4Upload: extractors_1.Mp4Upload,
         RapidCloud: extractors_1.RapidCloud,
-        MegaCloud: extractors_1.MegaCloud,
+        MegaCloud: (ctx) => new extractors_1.MegaCloud(ctx || extractorContext),
         StreamHub: extractors_1.StreamHub,
         StreamLare: extractors_1.StreamLare,
         StreamSB: extractors_1.StreamSB,
         StreamTape: extractors_1.StreamTape,
         StreamWish: extractors_1.StreamWish,
-        VidCloud: extractors_1.VidCloud,
+        VidCloud: (ctx) => new extractors_1.VidCloud(ctx || extractorContext),
         VidMoly: extractors_1.VidMoly,
         VizCloud: extractors_1.VizCloud,
         VidHide: extractors_1.VidHide,
         Voe: extractors_1.Voe,
         MegaUp: extractors_1.MegaUp,
-    };
-    // Default logger
-    const defaultLogger = {
-        log: console.log,
-        error: console.error,
     };
     return {
         axios: config.axios || defaultAxios,

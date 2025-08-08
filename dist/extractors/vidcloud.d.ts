@@ -1,7 +1,9 @@
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import { VideoExtractor, type ExtractorContext, type IVideo, type ISubtitle } from '../models';
 declare class VidCloud extends VideoExtractor {
     protected serverName: string;
     protected sources: IVideo[];
+    private ctx?;
+    constructor(ctx?: ExtractorContext);
     extract: (videoUrl: URL, referer?: string) => Promise<{
         sources: IVideo[];
     } & {

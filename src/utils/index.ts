@@ -93,11 +93,3 @@ export { createProviderContext } from './create-provider-context';
 
 // Export extension registry system
 export { ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY } from './extension-registry';
-
-// Export extension manifest types
-export type {
-  ExtensionManifest,
-  ExtensionRegistry,
-  ExtensionInstallResult,
-  ExtensionSearchFilters,
-} from '../models/extension-manifest';

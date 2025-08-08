@@ -153,7 +153,7 @@ function createZoro(ctx) {
                         case models_1.StreamingServers.VidCloud:
                             return {
                                 headers: { Referer: serverUrl.href },
-                                ...(await new MegaCloud({
+                                ...(await MegaCloud({
                                     axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
@@ -191,7 +191,7 @@ function createZoro(ctx) {
                         case models_1.StreamingServers.VidCloud:
                             return {
                                 headers: { Referer: serverUrl.href },
-                                ...(await new MegaCloud({
+                                ...(await MegaCloud({
                                     axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
@@ -200,8 +200,8 @@ function createZoro(ctx) {
                             };
                     }
                 }
-                console.log(episodeId, episodeId.includes('$episode$'));
-                // if (!episodeId.includes('$episode$')) throw new Error('Invalid episode id');
+                if (!episodeId.includes('$episode$'))
+                    throw new Error('Invalid episode id');
                 // keeping this for future use
                 // Fallback to using sub if no info found in case of compatibility
                 // TODO: add both options later

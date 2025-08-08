@@ -97,6 +97,22 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     },
   });
 
+  // Default logger
+  const defaultLogger = {
+    log: console.log,
+    error: console.error,
+  };
+
+  // Create extractor context for passing to context-aware extractors
+  const extractorContext = {
+    axios: config.axios || defaultAxios,
+    load: config.load || load,
+    USER_AGENT:
+      config.userAgent ||
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    logger: config.logger || defaultLogger,
+  };
+
   // Default extractors - all the important ones pre-configured
   const defaultExtractors = {
     AsianLoad: AsianLoad,
@@ -107,24 +123,18 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     Mp4Player: Mp4Player,
     Mp4Upload: Mp4Upload,
     RapidCloud: RapidCloud,
-    MegaCloud: MegaCloud,
+    MegaCloud: (ctx?: any) => new MegaCloud(ctx || extractorContext),
     StreamHub: StreamHub,
     StreamLare: StreamLare,
     StreamSB: StreamSB,
     StreamTape: StreamTape,
     StreamWish: StreamWish,
-    VidCloud: VidCloud,
+    VidCloud: (ctx?: any) => new VidCloud(ctx || extractorContext),
     VidMoly: VidMoly,
     VizCloud: VizCloud,
     VidHide: VidHide,
     Voe: Voe,
     MegaUp: MegaUp,
-  };
-
-  // Default logger
-  const defaultLogger = {
-    log: console.log,
-    error: console.error,
   };
 
   return {
@@ -140,6 +150,5 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     logger: config.logger || defaultLogger,
   };
 }
-
 
 export default createProviderContext;

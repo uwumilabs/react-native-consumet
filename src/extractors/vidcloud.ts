@@ -1,12 +1,19 @@
 import axios from 'axios';
 // @ts-nocheck
-import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
+import { VideoExtractor, type ExtractorContext, type IVideo, type ISubtitle, type Intro } from '../models';
 import { USER_AGENT } from '../utils';
 import { getSources } from './megacloud/megacloud.getsrcs';
 
 class VidCloud extends VideoExtractor {
   protected override serverName = 'VidCloud';
   protected override sources: IVideo[] = [];
+
+  private ctx?: ExtractorContext;
+
+  constructor(ctx?: ExtractorContext) {
+    super();
+    this.ctx = ctx;
+  }
 
   override extract = async (
     videoUrl: URL,
@@ -17,60 +24,70 @@ class VidCloud extends VideoExtractor {
       subtitles: [],
     };
     try {
+      // Use context axios if available, otherwise fall back to direct import
+      const axiosInstance = this.ctx?.axios || axios;
+      const USER_AGENT_VAL = this.ctx?.USER_AGENT || USER_AGENT;
+
       const options = {
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
           'Referer': videoUrl.href,
-          'User-Agent': USER_AGENT,
+          'User-Agent': USER_AGENT_VAL,
         },
       };
 
-      const resp = await getSources(videoUrl, referer);
+      const resp = await getSources(videoUrl, referer, this.ctx);
 
       if (!resp) {
         throw new Error('Failed to get sources from getSources function');
       }
 
-      if (Array.isArray(resp.sources)) {
-        for (const source of resp.sources) {
-          const { data } = await axios.get(source.file, options);
-          const urls = data
-            .split('\n')
-            .filter((line: string) => line.includes('.m3u8') || line.endsWith('m3u8')) as string[];
-          const qualities = data.split('\n').filter((line: string) => line.includes('RESOLUTION=')) as string[];
+      const sources = resp.sources;
 
-          const TdArray = qualities.map((s, i) => {
-            const f1 = s.split('x')[1];
-            const f2 = urls[i];
+      this.sources = sources.map((s: any) => ({
+        url: s.file,
+        isM3U8: s.file.includes('.m3u8') || s.file.endsWith('m3u8'),
+      }));
 
-            return [f1, f2];
-          });
+      result.sources.push(...this.sources);
 
-          for (const [f1, f2] of TdArray) {
-            this.sources.push({
-              url: f2!,
-              quality: f1,
-              isM3U8: f2!.includes('.m3u8') || f2!.endsWith('m3u8'),
-            });
-          }
-          result.sources.push(...this.sources);
-        }
-      }
+      result.sources = [];
+      this.sources = [];
 
-      if (resp.sources && typeof resp.sources === 'string') {
-        result.sources.push({
-          url: resp.sources,
-          isM3U8: resp.sources.includes('.m3u8') || resp.sources.endsWith('m3u8'),
-          quality: 'auto',
+      for (const source of sources) {
+        const { data } = await axiosInstance.get(source.file, options);
+        const urls = data
+          .split('\n')
+          .filter((line: string) => line.includes('.m3u8') || line.endsWith('m3u8')) as string[];
+        const qualities = data.split('\n').filter((line: string) => line.includes('RESOLUTION=')) as string[];
+
+        const TdArray = qualities.map((s, i) => {
+          const f1 = s.split('x')[1];
+          const f2 = urls[i];
+
+          return [f1, f2];
         });
+
+        for (const [f1, f2] of TdArray) {
+          this.sources.push({
+            url: f2!,
+            quality: f1,
+            isM3U8: f2!.includes('.m3u8') || f2!.endsWith('m3u8'),
+          });
+        }
+        result.sources.push(...this.sources);
       }
 
-      if (resp.tracks && Array.isArray(resp.tracks)) {
-        result.subtitles = resp.tracks.map((s: any) => ({
-          url: s.file,
-          lang: s.label ? s.label : 'Default (maybe)',
-        }));
-      }
+      result.sources.push({
+        url: sources[0].file,
+        isM3U8: sources[0].file.includes('.m3u8') || sources[0].file.endsWith('m3u8'),
+        quality: 'auto',
+      });
+
+      result.subtitles = resp.tracks.map((s: any) => ({
+        url: s.file,
+        lang: s.label ? s.label : 'Default (maybe)',
+      }));
 
       return result;
     } catch (err) {
