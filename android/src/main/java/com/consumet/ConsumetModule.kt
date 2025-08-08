@@ -42,9 +42,4 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     override fun deobfuscateScript(source: String, promise: Promise) {
         deobfuscator.deobfuscateScript(source, promise)
     }
-
-    @ReactMethod
-    override fun evaluateJavaScript(code: String, context: String, promise: Promise) {
-        jsEvaluator.evaluateJavaScript(code, context, promise)
-    }
 }

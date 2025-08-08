@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.6.0",
     "cheerio": "^1.0.0-rc.12",
+    "nodejs-mobile-react-native": "^18.20.4",
     "react": "19.0.0",
     "react-native": "0.78.1",
     "react-native-consumet": "workspace:^",

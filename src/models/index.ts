@@ -1,7 +1,6 @@
 import BaseProvider from './base-provider';
 import BaseParser from './base-parser';
 import AnimeParser from './anime-parser';
-import ComicParser from './comic-parser';
 import VideoExtractor from './video-extractor';
 import MangaParser from './manga-parser';
 import LightNovelParser from './lightnovel-parser';
@@ -16,7 +15,6 @@ import {
   type IAnimeResult,
   type IEpisodeServer,
   type IVideo,
-  type LibgenBook,
   StreamingServers,
   MediaStatus,
   SubOrSub,
@@ -27,8 +25,6 @@ import {
   type ILightNovelInfo,
   type ILightNovelChapter,
   type ILightNovelChapterContent,
-  type GetComicsComics,
-  type ComicRes,
   type IMangaChapterPage,
   TvType,
   type IMovieEpisode,
@@ -50,21 +46,17 @@ import {
   type AniZipEpisode,
   type IMovieSeason,
 } from './types';
-import { LibgenBookObject, GetComicsComicsObject } from './type-objects';
 
 export {
   BaseProvider,
   BaseParser,
   AnimeParser,
   VideoExtractor,
-  LibgenBookObject,
   StreamingServers,
   MediaStatus,
   SubOrSub,
   LightNovelParser,
   MangaParser,
-  ComicParser,
-  GetComicsComicsObject,
   TvType,
   MovieParser,
   Genres,
@@ -79,7 +71,6 @@ export type {
   IAnimeResult,
   IEpisodeServer,
   IVideo,
-  LibgenBook,
   IMangaResult,
   IMangaChapter,
   IMangaInfo,
@@ -87,8 +78,6 @@ export type {
   ILightNovelInfo,
   ILightNovelChapter,
   ILightNovelChapterContent,
-  GetComicsComics,
-  ComicRes,
   ISearch,
   IMangaChapterPage,
   IMovieEpisode,

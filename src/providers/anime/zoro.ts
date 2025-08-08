@@ -932,6 +932,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
 // Backward compatibility wrapper class
 export class Zoro extends AnimeParser {
   private instance: any;
+  public logo: string;
 
   constructor(customBaseURL?: string) {
     super();
@@ -940,6 +941,7 @@ export class Zoro extends AnimeParser {
     const defaultContext = createProviderContext();
 
     this.instance = createZoro(defaultContext);
+    this.logo = this.instance.logo;
     if (customBaseURL) {
       this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
     }
@@ -955,7 +957,6 @@ export class Zoro extends AnimeParser {
   set baseUrl(value: string) {
     this.instance.baseUrl = value;
   }
-  // get logo() { return this.instance.logo; }  // Commented out due to conflict with parent class
   get classPath() {
     return this.instance.classPath;
   }

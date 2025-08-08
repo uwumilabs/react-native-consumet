@@ -10,7 +10,6 @@ class VidCloud extends VideoExtractor {
 
   override extract = async (
     videoUrl: URL,
-    _?: boolean,
     referer: string = 'https://flixhq.to/'
   ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     const result: { sources: IVideo[]; subtitles: ISubtitle[]; intro?: Intro } = {

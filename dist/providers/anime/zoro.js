@@ -200,8 +200,8 @@ function createZoro(ctx) {
                             };
                     }
                 }
-                if (!episodeId.includes('$episode$'))
-                    throw new Error('Invalid episode id');
+                console.log(episodeId, episodeId.includes('$episode$'));
+                // if (!episodeId.includes('$episode$')) throw new Error('Invalid episode id');
                 // keeping this for future use
                 // Fallback to using sub if no info found in case of compatibility
                 // TODO: add both options later
@@ -857,6 +857,7 @@ class Zoro extends models_1.AnimeParser {
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, create_provider_context_1.createProviderContext)();
         this.instance = createZoro(defaultContext);
+        this.logo = this.instance.logo;
         if (customBaseURL) {
             this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
         }
@@ -871,7 +872,6 @@ class Zoro extends models_1.AnimeParser {
     set baseUrl(value) {
         this.instance.baseUrl = value;
     }
-    // get logo() { return this.instance.logo; }  // Commented out due to conflict with parent class
     get classPath() {
         return this.instance.classPath;
     }

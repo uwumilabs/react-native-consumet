@@ -22,7 +22,6 @@ exports.PROVIDERS_LIST = {
         new providers_1.MANGA.MangaHost(),
         new providers_1.MANGA.BRMangas(),
     ],
-    COMICS: [new providers_1.COMICS.GetComics()],
     LIGHT_NOVELS: [new providers_1.LIGHT_NOVELS.ReadLightNovels()],
     MOVIES: [new providers_1.MOVIES.DramaCool(), new providers_1.MOVIES.MultiMovies(), new providers_1.MOVIES.NetflixMirror(), new providers_1.MOVIES.HiMovies()],
     META: [new providers_1.META.Anilist(), new providers_1.META.TMDB(), new providers_1.META.Myanimelist()],

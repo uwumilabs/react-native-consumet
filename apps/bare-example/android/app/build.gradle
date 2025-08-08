@@ -105,6 +105,16 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            // Include all architectures except x86 (which has missing libnode.so in nodejs-mobile-react-native)
+            include "arm64-v8a", "armeabi-v7a", "x86_64"
+            universalApk false  // Set to true if you want a universal APK in addition to split APKs
+        }
+    }
 }
 
 dependencies {

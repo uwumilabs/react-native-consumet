@@ -6,6 +6,7 @@ import Movies from './Movies';
 import Ext from './Ext';
 import ExtGithub from './Ext-github';
 import ExtensionDemo from './ExtensionDemo';
+import NodeJSTest from './NodeJSTest';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       {/* <Ext/> */}
       {/* <ExtensionDemo/> */}
       <ExtGithub/>
+      {/* <NodeJSTest/> */}
       {/* <Manga/> */}
       {/* <Meta /> */}
     </SafeAreaView>

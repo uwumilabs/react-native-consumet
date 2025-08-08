@@ -1,5 +1,5 @@
 import type { ProviderContext } from '../models/provider-context';
-import { AnimeParser, MovieParser } from '../models';
+import { AnimeParser, MovieParser, MangaParser } from '../models';
 /**
  * Configuration options for creating a provider context
  */
@@ -35,6 +35,10 @@ export interface ProviderContextConfig {
      * Custom MovieParser base class (optional) - for advanced use cases
      */
     MovieParser?: typeof MovieParser;
+    /**
+     * Custom MangaParser base class (optional) - for advanced use cases
+     */
+    MangaParser?: typeof MangaParser;
 }
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -43,17 +47,5 @@ export interface ProviderContextConfig {
  * @returns Complete ProviderContext ready for use with extensions
  */
 export declare function createProviderContext(config?: ProviderContextConfig): ProviderContext;
-/**
- * Creates a React Native optimized provider context
- * This version is specifically tuned for React Native environments
- *
- * @param config Optional configuration to override defaults
- * @returns Complete ProviderContext optimized for React Native
- */
-export declare function createReactNativeProviderContext(config?: ProviderContextConfig): ProviderContext;
-/**
- * Quick helper to create a context with just custom axios
- */
-export declare function createProviderContextWithAxios(axiosInstance: any): ProviderContext;
 export default createProviderContext;
 //# sourceMappingURL=create-provider-context.d.ts.map

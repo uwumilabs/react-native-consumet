@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { 
-  loadProviderFromURL,
   createReactNativeProviderContext, 
   createZoro,
   type ExtensionManifest,
@@ -64,36 +63,74 @@ const ExtGithub = () => {
         console.log(`Loading provider from: ${githubUrl}`);
         setExtensionInfo(zoroExtension);
         
-        // Direct load from GitHub URL - BADA BOOM! 💥
+        // Direct load from GitHub URL using local Node.js runtime - BADA BOOM! 💥
         // NO LOCAL FALLBACK - Registry or throw error!
         const context = createReactNativeProviderContext();
-        const module = await loadProviderFromURL(githubUrl, { 
-          context,
-          useNative: true // Enable native Android JavaScript evaluation!
-        });
-        console.log('Loaded module:', module);
+        const res = await fetch(githubUrl);
+        const providerCode = await res.text();
         
-        // Create provider instance
-        const provider = module.createZoro(context);
+        console.log('Downloaded provider code from GitHub');
+        console.log('Provider code length:', providerCode.length);
+        
+        // Execute the code in Node.js environment to get the actual provider
+        // The zoro.js exports: { createZoro, Zoro, default }
+        const nodejs = require('nodejs-mobile-react-native');
+        
+        // Create a promise to handle the async execution
+        const provider = await new Promise((resolve, reject) => {
+          const messageId = Date.now().toString();
+          
+          // Send the code to Node.js along with the context
+          nodejs.channel.send({
+            type: 'executeProvider',
+            id: messageId,
+            payload: {
+              code: providerCode,
+              contextData: JSON.stringify(context) // Send context as JSON
+            }
+          });
+          
+          // Listen for the result
+          const messageListener = (data) => {
+            if (data.id === messageId) {
+              nodejs.channel.removeListener('message', messageListener);
+              
+              if (data.type === 'providerReady' && data.success) {
+                resolve(data.provider);
+              } else if (data.type === 'error' || !data.success) {
+                reject(new Error(data.error || 'Provider initialization failed'));
+              }
+            }
+          };
+          
+          nodejs.channel.addListener('message', messageListener);
+          
+          // Set a timeout for safety
+          setTimeout(() => {
+            nodejs.channel.removeListener('message', messageListener);
+            reject(new Error('Provider execution timeout'));
+          }, 10000);
+        });
+        
         console.log('Provider created successfully:', provider);
-        console.log('✅ Provider loaded directly from GitHub using native evaluation!');
-        setProviderSource(`GitHub Native (${zoroExtension.name} v${zoroExtension.version})`);
+        console.log('✅ Provider loaded directly from GitHub using Node.js runtime!');
+        setProviderSource(`GitHub Node.js (${zoroExtension.name} v${zoroExtension.version})`);
         
         console.log('Provider created successfully:', {
-          hasSearch: typeof provider.search,
-          hasFetchAnimeInfo: typeof provider.fetchAnimeInfo,
-          hasFetchEpisodeSources: typeof provider.fetchEpisodeSources
+          hasSearch: typeof provider.search === 'function',
+          hasFetchAnimeInfo: typeof provider.fetchAnimeInfo === 'function',
+          hasFetchEpisodeSources: typeof provider.fetchEpisodeSources === 'function'
         });
 
         // Test the search functionality
         console.log('Searching for "Naruto" using provider...');
-        // const data = await provider.search('Naruto');
-        // console.log('Search completed:', {
-        //   hasResults: !!data?.results,
-        //   resultCount: data?.results?.length || 0,
-        //   currentPage: data?.currentPage,
-        //   hasNextPage: data?.hasNextPage
-        // });
+        const data = await provider.search('Naruto');
+        console.log('Search completed:', {
+          hasResults: !!data?.results,
+          resultCount: data?.results?.length || 0,
+          currentPage: data?.currentPage,
+          hasNextPage: data?.hasNextPage
+        });
         
         // Also test fetchAnimeInfo
         const mediaInfo = await provider.fetchAnimeInfo("jujutsu-kaisen-0-movie-17763");

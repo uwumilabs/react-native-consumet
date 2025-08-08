@@ -1,7 +1,7 @@
 {
   "name": "react-native-consumet",
   "version": "0.9.0",
-  "description": "Zero-setup React Native library for executing entertainment provider code from GitHub URLs. Includes bundled Node.js runtime for anime, movies, manga providers with native fetch support.",
+  "description": "React Native library for entertainment provider execution. Supports basic provider functionality out-of-the-box, with optional Node.js runtime for advanced GitHub provider loading.",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -26,8 +26,6 @@
     "android",
     "ios",
     "cpp",
-    "nodejs-assets",
-    "scripts",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",
@@ -48,13 +46,11 @@
     "example:expo": "yarn workspace react-native-consumet-expo-example",
     "build": "tsc -p tsconfig.dist.json",
     "build:clean": "del-cli dist && yarn build",
-    "copy-nodejs-assets": "mkdir -p lib && cp -r nodejs-assets lib/ || robocopy nodejs-assets lib\\nodejs-assets /E /R:3 /W:1 || true",
-    "postinstall": "node scripts/postinstall.js",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
-    "prepare": "bob build && yarn build && yarn copy-nodejs-assets",
+    "prepare": "bob build && yarn build",
     "release": "release-it",
     "prettier": "prettier --write \"**/*.{js,ts,tsx,json}\""
   },
@@ -190,7 +186,6 @@
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
     "crypto-js": "^4.2.0",
-    "nodejs-mobile-react-native": "^18.20.4",
     "react-native-url-polyfill": "^2.0.0",
     "string-similarity": "^4.0.4"
   }

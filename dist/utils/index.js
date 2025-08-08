@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCachedExtensions = exports.clearExtensionCache = exports.validateProviderModule = exports.loadMultipleProviders = exports.createProviderFromURL = exports.loadProviderFromURL = exports.evaluateProviderCode = exports.createReactNativeProviderContext = exports.createProviderContextWithAxios = exports.createProviderContext = exports.MegaUp = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.parsePostInfo = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
-exports.NodeProviderModule = exports.DEFAULT_REGISTRIES = exports.setupDefaultExtensionManager = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.testProviderURL = void 0;
+exports.DEFAULT_REGISTRY = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createProviderContext = exports.MegaUp = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
 const extractors_1 = require("../extractors");
 Object.defineProperty(exports, "GogoCDN", { enumerable: true, get: function () { return extractors_1.GogoCDN; } });
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
@@ -44,30 +43,12 @@ Object.defineProperty(exports, "anilistAdvancedQuery", { enumerable: true, get: 
 Object.defineProperty(exports, "anilistSiteStatisticsQuery", { enumerable: true, get: function () { return queries_1.anilistSiteStatisticsQuery; } });
 Object.defineProperty(exports, "anilistCharacterQuery", { enumerable: true, get: function () { return queries_1.anilistCharacterQuery; } });
 Object.defineProperty(exports, "anilistStaffInfoQuery", { enumerable: true, get: function () { return queries_1.anilistStaffInfoQuery; } });
-const getComics_1 = require("./getComics");
-Object.defineProperty(exports, "parsePostInfo", { enumerable: true, get: function () { return getComics_1.parsePostInfo; } });
 // Export provider context utilities
 var create_provider_context_1 = require("./create-provider-context");
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return create_provider_context_1.createProviderContext; } });
-Object.defineProperty(exports, "createProviderContextWithAxios", { enumerable: true, get: function () { return create_provider_context_1.createProviderContextWithAxios; } });
-Object.defineProperty(exports, "createReactNativeProviderContext", { enumerable: true, get: function () { return create_provider_context_1.createReactNativeProviderContext; } });
-// Export extension utilities
-var extension_utils_1 = require("./extension-utils");
-Object.defineProperty(exports, "evaluateProviderCode", { enumerable: true, get: function () { return extension_utils_1.evaluateProviderCode; } });
-Object.defineProperty(exports, "loadProviderFromURL", { enumerable: true, get: function () { return extension_utils_1.loadProviderFromURL; } });
-Object.defineProperty(exports, "createProviderFromURL", { enumerable: true, get: function () { return extension_utils_1.createProviderFromURL; } });
-Object.defineProperty(exports, "loadMultipleProviders", { enumerable: true, get: function () { return extension_utils_1.loadMultipleProviders; } });
-Object.defineProperty(exports, "validateProviderModule", { enumerable: true, get: function () { return extension_utils_1.validateProviderModule; } });
-Object.defineProperty(exports, "clearExtensionCache", { enumerable: true, get: function () { return extension_utils_1.clearExtensionCache; } });
-Object.defineProperty(exports, "getCachedExtensions", { enumerable: true, get: function () { return extension_utils_1.getCachedExtensions; } });
-Object.defineProperty(exports, "testProviderURL", { enumerable: true, get: function () { return extension_utils_1.testProviderURL; } });
 // Export extension registry system
 var extension_registry_1 = require("./extension-registry");
 Object.defineProperty(exports, "ExtensionRegistryManager", { enumerable: true, get: function () { return extension_registry_1.ExtensionRegistryManager; } });
 Object.defineProperty(exports, "createExtensionManager", { enumerable: true, get: function () { return extension_registry_1.createExtensionManager; } });
-Object.defineProperty(exports, "setupDefaultExtensionManager", { enumerable: true, get: function () { return extension_registry_1.setupDefaultExtensionManager; } });
-Object.defineProperty(exports, "DEFAULT_REGISTRIES", { enumerable: true, get: function () { return extension_registry_1.DEFAULT_REGISTRIES; } });
-// Export Node.js runtime testing utilities
-var node_provider_module_1 = require("./node-provider-module");
-Object.defineProperty(exports, "NodeProviderModule", { enumerable: true, get: function () { return node_provider_module_1.NodeProviderModule; } });
+Object.defineProperty(exports, "DEFAULT_REGISTRY", { enumerable: true, get: function () { return extension_registry_1.DEFAULT_REGISTRY; } });
 //# sourceMappingURL=index.js.map

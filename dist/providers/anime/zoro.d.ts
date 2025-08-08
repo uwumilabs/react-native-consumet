@@ -2,6 +2,7 @@ import { type ProviderContext, AnimeParser } from '../../models';
 export declare function createZoro(ctx: ProviderContext): AnimeParser;
 export declare class Zoro extends AnimeParser {
     private instance;
+    logo: string;
     constructor(customBaseURL?: string);
     get name(): any;
     get baseUrl(): string;

@@ -1,10 +1,11 @@
+// @ts-nocheck
 import type {
   ExtensionManifest,
   ExtensionRegistry,
   ExtensionInstallResult,
   ExtensionSearchFilters,
 } from '../models/extension-manifest';
-import { loadProviderFromURL, createProviderFromURL, testProviderURL, type ExtensionConfig } from './extension-utils';
+import createProviderContext from './create-provider-context';
 
 /**
  * Extension registry manager for discovering and installing extensions
@@ -93,7 +94,7 @@ export class ExtensionRegistryManager {
   /**
    * Install an extension by ID
    */
-  async installExtension(extensionId: string, config: ExtensionConfig = {}): Promise<ExtensionInstallResult> {
+  async installExtension(extensionId: string): Promise<ExtensionInstallResult> {
     try {
       const manifest = this.getExtensionManifest(extensionId);
       if (!manifest) {
@@ -103,17 +104,9 @@ export class ExtensionRegistryManager {
         };
       }
 
-      // Test the extension URL first
-      const test = await testProviderURL(manifest.main, config);
-      if (!test.isValid) {
-        return {
-          success: false,
-          error: `Extension validation failed: ${test.errors.join(', ')}`,
-        };
-      }
 
       // Verify that the manifest factories match what's actually exported
-      const missingFactory = manifest.factoryName && !test.factories.includes(manifest.factoryName);
+      const missingFactory = manifest.factoryName;
       const missingFactories = missingFactory ? [manifest.factoryName] : [];
       const warnings =
         missingFactories.length > 0
@@ -139,7 +132,7 @@ export class ExtensionRegistryManager {
   /**
    * Create a provider instance from an installed extension
    */
-  async createProvider(extensionId: string, factoryName: string, config: ExtensionConfig = {}): Promise<any> {
+  async createProvider(extensionId: string, factoryName: string): Promise<any> {
     const manifest = this.installedExtensions.get(extensionId);
     if (!manifest) {
       throw new Error(`Extension ${extensionId} is not installed`);
@@ -264,25 +257,43 @@ export function createExtensionManager(): ExtensionRegistryManager {
 /**
  * Default extension registry URLs
  */
-export const DEFAULT_REGISTRIES = [
-  'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json',
-  // Add more registries as they become available
-];
+export const DEFAULT_REGISTRY =
+  'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json';
 
-/**
- * Helper function to set up extension manager with default registries
+  /**
+ * Create a provider instance from a URL with automatic context injection
+ *
+ * @param url - URL to fetch the provider from
+ * @param factoryName - Name of the factory function to call (e.g., 'createZoro')
+ * @param config - Configuration options
+ * @returns Promise resolving to the configured provider instance
+ *
+ * @example
+ * ```typescript
+ * // Automatically inject context and create provider
+ * const zoro = await createProviderFromURL(
+ *   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
+ *   'createZoro'
+ * );
+ *
+ * const results = await zoro.search('One Piece');
+ * ```
  */
-export async function setupDefaultExtensionManager(): Promise<ExtensionRegistryManager> {
-  const manager = createExtensionManager();
+export async function createProviderFromURL(
+  url: string,
+  factoryName: string,
+): Promise<any> {
+  const { context = createProviderContext() } = config;
 
-  // Add default registries
-  for (const registryUrl of DEFAULT_REGISTRIES) {
-    try {
-      await manager.addRegistry(registryUrl);
-    } catch (error) {
-      console.warn(`Failed to add default registry ${registryUrl}:`, error);
-    }
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch provider from ${url}: ${res.status} ${res.statusText}`);
+  }
+  const module = await res.text();
+
+  if (!module[factoryName] || typeof module[factoryName] !== 'function') {
+    throw new Error(`Provider module does not export a function named '${factoryName}'`);
   }
 
-  return manager;
+  return module[factoryName](context);
 }

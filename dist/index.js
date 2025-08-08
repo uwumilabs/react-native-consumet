@@ -1,34 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_REGISTRIES = exports.setupDefaultExtensionManager = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createZoro = exports.createReactNativeProviderContext = exports.createProviderContextWithAxios = exports.createProviderContext = exports.testProviderURL = exports.getCachedExtensions = exports.clearExtensionCache = exports.validateProviderModule = exports.loadMultipleProviders = exports.createProviderFromURL = exports.loadProviderFromURL = exports.evaluateProviderCode = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.COMICS = exports.ANIME = void 0;
+exports.DEFAULT_REGISTRY = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+// Polyfills (must be first for global APIs like URL, URLSearchParams, etc.)
 require("react-native-url-polyfill/auto");
+// Providers (namespaced provider groups)
 const providers_1 = require("./providers");
 Object.defineProperty(exports, "ANIME", { enumerable: true, get: function () { return providers_1.ANIME; } });
-Object.defineProperty(exports, "COMICS", { enumerable: true, get: function () { return providers_1.COMICS; } });
 Object.defineProperty(exports, "LIGHT_NOVELS", { enumerable: true, get: function () { return providers_1.LIGHT_NOVELS; } });
 Object.defineProperty(exports, "MANGA", { enumerable: true, get: function () { return providers_1.MANGA; } });
 Object.defineProperty(exports, "MOVIES", { enumerable: true, get: function () { return providers_1.MOVIES; } });
 Object.defineProperty(exports, "META", { enumerable: true, get: function () { return providers_1.META; } });
+// Provider metadata (catalog of built-in providers)
 const providers_list_1 = require("./utils/providers-list");
 Object.defineProperty(exports, "PROVIDERS_LIST", { enumerable: true, get: function () { return providers_list_1.PROVIDERS_LIST; } });
+// Utils (execution, dynamic loading, validation, contexts, and extension registry)
 const utils_1 = require("./utils");
-Object.defineProperty(exports, "evaluateProviderCode", { enumerable: true, get: function () { return utils_1.evaluateProviderCode; } });
-Object.defineProperty(exports, "loadProviderFromURL", { enumerable: true, get: function () { return utils_1.loadProviderFromURL; } });
-Object.defineProperty(exports, "createProviderFromURL", { enumerable: true, get: function () { return utils_1.createProviderFromURL; } });
-Object.defineProperty(exports, "loadMultipleProviders", { enumerable: true, get: function () { return utils_1.loadMultipleProviders; } });
-Object.defineProperty(exports, "validateProviderModule", { enumerable: true, get: function () { return utils_1.validateProviderModule; } });
-Object.defineProperty(exports, "clearExtensionCache", { enumerable: true, get: function () { return utils_1.clearExtensionCache; } });
-Object.defineProperty(exports, "getCachedExtensions", { enumerable: true, get: function () { return utils_1.getCachedExtensions; } });
-Object.defineProperty(exports, "testProviderURL", { enumerable: true, get: function () { return utils_1.testProviderURL; } });
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return utils_1.createProviderContext; } });
-Object.defineProperty(exports, "createProviderContextWithAxios", { enumerable: true, get: function () { return utils_1.createProviderContextWithAxios; } });
-Object.defineProperty(exports, "createReactNativeProviderContext", { enumerable: true, get: function () { return utils_1.createReactNativeProviderContext; } });
 Object.defineProperty(exports, "ExtensionRegistryManager", { enumerable: true, get: function () { return utils_1.ExtensionRegistryManager; } });
 Object.defineProperty(exports, "createExtensionManager", { enumerable: true, get: function () { return utils_1.createExtensionManager; } });
-Object.defineProperty(exports, "setupDefaultExtensionManager", { enumerable: true, get: function () { return utils_1.setupDefaultExtensionManager; } });
-Object.defineProperty(exports, "DEFAULT_REGISTRIES", { enumerable: true, get: function () { return utils_1.DEFAULT_REGISTRIES; } });
-const zoro_1 = require("./providers/anime/zoro");
-Object.defineProperty(exports, "createZoro", { enumerable: true, get: function () { return zoro_1.createZoro; } });
+Object.defineProperty(exports, "DEFAULT_REGISTRY", { enumerable: true, get: function () { return utils_1.DEFAULT_REGISTRY; } });
+// Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });
 Object.defineProperty(exports, "Filemoon", { enumerable: true, get: function () { return extractors_1.Filemoon; } });
@@ -50,6 +41,7 @@ Object.defineProperty(exports, "MegaCloud", { enumerable: true, get: function ()
 Object.defineProperty(exports, "VidHide", { enumerable: true, get: function () { return extractors_1.VidHide; } });
 Object.defineProperty(exports, "Voe", { enumerable: true, get: function () { return extractors_1.Voe; } });
 Object.defineProperty(exports, "MegaUp", { enumerable: true, get: function () { return extractors_1.MegaUp; } });
+// Models (domain types, enums, and constants)
 const models_1 = require("./models");
 Object.defineProperty(exports, "StreamingServers", { enumerable: true, get: function () { return models_1.StreamingServers; } });
 Object.defineProperty(exports, "MediaStatus", { enumerable: true, get: function () { return models_1.MediaStatus; } });

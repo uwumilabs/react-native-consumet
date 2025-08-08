@@ -308,43 +308,6 @@ export interface ILightNovelInfo extends ILightNovelResult {
   rating?: number;
 }
 
-export interface LibgenBook extends Book {
-  id: string;
-  language: string;
-  format: string;
-  size: string;
-  pages: string;
-  tableOfContents: string;
-  topic: string;
-  hashes: Hashes;
-}
-
-export interface LibgenResult {
-  result: LibgenBook[];
-  hasNextPage: boolean;
-}
-
-export interface GetComicsComics {
-  image: string;
-  title: string;
-  year: string;
-  size: string;
-  excerpt: string;
-  category: string;
-  description: string;
-  download: string;
-  ufile: string;
-  mega: string;
-  mediafire: string;
-  zippyshare: string;
-  readOnline: string;
-}
-
-export interface ComicRes {
-  containers: GetComicsComics[];
-  hasNextPage: boolean;
-}
-
 export interface ISubtitle {
   /**
    * The id of the subtitle. **not** required

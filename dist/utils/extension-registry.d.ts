@@ -1,5 +1,4 @@
 import type { ExtensionManifest, ExtensionRegistry, ExtensionInstallResult, ExtensionSearchFilters } from '../models/extension-manifest';
-import { type ExtensionConfig } from './extension-utils';
 /**
  * Extension registry manager for discovering and installing extensions
  */
@@ -26,11 +25,11 @@ export declare class ExtensionRegistryManager {
     /**
      * Install an extension by ID
      */
-    installExtension(extensionId: string, config?: ExtensionConfig): Promise<ExtensionInstallResult>;
+    installExtension(extensionId: string): Promise<ExtensionInstallResult>;
     /**
      * Create a provider instance from an installed extension
      */
-    createProvider(extensionId: string, factoryName: string, config?: ExtensionConfig): Promise<any>;
+    createProvider(extensionId: string, factoryName: string): Promise<any>;
     /**
      * Uninstall an extension
      */
@@ -74,9 +73,25 @@ export declare function createExtensionManager(): ExtensionRegistryManager;
 /**
  * Default extension registry URLs
  */
-export declare const DEFAULT_REGISTRIES: string[];
+export declare const DEFAULT_REGISTRY = "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json";
 /**
- * Helper function to set up extension manager with default registries
- */
-export declare function setupDefaultExtensionManager(): Promise<ExtensionRegistryManager>;
+* Create a provider instance from a URL with automatic context injection
+*
+* @param url - URL to fetch the provider from
+* @param factoryName - Name of the factory function to call (e.g., 'createZoro')
+* @param config - Configuration options
+* @returns Promise resolving to the configured provider instance
+*
+* @example
+* ```typescript
+* // Automatically inject context and create provider
+* const zoro = await createProviderFromURL(
+*   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
+*   'createZoro'
+* );
+*
+* const results = await zoro.search('One Piece');
+* ```
+*/
+export declare function createProviderFromURL(url: string, factoryName: string): Promise<any>;
 //# sourceMappingURL=extension-registry.d.ts.map

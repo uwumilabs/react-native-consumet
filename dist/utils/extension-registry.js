@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_REGISTRIES = exports.ExtensionRegistryManager = void 0;
+exports.DEFAULT_REGISTRY = exports.ExtensionRegistryManager = void 0;
 exports.createExtensionManager = createExtensionManager;
-exports.setupDefaultExtensionManager = setupDefaultExtensionManager;
-const extension_utils_1 = require("./extension-utils");
+exports.createProviderFromURL = createProviderFromURL;
+const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 /**
  * Extension registry manager for discovering and installing extensions
  */
@@ -87,7 +90,7 @@ class ExtensionRegistryManager {
     /**
      * Install an extension by ID
      */
-    async installExtension(extensionId, config = {}) {
+    async installExtension(extensionId) {
         try {
             const manifest = this.getExtensionManifest(extensionId);
             if (!manifest) {
@@ -96,16 +99,8 @@ class ExtensionRegistryManager {
                     error: `Extension ${extensionId} not found in any registry`,
                 };
             }
-            // Test the extension URL first
-            const test = await (0, extension_utils_1.testProviderURL)(manifest.main, config);
-            if (!test.isValid) {
-                return {
-                    success: false,
-                    error: `Extension validation failed: ${test.errors.join(', ')}`,
-                };
-            }
             // Verify that the manifest factories match what's actually exported
-            const missingFactory = manifest.factoryName && !test.factories.includes(manifest.factoryName);
+            const missingFactory = manifest.factoryName;
             const missingFactories = missingFactory ? [manifest.factoryName] : [];
             const warnings = missingFactories.length > 0
                 ? [`Manifest lists factories not found in code: ${missingFactories.join(', ')}`]
@@ -128,7 +123,7 @@ class ExtensionRegistryManager {
     /**
      * Create a provider instance from an installed extension
      */
-    async createProvider(extensionId, factoryName, config = {}) {
+    async createProvider(extensionId, factoryName) {
         const manifest = this.installedExtensions.get(extensionId);
         if (!manifest) {
             throw new Error(`Extension ${extensionId} is not installed`);
@@ -142,7 +137,7 @@ class ExtensionRegistryManager {
             return this.extensionInstances.get(cacheKey);
         }
         // Create new instance
-        const provider = await (0, extension_utils_1.createProviderFromURL)(manifest.main, factoryName, config);
+        const provider = await createProviderFromURL(manifest.main, factoryName, config);
         // Cache the instance
         this.extensionInstances.set(cacheKey, provider);
         return provider;
@@ -223,24 +218,36 @@ function createExtensionManager() {
 /**
  * Default extension registry URLs
  */
-exports.DEFAULT_REGISTRIES = [
-    'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json',
-    // Add more registries as they become available
-];
+exports.DEFAULT_REGISTRY = 'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json';
 /**
- * Helper function to set up extension manager with default registries
- */
-async function setupDefaultExtensionManager() {
-    const manager = createExtensionManager();
-    // Add default registries
-    for (const registryUrl of exports.DEFAULT_REGISTRIES) {
-        try {
-            await manager.addRegistry(registryUrl);
-        }
-        catch (error) {
-            console.warn(`Failed to add default registry ${registryUrl}:`, error);
-        }
+* Create a provider instance from a URL with automatic context injection
+*
+* @param url - URL to fetch the provider from
+* @param factoryName - Name of the factory function to call (e.g., 'createZoro')
+* @param config - Configuration options
+* @returns Promise resolving to the configured provider instance
+*
+* @example
+* ```typescript
+* // Automatically inject context and create provider
+* const zoro = await createProviderFromURL(
+*   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
+*   'createZoro'
+* );
+*
+* const results = await zoro.search('One Piece');
+* ```
+*/
+async function createProviderFromURL(url, factoryName) {
+    const { context = (0, create_provider_context_1.default)() } = config;
+    const res = await fetch(url);
+    if (!res.ok) {
+        throw new Error(`Failed to fetch provider from ${url}: ${res.status} ${res.statusText}`);
     }
-    return manager;
+    const module = await res.text();
+    if (!module[factoryName] || typeof module[factoryName] !== 'function') {
+        throw new Error(`Provider module does not export a function named '${factoryName}'`);
+    }
+    return module[factoryName](context);
 }
 //# sourceMappingURL=extension-registry.js.map

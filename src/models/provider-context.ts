@@ -3,6 +3,7 @@ import type { CheerioAPI } from 'cheerio';
 import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
 import type { ExtractorContext } from './extractor-context';
+import type MangaParser from './manga-parser';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -92,7 +93,7 @@ export interface ExtractorRegistry {
     proxyConfig?: any,
     adapter?: any
   ) => {
-    extract: (url: URL) => Promise<any>;
+    extract: (url: URL, referer?: string) => Promise<any>;
   };
   VidMoly: new (
     proxyConfig?: any,
@@ -133,6 +134,7 @@ export interface ProviderContext {
   USER_AGENT: string;
   AnimeParser: typeof AnimeParser;
   MovieParser: typeof MovieParser;
+  MangaParser: typeof MangaParser;
   extractors: ExtractorRegistry;
   logger?: {
     log: (...args: any[]) => void;

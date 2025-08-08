@@ -43,7 +43,6 @@ import {
   anilistCharacterQuery,
   anilistStaffInfoQuery,
 } from './queries';
-import { parsePostInfo } from './getComics';
 import getKKey from '../extractors/kisskh/kkey';
 
 export {
@@ -54,7 +53,6 @@ export {
   splitAuthor,
   floorID,
   formatTitle,
-  parsePostInfo,
   genElement,
   capitalizeFirstLetter,
   VidCloud,
@@ -91,33 +89,10 @@ export {
 };
 
 // Export provider context utilities
-export {
-  createProviderContext,
-  createProviderContextWithAxios,
-  createReactNativeProviderContext,
-} from './create-provider-context';
-
-// Export extension utilities
-export {
-  evaluateProviderCode,
-  loadProviderFromURL,
-  createProviderFromURL,
-  loadMultipleProviders,
-  validateProviderModule,
-  clearExtensionCache,
-  getCachedExtensions,
-  testProviderURL,
-  type ProviderModule,
-  type ExtensionConfig,
-} from './extension-utils';
+export { createProviderContext } from './create-provider-context';
 
 // Export extension registry system
-export {
-  ExtensionRegistryManager,
-  createExtensionManager,
-  setupDefaultExtensionManager,
-  DEFAULT_REGISTRIES,
-} from './extension-registry';
+export { ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY } from './extension-registry';
 
 // Export extension manifest types
 export type {
@@ -126,6 +101,3 @@ export type {
   ExtensionInstallResult,
   ExtensionSearchFilters,
 } from '../models/extension-manifest';
-
-// Export Node.js runtime testing utilities
-export { NodeProviderModule } from './node-provider-module';

@@ -1,31 +1,26 @@
+// Polyfills (must be first for global APIs like URL, URLSearchParams, etc.)
 import 'react-native-url-polyfill/auto';
 
-import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+// Providers (namespaced provider groups)
+import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+
+// Provider metadata (catalog of built-in providers)
 import { PROVIDERS_LIST } from './utils/providers-list';
+
+// Utils (execution, dynamic loading, validation, contexts, and extension registry)
 import {
-  evaluateProviderCode,
-  loadProviderFromURL,
-  createProviderFromURL,
-  loadMultipleProviders,
-  validateProviderModule,
-  clearExtensionCache,
-  getCachedExtensions,
-  testProviderURL,
-  type ProviderModule,
-  type ExtensionConfig,
   createProviderContext,
-  createProviderContextWithAxios,
-  createReactNativeProviderContext,
   ExtensionRegistryManager,
   createExtensionManager,
-  setupDefaultExtensionManager,
-  DEFAULT_REGISTRIES,
+  DEFAULT_REGISTRY,
   type ExtensionManifest,
   type ExtensionRegistry,
   type ExtensionInstallResult,
   type ExtensionSearchFilters,
 } from './utils';
-import { createZoro } from './providers/anime/zoro';
+
+
+// Extractors (video/file hosters and scrapers)
 import {
   AsianLoad,
   Filemoon,
@@ -48,6 +43,8 @@ import {
   Voe,
   MegaUp,
 } from './extractors';
+
+// Models (domain types, enums, and constants)
 import {
   type IProviderStats,
   type ISearch,
@@ -56,7 +53,6 @@ import {
   type IAnimeResult,
   type IEpisodeServer,
   type IVideo,
-  type LibgenBook,
   StreamingServers,
   MediaStatus,
   SubOrSub,
@@ -67,8 +63,6 @@ import {
   type ILightNovelInfo,
   type ILightNovelChapter,
   type ILightNovelChapterContent,
-  type GetComicsComics,
-  type ComicRes,
   type IMangaChapterPage,
   TvType,
   type IMovieEpisode,
@@ -89,16 +83,21 @@ import {
   type IMovieSeason,
 } from './models';
 
-export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META };
+// ---------------------------------------------------------------------------
+// Exports
+// ---------------------------------------------------------------------------
+
+// Providers (namespaced)
+export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
+
+// Provider metadata
 export { PROVIDERS_LIST };
+
+// Models: runtime enums/constants
+export { Topics, Genres, SubOrSub, StreamingServers, MediaStatus, TvType, MediaFormat };
+
+// Extractors (runtime values)
 export {
-  Topics,
-  Genres,
-  SubOrSub,
-  StreamingServers,
-  MediaStatus,
-  TvType,
-  MediaFormat,
   GogoCDN,
   StreamSB,
   VidCloud,
@@ -120,6 +119,8 @@ export {
   VidHide,
   Voe,
 };
+
+// Models: TypeScript types (compile-time only)
 export type {
   IProviderStats,
   IAnimeEpisode,
@@ -127,7 +128,6 @@ export type {
   IAnimeResult,
   IEpisodeServer,
   IVideo,
-  LibgenBook,
   IMangaResult,
   IMangaChapter,
   IMangaInfo,
@@ -135,8 +135,6 @@ export type {
   ILightNovelInfo,
   ILightNovelChapter,
   ILightNovelChapterContent,
-  GetComicsComics,
-  ComicRes,
   ISearch,
   IMangaChapterPage,
   IMovieEpisode,
@@ -154,27 +152,8 @@ export type {
   IMovieSeason,
 };
 
-export {
-  evaluateProviderCode,
-  loadProviderFromURL,
-  createProviderFromURL,
-  loadMultipleProviders,
-  validateProviderModule,
-  clearExtensionCache,
-  getCachedExtensions,
-  testProviderURL,
-  type ProviderModule,
-  type ExtensionConfig,
-  createProviderContext,
-  createProviderContextWithAxios,
-  createReactNativeProviderContext,
-  createZoro,
-  ExtensionRegistryManager,
-  createExtensionManager,
-  setupDefaultExtensionManager,
-  DEFAULT_REGISTRIES,
-  type ExtensionManifest,
-  type ExtensionRegistry,
-  type ExtensionInstallResult,
-  type ExtensionSearchFilters,
-};
+// Utils: functions, contexts, and extension registry (runtime values)
+export { createProviderContext, ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY };
+
+// Utils: exported types (compile-time only)
+export type { ExtensionManifest, ExtensionRegistry, ExtensionInstallResult, ExtensionSearchFilters };
