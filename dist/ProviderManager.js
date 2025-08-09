@@ -22,7 +22,13 @@ class ProviderManager {
     loadRegistry() {
         try {
             registry_json_1.default.extensions.forEach((extension) => {
-                this.extensionManifest.set(extension.id, extension);
+                // Convert old format to new format if needed
+                const manifest = {
+                    ...extension,
+                    category: extension.category, // Cast to avoid type error
+                    factories: extension.factories || (extension.factoryName ? [extension.factoryName] : []),
+                };
+                this.extensionManifest.set(extension.id, manifest);
             });
             console.log(`📚 Loaded ${registry_json_1.default.extensions.length} extensions from registry`);
         }
@@ -55,39 +61,41 @@ class ProviderManager {
      * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
      * @param extensionId - Optional custom extension ID for caching
      */
-    async loadProviderCode(source, factoryName, extensionId = `custom-${factoryName}-${Date.now()}`) {
-        try {
-            console.log(`📥 Loading provider code from: ${source}`);
-            let providerCode;
-            if (source.startsWith('http')) {
-                // Load from URL
-                const response = await fetch(source);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
-                }
-                providerCode = await response.text();
-                console.log('✅ Provider code loaded from URL');
-            }
-            else {
-                // Load from file system
-                const fs = require('fs');
-                providerCode = fs.readFileSync(source, 'utf-8');
-                console.log('✅ Provider code loaded from file');
-            }
-            // Execute the provider code
-            const providerInstance = await this.executeProviderCodeDirect(providerCode, factoryName);
-            // Cache the loaded extension
-            this.loadedExtensions.set(extensionId, providerInstance);
-            console.log(`✅ Provider '${factoryName}' loaded successfully`);
-            console.log(`📦 Provider code size: ${providerCode.length} characters`);
-            // @ts-ignore
-            return providerInstance;
-        }
-        catch (error) {
-            console.error(`❌ Failed to load provider code from ${source}:`, error);
-            throw error;
-        }
-    }
+    // async loadProviderCode(
+    //   source: string,
+    //   factoryName: string,
+    //   extensionId: string = `custom-${factoryName}-${Date.now()}`
+    // ): Promise<AnimeProviderInstance | MovieProviderInstance> {
+    //   try {
+    //     console.log(`📥 Loading provider code from: ${source}`);
+    //     let providerCode: string;
+    //     if (source.startsWith('http')) {
+    //       // Load from URL
+    //       const response = await fetch(source);
+    //       if (!response.ok) {
+    //         throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
+    //       }
+    //       providerCode = await response.text();
+    //       console.log('✅ Provider code loaded from URL');
+    //     } else {
+    //       // Load from file system
+    //       const fs = require('fs');
+    //       providerCode = fs.readFileSync(source, 'utf-8');
+    //       console.log('✅ Provider code loaded from file');
+    //     }
+    //     // This code path is only reached for URL-based loading
+    //     const providerInstance = await this.executeProviderCodeDirect(providerCode, factoryName);
+    //     // Cache the loaded extension
+    //     this.loadedExtensions.set(extensionId, providerInstance);
+    //     console.log(`✅ Provider '${factoryName}' loaded successfully`);
+    //     console.log(`📦 Provider code size: ${providerCode.length} characters`);
+    //     // @ts-ignore
+    //     return providerInstance;
+    //   } catch (error) {
+    //     console.error(`❌ Failed to load provider code from ${source}:`, error);
+    //     throw error;
+    //   }
+    // }
     /**
      * Load an extension by ID from the registry
      */
@@ -110,7 +118,11 @@ class ProviderManager {
             }
             const providerCode = await response.text();
             // Execute the provider code
-            const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
+            const factoryName = metadata.factories[0]; // Use first factory
+            if (!factoryName) {
+                throw new Error(`No factory functions available for extension ${extensionId}`);
+            }
+            const providerInstance = await this.executeProviderCode(providerCode, factoryName, metadata);
             // Cache the loaded extension
             this.loadedExtensions.set(extensionId, providerInstance);
             console.log(`✅ Extension '${extensionId}' loaded successfully`);
@@ -128,20 +140,33 @@ class ProviderManager {
         const context = this.createExecutionContext();
         try {
             // Create and execute the provider code
-            const executeFunction = new Function('context', `
-        const exports = context.exports;
-        const require = context.require;
-        const module = context.module;
-        const console = context.console;
-        const Promise = context.Promise;
-        const Object = context.Object;
-        const fetch = context.fetch;
-        const __awaiter = context.__awaiter;
-        
-        ${code}
-        
-        return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
-        `);
+            console.log(`📝 About to execute provider code for factory: ${factoryName} (direct)`);
+            let executeFunction;
+            try {
+                executeFunction = new Function('context', `
+          const exports = context.exports;
+          const require = context.require;
+          const module = context.module;
+          const console = context.console;
+          const Promise = context.Promise;
+          const Object = context.Object;
+          const fetch = context.fetch;
+          const __awaiter = context.__awaiter;
+          
+          try {
+            ${code}
+          } catch (execError) {
+            console.error('Error during provider code execution:', execError);
+            throw new Error('Provider code execution failed: ' + execError.message);
+          }
+          
+          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+          `);
+            }
+            catch (syntaxError) {
+                console.error('Syntax error in provider code:', syntaxError);
+                throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
+            }
             const result = executeFunction(context);
             const factory = result[factoryName];
             if (!factory || typeof factory !== 'function') {
@@ -168,20 +193,34 @@ class ProviderManager {
         const context = this.createExecutionContext();
         try {
             // Create and execute the provider code
-            const executeFunction = new Function('context', `
-        const exports = context.exports;
-        const require = context.require;
-        const module = context.module;
-        const console = context.console;
-        const Promise = context.Promise;
-        const Object = context.Object;
-        const fetch = context.fetch;
-        const __awaiter = context.__awaiter;
-        
-        ${code}
-        
-        return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
-        `);
+            console.log(`📝 About to execute provider code for factory: ${factoryName}`);
+            // Add more robust error handling for React Native environment
+            let executeFunction;
+            try {
+                executeFunction = new Function('context', `
+          const exports = context.exports;
+          const require = context.require;
+          const module = context.module;
+          const console = context.console;
+          const Promise = context.Promise;
+          const Object = context.Object;
+          const fetch = context.fetch;
+          const __awaiter = context.__awaiter;
+          
+          try {
+            ${code}
+          } catch (execError) {
+            console.error('Error during provider code execution:', execError);
+            throw new Error('Provider code execution failed: ' + execError.message);
+          }
+          
+          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+          `);
+            }
+            catch (syntaxError) {
+                console.error('Syntax error in provider code:', syntaxError);
+                throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
+            }
             const result = executeFunction(context);
             const factory = result[factoryName];
             if (!factory || typeof factory !== 'function') {
@@ -401,72 +440,6 @@ class ProviderManager {
             }
         });
         return Promise.all(searchPromises);
-    }
-    /**
-     * Load provider code from string (for testing purposes)
-     */
-    async loadProviderCodeFromString(code, factoryName, extensionId = `string-${factoryName}-${Date.now()}`) {
-        try {
-            console.log(`📥 Loading provider code from string: ${factoryName}`);
-            console.log(`📦 Provider code size: ${code.length} characters`);
-            // Execute the provider code
-            const providerInstance = await this.executeProviderCodeDirect(code, factoryName);
-            // Cache the loaded extension
-            this.loadedExtensions.set(extensionId, providerInstance);
-            console.log(`✅ Provider '${factoryName}' loaded successfully from string`);
-            // @ts-ignore
-            return providerInstance;
-        }
-        catch (error) {
-            console.error(`❌ Failed to load provider code from string:`, error);
-            throw error;
-        }
-    }
-    /**
-     * Convenience method to load Zoro provider (for testing)
-     */
-    async loadZoro(source) {
-        const defaultSource = './dist/providers/anime/zoro.js';
-        return this.loadProviderCode(source || defaultSource, 'createZoro', 'zoro-test');
-    }
-    /**
-     * Convenience method to load HiMovies provider (for testing)
-     */
-    async loadHiMovies(source) {
-        const defaultSource = './dist/providers/movies/himovies.js';
-        return this.loadProviderCode(source || defaultSource, 'createHiMovies', 'himovies-test');
-    }
-    /**
-     * Auto-detect and load any provider from file (for testing)
-     */
-    async loadAnyProvider(source, extensionId) {
-        try {
-            console.log(`🔍 Auto-detecting provider from: ${source}`);
-            let providerCode;
-            if (source.startsWith('http')) {
-                const response = await fetch(source);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
-                }
-                providerCode = await response.text();
-            }
-            else {
-                const fs = require('fs');
-                providerCode = fs.readFileSync(source, 'utf-8');
-            }
-            // Try to detect factory function name
-            const factoryMatches = providerCode.match(/(?:function\s+|const\s+|export\s+(?:function\s+)?)(create\w+)/g);
-            if (!factoryMatches || factoryMatches.length === 0) {
-                throw new Error('No factory function found (looking for createXxx pattern)');
-            }
-            const factoryName = factoryMatches[0].replace(/(?:function\s+|const\s+|export\s+(?:function\s+)?)/, '');
-            console.log(`🎯 Detected factory function: ${factoryName}`);
-            return this.loadProviderCode(source, factoryName, extensionId);
-        }
-        catch (error) {
-            console.error(`❌ Failed to auto-load provider from ${source}:`, error);
-            throw error;
-        }
     }
 }
 exports.ProviderManager = ProviderManager;

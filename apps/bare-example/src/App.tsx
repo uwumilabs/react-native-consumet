@@ -1,12 +1,11 @@
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import Meta from './Meta';
-import Anime from './Anime';
-import Manga from './Manga';
-import Movies from './Movies';
-import Ext from './Ext';
-import ExtGithub from './Ext-github';
-import ExtensionDemo from './ExtensionDemo';
-import NodeJSTest from './NodeJSTest';
+import Meta from './non-registry/Meta';
+import Anime from './non-registry/Anime';
+import Manga from './non-registry/Manga';
+import Movies from './non-registry/Movies';
+import ExtLocal from './registry/Ext-local';
+import ExtGithub from './registry/Ext-github';
+import ProviderManagerDemo from './registry';
 
 export default function App() {
   return (
@@ -14,10 +13,7 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       {/* <Anime /> */}
       {/* <Movies /> */}
-      {/* <Ext/> */}
-      {/* <ExtensionDemo/> */}
-      <ExtGithub/>
-      {/* <NodeJSTest/> */}
+      <ProviderManagerDemo/>
       {/* <Manga/> */}
       {/* <Meta /> */}
     </SafeAreaView>

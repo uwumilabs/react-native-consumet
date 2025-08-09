@@ -24,7 +24,7 @@ async function simpleExample() {
         console.log(`✅ Loaded: ${zoro.name}`);
         // Type-safe methods with full IntelliSense
         const results = await zoro.search('naruto', 1);
-        console.log(`🔍 Found ${results.results?.length || 0} anime`);
+        console.log(results);
         if (results.results?.[0]) {
             const anime = await zoro.fetchAnimeInfo(results.results[0].id);
             console.log(`📺 ${anime.title} (${anime.totalEpisodes} episodes)`);
@@ -33,18 +33,17 @@ async function simpleExample() {
     catch (error) {
         console.error('❌ Error:', error);
     }
-    try {
-        // Load movie provider from registry
-        console.log('\n📥 Loading HiMovies provider...');
-        const himovies = await manager.getMovieProvider('himovies-movies');
-        console.log(`✅ Loaded: ${himovies.name}`);
-        // Type-safe movie methods
-        const movieResults = await himovies.search('batman', 1);
-        console.log(`🔍 Found ${movieResults.results?.length || 0} movies`);
-    }
-    catch (error) {
-        console.error('❌ Error:', error);
-    }
+    // try {
+    //   // Load movie provider from registry
+    //   console.log('\n📥 Loading HiMovies provider...');
+    //   const himovies = await manager.getMovieProvider('himovies-movies');
+    //   console.log(`✅ Loaded: ${himovies.name}`);
+    //   // Type-safe movie methods
+    //   const movieResults = await himovies.search('batman', 1);
+    //   console.log(`🔍 Found ${movieResults.results?.length || 0} movies`);
+    // } catch (error) {
+    //   console.error('❌ Error:', error);
+    // }
 }
 /**
  * Key benefits of the new approach:

@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_REGISTRY = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.ExtensionUtils = exports.createProviderFromURL = exports.DEFAULT_REGISTRY = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.ProviderManager = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 // Polyfills (must be first for global APIs like URL, URLSearchParams, etc.)
 require("react-native-url-polyfill/auto");
 // Providers (namespaced provider groups)
@@ -13,12 +16,16 @@ Object.defineProperty(exports, "META", { enumerable: true, get: function () { re
 // Provider metadata (catalog of built-in providers)
 const providers_list_1 = require("./utils/providers-list");
 Object.defineProperty(exports, "PROVIDERS_LIST", { enumerable: true, get: function () { return providers_list_1.PROVIDERS_LIST; } });
+const ProviderManager_1 = __importDefault(require("./ProviderManager"));
+exports.ProviderManager = ProviderManager_1.default;
 // Utils (execution, dynamic loading, validation, contexts, and extension registry)
 const utils_1 = require("./utils");
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return utils_1.createProviderContext; } });
 Object.defineProperty(exports, "ExtensionRegistryManager", { enumerable: true, get: function () { return utils_1.ExtensionRegistryManager; } });
 Object.defineProperty(exports, "createExtensionManager", { enumerable: true, get: function () { return utils_1.createExtensionManager; } });
 Object.defineProperty(exports, "DEFAULT_REGISTRY", { enumerable: true, get: function () { return utils_1.DEFAULT_REGISTRY; } });
+Object.defineProperty(exports, "createProviderFromURL", { enumerable: true, get: function () { return utils_1.createProviderFromURL; } });
+Object.defineProperty(exports, "ExtensionUtils", { enumerable: true, get: function () { return utils_1.ExtensionUtils; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });

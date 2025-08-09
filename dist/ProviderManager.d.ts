@@ -60,7 +60,6 @@ export declare class ProviderManager {
      * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
      * @param extensionId - Optional custom extension ID for caching
      */
-    loadProviderCode(source: string, factoryName: string, extensionId?: string): Promise<AnimeProviderInstance | MovieProviderInstance>;
     /**
      * Load an extension by ID from the registry
      */
@@ -122,22 +121,6 @@ export declare class ProviderManager {
         extensionId: string;
         results: ISearch<any>;
     }>>;
-    /**
-     * Load provider code from string (for testing purposes)
-     */
-    loadProviderCodeFromString(code: string, factoryName: string, extensionId?: string): Promise<AnimeProviderInstance | MovieProviderInstance>;
-    /**
-     * Convenience method to load Zoro provider (for testing)
-     */
-    loadZoro(source?: string): Promise<AnimeProviderInstance>;
-    /**
-     * Convenience method to load HiMovies provider (for testing)
-     */
-    loadHiMovies(source?: string): Promise<MovieProviderInstance>;
-    /**
-     * Auto-detect and load any provider from file (for testing)
-     */
-    loadAnyProvider(source: string, extensionId?: string): Promise<BaseProviderInstance>;
 }
 export default ProviderManager;
 //# sourceMappingURL=ProviderManager.d.ts.map

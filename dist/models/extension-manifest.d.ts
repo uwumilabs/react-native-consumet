@@ -21,8 +21,8 @@ export interface ExtensionManifest {
     category: ProviderType;
     /** Main entry point URL or file path */
     main: string;
-    /** Factory function name exported by this extension */
-    factoryName: string;
+    /** Factory function names exported by this extension */
+    factories: string[];
     /** Minimum required consumet version */
     minConsumetVersion?: string;
     /** Maximum supported consumet version */

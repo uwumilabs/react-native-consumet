@@ -99,18 +99,28 @@ class ExtensionRegistryManager {
                     error: `Extension ${extensionId} not found in any registry`,
                 };
             }
-            // Verify that the manifest factories match what's actually exported
-            const missingFactory = manifest.factoryName;
-            const missingFactories = missingFactory ? [manifest.factoryName] : [];
-            const warnings = missingFactories.length > 0
-                ? [`Manifest lists factories not found in code: ${missingFactories.join(', ')}`]
-                : [];
+            // Validate extension URL accessibility
+            try {
+                const response = await fetch(manifest.main, { method: 'HEAD' });
+                if (!response.ok) {
+                    return {
+                        success: false,
+                        error: `Extension file not accessible: ${response.status} ${response.statusText}`,
+                    };
+                }
+            }
+            catch (fetchError) {
+                return {
+                    success: false,
+                    error: `Failed to access extension file: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`,
+                };
+            }
             // Mark as installed
             this.installedExtensions.set(extensionId, manifest);
             return {
                 success: true,
                 extension: manifest,
-                warnings,
+                warnings: [],
             };
         }
         catch (error) {
@@ -128,7 +138,7 @@ class ExtensionRegistryManager {
         if (!manifest) {
             throw new Error(`Extension ${extensionId} is not installed`);
         }
-        if (!manifest.factoryName.includes(factoryName)) {
+        if (!manifest.factories || !manifest.factories.includes(factoryName)) {
             throw new Error(`Factory ${factoryName} not available in extension ${extensionId}`);
         }
         const cacheKey = `${extensionId}:${factoryName}`;
@@ -137,7 +147,7 @@ class ExtensionRegistryManager {
             return this.extensionInstances.get(cacheKey);
         }
         // Create new instance
-        const provider = await createProviderFromURL(manifest.main, factoryName, config);
+        const provider = await createProviderFromURL(manifest.main, factoryName);
         // Cache the instance
         this.extensionInstances.set(cacheKey, provider);
         return provider;
@@ -220,34 +230,32 @@ function createExtensionManager() {
  */
 exports.DEFAULT_REGISTRY = 'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json';
 /**
-* Create a provider instance from a URL with automatic context injection
-*
-* @param url - URL to fetch the provider from
-* @param factoryName - Name of the factory function to call (e.g., 'createZoro')
-* @param config - Configuration options
-* @returns Promise resolving to the configured provider instance
-*
-* @example
-* ```typescript
-* // Automatically inject context and create provider
-* const zoro = await createProviderFromURL(
-*   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
-*   'createZoro'
-* );
-*
-* const results = await zoro.search('One Piece');
-* ```
-*/
+ * Create a provider instance from a URL with automatic context injection
+ * Note: Uses Function constructor for dynamic code execution - implement your own secure alternative
+ */
 async function createProviderFromURL(url, factoryName) {
-    const { context = (0, create_provider_context_1.default)() } = config;
+    const context = (0, create_provider_context_1.default)();
     const res = await fetch(url);
     if (!res.ok) {
         throw new Error(`Failed to fetch provider from ${url}: ${res.status} ${res.statusText}`);
     }
-    const module = await res.text();
-    if (!module[factoryName] || typeof module[factoryName] !== 'function') {
-        throw new Error(`Provider module does not export a function named '${factoryName}'`);
+    const moduleCode = await res.text();
+    // Basic module execution - developers should implement secure alternatives
+    const moduleExports = {};
+    const moduleFunction = new Function('exports', 'module', moduleCode);
+    const moduleObject = { exports: moduleExports };
+    try {
+        moduleFunction(moduleExports, moduleObject);
     }
-    return module[factoryName](context);
+    catch (error) {
+        throw new Error(`Failed to execute extension module: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+    const finalExports = Object.keys(moduleObject.exports).length > 0 ? moduleObject.exports : moduleExports;
+    if (!finalExports[factoryName] || typeof finalExports[factoryName] !== 'function') {
+        const availableFunctions = Object.keys(finalExports).filter((key) => typeof finalExports[key] === 'function');
+        throw new Error(`Provider module does not export a function named '${factoryName}'. ` +
+            `Available functions: ${availableFunctions.length > 0 ? availableFunctions.join(', ') : 'none'}`);
+    }
+    return finalExports[factoryName](context);
 }
 //# sourceMappingURL=extension-registry.js.map

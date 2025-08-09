@@ -3,5 +3,6 @@ import { USER_AGENT, splitAuthor, floorID, formatTitle, genElement, capitalizeFi
 import { anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistCharacterQuery, anilistStaffInfoQuery } from './queries';
 export { USER_AGENT, GogoCDN, StreamSB, StreamHub, splitAuthor, floorID, formatTitle, genElement, capitalizeFirstLetter, VidCloud, MixDrop, Kwik, anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, range, RapidCloud, MegaCloud, StreamTape, VizCloud, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistStaffInfoQuery, Filemoon, anilistCharacterQuery, getDays, days, isJson, convertDuration, AsianLoad, substringAfter, substringBefore, calculateStringSimilarity, VidMoly, MegaUp, };
 export { createProviderContext } from './create-provider-context';
-export { ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY } from './extension-registry';
+export { ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY, createProviderFromURL, } from './extension-registry';
+export { ExtensionUtils } from './extension-utils';
 //# sourceMappingURL=index.d.ts.map

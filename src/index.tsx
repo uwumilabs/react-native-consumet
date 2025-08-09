@@ -7,8 +7,17 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 // Provider metadata (catalog of built-in providers)
 import { PROVIDERS_LIST } from './utils/providers-list';
 
+import ProviderManager from './ProviderManager';
+
 // Utils (execution, dynamic loading, validation, contexts, and extension registry)
-import { createProviderContext, ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY } from './utils';
+import {
+  createProviderContext,
+  ExtensionRegistryManager,
+  createExtensionManager,
+  DEFAULT_REGISTRY,
+  createProviderFromURL,
+  ExtensionUtils,
+} from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -73,6 +82,14 @@ import {
   type IMovieSeason,
 } from './models';
 
+// Extension types
+import type {
+  ExtensionManifest,
+  ExtensionRegistry,
+  ExtensionInstallResult,
+  ExtensionSearchFilters,
+} from './models/extension-manifest';
+
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
@@ -82,6 +99,8 @@ export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
 
 // Provider metadata
 export { PROVIDERS_LIST };
+
+export { ProviderManager };
 
 // Models: runtime enums/constants
 export { Topics, Genres, SubOrSub, StreamingServers, MediaStatus, TvType, MediaFormat };
@@ -140,7 +159,19 @@ export type {
   ProxyConfig,
   AniZipEpisode,
   IMovieSeason,
+  ExtensionManifest,
+  ExtensionRegistry,
+  ExtensionInstallResult,
+  ExtensionSearchFilters,
 };
 
 // Utils: functions, contexts, and extension registry (runtime values)
-export { createProviderContext, ExtensionRegistryManager, createExtensionManager, DEFAULT_REGISTRY };
+export {
+  createProviderContext,
+  ExtensionRegistryManager,
+  createExtensionManager,
+  DEFAULT_REGISTRY,
+  createProviderFromURL,
+  ExtensionUtils,
+};
+

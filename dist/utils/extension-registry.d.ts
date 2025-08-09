@@ -75,23 +75,8 @@ export declare function createExtensionManager(): ExtensionRegistryManager;
  */
 export declare const DEFAULT_REGISTRY = "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json";
 /**
-* Create a provider instance from a URL with automatic context injection
-*
-* @param url - URL to fetch the provider from
-* @param factoryName - Name of the factory function to call (e.g., 'createZoro')
-* @param config - Configuration options
-* @returns Promise resolving to the configured provider instance
-*
-* @example
-* ```typescript
-* // Automatically inject context and create provider
-* const zoro = await createProviderFromURL(
-*   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
-*   'createZoro'
-* );
-*
-* const results = await zoro.search('One Piece');
-* ```
-*/
+ * Create a provider instance from a URL with automatic context injection
+ * Note: Uses Function constructor for dynamic code execution - implement your own secure alternative
+ */
 export declare function createProviderFromURL(url: string, factoryName: string): Promise<any>;
 //# sourceMappingURL=extension-registry.d.ts.map

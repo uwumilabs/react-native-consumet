@@ -1,4 +1,4 @@
-export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels'| 'meta'
+export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta';
 /**
  * Extension manifest interface for defining extension metadata
  */
@@ -28,8 +28,8 @@ export interface ExtensionManifest {
   /** Main entry point URL or file path */
   main: string;
 
-  /** Factory function name exported by this extension */
-  factoryName: string;
+  /** Factory function names exported by this extension */
+  factories: string[];
 
   /** Minimum required consumet version */
   minConsumetVersion?: string;
