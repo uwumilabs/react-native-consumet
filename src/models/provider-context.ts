@@ -122,6 +122,17 @@ export interface ExtractorRegistry {
   };
 }
 
+export type ProviderConfig = {
+  name: string;
+  languages: string[] | string;
+  classPath: string;
+  baseUrl: string;
+  isNSFW: boolean;
+  logo: string;
+  isWorking?: boolean;
+  isDubAvailableSeparately?: boolean;
+};
+
 /**
  * ProviderContext:
  * Passed into each provider factory function. Gives full access to platform-wide utils and extractors.
@@ -138,6 +149,8 @@ export interface ProviderContext {
     log: (...args: any[]) => void;
     error: (...args: any[]) => void;
   };
+  // Utility function to create normalized base URL
+  createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
   // Enums included directly in context to avoid require statements in bundled providers
   enums: {
     StreamingServers: typeof StreamingServers;

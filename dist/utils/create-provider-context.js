@@ -65,6 +65,18 @@ function createProviderContext(config = {}) {
         Voe: extractors_1.Voe,
         MegaUp: extractors_1.MegaUp,
     };
+    // Create base URL normalization utility
+    const createCustomBaseUrl = (defaultUrl, customUrl) => {
+        if (!customUrl) {
+            return defaultUrl;
+        }
+        if (customUrl.startsWith('http://') || customUrl.startsWith('https://')) {
+            return customUrl;
+        }
+        else {
+            return `http://${customUrl}`;
+        }
+    };
     return {
         axios: config.axios || defaultAxios,
         load: config.load || cheerio_1.load,
@@ -75,6 +87,7 @@ function createProviderContext(config = {}) {
         MangaParser: config.MangaParser || models_1.MangaParser,
         extractors: Object.assign(Object.assign({}, defaultExtractors), config.extractors),
         logger: config.logger || defaultLogger,
+        createCustomBaseUrl,
         enums: {
             StreamingServers: models_1.StreamingServers,
             MediaFormat: models_1.MediaFormat,

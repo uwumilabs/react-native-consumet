@@ -70,6 +70,16 @@ export interface ExtractorRegistry {
         extract: (url: URL) => Promise<any>;
     };
 }
+export type ProviderConfig = {
+    name: string;
+    languages: string[] | string;
+    classPath: string;
+    baseUrl: string;
+    isNSFW: boolean;
+    logo: string;
+    isWorking?: boolean;
+    isDubAvailableSeparately?: boolean;
+};
 /**
  * ProviderContext:
  * Passed into each provider factory function. Gives full access to platform-wide utils and extractors.
@@ -86,6 +96,7 @@ export interface ProviderContext {
         log: (...args: any[]) => void;
         error: (...args: any[]) => void;
     };
+    createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
     enums: {
         StreamingServers: typeof StreamingServers;
         MediaFormat: typeof MediaFormat;

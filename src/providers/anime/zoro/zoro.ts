@@ -13,11 +13,8 @@ export class Zoro extends AnimeParser {
     // Use the context factory to create a complete context with all defaults
     const defaultContext = createProviderContext();
 
-    this.instance = createZoro(defaultContext);
+    this.instance = createZoro(defaultContext, customBaseURL);
     this.logo = this.instance.logo;
-    if (customBaseURL) {
-      this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
-    }
   }
 
   // Proxy all methods to the instance

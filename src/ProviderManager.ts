@@ -292,6 +292,25 @@ export class ProviderManager {
 
       // Add more robust error handling for React Native environment
       let executeFunction;
+      console.log(`
+          const exports = context.exports;
+          const require = context.require;
+          const module = context.module;
+          const console = context.console;
+          const Promise = context.Promise;
+          const Object = context.Object;
+          const fetch = context.fetch;
+          const __awaiter = context.__awaiter;
+          
+          try {
+            ${code}
+          } catch (execError) {
+            console.error('Error during provider code execution:', execError);
+            throw new Error('Provider code execution failed: ' + execError.message);
+          }
+          
+          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+          `);
       try {
         executeFunction = new Function(
           'context',
@@ -315,6 +334,7 @@ export class ProviderManager {
           return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
           `
         );
+        
       } catch (syntaxError: any) {
         console.error('Syntax error in provider code:', syntaxError);
         throw new Error(`Failed to parse provider code: ${syntaxError.message}`);

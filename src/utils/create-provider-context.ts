@@ -149,6 +149,19 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MegaUp: MegaUp,
   };
 
+  // Create base URL normalization utility
+  const createCustomBaseUrl = (defaultUrl: string, customUrl?: string): string => {
+    if (!customUrl) {
+      return defaultUrl;
+    }
+
+    if (customUrl.startsWith('http://') || customUrl.startsWith('https://')) {
+      return customUrl;
+    } else {
+      return `http://${customUrl}`;
+    }
+  };
+
   return {
     axios: config.axios || defaultAxios,
     load: config.load || load,
@@ -160,6 +173,7 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MangaParser: config.MangaParser || MangaParser,
     extractors: { ...defaultExtractors, ...config.extractors },
     logger: config.logger || defaultLogger,
+    createCustomBaseUrl,
     enums: {
       StreamingServers,
       MediaFormat,
