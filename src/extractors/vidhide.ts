@@ -16,7 +16,7 @@ class VidHide extends VideoExtractor {
         throw new Error('Video not found');
       });
 
-      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
+      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', ''));
       const links = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g) ?? [];
       const m3u8Link = links[0];
       const m3u8Content = await axios.get(m3u8Link, {

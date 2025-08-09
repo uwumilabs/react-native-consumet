@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,15 +22,16 @@ class VidCloud extends models_1.VideoExtractor {
         super();
         this.serverName = 'VidCloud';
         this.sources = [];
-        this.extract = async (videoUrl, referer = 'https://flixhq.to/') => {
+        this.extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://flixhq.to/') {
+            var _a, _b;
             const result = {
                 sources: [],
                 subtitles: [],
             };
             try {
                 // Use context axios if available, otherwise fall back to direct import
-                const axiosInstance = this.ctx?.axios || axios_1.default;
-                const USER_AGENT_VAL = this.ctx?.USER_AGENT || utils_1.USER_AGENT;
+                const axiosInstance = ((_a = this.ctx) === null || _a === void 0 ? void 0 : _a.axios) || axios_1.default;
+                const USER_AGENT_VAL = ((_b = this.ctx) === null || _b === void 0 ? void 0 : _b.USER_AGENT) || utils_1.USER_AGENT;
                 const options = {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -29,7 +39,7 @@ class VidCloud extends models_1.VideoExtractor {
                         'User-Agent': USER_AGENT_VAL,
                     },
                 };
-                const resp = await (0, megacloud_getsrcs_1.getSources)(videoUrl, referer, this.ctx);
+                const resp = yield (0, megacloud_getsrcs_1.getSources)(videoUrl, referer, this.ctx);
                 if (!resp) {
                     throw new Error('Failed to get sources from getSources function');
                 }
@@ -42,7 +52,7 @@ class VidCloud extends models_1.VideoExtractor {
                 result.sources = [];
                 this.sources = [];
                 for (const source of sources) {
-                    const { data } = await axiosInstance.get(source.file, options);
+                    const { data } = yield axiosInstance.get(source.file, options);
                     const urls = data
                         .split('\n')
                         .filter((line) => line.includes('.m3u8') || line.endsWith('m3u8'));
@@ -75,7 +85,7 @@ class VidCloud extends models_1.VideoExtractor {
             catch (err) {
                 throw err;
             }
-        };
+        });
         this.ctx = ctx;
     }
 }

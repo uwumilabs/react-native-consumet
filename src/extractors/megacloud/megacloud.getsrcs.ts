@@ -94,7 +94,7 @@ export async function getSources(embed_url: URL, site: string, ctx?: ExtractorCo
     });
 
     const decodeRes = await axiosInstance.get(`${decodeUrl}?${params.toString()}`);
-    videoSrc = JSON.parse(decodeRes.data.match(/\[.*?\]/s)?.[0]);
+    videoSrc = JSON.parse(decodeRes.data.replace(/\n/g, ' ').match(/\[.*?\]/)?.[0]);
     // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
   } else {
     videoSrc = sources;

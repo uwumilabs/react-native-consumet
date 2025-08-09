@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,18 +28,20 @@ class ExtensionRegistryManager {
     /**
      * Add a registry URL to discover extensions from
      */
-    async addRegistry(url) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+    addRegistry(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const response = yield fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+                }
+                const registry = yield response.json();
+                this.registries.set(url, registry);
             }
-            const registry = await response.json();
-            this.registries.set(url, registry);
-        }
-        catch (error) {
-            throw new Error(`Failed to add registry ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
+            catch (error) {
+                throw new Error(`Failed to add registry ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
     }
     /**
      * Add a registry object directly (useful for testing or local registries)
@@ -90,67 +101,71 @@ class ExtensionRegistryManager {
     /**
      * Install an extension by ID
      */
-    async installExtension(extensionId) {
-        try {
-            const manifest = this.getExtensionManifest(extensionId);
-            if (!manifest) {
-                return {
-                    success: false,
-                    error: `Extension ${extensionId} not found in any registry`,
-                };
-            }
-            // Validate extension URL accessibility
+    installExtension(extensionId) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = await fetch(manifest.main, { method: 'HEAD' });
-                if (!response.ok) {
+                const manifest = this.getExtensionManifest(extensionId);
+                if (!manifest) {
                     return {
                         success: false,
-                        error: `Extension file not accessible: ${response.status} ${response.statusText}`,
+                        error: `Extension ${extensionId} not found in any registry`,
                     };
                 }
-            }
-            catch (fetchError) {
+                // Validate extension URL accessibility
+                try {
+                    const response = yield fetch(manifest.main, { method: 'HEAD' });
+                    if (!response.ok) {
+                        return {
+                            success: false,
+                            error: `Extension file not accessible: ${response.status} ${response.statusText}`,
+                        };
+                    }
+                }
+                catch (fetchError) {
+                    return {
+                        success: false,
+                        error: `Failed to access extension file: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`,
+                    };
+                }
+                // Mark as installed
+                this.installedExtensions.set(extensionId, manifest);
                 return {
-                    success: false,
-                    error: `Failed to access extension file: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`,
+                    success: true,
+                    extension: manifest,
+                    warnings: [],
                 };
             }
-            // Mark as installed
-            this.installedExtensions.set(extensionId, manifest);
-            return {
-                success: true,
-                extension: manifest,
-                warnings: [],
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            };
-        }
+            catch (error) {
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                };
+            }
+        });
     }
     /**
      * Create a provider instance from an installed extension
      */
-    async createProvider(extensionId, factoryName) {
-        const manifest = this.installedExtensions.get(extensionId);
-        if (!manifest) {
-            throw new Error(`Extension ${extensionId} is not installed`);
-        }
-        if (!manifest.factories || !manifest.factories.includes(factoryName)) {
-            throw new Error(`Factory ${factoryName} not available in extension ${extensionId}`);
-        }
-        const cacheKey = `${extensionId}:${factoryName}`;
-        // Return cached instance if available
-        if (this.extensionInstances.has(cacheKey)) {
-            return this.extensionInstances.get(cacheKey);
-        }
-        // Create new instance
-        const provider = await createProviderFromURL(manifest.main, factoryName);
-        // Cache the instance
-        this.extensionInstances.set(cacheKey, provider);
-        return provider;
+    createProvider(extensionId, factoryName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const manifest = this.installedExtensions.get(extensionId);
+            if (!manifest) {
+                throw new Error(`Extension ${extensionId} is not installed`);
+            }
+            if (!manifest.factories || !manifest.factories.includes(factoryName)) {
+                throw new Error(`Factory ${factoryName} not available in extension ${extensionId}`);
+            }
+            const cacheKey = `${extensionId}:${factoryName}`;
+            // Return cached instance if available
+            if (this.extensionInstances.has(cacheKey)) {
+                return this.extensionInstances.get(cacheKey);
+            }
+            // Create new instance
+            const provider = yield createProviderFromURL(manifest.main, factoryName);
+            // Cache the instance
+            this.extensionInstances.set(cacheKey, provider);
+            return provider;
+        });
     }
     /**
      * Uninstall an extension
@@ -181,23 +196,25 @@ class ExtensionRegistryManager {
     /**
      * Check for extension updates
      */
-    async checkForUpdates() {
-        const updates = [];
-        for (const installed of this.installedExtensions.values()) {
-            // Find the latest version in registries
-            for (const registry of this.registries.values()) {
-                const latest = registry.extensions.find((ext) => ext.id === installed.id);
-                if (latest && latest.version !== installed.version) {
-                    updates.push({
-                        extension: latest,
-                        currentVersion: installed.version,
-                        availableVersion: latest.version,
-                    });
-                    break;
+    checkForUpdates() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const updates = [];
+            for (const installed of this.installedExtensions.values()) {
+                // Find the latest version in registries
+                for (const registry of this.registries.values()) {
+                    const latest = registry.extensions.find((ext) => ext.id === installed.id);
+                    if (latest && latest.version !== installed.version) {
+                        updates.push({
+                            extension: latest,
+                            currentVersion: installed.version,
+                            availableVersion: latest.version,
+                        });
+                        break;
+                    }
                 }
             }
-        }
-        return updates;
+            return updates;
+        });
     }
     /**
      * Clear all cached provider instances
@@ -233,29 +250,31 @@ exports.DEFAULT_REGISTRY = 'https://raw.githubusercontent.com/uwumilabs/react-na
  * Create a provider instance from a URL with automatic context injection
  * Note: Uses Function constructor for dynamic code execution - implement your own secure alternative
  */
-async function createProviderFromURL(url, factoryName) {
-    const context = (0, create_provider_context_1.default)();
-    const res = await fetch(url);
-    if (!res.ok) {
-        throw new Error(`Failed to fetch provider from ${url}: ${res.status} ${res.statusText}`);
-    }
-    const moduleCode = await res.text();
-    // Basic module execution - developers should implement secure alternatives
-    const moduleExports = {};
-    const moduleFunction = new Function('exports', 'module', moduleCode);
-    const moduleObject = { exports: moduleExports };
-    try {
-        moduleFunction(moduleExports, moduleObject);
-    }
-    catch (error) {
-        throw new Error(`Failed to execute extension module: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-    const finalExports = Object.keys(moduleObject.exports).length > 0 ? moduleObject.exports : moduleExports;
-    if (!finalExports[factoryName] || typeof finalExports[factoryName] !== 'function') {
-        const availableFunctions = Object.keys(finalExports).filter((key) => typeof finalExports[key] === 'function');
-        throw new Error(`Provider module does not export a function named '${factoryName}'. ` +
-            `Available functions: ${availableFunctions.length > 0 ? availableFunctions.join(', ') : 'none'}`);
-    }
-    return finalExports[factoryName](context);
+function createProviderFromURL(url, factoryName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const context = (0, create_provider_context_1.default)();
+        const res = yield fetch(url);
+        if (!res.ok) {
+            throw new Error(`Failed to fetch provider from ${url}: ${res.status} ${res.statusText}`);
+        }
+        const moduleCode = yield res.text();
+        // Basic module execution - developers should implement secure alternatives
+        const moduleExports = {};
+        const moduleFunction = new Function('exports', 'module', moduleCode);
+        const moduleObject = { exports: moduleExports };
+        try {
+            moduleFunction(moduleExports, moduleObject);
+        }
+        catch (error) {
+            throw new Error(`Failed to execute extension module: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+        const finalExports = Object.keys(moduleObject.exports).length > 0 ? moduleObject.exports : moduleExports;
+        if (!finalExports[factoryName] || typeof finalExports[factoryName] !== 'function') {
+            const availableFunctions = Object.keys(finalExports).filter((key) => typeof finalExports[key] === 'function');
+            throw new Error(`Provider module does not export a function named '${factoryName}'. ` +
+                `Available functions: ${availableFunctions.length > 0 ? availableFunctions.join(', ') : 'none'}`);
+        }
+        return finalExports[factoryName](context);
+    });
 }
 //# sourceMappingURL=extension-registry.js.map

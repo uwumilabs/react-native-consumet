@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -16,16 +25,17 @@ class AsianLoad extends models_1.VideoExtractor {
             key: crypto_js_1.default.enc.Utf8.parse('93422192433952489752342908585752'),
             iv: crypto_js_1.default.enc.Utf8.parse('9262859232435825'),
         };
-        this.extract = async (videoUrl) => {
-            const res = await axios_1.default.get(videoUrl.href);
+        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            const res = yield axios_1.default.get(videoUrl.href);
             const $ = (0, cheerio_1.load)(res.data);
-            const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
-            const encryptedData = await axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
+            const encyptedParams = yield this.generateEncryptedAjaxParams($, (_a = videoUrl.searchParams.get('id')) !== null && _a !== void 0 ? _a : '');
+            const encryptedData = yield axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
             });
-            const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
+            const decryptedData = yield this.decryptAjaxData(encryptedData.data.data);
             if (!decryptedData.source)
                 throw new Error('No source found. Try a different server.');
             decryptedData.source.forEach((source) => {
@@ -40,7 +50,7 @@ class AsianLoad extends models_1.VideoExtractor {
                     isM3U8: source.file.includes('.m3u8'),
                 });
             });
-            const subtitles = decryptedData.track?.tracks?.map((track) => ({
+            const subtitles = (_c = (_b = decryptedData.track) === null || _b === void 0 ? void 0 : _b.tracks) === null || _c === void 0 ? void 0 : _c.map((track) => ({
                 url: track.file,
                 lang: track.kind === 'thumbnails' ? 'Default (maybe)' : track.kind,
             }));
@@ -48,8 +58,8 @@ class AsianLoad extends models_1.VideoExtractor {
                 sources: this.sources,
                 subtitles: subtitles,
             };
-        };
-        this.generateEncryptedAjaxParams = async ($, id) => {
+        });
+        this.generateEncryptedAjaxParams = ($, id) => __awaiter(this, void 0, void 0, function* () {
             const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
                 iv: this.keys.iv,
             }).toString();
@@ -58,13 +68,13 @@ class AsianLoad extends models_1.VideoExtractor {
                 iv: this.keys.iv,
             }).toString(crypto_js_1.default.enc.Utf8);
             return `id=${encryptedKey}&alias=${decryptedToken}`;
-        };
-        this.decryptAjaxData = async (encryptedData) => {
+        });
+        this.decryptAjaxData = (encryptedData) => __awaiter(this, void 0, void 0, function* () {
             const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.key, {
                 iv: this.keys.iv,
             }));
             return JSON.parse(decryptedData);
-        };
+        });
     }
 }
 exports.default = AsianLoad;

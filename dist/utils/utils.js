@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterValidM3U8 = exports.getHashFromImage = exports.substringBeforeLast = exports.substringAfterLast = exports.substringBefore = exports.substringAfter = exports.calculateStringSimilarity = exports.isJson = exports.getDays = exports.capitalizeFirstLetter = exports.range = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.ANIFY_URL = exports.days = exports.USER_AGENT = void 0;
 exports.convertDuration = convertDuration;
@@ -35,7 +44,7 @@ const splitAuthor = (authors) => {
 exports.splitAuthor = splitAuthor;
 const floorID = (id) => {
     let imp = '';
-    for (let i = 0; i < id?.length - 3; i++) {
+    for (let i = 0; i < (id === null || id === void 0 ? void 0 : id.length) - 3; i++) {
         imp += id[i];
     }
     const idV = parseInt(imp);
@@ -77,7 +86,7 @@ const genElement = (s, e) => {
 exports.genElement = genElement;
 const range = ({ from = 0, to = 0, step = 1, length = Math.ceil((to - from) / step) }) => Array.from({ length }, (_, i) => from + i * step);
 exports.range = range;
-const capitalizeFirstLetter = (s) => s?.charAt(0).toUpperCase() + s.slice(1);
+const capitalizeFirstLetter = (s) => (s === null || s === void 0 ? void 0 : s.charAt(0).toUpperCase()) + s.slice(1);
 exports.capitalizeFirstLetter = capitalizeFirstLetter;
 const getDays = (day1, day2) => {
     const day1Index = exports.days.indexOf((0, exports.capitalizeFirstLetter)(day1)) - 1;
@@ -166,7 +175,7 @@ exports.substringBeforeLast = substringBeforeLast;
 //   return blurhash.encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
 // };
 const getHashFromImage = (url) => {
-    if (url?.length === 0) {
+    if ((url === null || url === void 0 ? void 0 : url.length) === 0) {
         return '';
     }
     else {
@@ -179,27 +188,26 @@ exports.getHashFromImage = getHashFromImage;
 // Function to find similar titles
 function findSimilarTitles(inputTitle, titles) {
     const results = [];
-    titles?.forEach((titleObj) => {
-        const title = cleanTitle(titleObj?.title
-            ?.toLowerCase()
-            ?.replace(/\([^\)]*\)/g, '')
-            .trim() || '');
+    titles === null || titles === void 0 ? void 0 : titles.forEach((titleObj) => {
+        var _a, _b;
+        const title = cleanTitle(((_b = (_a = titleObj === null || titleObj === void 0 ? void 0 : titleObj.title) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === null || _b === void 0 ? void 0 : _b.replace(/\([^\)]*\)/g, '').trim()) || '');
         // Calculate similarity score between inputTitle and title
-        const similarity = (0, string_similarity_1.compareTwoStrings)(cleanTitle(inputTitle?.toLowerCase() || ''), title);
+        const similarity = (0, string_similarity_1.compareTwoStrings)(cleanTitle((inputTitle === null || inputTitle === void 0 ? void 0 : inputTitle.toLowerCase()) || ''), title);
         if (similarity > 0.6) {
-            results.push({ ...titleObj, similarity });
+            results.push(Object.assign(Object.assign({}, titleObj), { similarity }));
         }
     });
     const isSubAvailable = results.some((result) => result.episodes && result.episodes.sub > 0);
     // If episodes.sub is available, sort the results
     if (isSubAvailable) {
         return results.sort((a, b) => {
+            var _a, _b;
             // First sort by similarity in descending order
             if (b.similarity !== a.similarity) {
                 return b.similarity - a.similarity;
             }
             // If similarity is the same, sort by episodes.sub in descending order
-            return (b.episodes?.sub || 0) - (a.episodes?.sub || 0);
+            return (((_a = b.episodes) === null || _a === void 0 ? void 0 : _a.sub) || 0) - (((_b = a.episodes) === null || _b === void 0 ? void 0 : _b.sub) || 0);
         });
     }
     // If episodes.sub is not available, return the original list
@@ -235,27 +243,27 @@ function cleanTitle(title) {
     if (!title)
         return '';
     return transformSpecificVariations(removeSpecialChars(title
-        .replaceAll(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
-        .replaceAll(/(th|rd|nd|st) (Season|season)/gim, '')
-        .replaceAll(/\([^\(]*\)$/gim, '')
-        .replaceAll('season', '')
-        .replaceAll(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
-        .replaceAll('  ', ' ')
-        .replaceAll('"', '')
+        .replace(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
+        .replace(/(th|rd|nd|st) (Season|season)/gim, '')
+        .replace(/\([^\(]*\)$/gim, '')
+        .replace(/season/g, '')
+        .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
+        .replace(/  /g, ' ')
+        .replace(/"/g, '')
         .trimEnd()));
 }
 function removeSpecialChars(title) {
     if (!title)
         return '';
     return title
-        .replaceAll(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
-        .replaceAll(/[^A-Za-z0-9\-= ]/gim, '')
-        .replaceAll('  ', ' ');
+        .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
+        .replace(/[^A-Za-z0-9\-= ]/gim, '')
+        .replace(/  /g, ' ');
 }
 function transformSpecificVariations(title) {
     if (!title)
         return '';
-    return title.replaceAll('yuu', 'yu').replaceAll(' ou', ' oh');
+    return title.replace(/yuu/g, 'yu').replace(/ ou/g, ' oh');
 }
 function sanitizeTitle(title) {
     let resTitle = title.replace(/ *(\(dub\)|\(sub\)|\(uncensored\)|\(uncut\)|\(subbed\)|\(dubbed\))/i, '');
@@ -282,22 +290,19 @@ function stringSearch(string, pattern) {
     }
     return count;
 }
-const filterValidM3U8 = async (m3u8Links, options = {}) => {
+const filterValidM3U8 = (m3u8Links_1, ...args_1) => __awaiter(void 0, [m3u8Links_1, ...args_1], void 0, function* (m3u8Links, options = {}) {
     const { timeout = 10000, headers = {}, indicators = ['#EXT', '#EXTINF', '#EXT-X-', '#EXTM3U'], concurrency = 10, } = options;
     const validLinks = [];
     let index = 0;
-    const next = async () => {
+    const next = () => __awaiter(void 0, void 0, void 0, function* () {
         while (index < m3u8Links.length) {
             const currentIndex = index++;
             const url = m3u8Links[currentIndex];
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                        ...headers,
-                    },
+                const response = yield fetch(url, {
+                    headers: Object.assign({ 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }, headers),
                     signal: controller.signal,
                 });
                 clearTimeout(timeoutId);
@@ -311,7 +316,7 @@ const filterValidM3U8 = async (m3u8Links, options = {}) => {
                     // console.info(`⚠️ Skipping non-M3U8 type: ${url}`);
                     continue;
                 }
-                const content = await response.text();
+                const content = yield response.text();
                 if (indicators.some((ind) => content.includes(ind))) {
                     validLinks.push(url);
                 }
@@ -325,10 +330,10 @@ const filterValidM3U8 = async (m3u8Links, options = {}) => {
                 // console.warn(`⚠️ Failed to validate M3U8 (${url}): ${reason}`);
             }
         }
-    };
+    });
     // Run N concurrent validators
-    await Promise.all(Array.from({ length: concurrency }, () => next()));
+    yield Promise.all(Array.from({ length: concurrency }, () => next()));
     return validLinks;
-};
+});
 exports.filterValidM3U8 = filterValidM3U8;
 //# sourceMappingURL=utils.js.map

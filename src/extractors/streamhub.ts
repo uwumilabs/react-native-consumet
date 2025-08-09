@@ -16,7 +16,7 @@ class StreamHub extends VideoExtractor {
         throw new Error('Video not found');
       });
 
-      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', ''));
+      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', ''));
 
       const links = unpackedData.match(new RegExp('sources:\\[\\{src:"(.*?)"')) ?? [];
       const m3u8Content = await axios.get(links[1], {

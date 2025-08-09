@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,9 +22,9 @@ class AsuraScans extends models_1.MangaParser {
         this.baseUrl = 'https://asuracomic.net';
         this.logo = 'https://asuracomic.net/images/logo.png';
         this.classPath = 'MANGA.AsuraScans';
-        this.fetchMangaInfo = async (mangaId) => {
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/${mangaId}`);
                 const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const topInfoWrapper = dom.find('.relative.col-span-12.space-y-3.px-6');
@@ -71,10 +80,10 @@ class AsuraScans extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId) => {
+        });
+        this.fetchChapterPages = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/series/${chapterId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/series/${chapterId}`);
                 const chapMatch = data.replace(/\\/g, '').match(/pages.*:(\[{['"]order["'].*?}\])/);
                 if (!chapMatch)
                     throw new Error('Parsing error');
@@ -87,15 +96,15 @@ class AsuraScans extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param query Search query
          */
-        this.search = async (query, page = 1) => {
+        this.search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
             try {
                 const formattedQuery = encodeURI(query.toLowerCase());
-                const { data } = await axios_1.default.get(`${this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
                 const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const results = dom
@@ -125,7 +134,7 @@ class AsuraScans extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
     determineMediaState(state) {
         switch (state.toLowerCase().trim()) {

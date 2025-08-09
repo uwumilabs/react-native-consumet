@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -11,7 +20,8 @@ class StreamWish extends models_1.VideoExtractor {
         super(...arguments);
         this.serverName = 'streamwish';
         this.sources = [];
-        this.extract = async (videoUrl, referer) => {
+        this.extract = (videoUrl, referer) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e, _f;
             try {
                 const options = {
                     headers: {
@@ -21,7 +31,7 @@ class StreamWish extends models_1.VideoExtractor {
                         'Cache-Control': 'max-age=0',
                         'Priority': 'u=0, i',
                         'Origin': videoUrl.origin,
-                        'Referer': referer ?? videoUrl.origin,
+                        'Referer': referer !== null && referer !== void 0 ? referer : videoUrl.origin,
                         'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
                         'Sec-Ch-Ua-Mobile': '?0',
                         'Sec-Ch-Ua-Platform': 'Windows',
@@ -33,19 +43,19 @@ class StreamWish extends models_1.VideoExtractor {
                         'User-Agent': utils_1.USER_AGENT,
                     },
                 };
-                const { data } = await axios_1.default.get(videoUrl.href, options);
+                const { data } = yield axios_1.default.get(videoUrl.href, options);
                 // Code adapted from Zenda-Cross (https://github.com/Zenda-Cross/vega-app/blob/main/src/lib/providers/multi/multiGetStream.ts)
                 // Thank you to Zenda-Cross for the original implementation.
                 const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
                 const match = functionRegex.exec(data);
                 let p = '';
                 if (match) {
-                    const params = match[1]?.split(',').map((param) => param.trim());
+                    const params = (_a = match[1]) === null || _a === void 0 ? void 0 : _a.split(',').map((param) => param.trim());
                     const encodedString = match[0];
-                    p = encodedString.split("',36,")?.[0]?.trim();
+                    p = (_c = (_b = encodedString.split("',36,")) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.trim();
                     const a = 36;
-                    let c = encodedString.split("',36,")[1]?.slice(2).split('|').length;
-                    const k = encodedString.split("',36,")[1]?.slice(2).split('|');
+                    let c = (_d = encodedString.split("',36,")[1]) === null || _d === void 0 ? void 0 : _d.slice(2).split('|').length;
+                    const k = (_e = encodedString.split("',36,")[1]) === null || _e === void 0 ? void 0 : _e.slice(2).split('|');
                     while (c--) {
                         if (k[c]) {
                             const regex = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
@@ -59,12 +69,13 @@ class StreamWish extends models_1.VideoExtractor {
                 }
                 let link = p.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)[0];
                 // console.log('Decoded Links:', link);
-                const subtitleMatches = p?.match(/{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g) ?? [];
+                const subtitleMatches = (_f = p === null || p === void 0 ? void 0 : p.match(/{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g)) !== null && _f !== void 0 ? _f : [];
                 // console.log(subtitleMatches, 'subtitleMatches');
                 const subtitles = subtitleMatches.map((sub) => {
-                    const lang = sub?.match(/label:"([^"]+)"/)?.[1] ?? '';
-                    const url = sub?.match(/file:"([^"]+)"/)?.[1] ?? '';
-                    const kind = sub?.match(/kind:"([^"]+)"/)?.[1] ?? '';
+                    var _a, _b, _c, _d, _e, _f;
+                    const lang = (_b = (_a = sub === null || sub === void 0 ? void 0 : sub.match(/label:"([^"]+)"/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : '';
+                    const url = (_d = (_c = sub === null || sub === void 0 ? void 0 : sub.match(/file:"([^"]+)"/)) === null || _c === void 0 ? void 0 : _c[1]) !== null && _d !== void 0 ? _d : '';
+                    const kind = (_f = (_e = sub === null || sub === void 0 ? void 0 : sub.match(/kind:"([^"]+)"/)) === null || _e === void 0 ? void 0 : _e[1]) !== null && _f !== void 0 ? _f : '';
                     if (kind.includes('thumbnail')) {
                         return {
                             lang: kind,
@@ -87,10 +98,10 @@ class StreamWish extends models_1.VideoExtractor {
                     isM3U8: link.includes('.m3u8'),
                 });
                 try {
-                    const m3u8Content = await axios_1.default.get(this.sources[0].url, options);
+                    const m3u8Content = yield axios_1.default.get(this.sources[0].url, options);
                     if (m3u8Content.data.includes('EXTM3U')) {
                         const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
-                        for (const video of videoList ?? []) {
+                        for (const video of videoList !== null && videoList !== void 0 ? videoList : []) {
                             if (!video.includes('m3u8'))
                                 continue;
                             const url = link.split('master.m3u8')[0] + video.split('\n')[1];
@@ -112,7 +123,7 @@ class StreamWish extends models_1.VideoExtractor {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = StreamWish;

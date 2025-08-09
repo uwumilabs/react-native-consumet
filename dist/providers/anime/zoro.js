@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Zoro = void 0;
 exports.createZoro = createZoro;
@@ -17,14 +26,14 @@ function createZoro(ctx) {
             /**
              * @param id Anime id
              */
-            this.fetchAnimeInfo = async (id) => {
+            this.fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
                 const info = {
                     id: id,
                     title: '',
                 };
                 try {
-                    const response = await fetch(`${this.baseUrl}/watch/${id}`);
-                    const data = await response.text();
+                    const response = yield fetch(`${this.baseUrl}/watch/${id}`);
+                    const data = yield response.text();
                     const $ = load(data);
                     const { mal_id, anilist_id } = JSON.parse($('#syncData').text());
                     info.malID = Number(mal_id);
@@ -36,22 +45,23 @@ function createZoro(ctx) {
                     // Movie, TV, OVA, ONA, Special, Music
                     info.type = $('span.item').last().prev().prev().text().toUpperCase();
                     info.url = `${this.baseUrl}/${id}`;
-                    info.recommendations = await this.scrapeCard($);
+                    info.recommendations = yield this.scrapeCard($);
                     info.relatedAnime = [];
                     $('#main-sidebar section:nth-child(1) div.anif-block-ul li').each((i, ele) => {
+                        var _a, _b, _c, _d, _e, _f, _g;
                         const card = $(ele);
                         const aTag = card.find('.film-name a');
-                        const relatedId = aTag.attr('href')?.split('/')[1].split('?')[0];
+                        const relatedId = (_a = aTag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
                         info.relatedAnime.push({
                             id: relatedId,
                             title: aTag.text(),
                             url: `${this.baseUrl}${aTag.attr('href')}`,
-                            image: card.find('img')?.attr('data-src'),
+                            image: (_b = card.find('img')) === null || _b === void 0 ? void 0 : _b.attr('data-src'),
                             japaneseTitle: aTag.attr('data-jname'),
-                            type: card.find('.tick').contents().last()?.text()?.trim(),
-                            sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
-                            dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
-                            episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
+                            type: (_d = (_c = card.find('.tick').contents().last()) === null || _c === void 0 ? void 0 : _c.text()) === null || _d === void 0 ? void 0 : _d.trim(),
+                            sub: parseInt((_e = card.find('.tick-item.tick-sub')) === null || _e === void 0 ? void 0 : _e.text()) || 0,
+                            dub: parseInt((_f = card.find('.tick-item.tick-dub')) === null || _f === void 0 ? void 0 : _f.text()) || 0,
+                            episodes: parseInt((_g = card.find('.tick-item.tick-eps')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
                         });
                     });
                     const hasSub = $('div.film-stats div.tick div.tick-item.tick-sub').length > 0;
@@ -68,16 +78,17 @@ function createZoro(ctx) {
                         info.subOrDub = models_1.SubOrSub.BOTH;
                     }
                     // ZORO - PAGE INFO
-                    const zInfoResponse = await fetch(info.url);
-                    const zInfoData = await zInfoResponse.text();
+                    const zInfoResponse = yield fetch(info.url);
+                    const zInfoData = yield zInfoResponse.text();
                     const $$$ = load(zInfoData);
                     info.genres = [];
                     $$$('.item.item-list')
                         .find('a')
                         .each(function () {
+                        var _a;
                         const genre = $(this).text().trim();
                         if (genre !== undefined)
-                            info.genres?.push(genre);
+                            (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push(genre);
                     });
                     switch ($$$('.item.item-title').find("span.item-head:contains('Status')").next('span.name').text().trim()) {
                         case 'Finished Airing':
@@ -105,13 +116,13 @@ function createZoro(ctx) {
                             .text()
                             .trim();
                     }
-                    const episodesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
+                    const episodesResponse = yield fetch(`${this.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Referer': `${this.baseUrl}/watch/${id}`,
                         },
                     });
-                    const episodesData = await episodesResponse.json();
+                    const episodesData = yield episodesResponse.json();
                     const $$ = load(episodesData.html);
                     // Pre-calculate values used for all episodes
                     const episodeElements = $$('div.detail-infor-content > div > a');
@@ -121,11 +132,12 @@ function createZoro(ctx) {
                     info.episodes = [];
                     // Single pass through episodes
                     episodeElements.each((i, el) => {
+                        var _a, _b;
                         const $el = $$(el);
                         const href = $el.attr('href') || '';
                         const number = parseInt($el.attr('data-number') || '0');
-                        info.episodes?.push({
-                            id: href.split('/')[2]?.replace('?ep=', '$episode$') || '',
+                        (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
+                            id: ((_b = href.split('/')[2]) === null || _b === void 0 ? void 0 : _b.replace('?ep=', '$episode$')) || '',
                             number: number,
                             title: $el.attr('title'),
                             isFiller: $el.hasClass('ssl-item-filler'),
@@ -139,27 +151,24 @@ function createZoro(ctx) {
                 catch (err) {
                     throw new Error(err.message);
                 }
-            };
+            });
             /**
              *
              * @param episodeId Episode id
              * @param server server type (default `VidCloud`) (optional)
              * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
              */
-            this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.VidCloud, subOrDub = models_1.SubOrSub.SUB) => {
+            this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = models_1.StreamingServers.VidCloud, subOrDub = models_1.SubOrSub.SUB) {
                 if (episodeId.startsWith('http')) {
                     const serverUrl = new URL(episodeId);
                     switch (server) {
                         case models_1.StreamingServers.VidCloud:
-                            return {
-                                headers: { Referer: serverUrl.href },
-                                ...(await MegaCloud({
-                                    axios: fetch,
-                                    load,
-                                    USER_AGENT: ctx.USER_AGENT,
-                                    logger: ctx.logger,
-                                }).extract(serverUrl, this.baseUrl)),
-                            };
+                            return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud({
+                                axios: fetch,
+                                load,
+                                USER_AGENT: ctx.USER_AGENT,
+                                logger: ctx.logger,
+                            }).extract(serverUrl, this.baseUrl)));
                         case models_1.StreamingServers.StreamSB:
                             return {
                                 headers: {
@@ -167,7 +176,7 @@ function createZoro(ctx) {
                                     'watchsb': 'streamsb',
                                     'User-Agent': ctx.USER_AGENT,
                                 },
-                                sources: await new StreamSB({
+                                sources: yield new StreamSB({
                                     axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
@@ -180,7 +189,7 @@ function createZoro(ctx) {
                             }
                             return {
                                 headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT },
-                                sources: await new StreamTape({
+                                sources: yield new StreamTape({
                                     axios: fetch,
                                     load,
                                     USER_AGENT: ctx.USER_AGENT,
@@ -189,15 +198,12 @@ function createZoro(ctx) {
                             };
                         default:
                         case models_1.StreamingServers.VidCloud:
-                            return {
-                                headers: { Referer: serverUrl.href },
-                                ...(await MegaCloud({
-                                    axios: fetch,
-                                    load,
-                                    USER_AGENT: ctx.USER_AGENT,
-                                    logger: ctx.logger,
-                                }).extract(serverUrl, this.baseUrl)),
-                            };
+                            return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud({
+                                axios: fetch,
+                                load,
+                                USER_AGENT: ctx.USER_AGENT,
+                                logger: ctx.logger,
+                            }).extract(serverUrl, this.baseUrl)));
                     }
                 }
                 if (!episodeId.includes('$episode$'))
@@ -208,8 +214,8 @@ function createZoro(ctx) {
                 // subOrDub = episodeId.split('$')?.pop() === 'dub' ? 'dub' : 'sub';
                 episodeId = `${this.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
                 try {
-                    const response = await fetch(`${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
-                    const data = await response.json();
+                    const response = yield fetch(`${this.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
+                    const data = yield response.json();
                     const $ = load(data.html);
                     /**
                      * vidtreaming -> 4
@@ -247,29 +253,29 @@ function createZoro(ctx) {
                     catch (err) {
                         throw new Error("Couldn't find server. Try another server");
                     }
-                    const sourcesResponse = await fetch(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
-                    const sourcesData = await sourcesResponse.json();
+                    const sourcesResponse = yield fetch(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
+                    const sourcesData = yield sourcesResponse.json();
                     const { link } = sourcesData;
-                    return await this.fetchEpisodeSources(link, server, models_1.SubOrSub.SUB);
+                    return yield this.fetchEpisodeSources(link, server, models_1.SubOrSub.SUB);
                 }
                 catch (err) {
                     throw err;
                 }
-            };
-            this.verifyLoginState = async (connectSid) => {
+            });
+            this.verifyLoginState = (connectSid) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const response = await fetch(`${this.baseUrl}/ajax/login-state`, {
+                    const response = yield fetch(`${this.baseUrl}/ajax/login-state`, {
                         headers: {
                             Cookie: `connect.sid=${connectSid}`,
                         },
                     });
-                    const data = await response.json();
+                    const data = yield response.json();
                     return data.is_login;
                 }
                 catch (err) {
                     return false;
                 }
-            };
+            });
             this.retrieveServerId = ($, index, subOrDub) => {
                 const rawOrSubOrDub = (raw) => $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
                     .map((i, el) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
@@ -287,7 +293,8 @@ function createZoro(ctx) {
             /**
              * @param url string
              */
-            this.scrapeCardPage = async (url, headers) => {
+            this.scrapeCardPage = (url, headers) => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b, _c;
                 try {
                     const res = {
                         currentPage: 0,
@@ -295,26 +302,26 @@ function createZoro(ctx) {
                         totalPages: 0,
                         results: [],
                     };
-                    const response = await fetch(url, headers);
+                    const response = yield fetch(url, headers);
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
                     }
-                    const data = await response.text();
+                    const data = yield response.text();
                     const $ = load(data);
                     const pagination = $('ul.pagination');
-                    res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
-                    const nextPage = pagination.find('a[title=Next]')?.attr('href');
+                    res.currentPage = parseInt((_a = pagination.find('.page-item.active')) === null || _a === void 0 ? void 0 : _a.text());
+                    const nextPage = (_b = pagination.find('a[title=Next]')) === null || _b === void 0 ? void 0 : _b.attr('href');
                     if (nextPage !== undefined && nextPage !== '') {
                         res.hasNextPage = true;
                     }
-                    const totalPages = pagination.find('a[title=Last]').attr('href')?.split('=').pop();
+                    const totalPages = (_c = pagination.find('a[title=Last]').attr('href')) === null || _c === void 0 ? void 0 : _c.split('=').pop();
                     if (totalPages === undefined || totalPages === '') {
                         res.totalPages = res.currentPage;
                     }
                     else {
                         res.totalPages = parseInt(totalPages);
                     }
-                    res.results = await this.scrapeCard($);
+                    res.results = yield this.scrapeCard($);
                     if (res.results.length === 0) {
                         res.currentPage = 0;
                         res.hasNextPage = false;
@@ -326,37 +333,34 @@ function createZoro(ctx) {
                     console.error('scrapeCardPage error:', err);
                     throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
                 }
-            };
+            });
             /**
              * @param $ cheerio instance
              */
-            this.scrapeCard = async ($) => {
+            this.scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     const results = [];
                     $('.flw-item').each((i, ele) => {
+                        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                         const card = $(ele);
                         const atag = card.find('.film-name a');
-                        const id = atag.attr('href')?.split('/')[1].split('?')[0];
+                        const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
                         const watchList = card.find('.dropdown-menu .added').text().trim();
-                        const type = card
-                            .find('.fdi-item')
-                            ?.first()
-                            ?.text()
-                            .replace(' (? eps)', '')
-                            .replace(/\s\(\d+ eps\)/g, '');
+                        const type = (_c = (_b = card
+                            .find('.fdi-item')) === null || _b === void 0 ? void 0 : _b.first()) === null || _c === void 0 ? void 0 : _c.text().replace(' (? eps)', '').replace(/\s\(\d+ eps\)/g, '');
                         results.push({
                             id: id,
                             title: atag.text(),
                             url: `${this.baseUrl}${atag.attr('href')}`,
-                            image: card.find('img')?.attr('data-src'),
-                            duration: card.find('.fdi-duration')?.text(),
+                            image: (_d = card.find('img')) === null || _d === void 0 ? void 0 : _d.attr('data-src'),
+                            duration: (_e = card.find('.fdi-duration')) === null || _e === void 0 ? void 0 : _e.text(),
                             watchList: watchList || models_1.WatchListType.NONE,
                             japaneseTitle: atag.attr('data-jname'),
                             type: type,
-                            nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
-                            sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
-                            dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
-                            episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
+                            nsfw: ((_f = card.find('.tick-rate')) === null || _f === void 0 ? void 0 : _f.text()) === '18+' ? true : false,
+                            sub: parseInt((_g = card.find('.tick-item.tick-sub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
+                            dub: parseInt((_h = card.find('.tick-item.tick-dub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
+                            episodes: parseInt((_j = card.find('.tick-item.tick-eps')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
                         });
                     });
                     return results;
@@ -365,7 +369,7 @@ function createZoro(ctx) {
                     console.log(err);
                     throw new Error('Something went wrong. Please try again later.');
                 }
-            };
+            });
             /**
              * @deprecated
              * @param episodeId Episode id
@@ -466,8 +470,9 @@ function createZoro(ctx) {
             };
             const params = new URLSearchParams({ page: page.toString() });
             const addParam = (key, value) => {
+                var _a;
                 if (value)
-                    params.append(key, (mappings[key]?.[value] || value).toString());
+                    params.append(key, (((_a = mappings[key]) === null || _a === void 0 ? void 0 : _a[value]) || value).toString());
             };
             addParam('type', type);
             addParam('status', status);
@@ -488,7 +493,7 @@ function createZoro(ctx) {
             }
             if (sort)
                 params.append('sort', sort);
-            if (genres?.length) {
+            if (genres === null || genres === void 0 ? void 0 : genres.length) {
                 const genreIds = genres.map((genre) => (mappings.genre[genre] || genre).toString()).join('%2C');
                 params.append('genres', genreIds);
             }
@@ -630,26 +635,28 @@ function createZoro(ctx) {
             }
             return this.scrapeCardPage(`${this.baseUrl}/special?page=${page}`);
         }
-        async fetchGenres() {
-            try {
-                const res = [];
-                const response = await fetch(`${this.baseUrl}/home`);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status} ${response.statusText} for ${this.baseUrl}/home`);
+        fetchGenres() {
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const res = [];
+                    const response = yield fetch(`${this.baseUrl}/home`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status} ${response.statusText} for ${this.baseUrl}/home`);
+                    }
+                    const data = yield response.text();
+                    const $ = load(data);
+                    const sideBar = $('#main-sidebar');
+                    sideBar.find('ul.sb-genre-list li a').each((i, ele) => {
+                        const genres = $(ele);
+                        res.push(genres.text().toLowerCase());
+                    });
+                    return res;
                 }
-                const data = await response.text();
-                const $ = load(data);
-                const sideBar = $('#main-sidebar');
-                sideBar.find('ul.sb-genre-list li a').each((i, ele) => {
-                    const genres = $(ele);
-                    res.push(genres.text().toLowerCase());
-                });
-                return res;
-            }
-            catch (err) {
-                console.error('fetchGenres error:', err);
-                throw new Error(`Failed to fetch genres: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
+                catch (err) {
+                    console.error('fetchGenres error:', err);
+                    throw new Error(`Failed to fetch genres: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                }
+            });
         }
         /**
          * @param page number
@@ -668,183 +675,196 @@ function createZoro(ctx) {
          * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
          * @returns A promise that resolves to an object containing the search results.
          */
-        async fetchSchedule(date = new Date().toISOString().slice(0, 10)) {
-            try {
-                const res = {
-                    results: [],
-                };
-                const response = await fetch(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
-                const responseData = await response.json();
-                const { html } = responseData;
-                const $ = load(html);
-                $('li').each((i, ele) => {
-                    const card = $(ele);
-                    const title = card.find('.film-name');
-                    const id = card.find('a.tsl-link').attr('href')?.split('/')[1].split('?')[0];
-                    const airingTime = card.find('div.time').text().replace('\n', '').trim();
-                    const airingEpisode = card.find('div.film-detail div.fd-play button').text().replace('\n', '').trim();
-                    res.results.push({
-                        id: id,
-                        title: title.text(),
-                        japaneseTitle: title.attr('data-jname'),
-                        url: `${this.baseUrl}/${id}`,
-                        airingEpisode: airingEpisode,
-                        airingTime: airingTime,
-                    });
-                });
-                return res;
-            }
-            catch (err) {
-                throw new Error('Something went wrong. Please try again later.');
-            }
-        }
-        async fetchSpotlight() {
-            try {
-                const res = { results: [] };
-                const response = await fetch(`${this.baseUrl}/home`);
-                const data = await response.text();
-                const $ = load(data);
-                $('#slider div.swiper-wrapper div.swiper-slide').each((i, el) => {
-                    const card = $(el);
-                    const titleElement = card.find('div.desi-head-title');
-                    const id = card
-                        .find('div.desi-buttons .btn-secondary')
-                        .attr('href')
-                        ?.match(/\/([^/]+)$/)?.[1] || null;
-                    const img = card.find('img.film-poster-img');
-                    res.results.push({
-                        id: id,
-                        title: titleElement.text(),
-                        japaneseTitle: titleElement.attr('data-jname'),
-                        banner: img.attr('data-src') || img.attr('src') || null,
-                        rank: parseInt(card.find('.desi-sub-text').text().match(/(\d+)/g)?.[0]),
-                        url: `${this.baseUrl}/${id}`,
-                        type: card.find('div.sc-detail .scd-item:nth-child(1)').text().trim(),
-                        duration: card.find('div.sc-detail > div:nth-child(2)').text().trim(),
-                        releaseDate: card.find('div.sc-detail > div:nth-child(3)').text().trim(),
-                        quality: card.find('div.sc-detail > div:nth-child(4)').text().trim(),
-                        sub: parseInt(card.find('div.sc-detail div.tick-sub').text().trim()) || 0,
-                        dub: parseInt(card.find('div.sc-detail div.tick-dub').text().trim()) || 0,
-                        episodes: parseInt(card.find('div.sc-detail div.tick-eps').text()) || 0,
-                        description: card.find('div.desi-description').text().trim(),
-                    });
-                });
-                return res;
-            }
-            catch (error) {
-                throw new Error('Something went wrong. Please try again later.');
-            }
-        }
-        async fetchSearchSuggestions(query) {
-            try {
-                const encodedQuery = encodeURIComponent(query);
-                const response = await fetch(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
-                const responseData = await response.json();
-                const $ = load(responseData.html);
-                const res = {
-                    results: [],
-                };
-                $('.nav-item').each((i, el) => {
-                    const card = $(el);
-                    if (!card.hasClass('nav-bottom')) {
-                        const image = card.find('.film-poster img').attr('data-src');
+        fetchSchedule() {
+            return __awaiter(this, arguments, void 0, function* (date = new Date().toISOString().slice(0, 10)) {
+                try {
+                    const res = {
+                        results: [],
+                    };
+                    const response = yield fetch(`${this.baseUrl}/ajax/schedule/list?tzOffset=360&date=${date}`);
+                    const responseData = yield response.json();
+                    const { html } = responseData;
+                    const $ = load(html);
+                    $('li').each((i, ele) => {
+                        var _a;
+                        const card = $(ele);
                         const title = card.find('.film-name');
-                        const id = card.attr('href')?.split('/')[1].split('?')[0];
-                        const duration = card.find('.film-infor span').last().text().trim();
-                        const releaseDate = card.find('.film-infor span:nth-child(1)').text().trim();
-                        const type = card.find('.film-infor').find('span, i').remove().end().text().trim();
+                        const id = (_a = card.find('a.tsl-link').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
+                        const airingTime = card.find('div.time').text().replace('\n', '').trim();
+                        const airingEpisode = card.find('div.film-detail div.fd-play button').text().replace('\n', '').trim();
                         res.results.push({
-                            image: image,
                             id: id,
                             title: title.text(),
                             japaneseTitle: title.attr('data-jname'),
-                            aliasTitle: card.find('.alias-name').text(),
-                            releaseDate: releaseDate,
-                            type: type,
-                            duration: duration,
                             url: `${this.baseUrl}/${id}`,
+                            airingEpisode: airingEpisode,
+                            airingTime: airingTime,
                         });
-                    }
-                });
-                return res;
-            }
-            catch (error) {
-                throw new Error('Something went wrong. Please try again later.');
-            }
+                    });
+                    return res;
+                }
+                catch (err) {
+                    throw new Error('Something went wrong. Please try again later.');
+                }
+            });
+        }
+        fetchSpotlight() {
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const res = { results: [] };
+                    const response = yield fetch(`${this.baseUrl}/home`);
+                    const data = yield response.text();
+                    const $ = load(data);
+                    $('#slider div.swiper-wrapper div.swiper-slide').each((i, el) => {
+                        var _a, _b, _c;
+                        const card = $(el);
+                        const titleElement = card.find('div.desi-head-title');
+                        const id = ((_b = (_a = card
+                            .find('div.desi-buttons .btn-secondary')
+                            .attr('href')) === null || _a === void 0 ? void 0 : _a.match(/\/([^/]+)$/)) === null || _b === void 0 ? void 0 : _b[1]) || null;
+                        const img = card.find('img.film-poster-img');
+                        res.results.push({
+                            id: id,
+                            title: titleElement.text(),
+                            japaneseTitle: titleElement.attr('data-jname'),
+                            banner: img.attr('data-src') || img.attr('src') || null,
+                            rank: parseInt((_c = card.find('.desi-sub-text').text().match(/(\d+)/g)) === null || _c === void 0 ? void 0 : _c[0]),
+                            url: `${this.baseUrl}/${id}`,
+                            type: card.find('div.sc-detail .scd-item:nth-child(1)').text().trim(),
+                            duration: card.find('div.sc-detail > div:nth-child(2)').text().trim(),
+                            releaseDate: card.find('div.sc-detail > div:nth-child(3)').text().trim(),
+                            quality: card.find('div.sc-detail > div:nth-child(4)').text().trim(),
+                            sub: parseInt(card.find('div.sc-detail div.tick-sub').text().trim()) || 0,
+                            dub: parseInt(card.find('div.sc-detail div.tick-dub').text().trim()) || 0,
+                            episodes: parseInt(card.find('div.sc-detail div.tick-eps').text()) || 0,
+                            description: card.find('div.desi-description').text().trim(),
+                        });
+                    });
+                    return res;
+                }
+                catch (error) {
+                    throw new Error('Something went wrong. Please try again later.');
+                }
+            });
+        }
+        fetchSearchSuggestions(query) {
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const encodedQuery = encodeURIComponent(query);
+                    const response = yield fetch(`${this.baseUrl}/ajax/search/suggest?keyword=${encodedQuery}`);
+                    const responseData = yield response.json();
+                    const $ = load(responseData.html);
+                    const res = {
+                        results: [],
+                    };
+                    $('.nav-item').each((i, el) => {
+                        var _a;
+                        const card = $(el);
+                        if (!card.hasClass('nav-bottom')) {
+                            const image = card.find('.film-poster img').attr('data-src');
+                            const title = card.find('.film-name');
+                            const id = (_a = card.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
+                            const duration = card.find('.film-infor span').last().text().trim();
+                            const releaseDate = card.find('.film-infor span:nth-child(1)').text().trim();
+                            const type = card.find('.film-infor').find('span, i').remove().end().text().trim();
+                            res.results.push({
+                                image: image,
+                                id: id,
+                                title: title.text(),
+                                japaneseTitle: title.attr('data-jname'),
+                                aliasTitle: card.find('.alias-name').text(),
+                                releaseDate: releaseDate,
+                                type: type,
+                                duration: duration,
+                                url: `${this.baseUrl}/${id}`,
+                            });
+                        }
+                    });
+                    return res;
+                }
+                catch (error) {
+                    throw new Error('Something went wrong. Please try again later.');
+                }
+            });
         }
         /**
          * Fetches the list of episodes that the user is currently watching.
          * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)
          * @returns A promise that resolves to an array of anime episodes.
          */
-        async fetchContinueWatching(connectSid) {
-            try {
-                if (!(await this.verifyLoginState(connectSid))) {
+        fetchContinueWatching(connectSid) {
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    if (!(yield this.verifyLoginState(connectSid))) {
+                        throw new Error('Invalid session ID');
+                    }
+                    const res = [];
+                    const response = yield fetch(`${this.baseUrl}/user/continue-watching`, {
+                        headers: {
+                            Cookie: `connect.sid=${connectSid}`,
+                        },
+                    });
+                    const data = yield response.text();
+                    const $ = load(data);
+                    $('.flw-item').each((i, ele) => {
+                        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+                        const card = $(ele);
+                        const atag = card.find('.film-name a');
+                        const id = (_b = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '')) === null || _b === void 0 ? void 0 : _b.replace('?ep=', '$episode$');
+                        const timeText = (_e = (_d = (_c = card.find('.fdb-time')) === null || _c === void 0 ? void 0 : _c.text()) === null || _d === void 0 ? void 0 : _d.split('/')) !== null && _e !== void 0 ? _e : [];
+                        const duration = (_g = (_f = timeText.pop()) === null || _f === void 0 ? void 0 : _f.trim()) !== null && _g !== void 0 ? _g : '';
+                        const watchedTime = timeText.length > 0 ? timeText[0].trim() : '';
+                        res.push({
+                            id: id,
+                            title: atag.text(),
+                            number: parseInt(card.find('.fdb-type').text().replace('EP', '').trim()),
+                            duration: duration,
+                            watchedTime: watchedTime,
+                            url: `${this.baseUrl}${atag.attr('href')}`,
+                            image: (_h = card.find('img')) === null || _h === void 0 ? void 0 : _h.attr('data-src'),
+                            japaneseTitle: atag.attr('data-jname'),
+                            nsfw: ((_j = card.find('.tick-rate')) === null || _j === void 0 ? void 0 : _j.text()) === '18+' ? true : false,
+                            sub: parseInt((_k = card.find('.tick-item.tick-sub')) === null || _k === void 0 ? void 0 : _k.text()) || 0,
+                            dub: parseInt((_l = card.find('.tick-item.tick-dub')) === null || _l === void 0 ? void 0 : _l.text()) || 0,
+                            episodes: parseInt((_m = card.find('.tick-item.tick-eps')) === null || _m === void 0 ? void 0 : _m.text()) || 0,
+                        });
+                    });
+                    return res;
+                }
+                catch (err) {
+                    throw new Error(err.message);
+                }
+            });
+        }
+        fetchWatchList(connectSid_1) {
+            return __awaiter(this, arguments, void 0, function* (connectSid, page = 1, sortListType) {
+                if (!(yield this.verifyLoginState(connectSid))) {
                     throw new Error('Invalid session ID');
                 }
-                const res = [];
-                const response = await fetch(`${this.baseUrl}/user/continue-watching`, {
-                    headers: {
-                        Cookie: `connect.sid=${connectSid}`,
-                    },
+                if (page <= 0) {
+                    page = 1;
+                }
+                let type = 0;
+                switch (sortListType) {
+                    case models_1.WatchListType.WATCHING:
+                        type = 1;
+                        break;
+                    case models_1.WatchListType.ONHOLD:
+                        type = 2;
+                        break;
+                    case models_1.WatchListType.PLAN_TO_WATCH:
+                        type = 3;
+                        break;
+                    case models_1.WatchListType.DROPPED:
+                        type = 4;
+                        break;
+                    case models_1.WatchListType.COMPLETED:
+                        type = 5;
+                        break;
+                }
+                return this.scrapeCardPage(`${this.baseUrl}/user/watch-list?page=${page}${type !== 0 ? '&type=' + type : ''}`, {
+                    headers: { Cookie: `connect.sid=${connectSid}` },
                 });
-                const data = await response.text();
-                const $ = load(data);
-                $('.flw-item').each((i, ele) => {
-                    const card = $(ele);
-                    const atag = card.find('.film-name a');
-                    const id = atag.attr('href')?.replace('/watch/', '')?.replace('?ep=', '$episode$');
-                    const timeText = card.find('.fdb-time')?.text()?.split('/') ?? [];
-                    const duration = timeText.pop()?.trim() ?? '';
-                    const watchedTime = timeText.length > 0 ? timeText[0].trim() : '';
-                    res.push({
-                        id: id,
-                        title: atag.text(),
-                        number: parseInt(card.find('.fdb-type').text().replace('EP', '').trim()),
-                        duration: duration,
-                        watchedTime: watchedTime,
-                        url: `${this.baseUrl}${atag.attr('href')}`,
-                        image: card.find('img')?.attr('data-src'),
-                        japaneseTitle: atag.attr('data-jname'),
-                        nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
-                        sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
-                        dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
-                        episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
-                    });
-                });
-                return res;
-            }
-            catch (err) {
-                throw new Error(err.message);
-            }
-        }
-        async fetchWatchList(connectSid, page = 1, sortListType) {
-            if (!(await this.verifyLoginState(connectSid))) {
-                throw new Error('Invalid session ID');
-            }
-            if (page <= 0) {
-                page = 1;
-            }
-            let type = 0;
-            switch (sortListType) {
-                case models_1.WatchListType.WATCHING:
-                    type = 1;
-                    break;
-                case models_1.WatchListType.ONHOLD:
-                    type = 2;
-                    break;
-                case models_1.WatchListType.PLAN_TO_WATCH:
-                    type = 3;
-                    break;
-                case models_1.WatchListType.DROPPED:
-                    type = 4;
-                    break;
-                case models_1.WatchListType.COMPLETED:
-                    type = 5;
-                    break;
-            }
-            return this.scrapeCardPage(`${this.baseUrl}/user/watch-list?page=${page}${type !== 0 ? '&type=' + type : ''}`, {
-                headers: { Cookie: `connect.sid=${connectSid}` },
             });
         }
     }

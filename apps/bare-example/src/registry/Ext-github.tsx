@@ -98,7 +98,7 @@ const ExtGithub = () => {
         query: searchQuery,
         currentPage: searchResults.currentPage,
         hasNextPage: searchResults.hasNextPage,
-        resultCount: searchResults.results?.length || 0
+        resultCount: searchResults.results
       });
       
       if (searchResults.results && searchResults.results.length > 0) {

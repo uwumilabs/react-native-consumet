@@ -11,7 +11,6 @@ import {
   type ISource,
   type IEpisodeServer,
   TvType,
-  MediaFormat,
 } from './models';
 
 // Import the registry
@@ -170,7 +169,22 @@ export class ProviderManager {
       console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
 
       // Load the provider code
-      const response = await fetch(metadata.main);
+      console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+
+      // Add fetch options for better React Native compatibility
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/plain, application/javascript, */*',
+          'Content-Type': 'application/javascript',
+          'User-Agent': 'React-Native-Consumet/1.0.0',
+        },
+        timeout: 30000, // 30 second timeout
+      };
+
+      console.log(`📡 Fetch options:`, fetchOptions);
+
+      const response = await fetch(metadata.main, fetchOptions);
       if (!response.ok) {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
@@ -190,6 +204,12 @@ export class ProviderManager {
       return providerInstance;
     } catch (error) {
       console.error(`❌ Failed to load extension '${extensionId}':`, error);
+      console.error(`❌ Error details:`, {
+        message: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : 'Unknown',
+        stack: error instanceof Error ? error.stack : undefined,
+        url: metadata.main,
+      });
       throw error;
     }
   }
@@ -481,11 +501,6 @@ export class ProviderManager {
       throw new Error(`Extension '${extensionId}' is not an anime provider`);
     }
 
-    // Check if we're in React Native environment
-    if (this.isReactNativeEnvironment()) {
-      return await this.loadExtensionReactNative(extensionId);
-    }
-
     const instance = await this.loadExtension(extensionId);
     return instance as AnimeProviderInstance;
   }
@@ -577,141 +592,6 @@ export class ProviderManager {
   //     throw error;
   //   }
   // }
-
-  /**
-   * Detect if we're running in React Native environment
-   */
-  private isReactNativeEnvironment(): boolean {
-    // Check for React Native specific globals
-    return typeof global !== 'undefined' && (global as any).__fbBatchedBridge !== undefined;
-  }
-
-  /**
-   * Load extension in React Native environment using pre-compiled providers
-   */
-  private async loadExtensionReactNative(extensionId: string): Promise<AnimeProviderInstance> {
-    const metadata = this.getExtensionMetadata(extensionId);
-    if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found in registry`);
-    }
-
-    // Check if already loaded
-    if (this.loadedExtensions.has(extensionId)) {
-      console.log(`📦 Extension '${extensionId}' already loaded`);
-      return this.loadedExtensions.get(extensionId) as AnimeProviderInstance;
-    }
-
-    try {
-      console.log(`📥 Loading extension '${extensionId}' for React Native...`);
-
-      // For React Native, we'll use a different approach
-      // Instead of dynamic code execution, we'll use pre-compiled factories
-      const providerInstance = await this.createReactNativeProvider(extensionId, metadata);
-
-      // Cache the loaded extension
-      this.loadedExtensions.set(extensionId, providerInstance);
-
-      console.log(`✅ Extension '${extensionId}' loaded successfully in React Native`);
-      return providerInstance as AnimeProviderInstance;
-    } catch (error) {
-      console.error(`❌ Failed to load extension '${extensionId}' in React Native:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Create provider instance for React Native environment
-   */
-  private async createReactNativeProvider(
-    extensionId: string,
-    _metadata: ExtensionManifest
-  ): Promise<AnimeProviderInstance> {
-    // For now, we'll create a basic provider that shows the limitation
-    // In a real implementation, you would have pre-compiled providers
-    switch (extensionId) {
-      case 'zoro-anime':
-        return this.createZoroReactNativeProvider();
-      default:
-        throw new Error(
-          `Provider '${extensionId}' is not yet supported in React Native environment. Dynamic code execution is limited in React Native.`
-        );
-    }
-  }
-
-  /**
-   * Create a React Native compatible Zoro provider
-   */
-  private createZoroReactNativeProvider(): AnimeProviderInstance {
-    // This is a simplified version that demonstrates the concept
-    // In production, you'd want to import actual pre-compiled provider classes
-    return {
-      name: 'Zoro (React Native)',
-      baseUrl: 'https://hianime.to',
-      logo: 'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg',
-      classPath: 'ANIME.Zoro',
-      
-      search: async (query: string, page = 1): Promise<ISearch<IAnimeResult>> => {
-        // Basic implementation - in production you'd implement the full logic
-        console.log(`🔍 Searching for "${query}" on page ${page} using React Native compatible provider`);
-        return {
-          currentPage: page,
-          hasNextPage: false,
-          totalPages: 1,
-          results: [
-            {
-              id: 'demo-anime-1',
-              title: `Demo result for "${query}"`,
-              url: 'https://hianime.to/demo',
-              image: 'https://via.placeholder.com/300x400',
-              type: MediaFormat.TV,
-              sub: 12,
-              dub: 12,
-              episodes: 12,
-            } as IAnimeResult,
-          ],
-        };
-      },
-
-      fetchAnimeInfo: async (animeId: string) => {
-        console.log(`📺 Fetching anime info for ${animeId} using React Native compatible provider`);
-        return {
-          id: animeId,
-          title: 'Demo Anime',
-          url: `https://hianime.to/${animeId}`,
-          image: 'https://via.placeholder.com/300x400',
-          description: 'This is a demo anime result from React Native compatible provider.',
-          type: 'TV',
-          status: 'Completed',
-          totalEpisodes: 12,
-          episodes: [],
-        } as any;
-      },
-
-      fetchEpisodeSources: async (episodeId: string) => {
-        console.log(`🎬 Fetching episode sources for ${episodeId} using React Native compatible provider`);
-        return {
-          sources: [
-            {
-              url: 'https://demo-video-url.mp4',
-              isM3U8: false,
-              quality: '1080p',
-            },
-          ],
-          headers: {},
-        } as any;
-      },
-
-      fetchEpisodeServers: async (episodeId: string) => {
-        console.log(`🖥️ Fetching episode servers for ${episodeId} using React Native compatible provider`);
-        return [
-          {
-            name: 'Demo Server',
-            url: 'https://demo-server.com',
-          },
-        ] as any;
-      },
-    };
-  }
 }
 
 export default ProviderManager;

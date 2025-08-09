@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,12 +28,12 @@ class AnimePahe extends models_1.AnimeParser {
         /**
          * @param query Search query
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!this.ddgCookie) {
-                    await this.initDdgCookie();
+                    yield this.initDdgCookie();
                 }
-                const { data } = await axios_1.default.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
                     headers: this.Headers(false),
                 });
                 const res = {
@@ -43,24 +52,24 @@ class AnimePahe extends models_1.AnimeParser {
                 console.log(err);
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          * @param id id format id/session
          * @param episodePage Episode page number (optional) default: -1 to get all episodes. number of episode pages can be found in the anime info object
          */
-        this.fetchAnimeInfo = async (id, episodePage = -1) => {
+        this.fetchAnimeInfo = (id_1, ...args_1) => __awaiter(this, [id_1, ...args_1], void 0, function* (id, episodePage = -1) {
             const animeInfo = {
                 id: id,
                 title: '',
             };
             try {
                 if (!this.ddgCookie) {
-                    await this.initDdgCookie();
+                    yield this.initDdgCookie();
                 }
-                const res = await fetch(`${this.baseUrl}/anime/${id}`, {
+                const res = yield fetch(`${this.baseUrl}/anime/${id}`, {
                     headers: this.Headers(id),
                 });
-                const data = await res.text();
+                const data = yield res.text();
                 const $ = (0, cheerio_1.load)(data);
                 animeInfo.title = $('div.title-wrapper > h1 > span').first().text();
                 animeInfo.image = $('div.anime-poster a').attr('href');
@@ -90,22 +99,24 @@ class AnimePahe extends models_1.AnimeParser {
                 animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace('Episodes:', ''));
                 animeInfo.recommendations = [];
                 $('div.anime-recommendation .col-sm-6').each((i, el) => {
-                    animeInfo.recommendations?.push({
-                        id: $(el).find('.col-2 > a').attr('href')?.split('/')[2],
+                    var _a, _b, _c;
+                    (_a = animeInfo.recommendations) === null || _a === void 0 ? void 0 : _a.push({
+                        id: (_b = $(el).find('.col-2 > a').attr('href')) === null || _b === void 0 ? void 0 : _b.split('/')[2],
                         title: $(el).find('.col-2 > a').attr('title'),
                         image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
-                        url: `${this.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
+                        url: `${this.baseUrl}/anime/${(_c = $(el).find('.col-2 > a').attr('href')) === null || _c === void 0 ? void 0 : _c.split('/')[2]}`,
                         releaseDate: $(el).find('div.col-9 > a').text().trim(),
                         status: $(el).find('div.col-9 > strong').text().trim(),
                     });
                 });
                 animeInfo.relations = [];
                 $('div.anime-relation .col-sm-6').each((i, el) => {
-                    animeInfo.relations?.push({
-                        id: $(el).find('.col-2 > a').attr('href')?.split('/')[2],
+                    var _a, _b, _c;
+                    (_a = animeInfo.relations) === null || _a === void 0 ? void 0 : _a.push({
+                        id: (_b = $(el).find('.col-2 > a').attr('href')) === null || _b === void 0 ? void 0 : _b.split('/')[2],
                         title: $(el).find('.col-2 > a').attr('title'),
                         image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
-                        url: `${this.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
+                        url: `${this.baseUrl}/anime/${(_c = $(el).find('.col-2 > a').attr('href')) === null || _c === void 0 ? void 0 : _c.split('/')[2]}`,
                         releaseDate: $(el).find('div.col-9 > a').text().trim(),
                         status: $(el).find('div.col-9 > strong').text().trim(),
                         relationType: $(el).find('h4 > span').text().trim(),
@@ -113,7 +124,7 @@ class AnimePahe extends models_1.AnimeParser {
                 });
                 animeInfo.episodes = [];
                 if (episodePage < 0) {
-                    const { data: { last_page, data }, } = await axios_1.default.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
+                    const { data: { last_page, data }, } = yield axios_1.default.get(`${this.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
                         headers: this.Headers(id),
                     });
                     animeInfo.episodePages = last_page;
@@ -129,29 +140,29 @@ class AnimePahe extends models_1.AnimeParser {
                         url: `${this.baseUrl}/play/${id}/${item.session}`,
                     })));
                     for (let i = 1; i < last_page; i++) {
-                        animeInfo.episodes.push(...(await this.fetchEpisodes(id, i + 1)));
+                        animeInfo.episodes.push(...(yield this.fetchEpisodes(id, i + 1)));
                     }
                 }
                 else {
-                    animeInfo.episodes.push(...(await this.fetchEpisodes(id, episodePage)));
+                    animeInfo.episodes.push(...(yield this.fetchEpisodes(id, episodePage)));
                 }
                 return animeInfo;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param episodeId Episode id
          * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = async (episodeId, subOrDub = models_1.SubOrSub.SUB) => {
+        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrSub.SUB) {
             try {
                 if (!this.ddgCookie) {
-                    await this.initDdgCookie();
+                    yield this.initDdgCookie();
                 }
-                const { data } = await axios_1.default.get(`${this.baseUrl}/play/${episodeId}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/play/${episodeId}`, {
                     headers: this.Headers(episodeId.split('/')[0]),
                 });
                 const $ = (0, cheerio_1.load)(data);
@@ -173,7 +184,7 @@ class AnimePahe extends models_1.AnimeParser {
                     sources: [],
                 };
                 for (const link of links) {
-                    const res = await new extractors_1.Kwik().extract(new URL(link.url));
+                    const res = yield new extractors_1.Kwik().extract(new URL(link.url));
                     res[0].quality = link.quality;
                     res[0].isDub = link.audio === 'eng';
                     // Only include sources that match the requested SubOrSub type
@@ -196,9 +207,9 @@ class AnimePahe extends models_1.AnimeParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchEpisodes = async (session, page) => {
-            const res = await axios_1.default.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
+        });
+        this.fetchEpisodes = (session, page) => __awaiter(this, void 0, void 0, function* () {
+            const res = yield axios_1.default.get(`${this.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
                 headers: this.Headers(session),
             });
             const epData = res.data.data;
@@ -215,7 +226,7 @@ class AnimePahe extends models_1.AnimeParser {
                     url: `${this.baseUrl}/play/${session}/${item.session}`,
                 })),
             ];
-        };
+        });
         /**
          * @deprecated
          * @attention AnimePahe doesn't support this method
@@ -225,21 +236,23 @@ class AnimePahe extends models_1.AnimeParser {
         };
         this.initDdgCookie();
     }
-    async initDdgCookie() {
-        try {
+    initDdgCookie() {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.ddgCookie = await (0, NativeConsumet_1.getDdosGuardCookiesWithWebView)(this.baseUrl);
-                // console.log('DDoS-Guard cookie obtained (WebView):', this.ddgCookie);
+                try {
+                    this.ddgCookie = yield (0, NativeConsumet_1.getDdosGuardCookiesWithWebView)(this.baseUrl);
+                    // console.log('DDoS-Guard cookie obtained (WebView):', this.ddgCookie);
+                }
+                catch (err) {
+                    // console.error('Failed to bypass DDoS-Guard with WebView:', err);
+                    this.ddgCookie = yield (0, NativeConsumet_1.bypassDdosGuard)(this.baseUrl);
+                    // console.log('DDoS-Guard cookie obtained (fallback):', this.ddgCookie);
+                }
             }
-            catch (err) {
-                // console.error('Failed to bypass DDoS-Guard with WebView:', err);
-                this.ddgCookie = await (0, NativeConsumet_1.bypassDdosGuard)(this.baseUrl);
-                // console.log('DDoS-Guard cookie obtained (fallback):', this.ddgCookie);
+            catch (error) {
+                console.error('Failed to initialize DDoS-Guard cookie:', error);
             }
-        }
-        catch (error) {
-            console.error('Failed to initialize DDoS-Guard cookie:', error);
-        }
+        });
     }
     Headers(sessionId) {
         const headers = {

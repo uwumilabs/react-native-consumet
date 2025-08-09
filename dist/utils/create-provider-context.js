@@ -73,7 +73,7 @@ function createProviderContext(config = {}) {
         AnimeParser: config.AnimeParser || models_1.AnimeParser,
         MovieParser: config.MovieParser || models_1.MovieParser,
         MangaParser: config.MangaParser || models_1.MangaParser,
-        extractors: { ...defaultExtractors, ...config.extractors },
+        extractors: Object.assign(Object.assign({}, defaultExtractors), config.extractors),
         logger: config.logger || defaultLogger,
     };
 }

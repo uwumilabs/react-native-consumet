@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -14,12 +23,12 @@ class VyvyManga extends models_1.MangaParser {
         this.logo = 'https://vyvymanga.net/web/img/icon.png';
         this.classPath = 'MANGA.VyvyManga';
         this.baseWebsiteUrl = 'https://vyvymanga.net';
-        this.search = async (query, page = 1) => {
+        this.search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
             if (page < 1)
                 throw new Error('page must be equal to 1 or greater');
             try {
                 const formattedQuery = query.trim().toLowerCase().split(' ').join('+');
-                const { data } = await axios_1.default.get(`${this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
+                const { data } = yield axios_1.default.get(`${this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
                 const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const result = dom
@@ -58,11 +67,11 @@ class VyvyManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.searchApi = async (query) => {
+        });
+        this.searchApi = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const formattedQuery = query.toLowerCase().split(' ').join('%20');
-                const { data } = await axios_1.default.request({
+                const { data } = yield axios_1.default.request({
                     method: 'get',
                     url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
                     headers: {
@@ -82,10 +91,10 @@ class VyvyManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchMangaInfo = async (mangaId) => {
+        });
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.request({
+                const { data } = yield axios_1.default.request({
                     method: 'get',
                     url: `${this.baseUrl}/manga-detail/${mangaId}?userid=`,
                     headers: {
@@ -135,10 +144,10 @@ class VyvyManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId) => {
+        });
+        this.fetchChapterPages = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(chapterId);
+                const { data } = yield axios_1.default.get(chapterId);
                 const $ = (0, cheerio_1.load)(data);
                 const dom = $('html');
                 const images = dom
@@ -155,7 +164,7 @@ class VyvyManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         this.formatSearchResultData = (searchResultData) => {
             return searchResultData.map((ele) => {
                 return {
