@@ -1,12 +1,13 @@
-// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
 import { ProviderManager } from 'react-native-consumet';
+import type { AnimeParser, MovieParser } from '../../../../src/models';
+import type Zoro from '../../../../src/providers/anime/zoro/zoro';
 const ExtGithub = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('zoro-anime');
+  const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
   const [provider, setProvider] = useState<any>(null);
   const [providerManager, setProviderManager] = useState<any>(null);
 
@@ -40,7 +41,7 @@ const ExtGithub = () => {
     initializeProviderManager();
   }, []);
 
-  const loadExtension = async (manager: any, extensionId: string) => {
+  const loadExtension = async (manager: ProviderManager, extensionId: string) => {
     try {
       console.log(`📥 Loading extension: ${extensionId}`);
       
@@ -51,14 +52,13 @@ const ExtGithub = () => {
         name: metadata?.name,
         category: metadata?.category,
         main: metadata?.main,
-        factories: metadata?.factories
+        factories: metadata?.factoryName
       });
       
       // Load the extension from GitHub registry using type-safe method
-      let providerInstance;
+      let providerInstance:AnimeParser|MovieParser;
       if (metadata?.category === 'anime') {
         providerInstance = await manager.getAnimeProvider(extensionId);
-        console.log("pass ho gya");
       } else if (metadata?.category === 'movies') {
         providerInstance = await manager.getMovieProvider(extensionId);
       } else {
@@ -68,9 +68,8 @@ const ExtGithub = () => {
       
       console.log('✅ Extension loaded successfully:', {
         name: providerInstance.name,
-        baseUrl: providerInstance.baseUrl,
         hasSearch: typeof providerInstance.search === 'function',
-        hasFetchAnimeInfo: typeof providerInstance.fetchAnimeInfo === 'function'
+        hasFetchAnimeInfo: metadata?.category === 'anime' && typeof (providerInstance as AnimeParser).fetchAnimeInfo === 'function'
       });
       
       // Test search functionality
@@ -86,8 +85,8 @@ const ExtGithub = () => {
       Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
     }
   };
-
-  const testSearch = async (providerInstance: any) => {
+// @ts-ignore
+  const testSearch = async (providerInstance) => {
     try {
       console.log('🔍 Testing search functionality...');
       
@@ -245,4 +244,3 @@ const ExtGithub = () => {
 
 export default ExtGithub;
 
-export default ExtGithub;

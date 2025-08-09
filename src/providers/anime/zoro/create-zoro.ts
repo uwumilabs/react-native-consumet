@@ -42,101 +42,6 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     return page <= 0 ? 1 : page;
   };
 
-  const scrapeCard = async ($: CheerioAPI): Promise<IAnimeResult[]> => {
-    try {
-      const results: IAnimeResult[] = [];
-
-      $('.flw-item').each((i, ele) => {
-        const card = $(ele);
-        const atag = card.find('.film-name a');
-        const id = atag.attr('href')?.split('/')[1]!.split('?')[0];
-        const watchList = card.find('.dropdown-menu .added').text().trim() as WatchListType;
-        const type = card
-          .find('.fdi-item')
-          ?.first()
-          ?.text()
-          .replace(' (? eps)', '')
-          .replace(/\s\(\d+ eps\)/g, '');
-        results.push({
-          id: id!,
-          title: atag.text(),
-          url: `${config.baseUrl}${atag.attr('href')}`,
-          image: card.find('img')?.attr('data-src'),
-          duration: card.find('.fdi-duration')?.text(),
-          watchList: watchList || WatchListTypeEnum.NONE,
-          japaneseTitle: atag.attr('data-jname'),
-          type: type as MediaFormat,
-          nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
-          sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
-          dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
-          episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
-        });
-      });
-      return results;
-    } catch (err) {
-      console.log(err);
-      throw new Error(`Failed to scrape card: ${err}`);
-    }
-  };
-
-  const scrapeCardPage = async (url: string, headers?: object): Promise<ISearch<IAnimeResult>> => {
-    try {
-      const res: ISearch<IAnimeResult> = {
-        currentPage: 0,
-        hasNextPage: false,
-        totalPages: 0,
-        results: [],
-      };
-      const response = await fetch(url, headers);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
-      }
-
-      const data = await response.text();
-      const $ = load(data);
-
-      const pagination = $('ul.pagination');
-      res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
-      const nextPage = pagination.find('a[title=Next]')?.attr('href');
-      if (nextPage !== undefined && nextPage !== '') {
-        res.hasNextPage = true;
-      }
-      const totalPages = pagination.find('a[title=Last]').attr('href')?.split('=').pop();
-      if (totalPages === undefined || totalPages === '') {
-        res.totalPages = res.currentPage;
-      } else {
-        res.totalPages = parseInt(totalPages);
-      }
-
-      res.results = await scrapeCard($);
-      if (res.results.length === 0) {
-        res.currentPage = 0;
-        res.hasNextPage = false;
-        res.totalPages = 0;
-      }
-      return res;
-    } catch (err) {
-      console.error('scrapeCardPage error:', err);
-      throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-  };
-
-  const retrieveServerId = ($: any, index: number, subOrDub: SubOrSub) => {
-    const rawOrSubOrDub = (raw: boolean) =>
-      $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-        .map((i: any, el: any) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
-        .get()[0]
-        .attr('data-id');
-    try {
-      // Attempt to get the subOrDub ID
-      return rawOrSubOrDub(false);
-    } catch (error) {
-      // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
-      return rawOrSubOrDub(true);
-    }
-  };
-
   // Main provider functions
   const search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     const normalizedPage = normalizePageNumber(page);
@@ -669,6 +574,101 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     }
   };
 
+  const scrapeCard = async ($: CheerioAPI): Promise<IAnimeResult[]> => {
+    try {
+      const results: IAnimeResult[] = [];
+
+      $('.flw-item').each((i, ele) => {
+        const card = $(ele);
+        const atag = card.find('.film-name a');
+        const id = atag.attr('href')?.split('/')[1]!.split('?')[0];
+        const watchList = card.find('.dropdown-menu .added').text().trim() as WatchListType;
+        const type = card
+          .find('.fdi-item')
+          ?.first()
+          ?.text()
+          .replace(' (? eps)', '')
+          .replace(/\s\(\d+ eps\)/g, '');
+        results.push({
+          id: id!,
+          title: atag.text(),
+          url: `${config.baseUrl}${atag.attr('href')}`,
+          image: card.find('img')?.attr('data-src'),
+          duration: card.find('.fdi-duration')?.text(),
+          watchList: watchList || WatchListTypeEnum.NONE,
+          japaneseTitle: atag.attr('data-jname'),
+          type: type as MediaFormat,
+          nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
+          sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
+          dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
+          episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
+        });
+      });
+      return results;
+    } catch (err) {
+      console.log(err);
+      throw new Error(`Failed to scrape card: ${err}`);
+    }
+  };
+
+  const scrapeCardPage = async (url: string, headers?: object): Promise<ISearch<IAnimeResult>> => {
+    try {
+      const res: ISearch<IAnimeResult> = {
+        currentPage: 0,
+        hasNextPage: false,
+        totalPages: 0,
+        results: [],
+      };
+      const response = await fetch(url, headers);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+      }
+
+      const data = await response.text();
+      const $ = load(data);
+
+      const pagination = $('ul.pagination');
+      res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
+      const nextPage = pagination.find('a[title=Next]')?.attr('href');
+      if (nextPage !== undefined && nextPage !== '') {
+        res.hasNextPage = true;
+      }
+      const totalPages = pagination.find('a[title=Last]').attr('href')?.split('=').pop();
+      if (totalPages === undefined || totalPages === '') {
+        res.totalPages = res.currentPage;
+      } else {
+        res.totalPages = parseInt(totalPages);
+      }
+
+      res.results = await scrapeCard($);
+      if (res.results.length === 0) {
+        res.currentPage = 0;
+        res.hasNextPage = false;
+        res.totalPages = 0;
+      }
+      return res;
+    } catch (err) {
+      console.error('scrapeCardPage error:', err);
+      throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
+  const retrieveServerId = ($: any, index: number, subOrDub: SubOrSub) => {
+    const rawOrSubOrDub = (raw: boolean) =>
+      $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
+        .map((i: any, el: any) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
+        .get()[0]
+        .attr('data-id');
+    try {
+      // Attempt to get the subOrDub ID
+      return rawOrSubOrDub(false);
+    } catch (error) {
+      // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
+      return rawOrSubOrDub(true);
+    }
+  };
+
   // Return the functional provider object
   return {
     // Configuration
@@ -682,7 +682,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     logo: config.logo,
     classPath: config.classPath,
 
-    // Core methods
+    // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchAdvancedSearch,
     fetchTopAiring,
@@ -710,12 +710,11 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     fetchAnimeInfo,
     fetchEpisodeSources,
     fetchEpisodeServers,
-    verifyLoginState,
-    retrieveServerId,
-    scrapeCardPage,
-    scrapeCard,
   };
 }
+
+// Type definition for the provider instance returned by createZoro
+export type ZoroProviderInstance = ReturnType<typeof createZoro>;
 
 // Default export for backward compatibility
 export default createZoro;

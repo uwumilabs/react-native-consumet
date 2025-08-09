@@ -38,7 +38,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://github.com/uwumilabs/react-native-consumet/blob/native-executor/dist/providers/movies/himovies/create-himovies.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/providers/movies/himovies/create-himovies.js",
             "factoryName": "createHiMovies",
             "tags": ["movies", "tv-shows", "streaming", "popular"],
             "homepage": "https://himovies.sx",

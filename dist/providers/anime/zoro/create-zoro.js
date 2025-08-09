@@ -30,94 +30,6 @@ function createZoro(ctx, customBaseURL) {
     const normalizePageNumber = (page) => {
         return page <= 0 ? 1 : page;
     };
-    const scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
-        try {
-            const results = [];
-            $('.flw-item').each((i, ele) => {
-                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-                const card = $(ele);
-                const atag = card.find('.film-name a');
-                const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
-                const watchList = card.find('.dropdown-menu .added').text().trim();
-                const type = (_c = (_b = card
-                    .find('.fdi-item')) === null || _b === void 0 ? void 0 : _b.first()) === null || _c === void 0 ? void 0 : _c.text().replace(' (? eps)', '').replace(/\s\(\d+ eps\)/g, '');
-                results.push({
-                    id: id,
-                    title: atag.text(),
-                    url: `${config.baseUrl}${atag.attr('href')}`,
-                    image: (_d = card.find('img')) === null || _d === void 0 ? void 0 : _d.attr('data-src'),
-                    duration: (_e = card.find('.fdi-duration')) === null || _e === void 0 ? void 0 : _e.text(),
-                    watchList: watchList || WatchListTypeEnum.NONE,
-                    japaneseTitle: atag.attr('data-jname'),
-                    type: type,
-                    nsfw: ((_f = card.find('.tick-rate')) === null || _f === void 0 ? void 0 : _f.text()) === '18+' ? true : false,
-                    sub: parseInt((_g = card.find('.tick-item.tick-sub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
-                    dub: parseInt((_h = card.find('.tick-item.tick-dub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
-                    episodes: parseInt((_j = card.find('.tick-item.tick-eps')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
-                });
-            });
-            return results;
-        }
-        catch (err) {
-            console.log(err);
-            throw new Error(`Failed to scrape card: ${err}`);
-        }
-    });
-    const scrapeCardPage = (url, headers) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
-        try {
-            const res = {
-                currentPage: 0,
-                hasNextPage: false,
-                totalPages: 0,
-                results: [],
-            };
-            const response = yield fetch(url, headers);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
-            }
-            const data = yield response.text();
-            const $ = load(data);
-            const pagination = $('ul.pagination');
-            res.currentPage = parseInt((_a = pagination.find('.page-item.active')) === null || _a === void 0 ? void 0 : _a.text());
-            const nextPage = (_b = pagination.find('a[title=Next]')) === null || _b === void 0 ? void 0 : _b.attr('href');
-            if (nextPage !== undefined && nextPage !== '') {
-                res.hasNextPage = true;
-            }
-            const totalPages = (_c = pagination.find('a[title=Last]').attr('href')) === null || _c === void 0 ? void 0 : _c.split('=').pop();
-            if (totalPages === undefined || totalPages === '') {
-                res.totalPages = res.currentPage;
-            }
-            else {
-                res.totalPages = parseInt(totalPages);
-            }
-            res.results = yield scrapeCard($);
-            if (res.results.length === 0) {
-                res.currentPage = 0;
-                res.hasNextPage = false;
-                res.totalPages = 0;
-            }
-            return res;
-        }
-        catch (err) {
-            console.error('scrapeCardPage error:', err);
-            throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        }
-    });
-    const retrieveServerId = ($, index, subOrDub) => {
-        const rawOrSubOrDub = (raw) => $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-            .map((i, el) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
-            .get()[0]
-            .attr('data-id');
-        try {
-            // Attempt to get the subOrDub ID
-            return rawOrSubOrDub(false);
-        }
-        catch (error) {
-            // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
-            return rawOrSubOrDub(true);
-        }
-    };
     // Main provider functions
     const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
         const normalizedPage = normalizePageNumber(page);
@@ -580,6 +492,94 @@ function createZoro(ctx, customBaseURL) {
             return false;
         }
     });
+    const scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            const results = [];
+            $('.flw-item').each((i, ele) => {
+                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+                const card = $(ele);
+                const atag = card.find('.film-name a');
+                const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
+                const watchList = card.find('.dropdown-menu .added').text().trim();
+                const type = (_c = (_b = card
+                    .find('.fdi-item')) === null || _b === void 0 ? void 0 : _b.first()) === null || _c === void 0 ? void 0 : _c.text().replace(' (? eps)', '').replace(/\s\(\d+ eps\)/g, '');
+                results.push({
+                    id: id,
+                    title: atag.text(),
+                    url: `${config.baseUrl}${atag.attr('href')}`,
+                    image: (_d = card.find('img')) === null || _d === void 0 ? void 0 : _d.attr('data-src'),
+                    duration: (_e = card.find('.fdi-duration')) === null || _e === void 0 ? void 0 : _e.text(),
+                    watchList: watchList || WatchListTypeEnum.NONE,
+                    japaneseTitle: atag.attr('data-jname'),
+                    type: type,
+                    nsfw: ((_f = card.find('.tick-rate')) === null || _f === void 0 ? void 0 : _f.text()) === '18+' ? true : false,
+                    sub: parseInt((_g = card.find('.tick-item.tick-sub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
+                    dub: parseInt((_h = card.find('.tick-item.tick-dub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
+                    episodes: parseInt((_j = card.find('.tick-item.tick-eps')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
+                });
+            });
+            return results;
+        }
+        catch (err) {
+            console.log(err);
+            throw new Error(`Failed to scrape card: ${err}`);
+        }
+    });
+    const scrapeCardPage = (url, headers) => __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const res = {
+                currentPage: 0,
+                hasNextPage: false,
+                totalPages: 0,
+                results: [],
+            };
+            const response = yield fetch(url, headers);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
+            }
+            const data = yield response.text();
+            const $ = load(data);
+            const pagination = $('ul.pagination');
+            res.currentPage = parseInt((_a = pagination.find('.page-item.active')) === null || _a === void 0 ? void 0 : _a.text());
+            const nextPage = (_b = pagination.find('a[title=Next]')) === null || _b === void 0 ? void 0 : _b.attr('href');
+            if (nextPage !== undefined && nextPage !== '') {
+                res.hasNextPage = true;
+            }
+            const totalPages = (_c = pagination.find('a[title=Last]').attr('href')) === null || _c === void 0 ? void 0 : _c.split('=').pop();
+            if (totalPages === undefined || totalPages === '') {
+                res.totalPages = res.currentPage;
+            }
+            else {
+                res.totalPages = parseInt(totalPages);
+            }
+            res.results = yield scrapeCard($);
+            if (res.results.length === 0) {
+                res.currentPage = 0;
+                res.hasNextPage = false;
+                res.totalPages = 0;
+            }
+            return res;
+        }
+        catch (err) {
+            console.error('scrapeCardPage error:', err);
+            throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+    });
+    const retrieveServerId = ($, index, subOrDub) => {
+        const rawOrSubOrDub = (raw) => $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
+            .map((i, el) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
+            .get()[0]
+            .attr('data-id');
+        try {
+            // Attempt to get the subOrDub ID
+            return rawOrSubOrDub(false);
+        }
+        catch (error) {
+            // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
+            return rawOrSubOrDub(true);
+        }
+    };
     // Return the functional provider object
     return {
         // Configuration
@@ -592,7 +592,7 @@ function createZoro(ctx, customBaseURL) {
         },
         logo: config.logo,
         classPath: config.classPath,
-        // Core methods
+        // Core methods, pass only the necessary methods, dont pass helpers or unused methods
         search,
         fetchAdvancedSearch,
         fetchTopAiring,
@@ -620,10 +620,6 @@ function createZoro(ctx, customBaseURL) {
         fetchAnimeInfo,
         fetchEpisodeSources,
         fetchEpisodeServers,
-        verifyLoginState,
-        retrieveServerId,
-        scrapeCardPage,
-        scrapeCard,
     };
 }
 // Default export for backward compatibility

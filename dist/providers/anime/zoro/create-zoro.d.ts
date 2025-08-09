@@ -1,4 +1,3 @@
-import type { CheerioAPI } from 'cheerio';
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrSub, type WatchListType, type ProviderContext } from '../../../models';
 export declare function createZoro(ctx: ProviderContext, customBaseURL?: string): {
     name: string;
@@ -40,10 +39,7 @@ export declare function createZoro(ctx: ProviderContext, customBaseURL?: string)
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
     fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrSub) => Promise<ISource>;
     fetchEpisodeServers: (episodeId: string) => Promise<IEpisodeServer[]>;
-    verifyLoginState: (connectSid?: string) => Promise<boolean>;
-    retrieveServerId: ($: any, index: number, subOrDub: SubOrSub) => any;
-    scrapeCardPage: (url: string, headers?: object) => Promise<ISearch<IAnimeResult>>;
-    scrapeCard: ($: CheerioAPI) => Promise<IAnimeResult[]>;
 };
+export type ZoroProviderInstance = ReturnType<typeof createZoro>;
 export default createZoro;
 //# sourceMappingURL=create-zoro.d.ts.map

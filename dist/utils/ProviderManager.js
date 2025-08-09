@@ -17,6 +17,24 @@ exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 // Import the extension
 const provider_registry_json_1 = __importDefault(require("../provider-registry.json"));
+// /**
+//  * Anime provider interface
+//  */
+// export interface AnimeProviderInstance extends AnimeParser {
+//   search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
+//   fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
+//   fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
+//   fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
+// }
+// /**
+//  * Movie provider interface
+//  */
+// export interface MovieProviderInstance extends MovieParser {
+//   search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
+//   fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo>;
+//   fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
+//   supportedTypes: Set<TvType>;
+// }
 class ProviderManager {
     constructor(config = {}) {
         this.loadedExtensions = new Map();
@@ -59,48 +77,6 @@ class ProviderManager {
     getExtensionMetadata(extensionId) {
         return this.extensionManifest.get(extensionId) || null;
     }
-    /**
-     * Load provider code from file path or URL (for testing purposes)
-     *
-     * @param source - File path (e.g., './dist/providers/anime/zoro.js') or URL
-     * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
-     * @param extensionId - Optional custom extension ID for caching
-     */
-    // async loadProviderCode(
-    //   source: string,
-    //   factoryName: string,
-    //   extensionId: string = `custom-${factoryName}-${Date.now()}`
-    // ): Promise<AnimeProviderInstance | MovieProviderInstance> {
-    //   try {
-    //     console.log(`📥 Loading provider code from: ${source}`);
-    //     let providerCode: string;
-    //     if (source.startsWith('http')) {
-    //       // Load from URL
-    //       const response = await fetch(source);
-    //       if (!response.ok) {
-    //         throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
-    //       }
-    //       providerCode = await response.text();
-    //       console.log('✅ Provider code loaded from URL');
-    //     } else {
-    //       // Load from file system
-    //       const fs = require('fs');
-    //       providerCode = fs.readFileSync(source, 'utf-8');
-    //       console.log('✅ Provider code loaded from file');
-    //     }
-    //     // This code path is only reached for URL-based loading
-    //     const providerInstance = await this.executeProviderCodeDirect(providerCode, factoryName);
-    //     // Cache the loaded extension
-    //     this.loadedExtensions.set(extensionId, providerInstance);
-    //     console.log(`✅ Provider '${factoryName}' loaded successfully`);
-    //     console.log(`📦 Provider code size: ${providerCode.length} characters`);
-    //     // @ts-ignore
-    //     return providerInstance;
-    //   } catch (error) {
-    //     console.error(`❌ Failed to load provider code from ${source}:`, error);
-    //     throw error;
-    //   }
-    // }
     /**
      * Load an extension by ID from the extensionManifest
      */
@@ -155,61 +131,6 @@ class ProviderManager {
                     url: metadata.main,
                 });
                 throw error;
-            }
-        });
-    }
-    /**
-     * Execute provider code directly with minimal metadata (for testing)
-     */
-    executeProviderCodeDirect(code, factoryName) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const context = this.createExecutionContext();
-            try {
-                // Create and execute the provider code
-                console.log(`📝 About to execute provider code for factory: ${factoryName} (direct)`);
-                let executeFunction;
-                try {
-                    executeFunction = new Function('context', `
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          const __awaiter = context.__awaiter;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during provider code execution:', execError);
-            throw new Error('Provider code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
-          `);
-                }
-                catch (syntaxError) {
-                    console.error('Syntax error in provider code:', syntaxError);
-                    throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
-                }
-                const result = executeFunction(context);
-                const factory = result[factoryName];
-                if (!factory || typeof factory !== 'function') {
-                    throw new Error(`Factory function '${factoryName}' not found in provider code`);
-                }
-                const instance = factory(this.providerContext);
-                // Basic validation for required methods
-                const requiredMethods = ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'];
-                for (const method of requiredMethods) {
-                    if (typeof instance[method] !== 'function') {
-                        console.warn(`⚠️ Provider missing method: ${method}`);
-                    }
-                }
-                return instance;
-            }
-            catch (error) {
-                throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
             }
         });
     }
@@ -407,7 +328,7 @@ class ProviderManager {
         }
     }
     /**
-     * Get a type-safe anime provider
+     * Get anime provider
      */
     getAnimeProvider(extensionId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -423,7 +344,7 @@ class ProviderManager {
         });
     }
     /**
-     * Get a type-safe movie provider
+     * Get movie provider
      */
     getMovieProvider(extensionId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -467,7 +388,7 @@ class ProviderManager {
             const searchPromises = extensions.map((ext) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     const provider = yield this.loadExtension(ext.id);
-                    const results = yield provider.search(query, page);
+                    const results = (yield provider.search(query, page));
                     return { extensionId: ext.id, results };
                 }
                 catch (error) {

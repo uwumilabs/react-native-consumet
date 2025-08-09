@@ -1,43 +1,132 @@
 import { AnimeParser } from '../../../models';
+import { type ZoroProviderInstance } from './create-zoro';
 export declare class Zoro extends AnimeParser {
     private instance;
     logo: string;
     constructor(customBaseURL?: string);
-    get name(): any;
+    /**
+     * @param query Search query
+     * @param page Page number (optional)
+     */
+    search: ZoroProviderInstance['search'];
+    /**
+     * Fetch advanced anime search results with various filters.
+     *
+     * @param page Page number (default: 1)
+     * @param type One of (Optional): movie, tv, ova, ona, special, music
+     * @param status One of (Optional): finished_airing, currently_airing, not_yet_aired
+     * @param rated One of (Optional): g, pg, pg_13, r, r_plus, rx
+     * @param score Number from 1 to 10 (Optional)
+     * @param season One of (Optional): spring, summer, fall, winter
+     * @param language One of (Optional): sub, dub, sub_dub
+     * @param startDate Start date object { year, month, day } (Optional)
+     * @param endDate End date object { year, month, day } (Optional)
+     * @param sort One of (Optional): recently_added, recently_updated, score, name_az, released_date, most_watched
+     * @param genres Array of genres (Optional): action, adventure, cars, comedy, dementia, demons, mystery, drama, ecchi, fantasy, game, historical, horror, kids, magic, martial_arts, mecha, music, parody, samurai, romance, school, sci_fi, shoujo, shoujo_ai, shounen, shounen_ai, space, sports, super_power, vampire, harem, military, slice_of_life, supernatural, police, psychological, thriller, seinen, isekai, josei
+     * @returns A Promise resolving to the search results.
+     */
+    fetchAdvancedSearch: ZoroProviderInstance['fetchAdvancedSearch'];
+    /**
+     * @param page number
+     */
+    fetchTopAiring: ZoroProviderInstance['fetchTopAiring'];
+    /**
+     * @param page number
+     */
+    fetchMostPopular: ZoroProviderInstance['fetchMostPopular'];
+    /**
+     * @param page number
+     */
+    fetchMostFavorite: ZoroProviderInstance['fetchMostFavorite'];
+    /**
+     * @param page number
+     */
+    fetchLatestCompleted: ZoroProviderInstance['fetchLatestCompleted'];
+    /**
+     * @param page number
+     */
+    fetchRecentlyUpdated: ZoroProviderInstance['fetchRecentlyUpdated'];
+    /**
+     * @param page number
+     */
+    fetchRecentlyAdded: ZoroProviderInstance['fetchRecentlyAdded'];
+    /**
+     * @param page number
+     */
+    fetchTopUpcoming: ZoroProviderInstance['fetchTopUpcoming'];
+    /**
+     * @param studio Studio id, e.g. "toei-animation"
+     * @param page page number (optional) `default 1`
+     */
+    fetchStudio: ZoroProviderInstance['fetchStudio'];
+    /**
+     * @param page number
+     */
+    fetchSubbedAnime: ZoroProviderInstance['fetchSubbedAnime'];
+    /**
+     * @param page number
+     */
+    fetchDubbedAnime: ZoroProviderInstance['fetchDubbedAnime'];
+    /**
+     * @param page number
+     */
+    fetchMovie: ZoroProviderInstance['fetchMovie'];
+    /**
+     * @param page number
+     */
+    fetchTV: ZoroProviderInstance['fetchTV'];
+    /**
+     * @param page number
+     */
+    fetchOVA: ZoroProviderInstance['fetchOVA'];
+    /**
+     * @param page number
+     */
+    fetchONA: ZoroProviderInstance['fetchONA'];
+    /**
+     * @param page number
+     */
+    fetchSpecial: ZoroProviderInstance['fetchSpecial'];
+    fetchGenres: ZoroProviderInstance['fetchGenres'];
+    /**
+     * @param page number
+     */
+    genreSearch: ZoroProviderInstance['genreSearch'];
+    /**
+     * Fetches the schedule for a given date.
+     * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
+     * @returns A promise that resolves to an object containing the search results.
+     */
+    fetchSchedule: ZoroProviderInstance['fetchSchedule'];
+    fetchSpotlight: ZoroProviderInstance['fetchSpotlight'];
+    fetchSearchSuggestions: ZoroProviderInstance['fetchSearchSuggestions'];
+    /**
+     * Fetches the list of episodes that the user is currently watching.
+     * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)
+     * @returns A promise that resolves to an array of anime episodes.
+     */
+    fetchContinueWatching: ZoroProviderInstance['fetchContinueWatching'];
+    fetchWatchList: ZoroProviderInstance['fetchWatchList'];
+    /**
+     * @param id Anime id
+     */
+    fetchAnimeInfo: ZoroProviderInstance['fetchAnimeInfo'];
+    /**
+     *
+     * @param episodeId Episode id
+     * @param server server type (default `VidCloud`) (optional)
+     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+     */
+    fetchEpisodeSources: ZoroProviderInstance['fetchEpisodeSources'];
+    /**
+     * Method not implemented in Zoro provider.
+     * @param episodeId Episode id
+     */
+    fetchEpisodeServers: ZoroProviderInstance['fetchEpisodeServers'];
+    get name(): string;
     get baseUrl(): string;
     set baseUrl(value: string);
-    get classPath(): any;
-    search(...args: any[]): any;
-    fetchAdvancedSearch(...args: any[]): any;
-    fetchTopAiring(...args: any[]): any;
-    fetchMostPopular(...args: any[]): any;
-    fetchMostFavorite(...args: any[]): any;
-    fetchLatestCompleted(...args: any[]): any;
-    fetchRecentlyUpdated(...args: any[]): any;
-    fetchRecentlyAdded(...args: any[]): any;
-    fetchTopUpcoming(...args: any[]): any;
-    fetchStudio(...args: any[]): any;
-    fetchSubbedAnime(...args: any[]): any;
-    fetchDubbedAnime(...args: any[]): any;
-    fetchMovie(...args: any[]): any;
-    fetchTV(...args: any[]): any;
-    fetchOVA(...args: any[]): any;
-    fetchONA(...args: any[]): any;
-    fetchSpecial(...args: any[]): any;
-    fetchGenres(...args: any[]): any;
-    genreSearch(...args: any[]): any;
-    fetchSchedule(...args: any[]): any;
-    fetchSpotlight(...args: any[]): any;
-    fetchSearchSuggestions(...args: any[]): any;
-    fetchContinueWatching(...args: any[]): any;
-    fetchWatchList(...args: any[]): any;
-    fetchAnimeInfo(...args: any[]): any;
-    fetchEpisodeSources(...args: any[]): any;
-    fetchEpisodeServers(...args: any[]): any;
-    verifyLoginState(...args: any[]): any;
-    retrieveServerId(...args: any[]): any;
-    scrapeCardPage(...args: any[]): any;
-    scrapeCard(...args: any[]): any;
+    get classPath(): string;
 }
 export default Zoro;
 //# sourceMappingURL=zoro.d.ts.map

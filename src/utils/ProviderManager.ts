@@ -11,44 +11,33 @@ import {
   type ISource,
   type IEpisodeServer,
   TvType,
+  AnimeParser,
+  MovieParser,
 } from '../models';
 
 // Import the extension
 import providerRegistry from '../provider-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 
-/**
- * Base provider interface with required methods for extensions
- */
-interface BaseProviderInstance {
-  name: string;
-  baseUrl: string;
-  logo: string;
-  classPath: string;
-  search(query: string, page?: number): Promise<ISearch<any>>;
-  fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>;
-  fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>;
-  fetchSpotlight?(...args: any[]): Promise<ISearch<any>>;
-}
+// /**
+//  * Anime provider interface
+//  */
+// export interface AnimeProviderInstance extends AnimeParser {
+//   search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
+//   fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
+//   fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
+//   fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
+// }
 
-/**
- * Anime provider interface
- */
-interface AnimeProviderInstance extends BaseProviderInstance {
-  search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
-  fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
-  fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
-}
-
-/**
- * Movie provider interface
- */
-interface MovieProviderInstance extends BaseProviderInstance {
-  search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
-  fetchMediaInfo(mediaId: string): Promise<IMovieInfo>;
-  fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
-  supportedTypes: Set<TvType>;
-}
+// /**
+//  * Movie provider interface
+//  */
+// export interface MovieProviderInstance extends MovieParser {
+//   search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
+//   fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo>;
+//   fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
+//   supportedTypes: Set<TvType>;
+// }
 
 export class ProviderManager {
   private providerContext: ProviderContext;
@@ -103,57 +92,9 @@ export class ProviderManager {
   }
 
   /**
-   * Load provider code from file path or URL (for testing purposes)
-   *
-   * @param source - File path (e.g., './dist/providers/anime/zoro.js') or URL
-   * @param factoryName - Factory function name (e.g., 'createZoro', 'createHiMovies')
-   * @param extensionId - Optional custom extension ID for caching
-   */
-  // async loadProviderCode(
-  //   source: string,
-  //   factoryName: string,
-  //   extensionId: string = `custom-${factoryName}-${Date.now()}`
-  // ): Promise<AnimeProviderInstance | MovieProviderInstance> {
-  //   try {
-  //     console.log(`📥 Loading provider code from: ${source}`);
-
-  //     let providerCode: string;
-
-  //     if (source.startsWith('http')) {
-  //       // Load from URL
-  //       const response = await fetch(source);
-  //       if (!response.ok) {
-  //         throw new Error(`Failed to fetch from URL: ${response.status} ${response.statusText}`);
-  //       }
-  //       providerCode = await response.text();
-  //       console.log('✅ Provider code loaded from URL');
-  //     } else {
-  //       // Load from file system
-  //       const fs = require('fs');
-  //       providerCode = fs.readFileSync(source, 'utf-8');
-  //       console.log('✅ Provider code loaded from file');
-  //     }
-
-  //     // This code path is only reached for URL-based loading
-  //     const providerInstance = await this.executeProviderCodeDirect(providerCode, factoryName);
-
-  //     // Cache the loaded extension
-  //     this.loadedExtensions.set(extensionId, providerInstance);
-
-  //     console.log(`✅ Provider '${factoryName}' loaded successfully`);
-  //     console.log(`📦 Provider code size: ${providerCode.length} characters`);
-  //     // @ts-ignore
-  //     return providerInstance;
-  //   } catch (error) {
-  //     console.error(`❌ Failed to load provider code from ${source}:`, error);
-  //     throw error;
-  //   }
-  // }
-
-  /**
    * Load an extension by ID from the extensionManifest
    */
-  async loadExtension(extensionId: string): Promise<BaseProviderInstance> {
+  async loadExtension(extensionId: string): Promise<AnimeParser | MovieParser> {
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
@@ -215,75 +156,13 @@ export class ProviderManager {
   }
 
   /**
-   * Execute provider code directly with minimal metadata (for testing)
-   */
-  private async executeProviderCodeDirect(code: string, factoryName: string): Promise<BaseProviderInstance> {
-    const context = this.createExecutionContext();
-
-    try {
-      // Create and execute the provider code
-      console.log(`📝 About to execute provider code for factory: ${factoryName} (direct)`);
-
-      let executeFunction;
-      try {
-        executeFunction = new Function(
-          'context',
-          `
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          const __awaiter = context.__awaiter;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during provider code execution:', execError);
-            throw new Error('Provider code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
-          `
-        );
-      } catch (syntaxError: any) {
-        console.error('Syntax error in provider code:', syntaxError);
-        throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
-      }
-
-      const result = executeFunction(context);
-      const factory = result[factoryName];
-
-      if (!factory || typeof factory !== 'function') {
-        throw new Error(`Factory function '${factoryName}' not found in provider code`);
-      }
-
-      const instance = factory(this.providerContext);
-
-      // Basic validation for required methods
-      const requiredMethods = ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'];
-      for (const method of requiredMethods) {
-        if (typeof instance[method] !== 'function') {
-          console.warn(`⚠️ Provider missing method: ${method}`);
-        }
-      }
-
-      return instance;
-    } catch (error) {
-      throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
    * Execute provider code and create instance (extensionManifest-based)
    */
   private async executeProviderCode(
     code: string,
     factoryName: string,
     metadata: ExtensionManifest
-  ): Promise<BaseProviderInstance> {
+  ): Promise<AnimeParser | MovieParser> {
     const context = this.createExecutionContext();
 
     try {
@@ -489,9 +368,9 @@ export class ProviderManager {
   }
 
   /**
-   * Get a type-safe anime provider
+   * Get anime provider
    */
-  async getAnimeProvider(extensionId: string): Promise<AnimeProviderInstance> {
+  async getAnimeProvider(extensionId: string): Promise<AnimeParser> {
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -502,13 +381,13 @@ export class ProviderManager {
     }
 
     const instance = await this.loadExtension(extensionId);
-    return instance as AnimeProviderInstance;
+    return instance as AnimeParser;
   }
 
   /**
-   * Get a type-safe movie provider
+   * Get movie provider
    */
-  async getMovieProvider(extensionId: string): Promise<MovieProviderInstance> {
+  async getMovieProvider(extensionId: string): Promise<MovieParser> {
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -519,13 +398,13 @@ export class ProviderManager {
     }
 
     const instance = await this.loadExtension(extensionId);
-    return instance as MovieProviderInstance;
+    return instance as MovieParser;
   }
 
   /**
    * Get any provider (use with caution - prefer typed methods)
    */
-  async getProvider(extensionId: string): Promise<BaseProviderInstance> {
+  async getProvider(extensionId: string): Promise<AnimeParser | MovieParser> {
     return await this.loadExtension(extensionId);
   }
 
@@ -550,12 +429,12 @@ export class ProviderManager {
     category: ProviderType,
     query: string,
     page?: number
-  ): Promise<Array<{ extensionId: string; results: ISearch<any> }>> {
+  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult> }>> {
     const extensions = this.getExtensionsByCategory(category);
     const searchPromises = extensions.map(async (ext) => {
       try {
         const provider = await this.loadExtension(ext.id);
-        const results = await provider.search(query, page);
+        const results = (await provider.search(query, page)) as ISearch<IAnimeResult | IMovieResult>;
         return { extensionId: ext.id, results };
       } catch (error) {
         console.error(`Search failed for ${ext.id}:`, error);
@@ -565,33 +444,6 @@ export class ProviderManager {
 
     return Promise.all(searchPromises);
   }
-
-  /**
-   * Load provider code from string (for testing purposes)
-   */
-  // async loadProviderCodeFromString(
-  //   code: string,
-  //   factoryName: string,
-  //   extensionId: string = `string-${factoryName}-${Date.now()}`
-  // ): Promise<AnimeProviderInstance | MovieProviderInstance> {
-  //   try {
-  //     console.log(`📥 Loading provider code from string: ${factoryName}`);
-  //     console.log(`📦 Provider code size: ${code.length} characters`);
-
-  //     // Execute the provider code
-  //     const providerInstance = await this.executeProviderCodeDirect(code, factoryName);
-
-  //     // Cache the loaded extension
-  //     this.loadedExtensions.set(extensionId, providerInstance);
-
-  //     console.log(`✅ Provider '${factoryName}' loaded successfully from string`);
-  //     // @ts-ignore
-  //     return providerInstance;
-  //   } catch (error) {
-  //     console.error(`❌ Failed to load provider code from string:`, error);
-  //     throw error;
-  //   }
-  // }
 }
 
 export default ProviderManager;
