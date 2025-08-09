@@ -15,7 +15,7 @@ import {
 import type { IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
-import HiMovies from '../movies/himovies';
+import HiMovies from '../movies/himovies/himovies';
 
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';

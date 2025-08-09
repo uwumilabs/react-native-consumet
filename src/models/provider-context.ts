@@ -4,6 +4,7 @@ import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
 import type { ExtractorContext } from './extractor-context';
 import type MangaParser from './manga-parser';
+import { StreamingServers, MediaFormat, MediaStatus, SubOrSub, WatchListType, TvType, Genres, Topics } from './types';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -136,5 +137,16 @@ export interface ProviderContext {
   logger?: {
     log: (...args: any[]) => void;
     error: (...args: any[]) => void;
+  };
+  // Enums included directly in context to avoid require statements in bundled providers
+  enums: {
+    StreamingServers: typeof StreamingServers;
+    MediaFormat: typeof MediaFormat;
+    MediaStatus: typeof MediaStatus;
+    SubOrSub: typeof SubOrSub;
+    WatchListType: typeof WatchListType;
+    TvType: typeof TvType;
+    Genres: typeof Genres;
+    Topics: typeof Topics;
   };
 }

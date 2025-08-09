@@ -16,7 +16,7 @@ const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-const zoro_1 = __importDefault(require("../anime/zoro"));
+const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
 const anify_1 = __importDefault(require("../anime/anify"));
 const utils_2 = require("../../utils/utils");
 class Myanimelist extends models_1.AnimeParser {

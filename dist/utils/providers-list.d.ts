@@ -4,10 +4,10 @@
  * add new providers here (order does not matter)
  */
 export declare const PROVIDERS_LIST: {
-    ANIME: (import("../providers/anime/animepahe").default | import("../providers/anime/zoro").Zoro | import("../providers/anime/anify").default | import("../providers/anime/marin").default | import("../providers/anime/animekai").default)[];
+    ANIME: (import("../providers/anime/animepahe").default | import("../providers/anime/zoro/zoro").Zoro | import("../providers/anime/anify").default | import("../providers/anime/marin").default | import("../providers/anime/animekai").default)[];
     MANGA: (import("../providers/manga/mangadex").default | import("../providers/manga/comick").default | import("../providers/manga/mangahere").default | import("../providers/manga/mangakakalot").default | import("../providers/manga/mangasee123").default | import("../providers/manga/mangapark").default | import("../providers/manga/mangapill").default | import("../providers/manga/mangareader").default | import("../providers/manga/flamescans").default | import("../providers/manga/mangahost").default | import("../providers/manga/brmangas").default)[];
     LIGHT_NOVELS: import("../providers/light-novels/readlightnovels").default[];
-    MOVIES: (import("../providers/movies/dramacool").default | import("../providers/movies/multimovies").default | import("../providers/movies/netflixmirror").default | import("../providers/movies/himovies").default)[];
+    MOVIES: (import("../providers/movies/dramacool").default | import("../providers/movies/multimovies").default | import("../providers/movies/netflixmirror").default | import("../providers/movies/himovies/himovies").default)[];
     META: (import("../providers/meta/anilist").default | import("../providers/meta/mal").default | import("../providers/meta/tmdb").default)[];
     OTHERS: never[];
 };

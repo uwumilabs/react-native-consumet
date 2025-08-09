@@ -1,8 +1,9 @@
 import DramaCool from './dramacool';
 import MultiMovies from './multimovies';
 import NetflixMirror from './netflixmirror';
-import HiMovies from './himovies';
 import MultiStream from './multistream';
+import HiMovies from './himovies/himovies';
+import { createHiMovies } from './himovies/create-himovies';
 
 export default {
   DramaCool,
@@ -10,4 +11,5 @@ export default {
   NetflixMirror,
   HiMovies,
   MultiStream,
+  createHiMovies
 };

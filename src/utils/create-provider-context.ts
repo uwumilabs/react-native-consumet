@@ -1,7 +1,19 @@
 import axios from 'axios';
 import { load } from 'cheerio';
 import type { ProviderContext } from '../models/provider-context';
-import { AnimeParser, MovieParser, MangaParser } from '../models';
+import {
+  AnimeParser,
+  MovieParser,
+  MangaParser,
+  StreamingServers,
+  MediaFormat,
+  MediaStatus,
+  SubOrSub,
+  WatchListType,
+  TvType,
+  Genres,
+  Topics,
+} from '../models';
 
 // Import extractors
 import {
@@ -148,6 +160,16 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MangaParser: config.MangaParser || MangaParser,
     extractors: { ...defaultExtractors, ...config.extractors },
     logger: config.logger || defaultLogger,
+    enums: {
+      StreamingServers,
+      MediaFormat,
+      MediaStatus,
+      SubOrSub,
+      WatchListType,
+      TvType,
+      Genres,
+      Topics,
+    },
   };
 }
 

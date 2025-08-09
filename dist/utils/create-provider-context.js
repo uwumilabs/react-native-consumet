@@ -75,6 +75,16 @@ function createProviderContext(config = {}) {
         MangaParser: config.MangaParser || models_1.MangaParser,
         extractors: Object.assign(Object.assign({}, defaultExtractors), config.extractors),
         logger: config.logger || defaultLogger,
+        enums: {
+            StreamingServers: models_1.StreamingServers,
+            MediaFormat: models_1.MediaFormat,
+            MediaStatus: models_1.MediaStatus,
+            SubOrSub: models_1.SubOrSub,
+            WatchListType: models_1.WatchListType,
+            TvType: models_1.TvType,
+            Genres: models_1.Genres,
+            Topics: models_1.Topics,
+        },
     };
 }
 exports.default = createProviderContext;

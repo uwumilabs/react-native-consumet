@@ -1,5 +1,6 @@
 import AnimePahe from './animepahe';
-import Zoro, { createZoro } from './zoro';
+import Zoro from './zoro/zoro';
+import { createZoro } from './zoro/create-zoro';
 import AnimeDrive from './animedrive';
 import Anify from './anify';
 import Marin from './marin';

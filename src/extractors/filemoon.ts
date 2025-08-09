@@ -38,7 +38,9 @@ class Filemoon extends VideoExtractor {
     const $ = load(data);
     try {
       const { data } = await axios.get($('iframe').attr('src')!, options)!;
-      const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', ''));
+      const unpackedData = eval(
+        /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', '')
+      );
       const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
       const m3u8Link = links[1];
       this.sources.unshift({

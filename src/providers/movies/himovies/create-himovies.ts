@@ -1,28 +1,33 @@
 import axios from 'axios';
 
 import {
-  MovieParser,
-  TvType,
+  type TvType,
   type IMovieInfo,
   type IEpisodeServer,
-  StreamingServers,
+  type StreamingServers,
   type ISource,
   type IMovieResult,
   type ISearch,
   type ProviderContext,
-} from '../../models';
-import { createProviderContext } from '../../utils';
+} from '../../../models';
 
-export function createHiMovies(ctx: ProviderContext): MovieParser {
-  const { load, extractors } = ctx;
+export function createHiMovies(ctx: ProviderContext): InstanceType<typeof ctx.MovieParser> {
+  const { load, extractors, MovieParser, enums } = ctx;
   const { VidCloud, MegaCloud } = extractors;
+  const {
+    StreamingServers: StreamingServersEnum,
+    SubOrSub: SubOrSubEnum,
+    MediaStatus: MediaStatusEnum,
+    WatchListType: WatchListTypeEnum,
+    TvType: TvTypeEnum,
+  } = enums;
 
   class HiMoviesImpl extends MovieParser {
     override readonly name = 'HiMovies';
     protected override baseUrl = 'https://himovies.sx';
     protected override logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
     protected override classPath = 'MOVIES.HiMovies';
-    override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
+    override supportedTypes = new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
     constructor(customBaseURL?: string) {
       super();
       if (customBaseURL) {
@@ -68,8 +73,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
             seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]!) : undefined,
             type:
               $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvType.MOVIE
-                : TvType.TVSERIES,
+                ? TvTypeEnum.MOVIE
+                : TvTypeEnum.TVSERIES,
           });
         });
 
@@ -123,8 +128,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
             duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text().replace('m', '') ?? null,
             type:
               $(el).find('div.film-detail > div.fd-infor > span.fdi-type').text() === 'TV'
-                ? TvType.TVSERIES
-                : (TvType.MOVIE ?? null),
+                ? TvTypeEnum.TVSERIES
+                : (TvTypeEnum.MOVIE ?? null),
           });
         });
 
@@ -133,7 +138,7 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
         movieInfo.title = $('.heading-name > a:nth-child(1)').text();
         movieInfo.image = $('.film-poster > img:nth-child(1)').attr('src');
         movieInfo.description = $('.description').text().trim();
-        movieInfo.type = movieInfo.id.includes('tv/') ? TvType.TVSERIES : TvType.MOVIE;
+        movieInfo.type = movieInfo.id.includes('tv/') ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE;
         movieInfo.releaseDate = $('div.row-line:contains(Released:)').text().replace('Released:', '').trim();
         movieInfo.genres = $('div.row-line:contains(Genre:) a')
           .map((i, el) => $(el).text().split('&'))
@@ -154,7 +159,7 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
         const ajaxReqUrl = (id: string, type: string, isSeasons: boolean = false) =>
           `${this.baseUrl}/ajax/${type === 'movie' ? type : ``}${isSeasons ? 'season/list' : 'season/episodes'}/${id}`;
 
-        if (movieInfo.type === TvType.TVSERIES) {
+        if (movieInfo.type === TvTypeEnum.TVSERIES) {
           const { data } = await axios.get(ajaxReqUrl(uid, 'tv', true));
           const $$ = load(data);
           const seasonsIds = $$('.dropdown-menu > a')
@@ -207,17 +212,17 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
     override fetchEpisodeSources = async (
       episodeId: string,
       mediaId: string,
-      server: StreamingServers = StreamingServers.MegaCloud
+      server: StreamingServers = StreamingServersEnum.MegaCloud
     ): Promise<ISource> => {
       if (episodeId.startsWith('http')) {
         const serverUrl = new URL(episodeId);
         switch (server) {
-          case StreamingServers.MegaCloud:
+          case StreamingServersEnum.MegaCloud:
             return {
               headers: { Referer: serverUrl.href },
               ...(await MegaCloud().extract(serverUrl, this.baseUrl)),
             };
-          case StreamingServers.UpCloud:
+          case StreamingServersEnum.UpCloud:
             return {
               headers: { Referer: serverUrl.href },
               ...(await VidCloud().extract(serverUrl, this.baseUrl)),
@@ -303,8 +308,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             return movie;
           })
@@ -335,8 +340,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
                 null,
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             return tvshow;
           })
@@ -364,8 +369,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             return movie;
           })
@@ -394,8 +399,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
                 null,
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             return tvshow;
           })
@@ -429,8 +434,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               image: $(el).find('div.film-poster > img').attr('data-src'),
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             const season = $(el)
               .find('div.film-detail > div.fd-infor > span:nth-child(1)')
@@ -439,7 +444,7 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               .trim();
             const latestEpisode =
               $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-            if (resultItem.type === TvType.TVSERIES) {
+            if (resultItem.type === TvTypeEnum.TVSERIES) {
               resultItem.season = season;
               resultItem.latestEpisode = latestEpisode;
             } else {
@@ -479,8 +484,8 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               image: $(el).find('div.film-poster > img').attr('data-src'),
               type:
                 $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                  ? TvType.MOVIE
-                  : TvType.TVSERIES,
+                  ? TvTypeEnum.MOVIE
+                  : TvTypeEnum.TVSERIES,
             };
             const season = $(el)
               .find('div.film-detail > div.fd-infor > span:nth-child(1)')
@@ -489,7 +494,7 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
               .trim();
             const latestEpisode =
               $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-            if (resultItem.type === TvType.TVSERIES) {
+            if (resultItem.type === TvTypeEnum.TVSERIES) {
               resultItem.season = season;
               resultItem.latestEpisode = latestEpisode;
             } else {
@@ -509,80 +514,3 @@ export function createHiMovies(ctx: ProviderContext): MovieParser {
 
   return new HiMoviesImpl();
 }
-
-// Backward compatibility wrapper class
-class HiMovies extends MovieParser {
-  private instance: any;
-  public logo: string;
-  constructor(customBaseURL?: string) {
-    super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createHiMovies(defaultContext);
-    this.logo = this.instance.logo;
-    if (customBaseURL) {
-      this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
-    }
-  }
-
-  // Proxy all methods to the instance
-  get supportedTypes() {
-    return this.instance.supportedTypes;
-  }
-  get name() {
-    return this.instance.name;
-  }
-  get baseUrl() {
-    return this.instance.baseUrl;
-  }
-  set baseUrl(value: string) {
-    this.instance.baseUrl = value;
-  }
-  get classPath() {
-    return this.instance.classPath;
-  }
-
-  search(...args: any[]) {
-    return this.instance.search(...args);
-  }
-  fetchRecentMovies() {
-    return this.instance.fetchRecentMovies();
-  }
-  fetchRecentTvShows() {
-    return this.instance.fetchRecentTvShows();
-  }
-  fetchTrendingMovies() {
-    return this.instance.fetchTrendingMovies();
-  }
-  fetchTrendingTvShows() {
-    return this.instance.fetchTrendingTvShows();
-  }
-  fetchByCountry(...args: any[]) {
-    return this.instance.fetchByCountry(...args);
-  }
-  fetchByGenre(...args: any[]) {
-    return this.instance.fetchByGenre(...args);
-  }
-  fetchMediaInfo(...args: any[]) {
-    return this.instance.fetchAnimeInfo(...args);
-  }
-  fetchEpisodeSources(...args: any[]) {
-    return this.instance.fetchEpisodeSources(...args);
-  }
-  fetchEpisodeServers(...args: any[]) {
-    return this.instance.fetchEpisodeServers(...args);
-  }
-}
-
-// (async () => {
-//   const movie = new HiMovies();
-//   const search = await movie.search('jujutsu');
-//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
-//   // const recentTv = await movie.fetchTrendingTvShows();
-//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
-//   console.log(genre);
-// })();
-
-export default HiMovies;

@@ -17,7 +17,7 @@ const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const anify_1 = __importDefault(require("../anime/anify"));
-const zoro_1 = __importDefault(require("../anime/zoro"));
+const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
 const animekai_1 = __importDefault(require("../anime/animekai"));
 const animepahe_1 = __importDefault(require("../anime/animepahe"));
 const mangasee123_1 = __importDefault(require("../manga/mangasee123"));
@@ -614,7 +614,7 @@ class Anilist extends models_1.AnimeParser {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
                     results: data.data.Page.media.map((item) => {
-                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
                         return ({
                             id: item.id.toString(),
                             malId: item.idMal,
@@ -652,7 +652,7 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_u = (_s = item.episodes) !== null && _s !== void 0 ? _s : ((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) - 1) !== null && _u !== void 0 ? _u : 0),
+                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });
@@ -683,7 +683,7 @@ class Anilist extends models_1.AnimeParser {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
                     results: data.data.Page.media.map((item) => {
-                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
                         return ({
                             id: item.id.toString(),
                             malId: item.idMal,
@@ -721,7 +721,7 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_u = (_s = item.episodes) !== null && _s !== void 0 ? _s : ((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) - 1) !== null && _u !== void 0 ? _u : 0),
+                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });
@@ -822,7 +822,7 @@ class Anilist extends models_1.AnimeParser {
                     currentPage: data.data.Page.pageInfo.currentPage,
                     hasNextPage: data.data.Page.pageInfo.hasNextPage,
                     results: data.data.Page.media.map((item) => {
-                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+                        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
                         return ({
                             id: item.id.toString(),
                             malId: item.idMal,
@@ -849,7 +849,7 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_u = (_s = item.episodes) !== null && _s !== void 0 ? _s : ((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) - 1) !== null && _u !== void 0 ? _u : 0),
+                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });

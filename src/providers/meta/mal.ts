@@ -14,7 +14,7 @@ import {
   MediaFormat,
 } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
-import Zoro from '../anime/zoro';
+import Zoro from '../anime/zoro/zoro';
 import Anify from '../anime/anify';
 import { ANIFY_URL } from '../../utils/utils';
 

@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-const himovies_1 = __importDefault(require("../movies/himovies"));
+const himovies_1 = __importDefault(require("../movies/himovies/himovies"));
 class TMDB extends models_1.MovieParser {
     constructor(apiKey = '5201b54eb0968700e693a30576d7d4dc', provider, proxyConfig, adapter) {
         super();

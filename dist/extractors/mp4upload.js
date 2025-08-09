@@ -22,7 +22,9 @@ class Mp4Upload extends models_1.VideoExtractor {
         this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const { data } = yield axios_1.default.get(videoUrl.href);
-                const playerSrc = data.replace(/\n/g, ' ').match(/player\.src\(\s*{\s*type:\s*"[^"]+",\s*src:\s*"([^"]+)"\s*}\s*\);/);
+                const playerSrc = data
+                    .replace(/\n/g, ' ')
+                    .match(/player\.src\(\s*{\s*type:\s*"[^"]+",\s*src:\s*"([^"]+)"\s*}\s*\);/);
                 const streamUrl = playerSrc[1];
                 if (!streamUrl)
                     throw new Error('Stream url not found');

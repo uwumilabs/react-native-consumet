@@ -1,0 +1,43 @@
+import { AnimeParser } from '../../../models';
+export declare class Zoro extends AnimeParser {
+    private instance;
+    logo: string;
+    constructor(customBaseURL?: string);
+    get name(): any;
+    get baseUrl(): string;
+    set baseUrl(value: string);
+    get classPath(): any;
+    search(...args: any[]): any;
+    fetchAdvancedSearch(...args: any[]): any;
+    fetchTopAiring(...args: any[]): any;
+    fetchMostPopular(...args: any[]): any;
+    fetchMostFavorite(...args: any[]): any;
+    fetchLatestCompleted(...args: any[]): any;
+    fetchRecentlyUpdated(...args: any[]): any;
+    fetchRecentlyAdded(...args: any[]): any;
+    fetchTopUpcoming(...args: any[]): any;
+    fetchStudio(...args: any[]): any;
+    fetchSubbedAnime(...args: any[]): any;
+    fetchDubbedAnime(...args: any[]): any;
+    fetchMovie(...args: any[]): any;
+    fetchTV(...args: any[]): any;
+    fetchOVA(...args: any[]): any;
+    fetchONA(...args: any[]): any;
+    fetchSpecial(...args: any[]): any;
+    fetchGenres(...args: any[]): any;
+    genreSearch(...args: any[]): any;
+    fetchSchedule(...args: any[]): any;
+    fetchSpotlight(...args: any[]): any;
+    fetchSearchSuggestions(...args: any[]): any;
+    fetchContinueWatching(...args: any[]): any;
+    fetchWatchList(...args: any[]): any;
+    fetchAnimeInfo(...args: any[]): any;
+    fetchEpisodeSources(...args: any[]): any;
+    fetchEpisodeServers(...args: any[]): any;
+    verifyLoginState(...args: any[]): any;
+    retrieveServerId(...args: any[]): any;
+    scrapeCardPage(...args: any[]): any;
+    scrapeCard(...args: any[]): any;
+}
+export default Zoro;
+//# sourceMappingURL=zoro.d.ts.map

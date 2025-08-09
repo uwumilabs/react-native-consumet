@@ -5,20 +5,23 @@ import {
   type IAnimeResult,
   type ISource,
   type IEpisodeServer,
-  StreamingServers,
-  MediaFormat,
-  SubOrSub,
+  type StreamingServers,
+  type MediaFormat,
+  type SubOrSub,
   type IAnimeEpisode,
-  MediaStatus,
-  WatchListType,
+  type WatchListType,
   type ProviderContext,
-  AnimeParser,
-} from '../../models';
-import { createProviderContext } from '../../utils/create-provider-context';
+} from '../../../models';
 
-export function createZoro(ctx: ProviderContext): AnimeParser {
-  const { load, extractors } = ctx;
+export function createZoro(ctx: ProviderContext): InstanceType<typeof ctx.AnimeParser> {
+  const { load, extractors, enums, AnimeParser } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
+  const {
+    StreamingServers: StreamingServersEnum,
+    SubOrSub: SubOrSubEnum,
+    MediaStatus: MediaStatusEnum,
+    WatchListType: WatchListTypeEnum,
+  } = enums;
 
   class ZoroImpl extends AnimeParser {
     readonly name = 'Zoro';
@@ -519,19 +522,19 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
       }
       let type: number = 0;
       switch (sortListType) {
-        case WatchListType.WATCHING:
+        case WatchListTypeEnum.WATCHING:
           type = 1;
           break;
-        case WatchListType.ONHOLD:
+        case WatchListTypeEnum.ONHOLD:
           type = 2;
           break;
-        case WatchListType.PLAN_TO_WATCH:
+        case WatchListTypeEnum.PLAN_TO_WATCH:
           type = 3;
           break;
-        case WatchListType.DROPPED:
+        case WatchListTypeEnum.DROPPED:
           type = 4;
           break;
-        case WatchListType.COMPLETED:
+        case WatchListTypeEnum.COMPLETED:
           type = 5;
           break;
       }
@@ -584,15 +587,15 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         const hasDub: boolean = $('div.film-stats div.tick div.tick-item.tick-dub').length > 0;
 
         if (hasSub) {
-          info.subOrDub = SubOrSub.SUB;
+          info.subOrDub = SubOrSubEnum.SUB;
           info.hasSub = hasSub;
         }
         if (hasDub) {
-          info.subOrDub = SubOrSub.DUB;
+          info.subOrDub = SubOrSubEnum.DUB;
           info.hasDub = hasDub;
         }
         if (hasSub && hasDub) {
-          info.subOrDub = SubOrSub.BOTH;
+          info.subOrDub = SubOrSubEnum.BOTH;
         }
 
         // ZORO - PAGE INFO
@@ -610,16 +613,16 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
 
         switch ($$$('.item.item-title').find("span.item-head:contains('Status')").next('span.name').text().trim()) {
           case 'Finished Airing':
-            info.status = MediaStatus.COMPLETED;
+            info.status = MediaStatusEnum.COMPLETED;
             break;
           case 'Currently Airing':
-            info.status = MediaStatus.ONGOING;
+            info.status = MediaStatusEnum.ONGOING;
             break;
           case 'Not yet aired':
-            info.status = MediaStatus.NOT_YET_AIRED;
+            info.status = MediaStatusEnum.NOT_YET_AIRED;
             break;
           default:
-            info.status = MediaStatus.UNKNOWN;
+            info.status = MediaStatusEnum.UNKNOWN;
             break;
         }
 
@@ -681,17 +684,17 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
      *
      * @param episodeId Episode id
      * @param server server type (default `VidCloud`) (optional)
-     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+     * @param subOrDub sub or dub (default `SubOrSubEnum.SUB`) (optional)
      */
     fetchEpisodeSources = async (
       episodeId: string,
-      server: StreamingServers = StreamingServers.VidCloud,
-      subOrDub: SubOrSub = SubOrSub.SUB
+      server: StreamingServers = StreamingServersEnum.VidCloud,
+      subOrDub: SubOrSub = SubOrSubEnum.SUB
     ): Promise<ISource> => {
       if (episodeId.startsWith('http')) {
         const serverUrl = new URL(episodeId);
         switch (server) {
-          case StreamingServers.VidCloud:
+          case StreamingServersEnum.VidCloud:
             return {
               headers: { Referer: serverUrl.href },
               ...(await MegaCloud({
@@ -701,7 +704,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
                 logger: ctx.logger,
               }).extract(serverUrl, this.baseUrl)),
             };
-          case StreamingServers.StreamSB:
+          case StreamingServersEnum.StreamSB:
             return {
               headers: {
                 'Referer': serverUrl.href,
@@ -715,7 +718,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
                 logger: ctx.logger,
               }).extract(serverUrl, true),
             };
-          case StreamingServers.StreamTape:
+          case StreamingServersEnum.StreamTape:
             if (!StreamTape) {
               throw new Error('StreamTape extractor is not available');
             }
@@ -729,7 +732,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
               }).extract(serverUrl),
             };
           default:
-          case StreamingServers.VidCloud:
+          case StreamingServersEnum.VidCloud:
             return {
               headers: { Referer: serverUrl.href },
               ...(await MegaCloud({
@@ -766,24 +769,24 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         let serverId = '';
         try {
           switch (server) {
-            case StreamingServers.VidCloud:
+            case StreamingServersEnum.VidCloud:
               serverId = this.retrieveServerId($, 1, subOrDub);
 
               // zoro's vidcloud server is rapidcloud
               if (!serverId) throw new Error('RapidCloud not found');
               break;
-            case StreamingServers.VidStreaming:
+            case StreamingServersEnum.VidStreaming:
               serverId = this.retrieveServerId($, 4, subOrDub);
 
               // zoro's vidcloud server is rapidcloud
               if (!serverId) throw new Error('vidtreaming not found');
               break;
-            case StreamingServers.StreamSB:
+            case StreamingServersEnum.StreamSB:
               serverId = this.retrieveServerId($, 5, subOrDub);
 
               if (!serverId) throw new Error('StreamSB not found');
               break;
-            case StreamingServers.StreamTape:
+            case StreamingServersEnum.StreamTape:
               serverId = this.retrieveServerId($, 3, subOrDub);
 
               if (!serverId) throw new Error('StreamTape not found');
@@ -797,7 +800,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
         const sourcesData = await sourcesResponse.json();
         const { link } = sourcesData;
 
-        return await this.fetchEpisodeSources(link, server, SubOrSub.SUB);
+        return await this.fetchEpisodeSources(link, server, SubOrSubEnum.SUB);
       } catch (err) {
         throw err;
       }
@@ -902,7 +905,7 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
             url: `${this.baseUrl}${atag.attr('href')}`,
             image: card.find('img')?.attr('data-src'),
             duration: card.find('.fdi-duration')?.text(),
-            watchList: watchList || WatchListType.NONE,
+            watchList: watchList || WatchListTypeEnum.NONE,
             japaneseTitle: atag.attr('data-jname'),
             type: type as MediaFormat,
             nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
@@ -929,139 +932,5 @@ export function createZoro(ctx: ProviderContext): AnimeParser {
   return new ZoroImpl();
 }
 
-// Backward compatibility wrapper class
-export class Zoro extends AnimeParser {
-  private instance: any;
-  public logo: string;
-
-  constructor(customBaseURL?: string) {
-    super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createZoro(defaultContext);
-    this.logo = this.instance.logo;
-    if (customBaseURL) {
-      this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
-    }
-  }
-
-  // Proxy all methods to the instance
-  get name() {
-    return this.instance.name;
-  }
-  get baseUrl() {
-    return this.instance.baseUrl;
-  }
-  set baseUrl(value: string) {
-    this.instance.baseUrl = value;
-  }
-  get classPath() {
-    return this.instance.classPath;
-  }
-
-  search(...args: any[]) {
-    return this.instance.search(...args);
-  }
-  fetchAdvancedSearch(...args: any[]) {
-    return this.instance.fetchAdvancedSearch(...args);
-  }
-  fetchTopAiring(...args: any[]) {
-    return this.instance.fetchTopAiring(...args);
-  }
-  fetchMostPopular(...args: any[]) {
-    return this.instance.fetchMostPopular(...args);
-  }
-  fetchMostFavorite(...args: any[]) {
-    return this.instance.fetchMostFavorite(...args);
-  }
-  fetchLatestCompleted(...args: any[]) {
-    return this.instance.fetchLatestCompleted(...args);
-  }
-  fetchRecentlyUpdated(...args: any[]) {
-    return this.instance.fetchRecentlyUpdated(...args);
-  }
-  fetchRecentlyAdded(...args: any[]) {
-    return this.instance.fetchRecentlyAdded(...args);
-  }
-  fetchTopUpcoming(...args: any[]) {
-    return this.instance.fetchTopUpcoming(...args);
-  }
-  fetchStudio(...args: any[]) {
-    return this.instance.fetchStudio(...args);
-  }
-  fetchSubbedAnime(...args: any[]) {
-    return this.instance.fetchSubbedAnime(...args);
-  }
-  fetchDubbedAnime(...args: any[]) {
-    return this.instance.fetchDubbedAnime(...args);
-  }
-  fetchMovie(...args: any[]) {
-    return this.instance.fetchMovie(...args);
-  }
-  fetchTV(...args: any[]) {
-    return this.instance.fetchTV(...args);
-  }
-  fetchOVA(...args: any[]) {
-    return this.instance.fetchOVA(...args);
-  }
-  fetchONA(...args: any[]) {
-    return this.instance.fetchONA(...args);
-  }
-  fetchSpecial(...args: any[]) {
-    return this.instance.fetchSpecial(...args);
-  }
-  fetchGenres(...args: any[]) {
-    return this.instance.fetchGenres(...args);
-  }
-  genreSearch(...args: any[]) {
-    return this.instance.genreSearch(...args);
-  }
-  fetchSchedule(...args: any[]) {
-    return this.instance.fetchSchedule(...args);
-  }
-  fetchSpotlight(...args: any[]) {
-    return this.instance.fetchSpotlight(...args);
-  }
-  fetchSearchSuggestions(...args: any[]) {
-    return this.instance.fetchSearchSuggestions(...args);
-  }
-  fetchContinueWatching(...args: any[]) {
-    return this.instance.fetchContinueWatching(...args);
-  }
-  fetchWatchList(...args: any[]) {
-    return this.instance.fetchWatchList(...args);
-  }
-  fetchAnimeInfo(...args: any[]) {
-    return this.instance.fetchAnimeInfo(...args);
-  }
-  fetchEpisodeSources(...args: any[]) {
-    return this.instance.fetchEpisodeSources(...args);
-  }
-  fetchEpisodeServers(...args: any[]) {
-    return this.instance.fetchEpisodeServers(...args);
-  }
-  verifyLoginState(...args: any[]) {
-    return this.instance.verifyLoginState(...args);
-  }
-  retrieveServerId(...args: any[]) {
-    return this.instance.retrieveServerId(...args);
-  }
-  scrapeCardPage(...args: any[]) {
-    return this.instance.scrapeCardPage(...args);
-  }
-  scrapeCard(...args: any[]) {
-    return this.instance.scrapeCard(...args);
-  }
-}
-
-export default Zoro;
-
-// (async () => {
-//   const zoro = new Zoro();
-//   const anime = await zoro.search('Dandadan');
-//   const info = await zoro.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-19413');
-//   // console.log(info.episodes);
-//   const sources = await zoro.fetchEpisodeSources("solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub", StreamingServers.VidCloud,SubOrSub.DUB);
-// })();
+// Default export for backward compatibility
+export default createZoro;

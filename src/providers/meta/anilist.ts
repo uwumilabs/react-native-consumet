@@ -35,7 +35,7 @@ import {
   capitalizeFirstLetter,
 } from '../../utils';
 import Anify from '../anime/anify';
-import Zoro from '../anime/zoro';
+import Zoro from '../anime/zoro/zoro';
 import AnimeKai from '../anime/animekai';
 import AnimePahe from '../anime/animepahe';
 import Mangasee123 from '../manga/mangasee123';
@@ -749,7 +749,7 @@ class Anilist extends AnimeParser {
           releaseDate: item.seasonYear,
           color: item.coverImage?.color,
           genres: item.genres,
-          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? item.nextAiringEpisode?.episode - 1 ?? 0),
+          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? (item.nextAiringEpisode?.episode ? item.nextAiringEpisode.episode - 1 : 0)),
           duration: item.duration,
           type: item.format,
         })),
@@ -820,7 +820,7 @@ class Anilist extends AnimeParser {
           releaseDate: item.seasonYear,
           color: item.coverImage?.color,
           genres: item.genres,
-          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? item.nextAiringEpisode?.episode - 1 ?? 0),
+          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? (item.nextAiringEpisode?.episode ? item.nextAiringEpisode.episode - 1 : 0)),
           duration: item.duration,
           type: item.format,
         })),
@@ -966,7 +966,7 @@ class Anilist extends AnimeParser {
           releaseDate: item.seasonYear,
           color: item.coverImage?.color,
           genres: item.genres,
-          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? item.nextAiringEpisode?.episode - 1 ?? 0),
+          totalEpisodes: isNaN(item.episodes) ? 0 : (item.episodes ?? (item.nextAiringEpisode?.episode ? item.nextAiringEpisode.episode - 1 : 0)),
           duration: item.duration,
           type: item.format,
         })),
