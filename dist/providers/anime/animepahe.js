@@ -244,8 +244,8 @@ class AnimePahe extends models_1.AnimeParser {
                     // console.log('DDoS-Guard cookie obtained (WebView):', this.ddgCookie);
                 }
                 catch (err) {
-                    // console.error('Failed to bypass DDoS-Guard with WebView:', err);
-                    this.ddgCookie = yield (0, NativeConsumet_1.bypassDdosGuard)(this.baseUrl);
+                    console.error('Failed to bypass DDoS-Guard with WebView:', err);
+                    // this.ddgCookie = await bypassDdosGuard(this.baseUrl);
                     // console.log('DDoS-Guard cookie obtained (fallback):', this.ddgCookie);
                 }
             }

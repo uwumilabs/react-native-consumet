@@ -13,7 +13,7 @@
             "description": "High-quality anime streaming from Zoro (hianime.to) with multiple servers and subtitles",
             "version": "1.0.0",
             "author": {
-                "name": "Consumet Team",
+                "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
@@ -49,7 +49,7 @@
             "description": "Movies and TV shows streaming from HiMovies",
             "version": "1.0.0",
             "author": {
-                "name": "Consumet Team",
+                "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",

@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtensionUtils = exports.createProviderFromURL = exports.DEFAULT_REGISTRY = exports.createExtensionManager = exports.ExtensionRegistryManager = exports.createProviderContext = exports.MegaUp = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
+exports.ProviderManager = exports.createProviderContext = exports.MegaUp = exports.getKKey = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
 const extractors_1 = require("../extractors");
 Object.defineProperty(exports, "GogoCDN", { enumerable: true, get: function () { return extractors_1.GogoCDN; } });
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
@@ -43,15 +46,11 @@ Object.defineProperty(exports, "anilistAdvancedQuery", { enumerable: true, get: 
 Object.defineProperty(exports, "anilistSiteStatisticsQuery", { enumerable: true, get: function () { return queries_1.anilistSiteStatisticsQuery; } });
 Object.defineProperty(exports, "anilistCharacterQuery", { enumerable: true, get: function () { return queries_1.anilistCharacterQuery; } });
 Object.defineProperty(exports, "anilistStaffInfoQuery", { enumerable: true, get: function () { return queries_1.anilistStaffInfoQuery; } });
+const kkey_1 = __importDefault(require("../extractors/kisskh/kkey"));
+exports.getKKey = kkey_1.default;
 // Export provider context utilities
 var create_provider_context_1 = require("./create-provider-context");
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return create_provider_context_1.createProviderContext; } });
-// Export extension registry system
-var extension_registry_1 = require("./extension-registry");
-Object.defineProperty(exports, "ExtensionRegistryManager", { enumerable: true, get: function () { return extension_registry_1.ExtensionRegistryManager; } });
-Object.defineProperty(exports, "createExtensionManager", { enumerable: true, get: function () { return extension_registry_1.createExtensionManager; } });
-Object.defineProperty(exports, "DEFAULT_REGISTRY", { enumerable: true, get: function () { return extension_registry_1.DEFAULT_REGISTRY; } });
-Object.defineProperty(exports, "createProviderFromURL", { enumerable: true, get: function () { return extension_registry_1.createProviderFromURL; } });
-var extension_utils_1 = require("./extension-utils");
-Object.defineProperty(exports, "ExtensionUtils", { enumerable: true, get: function () { return extension_utils_1.ExtensionUtils; } });
+var ProviderManager_1 = require("./ProviderManager");
+Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: function () { return ProviderManager_1.ProviderManager; } });
 //# sourceMappingURL=index.js.map

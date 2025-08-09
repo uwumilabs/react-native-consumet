@@ -22,36 +22,15 @@ export interface ExtensionManifest {
     /** Main entry point URL or file path */
     main: string;
     /** Factory function names exported by this extension */
-    factories: string[];
-    /** Minimum required consumet version */
-    minConsumetVersion?: string;
-    /** Maximum supported consumet version */
-    maxConsumetVersion?: string;
-    /** Dependencies on other extensions */
-    dependencies?: Record<string, string>;
+    factoryName: string;
     /** Extension tags for searching/filtering */
     tags?: string[];
     /** Homepage URL */
     homepage?: string;
     /** Repository URL */
     repository?: string;
-    /** Bug tracker URL */
-    bugs?: string;
-    /** License identifier */
-    license?: string;
     /** Extension icon URL */
-    icon?: string;
-    /** Screenshots or preview images */
-    screenshots?: string[];
-    /** Extension settings schema */
-    settings?: {
-        [key: string]: {
-            type: 'string' | 'number' | 'boolean' | 'select';
-            default: any;
-            description?: string;
-            options?: any[];
-        };
-    };
+    logo?: string;
     /** Supported languages/regions */
     languages?: string[];
     /** Whether this extension requires adult content warnings */
@@ -60,42 +39,5 @@ export interface ExtensionManifest {
     status: 'stable' | 'beta' | 'alpha' | 'deprecated';
     /** Last updated timestamp */
     lastUpdated: string;
-    /** Extension changelog URL */
-    changelog?: string;
-}
-/**
- * Extension registry interface for managing multiple extensions
- */
-export interface ExtensionRegistry {
-    /** Registry metadata */
-    metadata: {
-        name: string;
-        description: string;
-        version: string;
-        lastUpdated: string;
-        url: string;
-    };
-    /** List of available extensions */
-    extensions: ExtensionManifest[];
-}
-/**
- * Extension installation result
- */
-export interface ExtensionInstallResult {
-    success: boolean;
-    extension?: ExtensionManifest;
-    error?: string;
-    warnings?: string[];
-}
-/**
- * Extension search filters
- */
-export interface ExtensionSearchFilters {
-    category?: ExtensionManifest['category'];
-    tags?: string[];
-    status?: ExtensionManifest['status'];
-    nsfw?: boolean;
-    language?: string;
-    query?: string;
 }
 //# sourceMappingURL=extension-manifest.d.ts.map

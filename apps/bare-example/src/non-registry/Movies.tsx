@@ -25,8 +25,8 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.MultiMovies();
-    const search = await movies.search('jurassic park');
+    const movies = new MOVIES.HiMovies();
+    const search = await movies.search('jujutsu');
     console.log('Search Results:', search);
 
     if (!search || !search.results || search.results.length === 0) {
@@ -40,14 +40,14 @@ const fetchData = async (): Promise<{
     let videoUrl: string | null = null;
     if (info.episodes && info.episodes.length > 0) {
       const firstEpisodeId = info.episodes[0]!.id;
-      const servers = await movies.fetchEpisodeServers(firstEpisodeId);
-      console.log('Episode Servers:', servers);
-      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id,StreamingServers.VidHide);
+      // const servers = await movies.fetchEpisodeServers(firstEpisodeId);
+      // console.log('Episode Servers:', servers);
+      const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
       console.log('Episode Sources:', sources);
 
       if (sources.sources && sources.sources.length > 0) {
         // Find the highest quality source, or just take the first one
-        const highestQualitySource = sources.sources.reduce((prev, current) =>
+        const highestQualitySource = sources.sources.reduce((prev:any, current:any) =>
           (prev.quality || 0) > (current.quality || 0) ? prev : current
         );
         videoUrl = highestQualitySource.url;

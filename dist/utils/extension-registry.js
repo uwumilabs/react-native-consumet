@@ -152,7 +152,7 @@ class ExtensionRegistryManager {
             if (!manifest) {
                 throw new Error(`Extension ${extensionId} is not installed`);
             }
-            if (!manifest.factories || !manifest.factories.includes(factoryName)) {
+            if (!manifest.factoryName || !manifest.factoryName.includes(factoryName)) {
                 throw new Error(`Factory ${factoryName} not available in extension ${extensionId}`);
             }
             const cacheKey = `${extensionId}:${factoryName}`;

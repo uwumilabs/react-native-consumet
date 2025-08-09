@@ -12,11 +12,8 @@ class HiMovies extends MovieParser {
     // Use the context factory to create a complete context with all defaults
     const defaultContext = createProviderContext();
 
-    this.instance = createHiMovies(defaultContext);
+    this.instance = createHiMovies(defaultContext, customBaseURL);
     this.logo = this.instance.logo;
-    if (customBaseURL) {
-      this.instance.baseUrl = customBaseURL.startsWith('http') ? customBaseURL : `http://${customBaseURL}`;
-    }
   }
 
   // Proxy all methods to the instance
@@ -58,7 +55,7 @@ class HiMovies extends MovieParser {
     return this.instance.fetchByGenre(...args);
   }
   fetchMediaInfo(...args: any[]) {
-    return this.instance.fetchAnimeInfo(...args);
+    return this.instance.fetchMediaInfo(...args);
   }
   fetchEpisodeSources(...args: any[]) {
     return this.instance.fetchEpisodeSources(...args);
@@ -68,13 +65,14 @@ class HiMovies extends MovieParser {
   }
 }
 
-// (async () => {
-//   const movie = new HiMovies();
-//   const search = await movie.search('jujutsu');
-//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
-//   // const recentTv = await movie.fetchTrendingTvShows();
-//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
-//   console.log(genre);
-// })();
+(async () => {
+  const movie = new HiMovies();
+  const search = await movie.search('jujutsu');
+  const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
+  // const recentTv = await movie.fetchTrendingTvShows();
+  const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
+  const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
+  // console.log(genre);
+})();
 
 export default HiMovies;

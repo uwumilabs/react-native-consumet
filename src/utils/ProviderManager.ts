@@ -1,7 +1,7 @@
 /* eslint-disable no-new-func */
 
-import createProviderContext, { type ProviderContextConfig } from './utils/create-provider-context';
-import type { ProviderContext } from './models/provider-context';
+import createProviderContext, { type ProviderContextConfig } from './create-provider-context';
+import type { ProviderContext } from '../models/provider-context';
 import {
   type IAnimeInfo,
   type IAnimeResult,
@@ -11,11 +11,11 @@ import {
   type ISource,
   type IEpisodeServer,
   TvType,
-} from './models';
+} from '../models';
 
-// Import the registry
-import registry from './registry.json';
-import type { ExtensionManifest, ProviderType } from './models/extension-manifest';
+// Import the extension
+import providerRegistry from '../provider-registry.json';
+import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 
 /**
  * Base provider interface with required methods for extensions
@@ -62,22 +62,22 @@ export class ProviderManager {
   }
 
   /**
-   * Load and parse the registry
+   * Load and parse the extensionManifest
    */
   private loadRegistry(): void {
     try {
-      registry.extensions.forEach((extension: any) => {
+      providerRegistry.extensions.forEach((extension: any) => {
         // Convert old format to new format if needed
         const manifest: ExtensionManifest = {
           ...extension,
           category: extension.category as any, // Cast to avoid type error
-          factories: extension.factories || (extension.factoryName ? [extension.factoryName] : []),
+          factoryName: extension.factoryName || ((extension as any).factories ? (extension as any).factories[0] : ''),
         };
         this.extensionManifest.set(extension.id, manifest);
       });
-      console.log(`📚 Loaded ${registry.extensions.length} extensions from registry`);
+      console.log(`📚 Loaded ${providerRegistry.extensions.length} extensions from extensionManifest`);
     } catch (error) {
-      console.error('❌ Failed to load registry:', error);
+      console.error('❌ Failed to load extensionManifest:', error);
     }
   }
 
@@ -151,12 +151,12 @@ export class ProviderManager {
   // }
 
   /**
-   * Load an extension by ID from the registry
+   * Load an extension by ID from the extensionManifest
    */
   async loadExtension(extensionId: string): Promise<BaseProviderInstance> {
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found in registry`);
+      throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
 
     // Check if already loaded
@@ -191,9 +191,9 @@ export class ProviderManager {
       const providerCode = await response.text();
 
       // Execute the provider code
-      const factoryName = metadata.factories[0]; // Use first factory
+      const factoryName = metadata.factoryName; // Use factory name directly
       if (!factoryName) {
-        throw new Error(`No factory functions available for extension ${extensionId}`);
+        throw new Error(`No factory function available for extension ${extensionId}`);
       }
       const providerInstance = await this.executeProviderCode(providerCode, factoryName, metadata);
 
@@ -277,7 +277,7 @@ export class ProviderManager {
   }
 
   /**
-   * Execute provider code and create instance (registry-based)
+   * Execute provider code and create instance (extensionManifest-based)
    */
   private async executeProviderCode(
     code: string,
@@ -292,25 +292,6 @@ export class ProviderManager {
 
       // Add more robust error handling for React Native environment
       let executeFunction;
-      console.log(`
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          const __awaiter = context.__awaiter;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during provider code execution:', execError);
-            throw new Error('Provider code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
-          `);
       try {
         executeFunction = new Function(
           'context',
@@ -334,7 +315,6 @@ export class ProviderManager {
           return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
           `
         );
-        
       } catch (syntaxError: any) {
         console.error('Syntax error in provider code:', syntaxError);
         throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
@@ -557,10 +537,10 @@ export class ProviderManager {
   }
 
   /**
-   * Get registry metadata
+   * Get extensionManifest metadata
    */
   getRegistryMetadata() {
-    return registry.metadata;
+    return providerRegistry.metadata;
   }
 
   /**

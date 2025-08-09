@@ -84,18 +84,10 @@ export {
   substringBefore,
   calculateStringSimilarity,
   VidMoly,
-  // getKKey,
+  getKKey,
   MegaUp,
 };
 
 // Export provider context utilities
 export { createProviderContext } from './create-provider-context';
-
-// Export extension registry system
-export {
-  ExtensionRegistryManager,
-  createExtensionManager,
-  DEFAULT_REGISTRY,
-  createProviderFromURL,
-} from './extension-registry';
-export { ExtensionUtils } from './extension-utils';
+export { ProviderManager } from './ProviderManager';

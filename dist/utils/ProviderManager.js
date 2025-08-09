@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderManager = void 0;
-const create_provider_context_1 = __importDefault(require("./utils/create-provider-context"));
-// Import the registry
-const registry_json_1 = __importDefault(require("./registry.json"));
+const create_provider_context_1 = __importDefault(require("./create-provider-context"));
+// Import the extension
+const provider_registry_json_1 = __importDefault(require("../provider-registry.json"));
 class ProviderManager {
     constructor(config = {}) {
         this.loadedExtensions = new Map();
@@ -26,19 +26,19 @@ class ProviderManager {
         console.log('🚀 Registry-based Provider Manager initialized');
     }
     /**
-     * Load and parse the registry
+     * Load and parse the extensionManifest
      */
     loadRegistry() {
         try {
-            registry_json_1.default.extensions.forEach((extension) => {
+            provider_registry_json_1.default.extensions.forEach((extension) => {
                 // Convert old format to new format if needed
                 const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName || (extension.factories ? extension.factories[0] : '') });
                 this.extensionManifest.set(extension.id, manifest);
             });
-            console.log(`📚 Loaded ${registry_json_1.default.extensions.length} extensions from registry`);
+            console.log(`📚 Loaded ${provider_registry_json_1.default.extensions.length} extensions from extensionManifest`);
         }
         catch (error) {
-            console.error('❌ Failed to load registry:', error);
+            console.error('❌ Failed to load extensionManifest:', error);
         }
     }
     /**
@@ -102,13 +102,13 @@ class ProviderManager {
     //   }
     // }
     /**
-     * Load an extension by ID from the registry
+     * Load an extension by ID from the extensionManifest
      */
     loadExtension(extensionId) {
         return __awaiter(this, void 0, void 0, function* () {
             const metadata = this.getExtensionMetadata(extensionId);
             if (!metadata) {
-                throw new Error(`Extension '${extensionId}' not found in registry`);
+                throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
             }
             // Check if already loaded
             if (this.loadedExtensions.has(extensionId)) {
@@ -214,7 +214,7 @@ class ProviderManager {
         });
     }
     /**
-     * Execute provider code and create instance (registry-based)
+     * Execute provider code and create instance (extensionManifest-based)
      */
     executeProviderCode(code, factoryName, metadata) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -453,10 +453,10 @@ class ProviderManager {
         return this.providerContext;
     }
     /**
-     * Get registry metadata
+     * Get extensionManifest metadata
      */
     getRegistryMetadata() {
-        return registry_json_1.default.metadata;
+        return provider_registry_json_1.default.metadata;
     }
     /**
      * Search across all loaded providers of a specific category
