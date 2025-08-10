@@ -15,7 +15,7 @@ import {
   Topics,
 } from '../models';
 
-// Import extractors
+// Import extractors for fallback compatibility
 import {
   AsianLoad,
   Filemoon,
@@ -59,7 +59,7 @@ export interface ProviderContextConfig {
   userAgent?: string;
 
   /**
-   * Custom extractors (optional) - defaults to built-in extractors
+   * Custom extractors (optional) - defaults to dynamic extractors
    */
   extractors?: any;
 
@@ -125,8 +125,8 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     logger: config.logger || defaultLogger,
   };
 
-  // Default extractors - all the important ones pre-configured
-  const defaultExtractors = {
+  // Default static extractors (for backward compatibility)
+  const defaultStaticExtractors = {
     AsianLoad: AsianLoad,
     Filemoon: Filemoon,
     GogoCDN: GogoCDN,
@@ -135,19 +135,58 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     Mp4Player: Mp4Player,
     Mp4Upload: Mp4Upload,
     RapidCloud: RapidCloud,
-    MegaCloud: (ctx?: any) => new MegaCloud(ctx || extractorContext),
+    MegaCloud: (ctx?: any) => MegaCloud(ctx || extractorContext),
     StreamHub: StreamHub,
     StreamLare: StreamLare,
     StreamSB: StreamSB,
     StreamTape: StreamTape,
     StreamWish: StreamWish,
-    VidCloud: (ctx?: any) => new VidCloud(ctx || extractorContext),
+    VidCloud: (ctx?: any) => VidCloud(ctx || extractorContext),
     VidMoly: VidMoly,
     VizCloud: VizCloud,
     VidHide: VidHide,
     Voe: Voe,
     MegaUp: MegaUp,
   };
+
+
+  // Create dynamic extractor proxy
+  const finalExtractors = new Proxy(defaultStaticExtractors, {
+    get: (target: any, prop: string) => {
+      // If it's a custom extractor, return it directly
+      if (config.extractors && config.extractors[prop]) {
+        return config.extractors[prop];
+      }
+
+      // If it's a static extractor, return it directly for immediate access
+      if (target[prop]) {
+        return target[prop];
+      }
+
+      // For dynamic extractors, return an async loader
+      return async (...args: any[]) => {
+        try {
+          // Dynamically import and create ExtractorManager to avoid circular dependency
+          const { ExtractorManager } = await import('./ExtractorManager');
+          const extractorManager = new ExtractorManager({
+            axios: config.axios || extractorContext.axios,
+            load: config.load || extractorContext.load,
+            userAgent: config.userAgent || extractorContext.USER_AGENT,
+            logger: config.logger || extractorContext.logger,
+          });
+          const extractor = await extractorManager.loadExtractor(prop.toLowerCase());
+          return typeof extractor === 'function' ? extractor(...args) : extractor;
+        } catch (error) {
+          console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
+          // Fallback to static if available
+          if (target[prop]) {
+            return target[prop](...args);
+          }
+          throw new Error(`Extractor '${prop}' not found in dynamic or static extractors`);
+        }
+      };
+    },
+  });
 
   // Create base URL normalization utility
   const createCustomBaseUrl = (defaultUrl: string, customUrl?: string): string => {
@@ -171,7 +210,7 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     AnimeParser: config.AnimeParser || AnimeParser,
     MovieParser: config.MovieParser || MovieParser,
     MangaParser: config.MangaParser || MangaParser,
-    extractors: { ...defaultExtractors, ...config.extractors },
+    extractors: finalExtractors,
     logger: config.logger || defaultLogger,
     createCustomBaseUrl,
     enums: {

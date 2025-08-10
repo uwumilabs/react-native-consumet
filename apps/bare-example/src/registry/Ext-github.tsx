@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager } from 'react-native-consumet';
-import type { AnimeParser, MovieParser } from '../../../../src/models';
-import type Zoro from '../../../../src/providers/anime/zoro/zoro';
+import { ProviderManager,ANIME,MOVIES } from 'react-native-consumet';
+import { AnimeParser, type MovieParser } from '../../../../src/models';
+import Zoro from '../../../../src/providers/anime/zoro/zoro';
+import HiMovies from '../../../../src/providers/movies/himovies/himovies';
 const ExtGithub = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,8 +86,8 @@ const ExtGithub = () => {
       Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
     }
   };
-// @ts-ignore
-  const testSearch = async (providerInstance) => {
+  // @ts-ignore
+  const testSearch = async (providerInstance:Zoro|HiMovies) => {
     try {
       console.log('🔍 Testing search functionality...');
       
@@ -103,6 +104,18 @@ const ExtGithub = () => {
       if (searchResults.results && searchResults.results.length > 0) {
         setResults(searchResults.results.slice(0, 10)); // Show first 10 results
         console.log('✅ Search successful, showing results');
+        let info;
+        if (providerInstance instanceof Zoro) {
+          info = await providerInstance.fetchAnimeInfo(searchResults.results[0].id);
+        }else{
+          info = await providerInstance.fetchMediaInfo(searchResults.results[0].id);
+        }
+        let sources
+        if (providerInstance instanceof Zoro) {
+          sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
+        }else{
+          sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id,searchResults.results[0].id);
+        }
       } else {
         console.log('⚠️ No search results found');
         setResults([]);

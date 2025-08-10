@@ -16,7 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 // Import the extension
-const provider_registry_json_1 = __importDefault(require("../provider-registry.json"));
+const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 // /**
 //  * Anime provider interface
 //  */
@@ -41,19 +41,19 @@ class ProviderManager {
         this.extensionManifest = new Map();
         this.providerContext = (0, create_provider_context_1.default)(config);
         this.loadRegistry();
-        console.log('🚀 Registry-based Provider Manager initialized');
+        console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
     }
     /**
      * Load and parse the extensionManifest
      */
     loadRegistry() {
         try {
-            provider_registry_json_1.default.extensions.forEach((extension) => {
+            extension_registry_json_1.default.extensions.forEach((extension) => {
                 // Convert old format to new format if needed
                 const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName || (extension.factories ? extension.factories[0] : '') });
                 this.extensionManifest.set(extension.id, manifest);
             });
-            console.log(`📚 Loaded ${provider_registry_json_1.default.extensions.length} extensions from extensionManifest`);
+            console.log(`📚 Loaded ${extension_registry_json_1.default.extensions.length} extensions from extensionManifest`);
         }
         catch (error) {
             console.error('❌ Failed to load extensionManifest:', error);
@@ -377,7 +377,7 @@ class ProviderManager {
      * Get extensionManifest metadata
      */
     getRegistryMetadata() {
-        return provider_registry_json_1.default.metadata;
+        return extension_registry_json_1.default.metadata;
     }
     /**
      * Search across all loaded providers of a specific category

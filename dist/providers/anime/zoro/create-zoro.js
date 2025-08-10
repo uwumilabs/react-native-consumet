@@ -371,19 +371,10 @@ function createZoro(ctx, customBaseURL) {
             const serverUrl = new URL(episodeId);
             switch (server) {
                 case StreamingServersEnum.VidCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud({
-                        axios: fetch,
-                        load,
-                        USER_AGENT: ctx.USER_AGENT,
-                        logger: ctx.logger,
-                    }).extract(serverUrl, config.baseUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
                 case StreamingServersEnum.StreamSB:
                     return {
-                        headers: {
-                            'Referer': serverUrl.href,
-                            'watchsb': 'streamsb',
-                            'User-Agent': ctx.USER_AGENT,
-                        },
+                        headers: { Referer: serverUrl.href },
                         sources: yield new StreamSB({
                             axios: fetch,
                             load,
@@ -406,12 +397,7 @@ function createZoro(ctx, customBaseURL) {
                     };
                 default:
                 case StreamingServersEnum.VidCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud({
-                        axios: fetch,
-                        load,
-                        USER_AGENT: ctx.USER_AGENT,
-                        logger: ctx.logger,
-                    }).extract(serverUrl, config.baseUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
             }
         }
         if (!episodeId.includes('$episode$'))

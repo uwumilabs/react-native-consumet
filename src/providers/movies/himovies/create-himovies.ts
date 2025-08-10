@@ -519,13 +519,10 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     classPath: config.classPath,
     supportedTypes,
 
-    // Core methods
     search,
     fetchMediaInfo,
     fetchEpisodeSources,
     fetchEpisodeServers,
-
-    // Additional methods
     fetchRecentMovies,
     fetchRecentTvShows,
     fetchTrendingMovies,

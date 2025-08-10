@@ -16,7 +16,7 @@ import {
 } from '../models';
 
 // Import the extension
-import providerRegistry from '../provider-registry.json';
+import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 
 // /**
@@ -47,7 +47,7 @@ export class ProviderManager {
   constructor(config: ProviderContextConfig = {}) {
     this.providerContext = createProviderContext(config);
     this.loadRegistry();
-    console.log('🚀 Registry-based Provider Manager initialized');
+    console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
   }
 
   /**
@@ -55,7 +55,7 @@ export class ProviderManager {
    */
   private loadRegistry(): void {
     try {
-      providerRegistry.extensions.forEach((extension: any) => {
+      extensionRegistry.extensions.forEach((extension: any) => {
         // Convert old format to new format if needed
         const manifest: ExtensionManifest = {
           ...extension,
@@ -64,7 +64,7 @@ export class ProviderManager {
         };
         this.extensionManifest.set(extension.id, manifest);
       });
-      console.log(`📚 Loaded ${providerRegistry.extensions.length} extensions from extensionManifest`);
+      console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
     } catch (error) {
       console.error('❌ Failed to load extensionManifest:', error);
     }
@@ -419,7 +419,7 @@ export class ProviderManager {
    * Get extensionManifest metadata
    */
   getRegistryMetadata() {
-    return providerRegistry.metadata;
+    return extensionRegistry.metadata;
   }
 
   /**

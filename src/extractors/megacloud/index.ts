@@ -1,19 +1,17 @@
-import { VideoExtractor, type ExtractorContext, type IVideo, type ISource } from '../../models';
+import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../../models';
 import { getSources } from './megacloud.getsrcs';
 
-export class MegaCloud extends VideoExtractor {
-  protected override serverName = 'MegaCloud';
-  protected override sources: IVideo[] = [];
+/**
+ * MegaCloud extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT, and logger
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
+  const serverName = 'MegaCloud';
+  const sources: IVideo[] = [];
 
-  private ctx: ExtractorContext;
-
-  constructor(ctx: ExtractorContext) {
-    super();
-    this.ctx = ctx;
-  }
-
-  async extract(embedIframeURL: URL, referer = 'https://hianime.to'): Promise<ISource> {
-    const { logger } = this.ctx;
+  const extract = async (embedIframeURL: URL, referer = 'https://hianime.to'): Promise<ISource> => {
+    const { logger } = ctx;
 
     const extractedData: ISource = {
       subtitles: [],
@@ -23,7 +21,7 @@ export class MegaCloud extends VideoExtractor {
     };
 
     try {
-      const resp = await getSources(embedIframeURL, referer, this.ctx);
+      const resp = await getSources(embedIframeURL, referer, ctx);
 
       if (!resp) return extractedData;
 
@@ -59,5 +57,11 @@ export class MegaCloud extends VideoExtractor {
       logger?.error('[MegaCloud] Extraction error', err);
       throw err;
     }
-  }
+  };
+
+  return {
+    serverName,
+    sources,
+    extract,
+  };
 }

@@ -445,20 +445,11 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.VidCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud({
-              axios: fetch as any,
-              load,
-              USER_AGENT: ctx.USER_AGENT,
-              logger: ctx.logger,
-            }).extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
           };
         case StreamingServersEnum.StreamSB:
           return {
-            headers: {
-              'Referer': serverUrl.href,
-              'watchsb': 'streamsb',
-              'User-Agent': ctx.USER_AGENT!,
-            },
+            headers: { Referer: serverUrl.href },
             sources: await new StreamSB({
               axios: fetch as any,
               load,
@@ -483,12 +474,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.VidCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud({
-              axios: fetch as any,
-              load,
-              USER_AGENT: ctx.USER_AGENT,
-              logger: ctx.logger,
-            }).extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
           };
       }
     }

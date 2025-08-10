@@ -7,7 +7,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 
 // Utils (contexts, and provider management)
-import { createProviderContext, ProviderManager } from './utils';
+import { createProviderContext, ProviderManager, ExtractorManager } from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -70,9 +70,8 @@ import {
   type ProxyConfig,
   type AniZipEpisode,
   type IMovieSeason,
-  type ExtensionManifest
+  type ExtensionManifest,
 } from './models';
-
 
 // ---------------------------------------------------------------------------
 // Exports
@@ -145,4 +144,4 @@ export type {
 };
 
 // Utils: context creation and provider management
-export { createProviderContext, ProviderManager };
+export { createProviderContext, ProviderManager, ExtractorManager };

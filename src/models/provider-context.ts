@@ -145,6 +145,7 @@ export interface ProviderContext {
   MovieParser: typeof MovieParser;
   MangaParser: typeof MangaParser;
   extractors: ExtractorRegistry;
+  extractorManager?: any;
   logger?: {
     log: (...args: any[]) => void;
     error: (...args: any[]) => void;

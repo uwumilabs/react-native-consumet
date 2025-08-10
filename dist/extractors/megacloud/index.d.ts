@@ -1,9 +1,8 @@
-import { VideoExtractor, type ExtractorContext, type IVideo, type ISource } from '../../models';
-export declare class MegaCloud extends VideoExtractor {
-    protected serverName: string;
-    protected sources: IVideo[];
-    private ctx;
-    constructor(ctx: ExtractorContext);
-    extract(embedIframeURL: URL, referer?: string): Promise<ISource>;
-}
+import { type ExtractorContext, type IVideoExtractor } from '../../models';
+/**
+ * MegaCloud extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT, and logger
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export declare function MegaCloud(ctx: ExtractorContext): IVideoExtractor;
 //# sourceMappingURL=index.d.ts.map

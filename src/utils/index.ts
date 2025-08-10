@@ -91,3 +91,4 @@ export {
 // Export provider context utilities
 export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
+export { ExtractorManager } from './ExtractorManager';

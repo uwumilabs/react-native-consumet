@@ -17,7 +17,7 @@ export interface ProviderContextConfig {
      */
     userAgent?: string;
     /**
-     * Custom extractors (optional) - defaults to built-in extractors
+     * Custom extractors (optional) - defaults to dynamic extractors
      */
     extractors?: any;
     /**

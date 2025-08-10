@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 require("react-native-url-polyfill/auto");
 // Providers (namespaced provider groups)
 const providers_1 = require("./providers");
@@ -16,6 +16,7 @@ Object.defineProperty(exports, "PROVIDERS_LIST", { enumerable: true, get: functi
 const utils_1 = require("./utils");
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return utils_1.createProviderContext; } });
 Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: function () { return utils_1.ProviderManager; } });
+Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: function () { return utils_1.ExtractorManager; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });

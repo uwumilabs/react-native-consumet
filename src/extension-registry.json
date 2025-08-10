@@ -22,11 +22,28 @@
       "tags": ["anime", "streaming", "subbed", "dubbed", "popular"],
       "homepage": "https://hianime.to",
       "repository": "https://github.com/uwumilabs/react-native-consumet",
-      "logo":"https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg",
+      "logo": "https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg",
       "languages": ["en", "ja"],
       "nsfw": false,
       "status": "stable",
-      "lastUpdated": "2025-08-05T00:00:00Z"
+      "lastUpdated": "2025-08-05T00:00:00Z",
+      "extractors": [
+        {
+          "name": "MegaCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/dynamic-megacloud.js"
+        },
+        {
+          "name": "VidCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/vidcloud/dynamic-vidcloud.js"
+        },
+        {
+          "name": "RapidCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/vidcloud/dynamic-rapidcloud.js"
+        }
+      ]
     },
     {
       "id": "himovies",
@@ -43,11 +60,28 @@
       "tags": ["movies", "tv-shows", "streaming", "popular"],
       "homepage": "https://himovies.sx",
       "repository": "https://github.com/uwumilabs/react-native-consumet",
-      "logo":"https://himovies.sx/images/group_1/theme_1/favicon.png",
+      "logo": "https://himovies.sx/images/group_1/theme_1/favicon.png",
       "languages": ["all"],
       "nsfw": false,
       "status": "stable",
-      "lastUpdated": "2025-08-05T00:00:00Z"
+      "lastUpdated": "2025-08-05T00:00:00Z",
+      "extractors": [
+        {
+          "name": "MegaCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/dynamic-megacloud.js"
+        },
+        {
+          "name": "VidCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/vidcloud/dynamic-vidcloud.js"
+        },
+        {
+          "name": "RapidCloud",
+          "version": "1.0.0",
+          "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/vidcloud/dynamic-rapidcloud.js"
+        }
+      ]
     }
   ]
 }

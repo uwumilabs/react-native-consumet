@@ -1,4 +1,13 @@
 export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta';
+
+export interface ExtractorInfo {
+  /** name of the extractor like MegaCloud */
+  name: string;
+  /** version of the extractor */
+  version: string;
+  /**github url path */
+  main: string;
+}
 /**
  * Extension manifest interface for defining extension metadata
  */
@@ -54,4 +63,7 @@ export interface ExtensionManifest {
 
   /** Last updated timestamp */
   lastUpdated: string;
+
+  /** extractors used in the provider */
+  extractors: ExtractorInfo[];
 }

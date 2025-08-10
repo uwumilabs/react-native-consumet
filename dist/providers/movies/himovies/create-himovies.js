@@ -455,12 +455,10 @@ function createHiMovies(ctx, customBaseURL) {
         logo: config.logo,
         classPath: config.classPath,
         supportedTypes,
-        // Core methods
         search,
         fetchMediaInfo,
         fetchEpisodeSources,
         fetchEpisodeServers,
-        // Additional methods
         fetchRecentMovies,
         fetchRecentTvShows,
         fetchTrendingMovies,

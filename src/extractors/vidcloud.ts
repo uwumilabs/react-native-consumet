@@ -1,21 +1,20 @@
 import axios from 'axios';
-// @ts-nocheck
-import { VideoExtractor, type ExtractorContext, type IVideo, type ISubtitle, type Intro } from '../models';
+import {
+  VideoExtractor,
+  type ExtractorContext,
+  type IVideo,
+  type ISubtitle,
+  type Intro,
+  type IVideoExtractor,
+} from '../models';
 import { USER_AGENT } from '../utils';
 import { getSources } from './megacloud/megacloud.getsrcs';
 
-class VidCloud extends VideoExtractor {
-  protected override serverName = 'VidCloud';
-  protected override sources: IVideo[] = [];
+function VidCloud(ctx: ExtractorContext): IVideoExtractor {
+  const serverName = 'VidCloud';
+  let sources: IVideo[] = [];
 
-  private ctx?: ExtractorContext;
-
-  constructor(ctx?: ExtractorContext) {
-    super();
-    this.ctx = ctx;
-  }
-
-  override extract = async (
+  const extract = async (
     videoUrl: URL,
     referer: string = 'https://flixhq.to/'
   ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
@@ -25,8 +24,8 @@ class VidCloud extends VideoExtractor {
     };
     try {
       // Use context axios if available, otherwise fall back to direct import
-      const axiosInstance = this.ctx?.axios || axios;
-      const USER_AGENT_VAL = this.ctx?.USER_AGENT || USER_AGENT;
+      const axiosInstance = ctx?.axios || axios;
+      const USER_AGENT_VAL = ctx?.USER_AGENT || USER_AGENT;
 
       const options = {
         headers: {
@@ -36,25 +35,25 @@ class VidCloud extends VideoExtractor {
         },
       };
 
-      const resp = await getSources(videoUrl, referer, this.ctx);
+      const resp = await getSources(videoUrl, referer, ctx);
 
       if (!resp) {
         throw new Error('Failed to get sources from getSources function');
       }
 
-      const sources = resp.sources;
+      const resSources = resp.sources;
 
-      this.sources = sources.map((s: any) => ({
+      sources = resSources.map((s: any) => ({
         url: s.file,
         isM3U8: s.file.includes('.m3u8') || s.file.endsWith('m3u8'),
       }));
 
-      result.sources.push(...this.sources);
+      result.sources.push(...sources);
 
       result.sources = [];
-      this.sources = [];
+      sources = [];
 
-      for (const source of sources) {
+      for (const source of resSources) {
         const { data } = await axiosInstance.get(source.file, options);
         const urls = data
           .split('\n')
@@ -69,18 +68,18 @@ class VidCloud extends VideoExtractor {
         });
 
         for (const [f1, f2] of TdArray) {
-          this.sources.push({
+          sources.push({
             url: f2!,
             quality: f1,
             isM3U8: f2!.includes('.m3u8') || f2!.endsWith('m3u8'),
           });
         }
-        result.sources.push(...this.sources);
+        result.sources.push(...sources);
       }
 
       result.sources.push({
-        url: sources[0].file,
-        isM3U8: sources[0].file.includes('.m3u8') || sources[0].file.endsWith('m3u8'),
+        url: resSources[0].file,
+        isM3U8: resSources[0].file.includes('.m3u8') || resSources[0].file.endsWith('m3u8'),
         quality: 'auto',
       });
 
@@ -93,6 +92,11 @@ class VidCloud extends VideoExtractor {
     } catch (err) {
       throw err;
     }
+  };
+  return {
+    serverName,
+    sources,
+    extract,
   };
 }
 

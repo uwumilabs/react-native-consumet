@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../../../models");
 const utils_1 = require("../../../utils");
@@ -68,14 +59,14 @@ class HiMovies extends models_1.MovieParser {
         return this.instance.fetchEpisodeServers(...args);
     }
 }
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    const movie = new HiMovies();
-    const search = yield movie.search('jujutsu');
-    const movieInfo = yield movie.fetchMediaInfo(search.results[0].id);
-    // const recentTv = await movie.fetchTrendingTvShows();
-    const servers = yield movie.fetchEpisodeServers(movieInfo.episodes[0].id, movieInfo.id);
-    const genre = yield movie.fetchEpisodeSources(movieInfo.episodes[0].id, movieInfo.id);
-    // console.log(genre);
-}))();
+// (async () => {
+//   const movie = new HiMovies();
+//   const search = await movie.search('jujutsu');
+//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
+//   // const recentTv = await movie.fetchTrendingTvShows();
+//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
+//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
+//   // console.log(genre);
+// })();
 exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map
