@@ -14,17 +14,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExtractorManager = void 0;
 /* eslint-disable no-new-func */
-const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
-// Import static extractors as fallbacks
-const extractors_1 = require("../extractors");
-const megacloud_getsrcs_1 = require("../extractors/megacloud/megacloud.getsrcs");
-const utils_1 = require("./utils");
+const create_extractor_context_1 = require("./create-extractor-context");
+const extension_utils_1 = require("./extension-utils");
 class ExtractorManager {
     constructor(config = {}) {
         this.loadedExtractors = new Map();
         this.extractorRegistry = new Map();
-        this.providerContext = (0, create_provider_context_1.default)(config);
+        this.extractorContext = (0, create_extractor_context_1.createExtractorContext)(config);
         this.initializeStaticExtractors();
         this.loadExtractorsFromRegistry();
         console.log('🔧 Dynamic Extractor Manager initialized');
@@ -33,42 +30,7 @@ class ExtractorManager {
      * Initialize static extractors as fallbacks
      */
     initializeStaticExtractors() {
-        this.staticExtractors = {
-            asianload: extractors_1.AsianLoad,
-            filemoon: extractors_1.Filemoon,
-            gogocdn: extractors_1.GogoCDN,
-            kwik: extractors_1.Kwik,
-            mixdrop: extractors_1.MixDrop,
-            mp4player: extractors_1.Mp4Player,
-            mp4upload: extractors_1.Mp4Upload,
-            rapidcloud: extractors_1.RapidCloud,
-            megacloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || this.createExtractorContext()),
-            streamhub: extractors_1.StreamHub,
-            streamlare: extractors_1.StreamLare,
-            streamsb: extractors_1.StreamSB,
-            streamtape: extractors_1.StreamTape,
-            streamwish: extractors_1.StreamWish,
-            vidcloud: (ctx) => (0, extractors_1.VidCloud)(ctx || this.createExtractorContext()),
-            vidmoly: extractors_1.VidMoly,
-            vizcloud: extractors_1.VizCloud,
-            vidhide: extractors_1.VidHide,
-            voe: extractors_1.Voe,
-            megaup: extractors_1.MegaUp,
-        };
-    }
-    /**
-     * Create extractor context for context-aware extractors
-     */
-    createExtractorContext() {
-        return {
-            axios: this.providerContext.axios,
-            load: this.providerContext.load,
-            USER_AGENT: this.providerContext.USER_AGENT || utils_1.USER_AGENT,
-            logger: this.providerContext.logger,
-            sharedUtils: {
-                getSources: megacloud_getsrcs_1.getSources,
-            },
-        };
+        this.staticExtractors = extension_utils_1.defaultStaticExtractors;
     }
     /**
      * Load extractors from the unified extension registry
@@ -189,6 +151,7 @@ class ExtractorManager {
           const __awaiter = context.__awaiter;
           const axios = context.axios;
           const load = context.load;
+          const sharedUtils = context.sharedUtils;
           
           try {
             ${code}
@@ -221,7 +184,7 @@ class ExtractorManager {
      * Create execution context for extractor code
      */
     createExecutionContext(_metadata) {
-        const extractorContext = this.createExtractorContext();
+        const extractorContext = this.extractorContext;
         return {
             exports: {},
             module: { exports: {} },
@@ -232,14 +195,15 @@ class ExtractorManager {
                         return extractorContext.axios;
                     case 'cheerio':
                         return { load: extractorContext.load };
+                    case 'sharedUtils':
+                        return extractorContext.sharedUtils;
                     default:
                         throw new Error(`Module '${name}' not available in extractor context`);
                 }
             },
-            console: extractorContext.logger,
             Promise,
             Object,
-            fetch: this.providerContext.axios.get,
+            fetch: extractorContext.axios.get,
             __awaiter: (thisArg, _arguments, P, generator) => {
                 return new (P || (P = Promise))((resolve, reject) => {
                     function fulfilled(value) {

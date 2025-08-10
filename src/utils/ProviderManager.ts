@@ -2,42 +2,10 @@
 
 import createProviderContext, { type ProviderContextConfig } from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
-import {
-  type IAnimeInfo,
-  type IAnimeResult,
-  type IMovieResult,
-  type IMovieInfo,
-  type ISearch,
-  type ISource,
-  type IEpisodeServer,
-  TvType,
-  AnimeParser,
-  MovieParser,
-} from '../models';
+import { type IAnimeResult, type IMovieResult, type ISearch, AnimeParser, MovieParser } from '../models';
 
-// Import the extension
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-
-// /**
-//  * Anime provider interface
-//  */
-// export interface AnimeProviderInstance extends AnimeParser {
-//   search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
-//   fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
-//   fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
-//   fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
-// }
-
-// /**
-//  * Movie provider interface
-//  */
-// export interface MovieProviderInstance extends MovieParser {
-//   search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
-//   fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo>;
-//   fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
-//   supportedTypes: Set<TvType>;
-// }
 
 export class ProviderManager {
   private providerContext: ProviderContext;

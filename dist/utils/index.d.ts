@@ -6,4 +6,6 @@ export { USER_AGENT, GogoCDN, StreamSB, StreamHub, splitAuthor, floorID, formatT
 export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
+export { createExtractorContext } from './create-extractor-context';
+export { defaultAxios, extractorContext, defaultStaticExtractors } from './extension-utils';
 //# sourceMappingURL=index.d.ts.map

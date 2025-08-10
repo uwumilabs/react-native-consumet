@@ -22,7 +22,6 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     TvType: TvTypeEnum,
   } = enums;
 
-  // Provider configuration - use the standardized base URL creation
   const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);
 
   const config: ProviderConfig = {

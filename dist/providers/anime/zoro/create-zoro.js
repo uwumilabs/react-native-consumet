@@ -379,7 +379,6 @@ function createZoro(ctx, customBaseURL) {
                             axios: fetch,
                             load,
                             USER_AGENT: ctx.USER_AGENT,
-                            logger: ctx.logger,
                         }).extract(serverUrl, true),
                     };
                 case StreamingServersEnum.StreamTape:
@@ -392,7 +391,6 @@ function createZoro(ctx, customBaseURL) {
                             axios: fetch,
                             load,
                             USER_AGENT: ctx.USER_AGENT,
-                            logger: ctx.logger,
                         }).extract(serverUrl),
                     };
                 default:

@@ -454,7 +454,6 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
               axios: fetch as any,
               load,
               USER_AGENT: ctx.USER_AGENT,
-              logger: ctx.logger,
             }).extract(serverUrl, true),
           };
         case StreamingServersEnum.StreamTape:
@@ -467,7 +466,6 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
               axios: fetch as any,
               load,
               USER_AGENT: ctx.USER_AGENT,
-              logger: ctx.logger,
             }).extract(serverUrl),
           };
         default:

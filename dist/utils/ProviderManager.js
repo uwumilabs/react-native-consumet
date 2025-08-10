@@ -15,26 +15,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
-// Import the extension
 const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
-// /**
-//  * Anime provider interface
-//  */
-// export interface AnimeProviderInstance extends AnimeParser {
-//   search(query: string, page?: number): Promise<ISearch<IAnimeResult>>;
-//   fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
-//   fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
-//   fetchSpotlight?(...args: any[]): Promise<ISearch<IAnimeResult>>;
-// }
-// /**
-//  * Movie provider interface
-//  */
-// export interface MovieProviderInstance extends MovieParser {
-//   search(query: string, page?: number): Promise<ISearch<IMovieResult>>;
-//   fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo>;
-//   fetchSpotlight?(...args: any[]): Promise<ISearch<IMovieResult>>;
-//   supportedTypes: Set<TvType>;
-// }
 class ProviderManager {
     constructor(config = {}) {
         this.loadedExtensions = new Map();

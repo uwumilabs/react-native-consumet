@@ -21,13 +21,6 @@ export interface ProviderContextConfig {
      */
     extractors?: any;
     /**
-     * Custom logger (optional) - defaults to console
-     */
-    logger?: {
-        log: (...args: any[]) => void;
-        error: (...args: any[]) => void;
-    };
-    /**
      * Custom AnimeParser base class (optional) - for advanced use cases
      */
     AnimeParser?: typeof AnimeParser;

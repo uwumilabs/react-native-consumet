@@ -1,49 +1,27 @@
-/**
- * Basic utilities for extension management that app developers can use
- * App developers handle their own caching, storage, downloading, and update mechanisms
- */
-import type { ExtensionManifest } from '../models/extension-manifest';
-/**
- * Essential utility functions for working with extensions
- */
-export declare class ExtensionUtils {
-    /**
-     * Validate extension manifest format
-     */
-    static validateManifest(manifest: any): manifest is ExtensionManifest;
-    /**
-     * Compare extension versions (basic semver comparison)
-     */
-    static compareVersions(version1: string, version2: string): number;
-    /**
-     * Check if extension version satisfies minimum requirement
-     */
-    static satisfiesMinVersion(extensionVersion: string, minVersion: string): boolean;
-    /**
-     * Generate extension cache key
-     */
-    static getCacheKey(extensionId: string, factoryName: string): string;
-    /**
-     * Filter extensions by criteria
-     */
-    static filterExtensions(extensions: ExtensionManifest[], criteria: {
-        category?: string;
-        status?: string;
-        nsfw?: boolean;
-        query?: string;
-        tags?: string[];
-    }): ExtensionManifest[];
-    /**
-     * Group extensions by category
-     */
-    static groupByCategory(extensions: ExtensionManifest[]): Record<string, ExtensionManifest[]>;
-    /**
-     * Get extension statistics
-     */
-    static getStats(extensions: ExtensionManifest[]): {
-        total: number;
-        byCategory: Record<string, number>;
-        byStatus: Record<string, number>;
-    };
-}
+import { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp } from '../extractors';
+import type { ExtractorContext } from '../models';
+export declare const defaultAxios: import("axios").AxiosInstance;
+export declare const extractorContext: ExtractorContext;
+export declare const defaultStaticExtractors: {
+    AsianLoad: typeof AsianLoad;
+    Filemoon: typeof Filemoon;
+    GogoCDN: typeof GogoCDN;
+    Kwik: typeof Kwik;
+    MixDrop: typeof MixDrop;
+    Mp4Player: typeof Mp4Player;
+    Mp4Upload: typeof Mp4Upload;
+    RapidCloud: typeof RapidCloud;
+    MegaCloud: (ctx?: any) => import("../models").IVideoExtractor;
+    StreamHub: typeof StreamHub;
+    StreamLare: typeof StreamLare;
+    StreamSB: typeof StreamSB;
+    StreamTape: typeof StreamTape;
+    StreamWish: typeof StreamWish;
+    VidCloud: (ctx?: any) => import("../models").IVideoExtractor;
+    VidMoly: typeof VidMoly;
+    VizCloud: typeof VizCloud;
+    VidHide: typeof VidHide;
+    Voe: typeof Voe;
+    MegaUp: typeof MegaUp;
+};
 //# sourceMappingURL=extension-utils.d.ts.map

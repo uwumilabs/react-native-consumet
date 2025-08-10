@@ -14,7 +14,6 @@ function createHiMovies(ctx, customBaseURL) {
     const { load, extractors, enums, axios, createCustomBaseUrl } = ctx;
     const { VidCloud, MegaCloud } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrSub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, TvType: TvTypeEnum, } = enums;
-    // Provider configuration - use the standardized base URL creation
     const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);
     const config = {
         name: 'HiMovies',

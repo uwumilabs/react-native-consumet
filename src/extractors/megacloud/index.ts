@@ -10,16 +10,15 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
   const sources: IVideo[] = [];
 
   const extract = async (embedIframeURL: URL, referer = 'https://hianime.to'): Promise<ISource> => {
-
     const extractedData: ISource = {
       subtitles: [],
       intro: { start: 0, end: 0 },
       outro: { start: 0, end: 0 },
       sources: [],
     };
-
+    // console.log(ctx);
     try {
-      const resp = await ctx.sharedUtils?.getSources(embedIframeURL, referer, ctx);
+      const resp = await ctx.sharedUtils.getSources(embedIframeURL, referer, ctx);
 
       if (!resp) return extractedData;
 
@@ -48,11 +47,11 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
           lang: track.label || track.kind,
         })) ?? [];
 
-      console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
+      // console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
 
       return extractedData;
     } catch (err) {
-      console.error('[MegaCloud] Extraction error', err);
+      // console.error('[MegaCloud] Extraction error', err);
       throw err;
     }
   };

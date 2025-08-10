@@ -7,7 +7,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 
 // Utils (contexts, and provider management)
-import { createProviderContext, ProviderManager, ExtractorManager } from './utils';
+import { createProviderContext, ProviderManager, ExtractorManager, createExtractorContext } from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -144,4 +144,4 @@ export type {
 };
 
 // Utils: context creation and provider management
-export { createProviderContext, ProviderManager, ExtractorManager };
+export { createProviderContext, ProviderManager, ExtractorManager, createExtractorContext };

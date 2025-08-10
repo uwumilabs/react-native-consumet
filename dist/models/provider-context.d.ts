@@ -5,6 +5,7 @@ import type MovieParser from './movie-parser';
 import type { ExtractorContext } from './extractor-context';
 import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrSub, WatchListType, TvType, Genres, Topics } from './types';
+import type { ExtractorManager } from '../utils';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -92,11 +93,7 @@ export interface ProviderContext {
     MovieParser: typeof MovieParser;
     MangaParser: typeof MangaParser;
     extractors: ExtractorRegistry;
-    extractorManager?: any;
-    logger?: {
-        log: (...args: any[]) => void;
-        error: (...args: any[]) => void;
-    };
+    extractorManager?: ExtractorManager;
     createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
     enums: {
         StreamingServers: typeof StreamingServers;

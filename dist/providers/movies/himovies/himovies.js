@@ -66,7 +66,7 @@ class HiMovies extends models_1.MovieParser {
 //   // const recentTv = await movie.fetchTrendingTvShows();
 //   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
 //   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
-//   // console.log(genre);
+//   console.log(genre);
 // })();
 exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map

@@ -41,16 +41,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createProviderContext = createProviderContext;
-const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const models_1 = require("../models");
-// Import extractors for fallback compatibility
-const extractors_1 = require("../extractors");
+const extension_utils_1 = require("./extension-utils");
 /**
  * Creates a provider context with sensible defaults for extensions
  *
@@ -58,57 +53,8 @@ const extractors_1 = require("../extractors");
  * @returns Complete ProviderContext ready for use with extensions
  */
 function createProviderContext(config = {}) {
-    // Default axios instance with optimized settings for scraping
-    const defaultAxios = axios_1.default.create({
-        timeout: 15000,
-        headers: {
-            'User-Agent': config.userAgent ||
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-        },
-    });
-    // Default logger
-    const defaultLogger = {
-        log: console.log,
-        error: console.error,
-    };
-    // Create extractor context for passing to context-aware extractors
-    const extractorContext = {
-        axios: config.axios || defaultAxios,
-        load: config.load || cheerio_1.load,
-        USER_AGENT: config.userAgent ||
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        logger: config.logger || defaultLogger,
-    };
-    // Default static extractors (for backward compatibility)
-    const defaultStaticExtractors = {
-        AsianLoad: extractors_1.AsianLoad,
-        Filemoon: extractors_1.Filemoon,
-        GogoCDN: extractors_1.GogoCDN,
-        Kwik: extractors_1.Kwik,
-        MixDrop: extractors_1.MixDrop,
-        Mp4Player: extractors_1.Mp4Player,
-        Mp4Upload: extractors_1.Mp4Upload,
-        RapidCloud: extractors_1.RapidCloud,
-        MegaCloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || extractorContext),
-        StreamHub: extractors_1.StreamHub,
-        StreamLare: extractors_1.StreamLare,
-        StreamSB: extractors_1.StreamSB,
-        StreamTape: extractors_1.StreamTape,
-        StreamWish: extractors_1.StreamWish,
-        VidCloud: (ctx) => (0, extractors_1.VidCloud)(ctx || extractorContext),
-        VidMoly: extractors_1.VidMoly,
-        VizCloud: extractors_1.VizCloud,
-        VidHide: extractors_1.VidHide,
-        Voe: extractors_1.Voe,
-        MegaUp: extractors_1.MegaUp,
-    };
     // Create dynamic extractor proxy
-    const finalExtractors = new Proxy(defaultStaticExtractors, {
+    const finalExtractors = new Proxy(extension_utils_1.defaultStaticExtractors, {
         get: (target, prop) => {
             // If it's a custom extractor, return it directly
             if (config.extractors && config.extractors[prop]) {
@@ -124,10 +70,9 @@ function createProviderContext(config = {}) {
                     // Dynamically import and create ExtractorManager to avoid circular dependency
                     const { ExtractorManager } = yield Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
                     const extractorManager = new ExtractorManager({
-                        axios: config.axios || extractorContext.axios,
-                        load: config.load || extractorContext.load,
-                        userAgent: config.userAgent || extractorContext.USER_AGENT,
-                        logger: config.logger || extractorContext.logger,
+                        axios: config.axios || extension_utils_1.extractorContext.axios,
+                        load: config.load || extension_utils_1.extractorContext.load,
+                        userAgent: config.userAgent || extension_utils_1.extractorContext.USER_AGENT,
                     });
                     const extractor = yield extractorManager.loadExtractor(prop.toLowerCase());
                     return typeof extractor === 'function' ? extractor(...args) : extractor;
@@ -156,7 +101,7 @@ function createProviderContext(config = {}) {
         }
     };
     return {
-        axios: config.axios || defaultAxios,
+        axios: config.axios || extension_utils_1.defaultAxios,
         load: config.load || cheerio_1.load,
         USER_AGENT: config.userAgent ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -164,7 +109,6 @@ function createProviderContext(config = {}) {
         MovieParser: config.MovieParser || models_1.MovieParser,
         MangaParser: config.MangaParser || models_1.MangaParser,
         extractors: finalExtractors,
-        logger: config.logger || defaultLogger,
         createCustomBaseUrl,
         enums: {
             StreamingServers: models_1.StreamingServers,

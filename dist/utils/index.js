@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.MegaUp = exports.getKKey = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
+exports.defaultStaticExtractors = exports.extractorContext = exports.defaultAxios = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.MegaUp = exports.getKKey = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
 const extractors_1 = require("../extractors");
 Object.defineProperty(exports, "GogoCDN", { enumerable: true, get: function () { return extractors_1.GogoCDN; } });
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
@@ -55,4 +55,10 @@ var ProviderManager_1 = require("./ProviderManager");
 Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: function () { return ProviderManager_1.ProviderManager; } });
 var ExtractorManager_1 = require("./ExtractorManager");
 Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: function () { return ExtractorManager_1.ExtractorManager; } });
+var create_extractor_context_1 = require("./create-extractor-context");
+Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return create_extractor_context_1.createExtractorContext; } });
+var extension_utils_1 = require("./extension-utils");
+Object.defineProperty(exports, "defaultAxios", { enumerable: true, get: function () { return extension_utils_1.defaultAxios; } });
+Object.defineProperty(exports, "extractorContext", { enumerable: true, get: function () { return extension_utils_1.extractorContext; } });
+Object.defineProperty(exports, "defaultStaticExtractors", { enumerable: true, get: function () { return extension_utils_1.defaultStaticExtractors; } });
 //# sourceMappingURL=index.js.map

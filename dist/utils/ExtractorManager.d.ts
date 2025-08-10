@@ -1,19 +1,15 @@
-import { type ProviderContextConfig } from './create-provider-context';
 import type { ExtractorInfo } from '../models/extension-manifest';
+import { type ExtractorContextConfig } from './create-extractor-context';
 export declare class ExtractorManager {
-    private providerContext;
     private loadedExtractors;
     private extractorRegistry;
     private staticExtractors;
-    constructor(config?: ProviderContextConfig);
+    private extractorContext;
+    constructor(config?: ExtractorContextConfig);
     /**
      * Initialize static extractors as fallbacks
      */
     private initializeStaticExtractors;
-    /**
-     * Create extractor context for context-aware extractors
-     */
-    private createExtractorContext;
     /**
      * Load extractors from the unified extension registry
      */
