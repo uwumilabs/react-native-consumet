@@ -27,6 +27,8 @@ import {
   MegaUp,
 } from '../extractors';
 import type { ExtractorInfo } from '../models/extension-manifest';
+import { getSources } from '../extractors/megacloud/megacloud.getsrcs';
+import { USER_AGENT } from './utils';
 
 export class ExtractorManager {
   private providerContext: ProviderContext;
@@ -76,8 +78,11 @@ export class ExtractorManager {
     return {
       axios: this.providerContext.axios,
       load: this.providerContext.load,
-      USER_AGENT: this.providerContext.USER_AGENT,
+      USER_AGENT: this.providerContext.USER_AGENT || USER_AGENT,
       logger: this.providerContext.logger,
+      sharedUtils: {
+        getSources,
+      },
     };
   }
 
@@ -276,7 +281,7 @@ export class ExtractorManager {
           }
           function rejected(value: any) {
             try {
-              step(generator['throw'](value));
+              step(generator.throw(value));
             } catch (e) {
               reject(e);
             }
@@ -284,7 +289,7 @@ export class ExtractorManager {
           function step(result: any) {
             result.done
               ? resolve(result.value)
-              : new P((resolve: any) => resolve(result.value)).then(fulfilled, rejected);
+              : new P((innerResolve: any) => innerResolve(result.value)).then(fulfilled, rejected);
           }
           step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
@@ -292,6 +297,7 @@ export class ExtractorManager {
       // Provide extractor context for context-aware extractors
       axios: extractorContext.axios,
       load: extractorContext.load,
+      sharedUtils: extractorContext.sharedUtils,
     };
   }
 }

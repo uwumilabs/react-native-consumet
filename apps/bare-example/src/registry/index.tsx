@@ -1,21 +1,21 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
-import ExtGithub from './Ext-github';
-import ExtLocal from './Ext-local';
+import ExtAnime from './Ext-anime';
+import ExtMovies from './Ext-movies';
 
 const ProviderManagerDemo = () => {
-  const [selectedExample, setSelectedExample] = useState<'github' | 'local'>('github');
+  const [selectedExample, setSelectedExample] = useState<'anime' | 'movies'>('anime');
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
       {/* Header */}
       <View style={{ backgroundColor: 'white', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e9ecef' }}>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2c3e50', textAlign: 'center' }}>
-          🚀 ProviderManager Examples
+          🚀 Provider Registry Demo
         </Text>
         <Text style={{ fontSize: 14, color: '#6c757d', textAlign: 'center', marginTop: 4 }}>
-          Registry vs Local Provider Loading
+          Anime vs Movies Provider Testing
         </Text>
       </View>
 
@@ -29,10 +29,10 @@ const ProviderManagerDemo = () => {
         borderBottomColor: '#e9ecef'
       }}>
         <TouchableOpacity
-          onPress={() => setSelectedExample('github')}
+          onPress={() => setSelectedExample('anime')}
           style={{
             flex: 1,
-            backgroundColor: selectedExample === 'github' ? '#27ae60' : '#ecf0f1',
+            backgroundColor: selectedExample === 'anime' ? '#e74c3c' : '#ecf0f1',
             paddingVertical: 12,
             paddingHorizontal: 16,
             borderRadius: 8,
@@ -41,26 +41,26 @@ const ProviderManagerDemo = () => {
           }}
         >
           <Text style={{
-            color: selectedExample === 'github' ? 'white' : '#2c3e50',
+            color: selectedExample === 'anime' ? 'white' : '#2c3e50',
             fontWeight: '600',
             fontSize: 16
           }}>
-            🌐 GitHub Registry
+            📺 Anime Providers
           </Text>
           <Text style={{
-            color: selectedExample === 'github' ? 'rgba(255,255,255,0.8)' : '#6c757d',
+            color: selectedExample === 'anime' ? 'rgba(255,255,255,0.8)' : '#6c757d',
             fontSize: 12,
             marginTop: 2
           }}>
-            loadExtension()
+            Test anime extensions
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setSelectedExample('local')}
+          onPress={() => setSelectedExample('movies')}
           style={{
             flex: 1,
-            backgroundColor: selectedExample === 'local' ? '#e74c3c' : '#ecf0f1',
+            backgroundColor: selectedExample === 'movies' ? '#3498db' : '#ecf0f1',
             paddingVertical: 12,
             paddingHorizontal: 16,
             borderRadius: 8,
@@ -68,48 +68,48 @@ const ProviderManagerDemo = () => {
           }}
         >
           <Text style={{
-            color: selectedExample === 'local' ? 'white' : '#2c3e50',
+            color: selectedExample === 'movies' ? 'white' : '#2c3e50',
             fontWeight: '600',
             fontSize: 16
           }}>
-            � React Native Loading
+            🎬 Movie Providers
           </Text>
           <Text style={{
-            color: selectedExample === 'local' ? 'rgba(255,255,255,0.8)' : '#6c757d',
+            color: selectedExample === 'movies' ? 'rgba(255,255,255,0.8)' : '#6c757d',
             fontSize: 12,
             marginTop: 2
           }}>
-            Direct imports + URLs
+            Test movie extensions
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Example Description */}
       <View style={{ backgroundColor: 'white', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e9ecef' }}>
-        {selectedExample === 'github' ? (
+        {selectedExample === 'anime' ? (
           <View>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#27ae60', marginBottom: 8 }}>
-              🌐 GitHub Registry Example
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#e74c3c', marginBottom: 8 }}>
+              📺 Anime Provider Testing
             </Text>
             <Text style={{ fontSize: 14, color: '#6c757d', lineHeight: 20 }}>
-              Uses <Text style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa', padding: 2 }}>ProviderManager.loadExtension()</Text> to load providers from the GitHub registry. 
-              This method fetches providers from remote URLs defined in registry.json and automatically handles factory functions.
+              Tests anime providers from the GitHub registry. Loads anime-specific extensions and tests 
+              search functionality, anime info fetching, and episode source retrieval.
             </Text>
-            <Text style={{ fontSize: 12, color: '#27ae60', marginTop: 8, fontWeight: '600' }}>
-              ✅ Benefits: Remote updates, version control, automatic discovery
+            <Text style={{ fontSize: 12, color: '#e74c3c', marginTop: 8, fontWeight: '600' }}>
+              ✅ Features: Anime search, episode info, streaming sources
             </Text>
           </View>
         ) : (
           <View>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#e74c3c', marginBottom: 8 }}>
-              � React Native Loading Example
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#3498db', marginBottom: 8 }}>
+              🎬 Movie Provider Testing
             </Text>
             <Text style={{ fontSize: 14, color: '#6c757d', lineHeight: 20 }}>
-              Demonstrates both static module imports and URL-based loading for React Native compatibility. 
-              Shows how to handle bundler limitations with dynamic imports.
+              Tests movie providers from the GitHub registry. Loads movie-specific extensions and tests 
+              search functionality, media info fetching, and episode source retrieval.
             </Text>
-            <Text style={{ fontSize: 12, color: '#e74c3c', marginTop: 8, fontWeight: '600' }}>
-              ✅ Benefits: Static bundling, cross-platform compatibility, remote loading
+            <Text style={{ fontSize: 12, color: '#3498db', marginTop: 8, fontWeight: '600' }}>
+              ✅ Features: Movie search, media info, streaming sources
             </Text>
           </View>
         )}
@@ -117,7 +117,7 @@ const ProviderManagerDemo = () => {
 
       {/* Content */}
       <View style={{ flex: 1 }}>
-        {selectedExample === 'github' ? <ExtGithub /> : <ExtLocal />}
+        {selectedExample === 'anime' ? <ExtAnime /> : <ExtMovies />}
       </View>
 
       {/* Footer */}
@@ -129,7 +129,7 @@ const ProviderManagerDemo = () => {
         alignItems: 'center'
       }}>
         <Text style={{ fontSize: 12, color: '#6c757d' }}>
-          💡 Both examples use the same ProviderManager class with different loading methods
+          💡 Both examples use the same ProviderManager class to test different provider categories
         </Text>
       </View>
     </SafeAreaView>

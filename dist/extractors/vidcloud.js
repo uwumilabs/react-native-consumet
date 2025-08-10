@@ -14,11 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const utils_1 = require("../utils");
-const megacloud_getsrcs_1 = require("./megacloud/megacloud.getsrcs");
 function VidCloud(ctx) {
     const serverName = 'VidCloud';
     let sources = [];
     const extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://flixhq.to/') {
+        var _a;
         const result = {
             sources: [],
             subtitles: [],
@@ -34,7 +34,7 @@ function VidCloud(ctx) {
                     'User-Agent': USER_AGENT_VAL,
                 },
             };
-            const resp = yield (0, megacloud_getsrcs_1.getSources)(videoUrl, referer, ctx);
+            const resp = yield ((_a = ctx.sharedUtils) === null || _a === void 0 ? void 0 : _a.getSources(videoUrl, referer, ctx));
             if (!resp) {
                 throw new Error('Failed to get sources from getSources function');
             }

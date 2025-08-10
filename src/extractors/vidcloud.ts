@@ -1,14 +1,6 @@
 import axios from 'axios';
-import {
-  VideoExtractor,
-  type ExtractorContext,
-  type IVideo,
-  type ISubtitle,
-  type Intro,
-  type IVideoExtractor,
-} from '../models';
+import { type ExtractorContext, type IVideo, type ISubtitle, type Intro, type IVideoExtractor } from '../models';
 import { USER_AGENT } from '../utils';
-import { getSources } from './megacloud/megacloud.getsrcs';
 
 function VidCloud(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'VidCloud';
@@ -35,7 +27,7 @@ function VidCloud(ctx: ExtractorContext): IVideoExtractor {
         },
       };
 
-      const resp = await getSources(videoUrl, referer, ctx);
+      const resp = await ctx.sharedUtils?.getSources(videoUrl, referer, ctx);
 
       if (!resp) {
         throw new Error('Failed to get sources from getSources function');

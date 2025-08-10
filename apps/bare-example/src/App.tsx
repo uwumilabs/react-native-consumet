@@ -3,8 +3,6 @@ import Meta from './non-registry/Meta';
 import Anime from './non-registry/Anime';
 import Manga from './non-registry/Manga';
 import Movies from './non-registry/Movies';
-import ExtLocal from './registry/Ext-local';
-import ExtGithub from './registry/Ext-github';
 import ProviderManagerDemo from './registry';
 
 export default function App() {

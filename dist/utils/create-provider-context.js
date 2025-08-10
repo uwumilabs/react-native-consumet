@@ -107,8 +107,6 @@ function createProviderContext(config = {}) {
         Voe: extractors_1.Voe,
         MegaUp: extractors_1.MegaUp,
     };
-    // Note: ExtractorManager is not created here to avoid circular dependency
-    // It should be created separately when needed
     // Create dynamic extractor proxy
     const finalExtractors = new Proxy(defaultStaticExtractors, {
         get: (target, prop) => {

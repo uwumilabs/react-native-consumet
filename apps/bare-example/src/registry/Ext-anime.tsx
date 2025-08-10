@@ -1,35 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager,ANIME,MOVIES } from 'react-native-consumet';
-import { AnimeParser, type MovieParser } from '../../../../src/models';
+import { ProviderManager, ANIME } from 'react-native-consumet';
+import { AnimeParser } from '../../../../src/models';
 import Zoro from '../../../../src/providers/anime/zoro/zoro';
-import HiMovies from '../../../../src/providers/movies/himovies/himovies';
-const ExtGithub = () => {
+
+const ExtAnime = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
   const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
-  const [provider, setProvider] = useState<any>(null);
-  const [providerManager, setProviderManager] = useState<any>(null);
+  const [provider, setProvider] = useState<AnimeParser | null>(null);
+  const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
   useEffect(() => {
     const initializeProviderManager = async () => {
       setLoading(true);
 
       try {
-        console.log('🚀 Initializing ProviderManager for GitHub registry...');
+        console.log('🚀 Initializing ProviderManager for anime providers...');
         
         // Create ProviderManager instance with registry
         const manager = new ProviderManager();
         setProviderManager(manager);
         
-        // Get available extensions from registry
-        const extensions = manager.getAvailableExtensions();
-        console.log('📚 Available extensions:', extensions.map(ext => ext.id));
+        // Get available anime extensions from registry
+        const extensions = manager.getAvailableExtensions().filter(ext => ext.category === 'anime');
+        console.log('📚 Available anime extensions:', extensions.map(ext => ext.id));
         setAvailableExtensions(extensions);
         
         // Load default extension (Zoro)
-        await loadExtension(manager, selectedExtension);
+        if (extensions.length > 0) {
+          const defaultExtension = extensions.find(ext => ext.id === selectedExtension) || extensions[0];
+          if (defaultExtension) {
+            await loadExtension(manager, defaultExtension.id);
+          }
+        }
         
       } catch (err: any) {
         console.error('❌ Failed to initialize ProviderManager:', err);
@@ -44,7 +49,7 @@ const ExtGithub = () => {
 
   const loadExtension = async (manager: ProviderManager, extensionId: string) => {
     try {
-      console.log(`📥 Loading extension: ${extensionId}`);
+      console.log(`📥 Loading anime extension: ${extensionId}`);
       
       // Get extension metadata
       const metadata = manager.getExtensionMetadata(extensionId);
@@ -56,28 +61,26 @@ const ExtGithub = () => {
         factories: metadata?.factoryName
       });
       
-      // Load the extension from GitHub registry using type-safe method
-      let providerInstance:AnimeParser|MovieParser;
-      if (metadata?.category === 'anime') {
-        providerInstance = await manager.getAnimeProvider(extensionId);
-      } else if (metadata?.category === 'movies') {
-        providerInstance = await manager.getMovieProvider(extensionId);
-      } else {
-        throw new Error(`Unsupported provider category: ${metadata?.category}. Only 'anime' and 'movies' are supported in React Native environment.`);
+      // Ensure this is an anime provider
+      if (metadata?.category !== 'anime') {
+        throw new Error(`Expected anime provider, got ${metadata?.category}`);
       }
+      
+      // Load the anime extension from GitHub registry
+      const providerInstance = await manager.getAnimeProvider(extensionId);
       setProvider(providerInstance);
       
-      console.log('✅ Extension loaded successfully:', {
+      console.log('✅ Anime extension loaded successfully:', {
         name: providerInstance.name,
         hasSearch: typeof providerInstance.search === 'function',
-        hasFetchAnimeInfo: metadata?.category === 'anime' && typeof (providerInstance as AnimeParser).fetchAnimeInfo === 'function'
+        hasFetchAnimeInfo: typeof providerInstance.fetchAnimeInfo === 'function'
       });
       
       // Test search functionality
       await testSearch(providerInstance);
       
     } catch (err: any) {
-      console.error(`❌ Failed to load extension ${extensionId}:`, err);
+      console.error(`❌ Failed to load anime extension ${extensionId}:`, err);
       console.error('Full error details:', {
         message: err.message,
         stack: err.stack,
@@ -86,43 +89,46 @@ const ExtGithub = () => {
       Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
     }
   };
-  // @ts-ignore
-  const testSearch = async (providerInstance:Zoro|HiMovies) => {
+
+  const testSearch = async (providerInstance: AnimeParser) => {
     try {
-      console.log('🔍 Testing search functionality...');
+      console.log('🔍 Testing anime search functionality...');
       
       const searchQuery = 'Naruto';
-      const searchResults = await providerInstance.search(searchQuery);
+      const searchResults = await providerInstance.search(searchQuery) as any;
       
-      console.log('🎯 Search results:', {
+      console.log('🎯 Anime search results:', {
         query: searchQuery,
-        currentPage: searchResults.currentPage,
-        hasNextPage: searchResults.hasNextPage,
-        resultCount: searchResults.results
+        currentPage: searchResults?.currentPage,
+        hasNextPage: searchResults?.hasNextPage,
+        resultCount: searchResults?.results?.length
       });
       
-      if (searchResults.results && searchResults.results.length > 0) {
+      if (searchResults?.results && searchResults.results.length > 0) {
         setResults(searchResults.results.slice(0, 10)); // Show first 10 results
-        console.log('✅ Search successful, showing results');
-        let info;
-        if (providerInstance instanceof Zoro) {
-          info = await providerInstance.fetchAnimeInfo(searchResults.results[0].id);
-        }else{
-          info = await providerInstance.fetchMediaInfo(searchResults.results[0].id);
-        }
-        let sources
-        if (providerInstance instanceof Zoro) {
-          sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
-        }else{
-          sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id,searchResults.results[0].id);
+        console.log('✅ Anime search successful, showing results');
+        
+        // Test fetching anime info and episode sources
+        const info = await providerInstance.fetchAnimeInfo(searchResults.results[0].id);
+        console.log('📺 Anime info fetched:', {
+          title: info.title,
+          episodeCount: info.episodes?.length
+        });
+        
+        if (info.episodes && info.episodes.length > 0 && info.episodes[0]) {
+          const sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
+          console.log('🎬 Episode sources fetched:', {
+            sourceCount: sources.sources?.length,
+            quality: sources.sources?.[0]?.quality
+          });
         }
       } else {
-        console.log('⚠️ No search results found');
+        console.log('⚠️ No anime search results found');
         setResults([]);
       }
       
     } catch (err: any) {
-      console.error('❌ Search failed:', err);
+      console.error('❌ Anime search failed:', err);
       setResults([]);
     }
   };
@@ -149,16 +155,16 @@ const ExtGithub = () => {
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>
-        🌐 GitHub Registry Extension
+        📺 Anime Provider Registry
       </Text>
       <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
-        Using ProviderManager with registry.json from GitHub
+        Testing anime providers from GitHub registry
       </Text>
       
       {/* Extension Selector */}
       <View style={{ marginBottom: 16 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>
-          Available Extensions:
+          Available Anime Extensions:
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {availableExtensions.map((ext) => (
@@ -166,7 +172,7 @@ const ExtGithub = () => {
               key={ext.id}
               onPress={() => switchExtension(ext.id)}
               style={{
-                backgroundColor: selectedExtension === ext.id ? '#3498db' : '#ecf0f1',
+                backgroundColor: selectedExtension === ext.id ? '#e74c3c' : '#ecf0f1',
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 16,
@@ -189,16 +195,13 @@ const ExtGithub = () => {
       {provider && (
         <View style={{ marginBottom: 16, backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8 }}>
           <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#2c3e50' }}>
-            📦 Loaded Provider: {provider.name}
-          </Text>
-          <Text style={{ fontSize: 12, color: '#666' }}>
-            Base URL: {provider.baseUrl}
+            📦 Loaded Anime Provider: {provider.name}
           </Text>
           <TouchableOpacity 
             onPress={refreshSearch}
             style={{ 
               marginTop: 8, 
-              backgroundColor: '#27ae60', 
+              backgroundColor: '#e74c3c', 
               paddingHorizontal: 12, 
               paddingVertical: 4, 
               borderRadius: 4,
@@ -212,24 +215,24 @@ const ExtGithub = () => {
 
       {loading ? (
         <View style={{ alignItems: 'center', marginTop: 20 }}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <ActivityIndicator size="large" color="#e74c3c" />
           <Text style={{ marginTop: 10, color: '#888' }}>
-            Loading extension from registry...
+            Loading anime extension from registry...
           </Text>
         </View>
       ) : results.length > 0 ? (
         <>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#27ae60' }}>
-            ✅ Registry provider working! Found {results.length} results:
+          <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#e74c3c' }}>
+            ✅ Anime provider working! Found {results.length} results:
           </Text>
           {results.map((item, idx) => (
             <View key={idx} style={{ 
               marginBottom: 12, 
-              backgroundColor: '#e8f5e8', 
+              backgroundColor: '#fdeaea', 
               padding: 12, 
               borderRadius: 8, 
               borderLeftWidth: 4, 
-              borderLeftColor: '#27ae60' 
+              borderLeftColor: '#e74c3c' 
             }}>
               <Text style={{ fontWeight: 'bold', color: '#2c3e50' }}>
                 {item.title || 'No Title'}
@@ -244,7 +247,7 @@ const ExtGithub = () => {
       ) : (
         <View style={{ alignItems: 'center', marginTop: 40 }}>
           <Text style={{ color: '#e74c3c', fontSize: 16 }}>
-            Extension loaded but no results found.
+            Anime extension loaded but no results found.
           </Text>
           <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
             Try refreshing or check network connection
@@ -255,5 +258,4 @@ const ExtGithub = () => {
   );
 };
 
-export default ExtGithub;
-
+export default ExtAnime;

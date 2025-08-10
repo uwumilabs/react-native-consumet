@@ -9,11 +9,11 @@ export interface ExtractorContext {
     load: (html: string) => CheerioAPI;
     USER_AGENT?: string;
     /**
-     * Optional Logger (can be console or a custom wrapper)
+     * Shared utilities and code that can be used by extractors
+     * This allows extractors to access common functions without requiring individual modules
      */
-    logger?: {
-        log: (...args: any[]) => void;
-        error: (...args: any[]) => void;
+    sharedUtils?: {
+        [key: string]: any;
     };
 }
 //# sourceMappingURL=extractor-context.d.ts.map

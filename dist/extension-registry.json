@@ -31,7 +31,7 @@
                 {
                     "name": "MegaCloud",
                     "version": "1.0.0",
-                    "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/dynamic-megacloud.js"
+                    "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/index.js"
                 },
                 {
                     "name": "VidCloud",
@@ -69,7 +69,7 @@
                 {
                     "name": "MegaCloud",
                     "version": "1.0.0",
-                    "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/dynamic-megacloud.js"
+                    "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud/index.js"
                 },
                 {
                     "name": "VidCloud",

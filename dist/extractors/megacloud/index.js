@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaCloud = MegaCloud;
-const megacloud_getsrcs_1 = require("./megacloud.getsrcs");
 /**
  * MegaCloud extractor function
  * @param ctx ExtractorContext containing axios, load, USER_AGENT, and logger
@@ -20,8 +19,7 @@ function MegaCloud(ctx) {
     const serverName = 'MegaCloud';
     const sources = [];
     const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://hianime.to') {
-        var _a, _b, _c, _d;
-        const { logger } = ctx;
+        var _a, _b, _c, _d, _e;
         const extractedData = {
             subtitles: [],
             intro: { start: 0, end: 0 },
@@ -29,7 +27,7 @@ function MegaCloud(ctx) {
             sources: [],
         };
         try {
-            const resp = yield (0, megacloud_getsrcs_1.getSources)(embedIframeURL, referer, ctx);
+            const resp = yield ((_a = ctx.sharedUtils) === null || _a === void 0 ? void 0 : _a.getSources(embedIframeURL, referer, ctx));
             if (!resp)
                 return extractedData;
             if (Array.isArray(resp.sources)) {
@@ -45,18 +43,18 @@ function MegaCloud(ctx) {
                 url: track.file,
                 lang: track.label ? track.label : track.kind,
             }));
-            extractedData.intro = (_a = resp.intro) !== null && _a !== void 0 ? _a : extractedData.intro;
-            extractedData.outro = (_b = resp.outro) !== null && _b !== void 0 ? _b : extractedData.outro;
+            extractedData.intro = (_b = resp.intro) !== null && _b !== void 0 ? _b : extractedData.intro;
+            extractedData.outro = (_c = resp.outro) !== null && _c !== void 0 ? _c : extractedData.outro;
             extractedData.subtitles =
-                (_d = (_c = resp.tracks) === null || _c === void 0 ? void 0 : _c.map((track) => ({
+                (_e = (_d = resp.tracks) === null || _d === void 0 ? void 0 : _d.map((track) => ({
                     url: track.file,
                     lang: track.label || track.kind,
-                }))) !== null && _d !== void 0 ? _d : [];
-            logger === null || logger === void 0 ? void 0 : logger.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
+                }))) !== null && _e !== void 0 ? _e : [];
+            console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
             return extractedData;
         }
         catch (err) {
-            logger === null || logger === void 0 ? void 0 : logger.error('[MegaCloud] Extraction error', err);
+            console.error('[MegaCloud] Extraction error', err);
             throw err;
         }
     });

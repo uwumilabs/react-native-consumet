@@ -18,6 +18,8 @@ const create_provider_context_1 = __importDefault(require("./create-provider-con
 const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 // Import static extractors as fallbacks
 const extractors_1 = require("../extractors");
+const megacloud_getsrcs_1 = require("../extractors/megacloud/megacloud.getsrcs");
+const utils_1 = require("./utils");
 class ExtractorManager {
     constructor(config = {}) {
         this.loadedExtractors = new Map();
@@ -61,8 +63,11 @@ class ExtractorManager {
         return {
             axios: this.providerContext.axios,
             load: this.providerContext.load,
-            USER_AGENT: this.providerContext.USER_AGENT,
+            USER_AGENT: this.providerContext.USER_AGENT || utils_1.USER_AGENT,
             logger: this.providerContext.logger,
+            sharedUtils: {
+                getSources: megacloud_getsrcs_1.getSources,
+            },
         };
     }
     /**
@@ -247,7 +252,7 @@ class ExtractorManager {
                     }
                     function rejected(value) {
                         try {
-                            step(generator['throw'](value));
+                            step(generator.throw(value));
                         }
                         catch (e) {
                             reject(e);
@@ -256,7 +261,7 @@ class ExtractorManager {
                     function step(result) {
                         result.done
                             ? resolve(result.value)
-                            : new P((resolve) => resolve(result.value)).then(fulfilled, rejected);
+                            : new P((innerResolve) => innerResolve(result.value)).then(fulfilled, rejected);
                     }
                     step((generator = generator.apply(thisArg, _arguments || [])).next());
                 });
@@ -264,6 +269,7 @@ class ExtractorManager {
             // Provide extractor context for context-aware extractors
             axios: extractorContext.axios,
             load: extractorContext.load,
+            sharedUtils: extractorContext.sharedUtils,
         };
     }
 }
