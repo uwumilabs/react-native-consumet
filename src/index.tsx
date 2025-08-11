@@ -1,5 +1,16 @@
-import 'react-native-url-polyfill/auto';
+import { URL as PolyURL, URLSearchParams as PolyURLSearchParams } from './utils/url-polyfill';
 
+// Polyfill global scope if they don't exist
+if (typeof globalThis !== 'undefined') {
+  // @ts-ignore
+  if (!globalThis.URL) {
+    (globalThis as any).URL = PolyURL;
+  }
+  // @ts-ignore
+  if (!globalThis.URLSearchParams) {
+    (globalThis as any).URLSearchParams = PolyURLSearchParams;
+  }
+} 
 // Providers (namespaced provider groups)
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 

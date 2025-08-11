@@ -9,7 +9,7 @@ const axios_1 = __importDefault(require("axios"));
 const extractors_1 = require("../extractors");
 const cheerio_1 = require("cheerio");
 const utils_1 = require("./utils");
-const megacloud_getsrcs_1 = require("../extractors/megacloud/megacloud.getsrcs");
+const url_polyfill_1 = require("./url-polyfill");
 // Default axios instance with optimized settings for scraping
 exports.defaultAxios = axios_1.default.create({
     timeout: 15000,
@@ -27,9 +27,8 @@ exports.extractorContext = {
     axios: exports.defaultAxios,
     load: cheerio_1.load,
     USER_AGENT: utils_1.USER_AGENT,
-    sharedUtils: {
-        getSources: megacloud_getsrcs_1.getSources,
-    },
+    URL: url_polyfill_1.PolyURL,
+    URLSearchParams: url_polyfill_1.PolyURLSearchParams,
 };
 // Default static extractors (for backward compatibility)
 exports.defaultStaticExtractors = {

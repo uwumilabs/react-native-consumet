@@ -1,4 +1,3 @@
-import 'react-native-url-polyfill/auto';
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import { PROVIDERS_LIST } from './utils/providers-list';
 import { createProviderContext, ProviderManager, ExtractorManager, createExtractorContext } from './utils';

@@ -1,7 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
-require("react-native-url-polyfill/auto");
+const url_polyfill_1 = require("./utils/url-polyfill");
+// Polyfill global scope if they don't exist
+if (typeof globalThis !== 'undefined') {
+    // @ts-ignore
+    if (!globalThis.URL) {
+        globalThis.URL = url_polyfill_1.URL;
+    }
+    // @ts-ignore
+    if (!globalThis.URLSearchParams) {
+        globalThis.URLSearchParams = url_polyfill_1.URLSearchParams;
+    }
+}
 // Providers (namespaced provider groups)
 const providers_1 = require("./providers");
 Object.defineProperty(exports, "ANIME", { enumerable: true, get: function () { return providers_1.ANIME; } });

@@ -296,10 +296,9 @@ class ExtractorManager {
             // Provide extractor context for context-aware extractors
             axios: extractorContext.axios,
             load: extractorContext.load,
-            sharedUtils: extractorContext.sharedUtils,
             console,
-            URL,
-            URLSearchParams,
+            URL: extractorContext.URL,
+            URLSearchParams: extractorContext.URLSearchParams,
         };
     }
 }

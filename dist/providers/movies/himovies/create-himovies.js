@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createHiMovies = createHiMovies;
 function createHiMovies(ctx, customBaseURL) {
-    const { load, extractors, enums, axios, createCustomBaseUrl } = ctx;
+    const { load, extractors, enums, axios, createCustomBaseUrl, URL } = ctx;
     const { VidCloud, MegaCloud } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrSub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, TvType: TvTypeEnum, } = enums;
     const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);

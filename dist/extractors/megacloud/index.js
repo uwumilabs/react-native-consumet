@@ -18,15 +18,15 @@ exports.MegaCloud = MegaCloud;
 function MegaCloud(ctx) {
     const serverName = 'MegaCloud';
     const sources = [];
-    const { axios, load, USER_AGENT } = ctx;
+    const { axios, load, USER_AGENT, URL } = ctx;
     /**
      * Thanks to https://github.com/yogesh-hacker for the original implementation.
      */
     function getSources(embed_url, site) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
+            console.log(`🔗 Fetching sources from: ${embed_url.pathname} with site: ${site}`, embed_url);
             const embedUrl = new URL(embed_url.href);
-            console.log(`🔗 Fetching sources from: ${embedUrl.pathname} with site: ${site}`);
             const regex = /\/([^/?]+)(?=\?)/;
             const xrax = (_a = embedUrl.toString().match(regex)) === null || _a === void 0 ? void 0 : _a[1];
             const basePath = embedUrl.pathname.split('/').slice(0, 4).join('/');

@@ -56,10 +56,12 @@
     "prettier": "prettier --write ."
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,html,css}": [
+    "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
-      "prettier --write .",
-      "del-cli dist && yarn build"
+      "prettier --write"
+    ],
+    "*.{json,md,html,css}": [
+      "prettier --write"
     ]
   },
   "keywords": [
@@ -195,7 +197,6 @@
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
     "crypto-js": "^4.2.0",
-    "react-native-url-polyfill": "^2.0.0",
     "string-similarity": "^4.0.4"
   }
 }

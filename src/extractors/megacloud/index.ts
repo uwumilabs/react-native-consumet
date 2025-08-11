@@ -8,14 +8,14 @@ import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor 
 export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'MegaCloud';
   const sources: IVideo[] = [];
-  const { axios, load, USER_AGENT } = ctx;
+  const { axios, load, USER_AGENT, URL } = ctx;
   /**
    * Thanks to https://github.com/yogesh-hacker for the original implementation.
    */
 
   async function getSources(embed_url: URL, site: string) {
+    console.log(`🔗 Fetching sources from: ${embed_url.pathname} with site: ${site}`, embed_url);
     const embedUrl = new URL(embed_url.href);
-    console.log(`🔗 Fetching sources from: ${embedUrl.pathname} with site: ${site}`);
     const regex = /\/([^/?]+)(?=\?)/;
     const xrax = embedUrl.toString().match(regex)?.[1];
     const basePath = embedUrl.pathname.split('/').slice(0, 4).join('/');

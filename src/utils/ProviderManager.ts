@@ -206,6 +206,8 @@ export class ProviderManager {
       '../../utils': {
         createProviderContext: () => this.providerContext,
       },
+      'URL': this.providerContext.URL,
+      'URLSearchParams': this.providerContext.URLSearchParams,
     };
 
     // Create fetch function using axios
@@ -241,6 +243,8 @@ export class ProviderManager {
       Object,
       fetch: customFetch,
       __awaiter: this.createAwaiterHelper(),
+      URL: this.providerContext.URL,
+      URLSearchParams: this.providerContext.URLSearchParams,
     };
   }
 

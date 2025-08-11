@@ -1,8 +1,7 @@
 import { load } from 'cheerio';
 import type { ExtractorContext } from '../models';
 import { defaultAxios } from './extension-utils';
-import { getSources } from '../extractors/megacloud/megacloud.getsrcs';
-
+import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 /**
  * Configuration options for creating a provider context
  */
@@ -38,6 +37,7 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
     USER_AGENT:
       config.userAgent ||
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    sharedUtils: { getSources },
+    URL: PolyURL,
+    URLSearchParams: PolyURLSearchParams,
   };
 }

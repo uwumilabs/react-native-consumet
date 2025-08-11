@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
-    const { load, extractors, enums, createCustomBaseUrl } = ctx;
+    const { load, extractors, enums, createCustomBaseUrl, URL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrSub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
     // Provider configuration - use the standardized base URL creation

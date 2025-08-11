@@ -1,15 +1,7 @@
-#!/usr/bin/env sh
-# . "$(dirname -- "$0")/_/husky.sh"
+#!/bin/sh
+set -e
 
-
-echo "🔍 Running ESLint on all files..."
-yarn lint
-echo "✅ ESLint on all files completed"
-
-echo "🎨 Running Prettier on all files..."
-yarn prettier
-echo "✅ Prettier on all files completed"
-
+yarn lint-staged
 echo "🛠 Running TypeScript check..."
 yarn typecheck
 echo "✅ TypeScript check completed"

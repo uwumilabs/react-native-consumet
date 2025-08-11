@@ -1,4 +1,5 @@
 import type { IVideo, ISource } from '.';
+import type { PolyURL } from '../utils/url-polyfill';
 /**
  * Interface for video extractors - can be implemented by both classes and functions
  */
@@ -16,7 +17,7 @@ export interface IVideoExtractor {
      *
      * returns video sources (video links) available
      */
-    extract(videoUrl: URL, ...args: any): Promise<IVideo[] | ISource>;
+    extract(videoUrl: PolyURL, ...args: any): Promise<IVideo[] | ISource>;
 }
 /**
  * Abstract class for video extractors - for class-based implementations

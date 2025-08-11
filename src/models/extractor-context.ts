@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
+import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
 
 /**
  * ExtractorContext:
@@ -9,7 +10,6 @@ export interface ExtractorContext {
   axios: AxiosInstance;
   load: (html: string) => CheerioAPI;
   USER_AGENT?: string;
-  sharedUtils: {
-    [key: string]: any;
-  };
+  URL: typeof PolyURL;
+  URLSearchParams: typeof PolyURLSearchParams;
 }

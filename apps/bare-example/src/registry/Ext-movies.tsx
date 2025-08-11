@@ -3,6 +3,7 @@ import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } fr
 import { ProviderManager, MOVIES, ExtractorManager } from 'react-native-consumet';
 import { type MovieParser } from '../../../../src/models';
 import HiMovies from '../../../../src/providers/movies/himovies/himovies';
+import { PolyURL } from '../../../../src/utils/url-polyfill';
 
 const ExtMovies = () => {
   const [results, setResults] = useState<any[]>([]);
@@ -126,7 +127,7 @@ const ExtMovies = () => {
           // Load specific extractor dynamically from extension registry
           const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
           console.log('🔗 Extractor loaded:', megacloudExtractor);
-          const links = await megacloudExtractor.extract(sources.headers?.Referer);
+          const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!), sources.headers?.Referer);
         }
       } else {
         console.log('⚠️ No movie search results found');

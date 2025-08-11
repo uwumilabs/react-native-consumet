@@ -12,7 +12,7 @@ import {
 } from '../../../models';
 
 export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
-  const { load, extractors, enums, axios, createCustomBaseUrl } = ctx;
+  const { load, extractors, enums, axios, createCustomBaseUrl, URL } = ctx;
   const { VidCloud, MegaCloud } = extractors;
   const {
     StreamingServers: StreamingServersEnum,

@@ -6,6 +6,7 @@ import type { ExtractorContext } from './extractor-context';
 import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrSub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
+import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -147,9 +148,9 @@ export interface ProviderContext {
   MangaParser: typeof MangaParser;
   extractors: ExtractorRegistry;
   extractorManager?: ExtractorManager;
-  // Utility function to create normalized base URL
+  URL: typeof PolyURL;
+  URLSearchParams: typeof PolyURLSearchParams;
   createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
-  // Enums included directly in context to avoid require statements in bundled providers
   enums: {
     StreamingServers: typeof StreamingServers;
     MediaFormat: typeof MediaFormat;

@@ -15,7 +15,7 @@ import {
 } from '../models';
 
 import { defaultAxios, defaultStaticExtractors, extractorContext } from './extension-utils';
-
+import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 /**
  * Configuration options for creating a provider context
  */
@@ -63,9 +63,6 @@ export interface ProviderContextConfig {
  * @returns Complete ProviderContext ready for use with extensions
  */
 export function createProviderContext(config: ProviderContextConfig = {}): ProviderContext {
-
-
-
   // Create dynamic extractor proxy
   const finalExtractors = new Proxy(defaultStaticExtractors, {
     get: (target: any, prop: string) => {
@@ -126,6 +123,8 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MovieParser: config.MovieParser || MovieParser,
     MangaParser: config.MangaParser || MangaParser,
     extractors: finalExtractors,
+    URL: PolyURL,
+    URLSearchParams: PolyURLSearchParams,
     createCustomBaseUrl,
     enums: {
       StreamingServers,

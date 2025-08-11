@@ -1,1 +1,1 @@
-{"version":3,"file":"vidcloud.d.ts","sourceRoot":"","sources":["../../src/extractors/vidcloud.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,KAAK,gBAAgB,EAA2C,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAGjH,iBAAS,QAAQ,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAwFxD;AAED,eAAe,QAAQ,CAAC"}
+{"version":3,"file":"vidcloud.d.ts","sourceRoot":"","sources":["../../src/extractors/vidcloud.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,KAAK,gBAAgB,EAA2C,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAIjH,iBAAS,QAAQ,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAwFxD;AAED,eAAe,QAAQ,CAAC"}

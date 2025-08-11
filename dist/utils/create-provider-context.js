@@ -46,6 +46,7 @@ exports.createProviderContext = createProviderContext;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../models");
 const extension_utils_1 = require("./extension-utils");
+const url_polyfill_1 = require("./url-polyfill");
 /**
  * Creates a provider context with sensible defaults for extensions
  *
@@ -109,6 +110,8 @@ function createProviderContext(config = {}) {
         MovieParser: config.MovieParser || models_1.MovieParser,
         MangaParser: config.MangaParser || models_1.MangaParser,
         extractors: finalExtractors,
+        URL: url_polyfill_1.PolyURL,
+        URLSearchParams: url_polyfill_1.PolyURLSearchParams,
         createCustomBaseUrl,
         enums: {
             StreamingServers: models_1.StreamingServers,

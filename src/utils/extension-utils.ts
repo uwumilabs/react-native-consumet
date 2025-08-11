@@ -26,8 +26,7 @@ import {
 import { load } from 'cheerio';
 import { USER_AGENT } from './utils';
 import type { ExtractorContext } from '../models';
-import { getSources } from '../extractors/megacloud/megacloud.getsrcs';
-
+import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 // Default axios instance with optimized settings for scraping
 export const defaultAxios = axios.create({
   timeout: 15000,
@@ -46,9 +45,8 @@ export const extractorContext: ExtractorContext = {
   axios: defaultAxios,
   load: load,
   USER_AGENT: USER_AGENT,
-  sharedUtils: {
-    getSources,
-  },
+  URL: PolyURL,
+  URLSearchParams: PolyURLSearchParams,
 };
 
 // Default static extractors (for backward compatibility)
