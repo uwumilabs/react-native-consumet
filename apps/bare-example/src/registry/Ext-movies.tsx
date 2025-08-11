@@ -127,7 +127,8 @@ const ExtMovies = () => {
           // Load specific extractor dynamically from extension registry
           const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
           console.log('🔗 Extractor loaded:', megacloudExtractor);
-          const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!), sources.headers?.Referer);
+          const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!),"https://himovies.sx");
+          console.log('📹 Extracted video links:', links);
         }
       } else {
         console.log('⚠️ No movie search results found');

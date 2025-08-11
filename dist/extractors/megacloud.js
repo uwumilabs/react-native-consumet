@@ -25,12 +25,10 @@ function MegaCloud(ctx) {
     function getSources(embed_url, site) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            console.log(`🔗 Fetching sources from: ${embed_url.pathname} with site: ${site}`, embed_url);
-            const embedUrl = new URL(embed_url.href);
             const regex = /\/([^/?]+)(?=\?)/;
-            const xrax = (_a = embedUrl.toString().match(regex)) === null || _a === void 0 ? void 0 : _a[1];
-            const basePath = embedUrl.pathname.split('/').slice(0, 4).join('/');
-            const url = `${embedUrl.origin}${basePath}/getSources?id=${xrax}}`;
+            const xrax = (_a = embed_url.toString().match(regex)) === null || _a === void 0 ? void 0 : _a[1];
+            const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
+            const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}}`;
             const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
             // console.log(`🔗 Fetching sources from: ${url} with key type: ${getKeyType}`);
             //gets the base64 encoded string from the URL and key in parallel
@@ -156,4 +154,4 @@ function MegaCloud(ctx) {
         extract,
     };
 }
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=megacloud.js.map

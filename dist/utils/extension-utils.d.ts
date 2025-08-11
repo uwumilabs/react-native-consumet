@@ -17,7 +17,6 @@ export declare const defaultStaticExtractors: {
     StreamSB: typeof StreamSB;
     StreamTape: typeof StreamTape;
     StreamWish: typeof StreamWish;
-    VidCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     VidMoly: typeof VidMoly;
     VizCloud: typeof VizCloud;
     VidHide: typeof VidHide;

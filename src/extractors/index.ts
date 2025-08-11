@@ -12,7 +12,6 @@ import StreamLare from './streamlare';
 import StreamSB from './streamsb';
 import StreamTape from './streamtape';
 import StreamWish from './streamwish';
-import VidCloud from './vidcloud';
 import VidMoly from './vidmoly';
 import VizCloud from './vizcloud';
 import VidHide from './vidhide';
@@ -34,7 +33,6 @@ export {
   StreamSB,
   StreamTape,
   StreamWish,
-  VidCloud,
   VidMoly,
   VizCloud,
   VidHide,

@@ -46,7 +46,6 @@ exports.defaultStaticExtractors = {
     StreamSB: extractors_1.StreamSB,
     StreamTape: extractors_1.StreamTape,
     StreamWish: extractors_1.StreamWish,
-    VidCloud: (ctx) => (0, extractors_1.VidCloud)(ctx || exports.extractorContext),
     VidMoly: extractors_1.VidMoly,
     VizCloud: extractors_1.VizCloud,
     VidHide: extractors_1.VidHide,

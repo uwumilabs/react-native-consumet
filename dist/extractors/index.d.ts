@@ -12,11 +12,10 @@ import StreamLare from './streamlare';
 import StreamSB from './streamsb';
 import StreamTape from './streamtape';
 import StreamWish from './streamwish';
-import VidCloud from './vidcloud';
 import VidMoly from './vidmoly';
 import VizCloud from './vizcloud';
 import VidHide from './vidhide';
 import Voe from './voe';
 import { MegaUp } from './megaup';
-export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidCloud, VidMoly, VizCloud, VidHide, Voe, MegaUp, };
+export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, };
 //# sourceMappingURL=index.d.ts.map

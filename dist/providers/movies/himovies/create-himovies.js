@@ -190,7 +190,7 @@ function createHiMovies(ctx, customBaseURL) {
                 case StreamingServersEnum.MegaCloud:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
                 case StreamingServersEnum.UpCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield VidCloud().extract(serverUrl, config.baseUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
                 default:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
             }

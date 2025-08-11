@@ -1,4 +1,4 @@
-import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../../models';
+import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
 
 /**
  * MegaCloud extractor function
@@ -14,13 +14,11 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
    */
 
   async function getSources(embed_url: URL, site: string) {
-    console.log(`🔗 Fetching sources from: ${embed_url.pathname} with site: ${site}`, embed_url);
-    const embedUrl = new URL(embed_url.href);
     const regex = /\/([^/?]+)(?=\?)/;
-    const xrax = embedUrl.toString().match(regex)?.[1];
-    const basePath = embedUrl.pathname.split('/').slice(0, 4).join('/');
+    const xrax = embed_url.toString().match(regex)?.[1];
+    const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
 
-    const url = `${embedUrl.origin}${basePath}/getSources?id=${xrax}}`;
+    const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}}`;
     const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
     // console.log(`🔗 Fetching sources from: ${url} with key type: ${getKeyType}`);
     //gets the base64 encoded string from the URL and key in parallel

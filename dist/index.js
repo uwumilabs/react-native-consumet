@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 const url_polyfill_1 = require("./utils/url-polyfill");
 // Polyfill global scope if they don't exist
 if (typeof globalThis !== 'undefined') {
@@ -43,7 +43,6 @@ Object.defineProperty(exports, "StreamLare", { enumerable: true, get: function (
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
 Object.defineProperty(exports, "StreamTape", { enumerable: true, get: function () { return extractors_1.StreamTape; } });
 Object.defineProperty(exports, "StreamWish", { enumerable: true, get: function () { return extractors_1.StreamWish; } });
-Object.defineProperty(exports, "VidCloud", { enumerable: true, get: function () { return extractors_1.VidCloud; } });
 Object.defineProperty(exports, "VidMoly", { enumerable: true, get: function () { return extractors_1.VidMoly; } });
 Object.defineProperty(exports, "VizCloud", { enumerable: true, get: function () { return extractors_1.VizCloud; } });
 Object.defineProperty(exports, "Mp4Player", { enumerable: true, get: function () { return extractors_1.Mp4Player; } });

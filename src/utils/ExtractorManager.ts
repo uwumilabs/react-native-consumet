@@ -1,29 +1,5 @@
 /* eslint-disable no-new-func */
 import extensionRegistry from '../extension-registry.json';
-
-// Import static extractors as fallbacks
-import {
-  AsianLoad,
-  Filemoon,
-  GogoCDN,
-  Kwik,
-  MixDrop,
-  Mp4Player,
-  Mp4Upload,
-  RapidCloud,
-  MegaCloud,
-  StreamHub,
-  StreamLare,
-  StreamSB,
-  StreamTape,
-  StreamWish,
-  VidCloud,
-  VidMoly,
-  VizCloud,
-  VidHide,
-  Voe,
-  MegaUp,
-} from '../extractors';
 import type { ExtractorContext } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import { createExtractorContext, type ExtractorContextConfig } from './create-extractor-context';

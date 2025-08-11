@@ -1,6 +1,4 @@
-import type { CheerioAPI } from 'cheerio';
 import {
-  type TvType,
   type IMovieInfo,
   type IEpisodeServer,
   type StreamingServers,
@@ -220,7 +218,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.UpCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await VidCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
           };
         default:
           return {

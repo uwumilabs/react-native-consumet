@@ -10,7 +10,7 @@ if (typeof globalThis !== 'undefined') {
   if (!globalThis.URLSearchParams) {
     (globalThis as any).URLSearchParams = PolyURLSearchParams;
   }
-} 
+}
 // Providers (namespaced provider groups)
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 
@@ -34,7 +34,6 @@ import {
   StreamSB,
   StreamTape,
   StreamWish,
-  VidCloud,
   VidMoly,
   VizCloud,
   Mp4Player,
@@ -101,7 +100,6 @@ export { Topics, Genres, SubOrSub, StreamingServers, MediaStatus, TvType, MediaF
 export {
   GogoCDN,
   StreamSB,
-  VidCloud,
   MixDrop,
   Kwik,
   RapidCloud,

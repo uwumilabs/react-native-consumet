@@ -1,7 +1,6 @@
 import {
   GogoCDN,
   StreamSB,
-  VidCloud,
   MixDrop,
   Kwik,
   RapidCloud,
@@ -55,7 +54,6 @@ export {
   formatTitle,
   genElement,
   capitalizeFirstLetter,
-  VidCloud,
   MixDrop,
   Kwik,
   anilistSearchQuery,
