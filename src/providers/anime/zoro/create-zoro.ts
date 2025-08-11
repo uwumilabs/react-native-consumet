@@ -450,11 +450,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.StreamSB:
           return {
             headers: { Referer: serverUrl.href },
-            sources: await new StreamSB({
-              axios: fetch as any,
-              load,
-              USER_AGENT: ctx.USER_AGENT,
-            }).extract(serverUrl, true),
+            sources: await new StreamSB().extract(serverUrl, true),
           };
         case StreamingServersEnum.StreamTape:
           if (!StreamTape) {
@@ -462,14 +458,9 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
           }
           return {
             headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT! },
-            sources: await new StreamTape({
-              axios: fetch as any,
-              load,
-              USER_AGENT: ctx.USER_AGENT,
-            }).extract(serverUrl),
+            sources: await new StreamTape().extract(serverUrl),
           };
         default:
-        case StreamingServersEnum.VidCloud:
           return {
             headers: { Referer: serverUrl.href },
             ...(await MegaCloud().extract(serverUrl, config.baseUrl)),

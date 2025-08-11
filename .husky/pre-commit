@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+# . "$(dirname -- "$0")/_/husky.sh"
+
+
+echo "🔍 Running ESLint on all files..."
+yarn lint
+echo "✅ ESLint on all files completed"
+
+echo "🎨 Running Prettier on all files..."
+yarn prettier
+echo "✅ Prettier on all files completed"
+
+echo "🛠 Running TypeScript check..."
+yarn typecheck
+echo "✅ TypeScript check completed"
+
+echo "📦 Building dist folder..."
+yarn build:clean
+if [ -d "dist" ]; then
+  echo "✅ Dist folder exists, adding to git..."
+  git add dist/
+  echo "✅ Dist folder added to commit"
+else
+  echo "❌ Dist folder not found after build!"
+  exit 1
+fi

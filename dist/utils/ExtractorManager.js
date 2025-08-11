@@ -148,6 +148,8 @@ class ExtractorManager {
           const Promise = context.Promise;
           const Object = context.Object;
           const fetch = context.fetch;
+          const URL = context.URL;
+          const URLSearchParams = context.URLSearchParams;
           const __awaiter = context.__awaiter;
           const axios = context.axios;
           const load = context.load;
@@ -172,7 +174,7 @@ class ExtractorManager {
                 if (!factory) {
                     throw new Error(`Factory function '${metadata.name || `create${metadata.name}`}' not found in extractor code`);
                 }
-                return factory();
+                return factory(this.extractorContext);
             }
             catch (error) {
                 console.error(`❌ Failed to execute extractor code for '${metadata.name}':`, error);
@@ -181,30 +183,93 @@ class ExtractorManager {
         });
     }
     /**
+     * Create models context
+     */
+    createModelsContext() {
+        return {
+            SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
+            StreamingServers: {
+                VidCloud: 'vidcloud',
+                StreamSB: 'streamsb',
+                StreamTape: 'streamtape',
+                VidStreaming: 'vidstreaming',
+                MegaCloud: 'megacloud',
+            },
+            MediaStatus: {
+                COMPLETED: 'completed',
+                ONGOING: 'ongoing',
+                NOT_YET_AIRED: 'not_yet_aired',
+                UNKNOWN: 'unknown',
+            },
+            TvType: {
+                MOVIE: 'movie',
+                TVSERIES: 'tvseries',
+                ANIME: 'anime',
+            },
+            WatchListType: {
+                WATCHING: 'watching',
+                COMPLETED: 'completed',
+                ONHOLD: 'onhold',
+                DROPPED: 'dropped',
+                PLAN_TO_WATCH: 'plan_to_watch',
+                NONE: 'none',
+            },
+        };
+    }
+    /**
      * Create execution context for extractor code
      */
     createExecutionContext(_metadata) {
         const extractorContext = this.extractorContext;
+        const models = this.createModelsContext();
+        const mocks = {
+            'cheerio': { load: this.extractorContext.load },
+            'axios': this.extractorContext.axios,
+            '../../models': models,
+            '../../models/index.js': models,
+            '../../models/index': models,
+            '../../utils/create-extractor-context': {
+                createExtractorContext: () => this.extractorContext,
+            },
+            '../../utils/create-extractor-context.js': {
+                createExtractorContext: () => this.extractorContext,
+            },
+            '../../utils': {
+                createExtractorContext: () => this.extractorContext,
+            },
+        };
         return {
             exports: {},
             module: { exports: {} },
-            require: (name) => {
-                // Provide required modules for extractors
-                switch (name) {
-                    case 'axios':
-                        return extractorContext.axios;
-                    case 'cheerio':
-                        return { load: extractorContext.load };
-                    case 'sharedUtils':
-                        return extractorContext.sharedUtils;
-                    default:
-                        throw new Error(`Module '${name}' not available in extractor context`);
-                }
-            },
+            require: (module) => mocks[module] || {},
             Promise,
             Object,
-            fetch: extractorContext.axios.get,
+            fetch: (url_1, ...args_1) => __awaiter(this, [url_1, ...args_1], void 0, function* (url, options = {}) {
+                try {
+                    const response = yield this.extractorContext.axios({
+                        url,
+                        method: options.method || 'GET',
+                        headers: options.headers || {},
+                        data: options.body,
+                        timeout: 30000,
+                    });
+                    return {
+                        ok: response.status >= 200 && response.status < 300,
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                        text: () => __awaiter(this, void 0, void 0, function* () { return response.data; }),
+                        json: () => __awaiter(this, void 0, void 0, function* () { return (typeof response.data === 'string' ? JSON.parse(response.data) : response.data); }),
+                    };
+                }
+                catch (error) {
+                    throw new Error(`fetch failed: ${error.message || error}`);
+                }
+            }),
             __awaiter: (thisArg, _arguments, P, generator) => {
+                function adopt(value) {
+                    return value instanceof P ? value : new P((resolve) => resolve(value));
+                }
                 return new (P || (P = Promise))((resolve, reject) => {
                     function fulfilled(value) {
                         try {
@@ -223,9 +288,7 @@ class ExtractorManager {
                         }
                     }
                     function step(result) {
-                        result.done
-                            ? resolve(result.value)
-                            : new P((innerResolve) => innerResolve(result.value)).then(fulfilled, rejected);
+                        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
                     }
                     step((generator = generator.apply(thisArg, _arguments || [])).next());
                 });
@@ -234,6 +297,9 @@ class ExtractorManager {
             axios: extractorContext.axios,
             load: extractorContext.load,
             sharedUtils: extractorContext.sharedUtils,
+            console,
+            URL,
+            URLSearchParams,
         };
     }
 }

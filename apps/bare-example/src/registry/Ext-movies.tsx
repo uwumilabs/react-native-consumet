@@ -125,6 +125,7 @@ const ExtMovies = () => {
           
           // Load specific extractor dynamically from extension registry
           const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
+          console.log('🔗 Extractor loaded:', megacloudExtractor);
           const links = await megacloudExtractor.extract(sources.headers?.Referer);
         }
       } else {

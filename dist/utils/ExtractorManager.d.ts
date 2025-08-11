@@ -27,6 +27,10 @@ export declare class ExtractorManager {
      */
     private executeExtractorCode;
     /**
+     * Create models context
+     */
+    private createModelsContext;
+    /**
      * Create execution context for extractor code
      */
     private createExecutionContext;

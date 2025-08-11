@@ -6,6 +6,7 @@ import Movies from './non-registry/Movies';
 import ProviderManagerDemo from './registry';
 
 export default function App() {
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />

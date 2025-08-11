@@ -11,13 +11,13 @@ export declare const defaultStaticExtractors: {
     Mp4Player: typeof Mp4Player;
     Mp4Upload: typeof Mp4Upload;
     RapidCloud: typeof RapidCloud;
-    MegaCloud: (ctx?: any) => import("../models").IVideoExtractor;
+    MegaCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     StreamHub: typeof StreamHub;
     StreamLare: typeof StreamLare;
     StreamSB: typeof StreamSB;
     StreamTape: typeof StreamTape;
     StreamWish: typeof StreamWish;
-    VidCloud: (ctx?: any) => import("../models").IVideoExtractor;
+    VidCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     VidMoly: typeof VidMoly;
     VizCloud: typeof VizCloud;
     VidHide: typeof VidHide;

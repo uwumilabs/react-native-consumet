@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/extractors/megacloud/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,cAAc,CAAC;AAEtG;;;;GAIG;AACH,wBAAgB,SAAS,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAwDhE"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/extractors/megacloud/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,cAAc,CAAC;AAEtG;;;;GAIG;AACH,wBAAgB,SAAS,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CA6JhE"}
