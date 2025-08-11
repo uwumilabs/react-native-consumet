@@ -178,7 +178,7 @@ class MultiStream extends MovieParser {
 
       return movieInfo;
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   };

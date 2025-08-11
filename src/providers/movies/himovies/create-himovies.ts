@@ -191,7 +191,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
 
       return movieInfo;
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   };

@@ -1,4 +1,4 @@
-import { MovieParser, StreamingServers } from '../../../models';
+import { MovieParser } from '../../../models';
 import { createProviderContext } from '../../../utils';
 import { createHiMovies } from './create-himovies';
 
@@ -65,14 +65,14 @@ class HiMovies extends MovieParser {
   }
 }
 
-(async () => {
-  const movie = new HiMovies();
-  const search = await movie.search('jujutsu');
-  const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
-  // const recentTv = await movie.fetchTrendingTvShows();
-  const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
-  const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id, StreamingServers.UpCloud);
-  console.log(genre);
-})();
+// (async () => {
+//   const movie = new HiMovies();
+//   const search = await movie.search('jujutsu');
+//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
+//   // const recentTv = await movie.fetchTrendingTvShows();
+//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
+//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id, StreamingServers.UpCloud);
+//   //console.log(genre);
+// })();
 
 export default HiMovies;

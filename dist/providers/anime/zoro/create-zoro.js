@@ -496,7 +496,7 @@ function createZoro(ctx, customBaseURL) {
             return results;
         }
         catch (err) {
-            console.log(err);
+            //console.log(err);
             throw new Error(`Failed to scrape card: ${err}`);
         }
     });

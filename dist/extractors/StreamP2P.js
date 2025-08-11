@@ -51,10 +51,10 @@ class StreamP2P extends video_extractor_1.default {
                 });
                 const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
                 const json = JSON.parse(decryptedStr);
-                console.log('Captured URL:', json.source);
-                console.log('\nUse these headers to access the URL:\n');
+                //console.log('Captured URL:', json.source);
+                //console.log('\nUse these headers to access the URL:\n');
                 for (const [key, value] of Object.entries(headers)) {
-                    console.log(`${key}: ${value}`);
+                    //console.log(`${key}: ${value}`);
                 }
             }
             catch (error) {

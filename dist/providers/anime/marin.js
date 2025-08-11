@@ -58,7 +58,7 @@ class Marin extends models_1.AnimeParser {
                 data = yield response.data;
             }
             catch (error) {
-                console.log(error);
+                //console.log(error);
             }
             const response_data = {
                 currentPage: page,
@@ -112,7 +112,7 @@ class Marin extends models_1.AnimeParser {
                 data = yield response.data;
             }
             catch (error) {
-                console.log(error);
+                //console.log(error);
             }
             const response_data = {
                 currentPage: page,
@@ -150,10 +150,10 @@ class Marin extends models_1.AnimeParser {
                     },
                 });
                 data = yield response.data;
-                console.log(data);
+                //console.log(data);
             }
             catch (error) {
-                console.log(error);
+                //console.log(error);
             }
             let episodes = data.props.episode_list.data;
             if (data.props.anime.last_episode > 36) {
@@ -237,7 +237,7 @@ class Marin extends models_1.AnimeParser {
                 data = yield response.data;
             }
             catch (error) {
-                console.log(error);
+                //console.log(error);
             }
             const response_data = {
                 headers: {

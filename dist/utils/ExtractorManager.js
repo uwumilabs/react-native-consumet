@@ -24,7 +24,7 @@ class ExtractorManager {
         this.extractorContext = (0, create_extractor_context_1.createExtractorContext)(config);
         this.initializeStaticExtractors();
         this.loadExtractorsFromRegistry();
-        console.log('🔧 Dynamic Extractor Manager initialized');
+        //console.log('🔧 Dynamic Extractor Manager initialized');
     }
     /**
      * Initialize static extractors as fallbacks
@@ -51,7 +51,7 @@ class ExtractorManager {
                 }
             });
             const totalExtractors = this.extractorRegistry.size;
-            console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
+            //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
         }
         catch (error) {
             console.error('❌ Failed to load extractors from extension registry:', error);
@@ -73,14 +73,14 @@ class ExtractorManager {
                 // Fallback to static extractor if available
                 const staticExtractor = this.staticExtractors[extractorId.toLowerCase()];
                 if (staticExtractor) {
-                    console.log(`🔧 Using static fallback for extractor '${extractorId}'`);
+                    //console.log(`🔧 Using static fallback for extractor '${extractorId}'`);
                     return staticExtractor;
                 }
                 throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
             }
             // Check if already loaded
             if (this.loadedExtractors.has(extractorId)) {
-                console.log(`🔧 Extractor '${extractorId}' already loaded`);
+                //console.log(`🔧 Extractor '${extractorId}' already loaded`);
                 return this.loadedExtractors.get(extractorId);
             }
             try {
@@ -90,12 +90,12 @@ class ExtractorManager {
                     const staticExtractor = this.staticExtractors[staticId.toLowerCase()];
                     if (staticExtractor) {
                         this.loadedExtractors.set(extractorId, staticExtractor);
-                        console.log(`🔧 Static extractor '${extractorId}' loaded`);
+                        //console.log(`🔧 Static extractor '${extractorId}' loaded`);
                         return staticExtractor;
                     }
                     throw new Error(`Static extractor '${staticId}' not found`);
                 }
-                console.log(`🔧 Loading dynamic extractor '${extractorId}' from ${metadata.main}`);
+                //console.log(`🔧 Loading dynamic extractor '${extractorId}' from ${metadata.main}`);
                 // Load the extractor code dynamically
                 const fetchOptions = {
                     method: 'GET',
@@ -115,7 +115,7 @@ class ExtractorManager {
                 const extractorInstance = yield this.executeExtractorCode(extractorCode, metadata);
                 // Cache the loaded extractor
                 this.loadedExtractors.set(extractorId, extractorInstance);
-                console.log(`✅ Dynamic extractor '${extractorId}' loaded successfully (encryption: ${metadata.version})`);
+                //console.log(`✅ Dynamic extractor '${extractorId}' loaded successfully (encryption: ${metadata.version})`);
                 return extractorInstance;
             }
             catch (error) {
@@ -123,7 +123,7 @@ class ExtractorManager {
                 // Fallback to static extractor if available
                 const staticExtractor = this.staticExtractors[extractorId.toLowerCase()];
                 if (staticExtractor) {
-                    console.log(`🔧 Falling back to static extractor for '${extractorId}'`);
+                    //console.log(`🔧 Falling back to static extractor for '${extractorId}'`);
                     this.loadedExtractors.set(extractorId, staticExtractor);
                     return staticExtractor;
                 }

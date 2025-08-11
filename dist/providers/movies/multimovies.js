@@ -246,7 +246,7 @@ class MultiMovies extends models_1.MovieParser {
                 return yield this.fetchEpisodeSources(serverUrl.href, mediaId, server, extractedFileId);
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error(err.message);
             }
         });
@@ -263,7 +263,7 @@ class MultiMovies extends models_1.MovieParser {
                 return servers;
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error(err.message);
             }
         });
@@ -346,12 +346,12 @@ class MultiMovies extends models_1.MovieParser {
     getServer(url) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f;
-            console.log(`Fetching server for URL: ${url}`);
+            //console.log(`Fetching server for URL: ${url}`);
             try {
-                console.log('step1');
+                //console.log('step1');
                 const { data } = yield axios_1.default.get(this.customProxyUrl + url);
                 const $ = (0, cheerio_1.load)(data);
-                console.log('step2');
+                //console.log('step2');
                 // Extract player config
                 const playerConfig = {
                     postId: $('#player-option-1').attr('data-post'),
@@ -369,7 +369,7 @@ class MultiMovies extends models_1.MovieParser {
                 const headers = {
                     'User-Agent': utils_1.USER_AGENT,
                 };
-                console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
+                //console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
                 const response = yield fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
                     method: 'POST',
                     headers: headers,
@@ -436,7 +436,7 @@ class MultiMovies extends models_1.MovieParser {
                 }
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error(err.message);
             }
         });

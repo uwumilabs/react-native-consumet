@@ -14,7 +14,7 @@ import {
 } from '../../../models';
 
 export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
-  const { load, extractors, enums, createCustomBaseUrl,URL } = ctx;
+  const { load, extractors, enums, createCustomBaseUrl, URL } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
@@ -581,7 +581,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
       });
       return results;
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error(`Failed to scrape card: ${err}`);
     }
   };

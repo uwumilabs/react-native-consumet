@@ -173,7 +173,7 @@ function createHiMovies(ctx, customBaseURL) {
             return movieInfo;
         }
         catch (err) {
-            console.log(err);
+            //console.log(err);
             throw new Error(err.message);
         }
     });

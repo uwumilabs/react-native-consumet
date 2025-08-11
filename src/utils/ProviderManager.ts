@@ -15,7 +15,7 @@ export class ProviderManager {
   constructor(config: ProviderContextConfig = {}) {
     this.providerContext = createProviderContext(config);
     this.loadRegistry();
-    console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
+    //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
   }
 
   /**
@@ -32,7 +32,7 @@ export class ProviderManager {
         };
         this.extensionManifest.set(extension.id, manifest);
       });
-      console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
+      //console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
     } catch (error) {
       console.error('❌ Failed to load extensionManifest:', error);
     }
@@ -70,15 +70,15 @@ export class ProviderManager {
 
     // Check if already loaded
     if (this.loadedExtensions.has(extensionId)) {
-      console.log(`📦 Extension '${extensionId}' already loaded`);
+      //console.log(`📦 Extension '${extensionId}' already loaded`);
       return this.loadedExtensions.get(extensionId);
     }
 
     try {
-      console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
+      //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
 
       // Load the provider code
-      console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+      //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
 
       // Add fetch options for better React Native compatibility
       const fetchOptions = {
@@ -91,7 +91,7 @@ export class ProviderManager {
         timeout: 30000, // 30 second timeout
       };
 
-      console.log(`📡 Fetch options:`, fetchOptions);
+      //console.log(`📡 Fetch options:`, fetchOptions);
 
       const response = await fetch(metadata.main, fetchOptions);
       if (!response.ok) {
@@ -109,7 +109,7 @@ export class ProviderManager {
       // Cache the loaded extension
       this.loadedExtensions.set(extensionId, providerInstance);
 
-      console.log(`✅ Extension '${extensionId}' loaded successfully`);
+      //console.log(`✅ Extension '${extensionId}' loaded successfully`);
       return providerInstance;
     } catch (error) {
       console.error(`❌ Failed to load extension '${extensionId}':`, error);
@@ -135,7 +135,7 @@ export class ProviderManager {
 
     try {
       // Create and execute the provider code
-      console.log(`📝 About to execute provider code for factory: ${factoryName}`);
+      //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
 
       // Add more robust error handling for React Native environment
       let executeFunction;

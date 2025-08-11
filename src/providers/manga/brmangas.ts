@@ -96,7 +96,7 @@ class BRMangas extends MangaParser {
           .replace(/\\/g, '')
       );
 
-      console.log(pageURLs.images);
+      //console.log(pageURLs.images);
 
       const pages = pageURLs.images.map(
         (img: any, i: any): IMangaChapterPage => ({

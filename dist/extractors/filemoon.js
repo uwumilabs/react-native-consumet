@@ -59,7 +59,7 @@ class Filemoon extends models_1.VideoExtractor {
                 });
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
             }
             return this.sources;
         });

@@ -1,0 +1,4 @@
+//comments all the console.log
+
+find src \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) \
+  -type f -exec sed -i 's/^\([[:space:]]*\)console\.log/\1\/\/console.log/g' {} +

@@ -305,7 +305,7 @@ class TMDB extends models_1.MovieParser {
                 }
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error(err.message);
             }
             return info;

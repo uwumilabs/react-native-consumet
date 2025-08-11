@@ -22,7 +22,7 @@ class ProviderManager {
         this.extensionManifest = new Map();
         this.providerContext = (0, create_provider_context_1.default)(config);
         this.loadRegistry();
-        console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
+        //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
     }
     /**
      * Load and parse the extensionManifest
@@ -34,7 +34,7 @@ class ProviderManager {
                 const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName || (extension.factories ? extension.factories[0] : '') });
                 this.extensionManifest.set(extension.id, manifest);
             });
-            console.log(`📚 Loaded ${extension_registry_json_1.default.extensions.length} extensions from extensionManifest`);
+            //console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
         }
         catch (error) {
             console.error('❌ Failed to load extensionManifest:', error);
@@ -69,13 +69,13 @@ class ProviderManager {
             }
             // Check if already loaded
             if (this.loadedExtensions.has(extensionId)) {
-                console.log(`📦 Extension '${extensionId}' already loaded`);
+                //console.log(`📦 Extension '${extensionId}' already loaded`);
                 return this.loadedExtensions.get(extensionId);
             }
             try {
-                console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
+                //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
                 // Load the provider code
-                console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+                //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
                 // Add fetch options for better React Native compatibility
                 const fetchOptions = {
                     method: 'GET',
@@ -86,7 +86,7 @@ class ProviderManager {
                     },
                     timeout: 30000, // 30 second timeout
                 };
-                console.log(`📡 Fetch options:`, fetchOptions);
+                //console.log(`📡 Fetch options:`, fetchOptions);
                 const response = yield fetch(metadata.main, fetchOptions);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
@@ -100,7 +100,7 @@ class ProviderManager {
                 const providerInstance = yield this.executeProviderCode(providerCode, factoryName, metadata);
                 // Cache the loaded extension
                 this.loadedExtensions.set(extensionId, providerInstance);
-                console.log(`✅ Extension '${extensionId}' loaded successfully`);
+                //console.log(`✅ Extension '${extensionId}' loaded successfully`);
                 return providerInstance;
             }
             catch (error) {
@@ -123,7 +123,7 @@ class ProviderManager {
             const context = this.createExecutionContext();
             try {
                 // Create and execute the provider code
-                console.log(`📝 About to execute provider code for factory: ${factoryName}`);
+                //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
                 // Add more robust error handling for React Native environment
                 let executeFunction;
                 try {

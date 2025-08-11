@@ -49,7 +49,7 @@ class AnimePahe extends models_1.AnimeParser {
                 return res;
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error(err.message);
             }
         });

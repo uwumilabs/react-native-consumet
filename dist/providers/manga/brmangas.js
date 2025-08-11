@@ -81,7 +81,7 @@ class BRMangas extends models_1.MangaParser {
                     .trim()
                     .slice(13, -2)
                     .replace(/\\/g, ''));
-                console.log(pageURLs.images);
+                //console.log(pageURLs.images);
                 const pages = pageURLs.images.map((img, i) => ({
                     img: img,
                     page: i,

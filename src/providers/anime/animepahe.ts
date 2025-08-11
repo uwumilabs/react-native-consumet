@@ -14,7 +14,7 @@ import {
   SubOrSub,
 } from '../../models';
 import { Kwik } from '../../extractors';
-import { bypassDdosGuard, getDdosGuardCookiesWithWebView } from '../../NativeConsumet';
+import { getDdosGuardCookiesWithWebView } from '../../NativeConsumet';
 
 class AnimePahe extends AnimeParser {
   override readonly name = 'AnimePahe';
@@ -73,7 +73,7 @@ class AnimePahe extends AnimeParser {
 
       return res;
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   };

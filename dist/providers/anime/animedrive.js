@@ -172,7 +172,7 @@ class AnimeDrive extends models_1.AnimeParser {
                 return { sources: convertedSources }; // Ensure sources matches ISource's definition
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error('Something went wrong. Please try again later.');
             }
         });
