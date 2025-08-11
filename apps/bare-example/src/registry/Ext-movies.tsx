@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
 import { ProviderManager, MOVIES, ExtractorManager } from 'react-native-consumet';
-import { type MovieParser } from '../../../../src/models';
+import { type ExtensionManifest, type MovieParser } from '../../../../src/models';
 import HiMovies from '../../../../src/providers/movies/himovies/himovies';
 import { PolyURL } from '../../../../src/utils/url-polyfill';
+const testCode=require('./test-code-generated.js');
+console.log((testCode.testCodeString));
 
 const ExtMovies = () => {
   const [results, setResults] = useState<any[]>([]);
@@ -47,7 +49,6 @@ const ExtMovies = () => {
 
     initializeProviderManager();
   }, []);
-
   const loadExtension = async (manager: ProviderManager, extensionId: string) => {
     try {
       console.log(`📥 Loading movie extension: ${extensionId}`);
@@ -68,7 +69,7 @@ const ExtMovies = () => {
       }
       
       // Load the movie extension from GitHub registry
-      const providerInstance = await manager.getMovieProvider(extensionId);
+      const providerInstance = await manager.getMovieProvider(extensionId) as HiMovies;
       setProvider(providerInstance);
       
       console.log('✅ Movie extension loaded successfully:', {
@@ -125,10 +126,14 @@ const ExtMovies = () => {
           const extractorManager = new ExtractorManager();
           
           // Load specific extractor dynamically from extension registry
-          const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
-          console.log('🔗 Extractor loaded:', megacloudExtractor);
+          // const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
+          // load the code itself
+          // @ts-ignore
+          const metadata=extractorManager.getExtractorMetadata('megacloud');
+          const megacloudExtractor = await extractorManager.executeExtractorCode(`${testCode.testCodeString}`,metadata!)
           const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!),"https://himovies.sx");
           console.log('📹 Extracted video links:', links);
+
         }
       } else {
         console.log('⚠️ No movie search results found');

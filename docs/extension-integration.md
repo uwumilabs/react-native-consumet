@@ -1,562 +1,588 @@
-# React Native Consumet - React### Why Use Extensions Architecture?
+# React Native Consumet - Extension Integration Guide
 
-- **🔄 Dynamic Loading**: Load providers on-demand
-- **🛠️ Unified API**: Consistent interface across all provider types
-- **🔍 Cross-Provider Search**: Search across multiple providers simultaneously
-- **🔧 Centralized Management**: Single interface for all provider operationsntegration Guide
-
-This guide explains how to integrate and use the React Native Consumet library in your React applications. The library provides a powerful extension system for accessing anime, movie, and other media content providers.
-
-> **⚠️ IMPORTANT: Extensions Architecture Required**
->
-> React Native Consumet is built around an **extensions-based architecture**. This documentation assumes you're using the extension system with `ProviderManager`. If you're looking to use individual providers directly without the extension system, please refer to the appropriate provider guides in the [`docs/guides`](./guides/) directory:
->
-> - **Anime Providers**: See [`docs/guides/anime.md`](./guides/anime.md)
-> - **Movie Providers**: See [`docs/guides/movies.md`](./guides/movies.md)
-> - **Manga Providers**: See [`docs/guides/manga.md`](./guides/manga.md)
-> - **Light Novel Providers**: See [`docs/guides/light-novels.md`](./guides/light-novels.md)
-> - **Meta Providers**: See [`docs/guides/meta.md`](./guides/meta.md)
->
-> The extension architecture provides better performance, type safety, and unified provider management compared to using individual providers directly.
+A powerful React Native library for accessing anime, movie, and media content through a unified extension system.
 
 ## Table of Contents
+- [Basic Usage](#basic-usage)
+- [Why Use Extensions?](#why-use-extensions)
+- [Core Components](#core-components)
+- [Usage Examples](#usage-examples)
+- [Custom HTTP Configuration](#custom-http-configuration)
+- [Extractor Usage Example](#extractor-usage-example)
+- [React Integration](#react-integration)
+- [API Reference](#api-reference)
+- [Some Helpful imports](#some-helpful-imports)
 
-1. [Overview](#overview)
-2. [Core Components](#core-components)
-3. [Getting Started](#getting-started)
-4. [ProviderManager](#providermanager)
-5. [Provider Context](#provider-context)
-6. [React Integration Examples](#react-integration-examples)
-7. [Advanced Usage](#advanced-usage)
-8. [Best Practices](#best-practices)
 
-## Overview
-
-React Native Consumet uses an **extension-based architecture** where media providers are loaded dynamically through a unified system. This approach offers several advantages over using individual providers directly:
-
-### Why Use Extensions Architecture?
-
-- **🔄 Dynamic Loading**: Load providers on-demand
-- **🛠️ Unified API**: Consistent interface across all provider types
-- **🔍 Cross-Provider Search**: Search across multiple providers simultaneously
-- **🔧 Centralized Management**: Single interface for all provider operations
-
-The library provides several key utilities:
-
-- **ProviderManager**: Main interface for loading and managing providers
-- **createProviderContext**: Context creation for providers
-
-## Core Components
-
-### 1. ProviderManager (`src/utils/ProviderManager.ts`)
-
-The main class for managing provider extensions and executing provider code.
-
-**Key Features:**
-
-- Load providers from registry or URLs
-- Type-safe provider interfaces
-- Built-in caching and validation
-- Cross-provider search capabilities
-
-### 2. createProviderContext (`src/utils/create-provider-context.ts`)
-
-Factory function for creating provider execution contexts with all necessary dependencies.
-
-**Key Features:**
-
-- HTTP client configuration
-- HTML parsing setup
-- Video extractor registry
-- Custom configuration support
-
-## Getting Started
-
-### Installation
-
-```bash
-npm install react-native-consumet
-# or
-yarn add react-native-consumet
-```
-
-### Basic Setup
+## Basic Usage
 
 ```typescript
 import { ProviderManager } from 'react-native-consumet';
 
 // Initialize the provider manager
 const providerManager = new ProviderManager();
+
+// Load an anime provider
+const provider = await providerManager.getAnimeProvider('zoro');
+
+// Search for content
+const results = await provider.search('Attack on Titan');
+console.log(results);
 ```
 
-## Why Choose Extensions Over Individual Providers?
+## Why Use Extensions?
 
-If you're considering whether to use the extensions architecture or individual providers, here's why the extension system is recommended:
+React Native Consumet uses an extension-based architecture instead of static provider imports. Here's why:
 
-### Extensions Architecture (Recommended) ✅
+### Extensions Architecture
 
 ```typescript
-// ✅ Recommended: Using ProviderManager with extensions
-import { ProviderManager } from 'react-native-consumet';
-
-const manager = new ProviderManager();
-const provider = await manager.getAnimeProvider('zoro');
-const results = await provider.search('Attack on Titan');
+// Load providers dynamically
+const provider = await providerManager.getAnimeProvider('zoro');
 ```
 
 **Benefits:**
+- **Dynamic Loading** - Only load what you need
+- **Unified API** - Consistent interface across all providers
+- **Cross-Provider Search** - Search multiple sources simultaneously
+- **Auto-Updates** - Providers update without app updates
 
-- **Lazy Loading**: Providers are loaded only when needed
-- **Unified API**: Consistent methods across all provider types
-- **Cross-Provider Search**: Search multiple providers simultaneously
-- **Future-Proof**: Easy to add new providers without code changes
-
-### Individual Providers (Legacy) ❌
+###  Direct Import 
 
 ```typescript
-// ❌ Legacy approach: Direct provider imports
 import { ANIME } from 'react-native-consumet';
-
 const zoro = new ANIME.Zoro();
-const results = await zoro.search('Attack on Titan');
 ```
 
 **Limitations:**
+- All providers loaded at startup
+- Inconsistent APIs between providers
+- Manual provider management required
 
-- **Static Loading**: All providers loaded even if unused
-- **Fragmented API**: Different interfaces for different providers
-- **Manual Management**: You handle all provider lifecycle
-- **No Cross-Provider Features**: Can't search multiple providers easily
+> [!NOTE]
+> For usage, see the [individual provider guides](./guides/) in the docs folder.
 
-> **📖 For Individual Provider Usage**: If you must use individual providers, refer to the specific guides in [`docs/guides/`](./guides/) for detailed examples and best practices for each provider type.
+## Core Components
 
-## ProviderManager
+### ProviderManager
 
-### Basic Usage
+The main class for managing and accessing providers.
+
+```typescript
+const providerManager = new ProviderManager();
+
+// Get available providers
+const extensions = providerManager.getAvailableExtensions();
+
+// Load specific provider types
+const animeProvider = await providerManager.getAnimeProvider('zoro') as Zoro; // Type assertion for better type safety
+const movieProvider = await providerManager.getMovieProvider('himovies') as HiMovies; // Type assertion for better type safety
+```
+
+### ExtractorManager
+
+Handles video source extraction from streaming sites.
+
+```typescript
+import { ExtractorManager } from 'react-native-consumet';
+
+const extractorManager = new ExtractorManager();
+const extractor = await extractorManager.loadExtractor('megacloud');
+const sources = await extractor.extract(embedUrl, referer);
+```
+
+
+## Usage Examples
+
+### Basic Provider Usage
 
 ```typescript
 import { ProviderManager } from 'react-native-consumet';
 
-const providerManager = new ProviderManager({
-  // Optional configuration
-  userAgent: 'MyApp/1.0.0',
-  timeout: 30000,
-});
+const manager = new ProviderManager();
 
-// Get available extensions
-const extensions = providerManager.getAvailableExtensions();
-console.log('Available providers:', extensions.map(ext => ext.name));
-
-// Load and use an anime provider
-const loadAnimeProvider = async () => {
-  try {
-    const provider = await providerManager.getAnimeProvider('zoro');
-    
-    // Search for anime
-    const searchResults = await provider.search('Attack on Titan');
-    console.log('Search results:', searchResults);
-    
-    // Get anime details
-    if (searchResults.results.length > 0) {
-      const animeInfo = await provider.fetchAnimeInfo(searchResults.results[0].id);
-      console.log('Anime info:', animeInfo);
-    }
-  } catch (error) {
-    console.error('Failed to load provider:', error);
-  }
+// Search for anime
+const searchAnime = async (query: string) => {
+  const provider = await manager.getAnimeProvider('zoro');
+  const results = await provider.search(query);
+  return results;
 };
-```
 
-### Provider Types
+// Get detailed information
+const getAnimeInfo = async (animeId: string) => {
+  const provider = await manager.getAnimeProvider('zoro');
+  const info = await provider.fetchAnimeInfo(animeId);
+  return info;
+};
 
-```typescript
-// Type-safe provider access
-const animeProvider = await providerManager.getAnimeProvider('zoro');
-const movieProvider = await providerManager.getMovieProvider('himovies');
-
-// Generic provider access (less type-safe)
-const genericProvider = await providerManager.getProvider('zoro');
+// Get streaming sources
+const getEpisodeSources = async (episodeId: string) => {
+  const provider = await manager.getAnimeProvider('zoro');
+  const sources = await provider.fetchEpisodeSources(episodeId);
+  return sources;
+};
 ```
 
 ### Cross-Provider Search
 
+Search across multiple providers simultaneously:
+
 ```typescript
 const searchAllProviders = async (query: string) => {
-  const results = await providerManager.searchAcrossProviders('anime', query);
+  const results = await manager.searchAcrossProviders('anime', query);
   
+  // Results grouped by provider
   results.forEach(({ extensionId, results }) => {
-    console.log(`Results from ${extensionId}:`, results.results.length);
+    console.log(`${extensionId}: ${results.results.length} results`);
   });
+  
+  return results;
 };
 ```
 
-## Provider Context
-
-### Basic Context Creation
+### Movie Provider Example
 
 ```typescript
-import {createProviderContext} from 'react-native-consumet';
+// Search for movies
+const searchMovies = async (query: string) => {
+  const provider = await manager.getMovieProvider('himovies');
+  const results = await provider.search(query);
+  return results;
+};
 
-// Create default context
-const context = createProviderContext();
-
-// Create custom context
-const customContext = createProviderContext({
-  userAgent: 'MyApp/1.0.0',
-  timeout: 30000,
-  logger: {
-    log: (msg) => console.log('[PROVIDER]', msg),
-    error: (msg) => console.error('[PROVIDER ERROR]', msg)
-  }
-});
+// Get movie details
+const getMovieInfo = async (movieId: string) => {
+  const provider = await manager.getMovieProvider('himovies');
+  const info = await provider.fetchMovieInfo(movieId);
+  return info;
+};
 ```
 
-### Custom HTTP Configuration
+### Error Handling
+
+```typescript
+const safeSearch = async (query: string) => {
+  try {
+    const provider = await manager.getAnimeProvider('zoro');
+    return await provider.search(query);
+  } catch (error) {
+    console.error('Search failed:', error.message);
+    return { results: [] };
+  }
+};
+```
+
+## Custom HTTP Configuration
 
 ```typescript
 import axios from 'axios';
 
 const customAxios = axios.create({
   timeout: 30000,
-  headers: {
-    'User-Agent': 'MyCustomApp/1.0.0'
-  },
-  proxy: {
-    host: 'proxy.example.com',
-    port: 8080
-  }
+  headers: { 'User-Agent': 'MyApp/1.0.0' },
+  // Add proxy if needed
+  proxy: { host: 'proxy.example.com', port: 8080 }
 });
 
-const context = createProviderContext({
-  axios: customAxios
+// ProviderManager takes ProviderContextConfig as an constructor argument
+const manager = new ProviderManager({
+  axios: customAxios,
+});
+
+// Extractormanager takes ExtractorContextConfig as an constructor argument
+const extractorManager = new ExtractorManager({
+  axios: customAxios,
 });
 ```
+[for more details go through `extension-utils` to see which default axios properties are passed](../src/utils/extension-utils.ts)\
+[`ProviderContextConfig`](../src/utils/create-provider-context.ts)\
+[`ExtractorContextConfig`](../src/utils/create-extractor-context.ts)
 
-## React Integration Examples
 
-### React Hook for Provider Management
+## Extractor Usage Example
+
+```typescript
+const extractVideoSources = async (embedUrl: string, referer: string) => {
+  try {
+    const extractorManager = new ExtractorManager();
+    const extractor = await extractorManager.loadExtractor('megacloud');
+    
+    const sources = await extractor.extract(new URL(embedUrl), referer);
+    return sources;
+  } catch (error) {
+    console.error('Extraction failed:', error);
+    return null;
+  }
+};
+```
+
+```typescript
+const extractVideoSources = async (embedUrl: string, referer: string) => {
+  try {
+    // This way u can use the cached extractor code reducing the need to load on every request
+    const metadata=extractorManager.getExtractorMetadata('megacloud');
+    const megacloudExtractor = await extractorManager.executeExtractorCode(`${testCode.testCodeString}`,metadata!)
+    const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!),"https://himovies.sx");
+    console.log('📹 Extracted video links:', links);
+  } catch (error) {
+    console.error('Extraction failed:', error);
+    return null;
+  }
+};
+```
+
+## React Integration
+
+### Custom Hook for Anime Provider
 
 ```typescript
 import { useState, useEffect, useCallback } from 'react';
 import { ProviderManager } from 'react-native-consumet';
 
-export const useProviderManager = () => {
+export const useAnimeProvider = () => {
   const [manager] = useState(() => new ProviderManager());
-  const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState([]);
 
   useEffect(() => {
-    const loadProviders = async () => {
-      try {
-        const extensions = manager.getAvailableExtensions();
-        setProviders(extensions);
-      } catch (error) {
-        console.error('Failed to load providers:', error);
-      }
+    const loadProviders = () => {
+      const extensions = manager.getAvailableExtensions();
+      const animeProviders = extensions.filter(ext => ext.category === 'anime');
+      setProviders(animeProviders);
     };
-
     loadProviders();
   }, [manager]);
 
-  const searchContent = useCallback(async (query: string, category: 'anime' | 'movies') => {
+  const searchAnime = useCallback(async (query: string, providerId = 'zoro') => {
     setLoading(true);
     try {
-      const results = await manager.searchAcrossProviders(category, query);
-      return results;
+      const provider = await manager.getAnimeProvider(providerId);
+      return await provider.search(query);
     } catch (error) {
       console.error('Search failed:', error);
+      return { results: [] };
+    } finally {
+      setLoading(false);
+    }
+  }, [manager]);
+
+  const getAnimeInfo = useCallback(async (animeId: string, providerId = 'zoro') => {
+    setLoading(true);
+    try {
+      const provider = await manager.getAnimeProvider(providerId);
+      return await provider.fetchAnimeInfo(animeId);
+    } catch (error) {
+      console.error('Failed to fetch anime info:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [manager]);
+
+  const searchAcrossProviders = useCallback(async (query: string) => {
+    setLoading(true);
+    try {
+      return await manager.searchAcrossProviders('anime', query);
+    } catch (error) {
+      console.error('Cross-provider search failed:', error);
       return [];
     } finally {
       setLoading(false);
     }
   }, [manager]);
 
-  return {
-    manager,
+  return { 
+    searchAnime, 
+    getAnimeInfo,
+    searchAcrossProviders,
+    loading, 
     providers,
-    searchContent,
-    loading
+    manager 
   };
 };
 ```
 
-### React Component Example
+### Anime Search Component
 
 ```tsx
 import React, { useState } from 'react';
-import { useProviderManager } from './hooks/useProviderManager';
+import { useAnimeProvider } from './hooks/useAnimeProvider';
 
 const AnimeSearch: React.FC = () => {
-  const { searchContent, providers, loading } = useProviderManager();
+  const { searchAnime, searchAcrossProviders, loading, providers } = useAnimeProvider();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [selectedProvider, setSelectedProvider] = useState('zoro');
+  const [searchMode, setSearchMode] = useState<'single' | 'all'>('single');
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     
-    const searchResults = await searchContent(query, 'anime');
-    setResults(searchResults);
+    if (searchMode === 'single') {
+      const searchResults = await searchAnime(query, selectedProvider);
+      setResults([{ extensionId: selectedProvider, results: searchResults }]);
+    } else {
+      const searchResults = await searchAcrossProviders(query);
+      setResults(searchResults);
+    }
   };
 
   return (
-    <div>
-      <h2>Anime Search</h2>
-      
-      <div>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for anime..."
-        />
-        <button onClick={handleSearch} disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </button>
-      </div>
+    <View style={styles.container}>
+      <Text style={styles.header}>Anime Search</Text>
 
-      <div>
-        <h3>Available Providers: {providers.length}</h3>
-        {providers.map(provider => (
-          <span key={provider.id} style={{ margin: '0 5px', padding: '2px 8px', background: '#eee' }}>
-            {provider.name}
-          </span>
-        ))}
-      </div>
+      <TextInput
+        style={styles.input}
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search anime..."
+      />
 
-      <div>
-        <h3>Results</h3>
-        {results.map(({ extensionId, results: providerResults }) => (
-          <div key={extensionId}>
-            <h4>{extensionId} ({providerResults.results.length} results)</h4>
-            {providerResults.results.slice(0, 5).map(result => (
-              <div key={result.id} style={{ margin: '10px 0', padding: '10px', border: '1px solid #ccc' }}>
-                <img src={result.image} alt={result.title} style={{ width: '50px', height: '70px' }} />
-                <h5>{result.title}</h5>
-                <p>{result.description}</p>
-              </div>
-            ))}
-          </div>
+      <View style={styles.providers}>
+        {mockProviders.map((p) => (
+          <TouchableOpacity
+            key={p.id}
+            style={[styles.provider, p.id === selectedProvider && styles.activeProvider]}
+            onPress={() => setSelectedProvider(p.id)}
+          >
+            <Text style={styles.providerText}>{p.name}</Text>
+          </TouchableOpacity>
         ))}
-      </div>
-    </div>
+      </View>
+
+      <Button title="Search" onPress={handleSearch} />
+
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image source={{ uri: item.image }} style={styles.image} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text>{item.description}</Text>
+              {item.releaseDate && <Text>Released: {item.releaseDate}</Text>}
+            </View>
+          </View>
+        )}
+      />
+    </View>
   );
 };
 
 export default AnimeSearch;
 ```
 
-### Provider Details Component
+### Anime Details Component
 
 ```tsx
 import React, { useState, useEffect } from 'react';
-import { ProviderManager } from 'react-native-consumet';
+import { useAnimeProvider } from './hooks/useAnimeProvider';
 
-interface ProviderDetailsProps {
+interface AnimeDetailsProps {
+  animeId: string;
   providerId: string;
-  mediaId: string;
 }
 
-const ProviderDetails: React.FC<ProviderDetailsProps> = ({ providerId, mediaId }) => {
-  const [provider, setProvider] = useState(null);
-  const [mediaInfo, setMediaInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+const AnimeDetails: React.FC<AnimeDetailsProps> = ({ animeId, providerId }) => {
+  const { getAnimeInfo, loading } = useAnimeProvider();
+  const [animeInfo, setAnimeInfo] = useState(null);
 
   useEffect(() => {
-    const loadProviderAndMedia = async () => {
-      try {
-        const manager = new ProviderManager();
-        const loadedProvider = await manager.getAnimeProvider(providerId);
-        setProvider(loadedProvider);
-
-        const info = await loadedProvider.fetchAnimeInfo(mediaId);
-        setMediaInfo(info);
-      } catch (error) {
-        console.error('Failed to load provider or media:', error);
-      } finally {
-        setLoading(false);
-      }
+    const loadAnimeInfo = async () => {
+      const info = await getAnimeInfo(animeId, providerId);
+      setAnimeInfo(info);
     };
+    
+    if (animeId && providerId) {
+      loadAnimeInfo();
+    }
+  }, [animeId, providerId, getAnimeInfo]);
 
-    loadProviderAndMedia();
-  }, [providerId, mediaId]);
-
-  if (loading) return <div>Loading...</div>;
-  if (!mediaInfo) return <div>Media not found</div>;
+  if (loading) return <div>Loading anime details...</div>;
+  if (!animeInfo) return <div>Anime not found</div>;
 
   return (
-    <div>
-      <h2>{mediaInfo.title}</h2>
-      <img src={mediaInfo.image} alt={mediaInfo.title} />
-      <p>{mediaInfo.description}</p>
-      
-      <h3>Episodes ({mediaInfo.episodes?.length || 0})</h3>
-      {mediaInfo.episodes?.map(episode => (
-        <div key={episode.id}>
-          <h4>Episode {episode.number}: {episode.title}</h4>
-        </div>
-      ))}
-    </div>
+    <ScrollView style={styles.container}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <Image source={{ uri: animeInfo.image }} style={styles.image} />
+        <View style={styles.info}>
+          <Text style={styles.title}>{animeInfo.title}</Text>
+          <Text style={styles.description}>{animeInfo.description}</Text>
+
+          <View style={styles.meta}>
+            <Text>Status: {animeInfo.status}</Text>
+            <Text>Release Date: {animeInfo.releaseDate}</Text>
+            <Text>Episodes: {animeInfo.totalEpisodes}</Text>
+          </View>
+
+          <View style={styles.genres}>
+            {animeInfo.genres.map((genre) => (
+              <Text key={genre} style={styles.genreTag}>
+                {genre}
+              </Text>
+            ))}
+          </View>
+        </View>
+      </View>
+
+      {/* Episodes List */}
+      <View style={styles.episodesSection}>
+        <Text style={styles.episodesTitle}>Episodes</Text>
+        <FlatList
+          data={animeInfo.episodes}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          renderItem={({ item }) => (
+            <View style={styles.episodeCard}>
+              <Text style={styles.episodeNumber}>Episode {item.number}</Text>
+              <Text style={styles.episodeTitle}>{item.title}</Text>
+            </View>
+          )}
+        />
+      </View>
+    </ScrollView>
   );
 };
+
+export default AnimeDetails;
 ```
 
-## Advanced Usage
-
-### Custom Provider Context
+### Multi-Provider Hook
 
 ```typescript
-import createProviderContext from 'react-native-consumet/utils/create-provider-context';
+import { useState, useCallback } from 'react';
+import { ProviderManager } from 'react-native-consumet';
 
-// Create context with custom extractors
-const context = createProviderContext({
-  extractors: {
-    MyCustomExtractor: CustomExtractorClass,
-    // Override default extractors
-    MegaCloud: MyMegaCloudExtractor
-  },
-  logger: {
-    log: (msg) => analytics.track('provider_log', { message: msg }),
-    error: (msg) => errorReporting.captureException(new Error(msg))
-  }
-});
-```
+export const useMultiProvider = () => {
+  const [manager] = useState(() => new ProviderManager());
+  const [loading, setLoading] = useState(false);
 
-### Caching and Performance
-
-```typescript
-class CachedProviderManager {
-  private cache = new Map();
-  private manager = new ProviderManager();
-
-  async getProvider(id: string) {
-    if (this.cache.has(id)) {
-      return this.cache.get(id);
+  const searchContent = useCallback(async (
+    query: string, 
+    category: 'anime' | 'movies' | 'manga' | 'light-novels'
+  ) => {
+    setLoading(true);
+    try {
+      return await manager.searchAcrossProviders(category, query);
+    } catch (error) {
+      console.error('Multi-provider search failed:', error);
+      return [];
+    } finally {
+      setLoading(false);
     }
+  }, [manager]);
 
-    const provider = await this.manager.getProvider(id);
-    this.cache.set(id, provider);
-    return provider;
-  }
+  const getProvidersByCategory = useCallback((category: string) => {
+    return manager.getExtensionsByCategory(category as any);
+  }, [manager]);
 
-  // Cache search results
-  async search(providerId: string, query: string) {
-    const cacheKey = `${providerId}:${query}`;
-    
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey);
-    }
-
-    const provider = await this.getProvider(providerId);
-    const results = await provider.search(query);
-    
-    // Cache for 5 minutes
-    this.cache.set(cacheKey, results);
-    setTimeout(() => this.cache.delete(cacheKey), 5 * 60 * 1000);
-    
-    return results;
-  }
-}
-```
-
-### Error Handling
-
-```typescript
-const robustProviderManager = {
-  async searchWithFallback(query: string) {
-    const providers = ['zoro', 'gogoanime', 'animepahe'];
-    
-    for (const providerId of providers) {
-      try {
-        const manager = new ProviderManager();
-        const provider = await manager.getAnimeProvider(providerId);
-        const results = await provider.search(query);
-        
-        if (results.results.length > 0) {
-          return { provider: providerId, results };
-        }
-      } catch (error) {
-        console.warn(`Provider ${providerId} failed:`, error);
-        continue;
-      }
-    }
-    
-    throw new Error('All providers failed');
-  }
+  return {
+    searchContent,
+    getProvidersByCategory,
+    loading,
+    manager
+  };
 };
 ```
-
-## Best Practices
-
-### 1. Architecture Choice
-
-**✅ Always prefer Extensions Architecture:**
-
-- Use `ProviderManager` for all new projects
-- Provides unified API across all provider types
-- Enables advanced features like cross-provider search
-
-**📖 When to use Individual Providers:**
-
-- Legacy projects that can't be migrated immediately
-- Very specific use cases requiring direct provider access
-- Educational purposes or debugging specific providers
-
-**🔄 If using individual providers, consider migrating:**
-
-```typescript
-// Instead of this (individual provider):
-import { ANIME } from 'react-native-consumet';
-const zoro = new ANIME.Zoro();
-
-// Use this (extensions architecture):
-import { ProviderManager } from 'react-native-consumet';
-const manager = new ProviderManager();
-const zoro = await manager.getAnimeProvider('zoro');
-```
-
-For individual provider usage, consult the specific guides:
-
-- [`docs/guides/anime.md`](./guides/anime.md) - Anime provider examples
-- [`docs/guides/movies.md`](./guides/movies.md) - Movie provider examples  
-- [`docs/guides/manga.md`](./guides/manga.md) - Manga provider examples
-- [`docs/guides/light-novels.md`](./guides/light-novels.md) - Light novel provider examples
-- [`docs/guides/meta.md`](./guides/meta.md) - Meta provider examples
-
-### 2. Provider Management
-
-- Initialize ProviderManager once and reuse it
-- Use appropriate provider methods for your use case
-- Handle network failures gracefully
-
-### 3. React Integration
-
-- Use React hooks for provider state management
-- Implement loading states for better UX
-- Consider using React Query or SWR for advanced caching
 
 ## API Reference
 
-### ProviderManager Methods
+### ProviderManager
 
 ```typescript
 class ProviderManager {
-  // Get extensions
+  constructor(config?: ProviderManagerConfig)
+  
+  // Extension management
   getAvailableExtensions(): ExtensionManifest[]
   getExtensionsByCategory(category: ProviderType): ExtensionManifest[]
-  getExtensionMetadata(extensionId: string): ExtensionManifest | null
+  getExtensionMetadata(extensionId: string): ExtensionManifest
   
-  // Load providers
+  // Provider loading
   getAnimeProvider(extensionId: string): Promise<AnimeProviderInstance>
   getMovieProvider(extensionId: string): Promise<MovieProviderInstance>
+  getMangaProvider(extensionId: string): Promise<MangaProviderInstance>
+  getLightNovelProvider(extensionId: string): Promise<LightNovelProviderInstance>
+  
+  // Generic provider access
   getProvider(extensionId: string): Promise<BaseProviderInstance>
   
-  // Search
-  searchAcrossProviders(category: ProviderType, query: string, page?: number): Promise<SearchResult[]>
+  // Cross-provider operations
+  searchAcrossProviders(
+    category: ProviderType, 
+    query: string, 
+    page?: number
+  ): Promise<CrossProviderSearchResult[]>
   
-  // Context
+  // Context and metadata
   getProviderContext(): ProviderContext
   getRegistryMetadata(): RegistryMetadata
+  
+  // Provider code execution
+  executeProviderCode(
+    code: string, 
+    factoryName: string, 
+    metadata: ExtensionManifest
+  ): Promise<AnimeParser | MovieParser | MangaParser | LightNovelParser>
 }
 ```
 
-This documentation provides a comprehensive guide for integrating React Native Consumet into React applications, covering everything from basic setup to advanced usage patterns.
+### ExtractorManager
+
+```typescript
+class ExtractorManager {
+  constructor(context?: ExtractorContext)
+  
+  // Extractor loading
+  loadExtractor(extractorId: string): Promise<VideoExtractor>
+  
+  // Extractor Metadata
+  getExtractorMetadata(extractorId: string): Promise<ExtractorMetadata>
+  
+  // Execute extractor code
+  executeExtractorCode(
+    code: string, 
+    metadata: ExtractorMetadata
+  ): Promise<VideoExtractor>  
+  
+}
+```
+
+### Provider Context Functions
+
+```typescript
+// Create provider execution context
+createProviderContext(config?: ProviderContextConfig): ProviderContext
+
+// Create extractor execution context  
+createExtractorContext(config?: ExtractorContextConfig): ExtractorContext
+```
+
+## Some Helpful imports
+
+```typescript
+import {
+  createProviderContext,
+  ProviderManager,
+  ExtractorManager,
+  createExtractorContext,
+  PolyURL, // Polyfill for URL handling
+  PolyURLSearchParams, // Polyfill for URLSearchParams
+  defaultAxios, // default axios instance
+  extractorContext,
+  defaultStaticExtractors,
+   } from 'react-native-consumet';
+---
+
+
+## Additional Resources
+
+- **Individual Provider Guides**: [`docs/guides/`](./guides/)
+  - [Anime Providers](./guides/anime.md)
+  - [Movie Providers](./guides/movies.md)
+  - [Manga Providers](./guides/manga.md)
+  - [Light Novel Providers](./guides/light-novels.md)
+  - [Meta Providers](./guides/meta.md)

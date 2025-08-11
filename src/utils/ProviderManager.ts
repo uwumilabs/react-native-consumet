@@ -55,8 +55,8 @@ export class ProviderManager {
   /**
    * Get extension metadata by ID
    */
-  getExtensionMetadata(extensionId: string): ExtensionManifest | null {
-    return this.extensionManifest.get(extensionId) || null;
+  getExtensionMetadata(extensionId: string): ExtensionManifest {
+    return this.extensionManifest.get(extensionId)!;
   }
 
   /**
@@ -126,7 +126,7 @@ export class ProviderManager {
   /**
    * Execute provider code and create instance (extensionManifest-based)
    */
-  private async executeProviderCode(
+  public async executeProviderCode(
     code: string,
     factoryName: string,
     metadata: ExtensionManifest
@@ -371,13 +371,6 @@ export class ProviderManager {
 
     const instance = await this.loadExtension(extensionId);
     return instance as MovieParser;
-  }
-
-  /**
-   * Get any provider (use with caution - prefer typed methods)
-   */
-  async getProvider(extensionId: string): Promise<AnimeParser | MovieParser> {
-    return await this.loadExtension(extensionId);
   }
 
   /**

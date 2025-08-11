@@ -1,3 +1,4 @@
+import type { IVideoExtractor } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import { type ExtractorContextConfig } from './create-extractor-context';
 export declare class ExtractorManager {
@@ -25,7 +26,7 @@ export declare class ExtractorManager {
     /**
      * Execute extractor code and create instance
      */
-    private executeExtractorCode;
+    executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor>;
     /**
      * Create models context
      */

@@ -136,7 +136,7 @@ class ExtractorManager {
      */
     executeExtractorCode(code, metadata) {
         return __awaiter(this, void 0, void 0, function* () {
-            const context = this.createExecutionContext(metadata);
+            const context = this.createExecutionContext();
             try {
                 let executeFunction;
                 try {
@@ -219,7 +219,7 @@ class ExtractorManager {
     /**
      * Create execution context for extractor code
      */
-    createExecutionContext(_metadata) {
+    createExecutionContext() {
         const extractorContext = this.extractorContext;
         const models = this.createModelsContext();
         const mocks = {

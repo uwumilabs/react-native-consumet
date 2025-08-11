@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.defaultStaticExtractors = exports.extractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 const url_polyfill_1 = require("./utils/url-polyfill");
+Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
+Object.defineProperty(exports, "PolyURLSearchParams", { enumerable: true, get: function () { return url_polyfill_1.URLSearchParams; } });
 // Polyfill global scope if they don't exist
 if (typeof globalThis !== 'undefined') {
     // @ts-ignore
@@ -29,6 +31,9 @@ Object.defineProperty(exports, "createProviderContext", { enumerable: true, get:
 Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: function () { return utils_1.ProviderManager; } });
 Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: function () { return utils_1.ExtractorManager; } });
 Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return utils_1.createExtractorContext; } });
+Object.defineProperty(exports, "defaultAxios", { enumerable: true, get: function () { return utils_1.defaultAxios; } });
+Object.defineProperty(exports, "extractorContext", { enumerable: true, get: function () { return utils_1.extractorContext; } });
+Object.defineProperty(exports, "defaultStaticExtractors", { enumerable: true, get: function () { return utils_1.defaultStaticExtractors; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });

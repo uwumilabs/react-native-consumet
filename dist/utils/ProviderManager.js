@@ -56,7 +56,7 @@ class ProviderManager {
      * Get extension metadata by ID
      */
     getExtensionMetadata(extensionId) {
-        return this.extensionManifest.get(extensionId) || null;
+        return this.extensionManifest.get(extensionId);
     }
     /**
      * Load an extension by ID from the extensionManifest
@@ -342,14 +342,6 @@ class ProviderManager {
             }
             const instance = yield this.loadExtension(extensionId);
             return instance;
-        });
-    }
-    /**
-     * Get any provider (use with caution - prefer typed methods)
-     */
-    getProvider(extensionId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.loadExtension(extensionId);
         });
     }
     /**

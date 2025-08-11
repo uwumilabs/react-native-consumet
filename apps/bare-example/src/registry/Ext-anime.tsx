@@ -67,7 +67,7 @@ const ExtAnime = () => {
       }
       
       // Load the anime extension from GitHub registry
-      const providerInstance = await manager.getAnimeProvider(extensionId);
+      const providerInstance = await manager.getAnimeProvider(extensionId) as Zoro;
       setProvider(providerInstance);
       
       console.log('✅ Anime extension loaded successfully:', {

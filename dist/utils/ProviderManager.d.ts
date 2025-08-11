@@ -22,7 +22,7 @@ export declare class ProviderManager {
     /**
      * Get extension metadata by ID
      */
-    getExtensionMetadata(extensionId: string): ExtensionManifest | null;
+    getExtensionMetadata(extensionId: string): ExtensionManifest;
     /**
      * Load an extension by ID from the extensionManifest
      */
@@ -30,7 +30,7 @@ export declare class ProviderManager {
     /**
      * Execute provider code and create instance (extensionManifest-based)
      */
-    private executeProviderCode;
+    executeProviderCode(code: string, factoryName: string, metadata: ExtensionManifest): Promise<AnimeParser | MovieParser>;
     /**
      * Create execution context for provider code
      */
@@ -55,10 +55,6 @@ export declare class ProviderManager {
      * Get movie provider
      */
     getMovieProvider(extensionId: string): Promise<MovieParser>;
-    /**
-     * Get any provider (use with caution - prefer typed methods)
-     */
-    getProvider(extensionId: string): Promise<AnimeParser | MovieParser>;
     /**
      * Get the provider context
      */

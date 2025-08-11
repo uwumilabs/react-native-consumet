@@ -1,6 +1,6 @@
 /* eslint-disable no-new-func */
 import extensionRegistry from '../extension-registry.json';
-import type { ExtractorContext } from '../models';
+import type { ExtractorContext, IVideoExtractor } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import { createExtractorContext, type ExtractorContextConfig } from './create-extractor-context';
 import { defaultStaticExtractors } from './extension-utils';
@@ -137,8 +137,8 @@ export class ExtractorManager {
   /**
    * Execute extractor code and create instance
    */
-  private async executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<any> {
-    const context = this.createExecutionContext(metadata);
+  public async executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor> {
+    const context = this.createExecutionContext();
 
     try {
       let executeFunction;
@@ -226,7 +226,7 @@ export class ExtractorManager {
   /**
    * Create execution context for extractor code
    */
-  private createExecutionContext(_metadata: ExtractorInfo) {
+  private createExecutionContext() {
     const extractorContext = this.extractorContext;
     const models = this.createModelsContext();
     const mocks: Record<string, any> = {
