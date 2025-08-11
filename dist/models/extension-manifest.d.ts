@@ -47,7 +47,7 @@ export interface ExtensionManifest {
     status: 'stable' | 'beta' | 'alpha' | 'deprecated';
     /** Last updated timestamp */
     lastUpdated: string;
-    /** extractors used in the provider */
-    extractors: ExtractorInfo[];
+    /** extractors name used in the provider */
+    extractors: string[];
 }
 //# sourceMappingURL=extension-manifest.d.ts.map

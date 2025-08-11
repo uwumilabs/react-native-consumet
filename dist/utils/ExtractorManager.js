@@ -40,7 +40,7 @@ class ExtractorManager {
             // Extract extractors from all extensions in the registry
             extension_registry_json_1.default.extensions.forEach((extension) => {
                 if (extension.extractors) {
-                    extension.extractors.forEach((extractor) => {
+                    extension_registry_json_1.default.extractors.forEach((extractor) => {
                         const manifest = {
                             name: extractor.name,
                             version: extractor.version,

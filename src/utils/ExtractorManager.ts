@@ -33,7 +33,7 @@ export class ExtractorManager {
       // Extract extractors from all extensions in the registry
       extensionRegistry.extensions.forEach((extension: any) => {
         if (extension.extractors) {
-          extension.extractors.forEach((extractor: any) => {
+          extensionRegistry.extractors.forEach((extractor: any) => {
             const manifest: ExtractorInfo = {
               name: extractor.name,
               version: extractor.version,

@@ -64,6 +64,6 @@ export interface ExtensionManifest {
   /** Last updated timestamp */
   lastUpdated: string;
 
-  /** extractors used in the provider */
-  extractors: ExtractorInfo[];
+  /** extractors name used in the provider */
+  extractors: string[];
 }
