@@ -1,4 +1,4 @@
-import { MANGA, SubOrSub, type IMangaResult, type ISearch } from 'react-native-consumet';
+import { MANGA, SubOrDub, type IMangaResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 

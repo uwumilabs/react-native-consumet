@@ -115,7 +115,7 @@ export declare class Zoro extends AnimeParser {
      *
      * @param episodeId Episode id
      * @param server server type (default `VidCloud`) (optional)
-     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
      */
     fetchEpisodeSources: ZoroProviderInstance['fetchEpisodeSources'];
     /**

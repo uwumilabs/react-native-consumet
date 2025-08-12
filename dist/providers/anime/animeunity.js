@@ -46,7 +46,7 @@ class AnimeUnity extends models_1.AnimeParser {
                         cover: items[i].imageurl_cover,
                         rating: parseFloat(items[i].score),
                         releaseDate: items[i].date,
-                        subOrDub: `${items[i].dub ? models_1.SubOrSub.DUB : models_1.SubOrSub.SUB}`,
+                        subOrDub: `${items[i].dub ? models_1.SubOrDub.DUB : models_1.SubOrDub.SUB}`,
                     });
                 }
                 return searchResult;

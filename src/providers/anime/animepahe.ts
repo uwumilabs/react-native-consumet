@@ -11,7 +11,7 @@ import {
   type IAnimeEpisode,
   type IEpisodeServer,
   MediaFormat,
-  SubOrSub,
+  SubOrDub,
 } from '../../models';
 import { Kwik } from '../../extractors';
 import { getDdosGuardCookiesWithWebView } from '../../NativeConsumet';
@@ -192,9 +192,9 @@ class AnimePahe extends AnimeParser {
   /**
    *
    * @param episodeId Episode id
-   * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+   * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
    */
-  override fetchEpisodeSources = async (episodeId: string, subOrDub: SubOrSub = SubOrSub.SUB): Promise<ISource> => {
+  override fetchEpisodeSources = async (episodeId: string, subOrDub: SubOrDub = SubOrDub.SUB): Promise<ISource> => {
     try {
       if (!this.ddgCookie) {
         await this.initDdgCookie();
@@ -230,8 +230,8 @@ class AnimePahe extends AnimeParser {
         res[0]!.quality = link.quality;
         res[0]!.isDub = link.audio === 'eng';
 
-        // Only include sources that match the requested SubOrSub type
-        if ((subOrDub === SubOrSub.DUB && res[0]!.isDub) || (subOrDub === SubOrSub.SUB && !res[0]!.isDub)) {
+        // Only include sources that match the requested SubOrDub type
+        if ((subOrDub === SubOrDub.DUB && res[0]!.isDub) || (subOrDub === SubOrDub.SUB && !res[0]!.isDub)) {
           iSource.sources.push(res[0]!);
         }
       }

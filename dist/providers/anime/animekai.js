@@ -84,15 +84,15 @@ class AnimeKai extends models_1.AnimeParser {
                 const hasSub = $('.entity-scroll > .info > span.sub').length > 0;
                 const hasDub = $('.entity-scroll > .info > span.dub').length > 0;
                 if (hasSub) {
-                    info.subOrDub = models_1.SubOrSub.SUB;
+                    info.subOrDub = models_1.SubOrDub.SUB;
                     info.hasSub = hasSub;
                 }
                 if (hasDub) {
-                    info.subOrDub = models_1.SubOrSub.DUB;
+                    info.subOrDub = models_1.SubOrDub.DUB;
                     info.hasDub = hasDub;
                 }
                 if (hasSub && hasDub) {
-                    info.subOrDub = models_1.SubOrSub.BOTH;
+                    info.subOrDub = models_1.SubOrDub.BOTH;
                 }
                 info.genres = [];
                 $('.entity-scroll > .detail')
@@ -155,9 +155,9 @@ class AnimeKai extends models_1.AnimeParser {
          *
          * @param episodeId Episode id
          * @param server server type (default `VidCloud`) (optional)
-         * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+         * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = models_1.StreamingServers.MegaUp, subOrDub = models_1.SubOrSub.SUB) {
+        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = models_1.StreamingServers.MegaUp, subOrDub = models_1.SubOrDub.SUB) {
             var _a, _b;
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
@@ -261,7 +261,7 @@ class AnimeKai extends models_1.AnimeParser {
          * @param episodeId Episode id
          * @param subOrDub sub or dub (default `sub`) (optional)
          */
-        this.fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrSub.SUB) {
+        this.fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrDub.SUB) {
             if (!episodeId.startsWith(this.baseUrl + '/ajax'))
                 episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(episodeId.split('$token=')[1])}`;
             try {

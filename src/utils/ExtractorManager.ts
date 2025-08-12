@@ -1,8 +1,8 @@
 /* eslint-disable no-new-func */
 import extensionRegistry from '../extension-registry.json';
-import type { ExtractorContext, IVideoExtractor } from '../models';
+import type { ExtractorContext, IVideoExtractor, StreamingServers, ExtractorContextConfig } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
-import { createExtractorContext, type ExtractorContextConfig } from './create-extractor-context';
+import createExtractorContext from './create-extractor-context';
 import { defaultStaticExtractors } from './extension-utils';
 
 export class ExtractorManager {
@@ -11,8 +11,8 @@ export class ExtractorManager {
   private staticExtractors!: Record<string, any>;
   private extractorContext: ExtractorContext;
 
-  constructor(config: ExtractorContextConfig = {}) {
-    this.extractorContext = createExtractorContext(config);
+  constructor(extractorConfig: ExtractorContextConfig = {}) {
+    this.extractorContext = createExtractorContext(extractorConfig);
     this.initializeStaticExtractors();
     this.loadExtractorsFromRegistry();
     //console.log('🔧 Dynamic Extractor Manager initialized');
@@ -44,7 +44,7 @@ export class ExtractorManager {
         }
       });
 
-      const totalExtractors = this.extractorRegistry.size;
+      // const totalExtractors = this.extractorRegistry.size;
       //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
     } catch (error) {
       console.error('❌ Failed to load extractors from extension registry:', error);
@@ -54,14 +54,14 @@ export class ExtractorManager {
   /**
    * Get extractor metadata by ID
    */
-  getExtractorMetadata(extractorId: string): ExtractorInfo | null {
-    return this.extractorRegistry.get(extractorId.toLowerCase()) || null;
+  getExtractorMetadata(extractorId: StreamingServers): ExtractorInfo {
+    return this.extractorRegistry.get(extractorId.toLowerCase())!;
   }
 
   /**
    * Load an extractor by ID from the registry
    */
-  async loadExtractor(extractorId: string): Promise<any> {
+  async loadExtractor(extractorId: StreamingServers): Promise<any> {
     const metadata = this.getExtractorMetadata(extractorId);
     if (!metadata) {
       // Fallback to static extractor if available

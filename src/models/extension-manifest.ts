@@ -1,8 +1,10 @@
+import type { StreamingServers } from './types';
+
 export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta';
 
 export interface ExtractorInfo {
   /** name of the extractor like MegaCloud */
-  name: string;
+  name: StreamingServers;
   /** version of the extractor */
   version: string;
   /**github url path */
@@ -40,17 +42,11 @@ export interface ExtensionManifest {
   /** Factory function names exported by this extension */
   factoryName: string;
 
-  /** Extension tags for searching/filtering */
-  tags?: string[];
-
   /** Homepage URL */
-  homepage?: string;
-
-  /** Repository URL */
-  repository?: string;
+  baseUrl: string;
 
   /** Extension icon URL */
-  logo?: string;
+  logo: string;
 
   /** Supported languages/regions */
   languages?: string[];
@@ -66,4 +62,16 @@ export interface ExtensionManifest {
 
   /** extractors name used in the provider */
   extractors: string[];
+
+  /** subbed for anime's */
+  subbed?: boolean;
+
+  /** dubbed for anime's */
+  dubbed?: boolean;
+
+  /** isSourceEmbed (boolean value to represent if a provider needs extractors) */
+  isSourceEmbed?: boolean;
+
+  /** isSourceDirect (boolean value to represent if a provider has direct sources)*/
+  isSourceDirect?: boolean;
 }

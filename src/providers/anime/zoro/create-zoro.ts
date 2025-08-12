@@ -7,7 +7,7 @@ import {
   type IEpisodeServer,
   type StreamingServers,
   type MediaFormat,
-  type SubOrSub,
+  type SubOrDub,
   type WatchListType,
   type ProviderContext,
   type ProviderConfig,
@@ -18,7 +18,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const { StreamSB, MegaCloud, StreamTape } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
-    SubOrSub: SubOrSubEnum,
+    SubOrDub: SubOrSubEnum,
     MediaStatus: MediaStatusEnum,
     WatchListType: WatchListTypeEnum,
   } = enums;
@@ -437,7 +437,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const fetchEpisodeSources = async (
     episodeId: string,
     server: StreamingServers = StreamingServersEnum.VidCloud,
-    subOrDub: SubOrSub = SubOrSubEnum.SUB
+    subOrDub: SubOrDub = SubOrSubEnum.SUB
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
@@ -629,7 +629,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     }
   };
 
-  const retrieveServerId = ($: any, index: number, subOrDub: SubOrSub) => {
+  const retrieveServerId = ($: any, index: number, subOrDub: SubOrDub) => {
     const rawOrSubOrDub = (raw: boolean) =>
       $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
         .map((i: any, el: any) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultStaticExtractors = exports.extractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrSub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 const url_polyfill_1 = require("./utils/url-polyfill");
 Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
 Object.defineProperty(exports, "PolyURLSearchParams", { enumerable: true, get: function () { return url_polyfill_1.URLSearchParams; } });
@@ -32,7 +32,7 @@ Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: funct
 Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: function () { return utils_1.ExtractorManager; } });
 Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return utils_1.createExtractorContext; } });
 Object.defineProperty(exports, "defaultAxios", { enumerable: true, get: function () { return utils_1.defaultAxios; } });
-Object.defineProperty(exports, "extractorContext", { enumerable: true, get: function () { return utils_1.extractorContext; } });
+Object.defineProperty(exports, "defaultExtractorContext", { enumerable: true, get: function () { return utils_1.defaultExtractorContext; } });
 Object.defineProperty(exports, "defaultStaticExtractors", { enumerable: true, get: function () { return utils_1.defaultStaticExtractors; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
@@ -59,7 +59,7 @@ Object.defineProperty(exports, "MegaUp", { enumerable: true, get: function () { 
 const models_1 = require("./models");
 Object.defineProperty(exports, "StreamingServers", { enumerable: true, get: function () { return models_1.StreamingServers; } });
 Object.defineProperty(exports, "MediaStatus", { enumerable: true, get: function () { return models_1.MediaStatus; } });
-Object.defineProperty(exports, "SubOrSub", { enumerable: true, get: function () { return models_1.SubOrSub; } });
+Object.defineProperty(exports, "SubOrDub", { enumerable: true, get: function () { return models_1.SubOrDub; } });
 Object.defineProperty(exports, "TvType", { enumerable: true, get: function () { return models_1.TvType; } });
 Object.defineProperty(exports, "Genres", { enumerable: true, get: function () { return models_1.Genres; } });
 Object.defineProperty(exports, "Topics", { enumerable: true, get: function () { return models_1.Topics; } });

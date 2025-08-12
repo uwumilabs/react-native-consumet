@@ -204,7 +204,7 @@ output:
 | ------------------- | ------------------ | -------------------------------------------------------------------------------------------------------- |
 | episodeId           | `string`           | takes episode id as a parameter. (_episode id can be found in the anime info object_)                    |
 | server (optional)   | `StreamingServers` | takes server enum as a parameter. (_default: `StreamingServers.MegaUp`_)                                 |
-| subOrDub (optional) | `SubOrSub `        | takes subOrDub enum as a parameter. (_can be `SubOrSub.SUB` or `SubOrSub.DUB`, default: `SubOrSub.SUB`_) |
+| subOrDub (optional) | `SubOrDub `        | takes subOrDub enum as a parameter. (_can be `SubOrDub.SUB` or `SubOrDub.DUB`, default: `SubOrDub.SUB`_) |
 
 In this example, we're getting the sources for the first episode of Overlord IV.
 

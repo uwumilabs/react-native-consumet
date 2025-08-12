@@ -8,7 +8,6 @@ A powerful React Native library for accessing anime, movie, and media content th
 - [Core Components](#core-components)
 - [Usage Examples](#usage-examples)
 - [Custom HTTP Configuration](#custom-http-configuration)
-- [Extractor Usage Example](#extractor-usage-example)
 - [React Integration](#react-integration)
 - [API Reference](#api-reference)
 - [Some Helpful imports](#some-helpful-imports)
@@ -140,34 +139,77 @@ const searchAllProviders = async (query: string) => {
 };
 ```
 
-### Movie Provider Example
+Yes — there are a few grammar and clarity improvements we can make so it reads more smoothly and professionally.
+
+Here’s a corrected and slightly polished version of your text:
+
+---
+
+### Basic Extractor Usage
+
+It is not compulsory to use `ExtractorManager` directly in all cases. The `fetchEpisodeSources` method (provided by `ProviderManager`) will handle source extraction for most providers implicitly. This is because `ProviderManager`'s context is designed to dynamically load extractors as needed.
+
+However, `ExtractorManager` is useful for:
+*   Providers that frequently change their source extraction code.
+*   When you want to use custom extractor logic for complete control over the extraction process.
+*   Directly accessing and testing specific extractors.
 
 ```typescript
-// Search for movies
-const searchMovies = async (query: string) => {
-  const provider = await manager.getMovieProvider('himovies');
-  const results = await provider.search(query);
-  return results;
-};
+import { ExtractorManager, PolyURL } from 'react-native-consumet';
 
-// Get movie details
-const getMovieInfo = async (movieId: string) => {
-  const provider = await manager.getMovieProvider('himovies');
-  const info = await provider.fetchMovieInfo(movieId);
-  return info;
+const extractVideoSources = async (embedUrl: string, referer?: string) => {
+  try {
+    const extractorManager = new ExtractorManager();
+    // Load a specific extractor by its ID.
+    // This method handles dynamic loading from the registry and falls back to static extractors.
+    const extractor = await extractorManager.loadExtractor('megacloud');
+    
+    // Assuming 'provider' and 'episodeId' are available from your context
+    const servers = await provider.fetchEpisodeServers(episodeId); 
+    
+    // Example usage with a direct URL and referer
+    const sources = await extractor.extract(
+      new PolyURL(servers[0].url), // Use PolyURL for consistent URL handling
+      referer
+    ); 
+    // 'referer' is available for only some extractors — check the TypeScript definition of `extract` for each extractor
+    return sources;
+  } catch (error) {
+    console.error('Extraction failed:', error);
+    return null;
+  }
 };
 ```
 
-### Error Handling
+You can also use the cached extractor code to reduce the need to load it on every request:
 
 ```typescript
-const safeSearch = async (query: string) => {
+import { ExtractorManager, PolyURL, defaultExtractorContext } from 'react-native-consumet';
+// and metadata is the ExtractorInfo for 'megacloud'
+import { MegaCloud } from 'react-native-consumet/src/extractors/megacloud'; // Import for type inference
+
+const extractVideoSourcesDynamic = async (codeString: string, metadata: any, embedUrl: string, referer?: string) => {
   try {
-    const provider = await manager.getAnimeProvider('zoro');
-    return await provider.search(query);
+    const extractorManager = new ExtractorManager();
+    // Execute arbitrary extractor code. The return type will be 'unknown' or 'any'
+    // unless explicitly cast.
+    const extractor = await extractorManager.executeExtractorCode(
+      codeString,
+      metadata
+    ) as typeof MegaCloud; // Cast to the expected type for better type safety
+    
+    // Assuming 'provider' and 'episodeId' are available from your context
+    const servers = await provider.fetchEpisodeServers(episodeId); 
+
+    const sources = await extractor(defaultExtractorContext).extract(
+      new PolyURL(servers[0].url), // Use PolyURL for consistent URL handling
+      referer
+    ); 
+    // 'referer' is available for only some extractors — check the TypeScript definition of `extract` for each extractor
+    return sources;
   } catch (error) {
-    console.error('Search failed:', error.message);
-    return { results: [] };
+    console.error('extraction failed:', error);
+    return null;
   }
 };
 ```
@@ -198,38 +240,6 @@ const extractorManager = new ExtractorManager({
 [`ProviderContextConfig`](../src/utils/create-provider-context.ts)\
 [`ExtractorContextConfig`](../src/utils/create-extractor-context.ts)
 
-
-## Extractor Usage Example
-
-```typescript
-const extractVideoSources = async (embedUrl: string, referer: string) => {
-  try {
-    const extractorManager = new ExtractorManager();
-    const extractor = await extractorManager.loadExtractor('megacloud');
-    
-    const sources = await extractor.extract(new URL(embedUrl), referer);
-    return sources;
-  } catch (error) {
-    console.error('Extraction failed:', error);
-    return null;
-  }
-};
-```
-
-```typescript
-const extractVideoSources = async (embedUrl: string, referer: string) => {
-  try {
-    // This way u can use the cached extractor code reducing the need to load on every request
-    const metadata=extractorManager.getExtractorMetadata('megacloud');
-    const megacloudExtractor = await extractorManager.executeExtractorCode(`${testCode.testCodeString}`,metadata!)
-    const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!),"https://himovies.sx");
-    console.log('📹 Extracted video links:', links);
-  } catch (error) {
-    console.error('Extraction failed:', error);
-    return null;
-  }
-};
-```
 
 ## React Integration
 

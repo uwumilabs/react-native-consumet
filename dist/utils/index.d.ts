@@ -7,6 +7,6 @@ export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
 export { createExtractorContext } from './create-extractor-context';
-export { defaultAxios, extractorContext, defaultStaticExtractors } from './extension-utils';
+export { defaultAxios, defaultExtractorContext, defaultStaticExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';
 //# sourceMappingURL=index.d.ts.map

@@ -18,7 +18,7 @@ exports.MegaCloud = MegaCloud;
 function MegaCloud(ctx) {
     const serverName = 'MegaCloud';
     const sources = [];
-    const { axios, load, USER_AGENT, URL } = ctx;
+    const { axios, load, USER_AGENT } = ctx;
     /**
      * Thanks to https://github.com/yogesh-hacker for the original implementation.
      */
@@ -40,7 +40,7 @@ function MegaCloud(ctx) {
                 'User-Agent': USER_AGENT,
             };
             try {
-                const { data: keyData } = yield axios.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json');
+                const { data: keyData } = yield (axios === null || axios === void 0 ? void 0 : axios.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'));
                 key = keyData;
             }
             catch (err) {
@@ -51,7 +51,7 @@ function MegaCloud(ctx) {
             let videoTag;
             let embedRes;
             try {
-                embedRes = yield axios.get(embed_url.href, { headers });
+                embedRes = yield (axios === null || axios === void 0 ? void 0 : axios.get(embed_url.href, { headers }));
                 const $ = load(embedRes.data);
                 videoTag = $('#megacloud-player');
             }

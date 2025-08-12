@@ -2,9 +2,9 @@ import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
-import type { ExtractorContext } from './extractor-context';
+import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
 import type MangaParser from './manga-parser';
-import { StreamingServers, MediaFormat, MediaStatus, SubOrSub, WatchListType, TvType, Genres, Topics } from './types';
+import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
 /**
@@ -92,9 +92,6 @@ export interface ExtractorRegistry {
   ) => {
     extract: (url: URL) => Promise<any>;
   };
-  VidCloud: (ctx?: ExtractorContext) => {
-    extract: (url: URL, referer?: string) => Promise<any>;
-  };
   VidMoly: new (
     proxyConfig?: any,
     adapter?: any
@@ -155,10 +152,30 @@ export interface ProviderContext {
     StreamingServers: typeof StreamingServers;
     MediaFormat: typeof MediaFormat;
     MediaStatus: typeof MediaStatus;
-    SubOrSub: typeof SubOrSub;
+    SubOrDub: typeof SubOrDub;
     WatchListType: typeof WatchListType;
     TvType: typeof TvType;
     Genres: typeof Genres;
     Topics: typeof Topics;
   };
+}
+
+/**
+ * Configuration options for creating a provider context
+ */
+export interface ProviderContextConfig extends ExtractorContextConfig {
+  /**
+   * Custom AnimeParser base class (optional) - for advanced use cases
+   */
+  AnimeParser?: typeof AnimeParser;
+
+  /**
+   * Custom MovieParser base class (optional) - for advanced use cases
+   */
+  MovieParser?: typeof MovieParser;
+
+  /**
+   * Custom MangaParser base class (optional) - for advanced use cases
+   */
+  MangaParser?: typeof MangaParser;
 }

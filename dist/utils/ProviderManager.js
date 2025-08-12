@@ -17,10 +17,10 @@ exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 class ProviderManager {
-    constructor(config = {}) {
+    constructor(providerConfig = {}) {
         this.loadedExtensions = new Map();
         this.extensionManifest = new Map();
-        this.providerContext = (0, create_provider_context_1.default)(config);
+        this.providerContext = (0, create_provider_context_1.default)(providerConfig);
         this.loadRegistry();
         //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
     }
@@ -233,7 +233,7 @@ class ProviderManager {
             AnimeParser: this.providerContext.AnimeParser,
             MovieParser: this.providerContext.MovieParser,
             MangaParser: this.providerContext.MangaParser,
-            SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
+            SubOrDub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
             StreamingServers: {
                 VidCloud: 'vidcloud',
                 StreamSB: 'streamsb',

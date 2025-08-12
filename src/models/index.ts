@@ -5,8 +5,8 @@ import VideoExtractor, { type IVideoExtractor } from './video-extractor';
 import MangaParser from './manga-parser';
 import LightNovelParser from './lightnovel-parser';
 import MovieParser from './movie-parser';
-import type { ExtractorContext } from './extractor-context';
-import type { ProviderContext, ProviderConfig } from './provider-context';
+import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
+import type { ProviderContext, ProviderConfig, ProviderContextConfig } from './provider-context';
 import type { ExtensionManifest, ProviderType } from './extension-manifest';
 import {
   type IProviderStats,
@@ -18,7 +18,7 @@ import {
   type IVideo,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   type IMangaResult,
   type IMangaChapter,
   type IMangaInfo,
@@ -55,7 +55,7 @@ export {
   VideoExtractor,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   LightNovelParser,
   MangaParser,
   TvType,
@@ -97,6 +97,8 @@ export type {
   AniZipEpisode,
   IMovieSeason,
   ExtractorContext,
+  ExtractorContextConfig,
+  ProviderContextConfig,
   ProviderContext,
   ProviderConfig,
   ExtensionManifest,

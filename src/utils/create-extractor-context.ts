@@ -2,30 +2,7 @@ import { load } from 'cheerio';
 import type { ExtractorContext } from '../models';
 import { defaultAxios } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
-/**
- * Configuration options for creating a provider context
- */
-export interface ExtractorContextConfig {
-  /**
-   * Custom axios instance (optional) - if not provided, a default one is created
-   */
-  axios?: any;
-
-  /**
-   * Custom cheerio load function (optional) - defaults to cheerio.load
-   */
-  load?: (html: string) => any;
-
-  /**
-   * Custom user agent (optional) - defaults to a standard browser user agent
-   */
-  userAgent?: string;
-
-  /**
-   * Custom extractors (optional) - defaults to dynamic extractors
-   */
-  extractors?: any;
-}
+import type { ExtractorContextConfig } from '../models/extractor-context';
 
 /**
  * Create extractor context for context-aware extractors
@@ -41,3 +18,5 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
     URLSearchParams: PolyURLSearchParams,
   };
 }
+
+export default createExtractorContext;

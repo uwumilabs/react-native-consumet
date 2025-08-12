@@ -1,4 +1,4 @@
-import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, SubOrSub } from '../../models';
+import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, SubOrDub } from '../../models';
 declare class AnimePahe extends AnimeParser {
     readonly name = "AnimePahe";
     protected baseUrl: string;
@@ -19,9 +19,9 @@ declare class AnimePahe extends AnimeParser {
     /**
      *
      * @param episodeId Episode id
-     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
      */
-    fetchEpisodeSources: (episodeId: string, subOrDub?: SubOrSub) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, subOrDub?: SubOrDub) => Promise<ISource>;
     private fetchEpisodes;
     /**
      * @deprecated

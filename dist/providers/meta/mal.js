@@ -211,14 +211,14 @@ class Myanimelist extends models_1.AnimeParser {
             let possibleAnime;
             possibleAnime = yield this.findAnimeRaw(slug, externalLinks);
             // To avoid a new request, lets match and see if the anime show found is in sub/dub
-            const expectedType = dub ? models_1.SubOrSub.DUB : models_1.SubOrSub.SUB;
-            if (possibleAnime.subOrDub !== models_1.SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
+            const expectedType = dub ? models_1.SubOrDub.DUB : models_1.SubOrDub.SUB;
+            if (possibleAnime.subOrDub !== models_1.SubOrDub.BOTH && possibleAnime.subOrDub !== expectedType) {
                 return [];
             }
             if (this.provider instanceof zoro_1.default) {
                 // Set the correct episode sub/dub request type
                 possibleAnime.episodes.forEach((_, index) => {
-                    if (possibleAnime.subOrDub === models_1.SubOrSub.BOTH) {
+                    if (possibleAnime.subOrDub === models_1.SubOrDub.BOTH) {
                         possibleAnime.episodes[index].id = possibleAnime.episodes[index].id.replace(`$both`, dub ? '$dub' : '$sub');
                     }
                 });

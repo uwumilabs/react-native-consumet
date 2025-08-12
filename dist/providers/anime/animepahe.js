@@ -155,9 +155,9 @@ class AnimePahe extends models_1.AnimeParser {
         /**
          *
          * @param episodeId Episode id
-         * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+         * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrSub.SUB) {
+        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrDub.SUB) {
             try {
                 if (!this.ddgCookie) {
                     yield this.initDdgCookie();
@@ -187,8 +187,8 @@ class AnimePahe extends models_1.AnimeParser {
                     const res = yield new extractors_1.Kwik().extract(new URL(link.url));
                     res[0].quality = link.quality;
                     res[0].isDub = link.audio === 'eng';
-                    // Only include sources that match the requested SubOrSub type
-                    if ((subOrDub === models_1.SubOrSub.DUB && res[0].isDub) || (subOrDub === models_1.SubOrSub.SUB && !res[0].isDub)) {
+                    // Only include sources that match the requested SubOrDub type
+                    if ((subOrDub === models_1.SubOrDub.DUB && res[0].isDub) || (subOrDub === models_1.SubOrDub.SUB && !res[0].isDub)) {
                         iSource.sources.push(res[0]);
                     }
                 }

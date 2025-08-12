@@ -1,5 +1,3 @@
-import { type Book, type Hashes } from './base-types';
-
 export interface IProviderStats {
   name: string;
   baseUrl: string;
@@ -83,7 +81,7 @@ export interface IAnimeInfo extends IAnimeResult {
   /**
    * @deprecated use `hasSub` or `hasDub` instead
    */
-  subOrDub?: SubOrSub;
+  subOrDub?: SubOrDub;
   hasSub?: boolean;
   hasDub?: boolean;
   synonyms?: string[];
@@ -235,7 +233,7 @@ export enum WatchListType {
   NONE = 'none',
 }
 
-export enum SubOrSub {
+export enum SubOrDub {
   SUB = 'sub',
   DUB = 'dub',
   BOTH = 'both',

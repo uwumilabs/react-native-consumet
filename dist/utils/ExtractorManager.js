@@ -15,13 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExtractorManager = void 0;
 /* eslint-disable no-new-func */
 const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
-const create_extractor_context_1 = require("./create-extractor-context");
+const create_extractor_context_1 = __importDefault(require("./create-extractor-context"));
 const extension_utils_1 = require("./extension-utils");
 class ExtractorManager {
-    constructor(config = {}) {
+    constructor(extractorConfig = {}) {
         this.loadedExtractors = new Map();
         this.extractorRegistry = new Map();
-        this.extractorContext = (0, create_extractor_context_1.createExtractorContext)(config);
+        this.extractorContext = (0, create_extractor_context_1.default)(extractorConfig);
         this.initializeStaticExtractors();
         this.loadExtractorsFromRegistry();
         //console.log('🔧 Dynamic Extractor Manager initialized');
@@ -50,7 +50,7 @@ class ExtractorManager {
                     });
                 }
             });
-            const totalExtractors = this.extractorRegistry.size;
+            // const totalExtractors = this.extractorRegistry.size;
             //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
         }
         catch (error) {
@@ -61,7 +61,7 @@ class ExtractorManager {
      * Get extractor metadata by ID
      */
     getExtractorMetadata(extractorId) {
-        return this.extractorRegistry.get(extractorId.toLowerCase()) || null;
+        return this.extractorRegistry.get(extractorId.toLowerCase());
     }
     /**
      * Load an extractor by ID from the registry

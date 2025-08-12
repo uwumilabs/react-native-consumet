@@ -24,7 +24,7 @@ import {
   ExtractorManager,
   createExtractorContext,
   defaultAxios,
-  extractorContext,
+  defaultExtractorContext,
   defaultStaticExtractors,
 } from './utils';
 
@@ -62,7 +62,7 @@ import {
   type IVideo,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   type IMangaResult,
   type IMangaChapter,
   type IMangaInfo,
@@ -102,7 +102,7 @@ export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
 export { PROVIDERS_LIST };
 
 // Models: runtime enums/constants
-export { Topics, Genres, SubOrSub, StreamingServers, MediaStatus, TvType, MediaFormat };
+export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat };
 
 // Extractors
 export {
@@ -169,6 +169,6 @@ export {
   PolyURL,
   PolyURLSearchParams,
   defaultAxios,
-  extractorContext,
+  defaultExtractorContext,
   defaultStaticExtractors,
 };

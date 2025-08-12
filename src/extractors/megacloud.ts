@@ -8,7 +8,7 @@ import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor 
 export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'MegaCloud';
   const sources: IVideo[] = [];
-  const { axios, load, USER_AGENT, URL } = ctx;
+  const { axios, load, USER_AGENT } = ctx;
   /**
    * Thanks to https://github.com/yogesh-hacker for the original implementation.
    */
@@ -32,7 +32,7 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
     };
 
     try {
-      const { data: keyData } = await axios.get(
+      const { data: keyData } = await axios?.get(
         'https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'
       );
       key = keyData;
@@ -44,7 +44,7 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
     let videoTag;
     let embedRes;
     try {
-      embedRes = await axios.get(embed_url.href, { headers });
+      embedRes = await axios?.get(embed_url.href, { headers });
       const $ = load(embedRes.data);
       videoTag = $('#megacloud-player');
     } catch (error) {

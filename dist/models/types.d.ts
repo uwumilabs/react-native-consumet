@@ -74,7 +74,7 @@ export interface IAnimeInfo extends IAnimeResult {
     /**
      * @deprecated use `hasSub` or `hasDub` instead
      */
-    subOrDub?: SubOrSub;
+    subOrDub?: SubOrDub;
     hasSub?: boolean;
     hasDub?: boolean;
     synonyms?: string[];
@@ -216,7 +216,7 @@ export declare enum WatchListType {
     COMPLETED = "completed",
     NONE = "none"
 }
-export declare enum SubOrSub {
+export declare enum SubOrDub {
     SUB = "sub",
     DUB = "dub",
     BOTH = "both"

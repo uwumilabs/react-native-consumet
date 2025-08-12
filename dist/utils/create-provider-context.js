@@ -71,9 +71,9 @@ function createProviderContext(config = {}) {
                     // Dynamically import and create ExtractorManager to avoid circular dependency
                     const { ExtractorManager } = yield Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
                     const extractorManager = new ExtractorManager({
-                        axios: config.axios || extension_utils_1.extractorContext.axios,
-                        load: config.load || extension_utils_1.extractorContext.load,
-                        userAgent: config.userAgent || extension_utils_1.extractorContext.USER_AGENT,
+                        axios: config.axios || extension_utils_1.defaultExtractorContext.axios,
+                        load: config.load || extension_utils_1.defaultExtractorContext.load,
+                        userAgent: config.userAgent || extension_utils_1.defaultExtractorContext.USER_AGENT,
                     });
                     const extractor = yield extractorManager.loadExtractor(prop.toLowerCase());
                     return typeof extractor === 'function' ? extractor(...args) : extractor;
@@ -117,7 +117,7 @@ function createProviderContext(config = {}) {
             StreamingServers: models_1.StreamingServers,
             MediaFormat: models_1.MediaFormat,
             MediaStatus: models_1.MediaStatus,
-            SubOrSub: models_1.SubOrSub,
+            SubOrDub: models_1.SubOrDub,
             WatchListType: models_1.WatchListType,
             TvType: models_1.TvType,
             Genres: models_1.Genres,

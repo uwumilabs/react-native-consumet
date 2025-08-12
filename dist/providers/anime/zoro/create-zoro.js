@@ -13,7 +13,7 @@ exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
     const { load, extractors, enums, createCustomBaseUrl, URL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
-    const { StreamingServers: StreamingServersEnum, SubOrSub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
+    const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
     // Provider configuration - use the standardized base URL creation
     const baseUrl = createCustomBaseUrl('https://hianime.to', customBaseURL);
     const config = {

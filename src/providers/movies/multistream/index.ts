@@ -192,7 +192,7 @@ class MultiStream extends MovieParser {
   override fetchEpisodeSources = async (
     episodeId: string,
     mediaId: string,
-    server: StreamingServers | string
+    server: StreamingServers
   ): Promise<ISource> => {
     const firstServer = (await this.fetchEpisodeServers(episodeId, mediaId))[0]!.name as StreamingServers;
     return await getMultiSources(episodeId, server ? server : firstServer);

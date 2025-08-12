@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager, MOVIES, ExtractorManager } from 'react-native-consumet';
-import { type ExtensionManifest, type MovieParser } from '../../../../src/models';
+import { ProviderManager, MOVIES, ExtractorManager ,MegaCloud, MegaUp, defaultExtractorContext} from 'react-native-consumet';
+import { StreamingServers, type ExtensionManifest, type MovieParser } from '../../../../src/models';
 import HiMovies from '../../../../src/providers/movies/himovies/himovies';
 import { PolyURL } from '../../../../src/utils/url-polyfill';
 const testCode=require('./test-code-generated.js');
-console.log((testCode.testCodeString));
 
 const ExtMovies = () => {
   const [results, setResults] = useState<any[]>([]);
@@ -128,10 +127,14 @@ const ExtMovies = () => {
           // Load specific extractor dynamically from extension registry
           // const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
           // load the code itself
-          // @ts-ignore
-          const metadata=extractorManager.getExtractorMetadata('megacloud');
-          const megacloudExtractor = await extractorManager.executeExtractorCode(`${testCode.testCodeString}`,metadata!)
-          const links = await megacloudExtractor.extract(new PolyURL(sources.headers?.Referer!),"https://himovies.sx");
+          const metadata=extractorManager.getExtractorMetadata(StreamingServers.MegaCloud);
+          const servers = await providerInstance.fetchEpisodeServers(
+            info.episodes[0].id, 
+            (searchResults as any).results[0].id
+          );
+          console.log(servers);
+          const megacloudExtractor = await extractorManager.executeExtractorCode(`${testCode.testCodeString}`, metadata!) as unknown as typeof MegaCloud
+          const links = await megacloudExtractor(defaultExtractorContext).extract(new PolyURL(servers[1]?.url!),"https://himovies.sx");
           console.log('📹 Extracted video links:', links);
 
         }

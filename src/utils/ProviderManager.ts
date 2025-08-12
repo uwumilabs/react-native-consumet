@@ -1,8 +1,15 @@
 /* eslint-disable no-new-func */
 
-import createProviderContext, { type ProviderContextConfig } from './create-provider-context';
+import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
-import { type IAnimeResult, type IMovieResult, type ISearch, AnimeParser, MovieParser } from '../models';
+import {
+  type IAnimeResult,
+  type IMovieResult,
+  type ISearch,
+  AnimeParser,
+  MovieParser,
+  type ProviderContextConfig,
+} from '../models';
 
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
@@ -12,8 +19,8 @@ export class ProviderManager {
   private loadedExtensions = new Map<string, any>();
   private extensionManifest = new Map<string, ExtensionManifest>();
 
-  constructor(config: ProviderContextConfig = {}) {
-    this.providerContext = createProviderContext(config);
+  constructor(providerConfig: ProviderContextConfig = {}) {
+    this.providerContext = createProviderContext(providerConfig);
     this.loadRegistry();
     //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
   }
@@ -256,7 +263,7 @@ export class ProviderManager {
       AnimeParser: this.providerContext.AnimeParser,
       MovieParser: this.providerContext.MovieParser,
       MangaParser: this.providerContext.MangaParser,
-      SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
+      SubOrDub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
       StreamingServers: {
         VidCloud: 'vidcloud',
         StreamSB: 'streamsb',

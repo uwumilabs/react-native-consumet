@@ -9,7 +9,7 @@ import {
   type IAnimeResult,
   type ISource,
   type IAnimeEpisode,
-  SubOrSub,
+  SubOrDub,
   type IEpisodeServer,
   MediaFormat,
 } from '../../models';
@@ -325,16 +325,16 @@ class Myanimelist extends AnimeParser {
 
     // To avoid a new request, lets match and see if the anime show found is in sub/dub
 
-    const expectedType = dub ? SubOrSub.DUB : SubOrSub.SUB;
+    const expectedType = dub ? SubOrDub.DUB : SubOrDub.SUB;
 
-    if (possibleAnime.subOrDub !== SubOrSub.BOTH && possibleAnime.subOrDub !== expectedType) {
+    if (possibleAnime.subOrDub !== SubOrDub.BOTH && possibleAnime.subOrDub !== expectedType) {
       return [];
     }
 
     if (this.provider instanceof Zoro) {
       // Set the correct episode sub/dub request type
       possibleAnime.episodes.forEach((_: any, index: number) => {
-        if (possibleAnime.subOrDub === SubOrSub.BOTH) {
+        if (possibleAnime.subOrDub === SubOrDub.BOTH) {
           possibleAnime.episodes[index].id = possibleAnime.episodes[index].id.replace(`$both`, dub ? '$dub' : '$sub');
         }
       });

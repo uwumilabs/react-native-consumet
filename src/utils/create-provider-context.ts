@@ -1,5 +1,5 @@
 import { load } from 'cheerio';
-import type { ProviderContext } from '../models/provider-context';
+import type { ProviderContext, ProviderContextConfig } from '../models/provider-context';
 import {
   AnimeParser,
   MovieParser,
@@ -7,54 +7,15 @@ import {
   StreamingServers,
   MediaFormat,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   WatchListType,
   TvType,
   Genres,
   Topics,
 } from '../models';
 
-import { defaultAxios, defaultStaticExtractors, extractorContext } from './extension-utils';
+import { defaultAxios, defaultStaticExtractors, defaultExtractorContext } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
-/**
- * Configuration options for creating a provider context
- */
-export interface ProviderContextConfig {
-  /**
-   * Custom axios instance (optional) - if not provided, a default one is created
-   */
-  axios?: any;
-
-  /**
-   * Custom cheerio load function (optional) - defaults to cheerio.load
-   */
-  load?: (html: string) => any;
-
-  /**
-   * Custom user agent (optional) - defaults to a standard browser user agent
-   */
-  userAgent?: string;
-
-  /**
-   * Custom extractors (optional) - defaults to dynamic extractors
-   */
-  extractors?: any;
-
-  /**
-   * Custom AnimeParser base class (optional) - for advanced use cases
-   */
-  AnimeParser?: typeof AnimeParser;
-
-  /**
-   * Custom MovieParser base class (optional) - for advanced use cases
-   */
-  MovieParser?: typeof MovieParser;
-
-  /**
-   * Custom MangaParser base class (optional) - for advanced use cases
-   */
-  MangaParser?: typeof MangaParser;
-}
 
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -82,11 +43,11 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
           // Dynamically import and create ExtractorManager to avoid circular dependency
           const { ExtractorManager } = await import('./ExtractorManager');
           const extractorManager = new ExtractorManager({
-            axios: config.axios || extractorContext.axios,
-            load: config.load || extractorContext.load,
-            userAgent: config.userAgent || extractorContext.USER_AGENT,
+            axios: config.axios || defaultExtractorContext.axios,
+            load: config.load || defaultExtractorContext.load,
+            userAgent: config.userAgent || defaultExtractorContext.USER_AGENT,
           });
-          const extractor = await extractorManager.loadExtractor(prop.toLowerCase());
+          const extractor = await extractorManager.loadExtractor(prop.toLowerCase() as StreamingServers);
           return typeof extractor === 'function' ? extractor(...args) : extractor;
         } catch (error) {
           console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
@@ -130,7 +91,7 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
       StreamingServers,
       MediaFormat,
       MediaStatus,
-      SubOrSub,
+      SubOrDub,
       WatchListType,
       TvType,
       Genres,
@@ -138,5 +99,4 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     },
   };
 }
-
 export default createProviderContext;

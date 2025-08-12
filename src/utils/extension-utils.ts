@@ -40,7 +40,7 @@ export const defaultAxios = axios.create({
 });
 
 // Create extractor context for passing to context-aware extractors
-export const extractorContext: ExtractorContext = {
+export const defaultExtractorContext: ExtractorContext = {
   axios: defaultAxios,
   load: load,
   USER_AGENT: USER_AGENT,
@@ -58,7 +58,7 @@ export const defaultStaticExtractors = {
   Mp4Player: Mp4Player,
   Mp4Upload: Mp4Upload,
   RapidCloud: RapidCloud,
-  MegaCloud: (ctx?: ExtractorContext) => MegaCloud(ctx || extractorContext),
+  MegaCloud: (ctx: ExtractorContext) => MegaCloud(ctx || defaultExtractorContext),
   StreamHub: StreamHub,
   StreamLare: StreamLare,
   StreamSB: StreamSB,

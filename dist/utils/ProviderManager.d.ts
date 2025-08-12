@@ -1,12 +1,11 @@
-import { type ProviderContextConfig } from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
-import { type IAnimeResult, type IMovieResult, type ISearch, AnimeParser, MovieParser } from '../models';
+import { type IAnimeResult, type IMovieResult, type ISearch, AnimeParser, MovieParser, type ProviderContextConfig } from '../models';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;
     private extensionManifest;
-    constructor(config?: ProviderContextConfig);
+    constructor(providerConfig?: ProviderContextConfig);
     /**
      * Load and parse the extensionManifest
      */

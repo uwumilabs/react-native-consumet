@@ -17,4 +17,5 @@ function createExtractorContext(config = {}) {
         URLSearchParams: url_polyfill_1.PolyURLSearchParams,
     };
 }
+exports.default = createExtractorContext;
 //# sourceMappingURL=create-extractor-context.js.map

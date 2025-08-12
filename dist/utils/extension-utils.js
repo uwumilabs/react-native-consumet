@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultStaticExtractors = exports.extractorContext = exports.defaultAxios = void 0;
+exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
 const axios_1 = __importDefault(require("axios"));
 // Import extractors for fallback compatibility
 const extractors_1 = require("../extractors");
@@ -23,7 +23,7 @@ exports.defaultAxios = axios_1.default.create({
     },
 });
 // Create extractor context for passing to context-aware extractors
-exports.extractorContext = {
+exports.defaultExtractorContext = {
     axios: exports.defaultAxios,
     load: cheerio_1.load,
     USER_AGENT: utils_1.USER_AGENT,
@@ -40,7 +40,7 @@ exports.defaultStaticExtractors = {
     Mp4Player: extractors_1.Mp4Player,
     Mp4Upload: extractors_1.Mp4Upload,
     RapidCloud: extractors_1.RapidCloud,
-    MegaCloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || exports.extractorContext),
+    MegaCloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || exports.defaultExtractorContext),
     StreamHub: extractors_1.StreamHub,
     StreamLare: extractors_1.StreamLare,
     StreamSB: extractors_1.StreamSB,
