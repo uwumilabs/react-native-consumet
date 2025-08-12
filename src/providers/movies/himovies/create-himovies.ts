@@ -231,11 +231,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
         throw new Error(`Server ${server} not found`);
       }
 
-      const { data } = await axios.get(
-        `${config.baseUrl}/ajax/episode/sources/${servers[i]!.url.split('.').slice(-1).shift()}`
-      );
-
-      const serverUrl: URL = new URL(data.link);
+      const serverUrl: URL = new URL(servers[i]!.url);
 
       return await fetchEpisodeSources(serverUrl.href, mediaId, server);
     } catch (err) {
@@ -257,20 +253,24 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     try {
       const { data } = await axios.get(episodeId);
       const $ = load(data);
-
       const servers = $('ul.nav > li')
-        .map((i, el) => {
-          const server = {
-            name: $(el).find('a').attr('title')!.slice(6).toLowerCase().replace('server', '').trim(),
-            url: `${config.baseUrl}/${mediaId}.${$(el).find('a').attr('data-id')}`.replace(
-              !mediaId.includes('movie') ? /\/tv\// : /\/movie\//,
-              !mediaId.includes('movie') ? '/watch-tv/' : '/watch-movie/'
-            ),
-          };
-          return server;
-        })
+        .map((i, el) => ({
+          name: $(el).find('a').attr('title')!.slice(6).toLowerCase().replace('server', '').trim(),
+          url: `${config.baseUrl}/ajax/episode/sources/${$(el).find('a').attr('data-id')}`,
+        }))
         .get();
-      return servers;
+
+      const finalServers: IEpisodeServer[] = await Promise.all(
+        servers.map(async (server) => {
+          const { data } = await axios.get(server.url);
+          return {
+            name: server.name,
+            url: data.link,
+          };
+        })
+      );
+
+      return finalServers;
     } catch (err) {
       throw new Error((err as Error).message);
     }
@@ -510,6 +510,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     classPath: config.classPath,
     supportedTypes,
 
+    // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchMediaInfo,
     fetchEpisodeSources,
@@ -522,3 +523,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     fetchByGenre,
   };
 }
+
+export type HiMoviesProviderInstance = ReturnType<typeof createHiMovies>;
+
+export default createHiMovies;

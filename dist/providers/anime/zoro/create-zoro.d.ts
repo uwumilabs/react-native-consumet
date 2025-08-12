@@ -38,7 +38,7 @@ export declare function createZoro(ctx: ProviderContext, customBaseURL?: string)
     fetchWatchList: (watchListType: WatchListType) => Promise<IAnimeResult[]>;
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
     fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
-    fetchEpisodeServers: (episodeId: string) => Promise<IEpisodeServer[]>;
+    fetchEpisodeServers: (episodeId: string, subOrDub: SubOrDub) => Promise<IEpisodeServer[]>;
 };
 export type ZoroProviderInstance = ReturnType<typeof createZoro>;
 export default createZoro;

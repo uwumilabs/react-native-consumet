@@ -201,8 +201,7 @@ function createHiMovies(ctx, customBaseURL) {
             if (i === -1) {
                 throw new Error(`Server ${server} not found`);
             }
-            const { data } = yield axios.get(`${config.baseUrl}/ajax/episode/sources/${servers[i].url.split('.').slice(-1).shift()}`);
-            const serverUrl = new URL(data.link);
+            const serverUrl = new URL(servers[i].url);
             return yield fetchEpisodeSources(serverUrl.href, mediaId, server);
         }
         catch (err) {
@@ -225,15 +224,19 @@ function createHiMovies(ctx, customBaseURL) {
             const { data } = yield axios.get(episodeId);
             const $ = load(data);
             const servers = $('ul.nav > li')
-                .map((i, el) => {
-                const server = {
-                    name: $(el).find('a').attr('title').slice(6).toLowerCase().replace('server', '').trim(),
-                    url: `${config.baseUrl}/${mediaId}.${$(el).find('a').attr('data-id')}`.replace(!mediaId.includes('movie') ? /\/tv\// : /\/movie\//, !mediaId.includes('movie') ? '/watch-tv/' : '/watch-movie/'),
-                };
-                return server;
-            })
+                .map((i, el) => ({
+                name: $(el).find('a').attr('title').slice(6).toLowerCase().replace('server', '').trim(),
+                url: `${config.baseUrl}/ajax/episode/sources/${$(el).find('a').attr('data-id')}`,
+            }))
                 .get();
-            return servers;
+            const finalServers = yield Promise.all(servers.map((server) => __awaiter(this, void 0, void 0, function* () {
+                const { data } = yield axios.get(server.url);
+                return {
+                    name: server.name,
+                    url: data.link,
+                };
+            })));
+            return finalServers;
         }
         catch (err) {
             throw new Error(err.message);
@@ -454,6 +457,7 @@ function createHiMovies(ctx, customBaseURL) {
         logo: config.logo,
         classPath: config.classPath,
         supportedTypes,
+        // Core methods, pass only the necessary methods, dont pass helpers or unused methods
         search,
         fetchMediaInfo,
         fetchEpisodeSources,
@@ -466,4 +470,5 @@ function createHiMovies(ctx, customBaseURL) {
         fetchByGenre,
     };
 }
+exports.default = createHiMovies;
 //# sourceMappingURL=create-himovies.js.map

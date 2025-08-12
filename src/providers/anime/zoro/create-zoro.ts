@@ -14,7 +14,7 @@ import {
 } from '../../../models';
 
 export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
-  const { load, extractors, enums, createCustomBaseUrl, URL } = ctx;
+  const { axios, load, extractors, enums, createCustomBaseUrl, URL } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
@@ -436,13 +436,13 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
 
   const fetchEpisodeSources = async (
     episodeId: string,
-    server: StreamingServers = StreamingServersEnum.VidCloud,
+    server: StreamingServers = StreamingServersEnum.MegaCloud,
     subOrDub: SubOrDub = SubOrSubEnum.SUB
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
       switch (server) {
-        case StreamingServersEnum.VidCloud:
+        case StreamingServersEnum.MegaCloud:
           return {
             headers: { Referer: serverUrl.href },
             ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
@@ -470,65 +470,53 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     if (!episodeId.includes('$episode$')) throw new Error('Invalid episode id');
 
     episodeId = `${config.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
-
     try {
-      const response = await fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
-      const data = await response.json();
-
-      const $ = load(data.html);
-
-      let serverId = '';
-      try {
-        switch (server) {
-          case StreamingServersEnum.VidCloud:
-            serverId = retrieveServerId($, 1, subOrDub);
-            if (!serverId) throw new Error('RapidCloud not found');
-            break;
-          case StreamingServersEnum.VidStreaming:
-            serverId = retrieveServerId($, 4, subOrDub);
-            if (!serverId) throw new Error('vidtreaming not found');
-            break;
-          case StreamingServersEnum.StreamSB:
-            serverId = retrieveServerId($, 5, subOrDub);
-            if (!serverId) throw new Error('StreamSB not found');
-            break;
-          case StreamingServersEnum.StreamTape:
-            serverId = retrieveServerId($, 3, subOrDub);
-            if (!serverId) throw new Error('StreamTape not found');
-            break;
-        }
-      } catch (err) {
-        throw new Error("Couldn't find server. Try another server");
+      const servers = await fetchEpisodeServers(episodeId.split('?ep=')[1]!, subOrDub);
+      const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
+      if (i === -1) {
+        throw new Error(`Server ${server} not found`);
       }
 
-      const sourcesResponse = await fetch(`${config.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
-      const sourcesData = await sourcesResponse.json();
-      const { link } = sourcesData;
+      const serverUrl: URL = new URL(servers[i]!.url);
 
-      return await fetchEpisodeSources(link, server, SubOrSubEnum.SUB);
+      return await fetchEpisodeSources(serverUrl.href, server, SubOrSubEnum.SUB);
     } catch (err) {
       throw err;
     }
   };
 
-  const fetchEpisodeServers = async (episodeId: string): Promise<IEpisodeServer[]> => {
+  const fetchEpisodeServers = async (episodeId: string, subOrDub: SubOrDub): Promise<IEpisodeServer[]> => {
     try {
       const response = await fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
       const data = await response.json();
-
       const $ = load(data.html);
-      const servers: IEpisodeServer[] = [];
-
-      $('.server-item').each((_, element) => {
+      const scrapedServers: any[] = [];
+      let selector;
+      try {
+        selector = `.ps_-block.ps_-block-sub.servers-${false ? 'raw' : subOrDub} > .ps__-list .server-item`;
+      } catch {
+        selector = `.ps_-block.ps_-block-sub.servers-${true ? 'raw' : subOrDub} > .ps__-list .server-item`;
+      }
+      $(selector).each((_, element) => {
         const name = $(element).text().trim();
-        const url = $(element).attr('data-id') || '';
+        const sourcesId = $(element).attr('data-id') || '';
+        const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrSubEnum.SUB : SubOrSubEnum.DUB;
 
-        servers.push({
-          name: name as StreamingServers,
-          url,
+        scrapedServers.push({
+          name,
+          sourcesId,
+          subOrDub: subOrDubValue,
         });
       });
-
+      const servers: IEpisodeServer[] = await Promise.all(
+        scrapedServers.map(async (server) => {
+          const { data } = await axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
+          return {
+            name: `megacloud-${server.name.toLowerCase()}`,
+            url: data.link,
+          };
+        })
+      );
       return servers;
     } catch (error) {
       throw new Error(`Failed to fetch episode servers: ${error}`);
@@ -626,21 +614,6 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     } catch (err) {
       console.error('scrapeCardPage error:', err);
       throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-  };
-
-  const retrieveServerId = ($: any, index: number, subOrDub: SubOrDub) => {
-    const rawOrSubOrDub = (raw: boolean) =>
-      $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-        .map((i: any, el: any) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
-        .get()[0]
-        .attr('data-id');
-    try {
-      // Attempt to get the subOrDub ID
-      return rawOrSubOrDub(false);
-    } catch (error) {
-      // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
-      return rawOrSubOrDub(true);
     }
   };
 

@@ -4,6 +4,10 @@ export declare class Zoro extends AnimeParser {
     private instance;
     logo: string;
     constructor(customBaseURL?: string);
+    get name(): string;
+    get baseUrl(): string;
+    set baseUrl(value: string);
+    get classPath(): string;
     /**
      * @param query Search query
      * @param page Page number (optional)
@@ -123,10 +127,6 @@ export declare class Zoro extends AnimeParser {
      * @param episodeId Episode id
      */
     fetchEpisodeServers: ZoroProviderInstance['fetchEpisodeServers'];
-    get name(): string;
-    get baseUrl(): string;
-    set baseUrl(value: string);
-    get classPath(): string;
 }
 export default Zoro;
 //# sourceMappingURL=zoro.d.ts.map

@@ -3,6 +3,7 @@ import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } fr
 import { ProviderManager, MOVIES, ExtractorManager ,MegaCloud, MegaUp, defaultExtractorContext} from 'react-native-consumet';
 import { StreamingServers, type ExtensionManifest, type MovieParser } from '../../../../src/models';
 import HiMovies from '../../../../src/providers/movies/himovies/himovies';
+import createHiMovies from '../../../../src/providers/movies/himovies/create-himovies';
 import { PolyURL } from '../../../../src/utils/url-polyfill';
 const testCode=require('./test-code-generated.js');
 
@@ -11,7 +12,7 @@ const ExtMovies = () => {
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
   const [selectedExtension, setSelectedExtension] = useState<string>('himovies');
-  const [provider, setProvider] = useState<MovieParser | null>(null);
+  const [provider, setProvider] = useState<HiMovies | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ const ExtMovies = () => {
     }
   };
 
-  const testSearch = async (providerInstance: MovieParser) => {
+  const testSearch = async (providerInstance: HiMovies) => {
     try {
       console.log('🔍 Testing movie search functionality...');
       

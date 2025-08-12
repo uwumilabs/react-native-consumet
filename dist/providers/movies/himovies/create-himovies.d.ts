@@ -16,4 +16,6 @@ export declare function createHiMovies(ctx: ProviderContext, customBaseURL?: str
     fetchByCountry: (country: string, page?: number) => Promise<ISearch<IMovieResult>>;
     fetchByGenre: (genre: string, page?: number) => Promise<ISearch<IMovieResult>>;
 };
+export type HiMoviesProviderInstance = ReturnType<typeof createHiMovies>;
+export default createHiMovies;
 //# sourceMappingURL=create-himovies.d.ts.map

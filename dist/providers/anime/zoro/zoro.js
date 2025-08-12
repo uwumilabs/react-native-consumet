@@ -62,6 +62,12 @@ exports.default = Zoro;
 //   const anime = await zoro.search('Dandadan');
 //   const info = await zoro.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-19413');
 //   // console.log(info.episodes);
-//   const sources = await zoro.fetchEpisodeSources("solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub", StreamingServers.VidCloud,SubOrDub.DUB);
+//   const sources = await zoro.fetchEpisodeSources(
+//     'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub',
+//     // 'megacloud-hd-2',
+//     undefined,
+//     SubOrDub.DUB
+//   );
+//   // console.log(sources);
 // })();
 //# sourceMappingURL=zoro.js.map

@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
-    const { load, extractors, enums, createCustomBaseUrl, URL } = ctx;
+    const { axios, load, extractors, enums, createCustomBaseUrl, URL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
     // Provider configuration - use the standardized base URL creation
@@ -366,11 +366,11 @@ function createZoro(ctx, customBaseURL) {
             throw new Error(err.message);
         }
     });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.VidCloud, subOrDub = SubOrSubEnum.SUB) {
+    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrSubEnum.SUB) {
         if (episodeId.startsWith('http')) {
             const serverUrl = new URL(episodeId);
             switch (server) {
-                case StreamingServersEnum.VidCloud:
+                case StreamingServersEnum.MegaCloud:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
                 case StreamingServersEnum.StreamSB:
                     return {
@@ -393,60 +393,48 @@ function createZoro(ctx, customBaseURL) {
             throw new Error('Invalid episode id');
         episodeId = `${config.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
         try {
-            const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId.split('?ep=')[1]}`);
-            const data = yield response.json();
-            const $ = load(data.html);
-            let serverId = '';
-            try {
-                switch (server) {
-                    case StreamingServersEnum.VidCloud:
-                        serverId = retrieveServerId($, 1, subOrDub);
-                        if (!serverId)
-                            throw new Error('RapidCloud not found');
-                        break;
-                    case StreamingServersEnum.VidStreaming:
-                        serverId = retrieveServerId($, 4, subOrDub);
-                        if (!serverId)
-                            throw new Error('vidtreaming not found');
-                        break;
-                    case StreamingServersEnum.StreamSB:
-                        serverId = retrieveServerId($, 5, subOrDub);
-                        if (!serverId)
-                            throw new Error('StreamSB not found');
-                        break;
-                    case StreamingServersEnum.StreamTape:
-                        serverId = retrieveServerId($, 3, subOrDub);
-                        if (!serverId)
-                            throw new Error('StreamTape not found');
-                        break;
-                }
+            const servers = yield fetchEpisodeServers(episodeId.split('?ep=')[1], subOrDub);
+            const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
+            if (i === -1) {
+                throw new Error(`Server ${server} not found`);
             }
-            catch (err) {
-                throw new Error("Couldn't find server. Try another server");
-            }
-            const sourcesResponse = yield fetch(`${config.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
-            const sourcesData = yield sourcesResponse.json();
-            const { link } = sourcesData;
-            return yield fetchEpisodeSources(link, server, SubOrSubEnum.SUB);
+            const serverUrl = new URL(servers[i].url);
+            return yield fetchEpisodeSources(serverUrl.href, server, SubOrSubEnum.SUB);
         }
         catch (err) {
             throw err;
         }
     });
-    const fetchEpisodeServers = (episodeId) => __awaiter(this, void 0, void 0, function* () {
+    const fetchEpisodeServers = (episodeId, subOrDub) => __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
             const data = yield response.json();
             const $ = load(data.html);
-            const servers = [];
-            $('.server-item').each((_, element) => {
+            const scrapedServers = [];
+            let selector;
+            try {
+                selector = `.ps_-block.ps_-block-sub.servers-${false ? 'raw' : subOrDub} > .ps__-list .server-item`;
+            }
+            catch (_a) {
+                selector = `.ps_-block.ps_-block-sub.servers-${true ? 'raw' : subOrDub} > .ps__-list .server-item`;
+            }
+            $(selector).each((_, element) => {
                 const name = $(element).text().trim();
-                const url = $(element).attr('data-id') || '';
-                servers.push({
-                    name: name,
-                    url,
+                const sourcesId = $(element).attr('data-id') || '';
+                const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrSubEnum.SUB : SubOrSubEnum.DUB;
+                scrapedServers.push({
+                    name,
+                    sourcesId,
+                    subOrDub: subOrDubValue,
                 });
             });
+            const servers = yield Promise.all(scrapedServers.map((server) => __awaiter(this, void 0, void 0, function* () {
+                const { data } = yield axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
+                return {
+                    name: `megacloud-${server.name.toLowerCase()}`,
+                    url: data.link,
+                };
+            })));
             return servers;
         }
         catch (error) {
@@ -541,20 +529,6 @@ function createZoro(ctx, customBaseURL) {
             throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     });
-    const retrieveServerId = ($, index, subOrDub) => {
-        const rawOrSubOrDub = (raw) => $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-            .map((i, el) => ($(el).attr('data-server-id') === `${index}` ? $(el) : null))
-            .get()[0]
-            .attr('data-id');
-        try {
-            // Attempt to get the subOrDub ID
-            return rawOrSubOrDub(false);
-        }
-        catch (error) {
-            // If an error is thrown, attempt to get the raw ID (The raw is the newest episode uploaded to zoro)
-            return rawOrSubOrDub(true);
-        }
-    };
     // Return the functional provider object
     return {
         // Configuration

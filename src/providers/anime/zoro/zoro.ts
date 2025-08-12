@@ -46,6 +46,19 @@ export class Zoro extends AnimeParser {
     this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
   }
 
+  // Getters for required AnimeParser properties
+  get name() {
+    return this.instance.name;
+  }
+  get baseUrl() {
+    return this.instance.baseUrl;
+  }
+  set baseUrl(value: string) {
+    this.instance.baseUrl = value;
+  }
+  get classPath() {
+    return this.instance.classPath;
+  }
   /**
    * @param query Search query
    * @param page Page number (optional)
@@ -165,20 +178,6 @@ export class Zoro extends AnimeParser {
    * @param episodeId Episode id
    */
   fetchEpisodeServers!: ZoroProviderInstance['fetchEpisodeServers'];
-
-  // Getters for required AnimeParser properties
-  get name() {
-    return this.instance.name;
-  }
-  get baseUrl() {
-    return this.instance.baseUrl;
-  }
-  set baseUrl(value: string) {
-    this.instance.baseUrl = value;
-  }
-  get classPath() {
-    return this.instance.classPath;
-  }
 }
 
 export default Zoro;
@@ -188,5 +187,11 @@ export default Zoro;
 //   const anime = await zoro.search('Dandadan');
 //   const info = await zoro.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-19413');
 //   // console.log(info.episodes);
-//   const sources = await zoro.fetchEpisodeSources("solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub", StreamingServers.VidCloud,SubOrDub.DUB);
+//   const sources = await zoro.fetchEpisodeSources(
+//     'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394$dub',
+//     // 'megacloud-hd-2',
+//     undefined,
+//     SubOrDub.DUB
+//   );
+//   // console.log(sources);
 // })();

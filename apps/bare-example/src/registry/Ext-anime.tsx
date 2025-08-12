@@ -9,7 +9,7 @@ const ExtAnime = () => {
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
   const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
-  const [provider, setProvider] = useState<AnimeParser | null>(null);
+  const [provider, setProvider] = useState<Zoro | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const ExtAnime = () => {
     }
   };
 
-  const testSearch = async (providerInstance: AnimeParser) => {
+  const testSearch = async (providerInstance: Zoro) => {
     try {
       console.log('🔍 Testing anime search functionality...');
       

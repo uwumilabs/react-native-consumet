@@ -11,6 +11,17 @@ class HiMovies extends models_1.MovieParser {
         const defaultContext = (0, utils_1.createProviderContext)();
         this.instance = (0, create_himovies_1.createHiMovies)(defaultContext, customBaseURL);
         this.logo = this.instance.logo;
+        // Bind all methods to preserve proper typing
+        this.search = this.instance.search;
+        this.fetchRecentMovies = this.instance.fetchRecentMovies;
+        this.fetchRecentTvShows = this.instance.fetchRecentTvShows;
+        this.fetchTrendingMovies = this.instance.fetchTrendingMovies;
+        this.fetchTrendingTvShows = this.instance.fetchTrendingTvShows;
+        this.fetchByCountry = this.instance.fetchByCountry;
+        this.fetchByGenre = this.instance.fetchByGenre;
+        this.fetchMediaInfo = this.instance.fetchMediaInfo;
+        this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
+        this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
     }
     // Proxy all methods to the instance
     get supportedTypes() {
@@ -28,45 +39,15 @@ class HiMovies extends models_1.MovieParser {
     get classPath() {
         return this.instance.classPath;
     }
-    search(...args) {
-        return this.instance.search(...args);
-    }
-    fetchRecentMovies() {
-        return this.instance.fetchRecentMovies();
-    }
-    fetchRecentTvShows() {
-        return this.instance.fetchRecentTvShows();
-    }
-    fetchTrendingMovies() {
-        return this.instance.fetchTrendingMovies();
-    }
-    fetchTrendingTvShows() {
-        return this.instance.fetchTrendingTvShows();
-    }
-    fetchByCountry(...args) {
-        return this.instance.fetchByCountry(...args);
-    }
-    fetchByGenre(...args) {
-        return this.instance.fetchByGenre(...args);
-    }
-    fetchMediaInfo(...args) {
-        return this.instance.fetchMediaInfo(...args);
-    }
-    fetchEpisodeSources(...args) {
-        return this.instance.fetchEpisodeSources(...args);
-    }
-    fetchEpisodeServers(...args) {
-        return this.instance.fetchEpisodeServers(...args);
-    }
 }
 // (async () => {
 //   const movie = new HiMovies();
 //   const search = await movie.search('jujutsu');
-//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
+//   const movieInfo = await movie.fetchMediaInfo(search.results[0]!.id);
 //   // const recentTv = await movie.fetchTrendingTvShows();
-//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
-//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id, StreamingServers.UpCloud);
-//   //console.log(genre);
+//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0]!.id, movieInfo.id);
+//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0]!.id, movieInfo.id);
+//   // console.log(genre);
 // })();
 exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map
