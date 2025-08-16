@@ -9,31 +9,45 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const models_1 = require("../models");
-class Kwik extends models_1.VideoExtractor {
-    constructor() {
-        super(...arguments);
-        this.serverName = 'kwik';
-        this.sources = [];
-        this.host = 'https://animepahe.ru/';
-        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const response = yield fetch(`${videoUrl.href}`, {
-                    headers: { Referer: this.host },
-                });
-                const data = yield response.text();
-                const source = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))[2].replace('eval', '')).match(/https.*?m3u8/);
-                this.sources.push({
-                    url: source[0],
-                    isM3U8: source[0].includes('.m3u8'),
-                });
-                return this.sources;
-            }
-            catch (err) {
-                throw new Error(err.message);
-            }
-        });
-    }
+exports.Kwik = Kwik;
+/**
+ * Kwik extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+function Kwik(ctx) {
+    const serverName = 'kwik';
+    const sources = [];
+    const { axios, load, USER_AGENT, PolyURL } = ctx;
+    const host = 'https://animepahe.ru/';
+    // @ts-ignore
+    const extract = (videoUrl, ...args) => __awaiter(this, void 0, void 0, function* () {
+        const extractedData = {
+            subtitles: [],
+            intro: { start: 0, end: 0 },
+            outro: { start: 0, end: 0 },
+            sources: [],
+        };
+        try {
+            const response = yield fetch(`${videoUrl.href}`, {
+                headers: { Referer: host },
+            });
+            const data = yield response.text();
+            const source = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))[2].replace('eval', '')).match(/https.*?m3u8/);
+            extractedData.sources.push({
+                url: source[0],
+                isM3U8: source[0].includes('.m3u8'),
+            });
+            return extractedData;
+        }
+        catch (err) {
+            throw new Error(err.message);
+        }
+    });
+    return {
+        serverName,
+        sources,
+        extract,
+    };
 }
-exports.default = Kwik;
 //# sourceMappingURL=kwik.js.map

@@ -13,8 +13,8 @@ function createExtractorContext(config = {}) {
         load: config.load || cheerio_1.load,
         USER_AGENT: config.userAgent ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        URL: url_polyfill_1.PolyURL,
-        URLSearchParams: url_polyfill_1.PolyURLSearchParams,
+        PolyURL: url_polyfill_1.PolyURL,
+        PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
     };
 }
 exports.default = createExtractorContext;

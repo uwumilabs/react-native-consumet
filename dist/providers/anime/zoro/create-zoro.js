@@ -11,9 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
-    const { axios, load, extractors, enums, createCustomBaseUrl, URL } = ctx;
+    const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
-    const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrSubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
+    const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
     // Provider configuration - use the standardized base URL creation
     const baseUrl = createCustomBaseUrl('https://hianime.to', customBaseURL);
     const config = {
@@ -321,15 +321,15 @@ function createZoro(ctx, customBaseURL) {
             const hasSub = $('div.film-stats div.tick div.tick-item.tick-sub').length > 0;
             const hasDub = $('div.film-stats div.tick div.tick-item.tick-dub').length > 0;
             if (hasSub) {
-                info.subOrDub = SubOrSubEnum.SUB;
+                info.subOrDub = SubOrDubEnum.SUB;
                 info.hasSub = hasSub;
             }
             if (hasDub) {
-                info.subOrDub = SubOrSubEnum.DUB;
+                info.subOrDub = SubOrDubEnum.DUB;
                 info.hasDub = hasDub;
             }
             if (hasSub && hasDub) {
-                info.subOrDub = SubOrSubEnum.BOTH;
+                info.subOrDub = SubOrDubEnum.BOTH;
             }
             // Fetch episodes
             const episodesResponse = yield fetch(`${config.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
@@ -366,25 +366,12 @@ function createZoro(ctx, customBaseURL) {
             throw new Error(err.message);
         }
     });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrSubEnum.SUB) {
+    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrDubEnum.SUB) {
         if (episodeId.startsWith('http')) {
-            const serverUrl = new URL(episodeId);
+            const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.MegaCloud:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
-                case StreamingServersEnum.StreamSB:
-                    return {
-                        headers: { Referer: serverUrl.href },
-                        sources: yield new StreamSB().extract(serverUrl, true),
-                    };
-                case StreamingServersEnum.StreamTape:
-                    if (!StreamTape) {
-                        throw new Error('StreamTape extractor is not available');
-                    }
-                    return {
-                        headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT },
-                        sources: yield new StreamTape().extract(serverUrl),
-                    };
                 default:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
             }
@@ -399,7 +386,7 @@ function createZoro(ctx, customBaseURL) {
                 throw new Error(`Server ${server} not found`);
             }
             const serverUrl = new URL(servers[i].url);
-            return yield fetchEpisodeSources(serverUrl.href, server, SubOrSubEnum.SUB);
+            return yield fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
         }
         catch (err) {
             throw err;
@@ -421,7 +408,7 @@ function createZoro(ctx, customBaseURL) {
             $(selector).each((_, element) => {
                 const name = $(element).text().trim();
                 const sourcesId = $(element).attr('data-id') || '';
-                const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrSubEnum.SUB : SubOrSubEnum.DUB;
+                const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrDubEnum.SUB : SubOrDubEnum.DUB;
                 scrapedServers.push({
                     name,
                     sourcesId,

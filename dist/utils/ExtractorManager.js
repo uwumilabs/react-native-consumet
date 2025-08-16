@@ -297,8 +297,8 @@ class ExtractorManager {
             axios: extractorContext.axios,
             load: extractorContext.load,
             console,
-            URL: extractorContext.URL,
-            URLSearchParams: extractorContext.URLSearchParams,
+            URL: extractorContext.PolyURL,
+            URLSearchParams: extractorContext.PolyURLSearchParams,
         };
     }
 }

@@ -2,13 +2,13 @@ import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor 
 
 /**
  * MegaCloud extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT, and logger
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'MegaCloud';
   const sources: IVideo[] = [];
-  const { axios, load, USER_AGENT } = ctx;
+  const { axios, load, USER_AGENT, PolyURL } = ctx;
   /**
    * Thanks to https://github.com/yogesh-hacker for the original implementation.
    */
@@ -95,7 +95,7 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
       });
 
       const decodeRes = await axios.get(`${decodeUrl}?${params.toString()}`);
-      videoSrc = JSON.parse(decodeRes.data.replace(/\n/g, ' ').match(/\[.*?\]/)?.[0]);
+      videoSrc = JSON.parse(decodeRes.data.replace(/\n/g, ' ').match(/\\\[.*?\\\\]/)?.[0]);
       // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
     } else {
       videoSrc = sources;
@@ -107,8 +107,8 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
       outro: encryptedResData?.outro,
     };
   }
-
-  const extract = async (embedIframeURL: URL, referer = 'https://hianime.to'): Promise<ISource> => {
+  // @ts-ignore
+  const extract = async (embedIframeURL: PolyURL, referer = 'https://hianime.to'): Promise<ISource> => {
     const extractedData: ISource = {
       subtitles: [],
       intro: { start: 0, end: 0 },

@@ -16,6 +16,7 @@ import {
 
 import { defaultAxios, defaultStaticExtractors, defaultExtractorContext } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
+import { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
 
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -84,8 +85,8 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MovieParser: config.MovieParser || MovieParser,
     MangaParser: config.MangaParser || MangaParser,
     extractors: finalExtractors,
-    URL: PolyURL,
-    URLSearchParams: PolyURLSearchParams,
+    PolyURL: PolyURL,
+    PolyURLSearchParams: PolyURLSearchParams,
     createCustomBaseUrl,
     enums: {
       StreamingServers,
@@ -96,6 +97,9 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
       TvType,
       Genres,
       Topics,
+    },
+    NativeConsumet: {
+      getDdosGuardCookiesWithWebView,
     },
   };
 }

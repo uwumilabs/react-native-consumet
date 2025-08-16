@@ -10,7 +10,7 @@ import {
 } from '../../../models';
 
 export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
-  const { load, extractors, enums, axios, createCustomBaseUrl, URL } = ctx;
+  const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaCloud } = extractors;
   const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
 
@@ -202,7 +202,7 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
     server: StreamingServers = StreamingServersEnum.MegaCloud
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
-      const serverUrl = new URL(episodeId);
+      const serverUrl = new PolyURL(episodeId);
       switch (server) {
         case StreamingServersEnum.MegaCloud:
           return {

@@ -84,6 +84,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.9",
+    "@babel/runtime": "^7.28.3",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/compat": "^1.2.7",
     "@eslint/eslintrc": "^3.3.0",

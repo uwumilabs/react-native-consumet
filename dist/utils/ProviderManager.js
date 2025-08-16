@@ -186,8 +186,8 @@ class ProviderManager {
             '../../utils': {
                 createProviderContext: () => this.providerContext,
             },
-            'URL': this.providerContext.URL,
-            'URLSearchParams': this.providerContext.URLSearchParams,
+            'URL': this.providerContext.PolyURL,
+            'URLSearchParams': this.providerContext.PolyURLSearchParams,
         };
         // Create fetch function using axios
         const customFetch = (url_1, ...args_1) => __awaiter(this, [url_1, ...args_1], void 0, function* (url, options = {}) {
@@ -221,8 +221,8 @@ class ProviderManager {
             Object,
             fetch: customFetch,
             __awaiter: this.createAwaiterHelper(),
-            URL: this.providerContext.URL,
-            URLSearchParams: this.providerContext.URLSearchParams,
+            URL: this.providerContext.PolyURL,
+            URLSearchParams: this.providerContext.PolyURLSearchParams,
         };
     }
     /**

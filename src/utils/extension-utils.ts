@@ -44,8 +44,8 @@ export const defaultExtractorContext: ExtractorContext = {
   axios: defaultAxios,
   load: load,
   USER_AGENT: USER_AGENT,
-  URL: PolyURL,
-  URLSearchParams: PolyURLSearchParams,
+  PolyURL: PolyURL,
+  PolyURLSearchParams: PolyURLSearchParams,
 };
 
 // Default static extractors (for backward compatibility)

@@ -12,13 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaCloud = MegaCloud;
 /**
  * MegaCloud extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT, and logger
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 function MegaCloud(ctx) {
     const serverName = 'MegaCloud';
     const sources = [];
-    const { axios, load, USER_AGENT } = ctx;
+    const { axios, load, USER_AGENT, PolyURL } = ctx;
     /**
      * Thanks to https://github.com/yogesh-hacker for the original implementation.
      */
@@ -93,7 +93,7 @@ function MegaCloud(ctx) {
                     secret: key[getKeyType],
                 });
                 const decodeRes = yield axios.get(`${decodeUrl}?${params.toString()}`);
-                videoSrc = JSON.parse((_b = decodeRes.data.replace(/\n/g, ' ').match(/\[.*?\]/)) === null || _b === void 0 ? void 0 : _b[0]);
+                videoSrc = JSON.parse((_b = decodeRes.data.replace(/\n/g, ' ').match(/\\\[.*?\\\\]/)) === null || _b === void 0 ? void 0 : _b[0]);
                 // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
             }
             else {
@@ -107,6 +107,7 @@ function MegaCloud(ctx) {
             };
         });
     }
+    // @ts-ignore
     const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://hianime.to') {
         var _a, _b, _c, _d;
         const extractedData = {

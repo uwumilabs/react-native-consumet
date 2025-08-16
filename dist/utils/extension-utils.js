@@ -27,8 +27,8 @@ exports.defaultExtractorContext = {
     axios: exports.defaultAxios,
     load: cheerio_1.load,
     USER_AGENT: utils_1.USER_AGENT,
-    URL: url_polyfill_1.PolyURL,
-    URLSearchParams: url_polyfill_1.PolyURLSearchParams,
+    PolyURL: url_polyfill_1.PolyURL,
+    PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
 };
 // Default static extractors (for backward compatibility)
 exports.defaultStaticExtractors = {

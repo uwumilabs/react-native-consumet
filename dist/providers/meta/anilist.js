@@ -19,7 +19,7 @@ const utils_1 = require("../../utils");
 const anify_1 = __importDefault(require("../anime/anify"));
 const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
 const animekai_1 = __importDefault(require("../anime/animekai"));
-const animepahe_1 = __importDefault(require("../anime/animepahe"));
+const animepahe_1 = __importDefault(require("../anime/animepahe/animepahe"));
 const mangasee123_1 = __importDefault(require("../manga/mangasee123"));
 const utils_2 = require("../../utils/utils");
 class Anilist extends models_1.AnimeParser {
@@ -652,7 +652,9 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
+                            totalEpisodes: isNaN(item.episodes)
+                                ? 0
+                                : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });
@@ -721,7 +723,9 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
+                            totalEpisodes: isNaN(item.episodes)
+                                ? 0
+                                : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });
@@ -849,7 +853,9 @@ class Anilist extends models_1.AnimeParser {
                             releaseDate: item.seasonYear,
                             color: (_r = item.coverImage) === null || _r === void 0 ? void 0 : _r.color,
                             genres: item.genres,
-                            totalEpisodes: isNaN(item.episodes) ? 0 : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
+                            totalEpisodes: isNaN(item.episodes)
+                                ? 0
+                                : ((_s = item.episodes) !== null && _s !== void 0 ? _s : (((_t = item.nextAiringEpisode) === null || _t === void 0 ? void 0 : _t.episode) ? item.nextAiringEpisode.episode - 1 : 0)),
                             duration: item.duration,
                             type: item.format,
                         });

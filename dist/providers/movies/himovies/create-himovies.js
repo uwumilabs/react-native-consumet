@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createHiMovies = createHiMovies;
 function createHiMovies(ctx, customBaseURL) {
-    const { load, extractors, enums, axios, createCustomBaseUrl, URL } = ctx;
+    const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL } = ctx;
     const { MegaCloud } = extractors;
     const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
     const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);
@@ -185,7 +185,7 @@ function createHiMovies(ctx, customBaseURL) {
      */
     const fetchEpisodeSources = (episodeId_1, mediaId_1, ...args_1) => __awaiter(this, [episodeId_1, mediaId_1, ...args_1], void 0, function* (episodeId, mediaId, server = StreamingServersEnum.MegaCloud) {
         if (episodeId.startsWith('http')) {
-            const serverUrl = new URL(episodeId);
+            const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.MegaCloud:
                     return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));

@@ -7,6 +7,7 @@ import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
+import type { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -29,11 +30,8 @@ export interface ExtractorRegistry {
   ) => {
     extract: (url: URL) => Promise<any>;
   };
-  Kwik: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
-    extract: (url: URL) => Promise<any>;
+  Kwik: (ctx?: ExtractorContext) => {
+    extract: (url: PolyURL) => Promise<any>;
   };
   MixDrop: new (
     proxyConfig?: any,
@@ -60,7 +58,7 @@ export interface ExtractorRegistry {
     extract: (url: URL, referer?: string) => Promise<any>;
   };
   MegaCloud: (ctx?: ExtractorContext) => {
-    extract: (url: URL, referer?: string) => Promise<any>;
+    extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
   StreamHub: new (
     proxyConfig?: any,
@@ -145,8 +143,8 @@ export interface ProviderContext {
   MangaParser: typeof MangaParser;
   extractors: ExtractorRegistry;
   extractorManager?: ExtractorManager;
-  URL: typeof PolyURL;
-  URLSearchParams: typeof PolyURLSearchParams;
+  PolyURL: typeof PolyURL;
+  PolyURLSearchParams: typeof PolyURLSearchParams;
   createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
   enums: {
     StreamingServers: typeof StreamingServers;
@@ -157,6 +155,9 @@ export interface ProviderContext {
     TvType: typeof TvType;
     Genres: typeof Genres;
     Topics: typeof Topics;
+  };
+  NativeConsumet: {
+    getDdosGuardCookiesWithWebView: typeof getDdosGuardCookiesWithWebView;
   };
 }
 

@@ -14,11 +14,11 @@ import {
 } from '../../../models';
 
 export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, extractors, enums, createCustomBaseUrl, URL } = ctx;
+  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
-    SubOrDub: SubOrSubEnum,
+    SubOrDub: SubOrDubEnum,
     MediaStatus: MediaStatusEnum,
     WatchListType: WatchListTypeEnum,
   } = enums;
@@ -384,15 +384,15 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
       const hasDub: boolean = $('div.film-stats div.tick div.tick-item.tick-dub').length > 0;
 
       if (hasSub) {
-        info.subOrDub = SubOrSubEnum.SUB;
+        info.subOrDub = SubOrDubEnum.SUB;
         info.hasSub = hasSub;
       }
       if (hasDub) {
-        info.subOrDub = SubOrSubEnum.DUB;
+        info.subOrDub = SubOrDubEnum.DUB;
         info.hasDub = hasDub;
       }
       if (hasSub && hasDub) {
-        info.subOrDub = SubOrSubEnum.BOTH;
+        info.subOrDub = SubOrDubEnum.BOTH;
       }
 
       // Fetch episodes
@@ -437,28 +437,15 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const fetchEpisodeSources = async (
     episodeId: string,
     server: StreamingServers = StreamingServersEnum.MegaCloud,
-    subOrDub: SubOrDub = SubOrSubEnum.SUB
+    subOrDub: SubOrDub = SubOrDubEnum.SUB
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
-      const serverUrl = new URL(episodeId);
+      const serverUrl = new PolyURL(episodeId);
       switch (server) {
         case StreamingServersEnum.MegaCloud:
           return {
             headers: { Referer: serverUrl.href },
             ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
-          };
-        case StreamingServersEnum.StreamSB:
-          return {
-            headers: { Referer: serverUrl.href },
-            sources: await new StreamSB().extract(serverUrl, true),
-          };
-        case StreamingServersEnum.StreamTape:
-          if (!StreamTape) {
-            throw new Error('StreamTape extractor is not available');
-          }
-          return {
-            headers: { 'Referer': serverUrl.href, 'User-Agent': ctx.USER_AGENT! },
-            sources: await new StreamTape().extract(serverUrl),
           };
         default:
           return {
@@ -479,7 +466,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
 
       const serverUrl: URL = new URL(servers[i]!.url);
 
-      return await fetchEpisodeSources(serverUrl.href, server, SubOrSubEnum.SUB);
+      return await fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
     } catch (err) {
       throw err;
     }
@@ -500,7 +487,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
       $(selector).each((_, element) => {
         const name = $(element).text().trim();
         const sourcesId = $(element).attr('data-id') || '';
-        const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrSubEnum.SUB : SubOrSubEnum.DUB;
+        const subOrDubValue = $(element).attr('data-type') === 'sub' ? SubOrDubEnum.SUB : SubOrDubEnum.DUB;
 
         scrapedServers.push({
           name,

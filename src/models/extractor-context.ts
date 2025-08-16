@@ -10,8 +10,8 @@ export interface ExtractorContext {
   axios: AxiosInstance;
   load: (html: string) => CheerioAPI;
   USER_AGENT?: string;
-  URL: typeof PolyURL;
-  URLSearchParams: typeof PolyURLSearchParams;
+  PolyURL: typeof PolyURL;
+  PolyURLSearchParams: typeof PolyURLSearchParams;
 }
 
 /**
@@ -22,12 +22,12 @@ export interface ExtractorContextConfig {
   /**
    * Custom axios instance (optional) - if not provided, a default one is created
    */
-  axios?: any;
+  axios?: AxiosInstance;
 
   /**
    * Custom cheerio load function (optional) - defaults to cheerio.load
    */
-  load?: (html: string) => any;
+  load?: (html: string) => CheerioAPI;
 
   /**
    * Custom user agent (optional) - defaults to a standard browser user agent
