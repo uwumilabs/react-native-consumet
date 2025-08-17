@@ -41,6 +41,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createProviderContext = createProviderContext;
 const cheerio_1 = require("cheerio");
@@ -48,6 +51,7 @@ const models_1 = require("../models");
 const extension_utils_1 = require("./extension-utils");
 const url_polyfill_1 = require("./url-polyfill");
 const NativeConsumet_1 = require("../NativeConsumet");
+const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 /**
  * Creates a provider context with sensible defaults for extensions
  *
@@ -71,13 +75,13 @@ function createProviderContext(config = {}) {
                 try {
                     // Dynamically import and create ExtractorManager to avoid circular dependency
                     const { ExtractorManager } = yield Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
-                    const extractorManager = new ExtractorManager({
+                    const extractorManager = new ExtractorManager(extension_registry_json_1.default, {
                         axios: config.axios || extension_utils_1.defaultExtractorContext.axios,
                         load: config.load || extension_utils_1.defaultExtractorContext.load,
                         userAgent: config.userAgent || extension_utils_1.defaultExtractorContext.USER_AGENT,
                     });
                     const extractor = yield extractorManager.loadExtractor(prop.toLowerCase());
-                    return typeof extractor === 'function' ? extractor(...args) : extractor;
+                    return extractor.extract(args[0], ...args.slice(1));
                 }
                 catch (error) {
                     console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);

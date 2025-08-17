@@ -17,6 +17,7 @@ import {
 import { defaultAxios, defaultStaticExtractors, defaultExtractorContext } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 import { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
+import extensionRegistry from '../extension-registry.json';
 
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -43,13 +44,13 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
         try {
           // Dynamically import and create ExtractorManager to avoid circular dependency
           const { ExtractorManager } = await import('./ExtractorManager');
-          const extractorManager = new ExtractorManager({
+          const extractorManager = new ExtractorManager(extensionRegistry, {
             axios: config.axios || defaultExtractorContext.axios,
             load: config.load || defaultExtractorContext.load,
             userAgent: config.userAgent || defaultExtractorContext.USER_AGENT,
           });
           const extractor = await extractorManager.loadExtractor(prop.toLowerCase() as StreamingServers);
-          return typeof extractor === 'function' ? extractor(...args) : extractor;
+          return extractor.extract(args[0], ...args.slice(1));
         } catch (error) {
           console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
           // Fallback to static if available

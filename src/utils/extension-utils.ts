@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ANIME, MOVIES, META } from '../providers';
 
 // Import extractors for fallback compatibility
 import {
@@ -53,7 +54,7 @@ export const defaultStaticExtractors = {
   AsianLoad: AsianLoad,
   Filemoon: Filemoon,
   GogoCDN: GogoCDN,
-  Kwik: Kwik,
+  Kwik: (ctx: ExtractorContext) => Kwik(ctx || defaultExtractorContext),
   MixDrop: MixDrop,
   Mp4Player: Mp4Player,
   Mp4Upload: Mp4Upload,
@@ -70,3 +71,44 @@ export const defaultStaticExtractors = {
   Voe: Voe,
   MegaUp: MegaUp,
 };
+
+// Define provider and extractor maps
+export const animeProviders = {
+  Zoro: ANIME.Zoro,
+  AnimePahe: ANIME.AnimePahe,
+};
+
+export const movieProviders = {
+  HiMovies: MOVIES.HiMovies,
+  MultiMovies: MOVIES.MultiMovies,
+  DramaCool: MOVIES.DramaCool,
+  MultiStream: MOVIES.MultiStream,
+};
+
+const metaProviders = {
+  Anilist: META.Anilist,
+  TMDB: META.TMDB,
+  MAL: META.Myanimelist,
+};
+
+export const extractors = {
+  GogoCDN: defaultStaticExtractors.GogoCDN,
+  StreamSB: defaultStaticExtractors.StreamSB,
+  StreamTape: defaultStaticExtractors.StreamTape,
+  MixDrop: defaultStaticExtractors.MixDrop,
+  Kwik: defaultStaticExtractors.Kwik,
+  RapidCloud: defaultStaticExtractors.RapidCloud,
+  StreamWish: defaultStaticExtractors.StreamWish,
+  Filemoon: defaultStaticExtractors.Filemoon,
+  Voe: defaultStaticExtractors.Voe,
+  AsianLoad: defaultStaticExtractors.AsianLoad,
+  StreamLare: defaultStaticExtractors.StreamLare,
+  VidMoly: defaultStaticExtractors.VidMoly,
+  MegaCloud: defaultStaticExtractors.MegaCloud,
+};
+
+// Type definitions for provider and extractor instances
+export type AnimeProvider = keyof typeof animeProviders;
+export type MovieProvider = keyof typeof movieProviders;
+export type MetaProvider = keyof typeof metaProviders;
+export type Extractor = keyof typeof extractors;

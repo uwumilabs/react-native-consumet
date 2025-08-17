@@ -13,17 +13,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExtractorManager = void 0;
-/* eslint-disable no-new-func */
-const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 const create_extractor_context_1 = __importDefault(require("./create-extractor-context"));
 const extension_utils_1 = require("./extension-utils");
 class ExtractorManager {
-    constructor(extractorConfig = {}) {
+    constructor(registry, extractorConfig = {}) {
         this.loadedExtractors = new Map();
         this.extractorRegistry = new Map();
         this.extractorContext = (0, create_extractor_context_1.default)(extractorConfig);
         this.initializeStaticExtractors();
-        this.loadExtractorsFromRegistry();
+        this.loadRegistry(registry);
         //console.log('🔧 Dynamic Extractor Manager initialized');
     }
     /**
@@ -35,12 +33,12 @@ class ExtractorManager {
     /**
      * Load extractors from the unified extension registry
      */
-    loadExtractorsFromRegistry() {
+    loadRegistry(registry) {
         try {
             // Extract extractors from all extensions in the registry
-            extension_registry_json_1.default.extensions.forEach((extension) => {
+            registry.extensions.forEach((extension) => {
                 if (extension.extractors) {
-                    extension_registry_json_1.default.extractors.forEach((extractor) => {
+                    registry.extractors.forEach((extractor) => {
                         const manifest = {
                             name: extractor.name,
                             version: extractor.version,

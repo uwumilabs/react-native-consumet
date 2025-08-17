@@ -11,5 +11,5 @@ export default {
   NetflixMirror,
   HiMovies,
   MultiStream,
-  createHiMovies
+  createHiMovies,
 };

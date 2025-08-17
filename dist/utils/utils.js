@@ -248,7 +248,7 @@ function cleanTitle(title) {
         .replace(/\([^\(]*\)$/gim, '')
         .replace(/season/g, '')
         .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
-        .replace(/  /g, ' ')
+        .replace(/ {2}/g, ' ')
         .replace(/"/g, '')
         .trimEnd()));
 }
@@ -258,7 +258,7 @@ function removeSpecialChars(title) {
     return title
         .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
         .replace(/[^A-Za-z0-9\-= ]/gim, '')
-        .replace(/  /g, ' ');
+        .replace(/ {2}/g, ' ');
 }
 function transformSpecificVariations(title) {
     if (!title)

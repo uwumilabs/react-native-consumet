@@ -2,44 +2,36 @@
 
 import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
-import {
-  type IAnimeResult,
-  type IMovieResult,
-  type ISearch,
-  AnimeParser,
-  MovieParser,
-  type ProviderContextConfig,
-} from '../models';
-
+import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
+import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './extension-utils';
 
 export class ProviderManager {
   private providerContext: ProviderContext;
   private loadedExtensions = new Map<string, any>();
   private extensionManifest = new Map<string, ExtensionManifest>();
 
-  constructor(providerConfig: ProviderContextConfig = {}) {
+  constructor(registry: typeof extensionRegistry, providerConfig: ProviderContextConfig = {}) {
     this.providerContext = createProviderContext(providerConfig);
-    this.loadRegistry();
-    //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
+    this.loadRegistry(registry);
   }
 
   /**
    * Load and parse the extensionManifest
    */
-  private loadRegistry(): void {
+  private loadRegistry(registry: typeof extensionRegistry): void {
     try {
-      extensionRegistry.extensions.forEach((extension: any) => {
+      registry.extensions.forEach((extension: any) => {
         // Convert old format to new format if needed
         const manifest: ExtensionManifest = {
           ...extension,
           category: extension.category as any, // Cast to avoid type error
-          factoryName: extension.factoryName || ((extension as any).factories ? (extension as any).factories[0] : ''),
+          factoryName: extension.factoryName,
         };
         this.extensionManifest.set(extension.id, manifest);
       });
-      //console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
+      //console.log(`📚 Loaded ${extensions.length} extensions from extensionManifest`);
     } catch (error) {
       console.error('❌ Failed to load extensionManifest:', error);
     }
@@ -69,7 +61,15 @@ export class ProviderManager {
   /**
    * Load an extension by ID from the extensionManifest
    */
-  async loadExtension(extensionId: string): Promise<AnimeParser | MovieParser> {
+  async loadExtension<T extends AnimeProvider | MovieProvider>(
+    extensionId: T
+  ): Promise<
+    T extends AnimeProvider
+      ? InstanceType<(typeof animeProviders)[T]>
+      : T extends MovieProvider
+        ? InstanceType<(typeof movieProviders)[T]>
+        : never
+  > {
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
@@ -111,7 +111,11 @@ export class ProviderManager {
       if (!factoryName) {
         throw new Error(`No factory function available for extension ${extensionId}`);
       }
-      const providerInstance = await this.executeProviderCode(providerCode, factoryName, metadata);
+      const providerInstance = await this.executeProviderCode(
+        providerCode,
+        factoryName,
+        metadata as ExtensionManifest & { id: T }
+      );
 
       // Cache the loaded extension
       this.loadedExtensions.set(extensionId, providerInstance);
@@ -133,11 +137,17 @@ export class ProviderManager {
   /**
    * Execute provider code and create instance (extensionManifest-based)
    */
-  public async executeProviderCode(
+  public async executeProviderCode<T extends AnimeProvider | MovieProvider>(
     code: string,
     factoryName: string,
-    metadata: ExtensionManifest
-  ): Promise<AnimeParser | MovieParser> {
+    metadata: ExtensionManifest & { id: T }
+  ): Promise<
+    T extends AnimeProvider
+      ? InstanceType<(typeof animeProviders)[T]>
+      : T extends MovieProvider
+        ? InstanceType<(typeof movieProviders)[T]>
+        : never
+  > {
     const context = this.createExecutionContext();
 
     try {
@@ -349,8 +359,8 @@ export class ProviderManager {
   /**
    * Get anime provider
    */
-  async getAnimeProvider(extensionId: string): Promise<AnimeParser> {
-    const metadata = this.getExtensionMetadata(extensionId);
+  async getAnimeProvider<T extends AnimeProvider>(extensionId: T): Promise<InstanceType<(typeof animeProviders)[T]>> {
+    const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
     }
@@ -360,14 +370,14 @@ export class ProviderManager {
     }
 
     const instance = await this.loadExtension(extensionId);
-    return instance as AnimeParser;
+    return instance;
   }
 
   /**
    * Get movie provider
    */
-  async getMovieProvider(extensionId: string): Promise<MovieParser> {
-    const metadata = this.getExtensionMetadata(extensionId);
+  async getMovieProvider<T extends MovieProvider>(extensionId: T): Promise<InstanceType<(typeof movieProviders)[T]>> {
+    const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
     }
@@ -377,7 +387,7 @@ export class ProviderManager {
     }
 
     const instance = await this.loadExtension(extensionId);
-    return instance as MovieParser;
+    return instance;
   }
 
   /**
@@ -385,13 +395,6 @@ export class ProviderManager {
    */
   getProviderContext(): ProviderContext {
     return this.providerContext;
-  }
-
-  /**
-   * Get extensionManifest metadata
-   */
-  getRegistryMetadata() {
-    return extensionRegistry.metadata;
   }
 
   /**
@@ -405,7 +408,7 @@ export class ProviderManager {
     const extensions = this.getExtensionsByCategory(category);
     const searchPromises = extensions.map(async (ext) => {
       try {
-        const provider = await this.loadExtension(ext.id);
+        const provider = await this.loadExtension(ext.id as AnimeProvider | MovieProvider);
         const results = (await provider.search(query, page)) as ISearch<IAnimeResult | IMovieResult>;
         return { extensionId: ext.id, results };
       } catch (error) {

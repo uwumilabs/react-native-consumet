@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager, ANIME } from 'react-native-consumet';
+import { ProviderManager, ANIME, ExtensionRegistry, type IAnimeResult, type ISearch } from 'react-native-consumet';
 import { AnimeParser } from '../../../../src/models';
-import Zoro from '../../../../src/providers/anime/zoro/zoro';
+import type { AnimeProvider, animeProviders } from '../../../../src/utils/extension-utils';
 
 const ExtAnime = () => {
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<IAnimeResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
-  const [provider, setProvider] = useState<Zoro | null>(null);
+  const [selectedExtension, setSelectedExtension] = useState<string>('Zoro');
+  const [provider, setProvider] = useState<AnimeParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
   useEffect(() => {
@@ -19,20 +19,17 @@ const ExtAnime = () => {
       try {
         console.log('🚀 Initializing ProviderManager for anime providers...');
         
-        // Create ProviderManager instance with registry
-        const manager = new ProviderManager();
+        const manager = new ProviderManager(ExtensionRegistry);
         setProviderManager(manager);
         
-        // Get available anime extensions from registry
-        const extensions = manager.getAvailableExtensions().filter(ext => ext.category === 'anime');
+        const extensions = manager.getExtensionsByCategory('anime');
         console.log('📚 Available anime extensions:', extensions.map(ext => ext.id));
         setAvailableExtensions(extensions);
         
-        // Load default extension (Zoro)
         if (extensions.length > 0) {
           const defaultExtension = extensions.find(ext => ext.id === selectedExtension) || extensions[0];
           if (defaultExtension) {
-            await loadExtension(manager, defaultExtension.id);
+            await loadExtension(manager, defaultExtension.id as AnimeProvider);
           }
         }
         
@@ -47,27 +44,11 @@ const ExtAnime = () => {
     initializeProviderManager();
   }, []);
 
-  const loadExtension = async (manager: ProviderManager, extensionId: string) => {
+  const loadExtension = async(manager: ProviderManager, extensionId: AnimeProvider) => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
       
-      // Get extension metadata
-      const metadata = manager.getExtensionMetadata(extensionId);
-      console.log('📋 Extension metadata:', {
-        id: metadata?.id,
-        name: metadata?.name,
-        category: metadata?.category,
-        main: metadata?.main,
-        factories: metadata?.factoryName
-      });
-      
-      // Ensure this is an anime provider
-      if (metadata?.category !== 'anime') {
-        throw new Error(`Expected anime provider, got ${metadata?.category}`);
-      }
-      
-      // Load the anime extension from GitHub registry
-      const providerInstance = await manager.getAnimeProvider(extensionId) as Zoro;
+      const providerInstance = await manager.loadExtension(extensionId);
       setProvider(providerInstance);
       
       console.log('✅ Anime extension loaded successfully:', {
@@ -76,51 +57,21 @@ const ExtAnime = () => {
         hasFetchAnimeInfo: typeof providerInstance.fetchAnimeInfo === 'function'
       });
       
-      // Test search functionality
-      await testSearch(providerInstance);
-      
-    } catch (err: any) {
-      console.error(`❌ Failed to load anime extension ${extensionId}:`, err);
-      console.error('Full error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-      Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
-    }
-  };
-
-  const testSearch = async (providerInstance: Zoro) => {
-    try {
-      console.log('🔍 Testing anime search functionality...');
-      
       const searchQuery = 'Naruto';
-      const searchResults = await providerInstance.search(searchQuery) as any;
+      const searchResults = await providerInstance.search(searchQuery) as ISearch<IAnimeResult>;
       
-      console.log('🎯 Anime search results:', {
-        query: searchQuery,
-        currentPage: searchResults?.currentPage,
-        hasNextPage: searchResults?.hasNextPage,
-        resultCount: searchResults?.results?.length
-      });
+      console.log('🎯 Anime search results:', searchResults);
       
       if (searchResults?.results && searchResults.results.length > 0) {
-        setResults(searchResults.results.slice(0, 10)); // Show first 10 results
+        setResults(searchResults.results.slice(0, 10));
         console.log('✅ Anime search successful, showing results');
         
-        // Test fetching anime info and episode sources
-        const info = await providerInstance.fetchAnimeInfo(searchResults.results[0].id);
-        console.log('📺 Anime info fetched:', {
-          title: info.title,
-          episodeCount: info.episodes?.length
-        });
+        const info = await providerInstance.fetchAnimeInfo(searchResults.results[0]!.id);
+        console.log('📺 Anime info fetched:', info);
         
         if (info.episodes && info.episodes.length > 0 && info.episodes[0]) {
           const sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
-          console.log('🎬 Episode sources fetched:', {
-            sourceCount: sources.sources?.length,
-            quality: sources.sources?.[0]?.quality
-          });
+          console.log('🎬 Episode sources fetched:', sources);
         }
       } else {
         console.log('⚠️ No anime search results found');
@@ -128,8 +79,8 @@ const ExtAnime = () => {
       }
       
     } catch (err: any) {
-      console.error('❌ Anime search failed:', err);
-      setResults([]);
+      console.error(`❌ Failed to load anime extension ${extensionId}:`, err);
+      Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
     }
   };
 
@@ -140,7 +91,7 @@ const ExtAnime = () => {
     setResults([]);
     setLoading(true);
     
-    await loadExtension(providerManager, extensionId);
+    await loadExtension(providerManager, extensionId as AnimeProvider);
     setLoading(false);
   };
 
@@ -148,7 +99,6 @@ const ExtAnime = () => {
     if (!provider) return;
     
     setLoading(true);
-    await testSearch(provider);
     setLoading(false);
   };
 
@@ -161,7 +111,6 @@ const ExtAnime = () => {
         Testing anime providers from GitHub registry
       </Text>
       
-      {/* Extension Selector */}
       <View style={{ marginBottom: 16 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>
           Available Anime Extensions:
@@ -191,7 +140,6 @@ const ExtAnime = () => {
         </ScrollView>
       </View>
 
-      {/* Provider Info */}
       {provider && (
         <View style={{ marginBottom: 16, backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8 }}>
           <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#2c3e50' }}>
@@ -235,7 +183,9 @@ const ExtAnime = () => {
               borderLeftColor: '#e74c3c' 
             }}>
               <Text style={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                {item.title || 'No Title'}
+                {typeof item.title === 'string'
+                  ? item.title
+                  : (item.title?.english || item.title?.romaji || item.title?.native || 'No Title')}
               </Text>
               <Text style={{ color: '#888', fontSize: 12 }}>ID: {item.id}</Text>
               {item.type && <Text style={{ color: '#666', fontSize: 12 }}>Type: {item.type}</Text>}

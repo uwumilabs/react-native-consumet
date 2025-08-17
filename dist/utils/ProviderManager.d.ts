@@ -1,11 +1,13 @@
 import type { ProviderContext } from '../models/provider-context';
-import { type IAnimeResult, type IMovieResult, type ISearch, AnimeParser, MovieParser, type ProviderContextConfig } from '../models';
+import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
+import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
+import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './extension-utils';
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;
     private extensionManifest;
-    constructor(providerConfig?: ProviderContextConfig);
+    constructor(registry: typeof extensionRegistry, providerConfig?: ProviderContextConfig);
     /**
      * Load and parse the extensionManifest
      */
@@ -25,11 +27,13 @@ export declare class ProviderManager {
     /**
      * Load an extension by ID from the extensionManifest
      */
-    loadExtension(extensionId: string): Promise<AnimeParser | MovieParser>;
+    loadExtension<T extends AnimeProvider | MovieProvider>(extensionId: T): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
     /**
      * Execute provider code and create instance (extensionManifest-based)
      */
-    executeProviderCode(code: string, factoryName: string, metadata: ExtensionManifest): Promise<AnimeParser | MovieParser>;
+    executeProviderCode<T extends AnimeProvider | MovieProvider>(code: string, factoryName: string, metadata: ExtensionManifest & {
+        id: T;
+    }): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
     /**
      * Create execution context for provider code
      */
@@ -49,25 +53,15 @@ export declare class ProviderManager {
     /**
      * Get anime provider
      */
-    getAnimeProvider(extensionId: string): Promise<AnimeParser>;
+    getAnimeProvider<T extends AnimeProvider>(extensionId: T): Promise<InstanceType<(typeof animeProviders)[T]>>;
     /**
      * Get movie provider
      */
-    getMovieProvider(extensionId: string): Promise<MovieParser>;
+    getMovieProvider<T extends MovieProvider>(extensionId: T): Promise<InstanceType<(typeof movieProviders)[T]>>;
     /**
      * Get the provider context
      */
     getProviderContext(): ProviderContext;
-    /**
-     * Get extensionManifest metadata
-     */
-    getRegistryMetadata(): {
-        name: string;
-        description: string;
-        version: string;
-        lastUpdated: string;
-        url: string;
-    };
     /**
      * Search across all loaded providers of a specific category
      */

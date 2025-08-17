@@ -15,26 +15,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
-const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 class ProviderManager {
-    constructor(providerConfig = {}) {
+    constructor(registry, providerConfig = {}) {
         this.loadedExtensions = new Map();
         this.extensionManifest = new Map();
         this.providerContext = (0, create_provider_context_1.default)(providerConfig);
-        this.loadRegistry();
-        //console.log('🚀 Registry-based Provider Manager initialized with dynamic extractors');
+        this.loadRegistry(registry);
     }
     /**
      * Load and parse the extensionManifest
      */
-    loadRegistry() {
+    loadRegistry(registry) {
         try {
-            extension_registry_json_1.default.extensions.forEach((extension) => {
+            registry.extensions.forEach((extension) => {
                 // Convert old format to new format if needed
-                const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName || (extension.factories ? extension.factories[0] : '') });
+                const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName });
                 this.extensionManifest.set(extension.id, manifest);
             });
-            //console.log(`📚 Loaded ${extensionRegistry.extensions.length} extensions from extensionManifest`);
+            //console.log(`📚 Loaded ${extensions.length} extensions from extensionManifest`);
         }
         catch (error) {
             console.error('❌ Failed to load extensionManifest:', error);
@@ -349,12 +347,6 @@ class ProviderManager {
      */
     getProviderContext() {
         return this.providerContext;
-    }
-    /**
-     * Get extensionManifest metadata
-     */
-    getRegistryMetadata() {
-        return extension_registry_json_1.default.metadata;
     }
     /**
      * Search across all loaded providers of a specific category

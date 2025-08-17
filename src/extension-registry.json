@@ -1,11 +1,4 @@
 {
-  "metadata": {
-    "name": "React Native Consumet Official Registry",
-    "description": "Official extension registry for React Native Consumet providers",
-    "version": "1.0.0",
-    "lastUpdated": "2025-08-05T00:00:00Z",
-    "url": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/extensions/registry.json"
-  },
   "extractors": [
     {
       "name": "MegaCloud",
@@ -21,7 +14,7 @@
   "extensions": [
     {
       "id": "zoro",
-      "name": "HiAnime",
+      "name": "Zoro",
       "description": "High-quality anime streaming from Zoro (hianime.to) with multiple servers and subtitles",
       "version": "1.0.0",
       "author": {

@@ -257,7 +257,7 @@ export function cleanTitle(title: string | undefined | null): string {
         .replace(/\([^\(]*\)$/gim, '')
         .replace(/season/g, '')
         .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match: any) => romanToArabic(match).toString())
-        .replace(/  /g, ' ')
+        .replace(/ {2}/g, ' ')
         .replace(/"/g, '')
         .trimEnd()
     )
@@ -270,7 +270,7 @@ export function removeSpecialChars(title: string | undefined | null): string {
   return title
     .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
     .replace(/[^A-Za-z0-9\-= ]/gim, '')
-    .replace(/  /g, ' ');
+    .replace(/ {2}/g, ' ');
 }
 
 export function transformSpecificVariations(title: string | undefined | null): string {

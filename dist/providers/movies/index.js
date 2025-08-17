@@ -15,6 +15,6 @@ exports.default = {
     NetflixMirror: netflixmirror_1.default,
     HiMovies: himovies_1.default,
     MultiStream: multistream_1.default,
-    createHiMovies: create_himovies_1.createHiMovies
+    createHiMovies: create_himovies_1.createHiMovies,
 };
 //# sourceMappingURL=index.js.map

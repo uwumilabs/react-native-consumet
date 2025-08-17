@@ -16,10 +16,10 @@ A powerful React Native library for accessing anime, movie, and media content th
 ## Basic Usage
 
 ```typescript
-import { ProviderManager } from 'react-native-consumet';
+import { ProviderManager, extensionRegistry } from 'react-native-consumet';
 
 // Initialize the provider manager
-const providerManager = new ProviderManager();
+const providerManager = new ProviderManager(extensionRegistry);
 
 // Load an anime provider
 const provider = await providerManager.getAnimeProvider('zoro');
@@ -68,14 +68,17 @@ const zoro = new ANIME.Zoro();
 The main class for managing and accessing providers.
 
 ```typescript
-const providerManager = new ProviderManager();
+const providerManager = new ProviderManager(extensionRegistry);
 
 // Get available providers
 const extensions = providerManager.getAvailableExtensions();
 
 // Load specific provider types
-const animeProvider = await providerManager.getAnimeProvider('zoro') as Zoro; // Type assertion for better type safety
-const movieProvider = await providerManager.getMovieProvider('himovies') as HiMovies; // Type assertion for better type safety
+const animeProvider = await providerManager.getAnimeProvider('zoro'); 
+const movieProvider = await providerManager.getMovieProvider('himovies'); 
+
+// You can also use loadExtension directly
+const zoroProvider = await providerManager.loadExtension('zoro');
 ```
 
 ### ExtractorManager
@@ -83,9 +86,9 @@ const movieProvider = await providerManager.getMovieProvider('himovies') as HiMo
 Handles video source extraction from streaming sites.
 
 ```typescript
-import { ExtractorManager } from 'react-native-consumet';
+import { ExtractorManager, extensionRegistry } from 'react-native-consumet';
 
-const extractorManager = new ExtractorManager();
+const extractorManager = new ExtractorManager(extensionRegistry);
 const extractor = await extractorManager.loadExtractor('megacloud');
 const sources = await extractor.extract(embedUrl, referer);
 ```
@@ -155,13 +158,13 @@ However, `ExtractorManager` is useful for:
 *   Directly accessing and testing specific extractors.
 
 ```typescript
-import { ExtractorManager, PolyURL } from 'react-native-consumet';
+import { ExtractorManager, extensionRegistry, PolyURL } from 'react-native-consumet';
 
 const extractVideoSources = async (embedUrl: string, referer?: string) => {
   try {
-    const extractorManager = new ExtractorManager();
+    const extractorManager = new ExtractorManager(extensionRegistry);
     // Load a specific extractor by its ID.
-    // This method handles dynamic loading from the registry and falls back to static extractors.
+   // This method handles dynamic loading from the registry and falls back to static extractors.
     const extractor = await extractorManager.loadExtractor('megacloud');
     
     // Assuming 'provider' and 'episodeId' are available from your context
@@ -184,19 +187,17 @@ const extractVideoSources = async (embedUrl: string, referer?: string) => {
 You can also use the cached extractor code to reduce the need to load it on every request:
 
 ```typescript
-import { ExtractorManager, PolyURL, defaultExtractorContext } from 'react-native-consumet';
-// and metadata is the ExtractorInfo for 'megacloud'
-import { MegaCloud } from 'react-native-consumet/src/extractors/megacloud'; // Import for type inference
+import { ExtractorManager, extensionRegistry, PolyURL, defaultExtractorContext } from 'react-native-consumet';
 
 const extractVideoSourcesDynamic = async (codeString: string, metadata: any, embedUrl: string, referer?: string) => {
   try {
-    const extractorManager = new ExtractorManager();
-    // Execute arbitrary extractor code. The return type will be 'unknown' or 'any'
-    // unless explicitly cast.
+    const extractorManager = new ExtractorManager(extensionRegistry);
+    // Execute arbitrary extractor code.
     const extractor = await extractorManager.executeExtractorCode(
       codeString,
       metadata
-    ) as typeof MegaCloud; // Cast to the expected type for better type safety
+    );
+    
     
     // Assuming 'provider' and 'episodeId' are available from your context
     const servers = await provider.fetchEpisodeServers(episodeId); 
@@ -504,7 +505,7 @@ export const useMultiProvider = () => {
 
 ```typescript
 class ProviderManager {
-  constructor(config?: ProviderManagerConfig)
+  constructor(registry: typeof extensionRegistry, config?: ProviderContextConfig)
   
   // Extension management
   getAvailableExtensions(): ExtensionManifest[]
@@ -512,31 +513,40 @@ class ProviderManager {
   getExtensionMetadata(extensionId: string): ExtensionManifest
   
   // Provider loading
-  getAnimeProvider(extensionId: string): Promise<AnimeProviderInstance>
-  getMovieProvider(extensionId: string): Promise<MovieProviderInstance>
-  getMangaProvider(extensionId: string): Promise<MangaProviderInstance>
-  getLightNovelProvider(extensionId: string): Promise<LightNovelProviderInstance>
-  
-  // Generic provider access
-  getProvider(extensionId: string): Promise<BaseProviderInstance>
+  loadExtension<T extends AnimeProvider | MovieProvider>(
+    extensionId: T
+  ): Promise<
+    T extends AnimeProvider
+      ? InstanceType<(typeof animeProviders)[T]>
+      : T extends MovieProvider
+        ? InstanceType<(typeof movieProviders)[T]>
+        : never
+  >
+  getAnimeProvider<T extends AnimeProvider>(extensionId: T, ...args: any[]): Promise<InstanceType<(typeof animeProviders)[T]>>
+  getMovieProvider<T extends MovieProvider>(extensionId: T, ...args: any[]): Promise<InstanceType<(typeof movieProviders)[T]>>
   
   // Cross-provider operations
   searchAcrossProviders(
     category: ProviderType, 
     query: string, 
     page?: number
-  ): Promise<CrossProviderSearchResult[]>
+  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult> }>>
   
   // Context and metadata
   getProviderContext(): ProviderContext
-  getRegistryMetadata(): RegistryMetadata
   
   // Provider code execution
-  executeProviderCode(
-    code: string, 
-    factoryName: string, 
-    metadata: ExtensionManifest
-  ): Promise<AnimeParser | MovieParser | MangaParser | LightNovelParser>
+  executeProviderCode<T extends AnimeProvider | MovieProvider>(
+    code: string,
+    factoryName: string,
+    metadata: ExtensionManifest & { id: T }
+  ): Promise<
+    T extends AnimeProvider
+      ? InstanceType<typeof animeProviders[T]>
+      : T extends MovieProvider
+        ? InstanceType<typeof movieProviders[T]>
+        : never
+  >
 }
 ```
 
@@ -544,20 +554,16 @@ class ProviderManager {
 
 ```typescript
 class ExtractorManager {
-  constructor(context?: ExtractorContext)
+  constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig)
   
   // Extractor loading
-  loadExtractor(extractorId: string): Promise<VideoExtractor>
+  loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultStaticExtractors)[T]>
   
   // Extractor Metadata
-  getExtractorMetadata(extractorId: string): Promise<ExtractorMetadata>
+  getExtractorMetadata(extractorId: StreamingServers): ExtractorInfo
   
   // Execute extractor code
-  executeExtractorCode(
-    code: string, 
-    metadata: ExtractorMetadata
-  ): Promise<VideoExtractor>  
-  
+  executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor>  
 }
 ```
 
@@ -584,8 +590,13 @@ import {
   defaultAxios, // default axios instance
   extractorContext,
   defaultStaticExtractors,
-   } from 'react-native-consumet';
----
+  extensionRegistry,
+  type AnimeProvider, 
+  type animeProviders, 
+  type MovieProvider, 
+  type movieProviders
+} from 'react-native-consumet';
+```
 
 
 ## Additional Resources

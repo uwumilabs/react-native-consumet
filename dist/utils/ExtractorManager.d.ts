@@ -1,11 +1,12 @@
 import type { IVideoExtractor, StreamingServers, ExtractorContextConfig } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
+import extensionRegistry from '../extension-registry.json';
 export declare class ExtractorManager {
     private loadedExtractors;
     private extractorRegistry;
     private staticExtractors;
     private extractorContext;
-    constructor(extractorConfig?: ExtractorContextConfig);
+    constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig);
     /**
      * Initialize static extractors as fallbacks
      */
@@ -13,7 +14,7 @@ export declare class ExtractorManager {
     /**
      * Load extractors from the unified extension registry
      */
-    private loadExtractorsFromRegistry;
+    private loadRegistry;
     /**
      * Get extractor metadata by ID
      */
@@ -21,7 +22,7 @@ export declare class ExtractorManager {
     /**
      * Load an extractor by ID from the registry
      */
-    loadExtractor(extractorId: StreamingServers): Promise<any>;
+    loadExtractor(extractorId: StreamingServers): Promise<IVideoExtractor>;
     /**
      * Execute extractor code and create instance
      */

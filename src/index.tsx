@@ -17,6 +17,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 // Provider metadata (catalog of built-in providers)
 import { PROVIDERS_LIST } from './utils/providers-list';
 
+import ExtensionRegistry from './extension-registry.json';
 // Utils (contexts, and provider management)
 import {
   createProviderContext,
@@ -159,7 +160,7 @@ export type {
   IMovieSeason,
   ExtensionManifest,
 };
-
+export { ExtensionRegistry };
 // Utils: context creation and provider management
 export {
   createProviderContext,
