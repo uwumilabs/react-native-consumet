@@ -8,7 +8,7 @@ const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('Zoro');
+  const [selectedExtension, setSelectedExtension] = useState<string>('animepahe');
   const [provider, setProvider] = useState<AnimeParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 

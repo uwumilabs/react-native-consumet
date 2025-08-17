@@ -11,7 +11,7 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const animekai = new ANIME.Zoro();
+    const animekai = new ANIME.AnimePahe();
     const search = await animekai.search('dandadan');
     console.log(search);
     const info = await animekai.fetchAnimeInfo(search.results[0]!.id);
