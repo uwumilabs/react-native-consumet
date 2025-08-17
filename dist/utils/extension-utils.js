@@ -1,295 +1,87 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.evaluateProviderCode = evaluateProviderCode;
-exports.loadProviderFromURL = loadProviderFromURL;
-exports.createProviderFromURL = createProviderFromURL;
-exports.loadMultipleProviders = loadMultipleProviders;
-exports.validateProviderModule = validateProviderModule;
-exports.clearExtensionCache = clearExtensionCache;
-exports.getCachedExtensions = getCachedExtensions;
-exports.testProviderURL = testProviderURL;
-const create_provider_context_1 = require("./create-provider-context");
-/**
- * Simple extension cache
- */
-const extensionCache = new Map();
-/**
- * Safely evaluate provider code with proper error handling
- * Note: Uses Function constructor which is necessary for dynamic code loading
- * Consider the security implications in your environment
- */
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-function evaluateProviderCode(code, allowedGlobals = ['console', 'Promise', 'URL', 'fetch']) {
-    try {
-        // Basic security: Remove potentially dangerous functions
-        const sanitizedCode = code
-            .replace(/eval\s*\(/g, '// eval(')
-            .replace(/Function\s*\(/g, '// Function(')
-            .replace(/setTimeout\s*\(/g, '// setTimeout(')
-            .replace(/setInterval\s*\(/g, '// setInterval(');
-        // Create a limited scope for execution
-        const allowedScope = allowedGlobals.reduce((acc, globalVar) => {
-            try {
-                if (typeof globalThis !== 'undefined' && globalThis[globalVar]) {
-                    acc[globalVar] = globalThis[globalVar];
-                }
-            }
-            catch {
-                // Ignore errors accessing globals
-            }
-            return acc;
-        }, {});
-        // Create the evaluation function
-        // eslint-disable-next-line @typescript-eslint/no-implied-eval
-        const func = new Function(...Object.keys(allowedScope), `
-      const module = { exports: {} };
-      const exports = module.exports;
-      
-      ${sanitizedCode}
-      
-      // Support both CommonJS and ES6 exports
-      return typeof module.exports === 'object' && Object.keys(module.exports).length > 0 
-        ? module.exports 
-        : this;
-      `);
-        // Execute with limited scope
-        const result = func.apply({}, Object.values(allowedScope));
-        if (!result || typeof result !== 'object') {
-            throw new Error('Provider code must export an object with provider factory functions');
-        }
-        return result;
-    }
-    catch (error) {
-        throw new Error(`Failed to evaluate provider code: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}
-/**
- * Load a provider extension from a URL
- *
- * @param url - URL to fetch the provider code from
- * @param config - Configuration options
- * @returns Promise resolving to the provider module
- *
- * @example
- * ```typescript
- * // Load from GitHub
- * const module = await loadProviderFromURL(
- *   'https://raw.githubusercontent.com/user/repo/main/providers/custom-anime.js'
- * );
- *
- * const provider = module.createCustomAnime(context);
- * const results = await provider.search('Naruto');
- * ```
- */
-async function loadProviderFromURL(url, config = {}) {
-    const { fetch: customFetch = globalThis.fetch || require('node-fetch'), timeout = 10000, headers = {}, cache = true } = config;
-    // Check cache first
-    if (cache && extensionCache.has(url)) {
-        return extensionCache.get(url);
-    }
-    try {
-        // Create timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error(`Extension loading timeout after ${timeout}ms`)), timeout);
-        });
-        // Fetch the provider code
-        const fetchPromise = customFetch(url).then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
-            }
-            return response.text();
-        });
-        const code = await Promise.race([fetchPromise, timeoutPromise]);
-        // Evaluate the code
-        const module = evaluateProviderCode(code);
-        // Cache the result
-        if (cache) {
-            extensionCache.set(url, module);
-        }
-        return module;
-    }
-    catch (error) {
-        throw new Error(`Failed to load provider from ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}
-/**
- * Create a provider instance from a URL with automatic context injection
- *
- * @param url - URL to fetch the provider from
- * @param factoryName - Name of the factory function to call (e.g., 'createZoro')
- * @param config - Configuration options
- * @returns Promise resolving to the configured provider instance
- *
- * @example
- * ```typescript
- * // Automatically inject context and create provider
- * const zoro = await createProviderFromURL(
- *   'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/zoro.js',
- *   'createZoro'
- * );
- *
- * const results = await zoro.search('One Piece');
- * ```
- */
-async function createProviderFromURL(url, factoryName, config = {}) {
-    const { context = (0, create_provider_context_1.createProviderContext)() } = config;
-    const module = await loadProviderFromURL(url, config);
-    if (!module[factoryName] || typeof module[factoryName] !== 'function') {
-        throw new Error(`Provider module does not export a function named '${factoryName}'`);
-    }
-    return module[factoryName](context);
-}
-/**
- * Load multiple providers from different URLs
- *
- * @param providers - Array of provider configurations
- * @param config - Global configuration options
- * @returns Promise resolving to an object with all loaded providers
- *
- * @example
- * ```typescript
- * const providers = await loadMultipleProviders([
- *   { name: 'zoro', url: 'https://example.com/zoro.js', factory: 'createZoro' },
- *   { name: 'gogoanime', url: 'https://example.com/gogo.js', factory: 'createGogoanime' }
- * ]);
- *
- * const zoroResults = await providers.zoro.search('Naruto');
- * const gogoResults = await providers.gogoanime.search('Naruto');
- * ```
- */
-async function loadMultipleProviders(providers, config = {}) {
-    const results = {};
-    // Load all providers in parallel
-    const promises = providers.map(async (provider) => {
-        const providerConfig = {
-            ...config,
-            context: provider.context || config.context || (0, create_provider_context_1.createProviderContext)()
-        };
-        const instance = await createProviderFromURL(provider.url, provider.factory, providerConfig);
-        return { name: provider.name, instance };
-    });
-    const loadedProviders = await Promise.allSettled(promises);
-    loadedProviders.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            results[result.value.name] = result.value.instance;
-        }
-        else {
-            const providerName = providers[index]?.name || 'unknown';
-            console.error(`Failed to load provider '${providerName}':`, result.reason);
-        }
-    });
-    return results;
-}
-/**
- * Validate that a provider module has the expected structure
- *
- * @param module - The provider module to validate
- * @param expectedFactories - Array of expected factory function names
- * @returns Validation result with details
- *
- * @example
- * ```typescript
- * const validation = validateProviderModule(module, ['createZoro']);
- * if (!validation.isValid) {
- *   console.error('Invalid provider:', validation.errors);
- * }
- * ```
- */
-function validateProviderModule(module, expectedFactories = []) {
-    const errors = [];
-    const factories = [];
-    if (!module || typeof module !== 'object') {
-        errors.push('Provider module must be an object');
-        return { isValid: false, errors, factories };
-    }
-    // Find all factory functions
-    Object.keys(module).forEach(key => {
-        if (typeof module[key] === 'function') {
-            factories.push(key);
-        }
-    });
-    // Check for expected factories
-    expectedFactories.forEach(factoryName => {
-        if (!module[factoryName] || typeof module[factoryName] !== 'function') {
-            errors.push(`Missing required factory function: ${factoryName}`);
-        }
-    });
-    // Check if at least one factory exists
-    if (factories.length === 0) {
-        errors.push('Provider module must export at least one factory function');
-    }
-    return {
-        isValid: errors.length === 0,
-        errors,
-        factories
-    };
-}
-/**
- * Clear the extension cache
- *
- * @param url - Specific URL to clear, or undefined to clear all
- *
- * @example
- * ```typescript
- * // Clear specific extension
- * clearExtensionCache('https://example.com/provider.js');
- *
- * // Clear all cached extensions
- * clearExtensionCache();
- * ```
- */
-function clearExtensionCache(url) {
-    if (url) {
-        extensionCache.delete(url);
-    }
-    else {
-        extensionCache.clear();
-    }
-}
-/**
- * Get information about cached extensions
- *
- * @returns Array of cached extension URLs
- */
-function getCachedExtensions() {
-    return Array.from(extensionCache.keys());
-}
-/**
- * Test if a provider URL is accessible and valid
- *
- * @param url - URL to test
- * @param config - Configuration options
- * @returns Promise resolving to test result
- *
- * @example
- * ```typescript
- * const test = await testProviderURL('https://example.com/provider.js');
- * if (test.isValid) {
- *   console.log('Provider is valid with factories:', test.factories);
- * } else {
- *   console.error('Provider test failed:', test.errors);
- * }
- * ```
- */
-async function testProviderURL(url, config = {}) {
-    const startTime = Date.now();
-    try {
-        const module = await loadProviderFromURL(url, { ...config, cache: false });
-        const validation = validateProviderModule(module);
-        const loadTime = Date.now() - startTime;
-        return {
-            ...validation,
-            loadTime
-        };
-    }
-    catch (error) {
-        const loadTime = Date.now() - startTime;
-        return {
-            isValid: false,
-            errors: [error instanceof Error ? error.message : 'Unknown error'],
-            factories: [],
-            loadTime
-        };
-    }
-}
+exports.extractors = exports.movieProviders = exports.animeProviders = exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
+const axios_1 = __importDefault(require("axios"));
+const providers_1 = require("../providers");
+// Import extractors for fallback compatibility
+const extractors_1 = require("../extractors");
+const cheerio_1 = require("cheerio");
+const utils_1 = require("./utils");
+const url_polyfill_1 = require("./url-polyfill");
+// Default axios instance with optimized settings for scraping
+exports.defaultAxios = axios_1.default.create({
+    timeout: 15000,
+    headers: {
+        'User-Agent': utils_1.USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+    },
+});
+// Create extractor context for passing to context-aware extractors
+exports.defaultExtractorContext = {
+    axios: exports.defaultAxios,
+    load: cheerio_1.load,
+    USER_AGENT: utils_1.USER_AGENT,
+    PolyURL: url_polyfill_1.PolyURL,
+    PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
+};
+// Default static extractors (for backward compatibility)
+exports.defaultStaticExtractors = {
+    AsianLoad: extractors_1.AsianLoad,
+    Filemoon: extractors_1.Filemoon,
+    GogoCDN: extractors_1.GogoCDN,
+    Kwik: (ctx) => (0, extractors_1.Kwik)(ctx || exports.defaultExtractorContext),
+    MixDrop: extractors_1.MixDrop,
+    Mp4Player: extractors_1.Mp4Player,
+    Mp4Upload: extractors_1.Mp4Upload,
+    RapidCloud: extractors_1.RapidCloud,
+    MegaCloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || exports.defaultExtractorContext),
+    StreamHub: extractors_1.StreamHub,
+    StreamLare: extractors_1.StreamLare,
+    StreamSB: extractors_1.StreamSB,
+    StreamTape: extractors_1.StreamTape,
+    StreamWish: extractors_1.StreamWish,
+    VidMoly: extractors_1.VidMoly,
+    VizCloud: extractors_1.VizCloud,
+    VidHide: extractors_1.VidHide,
+    Voe: extractors_1.Voe,
+    MegaUp: extractors_1.MegaUp,
+};
+// Define provider and extractor maps
+exports.animeProviders = {
+    Zoro: providers_1.ANIME.Zoro,
+    AnimePahe: providers_1.ANIME.AnimePahe,
+};
+exports.movieProviders = {
+    HiMovies: providers_1.MOVIES.HiMovies,
+    MultiMovies: providers_1.MOVIES.MultiMovies,
+    DramaCool: providers_1.MOVIES.DramaCool,
+    MultiStream: providers_1.MOVIES.MultiStream,
+};
+const metaProviders = {
+    Anilist: providers_1.META.Anilist,
+    TMDB: providers_1.META.TMDB,
+    MAL: providers_1.META.Myanimelist,
+};
+exports.extractors = {
+    GogoCDN: exports.defaultStaticExtractors.GogoCDN,
+    StreamSB: exports.defaultStaticExtractors.StreamSB,
+    StreamTape: exports.defaultStaticExtractors.StreamTape,
+    MixDrop: exports.defaultStaticExtractors.MixDrop,
+    Kwik: exports.defaultStaticExtractors.Kwik,
+    RapidCloud: exports.defaultStaticExtractors.RapidCloud,
+    StreamWish: exports.defaultStaticExtractors.StreamWish,
+    Filemoon: exports.defaultStaticExtractors.Filemoon,
+    Voe: exports.defaultStaticExtractors.Voe,
+    AsianLoad: exports.defaultStaticExtractors.AsianLoad,
+    StreamLare: exports.defaultStaticExtractors.StreamLare,
+    VidMoly: exports.defaultStaticExtractors.VidMoly,
+    MegaCloud: exports.defaultStaticExtractors.MegaCloud,
+};
 //# sourceMappingURL=extension-utils.js.map

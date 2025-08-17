@@ -1,29 +1,50 @@
-import { VideoExtractor, type IVideo } from '../models';
+import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
 
-class Kwik extends VideoExtractor {
-  protected override serverName = 'kwik';
-  protected override sources: IVideo[] = [];
+/**
+ * Kwik extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export function Kwik(ctx: ExtractorContext): IVideoExtractor {
+  const serverName = 'kwik';
+  const sources: IVideo[] = [];
+  const { axios, load, USER_AGENT, PolyURL } = ctx;
 
-  private readonly host = 'https://animepahe.ru/';
+  const host = 'https://animepahe.ru/';
+  // @ts-ignore
+  const extract = async (videoUrl: PolyURL, ...args: any): Promise<ISource> => {
+    const extractedData: ISource = {
+      subtitles: [],
+      intro: { start: 0, end: 0 },
+      outro: { start: 0, end: 0 },
+      sources: [],
+    };
 
-  override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
       const response = await fetch(`${videoUrl.href}`, {
-        headers: { Referer: this.host },
+        headers: { Referer: host },
       });
 
       const data = await response.text();
 
-      const source = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)![2]!.replace('eval', '')).match(/https.*?m3u8/);
-      this.sources.push({
+      const source = eval(
+        /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', '')
+      ).match(/https.*?m3u8/);
+
+      extractedData.sources.push({
         url: source[0],
         isM3U8: source[0].includes('.m3u8'),
       });
 
-      return this.sources;
+      return extractedData;
     } catch (err) {
       throw new Error((err as Error).message);
     }
   };
+
+  return {
+    serverName,
+    sources,
+    extract,
+  };
 }
-export default Kwik;

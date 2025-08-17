@@ -284,7 +284,7 @@ class MultiMovies extends MovieParser {
       // extractedFileId to be used for download link
       return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, extractedFileId);
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -302,7 +302,7 @@ class MultiMovies extends MovieParser {
       const { servers } = await this.getServer(episodeId);
       return servers;
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -375,12 +375,12 @@ class MultiMovies extends MovieParser {
   };
 
   private async getServer(url: string): Promise<{ servers: IEpisodeServer[]; fileId: string }> {
-    console.log(`Fetching server for URL: ${url}`);
+    //console.log(`Fetching server for URL: ${url}`);
     try {
-      console.log('step1');
+      //console.log('step1');
       const { data } = await axios.get(this.customProxyUrl + url);
       const $ = load(data);
-      console.log('step2');
+      //console.log('step2');
       // Extract player config
       const playerConfig = {
         postId: $('#player-option-1').attr('data-post'),
@@ -401,7 +401,7 @@ class MultiMovies extends MovieParser {
       const headers = {
         'User-Agent': USER_AGENT,
       };
-      console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
+      //console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
       const response = await fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
         method: 'POST',
         headers: headers,
@@ -476,7 +476,7 @@ class MultiMovies extends MovieParser {
         };
       }
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
   }

@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,20 +26,23 @@ class MangaReader extends models_1.MangaParser {
          *
          * @param query Search query
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/search?keyword=${query}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/search?keyword=${query}`);
                 const $ = (0, cheerio_1.load)(data);
                 const results = $('div.manga_list-sbs div.mls-wrap div.item')
-                    .map((i, el) => ({
-                    id: $(el).find('a.manga-poster').attr('href')?.split('/')[1],
-                    title: $(el).find('div.manga-detail h3.manga-name a').text().trim(),
-                    image: $(el).find('a.manga-poster img').attr('src'),
-                    genres: $(el)
-                        .find(`div.manga-detail div.fd-infor span > a`)
-                        .map((i, genre) => $(genre).text())
-                        .get(),
-                }))
+                    .map((i, el) => {
+                    var _a;
+                    return ({
+                        id: (_a = $(el).find('a.manga-poster').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1],
+                        title: $(el).find('div.manga-detail h3.manga-name a').text().trim(),
+                        image: $(el).find('a.manga-poster img').attr('src'),
+                        genres: $(el)
+                            .find(`div.manga-detail div.fd-infor span > a`)
+                            .map((i, genre) => $(genre).text())
+                            .get(),
+                    });
+                })
                     .get();
                 return {
                     results: results,
@@ -40,14 +52,14 @@ class MangaReader extends models_1.MangaParser {
                 //   console.log(err);
                 throw new Error(err.message);
             }
-        };
-        this.fetchMangaInfo = async (mangaId) => {
+        });
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             const mangaInfo = {
                 id: mangaId,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/${mangaId}`);
                 const $ = (0, cheerio_1.load)(data);
                 const container = $('div.container');
                 mangaInfo.title = container.find('div.anisc-detail h2.manga-name').text().trim();
@@ -59,28 +71,31 @@ class MangaReader extends models_1.MangaParser {
                     .get();
                 mangaInfo.chapters = container
                     .find(`div.chapters-list-ul ul li`)
-                    .map((i, el) => ({
-                    id: $(el).find('a').attr('href')?.split('/read/')[1],
-                    title: $(el).find('a').attr('title').trim(),
-                    chapter: $(el).find('a span.name').text().split('Chapter ')[1].split(':')[0],
-                }))
+                    .map((i, el) => {
+                    var _a;
+                    return ({
+                        id: (_a = $(el).find('a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/read/')[1],
+                        title: $(el).find('a').attr('title').trim(),
+                        chapter: $(el).find('a span.name').text().split('Chapter ')[1].split(':')[0],
+                    });
+                })
                     .get();
                 return mangaInfo;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId) => {
+        });
+        this.fetchChapterPages = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/read/${chapterId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/read/${chapterId}`);
                 const $ = (0, cheerio_1.load)(data);
                 const readingId = $('div#wrapper').attr('data-reading-id');
                 if (!readingId) {
                     throw new Error('Unable to find pages');
                 }
                 const ajaxURL = `https://mangareader.to/ajax/image/list/chap/${readingId}?mode=vertical&quality=high`;
-                const { data: pagesData } = await axios_1.default.get(ajaxURL);
+                const { data: pagesData } = yield axios_1.default.get(ajaxURL);
                 const $PagesHTML = (0, cheerio_1.load)(pagesData.html);
                 const pagesSelector = $PagesHTML('div#main-wrapper div.container-reader-chapter div.iv-card');
                 const pages = pagesSelector
@@ -94,7 +109,7 @@ class MangaReader extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 // (async () => {

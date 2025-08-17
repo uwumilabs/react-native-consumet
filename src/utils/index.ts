@@ -1,7 +1,6 @@
 import {
   GogoCDN,
   StreamSB,
-  VidCloud,
   MixDrop,
   Kwik,
   RapidCloud,
@@ -43,7 +42,6 @@ import {
   anilistCharacterQuery,
   anilistStaffInfoQuery,
 } from './queries';
-import { parsePostInfo } from './getComics';
 import getKKey from '../extractors/kisskh/kkey';
 
 export {
@@ -54,10 +52,8 @@ export {
   splitAuthor,
   floorID,
   formatTitle,
-  parsePostInfo,
   genElement,
   capitalizeFirstLetter,
-  VidCloud,
   MixDrop,
   Kwik,
   anilistSearchQuery,
@@ -91,22 +87,9 @@ export {
 };
 
 // Export provider context utilities
-export {
-  createProviderContext,
-  createProviderContextWithAxios,
-  createReactNativeProviderContext,
-} from './create-provider-context';
-
-// Export extension utilities
-export {
-  evaluateProviderCode,
-  loadProviderFromURL,
-  createProviderFromURL,
-  loadMultipleProviders,
-  validateProviderModule,
-  clearExtensionCache,
-  getCachedExtensions,
-  testProviderURL,
-  type ProviderModule,
-  type ExtensionConfig,
-} from './extension-utils';
+export { createProviderContext } from './create-provider-context';
+export { ProviderManager } from './ProviderManager';
+export { ExtractorManager } from './ExtractorManager';
+export { createExtractorContext } from './create-extractor-context';
+export { defaultAxios, defaultExtractorContext, defaultStaticExtractors } from './extension-utils';
+export { PolyURL, PolyURLSearchParams } from './url-polyfill';

@@ -1,0 +1,81 @@
+{
+    "extractors": [
+        {
+            "name": "MegaCloud",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/megacloud.js"
+        },
+        {
+            "name": "RapidCloud",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/extractors/vidcloud/dynamic-rapidcloud.js"
+        }
+    ],
+    "extensions": [
+        {
+            "id": "zoro",
+            "name": "Zoro",
+            "description": "High-quality anime streaming from Zoro (hianime.to) with multiple servers and subtitles",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "anime",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/providers/anime/zoro/create-zoro.js",
+            "factoryName": "createZoro",
+            "baseUrl": "https://hianime.to",
+            "logo": "https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg",
+            "languages": ["en", "ja"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["MegaCloud"],
+            "subbed": true,
+            "dubbed": true
+        },
+        {
+            "id": "animepahe",
+            "name": "AnimePahe",
+            "description": "High-quality anime streaming from Zoro (hianime.to) with multiple servers and subtitles",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "anime",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/providers/anime/animepahe/create-animepahe.js",
+            "factoryName": "createAnimePahe",
+            "baseUrl": "https://animepahe.ru",
+            "logo": "https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg",
+            "languages": ["en", "ja"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["Kwik"],
+            "subbed": true,
+            "dubbed": true
+        },
+        {
+            "id": "himovies",
+            "name": "HiMovies",
+            "description": "Movies and TV shows streaming from HiMovies",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "movies",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/native-executor/dist/providers/movies/himovies/create-himovies.js",
+            "factoryName": "createHiMovies",
+            "baseUrl": "https://himovies.sx",
+            "logo": "https://himovies.sx/images/group_1/theme_1/favicon.png",
+            "languages": ["all"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["MegaCloud"],
+            "isSourceEmbed": true
+        }
+    ]
+}

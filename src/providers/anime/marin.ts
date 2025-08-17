@@ -70,7 +70,7 @@ class Marin extends AnimeParser {
       );
       data = await response.data;
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
     const response_data = {
       currentPage: page,
@@ -128,7 +128,7 @@ class Marin extends AnimeParser {
       );
       data = await response.data;
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
     const response_data = {
       currentPage: page,
@@ -174,9 +174,9 @@ class Marin extends AnimeParser {
       );
       data = await response.data;
 
-      console.log(data);
+      //console.log(data);
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
 
     let episodes: any[] = data.props.episode_list.data;
@@ -275,7 +275,7 @@ class Marin extends AnimeParser {
       );
       data = await response.data;
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
 
     const response_data = {

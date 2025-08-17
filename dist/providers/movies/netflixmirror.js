@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -20,24 +29,25 @@ class NetflixMirror extends models_1.MovieParser {
          * @param query search query string
          * @param page page number (default 1) (optional)
          */
-        this.search = async (query, page = 1) => {
+        this.search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
             const searchResult = {
                 currentPage: page,
                 hasNextPage: false,
                 results: [],
             };
             try {
-                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/search.php?s=${encodeURI(query)}`, {
+                const { data } = yield axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/search.php?s=${encodeURI(query)}`, {
                     headers: this.Headers(),
                 });
                 const basicResults = data.searchResult || [];
                 if (basicResults.length === 0) {
                     return searchResult;
                 }
-                const detailedResults = await Promise.all(basicResults.map(async (item) => {
+                const detailedResults = yield Promise.all(basicResults.map((item) => __awaiter(this, void 0, void 0, function* () {
+                    var _a, _b;
                     try {
                         // Fetch additional details for each item
-                        const detailResponse = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${item.id}`, {
+                        const detailResponse = yield axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${item.id}`, {
                             headers: this.Headers(),
                         });
                         return {
@@ -46,7 +56,7 @@ class NetflixMirror extends models_1.MovieParser {
                             image: `https://imgcdn.media/poster/v/${item.id}.jpg`,
                             type: detailResponse.data.type === 't' ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE,
                             releaseDate: detailResponse.data.year,
-                            seasons: detailResponse.data.season?.length ?? undefined,
+                            seasons: (_b = (_a = detailResponse.data.season) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : undefined,
                         };
                     }
                     catch (error) {
@@ -58,37 +68,38 @@ class NetflixMirror extends models_1.MovieParser {
                             image: `https://imgcdn.media/poster/v/${item.id}.jpg`,
                         };
                     }
-                }));
+                })));
                 searchResult.results = detailedResults;
                 return searchResult;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param mediaId media link or id
          */
-        this.fetchMediaInfo = async (mediaId) => {
+        this.fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
             const movieInfo = {
                 id: mediaId,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${mediaId}`, {
+                const { data } = yield axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/post.php?id=${mediaId}`, {
                     headers: this.Headers(),
                 });
                 movieInfo.cover = `https://imgcdn.media/poster/h/${mediaId}.jpg`;
                 movieInfo.title = data.title;
                 movieInfo.image = `https://imgcdn.media/poster/v/${mediaId}.jpg`;
-                movieInfo.description = data.desc?.trim() ?? '';
+                movieInfo.description = (_b = (_a = data.desc) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : '';
                 movieInfo.type = data.type === 't' ? models_1.TvType.TVSERIES : models_1.TvType.MOVIE;
                 movieInfo.releaseDate = data.year;
-                movieInfo.genres = data.genre?.split(',').map((genre) => genre?.trim()) ?? [];
+                movieInfo.genres = (_d = (_c = data.genre) === null || _c === void 0 ? void 0 : _c.split(',').map((genre) => genre === null || genre === void 0 ? void 0 : genre.trim())) !== null && _d !== void 0 ? _d : [];
                 movieInfo.duration = data.runtime;
                 if (movieInfo.type === models_1.TvType.TVSERIES) {
-                    movieInfo.episodes = await this.fetchAllEpisodesOrdered(data.season, mediaId);
+                    movieInfo.episodes = yield this.fetchAllEpisodesOrdered(data.season, mediaId);
                 }
                 else {
                     movieInfo.episodes = [
@@ -104,36 +115,38 @@ class NetflixMirror extends models_1.MovieParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param episodeId episode id
          * @param media media id
          */
-        this.fetchEpisodeSources = async (episodeId, mediaId //just placeholder for compatibility with tmdb
-        ) => {
+        this.fetchEpisodeSources = (episodeId, mediaId //just placeholder for compatibility with tmdb
+        ) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             try {
                 if (!this.nfCookie) {
-                    await this.initCookie();
+                    yield this.initCookie();
                 }
-                await (0, NativeConsumet_1.makeGetRequestWithWebView)(`https://netfree2.cc/mobile/playlist.php?id=${episodeId}&tm=${Math.round(new Date().getTime() / 1000)}`, {
+                yield (0, NativeConsumet_1.makeGetRequestWithWebView)(`https://netfree2.cc/mobile/playlist.php?id=${episodeId}&tm=${Math.round(new Date().getTime() / 1000)}`, {
                     Cookie: this.nfCookie,
                 });
-                const { data } = await axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/playlist.php?id=${episodeId}`, {
+                const { data } = yield axios_1.default.get(`https://netmirror.8man.me/api/net-proxy?isPrime=false&url=${this.baseUrl}/mobile/playlist.php?id=${episodeId}`, {
                     headers: this.Headers(),
                 });
                 const sources = {
                     sources: [],
                     subtitles: [],
                 };
-                data[0].sources?.map((source) => {
+                (_a = data[0].sources) === null || _a === void 0 ? void 0 : _a.map((source) => {
+                    var _a;
                     sources.sources.push({
                         url: `${this.baseUrl}${source.file.replace(/%3A%3Asu/g, '%3A%3Ani').replace(/::su/g, '::ni')}`,
-                        quality: source.label === 'Auto' ? source.label.toLowerCase() : source.file.match(/[?&]q=([^&]+)/)?.[1],
+                        quality: source.label === 'Auto' ? source.label.toLowerCase() : (_a = source.file.match(/[?&]q=([^&]+)/)) === null || _a === void 0 ? void 0 : _a[1],
                         isM3U8: source.file.includes('.m3u8'),
                     });
                 });
-                data[0].tracks?.map((subtitle) => {
+                (_b = data[0].tracks) === null || _b === void 0 ? void 0 : _b.map((subtitle) => {
                     sources.subtitles = sources.subtitles || [];
                     sources.subtitles.push({
                         url: `https:${subtitle.file}`,
@@ -145,14 +158,14 @@ class NetflixMirror extends models_1.MovieParser {
             catch (error) {
                 throw new Error(error.message);
             }
-        };
+        });
         /**
          * @deprecated method not implemented
          * @param episodeId takes episode link or movie id
          */
-        this.fetchEpisodeServers = async (episodeId) => {
+        this.fetchEpisodeServers = (episodeId) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('Method not implemented.');
-        };
+        });
         if (customBaseURL) {
             if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
                 this.baseUrl = customBaseURL;
@@ -166,16 +179,18 @@ class NetflixMirror extends models_1.MovieParser {
         }
         this.initCookie();
     }
-    async initCookie() {
-        try {
-            const { data } = await axios_1.default.get('https://raw.githubusercontent.com/2004durgesh/nfmirror-cookies/refs/heads/main/captured-cookies.json');
-            for (const cookie of data.cookiesByDomain['.netfree2.cc']) {
-                this.nfCookie += `${cookie.name}=${cookie.value.replace('%3A%3Asu', '%3A%3Ani')};`;
+    initCookie() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { data } = yield axios_1.default.get('https://raw.githubusercontent.com/2004durgesh/nfmirror-cookies/refs/heads/main/captured-cookies.json');
+                for (const cookie of data.cookiesByDomain['.netfree2.cc']) {
+                    this.nfCookie += `${cookie.name}=${cookie.value.replace('%3A%3Asu', '%3A%3Ani')};`;
+                }
             }
-        }
-        catch (err) {
-            console.error('Failed to get cookie:', err);
-        }
+            catch (err) {
+                console.error('Failed to get cookie:', err);
+            }
+        });
     }
     Headers() {
         const headers = {
@@ -196,34 +211,39 @@ class NetflixMirror extends models_1.MovieParser {
         }
         return headers;
     }
-    async fetchAllEpisodesForSeason(seasonId, seriesId) {
-        let page = 1;
-        let episodes = [];
-        while (true) {
-            const url = `https://netfree2.cc/mobile/episodes.php?s=${seasonId}&series=${seriesId}&page=${page}`;
-            const { data } = await axios_1.default.get(url);
-            if (data.episodes?.length) {
-                episodes.push(...data.episodes.map((episode) => ({
-                    id: episode.id,
-                    title: episode.t,
-                    season: parseInt(String(episode.s).replace('S', '')),
-                    number: parseInt(String(episode.ep).replace('E', '')),
-                    image: `https://imgcdn.media/epimg/150/${episode.id}.jpg`,
-                })));
+    fetchAllEpisodesForSeason(seasonId, seriesId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            let page = 1;
+            let episodes = [];
+            while (true) {
+                const url = `https://netfree2.cc/mobile/episodes.php?s=${seasonId}&series=${seriesId}&page=${page}`;
+                const { data } = yield axios_1.default.get(url);
+                if ((_a = data.episodes) === null || _a === void 0 ? void 0 : _a.length) {
+                    episodes.push(...data.episodes.map((episode) => ({
+                        id: episode.id,
+                        title: episode.t,
+                        season: parseInt(String(episode.s).replace('S', '')),
+                        number: parseInt(String(episode.ep).replace('E', '')),
+                        image: `https://imgcdn.media/epimg/150/${episode.id}.jpg`,
+                    })));
+                }
+                if (data.nextPageShow !== 1)
+                    break; // no more pages
+                page++;
             }
-            if (data.nextPageShow !== 1)
-                break; // no more pages
-            page++;
-        }
-        return episodes;
+            return episodes;
+        });
     }
-    async fetchAllEpisodesOrdered(seasons, seriesId) {
-        const allEpisodes = [];
-        for (const season of seasons.sort((a, b) => Number(a.s) - Number(b.s))) {
-            const seasonEpisodes = await this.fetchAllEpisodesForSeason(season.id, seriesId);
-            allEpisodes.push(...seasonEpisodes);
-        }
-        return allEpisodes;
+    fetchAllEpisodesOrdered(seasons, seriesId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const allEpisodes = [];
+            for (const season of seasons.sort((a, b) => Number(a.s) - Number(b.s))) {
+                const seasonEpisodes = yield this.fetchAllEpisodesForSeason(season.id, seriesId);
+                allEpisodes.push(...seasonEpisodes);
+            }
+            return allEpisodes;
+        });
     }
 }
 // (async () => {

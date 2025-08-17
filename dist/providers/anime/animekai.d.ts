@@ -1,4 +1,4 @@
-import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, StreamingServers, SubOrSub } from '../../models';
+import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, StreamingServers, SubOrDub } from '../../models';
 declare class AnimeKai extends AnimeParser {
     readonly name = "AnimeKai";
     protected baseUrl: string;
@@ -67,9 +67,9 @@ declare class AnimeKai extends AnimeParser {
      *
      * @param episodeId Episode id
      * @param server server type (default `VidCloud`) (optional)
-     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
      */
-    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrSub) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
     /**
      * @param url string
      */
@@ -82,7 +82,7 @@ declare class AnimeKai extends AnimeParser {
      * @param episodeId Episode id
      * @param subOrDub sub or dub (default `sub`) (optional)
      */
-    fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrSub) => Promise<IEpisodeServer[]>;
+    fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrDub) => Promise<IEpisodeServer[]>;
     private Headers;
 }
 export default AnimeKai;

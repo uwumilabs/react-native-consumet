@@ -1,7 +1,7 @@
 import AsianLoad from './asianload';
 import Filemoon from './filemoon';
 import GogoCDN from './gogocdn';
-import Kwik from './kwik';
+import { Kwik } from './kwik';
 import MixDrop from './mixdrop';
 import Mp4Player from './mp4player';
 import Mp4Upload from './mp4upload';
@@ -12,7 +12,6 @@ import StreamLare from './streamlare';
 import StreamSB from './streamsb';
 import StreamTape from './streamtape';
 import StreamWish from './streamwish';
-import VidCloud from './vidcloud';
 import VidMoly from './vidmoly';
 import VizCloud from './vizcloud';
 import VidHide from './vidhide';
@@ -34,7 +33,6 @@ export {
   StreamSB,
   StreamTape,
   StreamWish,
-  VidCloud,
   VidMoly,
   VizCloud,
   VidHide,

@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -12,7 +21,8 @@ class Voe extends models_1.VideoExtractor {
         this.serverName = 'voe';
         this.sources = [];
         this.domains = ['voe.sx'];
-        this.extract = async (videoUrl) => {
+        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
             try {
                 function decryptF7(p8) {
                     try {
@@ -63,15 +73,15 @@ class Voe extends models_1.VideoExtractor {
                         return '';
                     }
                 }
-                const res = await axios_1.default.get(videoUrl.href);
+                const res = yield axios_1.default.get(videoUrl.href);
                 const $ = (0, cheerio_1.load)(res.data);
                 const scriptContent = $('script').html();
                 const pageUrl = scriptContent
-                    ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
+                    ? ((_b = (_a = scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : '')
                     : '';
-                const { data } = await axios_1.default.get(pageUrl);
+                const { data } = yield axios_1.default.get(pageUrl);
                 const $$ = (0, cheerio_1.load)(data);
-                const encodedString = $$('script[type="application/json"]').html()?.trim() || '';
+                const encodedString = ((_c = $$('script[type="application/json"]').html()) === null || _c === void 0 ? void 0 : _c.trim()) || '';
                 const jsonData = decryptF7(encodedString);
                 let url = jsonData.source;
                 let siteName = jsonData.site_name;
@@ -92,7 +102,7 @@ class Voe extends models_1.VideoExtractor {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = Voe;

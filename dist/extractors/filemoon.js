@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -16,7 +25,8 @@ class Filemoon extends models_1.VideoExtractor {
         this.serverName = 'Filemoon';
         this.sources = [];
         this.host = 'https://filemoon.sx';
-        this.extract = async (videoUrl) => {
+        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const options = {
                 headers: {
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -35,12 +45,12 @@ class Filemoon extends models_1.VideoExtractor {
                     'Access-Control-Allow-Origin': '*',
                 },
             };
-            const { data } = await axios_1.default.get(videoUrl.href, options);
+            const { data } = yield axios_1.default.get(videoUrl.href, options);
             const $ = (0, cheerio_1.load)(data);
             try {
-                const { data } = await axios_1.default.get($('iframe').attr('src'), options);
-                const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/s.exec(data)[2].replace('eval', ''));
-                const links = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"')) ?? [];
+                const { data } = yield axios_1.default.get($('iframe').attr('src'), options);
+                const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))[2].replace('eval', ''));
+                const links = (_a = unpackedData.match(new RegExp('sources:\\[\\{file:"(.*?)"'))) !== null && _a !== void 0 ? _a : [];
                 const m3u8Link = links[1];
                 this.sources.unshift({
                     url: m3u8Link,
@@ -49,10 +59,10 @@ class Filemoon extends models_1.VideoExtractor {
                 });
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
             }
             return this.sources;
-        };
+        });
     }
 }
 exports.default = Filemoon;

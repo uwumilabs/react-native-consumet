@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -18,17 +27,20 @@ class FlameScans extends models_1.MangaParser {
          * @param query Search query
          *
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/series/?title=${query.replace(/ /g, '%20')}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/series/?title=${query.replace(/ /g, '%20')}`);
                 const $ = (0, cheerio_1.load)(data);
                 const searchMangaSelector = '.utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx';
                 const results = $(searchMangaSelector)
-                    .map((i, el) => ({
-                    id: $(el).find('a').attr('href')?.split('/series/')[1].replace('/', '') ?? '',
-                    title: $(el).find('a').attr('title') ?? '',
-                    image: $(el).find('img').attr('src'),
-                }))
+                    .map((i, el) => {
+                    var _a, _b, _c;
+                    return ({
+                        id: (_b = (_a = $(el).find('a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/series/')[1].replace('/', '')) !== null && _b !== void 0 ? _b : '',
+                        title: (_c = $(el).find('a').attr('title')) !== null && _c !== void 0 ? _c : '',
+                        image: $(el).find('img').attr('src'),
+                    });
+                })
                     .get();
                 return {
                     results: results,
@@ -37,14 +49,14 @@ class FlameScans extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchMangaInfo = async (mangaId) => {
+        });
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             const mangaInfo = {
                 id: mangaId,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
                 const $ = (0, cheerio_1.load)(data);
                 // base from https://github.com/tachiyomiorg/tachiyomi-extensions/blob/661311c13b3b550e3fa906c1130b77a037ef7a11/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mangathemesia/MangaThemesia.kt#L233
                 const seriesTitleSelector = 'h1.entry-title';
@@ -92,21 +104,24 @@ class FlameScans extends models_1.MangaParser {
                     : [];
                 mangaInfo.artist = $(seriesArtistSelector).text().trim() ? $(seriesArtistSelector).text().trim() : 'N/A';
                 mangaInfo.chapters = $(seriesChaptersSelector)
-                    .map((i, el) => ({
-                    id: $(el).find('a').attr('href')?.split('/')[3] ?? '',
-                    title: $(el).find('.lch a, .chapternum').text().trim().replace(/\n/g, ' '),
-                    releasedDate: $(el).find('.chapterdate').text(),
-                }))
+                    .map((i, el) => {
+                    var _a, _b;
+                    return ({
+                        id: (_b = (_a = $(el).find('a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[3]) !== null && _b !== void 0 ? _b : '',
+                        title: $(el).find('.lch a, .chapternum').text().trim().replace(/\n/g, ' '),
+                        releasedDate: $(el).find('.chapterdate').text(),
+                    });
+                })
                     .get();
                 return mangaInfo;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId) => {
+        });
+        this.fetchChapterPages = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/${chapterId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/${chapterId}`);
                 const $ = (0, cheerio_1.load)(data);
                 const pageSelector = 'div#readerarea img, #readerarea div.figure_container div.composed_figure';
                 const pages = $(pageSelector)
@@ -121,7 +136,7 @@ class FlameScans extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = FlameScans;

@@ -1,53 +1,23 @@
-import axios from 'axios';
 import { load } from 'cheerio';
-import type { ProviderContext } from '../models/provider-context';
-import { AnimeParser, MovieParser } from '../models';
+import type { ProviderContext, ProviderContextConfig } from '../models/provider-context';
+import {
+  AnimeParser,
+  MovieParser,
+  MangaParser,
+  StreamingServers,
+  MediaFormat,
+  MediaStatus,
+  SubOrDub,
+  WatchListType,
+  TvType,
+  Genres,
+  Topics,
+} from '../models';
 
-// Import extractors
-import { StreamSB, MegaCloud, StreamTape } from '../extractors';
-
-/**
- * Configuration options for creating a provider context
- */
-export interface ProviderContextConfig {
-  /**
-   * Custom axios instance (optional) - if not provided, a default one is created
-   */
-  axios?: any;
-
-  /**
-   * Custom cheerio load function (optional) - defaults to cheerio.load
-   */
-  load?: (html: string) => any;
-
-  /**
-   * Custom user agent (optional) - defaults to a standard browser user agent
-   */
-  userAgent?: string;
-
-  /**
-   * Custom extractors (optional) - defaults to built-in extractors
-   */
-  extractors?: any;
-
-  /**
-   * Custom logger (optional) - defaults to console
-   */
-  logger?: {
-    log: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-  };
-
-  /**
-   * Custom AnimeParser base class (optional) - for advanced use cases
-   */
-  AnimeParser?: typeof AnimeParser;
-
-  /**
-   * Custom MovieParser base class (optional) - for advanced use cases
-   */
-  MovieParser?: typeof MovieParser;
-}
+import { defaultAxios, defaultStaticExtractors, defaultExtractorContext } from './extension-utils';
+import { PolyURL, PolyURLSearchParams } from './url-polyfill';
+import { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
+import extensionRegistry from '../extension-registry.json';
 
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -56,33 +26,54 @@ export interface ProviderContextConfig {
  * @returns Complete ProviderContext ready for use with extensions
  */
 export function createProviderContext(config: ProviderContextConfig = {}): ProviderContext {
-  // Default axios instance with optimized settings for scraping
-  const defaultAxios = axios.create({
-    timeout: 15000,
-    headers: {
-      'User-Agent':
-        config.userAgent ||
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-      'Accept-Encoding': 'gzip, deflate',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
+  // Create dynamic extractor proxy
+  const finalExtractors = new Proxy(defaultStaticExtractors, {
+    get: (target: any, prop: string) => {
+      // If it's a custom extractor, return it directly
+      if (config.extractors && config.extractors[prop]) {
+        return config.extractors[prop];
+      }
+
+      // If it's a static extractor, return it directly for immediate access
+      if (target[prop]) {
+        return target[prop];
+      }
+
+      // For dynamic extractors, return an async loader
+      return async (...args: any[]) => {
+        try {
+          // Dynamically import and create ExtractorManager to avoid circular dependency
+          const { ExtractorManager } = await import('./ExtractorManager');
+          const extractorManager = new ExtractorManager(extensionRegistry, {
+            axios: config.axios || defaultExtractorContext.axios,
+            load: config.load || defaultExtractorContext.load,
+            userAgent: config.userAgent || defaultExtractorContext.USER_AGENT,
+          });
+          const extractor = await extractorManager.loadExtractor(prop.toLowerCase() as StreamingServers);
+          return extractor.extract(args[0], ...args.slice(1));
+        } catch (error) {
+          console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
+          // Fallback to static if available
+          if (target[prop]) {
+            return target[prop](...args);
+          }
+          throw new Error(`Extractor '${prop}' not found in dynamic or static extractors`);
+        }
+      };
     },
   });
 
-  // Default extractors - all the important ones pre-configured
-  const defaultExtractors = {
-    StreamSB: StreamSB,
-    MegaCloud: MegaCloud,
-    StreamTape: StreamTape,
-    // Add more extractors as they become available
-  };
+  // Create base URL normalization utility
+  const createCustomBaseUrl = (defaultUrl: string, customUrl?: string): string => {
+    if (!customUrl) {
+      return defaultUrl;
+    }
 
-  // Default logger
-  const defaultLogger = {
-    log: console.log,
-    error: console.error,
+    if (customUrl.startsWith('http://') || customUrl.startsWith('https://')) {
+      return customUrl;
+    } else {
+      return `http://${customUrl}`;
+    }
   };
 
   return {
@@ -93,38 +84,24 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     AnimeParser: config.AnimeParser || AnimeParser,
     MovieParser: config.MovieParser || MovieParser,
-    extractors: { ...defaultExtractors, ...config.extractors },
-    logger: config.logger || defaultLogger,
+    MangaParser: config.MangaParser || MangaParser,
+    extractors: finalExtractors,
+    PolyURL: PolyURL,
+    PolyURLSearchParams: PolyURLSearchParams,
+    createCustomBaseUrl,
+    enums: {
+      StreamingServers,
+      MediaFormat,
+      MediaStatus,
+      SubOrDub,
+      WatchListType,
+      TvType,
+      Genres,
+      Topics,
+    },
+    NativeConsumet: {
+      getDdosGuardCookiesWithWebView,
+    },
   };
 }
-
-/**
- * Quick helper to create a context with just custom axios
- */
-export function createProviderContextWithAxios(axiosInstance: any): ProviderContext {
-  return createProviderContext({ axios: axiosInstance });
-}
-
-/**
- * Quick helper to create a context for React Native environments
- */
-export function createReactNativeProviderContext(config: ProviderContextConfig = {}): ProviderContext {
-  // React Native optimized axios settings
-  const rnAxios = axios.create({
-    timeout: 20000, // Longer timeout for mobile networks
-    headers: {
-      'User-Agent':
-        config.userAgent ||
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-    },
-  });
-
-  return createProviderContext({
-    ...config,
-    axios: config.axios || rnAxios,
-  });
-}
-
 export default createProviderContext;

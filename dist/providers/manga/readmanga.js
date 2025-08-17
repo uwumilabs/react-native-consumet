@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -23,9 +32,9 @@ class ReadManga extends models_1.MangaParser {
          *
          * @param query Search query
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
                     headers: {
                         Referer: this.baseUrl,
                     },
@@ -42,13 +51,13 @@ class ReadManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchNewManga = async (page = 1) => {
+        });
+        this.fetchNewManga = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
             if (page < 1) {
                 throw new Error('please provide a page number that is greater than- or equal to 1');
             }
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -69,13 +78,13 @@ class ReadManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchTopRatedManga = async (page = 1) => {
+        });
+        this.fetchTopRatedManga = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
             if (page < 1) {
                 throw new Error('please provide a page number that is greater than- or equal to 1');
             }
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -96,10 +105,10 @@ class ReadManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchMangaInfo = async (mangaId) => {
+        });
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/${mangaId}`, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -182,10 +191,10 @@ class ReadManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId) => {
+        });
+        this.fetchChapterPages = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(chapterId, {
+                const { data } = yield axios_1.default.get(chapterId, {
                     headers: {
                         'accept': 'application/json, text/javascript, */*; q=0.01',
                         'accept-language': 'en-US,en;q=0.9',
@@ -217,7 +226,7 @@ class ReadManga extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         this.getRankingTitleCardData = (text, page) => {
             const $ = (0, cheerio_1.load)(text);
             const dom = $('html');

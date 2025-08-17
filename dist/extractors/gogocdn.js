@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,30 +28,32 @@ class GogoCDN extends models_1.VideoExtractor {
             iv: crypto_js_1.default.enc.Utf8.parse('3134003223491201'),
         };
         this.referer = '';
-        this.extract = async (videoUrl) => {
+        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             this.referer = videoUrl.href;
-            const res = await axios_1.default.get(videoUrl.href);
+            const res = yield axios_1.default.get(videoUrl.href);
             const $ = (0, cheerio_1.load)(res.data);
-            const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
-            const encryptedData = await axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
+            const encyptedParams = yield this.generateEncryptedAjaxParams($, (_a = videoUrl.searchParams.get('id')) !== null && _a !== void 0 ? _a : '');
+            const encryptedData = yield axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
             });
-            const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
+            const decryptedData = yield this.decryptAjaxData(encryptedData.data.data);
             // console.log(decryptedData.track.tracks);
             if (!decryptedData.source)
                 throw new Error('No source found. Try a different server.');
-            const subtitles = decryptedData.track.tracks?.map((track) => ({
+            const subtitles = (_b = decryptedData.track.tracks) === null || _b === void 0 ? void 0 : _b.map((track) => ({
                 url: track.file,
                 lang: track.kind,
             }));
             if (decryptedData.source[0].file.includes('.m3u8')) {
-                const resResult = await axios_1.default.get(decryptedData.source[0].file.toString());
+                const resResult = yield axios_1.default.get(decryptedData.source[0].file.toString());
                 const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
-                resolutions?.forEach((res) => {
+                resolutions === null || resolutions === void 0 ? void 0 : resolutions.forEach((res) => {
+                    var _a, _b;
                     const index = decryptedData.source[0].file.lastIndexOf('/');
-                    const quality = res.split('\n')[0]?.split('x')[1]?.split(',')[0];
+                    const quality = (_b = (_a = res.split('\n')[0]) === null || _a === void 0 ? void 0 : _a.split('x')[1]) === null || _b === void 0 ? void 0 : _b.split(',')[0];
                     const url = decryptedData.source[0].file.slice(0, index);
                     this.sources.push({
                         url: url + '/' + res.split('\n')[1],
@@ -77,10 +88,10 @@ class GogoCDN extends models_1.VideoExtractor {
                 sources: this.sources,
                 subtitles: subtitles,
             };
-        };
-        this.addSources = async (source) => {
+        });
+        this.addSources = (source) => __awaiter(this, void 0, void 0, function* () {
             if (source.file.includes('m3u8')) {
-                const m3u8Urls = await axios_1.default
+                const m3u8Urls = yield axios_1.default
                     .get(source.file, {
                     headers: {
                         'Referer': this.referer,
@@ -88,8 +99,8 @@ class GogoCDN extends models_1.VideoExtractor {
                     },
                 })
                     .catch(() => null);
-                const videoList = m3u8Urls?.data.split('#EXT-X-I-FRAME-STREAM-INF:');
-                for (const video of videoList ?? []) {
+                const videoList = m3u8Urls === null || m3u8Urls === void 0 ? void 0 : m3u8Urls.data.split('#EXT-X-I-FRAME-STREAM-INF:');
+                for (const video of videoList !== null && videoList !== void 0 ? videoList : []) {
                     if (!video.includes('m3u8'))
                         continue;
                     const url = video
@@ -110,8 +121,8 @@ class GogoCDN extends models_1.VideoExtractor {
                 url: source.file,
                 isM3U8: source.file.includes('.m3u8'),
             });
-        };
-        this.generateEncryptedAjaxParams = async ($, id) => {
+        });
+        this.generateEncryptedAjaxParams = ($, id) => __awaiter(this, void 0, void 0, function* () {
             const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
                 iv: this.keys.iv,
             });
@@ -120,13 +131,13 @@ class GogoCDN extends models_1.VideoExtractor {
                 iv: this.keys.iv,
             }).toString(crypto_js_1.default.enc.Utf8);
             return `id=${encryptedKey}&alias=${id}&${decryptedToken}`;
-        };
-        this.decryptAjaxData = async (encryptedData) => {
+        });
+        this.decryptAjaxData = (encryptedData) => __awaiter(this, void 0, void 0, function* () {
             const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.secondKey, {
                 iv: this.keys.iv,
             }));
             return JSON.parse(decryptedData);
-        };
+        });
     }
 }
 exports.default = GogoCDN;
