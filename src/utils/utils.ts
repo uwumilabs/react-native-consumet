@@ -252,13 +252,13 @@ export function cleanTitle(title: string | undefined | null): string {
   return transformSpecificVariations(
     removeSpecialChars(
       title
-        .replaceAll(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
-        .replaceAll(/(th|rd|nd|st) (Season|season)/gim, '')
-        .replaceAll(/\([^\(]*\)$/gim, '')
-        .replaceAll('season', '')
-        .replaceAll(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
-        .replaceAll('  ', ' ')
-        .replaceAll('"', '')
+        .replace(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
+        .replace(/(th|rd|nd|st) (Season|season)/gim, '')
+        .replace(/\([^\(]*\)$/gim, '')
+        .replace(/season/g, '')
+        .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match: any) => romanToArabic(match).toString())
+        .replace(/ {2}/g, ' ')
+        .replace(/"/g, '')
         .trimEnd()
     )
   );
@@ -268,15 +268,15 @@ export function removeSpecialChars(title: string | undefined | null): string {
   if (!title) return '';
 
   return title
-    .replaceAll(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
-    .replaceAll(/[^A-Za-z0-9\-= ]/gim, '')
-    .replaceAll('  ', ' ');
+    .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
+    .replace(/[^A-Za-z0-9\-= ]/gim, '')
+    .replace(/ {2}/g, ' ');
 }
 
 export function transformSpecificVariations(title: string | undefined | null): string {
   if (!title) return '';
 
-  return title.replaceAll('yuu', 'yu').replaceAll(' ou', ' oh');
+  return title.replace(/yuu/g, 'yu').replace(/ ou/g, ' oh');
 }
 
 export function sanitizeTitle(title: string): string {

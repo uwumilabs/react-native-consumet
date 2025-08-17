@@ -1,5 +1,3 @@
-import { type Book, type Hashes } from './base-types';
-
 export interface IProviderStats {
   name: string;
   baseUrl: string;
@@ -83,7 +81,7 @@ export interface IAnimeInfo extends IAnimeResult {
   /**
    * @deprecated use `hasSub` or `hasDub` instead
    */
-  subOrDub?: SubOrSub;
+  subOrDub?: SubOrDub;
   hasSub?: boolean;
   hasDub?: boolean;
   synonyms?: string[];
@@ -215,6 +213,7 @@ export enum StreamingServers {
   MegaCloud = 'megacloud',
   Luffy = 'luffy',
   Multi = 'multi',
+  Kwik = 'kwik',
 }
 
 export enum MediaStatus {
@@ -235,7 +234,7 @@ export enum WatchListType {
   NONE = 'none',
 }
 
-export enum SubOrSub {
+export enum SubOrDub {
   SUB = 'sub',
   DUB = 'dub',
   BOTH = 'both',
@@ -306,43 +305,6 @@ export interface ILightNovelInfo extends ILightNovelResult {
   status?: MediaStatus;
   views?: number;
   rating?: number;
-}
-
-export interface LibgenBook extends Book {
-  id: string;
-  language: string;
-  format: string;
-  size: string;
-  pages: string;
-  tableOfContents: string;
-  topic: string;
-  hashes: Hashes;
-}
-
-export interface LibgenResult {
-  result: LibgenBook[];
-  hasNextPage: boolean;
-}
-
-export interface GetComicsComics {
-  image: string;
-  title: string;
-  year: string;
-  size: string;
-  excerpt: string;
-  category: string;
-  description: string;
-  download: string;
-  ufile: string;
-  mega: string;
-  mediafire: string;
-  zippyshare: string;
-  readOnline: string;
-}
-
-export interface ComicRes {
-  containers: GetComicsComics[];
-  hasNextPage: boolean;
 }
 
 export interface ISubtitle {

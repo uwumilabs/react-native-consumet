@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,13 +22,13 @@ class MangaHost extends models_1.MangaParser {
         this.baseUrl = 'https://mangahosted.com';
         this.logo = 'https://i.imgur.com/OVlhhsR.png';
         this.classPath = 'MANGA.MangaHost';
-        this.fetchMangaInfo = async (mangaId) => {
+        this.fetchMangaInfo = (mangaId) => __awaiter(this, void 0, void 0, function* () {
             const mangaInfo = {
                 id: mangaId,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
                 const $ = (0, cheerio_1.load)(data);
                 mangaInfo.title = $('article.ejeCg > h1.title').text();
                 mangaInfo.altTitles = $('article.ejeCg > h3.subtitle').text();
@@ -62,11 +71,11 @@ class MangaHost extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (mangaId, chapterId) => {
+        });
+        this.fetchChapterPages = (mangaId, chapterId) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
-                const { data } = await axios_1.default.get(url);
+                const { data } = yield axios_1.default.get(url);
                 const $ = (0, cheerio_1.load)(data);
                 const pages = $('section#imageWrapper > div > div.read-slideshow > a > img')
                     .map((i, el) => ({
@@ -81,22 +90,25 @@ class MangaHost extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param query Search query
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
                 const $ = (0, cheerio_1.load)(data);
                 const results = $('body > div.w-container > main > table > tbody > tr')
-                    .map((i, row) => ({
-                    id: $(row).find('td > a.pull-left').attr('href')?.split('/')[4],
-                    title: $(row).find('td > h4.entry-title > a').text(),
-                    image: $(row).find('td > a.pull-left > picture > img.manga').attr('src'),
-                    headerForImage: { Referer: this.baseUrl },
-                }))
+                    .map((i, row) => {
+                    var _a;
+                    return ({
+                        id: (_a = $(row).find('td > a.pull-left').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[4],
+                        title: $(row).find('td > h4.entry-title > a').text(),
+                        image: $(row).find('td > a.pull-left > picture > img.manga').attr('src'),
+                        headerForImage: { Referer: this.baseUrl },
+                    });
+                })
                     .get();
                 return {
                     results: results,
@@ -105,7 +117,7 @@ class MangaHost extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = MangaHost;

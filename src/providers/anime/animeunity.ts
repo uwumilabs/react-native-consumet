@@ -8,7 +8,7 @@ import {
   type IAnimeResult,
   type ISource,
   type IEpisodeServer,
-  SubOrSub,
+  SubOrDub,
 } from '../../models';
 
 class AnimeUnity extends AnimeParser {
@@ -46,7 +46,7 @@ class AnimeUnity extends AnimeParser {
           cover: items[i].imageurl_cover,
           rating: parseFloat(items[i].score),
           releaseDate: items[i].date,
-          subOrDub: `${items[i].dub ? SubOrSub.DUB : SubOrSub.SUB}`,
+          subOrDub: `${items[i].dub ? SubOrDub.DUB : SubOrDub.SUB}`,
         });
       }
 

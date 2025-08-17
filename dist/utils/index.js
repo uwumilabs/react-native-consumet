@@ -3,12 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearExtensionCache = exports.validateProviderModule = exports.loadMultipleProviders = exports.createProviderFromURL = exports.loadProviderFromURL = exports.evaluateProviderCode = exports.createReactNativeProviderContext = exports.createProviderContextWithAxios = exports.createProviderContext = exports.MegaUp = exports.getKKey = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.VidCloud = exports.capitalizeFirstLetter = exports.genElement = exports.parsePostInfo = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
-exports.testProviderURL = exports.getCachedExtensions = void 0;
+exports.PolyURLSearchParams = exports.PolyURL = exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.MegaUp = exports.getKKey = exports.VidMoly = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.AsianLoad = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.anilistCharacterQuery = exports.Filemoon = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.VizCloud = exports.StreamTape = exports.MegaCloud = exports.RapidCloud = exports.range = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.Kwik = exports.MixDrop = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.StreamHub = exports.StreamSB = exports.GogoCDN = exports.USER_AGENT = void 0;
 const extractors_1 = require("../extractors");
 Object.defineProperty(exports, "GogoCDN", { enumerable: true, get: function () { return extractors_1.GogoCDN; } });
 Object.defineProperty(exports, "StreamSB", { enumerable: true, get: function () { return extractors_1.StreamSB; } });
-Object.defineProperty(exports, "VidCloud", { enumerable: true, get: function () { return extractors_1.VidCloud; } });
 Object.defineProperty(exports, "MixDrop", { enumerable: true, get: function () { return extractors_1.MixDrop; } });
 Object.defineProperty(exports, "Kwik", { enumerable: true, get: function () { return extractors_1.Kwik; } });
 Object.defineProperty(exports, "RapidCloud", { enumerable: true, get: function () { return extractors_1.RapidCloud; } });
@@ -47,23 +45,22 @@ Object.defineProperty(exports, "anilistAdvancedQuery", { enumerable: true, get: 
 Object.defineProperty(exports, "anilistSiteStatisticsQuery", { enumerable: true, get: function () { return queries_1.anilistSiteStatisticsQuery; } });
 Object.defineProperty(exports, "anilistCharacterQuery", { enumerable: true, get: function () { return queries_1.anilistCharacterQuery; } });
 Object.defineProperty(exports, "anilistStaffInfoQuery", { enumerable: true, get: function () { return queries_1.anilistStaffInfoQuery; } });
-const getComics_1 = require("./getComics");
-Object.defineProperty(exports, "parsePostInfo", { enumerable: true, get: function () { return getComics_1.parsePostInfo; } });
 const kkey_1 = __importDefault(require("../extractors/kisskh/kkey"));
 exports.getKKey = kkey_1.default;
 // Export provider context utilities
 var create_provider_context_1 = require("./create-provider-context");
 Object.defineProperty(exports, "createProviderContext", { enumerable: true, get: function () { return create_provider_context_1.createProviderContext; } });
-Object.defineProperty(exports, "createProviderContextWithAxios", { enumerable: true, get: function () { return create_provider_context_1.createProviderContextWithAxios; } });
-Object.defineProperty(exports, "createReactNativeProviderContext", { enumerable: true, get: function () { return create_provider_context_1.createReactNativeProviderContext; } });
-// Export extension utilities
+var ProviderManager_1 = require("./ProviderManager");
+Object.defineProperty(exports, "ProviderManager", { enumerable: true, get: function () { return ProviderManager_1.ProviderManager; } });
+var ExtractorManager_1 = require("./ExtractorManager");
+Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: function () { return ExtractorManager_1.ExtractorManager; } });
+var create_extractor_context_1 = require("./create-extractor-context");
+Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return create_extractor_context_1.createExtractorContext; } });
 var extension_utils_1 = require("./extension-utils");
-Object.defineProperty(exports, "evaluateProviderCode", { enumerable: true, get: function () { return extension_utils_1.evaluateProviderCode; } });
-Object.defineProperty(exports, "loadProviderFromURL", { enumerable: true, get: function () { return extension_utils_1.loadProviderFromURL; } });
-Object.defineProperty(exports, "createProviderFromURL", { enumerable: true, get: function () { return extension_utils_1.createProviderFromURL; } });
-Object.defineProperty(exports, "loadMultipleProviders", { enumerable: true, get: function () { return extension_utils_1.loadMultipleProviders; } });
-Object.defineProperty(exports, "validateProviderModule", { enumerable: true, get: function () { return extension_utils_1.validateProviderModule; } });
-Object.defineProperty(exports, "clearExtensionCache", { enumerable: true, get: function () { return extension_utils_1.clearExtensionCache; } });
-Object.defineProperty(exports, "getCachedExtensions", { enumerable: true, get: function () { return extension_utils_1.getCachedExtensions; } });
-Object.defineProperty(exports, "testProviderURL", { enumerable: true, get: function () { return extension_utils_1.testProviderURL; } });
+Object.defineProperty(exports, "defaultAxios", { enumerable: true, get: function () { return extension_utils_1.defaultAxios; } });
+Object.defineProperty(exports, "defaultExtractorContext", { enumerable: true, get: function () { return extension_utils_1.defaultExtractorContext; } });
+Object.defineProperty(exports, "defaultStaticExtractors", { enumerable: true, get: function () { return extension_utils_1.defaultStaticExtractors; } });
+var url_polyfill_1 = require("./url-polyfill");
+Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.PolyURL; } });
+Object.defineProperty(exports, "PolyURLSearchParams", { enumerable: true, get: function () { return url_polyfill_1.PolyURLSearchParams; } });
 //# sourceMappingURL=index.js.map

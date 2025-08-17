@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,11 +22,11 @@ class Mangapark extends models_1.MangaParser {
         this.baseUrl = 'https://v2.mangapark.net';
         this.logo = 'https://raw.githubusercontent.com/tachiyomiorg/tachiyomi-extensions/repo/icon/tachiyomi-en.mangapark-v1.3.23.png';
         this.classPath = 'MANGA.Mangapark';
-        this.fetchMangaInfo = async (mangaId, ...args) => {
+        this.fetchMangaInfo = (mangaId, ...args) => __awaiter(this, void 0, void 0, function* () {
             const mangaInfo = { id: mangaId, title: '' };
             const url = `${this.baseUrl}/manga/${mangaId}`;
             try {
-                const { data } = await axios_1.default.get(url);
+                const { data } = yield axios_1.default.get(url);
                 const $ = (0, cheerio_1.load)(data);
                 mangaInfo.title = $('div.pb-1.mb-2.line-b-f.hd h2 a').text();
                 mangaInfo.image = $('img.w-100').attr('src');
@@ -48,13 +57,13 @@ class Mangapark extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapterPages = async (chapterId, ...args) => {
+        });
+        this.fetchChapterPages = (chapterId, ...args) => __awaiter(this, void 0, void 0, function* () {
             const regex = /var _load_pages = \[(.*)\]/gm;
             // Fetches manga with all pages; no /cx/y after.
             const url = `${this.baseUrl}/manga/${chapterId}`;
             try {
-                const { data } = await axios_1.default.get(url);
+                const { data } = yield axios_1.default.get(url);
                 const varLoadPages = data.match(regex)[0];
                 const loadPagesJson = JSON.parse(varLoadPages.replace('var _load_pages = ', ''));
                 const pages = loadPagesJson.map((page) => {
@@ -65,18 +74,19 @@ class Mangapark extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
-        this.search = async (query, page = 1, ...args) => {
+        });
+        this.search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1, ...args) {
             const url = `${this.baseUrl}/search?q=${query}&page=${page}`;
             try {
-                const { data } = await axios_1.default.get(url);
+                const { data } = yield axios_1.default.get(url);
                 const $ = (0, cheerio_1.load)(data);
                 const results = $('.item')
                     .get()
                     .map((item) => {
+                    var _a;
                     const cover = $(item).find('.cover');
                     return {
-                        id: `${cover.attr('href')?.replace('/manga/', '')}`,
+                        id: `${(_a = cover.attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/manga/', '')}`,
                         title: `${cover.attr('title')}`,
                         image: `${$(cover).find('img').attr('src')}}`,
                     };
@@ -86,7 +96,7 @@ class Mangapark extends models_1.MangaParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = Mangapark;

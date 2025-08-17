@@ -56,7 +56,7 @@ class StreamWish extends VideoExtractor {
 
         // console.log('Decoded String:', p);
       } else {
-        console.log('No match found');
+        //console.log('No match found');
       }
       let link = p.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)![0];
       // console.log('Decoded Links:', link);

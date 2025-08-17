@@ -1,9 +1,7 @@
 package com.consumet
 
-import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.*
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -11,8 +9,6 @@ import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @ReactModule(name = ConsumetModule.NAME)
 class ConsumetModule(private val reactContext: ReactApplicationContext) :

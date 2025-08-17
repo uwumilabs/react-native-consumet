@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
@@ -15,26 +24,27 @@ class NovelUpdates extends models_1.LightNovelParser {
          * @param lightNovelUrl light novel link or id
          * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
          */
-        this.fetchLightNovelInfo = async (lightNovelUrl, chapterPage = -1) => {
+        this.fetchLightNovelInfo = (lightNovelUrl_1, ...args_1) => __awaiter(this, [lightNovelUrl_1, ...args_1], void 0, function* (lightNovelUrl, chapterPage = -1) {
+            var _a, _b, _c, _d, _e, _f, _g;
             if (!lightNovelUrl.startsWith(this.baseUrl)) {
                 lightNovelUrl = `${this.baseUrl}/series/${lightNovelUrl}`;
             }
             const lightNovelInfo = {
-                id: lightNovelUrl.split('/')?.pop(),
+                id: (_a = lightNovelUrl.split('/')) === null || _a === void 0 ? void 0 : _a.pop(),
                 title: '',
                 url: lightNovelUrl,
             };
             try {
-                const page = await fetch(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
+                const page = yield fetch(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
                     headers: {
                         Referer: lightNovelUrl,
                     },
                 });
-                const $ = (0, cheerio_1.load)(await page.text());
+                const $ = (0, cheerio_1.load)(yield page.text());
                 if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
                     throw new Error('Client is blocked from accessing the site.');
                 }
-                lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
+                lightNovelInfo.title = (_b = $('div.seriestitlenu').text()) === null || _b === void 0 ? void 0 : _b.trim();
                 lightNovelInfo.image = $('div.seriesimg img').attr('src');
                 lightNovelInfo.author = $('div#showauthors a').text();
                 lightNovelInfo.genres = $('div#seriesgenre a')
@@ -42,8 +52,8 @@ class NovelUpdates extends models_1.LightNovelParser {
                     .get();
                 lightNovelInfo.rating = parseFloat($('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text());
                 lightNovelInfo.views = parseInt($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text());
-                lightNovelInfo.description = $('div#editdescription').text()?.trim();
-                const status = $('div#editstatus').text()?.trim();
+                lightNovelInfo.description = (_c = $('div#editdescription').text()) === null || _c === void 0 ? void 0 : _c.trim();
+                const status = (_d = $('div#editstatus').text()) === null || _d === void 0 ? void 0 : _d.trim();
                 if (status.includes('Complete')) {
                     lightNovelInfo.status = models_1.MediaStatus.COMPLETED;
                 }
@@ -54,18 +64,18 @@ class NovelUpdates extends models_1.LightNovelParser {
                     lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
                 }
                 const postId = $('input#mypostid').attr('value');
-                lightNovelInfo.chapters = await this.fetchChapters(postId);
-                lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
+                lightNovelInfo.chapters = yield this.fetchChapters(postId);
+                lightNovelInfo.rating = Number((_g = (_f = (_e = $('h5.seriesother span.uvotes').text()) === null || _e === void 0 ? void 0 : _e.split(' /')[0]) === null || _f === void 0 ? void 0 : _f.substring(1)) !== null && _g !== void 0 ? _g : 0) * 2;
                 return lightNovelInfo;
             }
             catch (err) {
                 console.error(err);
                 throw new Error(err.message);
             }
-        };
-        this.fetchChapters = async (postId) => {
+        });
+        this.fetchChapters = (postId) => __awaiter(this, void 0, void 0, function* () {
             const chapters = [];
-            const chapterData = (await (await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+            const chapterData = (yield (yield fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -84,12 +94,12 @@ class NovelUpdates extends models_1.LightNovelParser {
                 });
             });
             return chapters;
-        };
+        });
         /**
          *
          * @param chapterId chapter id or url
          */
-        this.fetchChapterContent = async (chapterId) => {
+        this.fetchChapterContent = (chapterId) => __awaiter(this, void 0, void 0, function* () {
             if (!chapterId.startsWith(this.baseUrl)) {
                 chapterId = `${this.baseUrl}/extnu/${chapterId}`;
             }
@@ -99,8 +109,8 @@ class NovelUpdates extends models_1.LightNovelParser {
                 text: '',
             };
             try {
-                const page = await fetch(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
-                const data = await page.text();
+                const page = yield fetch(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
+                const data = yield page.text();
                 const $ = (0, cheerio_1.load)(data);
                 contents.novelTitle = $('title').text();
                 contents.chapterTitle = $('title').text();
@@ -110,23 +120,24 @@ class NovelUpdates extends models_1.LightNovelParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param query search query string
          */
-        this.search = async (query) => {
+        this.search = (query) => __awaiter(this, void 0, void 0, function* () {
             const result = { results: [] };
             try {
-                const res = await fetch(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
+                const res = yield fetch(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
                     headers: {
                         Referer: this.baseUrl,
                     },
                 });
-                const $ = (0, cheerio_1.load)(await res.text());
+                const $ = (0, cheerio_1.load)(yield res.text());
                 $('div.search_main_box_nu').each((i, el) => {
+                    var _a;
                     result.results.push({
-                        id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1].split('/')[0],
+                        id: (_a = $(el).find('div.search_body_nu div.search_title a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/series/')[1].split('/')[0],
                         title: $(el).find('div.search_body_nu div.search_title a').text(),
                         url: $(el).find('div.search_body_nu div.search_title a').attr('href'),
                         image: $(el).find('div.search_img_nu img').attr('src'),
@@ -137,7 +148,7 @@ class NovelUpdates extends models_1.LightNovelParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
     }
 }
 exports.default = NovelUpdates;

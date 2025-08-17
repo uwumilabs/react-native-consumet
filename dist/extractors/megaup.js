@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -23,7 +32,7 @@ class MegaUp extends models_1.VideoExtractor {
             let o = [];
             for (var i = 0; i < l; i++) {
                 const kc = this.homeKeys[this.keysChar.indexOf(n.charAt(i))];
-                const c = kc?.charAt(i % kc.length);
+                const c = kc === null || kc === void 0 ? void 0 : kc.charAt(i % kc.length);
                 o.push(c);
             }
             return btoa(o.join('')).replace(/\//g, '_').replace(/\+/g, '-').replace(/\=/g, '');
@@ -35,11 +44,12 @@ class MegaUp extends models_1.VideoExtractor {
             for (var i = 0; i < l; i++) {
                 const c = n.charCodeAt(i);
                 const k = this.megaKeys[c];
-                o.push(k?.charCodeAt(i % k.length));
+                o.push(k === null || k === void 0 ? void 0 : k.charCodeAt(i % k.length));
             }
             return decodeURIComponent(String.fromCharCode.apply(null, o.filter((val) => val !== undefined)));
         };
         this.Decode = (n) => {
+            var _a, _b;
             n = atob(n.replace(/_/g, '/').replace(/-/g, '+'));
             const l = n.length;
             let o = [];
@@ -47,7 +57,7 @@ class MegaUp extends models_1.VideoExtractor {
                 const c = n.charCodeAt(i);
                 let cp = '';
                 for (var j = 0; j < this.homeKeys.length; j++) {
-                    var ck = this.homeKeys[j]?.charCodeAt(i % this.homeKeys[j]?.length);
+                    var ck = (_a = this.homeKeys[j]) === null || _a === void 0 ? void 0 : _a.charCodeAt(i % ((_b = this.homeKeys[j]) === null || _b === void 0 ? void 0 : _b.length));
                     if (ck === c) {
                         cp = this.keysChar[j];
                         break;
@@ -62,11 +72,11 @@ class MegaUp extends models_1.VideoExtractor {
             }
             return decodeURIComponent(o.join(''));
         };
-        this.extract = async (videoUrl) => {
+        this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
             try {
-                await this.kaiKeysReady;
+                yield this.kaiKeysReady;
                 const url = videoUrl.href.replace(/\/(e|e2)\//, '/media/');
-                const res = await axios_1.default.get(url);
+                const res = yield axios_1.default.get(url);
                 const decrypted = JSON.parse(this.DecodeIframeData(res.data.result).replace(/\\/g, ''));
                 const data = {
                     sources: decrypted.sources.map((s) => ({
@@ -84,19 +94,21 @@ class MegaUp extends models_1.VideoExtractor {
             catch (error) {
                 throw new Error(error.message);
             }
-        };
+        });
         this.kaiKeysReady = this.loadKAIKEYS();
     }
-    async loadKAIKEYS() {
-        const extraction_keys = 'https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json';
-        const response = await axios_1.default.get(extraction_keys);
-        const keys = await response.data;
-        for (var i = 0; i < keys.kai.length; i++) {
-            this.homeKeys.push(atob(keys.kai[i]));
-        }
-        for (var i = 0; i < keys.mega.length; i++) {
-            this.megaKeys.push(atob(keys.mega[i]));
-        }
+    loadKAIKEYS() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const extraction_keys = 'https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json';
+            const response = yield axios_1.default.get(extraction_keys);
+            const keys = yield response.data;
+            for (var i = 0; i < keys.kai.length; i++) {
+                this.homeKeys.push(atob(keys.kai[i]));
+            }
+            for (var i = 0; i < keys.mega.length; i++) {
+                this.megaKeys.push(atob(keys.mega[i]));
+            }
+        });
     }
 }
 exports.MegaUp = MegaUp;

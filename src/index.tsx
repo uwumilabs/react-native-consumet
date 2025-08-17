@@ -1,7 +1,35 @@
-import 'react-native-url-polyfill/auto';
+import { URL as PolyURL, URLSearchParams as PolyURLSearchParams } from './utils/url-polyfill';
 
-import { ANIME, COMICS, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+// Polyfill global scope if they don't exist
+if (typeof globalThis !== 'undefined') {
+  // @ts-ignore
+  if (!globalThis.URL) {
+    (globalThis as any).URL = PolyURL;
+  }
+  // @ts-ignore
+  if (!globalThis.URLSearchParams) {
+    (globalThis as any).URLSearchParams = PolyURLSearchParams;
+  }
+}
+// Providers (namespaced provider groups)
+import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+
+// Provider metadata (catalog of built-in providers)
 import { PROVIDERS_LIST } from './utils/providers-list';
+
+import ExtensionRegistry from './extension-registry.json';
+// Utils (contexts, and provider management)
+import {
+  createProviderContext,
+  ProviderManager,
+  ExtractorManager,
+  createExtractorContext,
+  defaultAxios,
+  defaultExtractorContext,
+  defaultStaticExtractors,
+} from './utils';
+
+// Extractors (video/file hosters and scrapers)
 import {
   AsianLoad,
   Filemoon,
@@ -15,7 +43,6 @@ import {
   StreamSB,
   StreamTape,
   StreamWish,
-  VidCloud,
   VidMoly,
   VizCloud,
   Mp4Player,
@@ -24,6 +51,8 @@ import {
   Voe,
   MegaUp,
 } from './extractors';
+
+// Models (domain types, enums, and constants)
 import {
   type IProviderStats,
   type ISearch,
@@ -32,10 +61,9 @@ import {
   type IAnimeResult,
   type IEpisodeServer,
   type IVideo,
-  type LibgenBook,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   type IMangaResult,
   type IMangaChapter,
   type IMangaInfo,
@@ -43,8 +71,6 @@ import {
   type ILightNovelInfo,
   type ILightNovelChapter,
   type ILightNovelChapterContent,
-  type GetComicsComics,
-  type ComicRes,
   type IMangaChapterPage,
   TvType,
   type IMovieEpisode,
@@ -63,21 +89,26 @@ import {
   type ProxyConfig,
   type AniZipEpisode,
   type IMovieSeason,
+  type ExtensionManifest,
 } from './models';
 
-export { ANIME, COMICS, MANGA, LIGHT_NOVELS, MOVIES, META };
+// ---------------------------------------------------------------------------
+// Exports
+// ---------------------------------------------------------------------------
+
+// Providers (namespaced)
+export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
+
+// Provider metadata
 export { PROVIDERS_LIST };
+
+// Models: runtime enums/constants
+export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat };
+
+// Extractors
 export {
-  Topics,
-  Genres,
-  SubOrSub,
-  StreamingServers,
-  MediaStatus,
-  TvType,
-  MediaFormat,
   GogoCDN,
   StreamSB,
-  VidCloud,
   MixDrop,
   Kwik,
   RapidCloud,
@@ -96,6 +127,8 @@ export {
   VidHide,
   Voe,
 };
+
+// Models: TypeScript types
 export type {
   IProviderStats,
   IAnimeEpisode,
@@ -103,7 +136,6 @@ export type {
   IAnimeResult,
   IEpisodeServer,
   IVideo,
-  LibgenBook,
   IMangaResult,
   IMangaChapter,
   IMangaInfo,
@@ -111,8 +143,6 @@ export type {
   ILightNovelInfo,
   ILightNovelChapter,
   ILightNovelChapterContent,
-  GetComicsComics,
-  ComicRes,
   ISearch,
   IMangaChapterPage,
   IMovieEpisode,
@@ -128,4 +158,18 @@ export type {
   ProxyConfig,
   AniZipEpisode,
   IMovieSeason,
+  ExtensionManifest,
+};
+export { ExtensionRegistry };
+// Utils: context creation and provider management
+export {
+  createProviderContext,
+  ProviderManager,
+  ExtractorManager,
+  createExtractorContext,
+  PolyURL,
+  PolyURLSearchParams,
+  defaultAxios,
+  defaultExtractorContext,
+  defaultStaticExtractors,
 };

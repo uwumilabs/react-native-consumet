@@ -15,7 +15,7 @@ import {
 import type { IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
-import HiMovies from '../movies/himovies';
+import HiMovies from '../movies/himovies/himovies';
 
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
@@ -360,7 +360,7 @@ class TMDB extends MovieParser {
         });
       }
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       throw new Error((err as Error).message);
     }
 

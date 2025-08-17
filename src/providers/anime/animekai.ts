@@ -9,7 +9,7 @@ import {
   type IEpisodeServer,
   StreamingServers,
   MediaFormat,
-  SubOrSub,
+  SubOrDub,
   MediaStatus,
   type Intro,
 } from '../../models';
@@ -351,15 +351,15 @@ class AnimeKai extends AnimeParser {
       const hasDub: boolean = $('.entity-scroll > .info > span.dub').length > 0;
 
       if (hasSub) {
-        info.subOrDub = SubOrSub.SUB;
+        info.subOrDub = SubOrDub.SUB;
         info.hasSub = hasSub;
       }
       if (hasDub) {
-        info.subOrDub = SubOrSub.DUB;
+        info.subOrDub = SubOrDub.DUB;
         info.hasDub = hasDub;
       }
       if (hasSub && hasDub) {
-        info.subOrDub = SubOrSub.BOTH;
+        info.subOrDub = SubOrDub.BOTH;
       }
 
       info.genres = [];
@@ -435,12 +435,12 @@ class AnimeKai extends AnimeParser {
    *
    * @param episodeId Episode id
    * @param server server type (default `VidCloud`) (optional)
-   * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+   * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
    */
   override fetchEpisodeSources = async (
     episodeId: string,
     server: StreamingServers = StreamingServers.MegaUp,
-    subOrDub: SubOrSub = SubOrSub.SUB
+    subOrDub: SubOrDub = SubOrDub.SUB
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
@@ -556,7 +556,7 @@ class AnimeKai extends AnimeParser {
    */
   override fetchEpisodeServers = async (
     episodeId: string,
-    subOrDub: SubOrSub = SubOrSub.SUB
+    subOrDub: SubOrDub = SubOrDub.SUB
   ): Promise<IEpisodeServer[]> => {
     if (!episodeId.startsWith(this.baseUrl + '/ajax'))
       episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(

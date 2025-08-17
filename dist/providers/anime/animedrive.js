@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,19 +26,19 @@ class AnimeDrive extends models_1.AnimeParser {
          * @param query Search query
          * @param page Page number (optional)
          */
-        this.search = async (query, page = 1) => {
+        this.search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/search/?q=${decodeURIComponent(query)}&p=${page}`);
                 const $ = (0, cheerio_1.load)(data);
                 const hasNextPage = $('.nk-pagination.nk-pagination-center > nav > a.nk-pagination-current-white').next('a').length > 0;
                 const searchResults = [];
                 $('div.row.row--grid .card')
                     .slice(1)
                     .each((i, el) => {
-                    const id = $(el)
+                    var _a;
+                    const id = (_a = $(el)
                         .find('div.card__content > h3.card__title > a')
-                        .attr('href')
-                        ?.replace('https://animedrive.hu/anime/?id=', '');
+                        .attr('href')) === null || _a === void 0 ? void 0 : _a.replace('https://animedrive.hu/anime/?id=', '');
                     const title = $(el).find('div.card__content > h3.card__title > a').text();
                     const image = $(el).find('div.card__cover > div.nk-image-box-1-a > img').attr('src');
                     const url = $(el).find('div.card__content > h3.card__title > a').attr('href');
@@ -47,17 +56,17 @@ class AnimeDrive extends models_1.AnimeParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          * @param id Anime id
          */
-        this.fetchAnimeInfo = async (id) => {
+        this.fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
             const info = {
                 id: id,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/anime/?id=${id}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/anime/?id=${id}`);
                 const $ = (0, cheerio_1.load)(data);
                 info.title = $('div.col-sm-12.col-md-8.col-lg-9 > h2').text();
                 info.image = $('div.nk-image-box-1-a.col-12 > img').attr('src');
@@ -74,7 +83,8 @@ class AnimeDrive extends models_1.AnimeParser {
                 info.episodes = [];
                 const episodes = Array.from({ length: info.totalEpisodes }, (_, i) => i + 1);
                 episodes.forEach((_, i) => {
-                    info.episodes?.push({
+                    var _a;
+                    (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
                         id: `?id=${id}&ep=${i + 1}`,
                         number: i + 1,
                         title: `${info.title} Episode ${i + 1}`,
@@ -86,18 +96,19 @@ class AnimeDrive extends models_1.AnimeParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          * @param page Page number
          */
-        this.fetchRecentEpisodes = async (page = 1) => {
+        this.fetchRecentEpisodes = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/latest-added?page=${page}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/latest-added?page=${page}`);
                 const $ = (0, cheerio_1.load)(data);
                 const hasNextPage = !$('.pagination > nav > ul > li').last().hasClass('disabled');
                 const recentEpisodes = [];
                 $('div.film_list-wrap > div').each((i, el) => {
-                    const id = $(el).find('div.film-poster > a').attr('href')?.replace('/watch/', '');
+                    var _a;
+                    const id = (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '');
                     const image = $(el).find('div.film-poster > img').attr('data-src');
                     const title = $(el).find('div.film-poster > img').attr('alt');
                     const url = `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`;
@@ -115,12 +126,12 @@ class AnimeDrive extends models_1.AnimeParser {
             catch (err) {
                 throw new Error('Something went wrong. Please try again later.');
             }
-        };
+        });
         /**
          *
          * @param episodeId episode id
          */
-        this.fetchEpisodeSources = async (episodeId) => {
+        this.fetchEpisodeSources = (episodeId) => __awaiter(this, void 0, void 0, function* () {
             const headers = {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'Accept-Language': 'en-US,en;q=0.9',
@@ -136,7 +147,7 @@ class AnimeDrive extends models_1.AnimeParser {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             };
             try {
-                const response = await axios_1.default.get(`https://player.animedrive.hu/player_v1.5.php${episodeId}`, { headers });
+                const response = yield axios_1.default.get(`https://player.animedrive.hu/player_v1.5.php${episodeId}`, { headers });
                 const $ = (0, cheerio_1.load)(response.data);
                 const htmlData = response.data;
                 const sourcesDataMatch = /sources:\s*\[\s*(.*?)\s*\],?\s*poster:/.exec(htmlData);
@@ -161,10 +172,10 @@ class AnimeDrive extends models_1.AnimeParser {
                 return { sources: convertedSources }; // Ensure sources matches ISource's definition
             }
             catch (err) {
-                console.log(err);
+                //console.log(err);
                 throw new Error('Something went wrong. Please try again later.');
             }
-        };
+        });
         /**
          * @deprecated Use fetchEpisodeSources instead
          */

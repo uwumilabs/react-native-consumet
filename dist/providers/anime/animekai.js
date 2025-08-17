@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -18,18 +27,19 @@ class AnimeKai extends models_1.AnimeParser {
         /**
          * @param id Anime id
          */
-        this.fetchAnimeInfo = async (id) => {
+        this.fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const info = {
                 id: id,
                 title: '',
             };
             try {
-                const { data } = await axios_1.default.get(`${this.baseUrl}/watch/${id}`, {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/watch/${id}`, {
                     headers: this.Headers(),
                 });
                 const $ = (0, cheerio_1.load)(data);
                 info.title = $('.entity-scroll > .title').text();
-                info.japaneseTitle = $('.entity-scroll > .title').attr('data-jp')?.trim();
+                info.japaneseTitle = (_a = $('.entity-scroll > .title').attr('data-jp')) === null || _a === void 0 ? void 0 : _a.trim();
                 info.image = $('div.poster > div >img').attr('src');
                 info.description = $('.entity-scroll > .desc').text().trim();
                 // Movie, TV, OVA, ONA, Special, Music
@@ -37,58 +47,61 @@ class AnimeKai extends models_1.AnimeParser {
                 info.url = `${this.baseUrl}/watch/${id}`;
                 info.recommendations = [];
                 $('section.sidebar-section:not(#related-anime) .aitem-col .aitem').each((i, ele) => {
+                    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                     const aTag = $(ele);
-                    const id = aTag.attr('href')?.replace('/watch/', '');
-                    info.recommendations?.push({
+                    const id = (_a = aTag.attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '');
+                    (_b = info.recommendations) === null || _b === void 0 ? void 0 : _b.push({
                         id: id,
                         title: aTag.find('.title').text().trim(),
                         url: `${this.baseUrl}${aTag.attr('href')}`,
-                        image: aTag.attr('style')?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
-                        japaneseTitle: aTag.find('.title').attr('data-jp')?.trim(),
+                        image: (_d = (_c = aTag.attr('style')) === null || _c === void 0 ? void 0 : _c.match(/background-image:\s*url\('(.+?)'\)/)) === null || _d === void 0 ? void 0 : _d[1],
+                        japaneseTitle: (_e = aTag.find('.title').attr('data-jp')) === null || _e === void 0 ? void 0 : _e.trim(),
                         type: aTag.find('.info').children().last().text().trim(),
-                        sub: parseInt(aTag.find('.info span.sub')?.text()) || 0,
-                        dub: parseInt(aTag.find('.info span.dub')?.text()) || 0,
-                        episodes: parseInt(aTag.find('.info').children().eq(-2).text().trim() ?? aTag.find('.info span.sub')?.text()) || 0,
+                        sub: parseInt((_f = aTag.find('.info span.sub')) === null || _f === void 0 ? void 0 : _f.text()) || 0,
+                        dub: parseInt((_g = aTag.find('.info span.dub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
+                        episodes: parseInt((_h = aTag.find('.info').children().eq(-2).text().trim()) !== null && _h !== void 0 ? _h : (_j = aTag.find('.info span.sub')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
                     });
                 });
                 info.relations = [];
                 $('section#related-anime .tab-body .aitem-col').each((i, ele) => {
+                    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                     const card = $(ele);
                     const aTag = card.find('a.aitem');
-                    const id = aTag.attr('href')?.replace('/watch/', '');
-                    info.relations?.push({
+                    const id = (_a = aTag.attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '');
+                    (_b = info.relations) === null || _b === void 0 ? void 0 : _b.push({
                         id: id,
                         title: aTag.find('.title').text().trim(),
                         url: `${this.baseUrl}${aTag.attr('href')}`,
-                        image: aTag.attr('style')?.match(/background-image:\s*url\('(.+?)'\)/)?.[1],
-                        japaneseTitle: aTag.find('.title').attr('data-jp')?.trim(),
+                        image: (_d = (_c = aTag.attr('style')) === null || _c === void 0 ? void 0 : _c.match(/background-image:\s*url\('(.+?)'\)/)) === null || _d === void 0 ? void 0 : _d[1],
+                        japaneseTitle: (_e = aTag.find('.title').attr('data-jp')) === null || _e === void 0 ? void 0 : _e.trim(),
                         type: card.find('.info').children().eq(-2).text().trim(),
-                        sub: parseInt(card.find('.info span.sub')?.text()) || 0,
-                        dub: parseInt(card.find('.info span.dub')?.text()) || 0,
+                        sub: parseInt((_f = card.find('.info span.sub')) === null || _f === void 0 ? void 0 : _f.text()) || 0,
+                        dub: parseInt((_g = card.find('.info span.dub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
                         relationType: card.find('.info').children().last().text().trim(),
-                        episodes: parseInt(card.find('.info').children().eq(-3).text().trim() ?? card.find('.info span.sub')?.text()) || 0,
+                        episodes: parseInt((_h = card.find('.info').children().eq(-3).text().trim()) !== null && _h !== void 0 ? _h : (_j = card.find('.info span.sub')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
                     });
                 });
                 const hasSub = $('.entity-scroll > .info > span.sub').length > 0;
                 const hasDub = $('.entity-scroll > .info > span.dub').length > 0;
                 if (hasSub) {
-                    info.subOrDub = models_1.SubOrSub.SUB;
+                    info.subOrDub = models_1.SubOrDub.SUB;
                     info.hasSub = hasSub;
                 }
                 if (hasDub) {
-                    info.subOrDub = models_1.SubOrSub.DUB;
+                    info.subOrDub = models_1.SubOrDub.DUB;
                     info.hasDub = hasDub;
                 }
                 if (hasSub && hasDub) {
-                    info.subOrDub = models_1.SubOrSub.BOTH;
+                    info.subOrDub = models_1.SubOrDub.BOTH;
                 }
                 info.genres = [];
                 $('.entity-scroll > .detail')
                     .find('div:contains("Genres")')
                     .each(function () {
+                    var _a;
                     const genre = $(this).text().trim();
                     if (genre !== undefined)
-                        info.genres?.push(genre);
+                        (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push(genre);
                 });
                 switch ($('.entity-scroll > .detail').find("div:contains('Status') > span").text().trim()) {
                     case 'Completed':
@@ -106,12 +119,8 @@ class AnimeKai extends models_1.AnimeParser {
                 }
                 info.season = $('.entity-scroll > .detail').find("div:contains('Premiered') > span").text().trim();
                 const ani_id = $('.rate-box#anime-rating').attr('data-id');
-                const episodesAjax = await axios_1.default.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id)}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Referer': `${this.baseUrl}/watch/${id}`,
-                        ...this.Headers(),
-                    },
+                const episodesAjax = yield axios_1.default.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id)}`, {
+                    headers: Object.assign({ 'X-Requested-With': 'XMLHttpRequest', 'Referer': `${this.baseUrl}/watch/${id}` }, this.Headers()),
                 });
                 const $$ = (0, cheerio_1.load)(episodesAjax.data.result);
                 // Pre-calculate values used for all episodes
@@ -121,11 +130,12 @@ class AnimeKai extends models_1.AnimeParser {
                 info.totalEpisodes = $$('div.eplist > ul > li').length;
                 info.episodes = [];
                 episodeElements.each((i, el) => {
+                    var _a;
                     const $el = $$(el);
                     const href = `${$el.attr('href')}ep=${$el.attr('num')}` || '';
                     const number = parseInt($el.attr('data-number') || '0');
                     const episodeId = `${info.id}$ep=${$$(el).attr('num')}$token=${$$(el).attr('token')}`; //appending token to episode id, as it is required to fetch servers keeping the structure same as other providers
-                    info.episodes?.push({
+                    (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
                         id: episodeId,
                         number: number,
                         title: $el.children('span').text().trim(),
@@ -140,51 +150,45 @@ class AnimeKai extends models_1.AnimeParser {
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          *
          * @param episodeId Episode id
          * @param server server type (default `VidCloud`) (optional)
-         * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
+         * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
          */
-        this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.MegaUp, subOrDub = models_1.SubOrSub.SUB) => {
+        this.fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = models_1.StreamingServers.MegaUp, subOrDub = models_1.SubOrDub.SUB) {
+            var _a, _b;
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
                     case models_1.StreamingServers.MegaUp:
-                        return {
-                            headers: { Referer: serverUrl.href },
-                            ...(await new utils_1.MegaUp().extract(serverUrl)),
-                            download: serverUrl.href.replace(/\/e\//, '/download/'),
-                        };
+                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new utils_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
                     default:
-                        return {
-                            headers: { Referer: serverUrl.href },
-                            ...(await new utils_1.MegaUp().extract(serverUrl)),
-                            download: serverUrl.href.replace(/\/e\//, '/download/'),
-                        };
+                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new utils_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
                 }
             }
             try {
-                const servers = await this.fetchEpisodeServers(episodeId, subOrDub);
+                const servers = yield this.fetchEpisodeServers(episodeId, subOrDub);
                 const i = servers.findIndex((s) => s.name.toLowerCase().includes(server)); //for now only megaup is available, hence directly using it
                 if (i === -1) {
                     throw new Error(`Server ${server} not found`);
                 }
                 const serverUrl = new URL(servers[i].url);
-                const sources = await this.fetchEpisodeSources(serverUrl.href, server, subOrDub);
-                sources.intro = servers[i]?.intro;
-                sources.outro = servers[i]?.outro;
+                const sources = yield this.fetchEpisodeSources(serverUrl.href, server, subOrDub);
+                sources.intro = (_a = servers[i]) === null || _a === void 0 ? void 0 : _a.intro;
+                sources.outro = (_b = servers[i]) === null || _b === void 0 ? void 0 : _b.outro;
                 return sources;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         /**
          * @param url string
          */
-        this.scrapeCardPage = async (url) => {
+        this.scrapeCardPage = (url) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             try {
                 const res = {
                     currentPage: 0,
@@ -192,24 +196,24 @@ class AnimeKai extends models_1.AnimeParser {
                     totalPages: 0,
                     results: [],
                 };
-                const { data } = await axios_1.default.get(url, {
+                const { data } = yield axios_1.default.get(url, {
                     headers: this.Headers(),
                 });
                 const $ = (0, cheerio_1.load)(data);
                 const pagination = $('ul.pagination');
                 res.currentPage = parseInt(pagination.find('.page-item.active span.page-link').text().trim()) || 0;
-                const nextPage = pagination.find('.page-item.active').next().find('a.page-link').attr('href')?.split('page=')[1];
+                const nextPage = (_a = pagination.find('.page-item.active').next().find('a.page-link').attr('href')) === null || _a === void 0 ? void 0 : _a.split('page=')[1];
                 if (nextPage !== undefined && nextPage !== '') {
                     res.hasNextPage = true;
                 }
-                const totalPages = pagination.find('.page-item:last-child a.page-link').attr('href')?.split('page=')[1];
+                const totalPages = (_b = pagination.find('.page-item:last-child a.page-link').attr('href')) === null || _b === void 0 ? void 0 : _b.split('page=')[1];
                 if (totalPages === undefined || totalPages === '') {
                     res.totalPages = res.currentPage;
                 }
                 else {
                     res.totalPages = parseInt(totalPages) || 0;
                 }
-                res.results = await this.scrapeCard($);
+                res.results = yield this.scrapeCard($);
                 if (res.results.length === 0) {
                     res.currentPage = 0;
                     res.hasNextPage = false;
@@ -220,30 +224,31 @@ class AnimeKai extends models_1.AnimeParser {
             catch (err) {
                 throw new Error('Something went wrong. Please try again later.');
             }
-        };
+        });
         /**
          * @param $ cheerio instance
          */
-        this.scrapeCard = async ($) => {
+        this.scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const results = [];
                 $('.aitem').each((i, ele) => {
+                    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
                     const card = $(ele);
                     const atag = card.find('div.inner > a');
-                    const id = atag.attr('href')?.replace('/watch/', '');
-                    const type = card.find('.info').children().last()?.text().trim();
+                    const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '');
+                    const type = (_b = card.find('.info').children().last()) === null || _b === void 0 ? void 0 : _b.text().trim();
                     results.push({
                         id: id,
                         title: atag.text().trim(),
                         url: `${this.baseUrl}${atag.attr('href')}`,
-                        image: card.find('img')?.attr('data-src') ?? card.find('img')?.attr('src'),
+                        image: (_d = (_c = card.find('img')) === null || _c === void 0 ? void 0 : _c.attr('data-src')) !== null && _d !== void 0 ? _d : (_e = card.find('img')) === null || _e === void 0 ? void 0 : _e.attr('src'),
                         //   duration: card.find('.fdi-duration')?.text(),
-                        japaneseTitle: card.find('a.title')?.attr('data-jp')?.trim(),
+                        japaneseTitle: (_g = (_f = card.find('a.title')) === null || _f === void 0 ? void 0 : _f.attr('data-jp')) === null || _g === void 0 ? void 0 : _g.trim(),
                         type: type,
                         //   nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
-                        sub: parseInt(card.find('.info span.sub')?.text()) || 0,
-                        dub: parseInt(card.find('.info span.dub')?.text()) || 0,
-                        episodes: parseInt(card.find('.info').children().eq(-2).text().trim() ?? card.find('.info span.sub')?.text()) || 0, //if no direct episode count, then just use sub count
+                        sub: parseInt((_h = card.find('.info span.sub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
+                        dub: parseInt((_j = card.find('.info span.dub')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
+                        episodes: parseInt((_k = card.find('.info').children().eq(-2).text().trim()) !== null && _k !== void 0 ? _k : (_l = card.find('.info span.sub')) === null || _l === void 0 ? void 0 : _l.text()) || 0, //if no direct episode count, then just use sub count
                     });
                 });
                 return results;
@@ -251,24 +256,24 @@ class AnimeKai extends models_1.AnimeParser {
             catch (err) {
                 throw new Error('Something went wrong. Please try again later.');
             }
-        };
+        });
         /**
          * @param episodeId Episode id
          * @param subOrDub sub or dub (default `sub`) (optional)
          */
-        this.fetchEpisodeServers = async (episodeId, subOrDub = models_1.SubOrSub.SUB) => {
+        this.fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrDub.SUB) {
             if (!episodeId.startsWith(this.baseUrl + '/ajax'))
                 episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(episodeId.split('$token=')[1])}`;
             try {
-                const { data } = await axios_1.default.get(episodeId, {
+                const { data } = yield axios_1.default.get(episodeId, {
                     headers: this.Headers(),
                 });
                 const $ = (0, cheerio_1.load)(data.result);
                 const servers = [];
                 const serverItems = $(`.server-items.lang-group[data-id="${subOrDub}"] .server`);
-                await Promise.all(serverItems.map(async (i, server) => {
+                yield Promise.all(serverItems.map((i, server) => __awaiter(this, void 0, void 0, function* () {
                     const id = $(server).attr('data-lid');
-                    const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id)}`, {
+                    const { data } = yield axios_1.default.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id)}`, {
                         headers: this.Headers(),
                     });
                     const decodedData = JSON.parse(Decode(data.result));
@@ -276,21 +281,21 @@ class AnimeKai extends models_1.AnimeParser {
                         name: `MegaUp ${$(server).text().trim()}`, //megaup is the only server for now
                         url: decodedData.url,
                         intro: {
-                            start: decodedData?.skip.intro[0],
-                            end: decodedData?.skip.intro[1],
+                            start: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.intro[0],
+                            end: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.intro[1],
                         },
                         outro: {
-                            start: decodedData?.skip.outro[0],
-                            end: decodedData?.skip.outro[1],
+                            start: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.outro[0],
+                            end: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.outro[1],
                         },
                     });
-                }));
+                })));
                 return servers;
             }
             catch (err) {
                 throw new Error(err.message);
             }
-        };
+        });
         if (customBaseURL) {
             if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
                 this.baseUrl = customBaseURL;
@@ -394,23 +399,25 @@ class AnimeKai extends models_1.AnimeParser {
         }
         return this.scrapeCardPage(`${this.baseUrl}/special?page=${page}`);
     }
-    async fetchGenres() {
-        try {
-            const res = [];
-            const { data } = await axios_1.default.get(`${this.baseUrl}/home`, {
-                headers: this.Headers(),
-            });
-            const $ = (0, cheerio_1.load)(data);
-            const sideBar = $('#menu');
-            sideBar.find('ul.c4 li a').each((i, ele) => {
-                const genres = $(ele);
-                res.push(genres.text().toLowerCase());
-            });
-            return res;
-        }
-        catch (err) {
-            throw new Error('Something went wrong. Please try again later.');
-        }
+    fetchGenres() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = [];
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/home`, {
+                    headers: this.Headers(),
+                });
+                const $ = (0, cheerio_1.load)(data);
+                const sideBar = $('#menu');
+                sideBar.find('ul.c4 li a').each((i, ele) => {
+                    const genres = $(ele);
+                    res.push(genres.text().toLowerCase());
+                });
+                return res;
+            }
+            catch (err) {
+                throw new Error('Something went wrong. Please try again later.');
+            }
+        });
     }
     /**
      * @param page number
@@ -429,110 +436,119 @@ class AnimeKai extends models_1.AnimeParser {
      * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
      * @returns A promise that resolves to an object containing the search results.
      */
-    async fetchSchedule(date = new Date().toISOString().split('T')[0]) {
-        try {
-            const res = {
-                results: [],
-            };
-            const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`, { headers: this.Headers() });
-            const $ = (0, cheerio_1.load)(data.result);
-            $('ul.collapsed li').each((i, ele) => {
-                const card = $(ele);
-                const titleElement = card.find('span.title');
-                const episodeText = card.find('span').last().text().trim();
-                res.results.push({
-                    id: card.find('a').attr('href')?.split('/')[2], // Extract anime ID
-                    title: titleElement.text().trim(),
-                    japaneseTitle: titleElement.attr('data-jp'),
-                    airingTime: card.find('span.time').text().trim(),
-                    airingEpisode: episodeText.replace('EP ', ''), // Extract episode number
+    fetchSchedule() {
+        return __awaiter(this, arguments, void 0, function* (date = new Date().toISOString().split('T')[0]) {
+            try {
+                const res = {
+                    results: [],
+                };
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/ajax/schedule/items?tz=5.5&time=${Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000)}`, { headers: this.Headers() });
+                const $ = (0, cheerio_1.load)(data.result);
+                $('ul.collapsed li').each((i, ele) => {
+                    var _a;
+                    const card = $(ele);
+                    const titleElement = card.find('span.title');
+                    const episodeText = card.find('span').last().text().trim();
+                    res.results.push({
+                        id: (_a = card.find('a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[2], // Extract anime ID
+                        title: titleElement.text().trim(),
+                        japaneseTitle: titleElement.attr('data-jp'),
+                        airingTime: card.find('span.time').text().trim(),
+                        airingEpisode: episodeText.replace('EP ', ''), // Extract episode number
+                    });
                 });
-            });
-            return res;
-        }
-        catch (err) {
-            throw new Error('Something went wrong. Please try again later.');
-        }
+                return res;
+            }
+            catch (err) {
+                throw new Error('Something went wrong. Please try again later.');
+            }
+        });
     }
-    async fetchSpotlight() {
-        try {
-            const res = { results: [] };
-            const { data } = await axios_1.default.get(`${this.baseUrl}/home`, {
-                headers: this.Headers(),
-            });
-            const $ = (0, cheerio_1.load)(data);
-            $('div.swiper-wrapper > div.swiper-slide').each((i, el) => {
-                const card = $(el);
-                const titleElement = card.find('div.detail > p.title');
-                const id = card.find('div.swiper-ctrl > a.btn').attr('href')?.replace('/watch/', '');
-                const img = card.attr('style');
-                res.results.push({
-                    id: id,
-                    title: titleElement.text(),
-                    japaneseTitle: titleElement.attr('data-jp'),
-                    banner: img?.match(/background-image:\s*url\(["']?(.+?)["']?\)/)?.[1] || null,
-                    url: `${this.baseUrl}/watch/${id}`,
-                    type: card.find('div.detail > div.info').children().eq(-2).text().trim(),
-                    genres: card
-                        .find('div.detail > div.info')
-                        .children()
-                        .last()
-                        .text()
-                        .trim()
-                        .split(',')
-                        .map((genre) => genre.trim()),
-                    releaseDate: card.find('div.detail > div.mics >div:contains("Release")').children('span').text().trim(),
-                    quality: card.find('div.detail > div.mics >div:contains("Quality")').children('span').text().trim(),
-                    sub: parseInt(card.find('div.detail > div.info > span.sub').text().trim()) || 0,
-                    dub: parseInt(card.find('div.detail > div.info > span.dub').text().trim()) || 0,
-                    description: card.find('div.detail > p.desc').text().trim(),
+    fetchSpotlight() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = { results: [] };
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/home`, {
+                    headers: this.Headers(),
                 });
-            });
-            return res;
-        }
-        catch (error) {
-            throw new Error('Something went wrong. Please try again later.');
-        }
+                const $ = (0, cheerio_1.load)(data);
+                $('div.swiper-wrapper > div.swiper-slide').each((i, el) => {
+                    var _a, _b;
+                    const card = $(el);
+                    const titleElement = card.find('div.detail > p.title');
+                    const id = (_a = card.find('div.swiper-ctrl > a.btn').attr('href')) === null || _a === void 0 ? void 0 : _a.replace('/watch/', '');
+                    const img = card.attr('style');
+                    res.results.push({
+                        id: id,
+                        title: titleElement.text(),
+                        japaneseTitle: titleElement.attr('data-jp'),
+                        banner: ((_b = img === null || img === void 0 ? void 0 : img.match(/background-image:\s*url\(["']?(.+?)["']?\)/)) === null || _b === void 0 ? void 0 : _b[1]) || null,
+                        url: `${this.baseUrl}/watch/${id}`,
+                        type: card.find('div.detail > div.info').children().eq(-2).text().trim(),
+                        genres: card
+                            .find('div.detail > div.info')
+                            .children()
+                            .last()
+                            .text()
+                            .trim()
+                            .split(',')
+                            .map((genre) => genre.trim()),
+                        releaseDate: card.find('div.detail > div.mics >div:contains("Release")').children('span').text().trim(),
+                        quality: card.find('div.detail > div.mics >div:contains("Quality")').children('span').text().trim(),
+                        sub: parseInt(card.find('div.detail > div.info > span.sub').text().trim()) || 0,
+                        dub: parseInt(card.find('div.detail > div.info > span.dub').text().trim()) || 0,
+                        description: card.find('div.detail > p.desc').text().trim(),
+                    });
+                });
+                return res;
+            }
+            catch (error) {
+                throw new Error('Something went wrong. Please try again later.');
+            }
+        });
     }
-    async fetchSearchSuggestions(query) {
-        try {
-            const { data } = await axios_1.default.get(`${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`, {
-                headers: this.Headers(),
-            });
-            const $ = (0, cheerio_1.load)(data.result.html);
-            const res = {
-                results: [],
-            };
-            $('a.aitem').each((i, el) => {
-                const card = $(el);
-                const image = card.find('.poster img').attr('src');
-                const titleElement = card.find('.title');
-                const title = titleElement.text().trim();
-                const japaneseTitle = titleElement.attr('data-jp');
-                const id = card.attr('href')?.split('/')[2];
-                const year = card.find('.info').children().eq(-2).text().trim();
-                const type = card.find('.info').children().eq(-3).text().trim();
-                const sub = parseInt(card.find('.info span.sub')?.text()) || 0;
-                const dub = parseInt(card.find('.info span.dub')?.text()) || 0;
-                const episodes = parseInt(card.find('.info').children().eq(-4).text().trim() ?? card.find('.info span.sub')?.text()) || 0;
-                res.results.push({
-                    id: id,
-                    title: title,
-                    url: `${this.baseUrl}/watch/${id}`,
-                    image: image,
-                    japaneseTitle: japaneseTitle || null,
-                    type: type,
-                    year: year,
-                    sub: sub,
-                    dub: dub,
-                    episodes: episodes,
+    fetchSearchSuggestions(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/ajax/anime/search?keyword=${query.replace(/[\W_]+/g, '+')}`, {
+                    headers: this.Headers(),
                 });
-            });
-            return res;
-        }
-        catch (error) {
-            throw new Error('Something went wrong. Please try again later.');
-        }
+                const $ = (0, cheerio_1.load)(data.result.html);
+                const res = {
+                    results: [],
+                };
+                $('a.aitem').each((i, el) => {
+                    var _a, _b, _c, _d, _e;
+                    const card = $(el);
+                    const image = card.find('.poster img').attr('src');
+                    const titleElement = card.find('.title');
+                    const title = titleElement.text().trim();
+                    const japaneseTitle = titleElement.attr('data-jp');
+                    const id = (_a = card.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[2];
+                    const year = card.find('.info').children().eq(-2).text().trim();
+                    const type = card.find('.info').children().eq(-3).text().trim();
+                    const sub = parseInt((_b = card.find('.info span.sub')) === null || _b === void 0 ? void 0 : _b.text()) || 0;
+                    const dub = parseInt((_c = card.find('.info span.dub')) === null || _c === void 0 ? void 0 : _c.text()) || 0;
+                    const episodes = parseInt((_d = card.find('.info').children().eq(-4).text().trim()) !== null && _d !== void 0 ? _d : (_e = card.find('.info span.sub')) === null || _e === void 0 ? void 0 : _e.text()) || 0;
+                    res.results.push({
+                        id: id,
+                        title: title,
+                        url: `${this.baseUrl}/watch/${id}`,
+                        image: image,
+                        japaneseTitle: japaneseTitle || null,
+                        type: type,
+                        year: year,
+                        sub: sub,
+                        dub: dub,
+                        episodes: episodes,
+                    });
+                });
+                return res;
+            }
+            catch (error) {
+                throw new Error('Something went wrong. Please try again later.');
+            }
+        });
     }
     Headers() {
         return {

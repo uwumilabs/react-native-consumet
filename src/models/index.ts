@@ -1,13 +1,13 @@
 import BaseProvider from './base-provider';
 import BaseParser from './base-parser';
 import AnimeParser from './anime-parser';
-import ComicParser from './comic-parser';
-import VideoExtractor from './video-extractor';
+import VideoExtractor, { type IVideoExtractor } from './video-extractor';
 import MangaParser from './manga-parser';
 import LightNovelParser from './lightnovel-parser';
 import MovieParser from './movie-parser';
-import type { ExtractorContext } from './extractor-context';
-import type { ProviderContext } from './provider-context';
+import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
+import type { ProviderContext, ProviderConfig, ProviderContextConfig } from './provider-context';
+import type { ExtensionManifest, ProviderType } from './extension-manifest';
 import {
   type IProviderStats,
   type ISearch,
@@ -16,10 +16,9 @@ import {
   type IAnimeResult,
   type IEpisodeServer,
   type IVideo,
-  type LibgenBook,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   type IMangaResult,
   type IMangaChapter,
   type IMangaInfo,
@@ -27,8 +26,6 @@ import {
   type ILightNovelInfo,
   type ILightNovelChapter,
   type ILightNovelChapterContent,
-  type GetComicsComics,
-  type ComicRes,
   type IMangaChapterPage,
   TvType,
   type IMovieEpisode,
@@ -50,21 +47,17 @@ import {
   type AniZipEpisode,
   type IMovieSeason,
 } from './types';
-import { LibgenBookObject, GetComicsComicsObject } from './type-objects';
 
 export {
   BaseProvider,
   BaseParser,
   AnimeParser,
   VideoExtractor,
-  LibgenBookObject,
   StreamingServers,
   MediaStatus,
-  SubOrSub,
+  SubOrDub,
   LightNovelParser,
   MangaParser,
-  ComicParser,
-  GetComicsComicsObject,
   TvType,
   MovieParser,
   Genres,
@@ -73,13 +66,13 @@ export {
   WatchListType,
 };
 export type {
+  IVideoExtractor,
   IProviderStats,
   IAnimeEpisode,
   IAnimeInfo,
   IAnimeResult,
   IEpisodeServer,
   IVideo,
-  LibgenBook,
   IMangaResult,
   IMangaChapter,
   IMangaInfo,
@@ -87,8 +80,6 @@ export type {
   ILightNovelInfo,
   ILightNovelChapter,
   ILightNovelChapterContent,
-  GetComicsComics,
-  ComicRes,
   ISearch,
   IMangaChapterPage,
   IMovieEpisode,
@@ -106,5 +97,10 @@ export type {
   AniZipEpisode,
   IMovieSeason,
   ExtractorContext,
+  ExtractorContextConfig,
+  ProviderContextConfig,
   ProviderContext,
+  ProviderConfig,
+  ExtensionManifest,
+  ProviderType,
 };
