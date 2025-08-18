@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-rc.0 (2025-08-18)
+
+* refactor(core): introduce extension system with ProviderManager & ExtractorManager, remove deprecate ([b2d7aa4](https://github.com/2004durgesh/react-native-consumet/commit/b2d7aa4)), closes [#1](https://github.com/2004durgesh/react-native-consumet/issues/1)
+* refactor(proxy): remove proxy and other deprecated exports ([90b4794](https://github.com/2004durgesh/react-native-consumet/commit/90b4794))
+* feat(build): added a build command to make dist folder ([f571c53](https://github.com/2004durgesh/react-native-consumet/commit/f571c53))
+* feat(utils): create some ready to use utilities and clean all the files ([c1b7c58](https://github.com/2004durgesh/react-native-consumet/commit/c1b7c58))
+* feat(zoro): first provider towards extension archiecture ([b949f71](https://github.com/2004durgesh/react-native-consumet/commit/b949f71))
+* chore(providers): remove deprecated movie and news providers ([c88baa9](https://github.com/2004durgesh/react-native-consumet/commit/c88baa9))
+* fix(multimovies): proxy network calls of multimovies via cloudflare based proxy ([8bb45ad](https://github.com/2004durgesh/react-native-consumet/commit/8bb45ad))
+* refactor(himovies, tmdb): get release date in search from fetchMediaInfo and fix tmdb mapping ([c1c9328](https://github.com/2004durgesh/react-native-consumet/commit/c1c9328))
+
 ## 0.9.0 (2025-07-28)
 
 * fix(ci): fix type definition error in vidcloud.ts that caused ci to fail ([8897ee3](https://github.com/2004durgesh/react-native-consumet/commit/8897ee3))
