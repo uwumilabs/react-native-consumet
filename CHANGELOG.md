@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-rc.1 (2025-08-18)
+
+* refactor: add registry script, and remove circular deps ([b5b1dda](https://github.com/2004durgesh/react-native-consumet/commit/b5b1dda))
+* chore: update extractor main urls to point to the main branch [skip ci] ([acc9e03](https://github.com/2004durgesh/react-native-consumet/commit/acc9e03))
+* docs: improve pr and bug report templates ([f7ddfcf](https://github.com/2004durgesh/react-native-consumet/commit/f7ddfcf))
+
 ## 1.0.0-rc.0 (2025-08-18)
 
 * refactor(core): introduce extension system with ProviderManager & ExtractorManager, remove deprecate ([b2d7aa4](https://github.com/2004durgesh/react-native-consumet/commit/b2d7aa4)), closes [#1](https://github.com/2004durgesh/react-native-consumet/issues/1)
