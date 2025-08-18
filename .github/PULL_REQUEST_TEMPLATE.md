@@ -1,48 +1,80 @@
-<!-- Thanks for submitting a pull request! Please provide enough information so that others can review your pull request. -->
+---
+name: Pull Request
+about: Propose changes to the codebase
+title: 'feat: Add new feature'
+labels: ''
+assignees: ''
+---
 
-**What kind of change does this PR introduce?** (check at least one)
+## Pull Request Description
 
-- [ ] Bugfix
-- [ ] New provider
-- [ ] Feature
-- [ ] Code style update
-- [ ] Refactoring
-- [ ] Build-related changes
-- [ ] Documentation changes
-- [ ] Other, please describe:
+Please provide a clear and concise description of the changes introduced by this pull request. Explain the **what** and **why** behind your changes.
 
-**Does this PR introduce a breaking change?** (check one)
+**Closes #[issue_number]** (if applicable)
+
+---
+
+### Type of Change
+
+Please check the type of change your PR introduces:
+
+- [ ] Bugfix (A change that fixes an issue)
+- [ ] New Feature (A change that adds new functionality)
+- [ ] New Provider (A change that adds a new content provider)
+- [ ] Code Style Update (Formatting, semicolons, etc.; no code change)
+- [ ] Refactoring (A change that neither fixes a bug nor adds a feature)
+- [ ] Build-related changes (Changes to build scripts, dependencies, etc.)
+- [ ] Documentation Update (Changes to documentation files)
+- [ ] Other (Please describe below)
+
+### Breaking Change
+
+Does this PR introduce a breaking change?
 
 - [ ] Yes
 - [ ] No
 
-If yes, please describe the impact and migration path for existing applications:
+If 'Yes', please describe the impact and migration path for existing applications:
 
-**Testing**
+---
 
-- [ ] Did you add unit tests for your changes?
-- [ ] Did you manually test on both iOS and Android?
-- [ ] What's the minimum React Native version tested? <!-- Optional -->
+### How Has This Been Tested?
 
-**Platform Compatibility**
+Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration.
 
-- [ ] iOS
-- [ ] Android
+- [ ] Unit tests (e.g., `yarn test`)
+- [ ] Manual testing on:
+    - [ ] iOS
+    - [ ] Android
+- [ ] Other (Please describe below)
 
-**Development Checklist** <!-- Optional for minor changes -->
+**Test Configuration:**
+- React Native Version: [e.g., 0.72.0]
+- Device/Emulator: [e.g., iPhone 14 Pro, Android Emulator API 33]
 
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have updated the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
+---
 
-**Summary**
+### Screenshots / Gifs (Optional)
 
-<!-- Explain the **motivation** for making this change. What existing problem does the pull request solve? -->
-<!-- Try to link to an open issue for more information. -->
+If your changes include UI updates or visual enhancements, please provide screenshots or GIFs here.
 
-**Additional Context** <!-- Optional -->
+---
 
-<!-- Add any other context about the PR here. Include screenshots/videos if applicable -->
+### PR Checklist
+
+Before submitting your pull request, please ensure the following:
+
+- [ ] My code follows the style guidelines of this project (run `yarn lint` and `yarn format`).
+- [ ] I have performed a self-review of my own code.
+- [ ] I have commented my code, particularly in hard-to-understand areas.
+- [ ] I have updated the documentation where necessary.
+- [ ] My changes generate no new warnings or errors.
+- [ ] I have added tests that prove my fix is effective or that my feature works.
+- [ ] All existing and new tests pass.
+- [ ] I have run the build process (`yarn build`) and confirmed no issues.
+
+---
+
+### Further Comments / Notes (Optional)
+
+Add any additional context or notes about the pull request here.

@@ -31,12 +31,34 @@ body:
         If needed, you can also provide other samples: error messages / stack traces, screenshots, gifs, etc.
     validations:
       required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: Describe what actually happened.
+    validations:
+      required: true
   - type: input
     id: library-version
     attributes:
       label: Library version
       description: What version of the library are you using?
       placeholder: "x.x.x"
+    validations:
+      required: true
+  - type: input
+    id: platform-device
+    attributes:
+      label: Platform / Device
+      description: On which platform (iOS/Android) and device/emulator did you encounter the bug? (e.g., iOS 17.0 on iPhone 15 Pro, Android 13 on Pixel 7)
+      placeholder: "iOS 17.0 on iPhone 15 Pro"
     validations:
       required: true
   - type: textarea
@@ -61,8 +83,10 @@ body:
   - type: textarea
     id: reproducible-example
     attributes:
-      label: Reproducible example repository 
-      description: Please provide a link to a repository on GitHub with a reproducible example.
+      label: Reproducible example repository
+      description: |
+        Please provide a link to a minimal repository on GitHub with a reproducible example.
+        This is crucial for us to investigate the issue.
       render: plain
     validations:
       required: true
