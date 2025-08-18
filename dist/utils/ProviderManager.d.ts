@@ -2,7 +2,7 @@ import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './extension-utils';
+import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './provider-maps';
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;

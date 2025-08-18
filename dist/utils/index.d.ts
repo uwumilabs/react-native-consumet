@@ -7,6 +7,7 @@ export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
 export { createExtractorContext } from './create-extractor-context';
-export { defaultAxios, defaultExtractorContext, defaultStaticExtractors } from './extension-utils';
+export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';
+export type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './provider-maps';
 //# sourceMappingURL=index.d.ts.map

@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAnimePahe = createAnimePahe;
 function createAnimePahe(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
     const { Kwik } = extractors;

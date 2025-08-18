@@ -15,7 +15,7 @@ if (typeof globalThis !== 'undefined') {
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 
 // Provider metadata (catalog of built-in providers)
-import { PROVIDERS_LIST } from './utils/providers-list';
+import type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './utils';
 
 import ExtensionRegistry from './extension-registry.json';
 // Utils (contexts, and provider management)
@@ -26,7 +26,7 @@ import {
   createExtractorContext,
   defaultAxios,
   defaultExtractorContext,
-  defaultStaticExtractors,
+  defaultExtractors,
 } from './utils';
 
 // Extractors (video/file hosters and scrapers)
@@ -99,8 +99,7 @@ import {
 // Providers (namespaced)
 export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
 
-// Provider metadata
-export { PROVIDERS_LIST };
+export type { AnimeProvider, MovieProvider, animeProviders, movieProviders };
 
 // Models: runtime enums/constants
 export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat };
@@ -171,5 +170,5 @@ export {
   PolyURLSearchParams,
   defaultAxios,
   defaultExtractorContext,
-  defaultStaticExtractors,
+  defaultExtractors,
 };

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager, ANIME, ExtensionRegistry, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { ProviderManager, ANIME, ExtensionRegistry, type IAnimeResult, type ISearch ,type AnimeProvider, type animeProviders} from 'react-native-consumet';
 import { AnimeParser } from '../../../../src/models';
-import type { AnimeProvider, animeProviders } from '../../../../src/utils/extension-utils';
 
 const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);

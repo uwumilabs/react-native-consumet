@@ -60,7 +60,7 @@ const extension_registry_json_1 = __importDefault(require("../extension-registry
  */
 function createProviderContext(config = {}) {
     // Create dynamic extractor proxy
-    const finalExtractors = new Proxy(extension_utils_1.defaultStaticExtractors, {
+    const finalExtractors = new Proxy(extension_utils_1.defaultExtractors, {
         get: (target, prop) => {
             // If it's a custom extractor, return it directly
             if (config.extractors && config.extractors[prop]) {

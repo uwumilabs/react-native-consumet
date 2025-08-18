@@ -1,6 +1,6 @@
 import { AnimeParser } from '../../../models';
 import { createProviderContext } from '../../../utils/create-provider-context';
-import { createZoro, type ZoroProviderInstance } from './create-zoro';
+import createZoro, { type ZoroProviderInstance } from './create-zoro';
 
 // Backward compatibility wrapper class
 export class Zoro extends AnimeParser {

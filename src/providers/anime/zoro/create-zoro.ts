@@ -13,7 +13,7 @@ import {
   type ProviderConfig,
 } from '../../../models';
 
-export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
+function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
   const { StreamSB, MegaCloud, StreamTape } = extractors;
   const {

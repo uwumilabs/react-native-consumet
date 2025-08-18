@@ -1,6 +1,6 @@
 import { AnimeParser } from '../../../models';
 import { createProviderContext } from '../../../utils/create-provider-context';
-import { createAnimePahe, type AnimePaheProviderInstance } from './create-animepahe';
+import createAnimePahe, { type AnimePaheProviderInstance } from './create-animepahe';
 
 // Backward compatibility wrapper class
 export class AnimePahe extends AnimeParser {

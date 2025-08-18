@@ -2,7 +2,7 @@
 import type { ExtractorContext, IVideoExtractor, StreamingServers, ExtractorContextConfig } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import createExtractorContext from './create-extractor-context';
-import { defaultStaticExtractors } from './extension-utils';
+import { defaultExtractors } from './extension-utils';
 import extensionRegistry from '../extension-registry.json';
 
 export class ExtractorManager {
@@ -22,7 +22,7 @@ export class ExtractorManager {
    * Initialize static extractors as fallbacks
    */
   private initializeStaticExtractors(): void {
-    this.staticExtractors = defaultStaticExtractors;
+    this.staticExtractors = defaultExtractors;
   }
 
   /**
