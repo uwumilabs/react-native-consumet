@@ -148,6 +148,9 @@
         },
         "infile": "CHANGELOG.md"
       }
+    },
+    "hooks": {
+      "before:release": "node scripts/prepare-registry.js"
     }
   },
   "react-native-builder-bob": {

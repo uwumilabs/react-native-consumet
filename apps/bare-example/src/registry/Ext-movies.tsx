@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager, ExtensionRegistry, type IMovieResult, type ISearch, ExtractorManager, defaultExtractorContext, PolyURL, MegaCloud } from 'react-native-consumet';
+import { ProviderManager, ExtensionRegistry, type IMovieResult, type ISearch, ExtractorManager, defaultExtractorContext, PolyURL, type MovieProvider } from 'react-native-consumet';
 import { MovieParser, StreamingServers } from '../../../../src/models';
-import type { MovieProvider } from '../../../../src/utils/extension-utils';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
 import type HiMovies from '../../../../src/providers/movies/himovies/himovies';

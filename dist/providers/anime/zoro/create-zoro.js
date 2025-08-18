@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;

@@ -557,7 +557,7 @@ class ExtractorManager {
   constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig)
   
   // Extractor loading
-  loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultStaticExtractors)[T]>
+  loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultExtractors)[T]>
   
   // Extractor Metadata
   getExtractorMetadata(extractorId: StreamingServers): ExtractorInfo
@@ -589,7 +589,7 @@ import {
   PolyURLSearchParams, // Polyfill for URLSearchParams
   defaultAxios, // default axios instance
   extractorContext,
-  defaultStaticExtractors,
+  defaultExtractors,
   extensionRegistry,
   type AnimeProvider, 
   type animeProviders, 

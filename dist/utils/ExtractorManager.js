@@ -28,7 +28,7 @@ class ExtractorManager {
      * Initialize static extractors as fallbacks
      */
     initializeStaticExtractors() {
-        this.staticExtractors = extension_utils_1.defaultStaticExtractors;
+        this.staticExtractors = extension_utils_1.defaultExtractors;
     }
     /**
      * Load extractors from the unified extension registry

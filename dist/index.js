@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.PROVIDERS_LIST = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 const url_polyfill_1 = require("./utils/url-polyfill");
 Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
 Object.defineProperty(exports, "PolyURLSearchParams", { enumerable: true, get: function () { return url_polyfill_1.URLSearchParams; } });
@@ -25,9 +25,6 @@ Object.defineProperty(exports, "LIGHT_NOVELS", { enumerable: true, get: function
 Object.defineProperty(exports, "MANGA", { enumerable: true, get: function () { return providers_1.MANGA; } });
 Object.defineProperty(exports, "MOVIES", { enumerable: true, get: function () { return providers_1.MOVIES; } });
 Object.defineProperty(exports, "META", { enumerable: true, get: function () { return providers_1.META; } });
-// Provider metadata (catalog of built-in providers)
-const providers_list_1 = require("./utils/providers-list");
-Object.defineProperty(exports, "PROVIDERS_LIST", { enumerable: true, get: function () { return providers_list_1.PROVIDERS_LIST; } });
 const extension_registry_json_1 = __importDefault(require("./extension-registry.json"));
 exports.ExtensionRegistry = extension_registry_json_1.default;
 // Utils (contexts, and provider management)
@@ -38,7 +35,7 @@ Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: func
 Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return utils_1.createExtractorContext; } });
 Object.defineProperty(exports, "defaultAxios", { enumerable: true, get: function () { return utils_1.defaultAxios; } });
 Object.defineProperty(exports, "defaultExtractorContext", { enumerable: true, get: function () { return utils_1.defaultExtractorContext; } });
-Object.defineProperty(exports, "defaultStaticExtractors", { enumerable: true, get: function () { return utils_1.defaultStaticExtractors; } });
+Object.defineProperty(exports, "defaultExtractors", { enumerable: true, get: function () { return utils_1.defaultExtractors; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });

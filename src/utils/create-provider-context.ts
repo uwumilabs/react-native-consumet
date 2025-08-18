@@ -14,7 +14,7 @@ import {
   Topics,
 } from '../models';
 
-import { defaultAxios, defaultStaticExtractors, defaultExtractorContext } from './extension-utils';
+import { defaultAxios, defaultExtractors, defaultExtractorContext } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 import { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
 import extensionRegistry from '../extension-registry.json';
@@ -27,7 +27,7 @@ import extensionRegistry from '../extension-registry.json';
  */
 export function createProviderContext(config: ProviderContextConfig = {}): ProviderContext {
   // Create dynamic extractor proxy
-  const finalExtractors = new Proxy(defaultStaticExtractors, {
+  const finalExtractors = new Proxy(defaultExtractors, {
     get: (target: any, prop: string) => {
       // If it's a custom extractor, return it directly
       if (config.extractors && config.extractors[prop]) {

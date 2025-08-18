@@ -3,9 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractors = exports.movieProviders = exports.animeProviders = exports.defaultStaticExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
+exports.extractors = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
 const axios_1 = __importDefault(require("axios"));
-const providers_1 = require("../providers");
 // Import extractors for fallback compatibility
 const extractors_1 = require("../extractors");
 const cheerio_1 = require("cheerio");
@@ -32,7 +31,7 @@ exports.defaultExtractorContext = {
     PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
 };
 // Default static extractors (for backward compatibility)
-exports.defaultStaticExtractors = {
+exports.defaultExtractors = {
     AsianLoad: extractors_1.AsianLoad,
     Filemoon: extractors_1.Filemoon,
     GogoCDN: extractors_1.GogoCDN,
@@ -53,35 +52,19 @@ exports.defaultStaticExtractors = {
     Voe: extractors_1.Voe,
     MegaUp: extractors_1.MegaUp,
 };
-// Define provider and extractor maps
-exports.animeProviders = {
-    Zoro: providers_1.ANIME.Zoro,
-    AnimePahe: providers_1.ANIME.AnimePahe,
-};
-exports.movieProviders = {
-    HiMovies: providers_1.MOVIES.HiMovies,
-    MultiMovies: providers_1.MOVIES.MultiMovies,
-    DramaCool: providers_1.MOVIES.DramaCool,
-    MultiStream: providers_1.MOVIES.MultiStream,
-};
-const metaProviders = {
-    Anilist: providers_1.META.Anilist,
-    TMDB: providers_1.META.TMDB,
-    MAL: providers_1.META.Myanimelist,
-};
 exports.extractors = {
-    GogoCDN: exports.defaultStaticExtractors.GogoCDN,
-    StreamSB: exports.defaultStaticExtractors.StreamSB,
-    StreamTape: exports.defaultStaticExtractors.StreamTape,
-    MixDrop: exports.defaultStaticExtractors.MixDrop,
-    Kwik: exports.defaultStaticExtractors.Kwik,
-    RapidCloud: exports.defaultStaticExtractors.RapidCloud,
-    StreamWish: exports.defaultStaticExtractors.StreamWish,
-    Filemoon: exports.defaultStaticExtractors.Filemoon,
-    Voe: exports.defaultStaticExtractors.Voe,
-    AsianLoad: exports.defaultStaticExtractors.AsianLoad,
-    StreamLare: exports.defaultStaticExtractors.StreamLare,
-    VidMoly: exports.defaultStaticExtractors.VidMoly,
-    MegaCloud: exports.defaultStaticExtractors.MegaCloud,
+    GogoCDN: exports.defaultExtractors.GogoCDN,
+    StreamSB: exports.defaultExtractors.StreamSB,
+    StreamTape: exports.defaultExtractors.StreamTape,
+    MixDrop: exports.defaultExtractors.MixDrop,
+    Kwik: exports.defaultExtractors.Kwik,
+    RapidCloud: exports.defaultExtractors.RapidCloud,
+    StreamWish: exports.defaultExtractors.StreamWish,
+    Filemoon: exports.defaultExtractors.Filemoon,
+    Voe: exports.defaultExtractors.Voe,
+    AsianLoad: exports.defaultExtractors.AsianLoad,
+    StreamLare: exports.defaultExtractors.StreamLare,
+    VidMoly: exports.defaultExtractors.VidMoly,
+    MegaCloud: exports.defaultExtractors.MegaCloud,
 };
 //# sourceMappingURL=extension-utils.js.map

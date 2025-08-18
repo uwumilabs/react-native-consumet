@@ -13,7 +13,7 @@ import {
   type IAnimeEpisode,
 } from '../../../models';
 
-export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
+function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
   const { Kwik } = extractors;
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;

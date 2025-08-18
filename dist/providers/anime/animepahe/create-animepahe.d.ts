@@ -1,5 +1,5 @@
 import { type SubOrDub, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type ProviderContext } from '../../../models';
-export declare function createAnimePahe(ctx: ProviderContext, customBaseURL?: string): {
+declare function createAnimePahe(ctx: ProviderContext, customBaseURL?: string): {
     name: string;
     baseUrl: string;
     logo: string;

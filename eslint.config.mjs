@@ -5,7 +5,7 @@ import prettier from 'eslint-plugin-prettier';
 import { defineConfig } from 'eslint/config';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import unusedImports from "eslint-plugin-unused-imports";
+import unusedImports from 'eslint-plugin-unused-imports';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +18,7 @@ const compat = new FlatCompat({
 export default defineConfig([
   {
     extends: fixupConfigRules(compat.extends('@react-native', 'prettier')),
-    plugins: { prettier, "unused-imports": unusedImports, },
+    plugins: { prettier, 'unused-imports': unusedImports },
     rules: {
       'react/react-in-jsx-scope': 'off',
       'radix': 'off',
@@ -33,24 +33,24 @@ export default defineConfig([
           useTabs: false,
         },
       ],
-      "no-new-wrappers": "off",
-      "no-eval": [
-        "warn",
+      'no-new-wrappers': 'off',
+      'no-eval': [
+        'warn',
         {
-          "allowIndirect": true
-        }
+          allowIndirect: true,
+        },
       ],
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "warn",
-      "unused-imports/no-unused-vars": [
-        "warn",
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'warn',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          "vars": "all",
-          "varsIgnorePattern": "^_",
-          "args": "after-used",
-          "argsIgnorePattern": "^_"
-        }
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
       ],
     },
   },
@@ -67,8 +67,8 @@ export default defineConfig([
       'ios/**/*',
       '.ios/',
       '.github/',
-      "apps/**/*",
-      "apps/**/*",
+      'apps/**/*',
+      'apps/**/*',
 
       // Build and Output
       'lib/',
@@ -81,7 +81,7 @@ export default defineConfig([
       // Testing and Coverage
       '__tests__/',
       'test/',
-      "jest.setup.*",
+      'jest.setup.*',
       'coverage/',
       'jest.config.*',
 
@@ -127,7 +127,7 @@ export default defineConfig([
       // IDE specific
       '.idea/',
       '*.sublime-*',
-      '*.swp'
+      '*.swp',
     ],
   },
 ]);

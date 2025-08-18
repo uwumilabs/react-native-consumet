@@ -1,5 +1,5 @@
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type WatchListType, type ProviderContext } from '../../../models';
-export declare function createZoro(ctx: ProviderContext, customBaseURL?: string): {
+declare function createZoro(ctx: ProviderContext, customBaseURL?: string): {
     name: string;
     baseUrl: string;
     logo: string;
