@@ -90,6 +90,7 @@ import {
   type AniZipEpisode,
   type IMovieSeason,
   type ExtensionManifest,
+  type ExtractorInfo,
 } from './models';
 
 // ---------------------------------------------------------------------------
@@ -158,6 +159,7 @@ export type {
   AniZipEpisode,
   IMovieSeason,
   ExtensionManifest,
+  ExtractorInfo,
 };
 export { ExtensionRegistry };
 // Utils: context creation and provider management
