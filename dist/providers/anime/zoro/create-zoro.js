@@ -393,8 +393,11 @@ function createZoro(ctx, customBaseURL) {
     });
     const fetchEpisodeServers = (episodeId, subOrDub) => __awaiter(this, void 0, void 0, function* () {
         try {
+            if (episodeId.includes('$episode$'))
+                episodeId = episodeId.split('$episode$')[1];
             const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
             const data = yield response.json();
+            console.log(data);
             const $ = load(data.html);
             const scrapedServers = [];
             let selector;
