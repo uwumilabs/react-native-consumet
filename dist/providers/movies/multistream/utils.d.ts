@@ -1,8 +1,8 @@
 import type { IEpisodeServer, ISource } from '../../../models';
-export declare function getRiveSourcesAndServers(id: string): Promise<ISource & {
+export declare function getVidsrcSourcesAndServers(id: string): Promise<ISource & {
     servers: IEpisodeServer[];
 }>;
-export declare function getVidsrcSourcesAndServers(id: string): Promise<ISource & {
+export declare function get111MoviesSourcesAndServers(id: string): Promise<ISource & {
     servers: IEpisodeServer[];
 }>;
 export declare function getMultiServers(id: string): Promise<IEpisodeServer[]>;
