@@ -44,7 +44,7 @@
         "url": "https://github.com/uwumilabs"
       },
       "category": "anime",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animepahe/create-animepahe.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/fix/animpahe/dist/providers/anime/animepahe/create-animepahe.js",
       "factoryName": "createAnimePahe",
       "baseUrl": "https://animepahe.ru",
       "logo": "https://animepahe.ru//web-app-manifest-512x512.png",

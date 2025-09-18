@@ -225,6 +225,7 @@ export class ProviderManager {
       },
       'URL': this.providerContext.PolyURL,
       'URLSearchParams': this.providerContext.PolyURLSearchParams,
+      'NativeConsumet': this.providerContext.NativeConsumet,
     };
 
     // Create fetch function using axios

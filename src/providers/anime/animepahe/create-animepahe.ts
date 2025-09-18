@@ -20,7 +20,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { getDdosGuardCookiesWithWebView } = NativeConsumet;
   // Provider configuration - use the standardized base URL creation
   const baseUrl = createCustomBaseUrl('https://animepahe.ru', customBaseURL);
-
+  console.log('look here', getDdosGuardCookiesWithWebView);
   const config: ProviderConfig = {
     name: 'Zoro',
     languages: 'en',

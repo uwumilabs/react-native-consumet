@@ -397,7 +397,6 @@ function createZoro(ctx, customBaseURL) {
                 episodeId = episodeId.split('$episode$')[1];
             const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
             const data = yield response.json();
-            console.log(data);
             const $ = load(data.html);
             const scrapedServers = [];
             let selector;
