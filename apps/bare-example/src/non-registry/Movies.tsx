@@ -25,7 +25,7 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.HiMovies();
+    const movies = new MOVIES.MultiStream();
     const search = await movies.search('jujutsu');
     console.log('Search Results:', search);
 
@@ -40,8 +40,8 @@ const fetchData = async (): Promise<{
     let videoUrl: string | null = null;
     if (info.episodes && info.episodes.length > 0) {
       const firstEpisodeId = info.episodes[0]!.id;
-      // const servers = await movies.fetchEpisodeServers(firstEpisodeId);
-      // console.log('Episode Servers:', servers);
+      const servers = await movies.fetchEpisodeServers(firstEpisodeId,info.id);
+      console.log('Episode Servers:', servers);
       const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
       console.log('Episode Sources:', sources);
 

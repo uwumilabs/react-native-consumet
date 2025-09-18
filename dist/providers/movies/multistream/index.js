@@ -185,6 +185,7 @@ class MultiStream extends models_1.MovieParser {
                 return servers;
             }
             catch (err) {
+                console.log(err);
                 throw new Error(err.message);
             }
         });
@@ -204,14 +205,14 @@ class MultiStream extends models_1.MovieParser {
 // (async () => {
 //   const movie = new MultiStream();
 //   const search = await movie.search('jujutsu');
-//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
+//   const movieInfo = await movie.fetchMediaInfo(search.results[0]!.id);
 //   // const recentTv = await movie.fetchTrendingTvShows();
-//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0].id, movieInfo.id);
+//   const servers = await movie.fetchEpisodeServers(movieInfo.episodes![0]!.id, movieInfo.id);
 //   console.log(servers);
 //   const genre = await movie.fetchEpisodeSources(
-//     movieInfo.episodes![0].id,
+//     movieInfo.episodes![0]!.id,
 //     movieInfo.id,
-//     servers[0].name as StreamingServers
+//     servers[0]!.name as StreamingServers
 //   );
 //   console.log(genre);
 // })();
