@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-rc.2 (2025-09-19)
+
+* Fix/animpahe (#2) ([23b2295](https://github.com/2004durgesh/react-native-consumet/commit/23b2295)), closes [#2](https://github.com/2004durgesh/react-native-consumet/issues/2)
+* feat: add 111Movies & AnimeSuge; fix MultiStream ([dcbbadf](https://github.com/2004durgesh/react-native-consumet/commit/dcbbadf))
+* fix: clean episodeId in server fetching of zoro ([dd3e0ff](https://github.com/2004durgesh/react-native-consumet/commit/dd3e0ff))
+* fix: update branch references in extension registry to point to 'main' ([4dae325](https://github.com/2004durgesh/react-native-consumet/commit/4dae325))
+
 ## 1.0.0-rc.1 (2025-08-18)
 
 * refactor: add registry script, and remove circular deps ([b5b1dda](https://github.com/2004durgesh/react-native-consumet/commit/b5b1dda))
