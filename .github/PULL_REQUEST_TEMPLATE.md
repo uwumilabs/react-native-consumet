@@ -1,11 +1,3 @@
----
-name: Pull Request
-about: Propose changes to the codebase
-title: 'feat: Add new feature'
-labels: ''
-assignees: ''
----
-
 ## Pull Request Description
 
 Please provide a clear and concise description of the changes introduced by this pull request. Explain the **what** and **why** behind your changes.
