@@ -7,7 +7,13 @@ import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
-import type { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
+import type {
+  bypassDdosGuard,
+  getDdosGuardCookiesWithWebView,
+  makeGetRequestWithWebView,
+  multiply,
+  deobfuscateScript,
+} from '../NativeConsumet';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -31,7 +37,7 @@ export interface ExtractorRegistry {
     extract: (url: URL) => Promise<any>;
   };
   Kwik: (ctx?: ExtractorContext) => {
-    extract: (url: PolyURL) => Promise<any>;
+    extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
   MixDrop: new (
     proxyConfig?: any,
@@ -158,6 +164,10 @@ export interface ProviderContext {
   };
   NativeConsumet: {
     getDdosGuardCookiesWithWebView: typeof getDdosGuardCookiesWithWebView;
+    makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
+    multiply: typeof multiply;
+    bypassDdosGuard: typeof bypassDdosGuard;
+    deobfuscateScript: typeof deobfuscateScript;
   };
 }
 

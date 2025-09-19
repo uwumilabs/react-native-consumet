@@ -19,24 +19,80 @@ function Kwik(ctx) {
     const serverName = 'kwik';
     const sources = [];
     const { axios, load, USER_AGENT, PolyURL } = ctx;
-    const host = 'https://animepahe.ru/';
+    function unPack(code) {
+        function indent(code) {
+            try {
+                let tabs = 0, old = -1, add = '';
+                for (let i = 0; i < code.length; i++) {
+                    if (code[i].includes('{'))
+                        tabs++;
+                    if (code[i].includes('}'))
+                        tabs--;
+                    if (old !== tabs) {
+                        old = tabs;
+                        add = '';
+                        while (old > 0) {
+                            add += '\t';
+                            old--;
+                        }
+                        old = tabs;
+                    }
+                    code[i] = add + code[i];
+                }
+            }
+            finally {
+                // let GC cleanup
+            }
+            return code;
+        }
+        let captured = '';
+        // fake environment
+        const env = {
+            eval: function (c) {
+                captured = c;
+            },
+            window: {},
+            document: {},
+        };
+        // Instead of `with`, run inside a Function with env injected
+        const runner = new Function('env', `
+    const { eval, window, document } = env;
+    ${code}
+  `);
+        runner(env);
+        // prettify captured code
+        captured = (captured + '')
+            .replace(/;/g, ';\n')
+            .replace(/{/g, '\n{\n')
+            .replace(/}/g, '\n}\n')
+            .replace(/\n;\n/g, ';\n')
+            .replace(/\n\n/g, '\n');
+        let lines = captured.split('\n');
+        lines = indent(lines);
+        return lines.join('\n');
+    }
     // @ts-ignore
-    const extract = (videoUrl, ...args) => __awaiter(this, void 0, void 0, function* () {
+    const extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://animepahe.si/') {
         const extractedData = {
-            subtitles: [],
-            intro: { start: 0, end: 0 },
-            outro: { start: 0, end: 0 },
+            // subtitles: [],
+            // intro: { start: 0, end: 0 },
+            // outro: { start: 0, end: 0 },
             sources: [],
         };
         try {
             const response = yield fetch(`${videoUrl.href}`, {
-                headers: { Referer: host },
+                headers: {
+                    'Referer': referer,
+                    'User-Agent': USER_AGENT,
+                },
             });
             const data = yield response.text();
-            const source = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))[2].replace('eval', '')).match(/https.*?m3u8/);
+            const unpackedSourceCode = unPack(data.match(/<script\b[^>]*>\s*(eval\([\s\S]*?\))\s*<\/script>/i)[1]);
+            const re = /https?:\/\/[^'"\s]+?\.m3u8(?:\?[^'"\s]*)?/i;
+            const source = unpackedSourceCode.match(re)[0];
             extractedData.sources.push({
-                url: source[0],
-                isM3U8: source[0].includes('.m3u8'),
+                url: source,
+                isM3U8: source.includes('.m3u8'),
             });
             return extractedData;
         }
