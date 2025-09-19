@@ -186,6 +186,7 @@ class ProviderManager {
             },
             'URL': this.providerContext.PolyURL,
             'URLSearchParams': this.providerContext.PolyURLSearchParams,
+            'NativeConsumet': this.providerContext.NativeConsumet,
         };
         // Create fetch function using axios
         const customFetch = (url_1, ...args_1) => __awaiter(this, [url_1, ...args_1], void 0, function* (url, options = {}) {

@@ -19,7 +19,7 @@ function createZoro(ctx, customBaseURL) {
         name: 'Zoro',
         languages: 'en',
         classPath: 'ANIME.Zoro',
-        logo: 'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg',
+        logo: 'https://hianime.to/images/icons-512.png',
         baseUrl,
         isNSFW: false,
         isWorking: true,
@@ -397,7 +397,6 @@ function createZoro(ctx, customBaseURL) {
                 episodeId = episodeId.split('$episode$')[1];
             const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
             const data = yield response.json();
-            console.log(data);
             const $ = load(data.html);
             const scrapedServers = [];
             let selector;

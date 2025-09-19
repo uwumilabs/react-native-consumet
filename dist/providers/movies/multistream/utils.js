@@ -23,272 +23,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRiveSourcesAndServers = getRiveSourcesAndServers;
 exports.getVidsrcSourcesAndServers = getVidsrcSourcesAndServers;
+exports.get111MoviesSourcesAndServers = get111MoviesSourcesAndServers;
 exports.getMultiServers = getMultiServers;
 exports.getMultiSources = getMultiSources;
 const axios_1 = __importDefault(require("axios"));
-const utils_1 = require("../../../utils");
-const utils_2 = require("../../../utils/utils");
 const cheerio_1 = require("cheerio");
-function getRiveSourcesAndServers(id) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const parts = id.split('$');
-        const [tmdbId, type, episode, season] = parts;
-        const secret = generateSecretKey(Number(tmdbId));
-        const riveServers = [
-            'flowcast',
-            'primevids',
-            'loki',
-            'shadow',
-            'asiacloud',
-            'hindicast',
-            'anime',
-            'animez',
-            'sapphire',
-            'guru',
-            'guard',
-            'curve',
-            'hq',
-            'ninja',
-            'alpha',
-            'kaze',
-            'zenesis',
-            'genesis',
-            'zenith',
-            'ghost',
-            'halo',
-            'kinoecho',
-            'ee3',
-            'volt',
-            'putafilme',
-            'ophim',
-            'kage',
-        ];
-        const baseUrl = 'https://rivestream.org';
-        const route = type === 'tv'
-            ? `/api/backendfetch?requestID=tvVideoProvider&id=${tmdbId}&season=${season}&episode=${episode}&secretKey=${secret}&service=`
-            : `/api/backendfetch?requestID=movieVideoProvider&id=${tmdbId}&secretKey=${secret}&service=`;
-        const url = baseUrl + route;
-        const subtitles = [];
-        const sources = [];
-        const servers = [];
-        yield Promise.all(riveServers.map((server) => __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f;
-            // console.log('Rive: ' + url + server);
-            try {
-                const res = yield axios_1.default.get(url + server, {
-                    timeout: 4000,
-                    headers: {
-                        'Referer': baseUrl,
-                        'User-Agent': utils_1.USER_AGENT,
-                    },
-                });
-                if ((_b = (_a = res.data) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.captions) {
-                    (_d = (_c = res.data) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.captions.forEach((sub) => {
-                        var _a;
-                        subtitles.push({
-                            lang: ((_a = sub === null || sub === void 0 ? void 0 : sub.label) === null || _a === void 0 ? void 0 : _a.slice(0, 2)) || 'Und',
-                            url: sub === null || sub === void 0 ? void 0 : sub.file,
-                        });
-                    });
-                }
-                (_f = (_e = res.data) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.sources.forEach((source) => {
-                    servers.push({
-                        name: (source === null || source === void 0 ? void 0 : source.source) + '-' + (source === null || source === void 0 ? void 0 : source.quality),
-                        url: source === null || source === void 0 ? void 0 : source.url,
-                    });
-                    sources.push({
-                        url: source === null || source === void 0 ? void 0 : source.url,
-                        isM3U8: (source === null || source === void 0 ? void 0 : source.format) === 'hls' ? true : false,
-                        quality: source === null || source === void 0 ? void 0 : source.quality,
-                        name: (source === null || source === void 0 ? void 0 : source.source) + '-' + (source === null || source === void 0 ? void 0 : source.quality),
-                    });
-                });
-            }
-            catch (e) {
-                // console.log(e);
-                return null;
-            }
-        })));
-        const validUrls = yield (0, utils_2.filterValidM3U8)(sources.map((s) => s.url));
-        return {
-            sources: sources.filter((source) => validUrls.includes(source.url)),
-            subtitles: subtitles.filter((sub) => sub.url && sub.lang),
-            servers: servers.filter((source) => validUrls.includes(source.url)),
-        };
-    });
-}
-function generateSecretKey(id) {
-    // Array of secret key fragments - updated array from the new implementation
-    const c = [
-        'oYRu3JJ5g1C',
-        'TRlWJIJXT',
-        'RuoyGA0udvsFVXr',
-        'Y4s2LNM4y',
-        'wHzuSgl0fD',
-        'MGLTaSGs',
-        'rr0rSBIYfwutV7E',
-        'ABJXC9c',
-        'W2BuY0yDB9CcK',
-        '3yvZP1OJuTM',
-        'YDoqbu6zdN0zT',
-        'rnNQ2a5OBaMu',
-        'eSKa1Uy',
-        'QsIV8J472Xa',
-        'cPfTgu27',
-        'j4mzadQCou9',
-        'qHLZbLrZQfB',
-        '8U9YP6hrTz4cJNQ',
-        'xbAbu4pzFEXz',
-        'dhuA9zvdw',
-        'k3A1JGmb',
-        'eVC3z4COdUNvvzA',
-        'dwMmuXnrb',
-        'AqpWzY9I1ZmGPR',
-        'VGXWUm0JTetmXs',
-        'gD4sH3CISTanpTs',
-        'd6w8dntV',
-        'iL6dvSNqEab4kd',
-        'mIB8NFtmPjnX1kM',
-        'F4PXdP0Hx3',
-        '5Fijua4Z7C',
-        'wPGnHJrkYa1Tu4P',
-        'pjrfBfTf',
-        'vswQDEbM0y64io',
-        'LAnpQuk6hR2bEWs',
-        'kX8orxNnkK',
-        'mRsZ5fjHbC8YuT',
-        'JnBr1jr',
-        '2twFGU5PgvDmKdP',
-        '3wCg6zYtHFjy',
-        'gaQSJhixHiy1pa8',
-        'pE2cXTP0GPX',
-        'xr0ONW3sOnCRdt',
-        'QZu43flHFsebX',
-        'yrvtqRTOnHo',
-        'kvXEs16lgj',
-        'AGwT2zpQVHCMb09',
-        'M4BxOh3z2JgC',
-        '5hbV7briYC7',
-        'YfHMsm0',
-        'jC9PAPfz34Vgc',
-        'ExoJ1tgEXpK',
-        'eD8WPA4Lmsyf4W',
-        'h7WSlhT7iNOj',
-        'RRP61kk',
-        'QtY0f1aN',
-        'TlatGjcOQjup',
-        'MfpeEGbjouYSOa',
-        'Zz0Qh8B0pwUkdRT',
-        'Y4SkLSQNU',
-        'hOk01KFeEVbNRZx',
-        'fyf4H8MXazm3oY',
-        'Z116B9F2p',
-        'GdxNJOnvdz',
-        'kqVNNHfP',
-        'IO3hhNu',
-        'qDdC9Lcllce',
-        'Et7lLOg',
-        '6ZlQrvfgZu',
-        'YXHLeZBF',
-        'NH6nAd7y',
-        'ARsut59gfK6j0v',
-        'jPE2KXiJjnSsjn',
-        'qYcG5HOJc3TtxM',
-        'C2w06YGj5C',
-        'kHx1pT7',
-        '2enXfHXw',
-        'koFHBiR054aizN',
-        'Uj53XTQ92Ntbq7K',
-        'QjC5euFYi2AuxWb',
-        'njLwvdMejA',
-        'NWMzrwTAVZEb',
-        's4sVqC0AyTM5h',
-        'pu01jeZ6AoH',
-        'SgiOfwx9qkR',
-        'grjsLtBNn9eTQg',
-        'XABTTaYgihZk2mq',
-        '2vlSCZQc3HT27F4',
-        'kQZ7VQfEL3TC7P',
-        'MEzqVne021W',
-        'BLYPZp2SIO',
-        '5zDMVoqw4nH',
-        't14S9uLuGKX7Lb5',
-        '4McODHAYTyp',
-        'EAoxL5UKvMPqjH3',
-        'hJpAbqp',
-        'tcj63Wpz',
-        'hGqEu0LxKkMv46P',
-        'u2wNvb8ou19N3',
-        'wUKY6Opi1kH',
-    ];
-    try {
-        let e = (function (e) {
-            if (e === undefined) {
-                return 'rive';
-            }
-            try {
-                let t;
-                let n;
-                let r = String(e);
-                if (isNaN(Number(e))) {
-                    let e = r.split('').reduce((e, t) => e + t.charCodeAt(0), 0);
-                    t = c[e % c.length] || btoa(r);
-                    n = Math.floor((e % r.length) / 2);
-                }
-                else {
-                    let i = Number(e);
-                    t = c[i % c.length] || btoa(r);
-                    n = Math.floor((i % r.length) / 2);
-                }
-                let i = r.slice(0, n) + t + r.slice(n);
-                let o = (function (e) {
-                    let t = String(e);
-                    let n = t.length ^ -559038737;
-                    for (let e = 0; e < t.length; e++) {
-                        let r = t.charCodeAt(e);
-                        r ^= ((e * 131 + 89) ^ (r << e % 5)) & 255;
-                        n = (((n << 7) | (n >>> 25)) >>> 0) ^ r;
-                        let i = (n & 65535) * 60205;
-                        let o = ((n >>> 16) * 60205) << 16;
-                        n = (i + o) >>> 0;
-                        n ^= n >>> 11;
-                    }
-                    n ^= n >>> 15;
-                    n = ((n & 65535) * 49842 + (((n >>> 16) * 49842) << 16)) >>> 0;
-                    n ^= n >>> 13;
-                    n = ((n & 65535) * 40503 + (((n >>> 16) * 40503) << 16)) >>> 0;
-                    n ^= n >>> 16;
-                    n = ((n & 65535) * 10196 + (((n >>> 16) * 10196) << 16)) >>> 0;
-                    return (n ^= n >>> 15).toString(16).padStart(8, '0');
-                })((function (e) {
-                    e = String(e);
-                    let t = 0;
-                    for (let n = 0; n < e.length; n++) {
-                        let r = e.charCodeAt(n);
-                        let i = (((t = (r + (t << 6) + (t << 16) - t) >>> 0) << n % 5) | (t >>> (32 - (n % 5)))) >>> 0;
-                        t ^= (i ^ ((r << n % 7) | (r >>> (8 - (n % 7))))) >>> 0;
-                        t = (t + ((t >>> 11) ^ (t << 3))) >>> 0;
-                    }
-                    t ^= t >>> 15;
-                    t = ((t & 65535) * 49842 + ((((t >>> 16) * 49842) & 65535) << 16)) >>> 0;
-                    t ^= t >>> 13;
-                    t = ((t & 65535) * 40503 + ((((t >>> 16) * 40503) & 65535) << 16)) >>> 0;
-                    return (t ^= t >>> 16).toString(16).padStart(8, '0');
-                })(i));
-                return btoa(o);
-            }
-            catch (e) {
-                return 'topSecret';
-            }
-        })(id);
-        return e;
-    }
-    catch (e) {
-        console.error('Error fetching data:', e);
-    }
-}
+const url_polyfill_1 = require("../../../utils/url-polyfill");
+const crypto_js_1 = __importDefault(require("crypto-js"));
 function getVidsrcSourcesAndServers(id) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
@@ -372,15 +114,130 @@ function getVidsrcSourcesAndServers(id) {
         }
     });
 }
+function get111MoviesSourcesAndServers(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const parts = id.split('$');
+        const [tmdbId, type, episode, season] = parts;
+        const baseUrl = 'https://111movies.com';
+        const userAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
+        const defaultDomain = (() => {
+            const u = new url_polyfill_1.URL(baseUrl);
+            return `${u.protocol}//${u.host}/`;
+        })();
+        const headers = {
+            'Referer': defaultDomain,
+            'User-Agent': userAgent,
+            // 'Content-Type': 'image/gif',
+            'X-Requested-With': 'XMLHttpRequest',
+        };
+        function customEncode(input) {
+            const src = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+            const dst = 'BdNqfj2X1RalybZHxP50e8UGz4Tv6mg3QS-7JnAWIsiKrCpFktVM9D_chuYOoEwL';
+            // Normal base64 url-safe
+            let b64 = crypto_js_1.default.enc.Base64.stringify(crypto_js_1.default.enc.Utf8.parse(input));
+            b64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
+            // Translate characters
+            let result = '';
+            for (const ch of b64) {
+                const idx = src.indexOf(ch);
+                result += idx >= 0 ? dst[idx] : ch;
+            }
+            return result;
+        }
+        let url;
+        if (type === 'tv') {
+            url = `${baseUrl}/tv/${tmdbId}/${season}/${episode}`;
+        }
+        else {
+            url = `${baseUrl}/movie/${tmdbId}`;
+        }
+        const res = yield axios_1.default.get(url, { headers });
+        const html = res.data;
+        // Extract raw data
+        const match = html.match(/\{\"data\":\"(.*?)\"/);
+        if (!match) {
+            console.error('No data found!');
+            throw new Error('No data found in the response');
+        }
+        const rawData = match[1];
+        // AES CBC encrypt
+        const keyHex = '912660f3d9f3f35cee36396d31ed73366ab53c22c70710ce029697d17762997e';
+        const ivHex = 'f91f2863783814f51c56f341d6ce1677';
+        const aesKey = crypto_js_1.default.enc.Hex.parse(keyHex);
+        const aesIv = crypto_js_1.default.enc.Hex.parse(ivHex);
+        const padded = crypto_js_1.default.enc.Utf8.parse(rawData);
+        const encrypted = crypto_js_1.default.AES.encrypt(padded, aesKey, {
+            iv: aesIv,
+            mode: crypto_js_1.default.mode.CBC,
+            padding: crypto_js_1.default.pad.Pkcs7,
+        });
+        // Python used .hex(), CryptoJS AES output is base64 → convert to hex
+        // AES ciphertext in hex (same as Python's .hex())
+        const aesEncryptedHex = encrypted.ciphertext.toString(crypto_js_1.default.enc.Hex);
+        // XOR key as a Uint8Array instead of Buffer
+        const xorKey = new Uint8Array([0xbe, 0x43, 0x0a]);
+        let xorResult = '';
+        for (let i = 0; i < aesEncryptedHex.length; i++) {
+            const charCode = aesEncryptedHex.charCodeAt(i);
+            xorResult += String.fromCharCode(charCode ^ xorKey[i % xorKey.length]);
+        }
+        // Encode final
+        const encodedFinal = customEncode(xorResult);
+        // API call
+        const staticPath = 'to/1000003134441812/c945be05/2f30b6e198562e7015537bb71a738ff8245942a7/y/2c20617150078ad280239d1cc3a8b6ee9331acef9b0bdc6b742435597c38edb4/c8ddbffe-3efb-53e1-b883-3b6ce90ba310';
+        const apiServers = `https://111movies.com/${staticPath}/${encodedFinal}/sr`;
+        const { data: serversData } = yield axios_1.default.post(apiServers, {}, { headers });
+        // const servers = serverRes.data;
+        if (!Array.isArray(serversData) || serversData.length === 0) {
+            console.error('No servers found!');
+            throw new Error('No servers found in the response');
+        }
+        const servers = serversData.map((s) => ({
+            name: s.name,
+            url: `https://111movies.com/${staticPath}/${s.data}`,
+        }));
+        const sources = [];
+        let subtitles = [];
+        // console.log(subtitles);
+        for (const server of servers) {
+            try {
+                const { data: streamData } = yield axios_1.default.post(server.url, {}, { headers });
+                if (streamData.tracks && streamData.tracks.length > 0) {
+                    const newSubs = streamData.tracks.map((sub) => ({
+                        url: sub.file,
+                        lang: sub.label,
+                    }));
+                    const allSubs = [...subtitles, ...newSubs];
+                    const uniqueSubs = allSubs.filter((sub, index, self) => index === self.findIndex((s) => s.lang === sub.lang));
+                    subtitles = uniqueSubs;
+                }
+                sources.push({
+                    url: streamData.url,
+                    isM3U8: streamData.url.includes('.m3u8'),
+                    quality: 'default',
+                    name: server.name,
+                });
+            }
+            catch (err) {
+                // ignore bad ones
+            }
+        }
+        return {
+            servers,
+            sources,
+            subtitles,
+        };
+    });
+}
 function getMultiServers(id) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const servers = [];
-            const [{ servers: riveServers }, { servers: vidsrcServers }] = yield Promise.all([
-                getRiveSourcesAndServers(id),
+            const [{ servers: oneoneoneServers }, { servers: vidsrcServers }] = yield Promise.all([
+                get111MoviesSourcesAndServers(id),
                 getVidsrcSourcesAndServers(id),
             ]);
-            servers.push(...riveServers, ...vidsrcServers);
+            servers.push(...oneoneoneServers, ...vidsrcServers);
             return servers;
         }
         catch (error) {
@@ -393,10 +250,10 @@ function getMultiSources(id, server) {
         var _a;
         try {
             const [_b, _c] = yield Promise.all([
-                getRiveSourcesAndServers(id),
+                get111MoviesSourcesAndServers(id),
                 getVidsrcSourcesAndServers(id),
-            ]), { servers: _ } = _b, riveSources = __rest(_b, ["servers"]), { servers: __ } = _c, vidsrcSources = __rest(_c, ["servers"]);
-            const allSources = Object.assign(Object.assign(Object.assign({}, riveSources), vidsrcSources), { sources: [...(riveSources.sources || []), ...(vidsrcSources.sources || [])], subtitles: [...(riveSources.subtitles || []), ...(vidsrcSources.subtitles || [])] });
+            ]), { servers: _ } = _b, oneoneoneSources = __rest(_b, ["servers"]), { servers: __ } = _c, vidsrcSources = __rest(_c, ["servers"]);
+            const allSources = Object.assign(Object.assign(Object.assign({}, oneoneoneSources), vidsrcSources), { sources: [...(oneoneoneSources.sources || []), ...(vidsrcSources.sources || [])], subtitles: [...(oneoneoneSources.subtitles || []), ...(vidsrcSources.subtitles || [])] });
             const matchedSources = ((_a = allSources.sources) === null || _a === void 0 ? void 0 : _a.filter((source) => source.name === server)) || [];
             if (matchedSources.length === 0) {
                 throw new Error(`No sources found for server: ${server}`);
