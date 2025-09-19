@@ -26,6 +26,13 @@ import { load } from 'cheerio';
 import { USER_AGENT } from './utils';
 import type { ExtractorContext } from '../models';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
+import {
+  getDdosGuardCookiesWithWebView,
+  makeGetRequestWithWebView,
+  multiply,
+  bypassDdosGuard,
+  deobfuscateScript,
+} from '../NativeConsumet';
 // Default axios instance with optimized settings for scraping
 export const defaultAxios = axios.create({
   timeout: 15000,
@@ -46,6 +53,13 @@ export const defaultExtractorContext: ExtractorContext = {
   USER_AGENT: USER_AGENT,
   PolyURL: PolyURL,
   PolyURLSearchParams: PolyURLSearchParams,
+  NativeConsumet: {
+    getDdosGuardCookiesWithWebView,
+    makeGetRequestWithWebView,
+    multiply,
+    bypassDdosGuard,
+    deobfuscateScript,
+  },
 };
 
 // Default static extractors (for backward compatibility)

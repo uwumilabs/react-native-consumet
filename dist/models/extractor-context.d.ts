@@ -1,6 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
+import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, multiply, deobfuscateScript } from '../NativeConsumet';
 /**
  * ExtractorContext:
  * This context is injected into each extractor to provide core utilities.
@@ -11,6 +12,13 @@ export interface ExtractorContext {
     USER_AGENT?: string;
     PolyURL: typeof PolyURL;
     PolyURLSearchParams: typeof PolyURLSearchParams;
+    NativeConsumet: {
+        getDdosGuardCookiesWithWebView: typeof getDdosGuardCookiesWithWebView;
+        makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
+        multiply: typeof multiply;
+        bypassDdosGuard: typeof bypassDdosGuard;
+        deobfuscateScript: typeof deobfuscateScript;
+    };
 }
 /**
  * Configuration options for creating a extractor context

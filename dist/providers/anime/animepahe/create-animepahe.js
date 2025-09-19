@@ -13,15 +13,14 @@ function createAnimePahe(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
     const { Kwik } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
-    const { getDdosGuardCookiesWithWebView } = NativeConsumet;
+    const { getDdosGuardCookiesWithWebView, multiply, bypassDdosGuard } = NativeConsumet;
     // Provider configuration - use the standardized base URL creation
-    const baseUrl = createCustomBaseUrl('https://animepahe.ru', customBaseURL);
-    console.log('look here', getDdosGuardCookiesWithWebView);
+    const baseUrl = createCustomBaseUrl('https://animepahe.si', customBaseURL);
     const config = {
-        name: 'Zoro',
+        name: 'AnimePahe',
         languages: 'en',
-        classPath: 'ANIME.Zoro',
-        logo: 'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg',
+        classPath: 'ANIME.AnimePahe',
+        logo: 'https://animepahe.si//web-app-manifest-512x512.png',
         baseUrl,
         isNSFW: false,
         isWorking: true,
@@ -32,7 +31,7 @@ function createAnimePahe(ctx, customBaseURL) {
         try {
             try {
                 ddgCookie = yield getDdosGuardCookiesWithWebView(config.baseUrl);
-                // console.log('DDoS-Guard cookie obtained (WebView):', ddgCookie);
+                // console.log('DDoS-Guard cookie obtained (WebView):', ans,ddgCookie);
             }
             catch (err) {
                 console.error('Failed to bypass DDoS-Guard with WebView:', err);
@@ -205,9 +204,9 @@ function createAnimePahe(ctx, customBaseURL) {
             const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.Kwik:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl, config.baseUrl)));
                 default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl, config.baseUrl)));
             }
         }
         try {
@@ -240,6 +239,7 @@ function createAnimePahe(ctx, customBaseURL) {
             return yield fetchEpisodeSources(serverUrl.href, server, subOrDub);
         }
         catch (err) {
+            console.log(err);
             throw new Error(err.message);
         }
     });
@@ -268,6 +268,7 @@ function createAnimePahe(ctx, customBaseURL) {
             return servers;
         }
         catch (err) {
+            console.log(err);
             throw new Error(err.message);
         }
     });

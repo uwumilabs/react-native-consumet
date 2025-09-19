@@ -13,6 +13,7 @@ export interface Spec extends TurboModule {
         status: string;
     }>;
     deobfuscateScript: (source: string) => Promise<string | null>;
+    multiply: (a: number, b: number) => number;
 }
 declare const NativeConsumet: Spec;
 export declare const bypassDdosGuard: (url: string) => Promise<{
@@ -28,5 +29,6 @@ export declare const makeGetRequestWithWebView: (url: string, headers: {
     status: string;
 }>;
 export declare const deobfuscateScript: (source: string) => Promise<string | null>;
+export declare const multiply: (a: number, b: number) => number;
 export default NativeConsumet;
 //# sourceMappingURL=NativeConsumet.d.ts.map

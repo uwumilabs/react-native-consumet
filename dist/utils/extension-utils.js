@@ -10,6 +10,7 @@ const extractors_1 = require("../extractors");
 const cheerio_1 = require("cheerio");
 const utils_1 = require("./utils");
 const url_polyfill_1 = require("./url-polyfill");
+const NativeConsumet_1 = require("../NativeConsumet");
 // Default axios instance with optimized settings for scraping
 exports.defaultAxios = axios_1.default.create({
     timeout: 15000,
@@ -29,6 +30,13 @@ exports.defaultExtractorContext = {
     USER_AGENT: utils_1.USER_AGENT,
     PolyURL: url_polyfill_1.PolyURL,
     PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
+    NativeConsumet: {
+        getDdosGuardCookiesWithWebView: NativeConsumet_1.getDdosGuardCookiesWithWebView,
+        makeGetRequestWithWebView: NativeConsumet_1.makeGetRequestWithWebView,
+        multiply: NativeConsumet_1.multiply,
+        bypassDdosGuard: NativeConsumet_1.bypassDdosGuard,
+        deobfuscateScript: NativeConsumet_1.deobfuscateScript,
+    },
 };
 // Default static extractors (for backward compatibility)
 exports.defaultExtractors = {

@@ -16,7 +16,13 @@ import {
 
 import { defaultAxios, defaultExtractors, defaultExtractorContext } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
-import { getDdosGuardCookiesWithWebView } from '../NativeConsumet';
+import {
+  getDdosGuardCookiesWithWebView,
+  makeGetRequestWithWebView,
+  multiply,
+  bypassDdosGuard,
+  deobfuscateScript,
+} from '../NativeConsumet';
 import extensionRegistry from '../extension-registry.json';
 
 /**
@@ -101,6 +107,10 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     },
     NativeConsumet: {
       getDdosGuardCookiesWithWebView,
+      makeGetRequestWithWebView,
+      multiply,
+      bypassDdosGuard,
+      deobfuscateScript,
     },
   };
 }
