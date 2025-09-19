@@ -14,6 +14,7 @@ export interface Spec extends TurboModule {
     status: string;
   }>;
   deobfuscateScript: (source: string) => Promise<string | null>;
+  multiply: (a: number, b: number) => number;
 }
 
 const NativeConsumet = TurboModuleRegistry.getEnforcing<Spec>('Consumet');
@@ -22,5 +23,6 @@ export const bypassDdosGuard = NativeConsumet.bypassDdosGuard;
 export const getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
 export const makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
 export const deobfuscateScript = NativeConsumet.deobfuscateScript;
+export const multiply = NativeConsumet.multiply;
 
 export default NativeConsumet;

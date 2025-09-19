@@ -7,7 +7,7 @@
     },
     {
       "name": "Kwik",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/kwik.js"
     }
   ],
@@ -38,7 +38,7 @@
       "id": "animepahe",
       "name": "AnimePahe",
       "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -46,8 +46,8 @@
       "category": "anime",
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animepahe/create-animepahe.js",
       "factoryName": "createAnimePahe",
-      "baseUrl": "https://animepahe.ru",
-      "logo": "https://animepahe.ru//web-app-manifest-512x512.png",
+      "baseUrl": "https://animepahe.si",
+      "logo": "https://animepahe.si//web-app-manifest-512x512.png",
       "languages": ["en", "ja"],
       "nsfw": false,
       "status": "stable",

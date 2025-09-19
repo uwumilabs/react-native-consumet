@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
 import { ProviderManager, ANIME, ExtensionRegistry, type IAnimeResult, type ISearch ,type AnimeProvider, type animeProviders} from 'react-native-consumet';
 import { AnimeParser } from '../../../../src/models';
+// @ts-ignore
+import * as testCode from './test-code-generated.js';
 
 const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);
@@ -47,7 +49,10 @@ const ExtAnime = () => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
       
-      const providerInstance = await manager.loadExtension(extensionId);
+      // const providerInstance = await manager.loadExtension(extensionId);
+      const metadata= manager.getExtensionMetadata(extensionId);
+      // @ts-ignore
+      const providerInstance = await manager.executeProviderCode<'AnimePahe'>(`${testCode.testCodeString}`, 'createAnimePahe',metadata);
       setProvider(providerInstance);
       
       console.log('✅ Anime extension loaded successfully:', {

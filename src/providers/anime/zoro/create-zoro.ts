@@ -477,7 +477,6 @@ function createZoro(ctx: ProviderContext, customBaseURL?: string) {
       if (episodeId.includes('$episode$')) episodeId = episodeId.split('$episode$')[1]!;
       const response = await fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
       const data = await response.json();
-      console.log(data);
       const $ = load(data.html);
       const scrapedServers: any[] = [];
       let selector;

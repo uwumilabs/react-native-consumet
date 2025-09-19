@@ -1,5 +1,3 @@
-/* eslint-disable no-new-func */
-
 import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
@@ -225,6 +223,7 @@ export class ProviderManager {
       },
       'URL': this.providerContext.PolyURL,
       'URLSearchParams': this.providerContext.PolyURLSearchParams,
+      'NativeConsumet': this.providerContext.NativeConsumet,
     };
 
     // Create fetch function using axios
