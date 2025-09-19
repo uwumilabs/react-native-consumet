@@ -17,15 +17,15 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
   const { Kwik } = extractors;
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
-  const { getDdosGuardCookiesWithWebView } = NativeConsumet;
+  const { getDdosGuardCookiesWithWebView, multiply, bypassDdosGuard } = NativeConsumet;
   // Provider configuration - use the standardized base URL creation
-  const baseUrl = createCustomBaseUrl('https://animepahe.ru', customBaseURL);
+  const baseUrl = createCustomBaseUrl('https://animepahe.si', customBaseURL);
 
   const config: ProviderConfig = {
-    name: 'Zoro',
+    name: 'AnimePahe',
     languages: 'en',
-    classPath: 'ANIME.Zoro',
-    logo: 'https://is3-ssl.mzstatic.com/image/thumb/Purple112/v4/7e/91/00/7e9100ee-2b62-0942-4cdc-e9b93252ce1c/source/512x512bb.jpg',
+    classPath: 'ANIME.AnimePahe',
+    logo: 'https://animepahe.si//web-app-manifest-512x512.png',
     baseUrl,
     isNSFW: false,
     isWorking: true,
@@ -41,7 +41,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     try {
       try {
         ddgCookie = await getDdosGuardCookiesWithWebView(config.baseUrl);
-        // console.log('DDoS-Guard cookie obtained (WebView):', ddgCookie);
+        // console.log('DDoS-Guard cookie obtained (WebView):', ans,ddgCookie);
       } catch (err) {
         console.error('Failed to bypass DDoS-Guard with WebView:', err);
       }
@@ -241,12 +241,12 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.Kwik:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await Kwik().extract(serverUrl)),
+            ...(await Kwik().extract(serverUrl, config.baseUrl)),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await Kwik().extract(serverUrl)),
+            ...(await Kwik().extract(serverUrl, config.baseUrl)),
           };
       }
     }
@@ -284,6 +284,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
       const serverUrl: URL = new URL(servers[i]!.url);
       return await fetchEpisodeSources(serverUrl.href, server, subOrDub);
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -316,6 +317,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
       return servers;
     } catch (err) {
+      console.log(err);
       throw new Error((err as Error).message);
     }
   };

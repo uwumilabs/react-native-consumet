@@ -3,6 +3,7 @@ package com.consumet
 import android.os.Handler
 import android.os.Looper
 import android.webkit.*
+import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
@@ -21,6 +22,12 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     companion object {
         const val NAME = "Consumet"
         private const val TIMEOUT_SEC: Long = 90
+    }
+
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    override fun multiply(a: Double, b: Double): Double {
+        Log.d("multiply", "Multiplying $a * $b")
+        return a * b
     }
 
     @ReactMethod

@@ -25,7 +25,7 @@ declare class MultiStream extends MovieParser {
      * @param mediaId media id
      * @param server server type (defaults to the first from `fetchEpisodeServers`) (optional)
      */
-    fetchEpisodeSources: (episodeId: string, mediaId: string, server: StreamingServers) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, mediaId: string, server?: StreamingServers) => Promise<ISource>;
     /**
      *
      * @param episodeId takes episode link or movie id

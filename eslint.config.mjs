@@ -34,6 +34,7 @@ export default defineConfig([
         },
       ],
       'no-new-wrappers': 'off',
+      'no-new-func': 'off',
       'no-eval': [
         'warn',
         {
