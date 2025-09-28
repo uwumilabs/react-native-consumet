@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0 (2025-09-28)
+
+* refactor(provider-manager): enhance extension loading and type safety ([2487946](https://github.com/2004durgesh/react-native-consumet/commit/2487946))
+
 ## 1.0.0-rc.2 (2025-09-19)
 
 * Fix/animpahe (#2) ([23b2295](https://github.com/2004durgesh/react-native-consumet/commit/23b2295)), closes [#2](https://github.com/2004durgesh/react-native-consumet/issues/2)
