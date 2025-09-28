@@ -12,7 +12,6 @@ export declare const animeProviders: {
 export declare const movieProviders: {
     HiMovies: typeof import("../providers/movies/himovies/himovies").default;
     MultiMovies: typeof import("../providers/movies/multimovies").default;
-    DramaCool: typeof import("../providers/movies/dramacool").default;
     MultiStream: typeof import("../providers/movies/multistream").default;
 };
 declare const metaProviders: {

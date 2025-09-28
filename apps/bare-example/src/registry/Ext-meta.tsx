@@ -11,8 +11,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult } from 'react-native-consumet';
+import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 import Video from 'react-native-video';
+import Zoro from '../../../../src/providers/anime/zoro/zoro';
 
 // Get screen width for responsive video player
 const { width } = Dimensions.get('window');
@@ -57,7 +58,9 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.HiMovies());
+        const manager = new ProviderManager(ExtensionRegistry);
+        const providerInstance = await manager.loadExtension("HiMovies");
+      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', providerInstance);
       const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
 
@@ -105,7 +108,11 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.Zoro());
+  const manager = new ProviderManager(ExtensionRegistry);
+  // Use registry id for consistency; lookup is case-insensitive and supports name too
+  const providerInstance = await manager.loadExtension("AnimePahe");
+      const anime = new META.Anilist(providerInstance);
+    
       const searchResult = await anime.search('sakamoto days');
       console.log('Anime Search Result:', searchResult);
 
@@ -343,6 +350,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     paddingVertical: 10,
+    paddingTop:50
   },
   tabButton: {
     paddingVertical: 8,
