@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
+const provider_maps_1 = require("./provider-maps");
 class ProviderManager {
     constructor(registry, providerConfig = {}) {
         this.loadedExtensions = new Map();
@@ -29,7 +30,13 @@ class ProviderManager {
             registry.extensions.forEach((extension) => {
                 // Convert old format to new format if needed
                 const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName });
-                this.extensionManifest.set(extension.id, manifest);
+                // Store with a normalized key to enable case-insensitive lookup by id
+                if (typeof extension.id === 'string') {
+                    this.extensionManifest.set(extension.id.toLowerCase(), manifest);
+                }
+                else {
+                    this.extensionManifest.set(String(extension.id), manifest);
+                }
             });
             //console.log(`📚 Loaded ${extensions.length} extensions from extensionManifest`);
         }
@@ -53,7 +60,23 @@ class ProviderManager {
      * Get extension metadata by ID
      */
     getExtensionMetadata(extensionId) {
-        return this.extensionManifest.get(extensionId);
+        if (!extensionId)
+            throw new Error('Extension id/name is required');
+        // Try direct hit (as-is and lowercase id)
+        const direct = this.extensionManifest.get(extensionId) || this.extensionManifest.get(extensionId.toLowerCase());
+        if (direct)
+            return direct;
+        // Fallback: search by id or name, case-insensitive
+        const needle = extensionId.toLowerCase();
+        for (const [key, manifest] of this.extensionManifest.entries()) {
+            if (key.toLowerCase() === needle)
+                return manifest;
+            if (manifest.id && String(manifest.id).toLowerCase() === needle)
+                return manifest;
+            if (manifest.name && String(manifest.name).toLowerCase() === needle)
+                return manifest;
+        }
+        throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
     /**
      * Load an extension by ID from the extensionManifest
@@ -64,10 +87,11 @@ class ProviderManager {
             if (!metadata) {
                 throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
             }
+            const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
             // Check if already loaded
-            if (this.loadedExtensions.has(extensionId)) {
+            if (this.loadedExtensions.has(cacheKey)) {
                 //console.log(`📦 Extension '${extensionId}' already loaded`);
-                return this.loadedExtensions.get(extensionId);
+                return this.loadedExtensions.get(cacheKey);
             }
             try {
                 //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
@@ -94,9 +118,19 @@ class ProviderManager {
                 if (!factoryName) {
                     throw new Error(`No factory function available for extension ${extensionId}`);
                 }
-                const providerInstance = yield this.executeProviderCode(providerCode, factoryName, metadata);
+                let providerInstance = yield this.executeProviderCode(providerCode, factoryName, metadata);
+                // Attempt to attach the prototype from local provider classes so instanceof works in app code
+                try {
+                    // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
+                    const lookupKey = metadata.name || extensionId;
+                    providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
+                }
+                catch (protoErr) {
+                    // Non-fatal – if we can't attach prototype, just proceed with the plain instance
+                    console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
+                }
                 // Cache the loaded extension
-                this.loadedExtensions.set(extensionId, providerInstance);
+                this.loadedExtensions.set(cacheKey, providerInstance);
                 //console.log(`✅ Extension '${extensionId}' loaded successfully`);
                 return providerInstance;
             }
@@ -111,6 +145,29 @@ class ProviderManager {
                 throw error;
             }
         });
+    }
+    /**
+     * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
+     * and developer tooling understands the shape better.
+     */
+    attachProviderPrototype(instance, providerKey, category) {
+        // Use provided key directly; our maps are keyed by PascalCase names
+        const key = providerKey;
+        // Pick the correct constructor map by category
+        const ctor = category === 'anime'
+            ? provider_maps_1.animeProviders[key]
+            : category === 'movies'
+                ? provider_maps_1.movieProviders[key]
+                : undefined;
+        if (!ctor || typeof ctor !== 'function' || !ctor.prototype) {
+            return instance; // Nothing to do
+        }
+        // If already an instance of desired ctor, skip
+        if (instance instanceof ctor)
+            return instance;
+        // Attach the prototype so `instanceof` works at runtime
+        Object.setPrototypeOf(instance, ctor.prototype);
+        return instance;
     }
     /**
      * Execute provider code and create instance (extensionManifest-based)

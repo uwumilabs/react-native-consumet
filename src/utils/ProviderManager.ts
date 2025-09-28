@@ -3,7 +3,7 @@ import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './provider-maps';
+import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
 
 export class ProviderManager {
   private providerContext: ProviderContext;
@@ -27,7 +27,12 @@ export class ProviderManager {
           category: extension.category as any, // Cast to avoid type error
           factoryName: extension.factoryName,
         };
-        this.extensionManifest.set(extension.id, manifest);
+        // Store with a normalized key to enable case-insensitive lookup by id
+        if (typeof extension.id === 'string') {
+          this.extensionManifest.set(extension.id.toLowerCase(), manifest);
+        } else {
+          this.extensionManifest.set(String(extension.id), manifest);
+        }
       });
       //console.log(`📚 Loaded ${extensions.length} extensions from extensionManifest`);
     } catch (error) {
@@ -53,7 +58,21 @@ export class ProviderManager {
    * Get extension metadata by ID
    */
   getExtensionMetadata(extensionId: string): ExtensionManifest {
-    return this.extensionManifest.get(extensionId)!;
+    if (!extensionId) throw new Error('Extension id/name is required');
+
+    // Try direct hit (as-is and lowercase id)
+    const direct = this.extensionManifest.get(extensionId) || this.extensionManifest.get(extensionId.toLowerCase());
+    if (direct) return direct;
+
+    // Fallback: search by id or name, case-insensitive
+    const needle = extensionId.toLowerCase();
+    for (const [key, manifest] of this.extensionManifest.entries()) {
+      if (key.toLowerCase() === needle) return manifest;
+      if (manifest.id && String(manifest.id).toLowerCase() === needle) return manifest;
+      if (manifest.name && String(manifest.name).toLowerCase() === needle) return manifest;
+    }
+
+    throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
   }
 
   /**
@@ -68,15 +87,17 @@ export class ProviderManager {
         ? InstanceType<(typeof movieProviders)[T]>
         : never
   > {
-    const metadata = this.getExtensionMetadata(extensionId);
+    const metadata = this.getExtensionMetadata(extensionId as unknown as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
 
+    const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
+
     // Check if already loaded
-    if (this.loadedExtensions.has(extensionId)) {
+    if (this.loadedExtensions.has(cacheKey)) {
       //console.log(`📦 Extension '${extensionId}' already loaded`);
-      return this.loadedExtensions.get(extensionId);
+      return this.loadedExtensions.get(cacheKey);
     }
 
     try {
@@ -109,14 +130,24 @@ export class ProviderManager {
       if (!factoryName) {
         throw new Error(`No factory function available for extension ${extensionId}`);
       }
-      const providerInstance = await this.executeProviderCode(
+      let providerInstance = await this.executeProviderCode(
         providerCode,
         factoryName,
         metadata as ExtensionManifest & { id: T }
       );
 
+      // Attempt to attach the prototype from local provider classes so instanceof works in app code
+      try {
+        // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
+        const lookupKey = (metadata as any).name || (extensionId as string);
+        providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
+      } catch (protoErr) {
+        // Non-fatal – if we can't attach prototype, just proceed with the plain instance
+        console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
+      }
+
       // Cache the loaded extension
-      this.loadedExtensions.set(extensionId, providerInstance);
+      this.loadedExtensions.set(cacheKey, providerInstance);
 
       //console.log(`✅ Extension '${extensionId}' loaded successfully`);
       return providerInstance;
@@ -130,6 +161,34 @@ export class ProviderManager {
       });
       throw error;
     }
+  }
+
+  /**
+   * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
+   * and developer tooling understands the shape better.
+   */
+  private attachProviderPrototype<T extends object>(instance: T, providerKey: string, category: ProviderType): any {
+    // Use provided key directly; our maps are keyed by PascalCase names
+    const key: any = providerKey;
+
+    // Pick the correct constructor map by category
+    const ctor =
+      category === 'anime'
+        ? (animeProviders as any)[key]
+        : category === 'movies'
+          ? (movieProviders as any)[key]
+          : undefined;
+
+    if (!ctor || typeof ctor !== 'function' || !ctor.prototype) {
+      return instance; // Nothing to do
+    }
+
+    // If already an instance of desired ctor, skip
+    if (instance instanceof ctor) return instance;
+
+    // Attach the prototype so `instanceof` works at runtime
+    Object.setPrototypeOf(instance as object, ctor.prototype);
+    return instance;
   }
 
   /**

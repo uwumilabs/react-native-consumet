@@ -2,7 +2,7 @@ import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-import type { AnimeProvider, animeProviders, MovieProvider, movieProviders } from './provider-maps';
+import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;
@@ -28,6 +28,11 @@ export declare class ProviderManager {
      * Load an extension by ID from the extensionManifest
      */
     loadExtension<T extends AnimeProvider | MovieProvider>(extensionId: T): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
+    /**
+     * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
+     * and developer tooling understands the shape better.
+     */
+    private attachProviderPrototype;
     /**
      * Execute provider code and create instance (extensionManifest-based)
      */

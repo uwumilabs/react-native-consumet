@@ -16,7 +16,6 @@ exports.animeProviders = {
 exports.movieProviders = {
     HiMovies: providers_1.MOVIES.HiMovies,
     MultiMovies: providers_1.MOVIES.MultiMovies,
-    DramaCool: providers_1.MOVIES.DramaCool,
     MultiStream: providers_1.MOVIES.MultiStream,
 };
 const metaProviders = {
