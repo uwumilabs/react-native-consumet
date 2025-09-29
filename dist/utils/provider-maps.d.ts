@@ -6,18 +6,18 @@
  * createProviderContext function.
  */
 export declare const animeProviders: {
-    Zoro: typeof import("../providers/anime/zoro/zoro").Zoro;
-    AnimePahe: typeof import("../providers/anime/animepahe/animepahe").AnimePahe;
+    readonly Zoro: any;
+    readonly AnimePahe: any;
 };
 export declare const movieProviders: {
-    HiMovies: typeof import("../providers/movies/himovies/himovies").default;
-    MultiMovies: typeof import("../providers/movies/multimovies").default;
-    MultiStream: typeof import("../providers/movies/multistream").default;
+    readonly HiMovies: any;
+    readonly MultiMovies: any;
+    readonly MultiStream: any;
 };
 declare const metaProviders: {
-    Anilist: typeof import("../providers/meta/anilist").default;
-    TMDB: typeof import("../providers/meta/tmdb").default;
-    MAL: typeof import("../providers/meta/mal").default;
+    readonly Anilist: any;
+    readonly TMDB: any;
+    readonly MAL: any;
 };
 export type AnimeProvider = keyof typeof animeProviders;
 export type MovieProvider = keyof typeof movieProviders;

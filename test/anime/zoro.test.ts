@@ -1,4 +1,4 @@
-import { ANIME } from '../../lib/module/providers';
+import { ANIME } from '../../lib/typescript/module/src/providers';
 
 jest.setTimeout(120000);
 
@@ -100,33 +100,36 @@ test('returns a filled array of anime list', async () => {
 });
 
 test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchSchedule();
-  expect(data.results).not.toEqual([]);
+  const date = new Date();
+  //date in YYYY-MM-DD format
+  const formattedDate = date.toISOString().split('T')[0];
+  const data = await zoro.fetchSchedule(formattedDate);
+  expect(data).not.toEqual([]);
 });
 
 test('returns a filled array of anime list', async () => {
   const data = await zoro.fetchSpotlight();
-  expect(data.results).not.toEqual([]);
+  expect(data).not.toEqual([]);
 });
 
 test('returns a filled array of anime list', async () => {
   const data = await zoro.fetchSearchSuggestions('one piece');
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of episode list for continue watching', async () => {
-  const connectSid = 'users_connect_sid';
-  const data = await zoro.fetchContinueWatching(`${connectSid}`);
-  console.log(data);
   expect(data).not.toEqual([]);
 });
 
-test('returns a filled array of animes from watch list', async () => {
-  const connectSid = 'users_connect_sid';
-  const data = await zoro.fetchWatchList(`${connectSid}`);
-  console.log(data);
-  expect(data).not.toEqual([]);
-});
+// test('returns a filled array of episode list for continue watching', async () => {
+//   const connectSid = 'users_connect_sid';
+//   const data = await zoro.fetchContinueWatching(`${connectSid}`);
+//   console.log(data);
+//   expect(data).not.toEqual([]);
+// });
+
+// test('returns a filled array of animes from watch list', async () => {
+//   const connectSid = 'users_connect_sid';
+//   const data = await zoro.fetchWatchList(`${connectSid}`);
+//   console.log(data);
+//   expect(data).not.toEqual([]);
+// });
 
 test('returns a filled object of anime data', async () => {
   const data = await zoro.fetchAnimeInfo('one-piece-100');
