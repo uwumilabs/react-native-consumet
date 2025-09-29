@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>1.0.1 (2025-09-29)</small>
+
+* refactor(provider-maps): implement lazy loading for providers to avoid circular dependencies ([85f1022](https://github.com/2004durgesh/react-native-consumet/commit/85f1022))
+
 ## 1.0.0 (2025-09-28)
 
 * refactor(provider-manager): enhance extension loading and type safety ([2487946](https://github.com/2004durgesh/react-native-consumet/commit/2487946))
