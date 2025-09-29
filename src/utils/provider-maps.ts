@@ -6,23 +6,58 @@
  * createProviderContext function.
  */
 
-import { ANIME, MOVIES, META } from '../providers';
+// Use lazy getters to break circular dependency
+let _PROVIDERS: any = null;
 
+const getProviders = () => {
+  if (_PROVIDERS === null) {
+    // Import providers only when needed to break circular dependency
+    const providers = require('../providers');
+    _PROVIDERS = providers;
+  }
+  return _PROVIDERS;
+};
+
+// Create lazy getters for provider objects
 export const animeProviders = {
-  Zoro: ANIME.Zoro,
-  AnimePahe: ANIME.AnimePahe,
+  get Zoro() {
+    const { ANIME } = getProviders();
+    return ANIME.Zoro;
+  },
+  get AnimePahe() {
+    const { ANIME } = getProviders();
+    return ANIME.AnimePahe;
+  },
 };
 
 export const movieProviders = {
-  HiMovies: MOVIES.HiMovies,
-  MultiMovies: MOVIES.MultiMovies,
-  MultiStream: MOVIES.MultiStream,
+  get HiMovies() {
+    const { MOVIES } = getProviders();
+    return MOVIES.HiMovies;
+  },
+  get MultiMovies() {
+    const { MOVIES } = getProviders();
+    return MOVIES.MultiMovies;
+  },
+  get MultiStream() {
+    const { MOVIES } = getProviders();
+    return MOVIES.MultiStream;
+  },
 };
 
 const metaProviders = {
-  Anilist: META.Anilist,
-  TMDB: META.TMDB,
-  MAL: META.Myanimelist,
+  get Anilist() {
+    const { META } = getProviders();
+    return META.Anilist;
+  },
+  get TMDB() {
+    const { META } = getProviders();
+    return META.TMDB;
+  },
+  get MAL() {
+    const { META } = getProviders();
+    return META.Myanimelist;
+  },
 };
 
 export type AnimeProvider = keyof typeof animeProviders;

@@ -2,6 +2,7 @@
 set -e
 yarn prepare
 
+yarn test zoro.test.ts
 yarn lint-staged
 echo "🛠 Running TypeScript check..."
 yarn typecheck
