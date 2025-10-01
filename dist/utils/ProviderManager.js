@@ -211,9 +211,20 @@ class ProviderManager {
                     throw new Error(`Factory function '${factoryName}' not found in extension`);
                 }
                 const instance = factory(this.providerContext);
+                let providerInstance = instance;
                 // Validate the instance has required methods
                 this.validateProviderInstance(instance, metadata.category);
-                return instance;
+                // Attempt to attach the prototype from local provider classes so instanceof works in app code
+                try {
+                    // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
+                    const lookupKey = metadata.name;
+                    providerInstance = this.attachProviderPrototype(instance, lookupKey, metadata.category);
+                }
+                catch (protoErr) {
+                    // Non-fatal – if we can't attach prototype, just proceed with the plain instance
+                    console.warn(`⚠️  Could not attach prototype for '${metadata.name}':`, protoErr);
+                }
+                return providerInstance;
             }
             catch (error) {
                 throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);

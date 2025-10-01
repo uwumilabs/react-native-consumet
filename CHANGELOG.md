@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>1.0.2 (2025-10-01)</small>
+
+* refactor(provider-manager): attach provider prototypes for instance validation ([3045b95](https://github.com/2004durgesh/react-native-consumet/commit/3045b95))
+
 ## <small>1.0.1 (2025-09-29)</small>
 
 * refactor(provider-maps): implement lazy loading for providers to avoid circular dependencies ([85f1022](https://github.com/2004durgesh/react-native-consumet/commit/85f1022))
