@@ -1,4 +1,4 @@
-import { ANIME } from '../../lib/typescript/module/src/providers';
+import { ANIME } from '../../lib/module/providers';
 
 jest.setTimeout(120000);
 
