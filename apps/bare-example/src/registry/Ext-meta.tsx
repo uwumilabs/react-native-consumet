@@ -11,10 +11,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
+import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult, ProviderManager, ExtensionRegistry, type AnimeProvider } from 'react-native-consumet';
 import Video from 'react-native-video';
 import Zoro from '../../../../src/providers/anime/zoro/zoro';
-
+// @ts-ignore
+import * as testCode from './test-code-generated.js';
 // Get screen width for responsive video player
 const { width } = Dimensions.get('window');
 
@@ -109,8 +110,15 @@ export default function Meta() {
   const fetchAnimeData = async () => {
     try {
   const manager = new ProviderManager(ExtensionRegistry);
-  // Use registry id for consistency; lookup is case-insensitive and supports name too
-  const providerInstance = await manager.loadExtension("AnimePahe");
+/** thisexample loads extension code from github itself */
+  // const providerInstance = await manager.loadExtension("AnimePahe");
+  const metadata = manager.getExtensionMetadata("zoro");
+  /** this example loads code from local */
+          const providerInstance = await manager.executeProviderCode<AnimeProvider>(
+            `${testCode.testCodeString}`,
+            metadata.factoryName,
+            metadata as typeof metadata & { id: AnimeProvider },
+          );
       const anime = new META.Anilist(providerInstance);
     
       const searchResult = await anime.search('sakamoto days');
