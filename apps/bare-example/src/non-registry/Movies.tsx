@@ -40,14 +40,14 @@ const fetchData = async (): Promise<{
     let videoUrl: string | null = null;
     if (info.episodes && info.episodes.length > 0) {
       const firstEpisodeId = info.episodes[0]!.id;
-      const servers = await movies.fetchEpisodeServers(firstEpisodeId,info.id);
+      const servers = await movies.fetchEpisodeServers(firstEpisodeId, info.id);
       console.log('Episode Servers:', servers);
       const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
       console.log('Episode Sources:', sources);
 
       if (sources.sources && sources.sources.length > 0) {
         // Find the highest quality source, or just take the first one
-        const highestQualitySource = sources.sources.reduce((prev:any, current:any) =>
+        const highestQualitySource = sources.sources.reduce((prev: any, current: any) =>
           (prev.quality || 0) > (current.quality || 0) ? prev : current
         );
         videoUrl = highestQualitySource.url;

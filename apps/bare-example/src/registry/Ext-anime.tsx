@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { ProviderManager, ANIME, ExtensionRegistry, type IAnimeResult, type ISearch ,type AnimeProvider, type animeProviders} from 'react-native-consumet';
+import {
+  ProviderManager,
+  ANIME,
+  ExtensionRegistry,
+  type IAnimeResult,
+  type ISearch,
+  type AnimeProvider,
+  type animeProviders,
+} from 'react-native-consumet';
 import { AnimeParser } from '../../../../src/models';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
@@ -19,21 +27,23 @@ const ExtAnime = () => {
 
       try {
         console.log('🚀 Initializing ProviderManager for anime providers...');
-        
+
         const manager = new ProviderManager(ExtensionRegistry);
         setProviderManager(manager);
-        
+
         const extensions = manager.getExtensionsByCategory('anime');
-        console.log('📚 Available anime extensions:', extensions.map(ext => ext.id));
+        console.log(
+          '📚 Available anime extensions:',
+          extensions.map((ext) => ext.id)
+        );
         setAvailableExtensions(extensions);
-        
+
         if (extensions.length > 0) {
-          const defaultExtension = extensions.find(ext => ext.id === selectedExtension) || extensions[0];
+          const defaultExtension = extensions.find((ext) => ext.id === selectedExtension) || extensions[0];
           if (defaultExtension) {
             await loadExtension(manager, defaultExtension.id as AnimeProvider);
           }
         }
-        
       } catch (err: any) {
         console.error('❌ Failed to initialize ProviderManager:', err);
         Alert.alert('Initialization Error', err.message);
@@ -45,34 +55,39 @@ const ExtAnime = () => {
     initializeProviderManager();
   }, []);
 
-  const loadExtension = async(manager: ProviderManager, extensionId: AnimeProvider) => {
+  const loadExtension = async (manager: ProviderManager, extensionId: AnimeProvider) => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
-      
+
       // const providerInstance = await manager.loadExtension(extensionId);
-      const metadata= manager.getExtensionMetadata(extensionId);
+      const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'AnimePahe'>(`${testCode.testCodeString}`, 'createAnimePahe',metadata);
+      const providerInstance = await manager.executeProviderCode<'AnimePahe'>(
+        `${testCode.testCodeString}`,
+        'createAnimePahe',
+        // @ts-ignore
+        metadata
+      );
       setProvider(providerInstance);
-      
+
       console.log('✅ Anime extension loaded successfully:', {
         name: providerInstance.name,
         hasSearch: typeof providerInstance.search === 'function',
-        hasFetchAnimeInfo: typeof providerInstance.fetchAnimeInfo === 'function'
+        hasFetchAnimeInfo: typeof providerInstance.fetchAnimeInfo === 'function',
       });
-      
+
       const searchQuery = 'Naruto';
-      const searchResults = await providerInstance.search(searchQuery) as ISearch<IAnimeResult>;
-      
+      const searchResults = (await providerInstance.search(searchQuery)) as ISearch<IAnimeResult>;
+
       console.log('🎯 Anime search results:', searchResults);
-      
+
       if (searchResults?.results && searchResults.results.length > 0) {
         setResults(searchResults.results.slice(0, 10));
         console.log('✅ Anime search successful, showing results');
-        
+
         const info = await providerInstance.fetchAnimeInfo(searchResults.results[0]!.id);
         console.log('📺 Anime info fetched:', info);
-        
+
         if (info.episodes && info.episodes.length > 0 && info.episodes[0]) {
           const sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
           console.log('🎬 Episode sources fetched:', sources);
@@ -81,7 +96,6 @@ const ExtAnime = () => {
         console.log('⚠️ No anime search results found');
         setResults([]);
       }
-      
     } catch (err: any) {
       console.error(`❌ Failed to load anime extension ${extensionId}:`, err);
       Alert.alert('Extension Load Error', `Failed to load ${extensionId}: ${err.message}`);
@@ -90,35 +104,31 @@ const ExtAnime = () => {
 
   const switchExtension = async (extensionId: string) => {
     if (!providerManager) return;
-    
+
     setSelectedExtension(extensionId);
     setResults([]);
     setLoading(true);
-    
+
     await loadExtension(providerManager, extensionId as AnimeProvider);
     setLoading(false);
   };
 
   const refreshSearch = async () => {
     if (!provider) return;
-    
+
     setLoading(true);
     setLoading(false);
   };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>
-        📺 Anime Provider Registry
-      </Text>
+      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>📺 Anime Provider Registry</Text>
       <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
         Testing anime providers from GitHub registry
       </Text>
-      
+
       <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>
-          Available Anime Extensions:
-        </Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>Available Anime Extensions:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {availableExtensions.map((ext) => (
             <TouchableOpacity
@@ -130,13 +140,13 @@ const ExtAnime = () => {
                 paddingVertical: 6,
                 borderRadius: 16,
                 marginRight: 8,
-              }}
-            >
-              <Text style={{
-                color: selectedExtension === ext.id ? 'white' : '#2c3e50',
-                fontSize: 12,
-                fontWeight: '600'
               }}>
+              <Text
+                style={{
+                  color: selectedExtension === ext.id ? 'white' : '#2c3e50',
+                  fontSize: 12,
+                  fontWeight: '600',
+                }}>
                 {ext.name}
               </Text>
             </TouchableOpacity>
@@ -149,17 +159,16 @@ const ExtAnime = () => {
           <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#2c3e50' }}>
             📦 Loaded Anime Provider: {provider.name}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={refreshSearch}
-            style={{ 
-              marginTop: 8, 
-              backgroundColor: '#e74c3c', 
-              paddingHorizontal: 12, 
-              paddingVertical: 4, 
+            style={{
+              marginTop: 8,
+              backgroundColor: '#e74c3c',
+              paddingHorizontal: 12,
+              paddingVertical: 4,
               borderRadius: 4,
-              alignSelf: 'flex-start'
-            }}
-          >
+              alignSelf: 'flex-start',
+            }}>
             <Text style={{ color: 'white', fontSize: 12 }}>🔄 Refresh Search</Text>
           </TouchableOpacity>
         </View>
@@ -168,9 +177,7 @@ const ExtAnime = () => {
       {loading ? (
         <View style={{ alignItems: 'center', marginTop: 20 }}>
           <ActivityIndicator size="large" color="#e74c3c" />
-          <Text style={{ marginTop: 10, color: '#888' }}>
-            Loading anime extension from registry...
-          </Text>
+          <Text style={{ marginTop: 10, color: '#888' }}>Loading anime extension from registry...</Text>
         </View>
       ) : results.length > 0 ? (
         <>
@@ -178,18 +185,20 @@ const ExtAnime = () => {
             ✅ Anime provider working! Found {results.length} results:
           </Text>
           {results.map((item, idx) => (
-            <View key={idx} style={{ 
-              marginBottom: 12, 
-              backgroundColor: '#fdeaea', 
-              padding: 12, 
-              borderRadius: 8, 
-              borderLeftWidth: 4, 
-              borderLeftColor: '#e74c3c' 
-            }}>
+            <View
+              key={idx}
+              style={{
+                marginBottom: 12,
+                backgroundColor: '#fdeaea',
+                padding: 12,
+                borderRadius: 8,
+                borderLeftWidth: 4,
+                borderLeftColor: '#e74c3c',
+              }}>
               <Text style={{ fontWeight: 'bold', color: '#2c3e50' }}>
                 {typeof item.title === 'string'
                   ? item.title
-                  : (item.title?.english || item.title?.romaji || item.title?.native || 'No Title')}
+                  : item.title?.english || item.title?.romaji || item.title?.native || 'No Title'}
               </Text>
               <Text style={{ color: '#888', fontSize: 12 }}>ID: {item.id}</Text>
               {item.type && <Text style={{ color: '#666', fontSize: 12 }}>Type: {item.type}</Text>}
@@ -200,12 +209,8 @@ const ExtAnime = () => {
         </>
       ) : (
         <View style={{ alignItems: 'center', marginTop: 40 }}>
-          <Text style={{ color: '#e74c3c', fontSize: 16 }}>
-            Anime extension loaded but no results found.
-          </Text>
-          <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
-            Try refreshing or check network connection
-          </Text>
+          <Text style={{ color: '#e74c3c', fontSize: 16 }}>Anime extension loaded but no results found.</Text>
+          <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>Try refreshing or check network connection</Text>
         </View>
       )}
     </ScrollView>

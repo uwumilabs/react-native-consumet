@@ -11,7 +11,17 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { MOVIES, ANIME, META, type IMovieResult, type IAnimeEpisode, type IAnimeResult, ProviderManager, ExtensionRegistry, type AnimeProvider } from 'react-native-consumet';
+import {
+  MOVIES,
+  ANIME,
+  META,
+  type IMovieResult,
+  type IAnimeEpisode,
+  type IAnimeResult,
+  ProviderManager,
+  ExtensionRegistry,
+  type AnimeProvider,
+} from 'react-native-consumet';
 import Video from 'react-native-video';
 import Zoro from '../../../../src/providers/anime/zoro/zoro';
 // @ts-ignore
@@ -59,8 +69,8 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-        const manager = new ProviderManager(ExtensionRegistry);
-        const providerInstance = await manager.loadExtension("HiMovies");
+      const manager = new ProviderManager(ExtensionRegistry);
+      const providerInstance = await manager.loadExtension('HiMovies');
       const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', providerInstance);
       const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
@@ -109,18 +119,19 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-  const manager = new ProviderManager(ExtensionRegistry);
-/** thisexample loads extension code from github itself */
-  // const providerInstance = await manager.loadExtension("AnimePahe");
-  const metadata = manager.getExtensionMetadata("zoro");
-  /** this example loads code from local */
-          const providerInstance = await manager.executeProviderCode<AnimeProvider>(
-            `${testCode.testCodeString}`,
-            metadata.factoryName,
-            metadata as typeof metadata & { id: AnimeProvider },
-          );
+      const manager = new ProviderManager(ExtensionRegistry);
+      /** this example loads extension code from github itself */
+      // const providerInstance = await manager.loadExtension("AnimePahe");
+      const metadata = manager.getExtensionMetadata('zoro');
+      /** this example loads code from local */
+      const providerInstance = await manager.executeProviderCode<AnimeProvider>(
+        `${testCode.testCodeString}`,
+        metadata.factoryName,
+        metadata as typeof metadata & { id: AnimeProvider }
+      );
+      console.log(providerInstance instanceof Zoro);
       const anime = new META.Anilist(providerInstance);
-    
+
       const searchResult = await anime.search('sakamoto days');
       console.log('Anime Search Result:', searchResult);
 
@@ -358,7 +369,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     paddingVertical: 10,
-    paddingTop:50
+    paddingTop: 50,
   },
   tabButton: {
     paddingVertical: 8,
