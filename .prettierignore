@@ -8,7 +8,6 @@ android/**/*
 ios/**/*
 .ios/
 .github/
-apps/
 
 # Build and Output
 lib/
