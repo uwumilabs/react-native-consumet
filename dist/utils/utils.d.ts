@@ -1,6 +1,4 @@
-export declare const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
-export declare const days: string[];
-export declare const ANIFY_URL = "https://anify.eltik.cc";
+export { USER_AGENT, days, ANIFY_URL } from './constants';
 export declare const splitAuthor: (authors: string) => string[];
 export declare const floorID: (id: string) => number;
 export declare const formatTitle: (title: string) => string;
@@ -34,5 +32,4 @@ interface FilterOptions {
     concurrency?: number;
 }
 export declare const filterValidM3U8: (m3u8Links: string[], options?: FilterOptions) => Promise<string[]>;
-export {};
 //# sourceMappingURL=utils.d.ts.map

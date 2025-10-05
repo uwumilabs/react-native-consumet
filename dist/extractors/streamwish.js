@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
-const utils_1 = require("../utils");
+const constants_1 = require("../utils/constants");
 class StreamWish extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
@@ -40,7 +40,7 @@ class StreamWish extends models_1.VideoExtractor {
                         'Sec-Fetch-Site': 'none',
                         'Sec-Fetch-User': '?1',
                         'Upgrade-Insecure-Requests': '1',
-                        'User-Agent': utils_1.USER_AGENT,
+                        'User-Agent': constants_1.USER_AGENT,
                     },
                 };
                 const { data } = yield axios_1.default.get(videoUrl.href, options);

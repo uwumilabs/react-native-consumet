@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const crypto_js_1 = __importDefault(require("crypto-js"));
-const utils_1 = require("../utils");
+const utils_1 = require("../utils/utils");
 const models_1 = require("../models");
 class RapidCloud extends models_1.VideoExtractor {
     constructor() {

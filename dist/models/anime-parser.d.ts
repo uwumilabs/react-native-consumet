@@ -1,4 +1,5 @@
-import { BaseParser, type IAnimeInfo, type ISource, type IEpisodeServer } from '.';
+import BaseParser from './base-parser';
+import type { IAnimeInfo, ISource, IEpisodeServer } from './types';
 declare abstract class AnimeParser extends BaseParser {
     /**
      * if the provider has dub and it's avialable seperatly from sub set this to `true`

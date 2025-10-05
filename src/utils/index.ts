@@ -1,18 +1,4 @@
-import {
-  GogoCDN,
-  StreamSB,
-  MixDrop,
-  Kwik,
-  RapidCloud,
-  MegaCloud,
-  StreamTape,
-  VizCloud,
-  Filemoon,
-  AsianLoad,
-  StreamHub,
-  VidMoly,
-  MegaUp,
-} from '../extractors';
+// Re-export helper utilities (no extractors to avoid circular deps)
 import {
   USER_AGENT,
   splitAuthor,
@@ -42,28 +28,26 @@ import {
   anilistCharacterQuery,
   anilistStaffInfoQuery,
 } from './queries';
-import getKKey from '../extractors/kisskh/kkey';
 
+// Export helper utilities
 export {
   USER_AGENT,
-  GogoCDN,
-  StreamSB,
-  StreamHub,
   splitAuthor,
   floorID,
   formatTitle,
   genElement,
   capitalizeFirstLetter,
-  MixDrop,
-  Kwik,
+  range,
+  getDays,
+  days,
+  isJson,
+  convertDuration,
+  substringAfter,
+  substringBefore,
+  calculateStringSimilarity,
   anilistSearchQuery,
   anilistMediaDetailQuery,
   kitsuSearchQuery,
-  range,
-  RapidCloud,
-  MegaCloud,
-  StreamTape,
-  VizCloud,
   anilistTrendingQuery,
   anilistPopularQuery,
   anilistAiringScheduleQuery,
@@ -71,19 +55,7 @@ export {
   anilistAdvancedQuery,
   anilistSiteStatisticsQuery,
   anilistStaffInfoQuery,
-  Filemoon,
   anilistCharacterQuery,
-  getDays,
-  days,
-  isJson,
-  convertDuration,
-  AsianLoad,
-  substringAfter,
-  substringBefore,
-  calculateStringSimilarity,
-  VidMoly,
-  getKKey,
-  MegaUp,
 };
 
 // Export provider context utilities

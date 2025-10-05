@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
-const utils_1 = require("../../utils");
+const extractors_1 = require("../../extractors");
 const axios_1 = __importDefault(require("axios"));
-const { GenerateToken, DecodeIframeData, Decode } = new utils_1.MegaUp();
+const { GenerateToken, DecodeIframeData, Decode } = new extractors_1.MegaUp();
 class AnimeKai extends models_1.AnimeParser {
     constructor(customBaseURL) {
         super();
@@ -163,9 +163,9 @@ class AnimeKai extends models_1.AnimeParser {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
                     case models_1.StreamingServers.MegaUp:
-                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new utils_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
+                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new extractors_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
                     default:
-                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new utils_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
+                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new extractors_1.MegaUp().extract(serverUrl))), { download: serverUrl.href.replace(/\/e\//, '/download/') });
                 }
             }
             try {

@@ -13,4 +13,5 @@ export declare class MegaUp extends VideoExtractor {
     Decode: (n: string) => string;
     extract: (videoUrl: URL) => Promise<ISource>;
 }
+export default MegaUp;
 //# sourceMappingURL=megaup.d.ts.map

@@ -14,7 +14,7 @@ import {
   type Intro,
 } from '../../models';
 
-import { MegaUp } from '../../utils';
+import { MegaUp } from '../../extractors';
 import axios from 'axios';
 
 const { GenerateToken, DecodeIframeData, Decode } = new MegaUp();

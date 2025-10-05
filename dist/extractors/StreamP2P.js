@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-nocheck
 const axios_1 = __importDefault(require("axios"));
 const video_extractor_1 = __importDefault(require("../models/video-extractor"));
-const utils_1 = require("../utils");
+const constants_1 = require("../utils/constants");
 class StreamP2P extends video_extractor_1.default {
     constructor() {
         super(...arguments);
@@ -27,7 +27,7 @@ class StreamP2P extends video_extractor_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const headers = {
                 'Referer': this.host,
-                'User-Agent': utils_1.USER_AGENT,
+                'User-Agent': constants_1.USER_AGENT,
             };
             // Extract video ID from URL fragment
             const videoId = videoUrl.href.split('#')[1];

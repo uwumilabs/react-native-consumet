@@ -1,4 +1,4 @@
-import { VideoExtractor, type IVideo } from '../models';
+import { type IVideo, VideoExtractor } from '../models';
 /**
  * work in progress
  */
