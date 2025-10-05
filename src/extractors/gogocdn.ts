@@ -3,7 +3,7 @@ import { type CheerioAPI, load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-import { USER_AGENT } from '../utils';
+import { USER_AGENT } from '../utils/constants';
 
 class GogoCDN extends VideoExtractor {
   protected override serverName = 'goload';

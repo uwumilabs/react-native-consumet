@@ -1,9 +1,11 @@
 /**
- * This file is used to map the providers to their respective keys.
- * It is a separate file to avoid circular dependencies between the providers and the utils.
- * The circular dependency is caused by the fact that the providers need to be imported in the utils
- * to be used in the ProviderManager, but the providers also need to import the utils to use the
- * createProviderContext function.
+ * This file maps provider keys to their classes for ProviderManager.
+ *
+ * We use lazy getters to break circular dependencies:
+ * - Meta providers (like Anilist) import anime providers (like AnimeKai)
+ * - AnimeKai imports extractors directly from extractors/
+ * - Utils no longer re-exports extractors (breaking one part of the circle)
+ * - Lazy loading breaks the other part at runtime
  */
 export declare const animeProviders: {
     readonly Zoro: any;

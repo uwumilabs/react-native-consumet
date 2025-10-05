@@ -1,60 +1,45 @@
 "use strict";
 /**
- * This file is used to map the providers to their respective keys.
- * It is a separate file to avoid circular dependencies between the providers and the utils.
- * The circular dependency is caused by the fact that the providers need to be imported in the utils
- * to be used in the ProviderManager, but the providers also need to import the utils to use the
- * createProviderContext function.
+ * This file maps provider keys to their classes for ProviderManager.
+ *
+ * We use lazy getters to break circular dependencies:
+ * - Meta providers (like Anilist) import anime providers (like AnimeKai)
+ * - AnimeKai imports extractors directly from extractors/
+ * - Utils no longer re-exports extractors (breaking one part of the circle)
+ * - Lazy loading breaks the other part at runtime
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.movieProviders = exports.animeProviders = void 0;
-// Use lazy getters to break circular dependency
-let _PROVIDERS = null;
-const getProviders = () => {
-    if (_PROVIDERS === null) {
-        // Import providers only when needed to break circular dependency
-        const providers = require('../providers');
-        _PROVIDERS = providers;
-    }
-    return _PROVIDERS;
-};
-// Create lazy getters for provider objects
+// Use lazy getters to avoid circular dependency issues
+// Providers are loaded only when accessed, after all modules are initialized
 exports.animeProviders = {
     get Zoro() {
-        const { ANIME } = getProviders();
-        return ANIME.Zoro;
+        return require('../providers/anime/zoro/zoro').default;
     },
     get AnimePahe() {
-        const { ANIME } = getProviders();
-        return ANIME.AnimePahe;
+        return require('../providers/anime/animepahe/animepahe').default;
     },
 };
 exports.movieProviders = {
     get HiMovies() {
-        const { MOVIES } = getProviders();
-        return MOVIES.HiMovies;
+        return require('../providers/movies/himovies/himovies').default;
     },
     get MultiMovies() {
-        const { MOVIES } = getProviders();
-        return MOVIES.MultiMovies;
+        return require('../providers/movies/multimovies').default;
     },
     get MultiStream() {
-        const { MOVIES } = getProviders();
-        return MOVIES.MultiStream;
+        return require('../providers/movies/multistream').default;
     },
 };
 const metaProviders = {
     get Anilist() {
-        const { META } = getProviders();
-        return META.Anilist;
+        return require('../providers/meta/anilist').default;
     },
     get TMDB() {
-        const { META } = getProviders();
-        return META.TMDB;
+        return require('../providers/meta/tmdb').default;
     },
     get MAL() {
-        const { META } = getProviders();
-        return META.Myanimelist;
+        return require('../providers/meta/mal').default;
     },
 };
 //# sourceMappingURL=provider-maps.js.map

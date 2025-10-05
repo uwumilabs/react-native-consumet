@@ -3,10 +3,9 @@ import { compareTwoStrings } from 'string-similarity';
 import { load } from 'cheerio';
 // import * as blurhash from 'blurhash';
 
-export const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36';
-export const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-export const ANIFY_URL = 'https://anify.eltik.cc';
+// Re-export constants from constants.ts to maintain backward compatibility
+export { USER_AGENT, days, ANIFY_URL } from './constants';
+import { days } from './constants';
 
 export const splitAuthor = (authors: string) => {
   const res: string[] = [];

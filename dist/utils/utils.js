@@ -21,9 +21,12 @@ const string_similarity_1 = require("string-similarity");
 // import sharp from 'sharp';
 const cheerio_1 = require("cheerio");
 // import * as blurhash from 'blurhash';
-exports.USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36';
-exports.days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-exports.ANIFY_URL = 'https://anify.eltik.cc';
+// Re-export constants from constants.ts to maintain backward compatibility
+var constants_1 = require("./constants");
+Object.defineProperty(exports, "USER_AGENT", { enumerable: true, get: function () { return constants_1.USER_AGENT; } });
+Object.defineProperty(exports, "days", { enumerable: true, get: function () { return constants_1.days; } });
+Object.defineProperty(exports, "ANIFY_URL", { enumerable: true, get: function () { return constants_1.ANIFY_URL; } });
+const constants_2 = require("./constants");
 const splitAuthor = (authors) => {
     const res = [];
     let eater = '';
@@ -89,8 +92,8 @@ exports.range = range;
 const capitalizeFirstLetter = (s) => (s === null || s === void 0 ? void 0 : s.charAt(0).toUpperCase()) + s.slice(1);
 exports.capitalizeFirstLetter = capitalizeFirstLetter;
 const getDays = (day1, day2) => {
-    const day1Index = exports.days.indexOf((0, exports.capitalizeFirstLetter)(day1)) - 1;
-    const day2Index = exports.days.indexOf((0, exports.capitalizeFirstLetter)(day2)) - 1;
+    const day1Index = constants_2.days.indexOf((0, exports.capitalizeFirstLetter)(day1)) - 1;
+    const day2Index = constants_2.days.indexOf((0, exports.capitalizeFirstLetter)(day2)) - 1;
     const now = new Date();
     const day1Date = new Date();
     const day2Date = new Date();

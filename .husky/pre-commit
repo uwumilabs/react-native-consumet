@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-git config core.hooksPath .husky
 yarn prepare
 
 # Run zoro test but don't fail if it errors

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { VideoExtractor, type IVideo } from '../models';
-import { USER_AGENT } from '../utils';
+import { USER_AGENT } from '../utils/constants';
 
 class StreamSB extends VideoExtractor {
   protected override serverName = 'streamsb';

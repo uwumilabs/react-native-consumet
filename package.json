@@ -50,7 +50,7 @@
     "typecheck": "tsc",
     "lint": "eslint --fix .",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
-    "prepare": "bob build && yarn build && husky",
+    "prepare": "bob build && yarn build",
     "prepublishOnly": "yarn build",
     "release": "release-it",
     "prettier": "prettier --write ."

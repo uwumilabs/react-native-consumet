@@ -1,4 +1,4 @@
-import { BaseParser } from '.';
+import BaseParser from './base-parser';
 
 abstract class LightNovelParser extends BaseParser {
   /**

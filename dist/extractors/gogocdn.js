@@ -16,7 +16,7 @@ const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const models_1 = require("../models");
-const utils_1 = require("../utils");
+const constants_1 = require("../utils/constants");
 class GogoCDN extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
@@ -95,7 +95,7 @@ class GogoCDN extends models_1.VideoExtractor {
                     .get(source.file, {
                     headers: {
                         'Referer': this.referer,
-                        'User-Agent': utils_1.USER_AGENT,
+                        'User-Agent': constants_1.USER_AGENT,
                     },
                 })
                     .catch(() => null);

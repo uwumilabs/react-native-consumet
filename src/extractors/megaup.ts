@@ -105,3 +105,4 @@ export class MegaUp extends VideoExtractor {
     }
   };
 }
+export default MegaUp;

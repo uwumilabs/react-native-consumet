@@ -16,6 +16,6 @@ import VidMoly from './vidmoly';
 import VizCloud from './vizcloud';
 import VidHide from './vidhide';
 import Voe from './voe';
-import { MegaUp } from './megaup';
+import MegaUp from './megaup';
 export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, };
 //# sourceMappingURL=index.d.ts.map

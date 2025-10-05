@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const _1 = require(".");
-class LightNovelParser extends _1.BaseParser {
+const base_parser_1 = __importDefault(require("./base-parser"));
+class LightNovelParser extends base_parser_1.default {
 }
 exports.default = LightNovelParser;
 //# sourceMappingURL=lightnovel-parser.js.map

@@ -1,1 +1,1 @@
-{"version":3,"file":"lightnovel-parser.js","sourceRoot":"","sources":["../../src/models/lightnovel-parser.ts"],"names":[],"mappings":";;AAAA,wBAA+B;AAE/B,MAAe,gBAAiB,SAAQ,aAAU;CAcjD;AAED,kBAAe,gBAAgB,CAAC"}
+{"version":3,"file":"lightnovel-parser.js","sourceRoot":"","sources":["../../src/models/lightnovel-parser.ts"],"names":[],"mappings":";;;;;AAAA,gEAAuC;AAEvC,MAAe,gBAAiB,SAAQ,qBAAU;CAcjD;AAED,kBAAe,gBAAgB,CAAC"}

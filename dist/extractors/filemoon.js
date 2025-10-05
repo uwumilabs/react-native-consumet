@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const models_1 = require("../models");
-const utils_1 = require("../utils");
+const constants_1 = require("../utils/constants");
 /**
  * work in progress
  */
@@ -41,7 +41,7 @@ class Filemoon extends models_1.VideoExtractor {
                     'Sec-Fetch-Dest': 'iframe',
                     'Sec-Fetch-Mode': 'navigate',
                     'Sec-Fetch-Site': 'cross-site',
-                    'User-Agent': utils_1.USER_AGENT,
+                    'User-Agent': constants_1.USER_AGENT,
                     'Access-Control-Allow-Origin': '*',
                 },
             };

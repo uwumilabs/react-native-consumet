@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { load } from 'cheerio';
 import CryptoJS from 'crypto-js';
-import { substringAfter, substringBefore } from '../utils';
+import { substringAfter, substringBefore } from '../utils/utils';
 import { VideoExtractor, type IVideo, type ISubtitle, type Intro } from '../models';
 
 class RapidCloud extends VideoExtractor {

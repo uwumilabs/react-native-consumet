@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
-const utils_1 = require("../utils");
+const constants_1 = require("../utils/constants");
 class StreamSB extends models_1.VideoExtractor {
     constructor() {
         super(...arguments);
@@ -27,7 +27,7 @@ class StreamSB extends models_1.VideoExtractor {
         this.extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, isAlt = false) {
             let headers = {
                 'watchsb': 'sbstream',
-                'User-Agent': utils_1.USER_AGENT,
+                'User-Agent': constants_1.USER_AGENT,
                 'Referer': videoUrl.href,
             };
             let id = videoUrl.href.split('/e/').pop();
@@ -42,7 +42,7 @@ class StreamSB extends models_1.VideoExtractor {
             if (!(res === null || res === void 0 ? void 0 : res.data.stream_data))
                 throw new Error('No source found. Try a different server.');
             headers = {
-                'User-Agent': utils_1.USER_AGENT,
+                'User-Agent': constants_1.USER_AGENT,
                 'Referer': videoUrl.href.split('e/')[0],
             };
             const m3u8Urls = yield axios_1.default.get(res.data.stream_data.file, {

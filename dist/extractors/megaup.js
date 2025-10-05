@@ -112,4 +112,5 @@ class MegaUp extends models_1.VideoExtractor {
     }
 }
 exports.MegaUp = MegaUp;
+exports.default = MegaUp;
 //# sourceMappingURL=megaup.js.map

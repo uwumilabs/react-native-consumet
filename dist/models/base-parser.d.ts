@@ -1,4 +1,4 @@
-import { BaseProvider } from '.';
+import BaseProvider from './base-provider';
 declare abstract class BaseParser extends BaseProvider {
     /**
      * Search for books/anime/manga/etc using the given query
