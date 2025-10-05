@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>1.0.3 (2025-10-05)</small>
+
+* fix: resolve circular dependency issues ([6ca2897](https://github.com/2004durgesh/react-native-consumet/commit/6ca2897))
+* refactor: code format [skip ci] ([2d0e80d](https://github.com/2004durgesh/react-native-consumet/commit/2d0e80d))
+
 ## <small>1.0.2 (2025-10-01)</small>
 
 * refactor(provider-manager): attach provider prototypes for instance validation ([3045b95](https://github.com/2004durgesh/react-native-consumet/commit/3045b95))
