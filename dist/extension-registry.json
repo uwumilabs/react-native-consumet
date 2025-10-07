@@ -2,7 +2,7 @@
     "extractors": [
         {
             "name": "MegaCloud",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megacloud.js"
         },
         {
@@ -32,7 +32,9 @@
             "lastUpdated": "2025-08-05T00:00:00Z",
             "extractors": ["MegaCloud"],
             "subbed": true,
-            "dubbed": true
+            "dubbed": true,
+            "isSourceEmbed": true,
+            "haveMultiServers": true
         },
         {
             "id": "animepahe",
@@ -54,7 +56,9 @@
             "lastUpdated": "2025-08-05T00:00:00Z",
             "extractors": ["Kwik"],
             "subbed": true,
-            "dubbed": true
+            "dubbed": true,
+            "isSourceEmbed": true,
+            "haveMultiServers": false
         },
         {
             "id": "himovies",
@@ -75,7 +79,8 @@
             "status": "stable",
             "lastUpdated": "2025-08-05T00:00:00Z",
             "extractors": ["MegaCloud"],
-            "isSourceEmbed": true
+            "isSourceEmbed": true,
+            "haveMultiServers": true
         }
     ]
 }

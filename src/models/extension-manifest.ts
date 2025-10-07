@@ -74,4 +74,7 @@ export interface ExtensionManifest {
 
   /** isSourceDirect (boolean value to represent if a provider has direct sources)*/
   isSourceDirect?: boolean;
+
+  /** does the provider have multiple servers/extractors to choose from */
+  haveMultiServers?: boolean;
 }
