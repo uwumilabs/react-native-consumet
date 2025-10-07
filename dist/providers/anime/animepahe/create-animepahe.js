@@ -200,15 +200,6 @@ function createAnimePahe(ctx, customBaseURL) {
         }
     });
     const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.Kwik, subOrDub = SubOrDubEnum.SUB) {
-        if (episodeId.startsWith('http')) {
-            const serverUrl = new PolyURL(episodeId);
-            switch (server) {
-                case StreamingServersEnum.Kwik:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl, config.baseUrl)));
-                default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield Kwik().extract(serverUrl, config.baseUrl)));
-            }
-        }
         try {
             if (!ddgCookie) {
                 yield initDdgCookie();
@@ -217,6 +208,13 @@ function createAnimePahe(ctx, customBaseURL) {
                 headers: Headers(episodeId.split('/')[0]),
             });
             const $ = load(data);
+            const links = $('div#resolutionMenu > button')
+                .map((i, el) => ({
+                url: $(el).attr('data-src'),
+                quality: $(el).text(),
+                audio: $(el).attr('data-audio'),
+            }))
+                .get();
             const downloads = $('div#pickDownload > a')
                 .map((i, el) => ({
                 url: $(el).attr('href'),
@@ -230,13 +228,28 @@ function createAnimePahe(ctx, customBaseURL) {
                 sources: [],
             };
             iSource.download = downloads;
-            const servers = yield fetchEpisodeServers(episodeId, subOrDub);
-            const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
-            if (i === -1) {
-                throw new Error(`Server ${server} not found`);
+            // Filter links based on subOrDub parameter
+            const filteredLinks = links.filter((link) => {
+                const isDub = link.audio === 'eng';
+                if (subOrDub === SubOrDubEnum.DUB) {
+                    return isDub;
+                }
+                else if (subOrDub === SubOrDubEnum.SUB) {
+                    return !isDub;
+                }
+                // For SubOrDubEnum.BOTH, return all links
+                return true;
+            });
+            // Extract sources from filtered links
+            for (const link of filteredLinks) {
+                const res = yield Kwik().extract(new PolyURL(link.url));
+                if (res && res.sources && res.sources.length > 0) {
+                    res.sources.forEach((source) => {
+                        iSource.sources.push(Object.assign(Object.assign({}, source), { quality: (link.quality.match(/(\d{3,4})p/) || [])[0] }));
+                    });
+                }
             }
-            const serverUrl = new URL(servers[i].url);
-            return yield fetchEpisodeSources(serverUrl.href, server, subOrDub);
+            return iSource;
         }
         catch (err) {
             console.log(err);
@@ -261,7 +274,7 @@ function createAnimePahe(ctx, customBaseURL) {
                 if ((subOrDub === SubOrDubEnum.DUB && audio === 'eng') || (subOrDub === SubOrDubEnum.SUB && audio !== 'eng')) {
                     servers.push({
                         url: src,
-                        name: `kwik-${fansub}-${resolution}`,
+                        name: `kwik-${fansub}`,
                     });
                 }
             });

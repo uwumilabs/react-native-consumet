@@ -122,20 +122,57 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
       if (!resp) return extractedData;
 
       if (Array.isArray(resp.sources)) {
-        extractedData.sources = resp.sources.map((s: { file: any; type: string }) => ({
-          url: s.file,
-          isM3U8: s.type === 'hls',
-          type: s.type,
-        }));
+        // Process each source to extract quality information
+        for (const s of resp.sources) {
+          const isM3U8 = s.type === 'hls';
+
+          // Add the main source with "auto" quality
+          extractedData.sources.push({
+            url: s.file,
+            isM3U8,
+            quality: 'auto',
+          });
+
+          // If it's an M3U8 file, fetch and parse quality variants
+          if (isM3U8) {
+            try {
+              const m3u8Response = await fetch(s.file, {
+                headers: {
+                  'Referer': referer,
+                  'User-Agent': USER_AGENT || 'Mozilla/5.0',
+                },
+              });
+              const m3u8Content = await m3u8Response.text();
+              if (m3u8Content.includes('EXTM3U')) {
+                const pathWithoutMaster = s.file.split('/master.m3u8')[0];
+                const videoList = m3u8Content.split('#EXT-X-STREAM-INF:');
+                for (const video of videoList ?? []) {
+                  if (!video.includes('m3u8')) continue;
+
+                  const url = video.split('\n')[1]!;
+                  const quality = video.split('RESOLUTION=')[1]?.split(',')[0]?.split('x')[1];
+
+                  extractedData.sources.push({
+                    url: `${pathWithoutMaster}/${url}`,
+                    quality: `${quality}p`,
+                    isM3U8: url.includes('.m3u8'),
+                  });
+                }
+              }
+            } catch (error) {
+              // If fetching M3U8 fails, just use the auto quality
+              console.warn('[MegaCloud] Failed to fetch M3U8 variants:', error);
+            }
+          } else {
+            // For non-M3U8 sources, keep as is
+            extractedData.sources[extractedData.sources.length - 1] = {
+              url: s.file,
+              isM3U8: false,
+              quality: 'default',
+            };
+          }
+        }
       }
-
-      extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
-      extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
-
-      extractedData.subtitles = resp.tracks.map((track: { file: any; label: any; kind: any }) => ({
-        url: track.file,
-        lang: track.label ? track.label : track.kind,
-      }));
 
       extractedData.intro = resp.intro ?? extractedData.intro;
       extractedData.outro = resp.outro ?? extractedData.outro;

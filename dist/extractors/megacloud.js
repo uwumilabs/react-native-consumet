@@ -109,7 +109,7 @@ function MegaCloud(ctx) {
     }
     // @ts-ignore
     const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://hianime.to') {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         const extractedData = {
             subtitles: [],
             intro: { start: 0, end: 0 },
@@ -122,25 +122,63 @@ function MegaCloud(ctx) {
             if (!resp)
                 return extractedData;
             if (Array.isArray(resp.sources)) {
-                extractedData.sources = resp.sources.map((s) => ({
-                    url: s.file,
-                    isM3U8: s.type === 'hls',
-                    type: s.type,
-                }));
+                // Process each source to extract quality information
+                for (const s of resp.sources) {
+                    const isM3U8 = s.type === 'hls';
+                    // Add the main source with "auto" quality
+                    extractedData.sources.push({
+                        url: s.file,
+                        isM3U8,
+                        quality: 'auto',
+                    });
+                    // If it's an M3U8 file, fetch and parse quality variants
+                    if (isM3U8) {
+                        try {
+                            const m3u8Response = yield fetch(s.file, {
+                                headers: {
+                                    'Referer': referer,
+                                    'User-Agent': USER_AGENT || 'Mozilla/5.0',
+                                },
+                            });
+                            const m3u8Content = yield m3u8Response.text();
+                            if (m3u8Content.includes('EXTM3U')) {
+                                const pathWithoutMaster = s.file.split('/master.m3u8')[0];
+                                const videoList = m3u8Content.split('#EXT-X-STREAM-INF:');
+                                for (const video of videoList !== null && videoList !== void 0 ? videoList : []) {
+                                    if (!video.includes('m3u8'))
+                                        continue;
+                                    const url = video.split('\n')[1];
+                                    const quality = (_b = (_a = video.split('RESOLUTION=')[1]) === null || _a === void 0 ? void 0 : _a.split(',')[0]) === null || _b === void 0 ? void 0 : _b.split('x')[1];
+                                    extractedData.sources.push({
+                                        url: `${pathWithoutMaster}/${url}`,
+                                        quality: `${quality}p`,
+                                        isM3U8: url.includes('.m3u8'),
+                                    });
+                                }
+                            }
+                        }
+                        catch (error) {
+                            // If fetching M3U8 fails, just use the auto quality
+                            console.warn('[MegaCloud] Failed to fetch M3U8 variants:', error);
+                        }
+                    }
+                    else {
+                        // For non-M3U8 sources, keep as is
+                        extractedData.sources[extractedData.sources.length - 1] = {
+                            url: s.file,
+                            isM3U8: false,
+                            quality: 'default',
+                        };
+                    }
+                }
             }
-            extractedData.intro = resp.intro ? resp.intro : extractedData.intro;
-            extractedData.outro = resp.outro ? resp.outro : extractedData.outro;
-            extractedData.subtitles = resp.tracks.map((track) => ({
-                url: track.file,
-                lang: track.label ? track.label : track.kind,
-            }));
-            extractedData.intro = (_a = resp.intro) !== null && _a !== void 0 ? _a : extractedData.intro;
-            extractedData.outro = (_b = resp.outro) !== null && _b !== void 0 ? _b : extractedData.outro;
+            extractedData.intro = (_c = resp.intro) !== null && _c !== void 0 ? _c : extractedData.intro;
+            extractedData.outro = (_d = resp.outro) !== null && _d !== void 0 ? _d : extractedData.outro;
             extractedData.subtitles =
-                (_d = (_c = resp.tracks) === null || _c === void 0 ? void 0 : _c.map((track) => ({
+                (_f = (_e = resp.tracks) === null || _e === void 0 ? void 0 : _e.map((track) => ({
                     url: track.file,
                     lang: track.label || track.kind,
-                }))) !== null && _d !== void 0 ? _d : [];
+                }))) !== null && _f !== void 0 ? _f : [];
             // console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
             return extractedData;
         }

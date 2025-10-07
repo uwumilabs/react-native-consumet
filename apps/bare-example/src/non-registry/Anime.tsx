@@ -16,7 +16,7 @@ const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
     console.log(search);
     const info = await anime.fetchAnimeInfo(search.results[0]!.id);
     console.log(info);
-    const sources = info.episodes && (await anime.fetchEpisodeSources(info.episodes[0]!.id, undefined, SubOrDub.DUB));
+    const sources = info.episodes && (await anime.fetchEpisodeSources(info.episodes[0]!.id, undefined, SubOrDub.SUB));
     const servers = info.episodes && (await anime.fetchEpisodeServers(info.episodes[0]!.id, SubOrDub.DUB));
     console.log('sources end');
     console.log(sources, servers);
