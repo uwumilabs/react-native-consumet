@@ -10,9 +10,9 @@ const ProviderManagerDemo = () => {
 
   return (
     <>
-      {/* <ExtAnime/> */}
+      <ExtAnime />
       {/* <ExtMovies/> */}
-      <ExtMeta />
+      {/* <ExtMeta /> */}
     </>
   );
 };

@@ -25,7 +25,6 @@ var StreamingServers;
     StreamingServers["MixDrop"] = "mixdrop";
     StreamingServers["Mp4Upload"] = "mp4upload";
     StreamingServers["UpCloud"] = "upcloud";
-    StreamingServers["VidCloud"] = "vidcloud";
     StreamingServers["StreamTape"] = "streamtape";
     StreamingServers["VizCloud"] = "vizcloud";
     // same as vizcloud

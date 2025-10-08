@@ -21,7 +21,7 @@ export declare class ProviderManager {
      */
     getExtensionsByCategory(category: ProviderType): ExtensionManifest[];
     /**
-     * Get extension metadata by ID
+     * Get extension metadata by ID/ name (case-insensitive) like 'zoro' or 'Zoro'
      */
     getExtensionMetadata(extensionId: string): ExtensionManifest;
     /**

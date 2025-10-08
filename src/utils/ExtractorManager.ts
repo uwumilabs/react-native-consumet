@@ -1,5 +1,5 @@
-/* eslint-disable no-new-func */
-import type { ExtractorContext, IVideoExtractor, StreamingServers, ExtractorContextConfig } from '../models';
+import type { ExtractorContext, IVideoExtractor, ExtractorContextConfig } from '../models';
+import { StreamingServers } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import createExtractorContext from './create-extractor-context';
 import { defaultExtractors } from './extension-utils';
@@ -10,6 +10,12 @@ export class ExtractorManager {
   private extractorRegistry = new Map<string, ExtractorInfo>();
   private staticExtractors!: Record<string, any>;
   private extractorContext: ExtractorContext;
+
+  // Map of server name aliases to their actual extractor names
+  private extractorAliases: Map<string, string> = new Map([
+    ['upcloud', 'megacloud'],
+    ['akcloud', 'megacloud'],
+  ]);
 
   constructor(registry: typeof extensionRegistry, extractorConfig: ExtractorContextConfig = {}) {
     this.extractorContext = createExtractorContext(extractorConfig);
@@ -52,22 +58,100 @@ export class ExtractorManager {
   }
 
   /**
-   * Get extractor metadata by ID
+   * @param extractorId server name or extractor ID (case-insensitive) like 'megacloud' or 'MegaCloud'
+   * @returns ExtractorInfo or undefined if not found
+   * - Also handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
+   * - Resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
    */
-  getExtractorMetadata(extractorId: StreamingServers): ExtractorInfo {
-    return this.extractorRegistry.get(extractorId.toLowerCase())!;
+  getExtractorMetadata(extractorId: string): ExtractorInfo | undefined {
+    const lowerExtractorId = extractorId.toLowerCase();
+
+    // Check if this is an alias and resolve it
+    const resolvedId = this.extractorAliases.get(lowerExtractorId) || lowerExtractorId;
+
+    // First try exact match with resolved ID
+    const exactMatch = this.extractorRegistry.get(resolvedId);
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    // If no exact match, try to extract base name from patterns like:
+    // - 'megacloud-hd-1' -> 'megacloud'
+    // - 'kwik-pahe' -> 'kwik'
+    // - 'streamsb-backup' -> 'streamsb'
+    const baseExtractorName = this.extractBaseExtractorName(extractorId);
+    if (baseExtractorName) {
+      // Check if base name is an alias
+      const resolvedBaseName = this.extractorAliases.get(baseExtractorName) || baseExtractorName;
+      const baseMatch = this.extractorRegistry.get(resolvedBaseName);
+      if (baseMatch) {
+        return baseMatch;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Extract the base extractor name from server names with suffixes and resolve aliases
+   * Examples:
+   * - 'megacloud-hd-1' -> 'megacloud'
+   * - 'kwik-pahe' -> 'kwik'
+   * - 'upcloud' -> 'megacloud' (alias resolved)
+   * - 'akcloud' -> 'megacloud' (alias resolved)
+   * - 'MegaCloud' -> 'megacloud'
+   */
+  public extractBaseExtractorName(serverName: string): string | null {
+    const lowerName = serverName.toLowerCase();
+
+    // Get all extractor values from StreamingServers enum
+    const knownExtractors = Object.values(StreamingServers as Record<string, string>);
+
+    // Check aliases first
+    for (const [alias] of this.extractorAliases) {
+      if (lowerName.startsWith(alias)) {
+        // Return the resolved alias target
+        return this.extractorAliases.get(alias)!;
+      }
+    }
+
+    // Check if the server name starts with any known extractor
+    for (const extractor of knownExtractors) {
+      if (lowerName.startsWith(extractor.toLowerCase())) {
+        return extractor.toLowerCase();
+      }
+    }
+
+    // If no match found, try splitting by hyphen and taking first part
+    const firstPart = lowerName.split('-')[0];
+
+    // Check if first part is an alias
+    if (firstPart && this.extractorAliases.has(firstPart)) {
+      return this.extractorAliases.get(firstPart)!;
+    }
+
+    // Check if first part is a known extractor
+    if (firstPart && knownExtractors.some((e) => e.toLowerCase() === firstPart)) {
+      return firstPart;
+    }
+
+    return null;
   }
 
   /**
    * Load an extractor by ID from the registry
+   * Handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
+   * Also resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
    */
   async loadExtractor(extractorId: StreamingServers): Promise<IVideoExtractor> {
     const metadata = this.getExtractorMetadata(extractorId as StreamingServers);
     if (!metadata) {
-      // Fallback to static extractor if available
-      const staticExtractor = this.staticExtractors[extractorId.toLowerCase()];
+      // Try to extract base name and look for static extractor
+      const baseName = this.extractBaseExtractorName(extractorId) || extractorId;
+      const resolvedName = this.extractorAliases.get(baseName.toLowerCase()) || baseName;
+      const staticExtractor = this.staticExtractors[resolvedName.toLowerCase()];
       if (staticExtractor) {
-        //console.log(`🔧 Using static fallback for extractor '${extractorId}'`);
+        //console.log(`🔧 Using static fallback for extractor '${extractorId}' (resolved: '${resolvedName}')`);
         return staticExtractor;
       }
       throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
@@ -195,7 +279,6 @@ export class ExtractorManager {
     return {
       SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
       StreamingServers: {
-        VidCloud: 'vidcloud',
         StreamSB: 'streamsb',
         StreamTape: 'streamtape',
         VidStreaming: 'vidstreaming',

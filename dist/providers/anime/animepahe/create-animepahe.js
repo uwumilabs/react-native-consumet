@@ -274,7 +274,7 @@ function createAnimePahe(ctx, customBaseURL) {
                 if ((subOrDub === SubOrDubEnum.DUB && audio === 'eng') || (subOrDub === SubOrDubEnum.SUB && audio !== 'eng')) {
                     servers.push({
                         url: src,
-                        name: `kwik-${fansub}`,
+                        name: `kwik-${fansub}-${resolution}`,
                     });
                 }
             });

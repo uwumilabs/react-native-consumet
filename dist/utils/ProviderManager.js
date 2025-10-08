@@ -57,7 +57,7 @@ class ProviderManager {
         return this.getAvailableExtensions().filter((ext) => ext.category === category);
     }
     /**
-     * Get extension metadata by ID
+     * Get extension metadata by ID/ name (case-insensitive) like 'zoro' or 'Zoro'
      */
     getExtensionMetadata(extensionId) {
         if (!extensionId)
@@ -301,7 +301,6 @@ class ProviderManager {
             MangaParser: this.providerContext.MangaParser,
             SubOrDub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
             StreamingServers: {
-                VidCloud: 'vidcloud',
                 StreamSB: 'streamsb',
                 StreamTape: 'streamtape',
                 VidStreaming: 'vidstreaming',
