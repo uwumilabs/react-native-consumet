@@ -195,7 +195,6 @@ export enum StreamingServers {
   MixDrop = 'mixdrop',
   Mp4Upload = 'mp4upload',
   UpCloud = 'upcloud',
-  VidCloud = 'vidcloud',
   StreamTape = 'streamtape',
   VizCloud = 'vizcloud',
   // same as vizcloud

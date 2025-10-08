@@ -1,9 +1,8 @@
 // build-test-string.js - Run this in Node.js
 const fs = require('fs');
 const path = require('path');
-const extractor = require('../../../../dist/extractors/megacloud.js');
 // Read your actual test.js file
-const testPath = path.join(__dirname, '../../../../dist/providers/anime/zoro/create-zoro.js');
+const testPath = path.join(__dirname, '../../../../dist/extractors/kwik.js');
 const actualTestCode = fs.readFileSync(testPath, 'utf8');
 
 // Create React Native compatible file

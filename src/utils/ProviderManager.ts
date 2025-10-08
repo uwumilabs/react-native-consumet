@@ -55,7 +55,7 @@ export class ProviderManager {
   }
 
   /**
-   * Get extension metadata by ID
+   * Get extension metadata by ID/ name (case-insensitive) like 'zoro' or 'Zoro'
    */
   getExtensionMetadata(extensionId: string): ExtensionManifest {
     if (!extensionId) throw new Error('Extension id/name is required');
@@ -342,7 +342,6 @@ export class ProviderManager {
       MangaParser: this.providerContext.MangaParser,
       SubOrDub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
       StreamingServers: {
-        VidCloud: 'vidcloud',
         StreamSB: 'streamsb',
         StreamTape: 'streamtape',
         VidStreaming: 'vidstreaming',

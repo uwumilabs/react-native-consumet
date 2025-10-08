@@ -8,16 +8,20 @@ import {
   type ISearch,
   type AnimeProvider,
   type animeProviders,
+  ExtractorManager,
+  PolyURL,
+  StreamingServers,
 } from 'react-native-consumet';
-import { AnimeParser } from '../../../../src/models';
+import { AnimeParser, SubOrDub } from '../../../../src/models';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
+import type Zoro from '../../../../src/providers/anime/zoro/zoro';
 
 const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('animepahe');
+  const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
   const [provider, setProvider] = useState<AnimeParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
@@ -59,15 +63,15 @@ const ExtAnime = () => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
 
-      // const providerInstance = await manager.loadExtension(extensionId);
+      const providerInstance = (await manager.loadExtension(extensionId)) as Zoro;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'AnimePahe'>(
-        `${testCode.testCodeString}`,
-        'createAnimePahe',
-        // @ts-ignore
-        metadata
-      );
+      // const providerInstance = await manager.executeProviderCode<'AnimePahe'>(
+      //   `${testCode.testCodeString}`,
+      //   'createAnimePahe',
+      //   // @ts-ignore
+      //   metadata
+      // );
       setProvider(providerInstance);
 
       console.log('✅ Anime extension loaded successfully:', {
@@ -91,6 +95,26 @@ const ExtAnime = () => {
         if (info.episodes && info.episodes.length > 0 && info.episodes[0]) {
           const sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id);
           console.log('🎬 Episode sources fetched:', sources);
+
+          const extractorManager = new ExtractorManager(ExtensionRegistry);
+
+          // Load specific extractor dynamically from extension registry
+          // const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
+          // load the code itself
+          const servers = await providerInstance.fetchEpisodeServers(info.episodes[0].id, SubOrDub.SUB);
+          console.log(servers);
+          console.log(
+            'Resolved:',
+            extractorManager.extractBaseExtractorName('upcloud'),
+            extractorManager.extractBaseExtractorName(servers[1]?.name!)
+          );
+          const metadata = extractorManager.getExtractorMetadata(servers[1]?.name!);
+          const megacloudExtractor = await extractorManager.executeExtractorCode(
+            `${testCode.testCodeString}`,
+            metadata!
+          );
+          const links = await megacloudExtractor.extract(new PolyURL(servers[1]?.url!));
+          console.log('📹 Extracted video links:', links);
         }
       } else {
         console.log('⚠️ No anime search results found');

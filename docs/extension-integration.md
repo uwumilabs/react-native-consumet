@@ -202,7 +202,7 @@ const extractVideoSourcesDynamic = async (codeString: string, metadata: any, emb
     // Assuming 'provider' and 'episodeId' are available from your context
     const servers = await provider.fetchEpisodeServers(episodeId); 
 
-    const sources = await extractor(defaultExtractorContext).extract(
+    const sources = await extractor.extract(
       new PolyURL(servers[0].url), // Use PolyURL for consistent URL handling
       referer
     ); 
