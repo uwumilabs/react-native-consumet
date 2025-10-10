@@ -1,4 +1,4 @@
-import { MOVIES } from '../../src/providers';
+import { MOVIES } from '../../lib/module/providers';
 
 jest.setTimeout(120000);
 
