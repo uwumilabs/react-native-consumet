@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 (2025-10-10)
+
+* feat: multi-quality support and add  property in registry ([1f9344a](https://github.com/2004durgesh/react-native-consumet/commit/1f9344a))
+* feat(extractor): enhance extractor-manager to support dynamic server names ([02549cc](https://github.com/2004durgesh/react-native-consumet/commit/02549cc))
+
 ## <small>1.0.3 (2025-10-05)</small>
 
 * fix: resolve circular dependency issues ([6ca2897](https://github.com/2004durgesh/react-native-consumet/commit/6ca2897))
