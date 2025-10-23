@@ -2,6 +2,25 @@
 
 React Native library providing access to entertainment media information (anime, movies, manga, etc.) from multiple sources, adapting the [Consumet](https://github.com/consumet/consumet.ts) Node Package for mobile applications.
 
+<a href="https://www.npmjs.com/package/react-native-consumet">
+  <img src="https://img.shields.io/npm/v/react-native-consumet" alt="npm version" />
+</a>
+<a href="https://github.com/uwumilabs/react-native-consumet/blob/main/LICENSE">
+  <img src="https://img.shields.io/github/license/uwumilabs/react-native-consumet" alt="license" />
+</a>
+<a href="https://github.com/uwumilabs/react-native-consumet/actions/workflows/ci.yml">
+  <img
+    src="https://img.shields.io/github/actions/workflow/status/uwumilabs/react-native-consumet/ci.yml?label=ci"
+    alt="CI Workflow Status"
+  />
+</a>
+<a href="https://discord.gg/n7xVPxbG4R">
+  <img
+    src="https://img.shields.io/discord/1387063063223599265?color=7289da&label=discord&logo=discord&logoColor=7289d"
+    alt="discord"
+  />
+</a>
+
 ## 📚 Documentation
 
 **New to React Native Consumet?** Start here:
