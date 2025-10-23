@@ -1,4 +1,4 @@
-import { ANIME, SubOrDub, type IAnimeResult, type ISearch } from 'react-native-consumet';
+import { ANIME, StreamingServers, SubOrDub, type IAnimeResult, type ISearch } from 'react-native-consumet';
 import { Text, View, StyleSheet, ActivityIndicator, FlatList, RefreshControl, SafeAreaView } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -11,13 +11,15 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const anime = new ANIME.AnimePahe();
+    const anime = new ANIME.Zoro();
     const search = await anime.search('dandadan');
     console.log(search);
     const info = await anime.fetchAnimeInfo(search.results[0]!.id);
     console.log(info);
-    const sources = info.episodes && (await anime.fetchEpisodeSources(info.episodes[0]!.id, undefined, SubOrDub.SUB));
     const servers = info.episodes && (await anime.fetchEpisodeServers(info.episodes[0]!.id, SubOrDub.DUB));
+    const sources =
+      info.episodes &&
+      (await anime.fetchEpisodeSources(info.episodes[0]!.id, servers![1]?.name as StreamingServers, SubOrDub.SUB));
     console.log('sources end');
     console.log(sources, servers);
     if (!search || !search.results) {

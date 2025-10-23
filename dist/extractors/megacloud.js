@@ -109,7 +109,7 @@ function MegaCloud(ctx) {
     }
     // @ts-ignore
     const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://hianime.to') {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d;
         const extractedData = {
             subtitles: [],
             intro: { start: 0, end: 0 },
@@ -142,16 +142,21 @@ function MegaCloud(ctx) {
                             });
                             const m3u8Content = yield m3u8Response.text();
                             if (m3u8Content.includes('EXTM3U')) {
-                                const pathWithoutMaster = s.file.split('/master.m3u8')[0];
+                                const pathWithoutMaster = s.file.split('/master.m3u8')[0] || s.file.split('/index.m3u8')[0];
                                 const videoList = m3u8Content.split('#EXT-X-STREAM-INF:');
                                 for (const video of videoList !== null && videoList !== void 0 ? videoList : []) {
                                     if (!video.includes('m3u8'))
                                         continue;
-                                    const url = video.split('\n')[1];
-                                    const quality = (_b = (_a = video.split('RESOLUTION=')[1]) === null || _a === void 0 ? void 0 : _a.split(',')[0]) === null || _b === void 0 ? void 0 : _b.split('x')[1];
+                                    const url = video.split('\n')[1].trim();
+                                    // Extract quality from RESOLUTION=WIDTHxHEIGHT
+                                    const resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
+                                    const quality = resolutionMatch ? resolutionMatch[2] : null;
+                                    // Check if URL is absolute or relative
+                                    const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
+                                    const finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
                                     extractedData.sources.push({
-                                        url: `${pathWithoutMaster}/${url}`,
-                                        quality: `${quality}p`,
+                                        url: finalUrl,
+                                        quality: quality ? `${quality}p` : 'auto',
                                         isM3U8: url.includes('.m3u8'),
                                     });
                                 }
@@ -172,13 +177,13 @@ function MegaCloud(ctx) {
                     }
                 }
             }
-            extractedData.intro = (_c = resp.intro) !== null && _c !== void 0 ? _c : extractedData.intro;
-            extractedData.outro = (_d = resp.outro) !== null && _d !== void 0 ? _d : extractedData.outro;
+            extractedData.intro = (_a = resp.intro) !== null && _a !== void 0 ? _a : extractedData.intro;
+            extractedData.outro = (_b = resp.outro) !== null && _b !== void 0 ? _b : extractedData.outro;
             extractedData.subtitles =
-                (_f = (_e = resp.tracks) === null || _e === void 0 ? void 0 : _e.map((track) => ({
+                (_d = (_c = resp.tracks) === null || _c === void 0 ? void 0 : _c.map((track) => ({
                     url: track.file,
                     lang: track.label || track.kind,
-                }))) !== null && _f !== void 0 ? _f : [];
+                }))) !== null && _d !== void 0 ? _d : [];
             // console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
             return extractedData;
         }

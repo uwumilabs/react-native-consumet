@@ -2,7 +2,7 @@
   "extractors": [
     {
       "name": "MegaCloud",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megacloud.js"
     },
     {

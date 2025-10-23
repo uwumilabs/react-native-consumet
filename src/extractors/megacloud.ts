@@ -144,17 +144,23 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
               });
               const m3u8Content = await m3u8Response.text();
               if (m3u8Content.includes('EXTM3U')) {
-                const pathWithoutMaster = s.file.split('/master.m3u8')[0];
+                const pathWithoutMaster = s.file.split('/master.m3u8')[0] || s.file.split('/index.m3u8')[0];
                 const videoList = m3u8Content.split('#EXT-X-STREAM-INF:');
                 for (const video of videoList ?? []) {
                   if (!video.includes('m3u8')) continue;
 
-                  const url = video.split('\n')[1]!;
-                  const quality = video.split('RESOLUTION=')[1]?.split(',')[0]?.split('x')[1];
+                  const url = video.split('\n')[1]!.trim();
+                  // Extract quality from RESOLUTION=WIDTHxHEIGHT
+                  const resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
+                  const quality = resolutionMatch ? resolutionMatch[2] : null;
+
+                  // Check if URL is absolute or relative
+                  const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
+                  const finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
 
                   extractedData.sources.push({
-                    url: `${pathWithoutMaster}/${url}`,
-                    quality: `${quality}p`,
+                    url: finalUrl,
+                    quality: quality ? `${quality}p` : 'auto',
                     isM3U8: url.includes('.m3u8'),
                   });
                 }
