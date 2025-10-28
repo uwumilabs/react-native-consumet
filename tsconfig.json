@@ -45,7 +45,6 @@
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/android/build/**",
-    "**/apps/bare-example/android/app/build/**",
-    "**/apps/expo-example/android/app/build/**"
+    "**/apps/android/app/build/**"
   ]
 }

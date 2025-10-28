@@ -10,10 +10,10 @@ import {
   PolyURL,
   type MovieProvider,
 } from 'react-native-consumet';
-import { MovieParser, StreamingServers } from '../../../../src/models';
+import { MovieParser, StreamingServers } from '../../../src/models';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
-import type HiMovies from '../../../../src/providers/movies/himovies/himovies';
+import type HiMovies from '../../../src/providers/movies/himovies/himovies';
 const ExtMovies = () => {
   const [results, setResults] = useState<IMovieResult[]>([]);
   const [loading, setLoading] = useState(true);

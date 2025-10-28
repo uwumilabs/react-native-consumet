@@ -23,7 +23,7 @@ import {
   type AnimeProvider,
 } from 'react-native-consumet';
 import Video from 'react-native-video';
-import Zoro from '../../../../src/providers/anime/zoro/zoro';
+import Zoro from '../../../src/providers/anime/zoro/zoro';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
 // Get screen width for responsive video player
