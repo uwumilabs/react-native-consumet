@@ -12,10 +12,10 @@ import {
   PolyURL,
   StreamingServers,
 } from 'react-native-consumet';
-import { AnimeParser, SubOrDub } from '../../../../src/models';
+import { AnimeParser, SubOrDub } from '../../../src/models';
 // @ts-ignore
 import * as testCode from './test-code-generated.js';
-import type Zoro from '../../../../src/providers/anime/zoro/zoro';
+import type Zoro from '../../../src/providers/anime/zoro/zoro';
 
 const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);

@@ -42,8 +42,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example:bare": "yarn workspace react-native-consumet-bare-example",
-    "example:expo": "yarn workspace react-native-consumet-expo-example",
+    "example": "yarn workspace react-native-consumet-example",
     "build": "tsc -p tsconfig.dist.json",
     "build:clean": "del-cli dist && yarn build",
     "test": "jest",
@@ -121,8 +120,7 @@
     "react-native": "*"
   },
   "workspaces": [
-    "apps/bare-example",
-    "apps/expo-example"
+    "apps"
   ],
   "packageManager": "yarn@3.6.1",
   "commitlint": {

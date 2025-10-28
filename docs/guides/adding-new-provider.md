@@ -260,7 +260,7 @@ yarn build
 yarn lint
 ```
 
-Test your provider in the example applications (`apps/bare-example` or `apps/expo-example`) to ensure it works as expected in a real React Native environment.
+Test your provider in the example applications (`apps/`) to ensure it works as expected in a real React Native environment.
 
 ## Submitting Your Contribution
 

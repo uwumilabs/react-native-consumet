@@ -1,5 +1,5 @@
 {
-  "name": "react-native-consumet-bare-example",
+  "name": "react-native-consumet-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -15,7 +15,6 @@
     "react": "19.0.0",
     "react-native": "0.78.1",
     "react-native-consumet": "workspace:^",
-    "react-native-fs": "^2.20.0",
     "react-native-video": "^6.14.0"
   },
   "devDependencies": {

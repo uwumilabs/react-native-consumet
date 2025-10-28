@@ -9,7 +9,7 @@ We want this community to be friendly and respectful to each other. Please follo
 This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/features/workspaces). It contains the following packages:
 
 - The library package in the root directory (`react-native-consumet`).
-- Example applications in the `apps/` directory (`apps/bare-example`, `apps/expo-example`).
+- Example applications in the `apps/` directory .
 
 To get started with the project, run `yarn` in the root directory to install the required dependencies for each package:
 
@@ -19,13 +19,13 @@ yarn
 
 > Since the project relies on Yarn workspaces, you cannot use [`npm`](https://github.com/npm/cli) for development.
 
-The example applications (`apps/bare-example`, `apps/expo-example`) demonstrate usage of the library. You need to run them to test any changes you make.
+The example applications (`apps/) demonstrate usage of the library. You need to run them to test any changes you make.
 
 They are configured to use the local version of the library, so any changes you make to the library's source code will be reflected in the example apps. Changes to the library's JavaScript code will be reflected in the example apps without a rebuild, but native code changes will require a rebuild of the example apps.
 
-If you want to use Android Studio or XCode to edit the native code, you can open the `apps/bare-example/android` or `apps/bare-example/ios` directories respectively in those editors. To edit the Objective-C or Swift files, open `apps/bare-example/ios/ConsumetExample.xcworkspace` in XCode and find the source files at `Pods > Development Pods > react-native-consumet`.
+If you want to use Android Studio or XCode to edit the native code, you can open the `apps/android` or `apps/ios` directories respectively in those editors. To edit the Objective-C or Swift files, open `apps/ios/ConsumetExample.xcworkspace` in XCode and find the source files at `Pods > Development Pods > react-native-consumet`.
 
-To edit the Java or Kotlin files, open `apps/bare-example/android` in Android studio and find the source files at `react-native-consumet` under `Android`.
+To edit the Java or Kotlin files, open `apps/android` in Android studio and find the source files at `react-native-consumet` under `Android`.
 
 You can use various commands from the root directory to work with the project.
 
