@@ -23,23 +23,47 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getDummySourcesAndServers = getDummySourcesAndServers;
 exports.getVidsrcSourcesAndServers = getVidsrcSourcesAndServers;
 exports.get111MoviesSourcesAndServers = get111MoviesSourcesAndServers;
+exports.getVideasySourcesAndServers = getVideasySourcesAndServers;
+exports.getHexaSourcesAndServers = getHexaSourcesAndServers;
 exports.getMultiServers = getMultiServers;
 exports.getMultiSources = getMultiSources;
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const url_polyfill_1 = require("../../../utils/url-polyfill");
 const crypto_js_1 = __importDefault(require("crypto-js"));
+function getDummySourcesAndServers(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Simulate some async work
+        yield new Promise((resolve) => setTimeout(resolve, 100));
+        return {
+            servers: [
+                { name: 'DummyServer1', url: 'https://dummy.com/server1/stream.m3u8' },
+                { name: 'DummyServer2', url: 'https://dummy.com/server2/stream.m3u8' },
+            ],
+            sources: [
+                { url: 'https://dummy.com/server1/stream.m3u8', isM3U8: true, quality: 'default', name: 'DummyServer1' },
+                { url: 'https://dummy.com/server2/stream.m3u8', isM3U8: true, quality: 'default', name: 'DummyServer2' },
+            ],
+            subtitles: [{ url: 'https://dummy.com/subs/en.vtt', lang: 'English' }],
+        };
+    });
+}
+function getParts(id) {
+    const parts = id.split('$');
+    const [tmdbId, type, episode, season] = parts;
+    return [tmdbId, type, episode, season];
+}
 function getVidsrcSourcesAndServers(id) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
-        const parts = id.split('$');
-        const [tmdbId, type, episode, season] = parts;
-        const baseURL = 'https://vidsrc.xyz/embed/';
+        const [tmdbId, type, episode, season] = getParts(id);
+        const baseURL = 'https://vidsrc-embed.ru/embed/';
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
-            'Referer': 'https://vidsrc.xyz/',
+            'Referer': 'https://vidsrc-embed.ru/',
         };
         const servers = [];
         const sources = [];
@@ -116,8 +140,7 @@ function getVidsrcSourcesAndServers(id) {
 }
 function get111MoviesSourcesAndServers(id) {
     return __awaiter(this, void 0, void 0, function* () {
-        const parts = id.split('$');
-        const [tmdbId, type, episode, season] = parts;
+        const [tmdbId, type, episode, season] = getParts(id);
         const baseUrl = 'https://111movies.com';
         const userAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
         const defaultDomain = (() => {
@@ -229,15 +252,165 @@ function get111MoviesSourcesAndServers(id) {
         };
     });
 }
+function getVideasySourcesAndServers(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const servers = [
+            { name: 'neon-org', url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title' },
+            { name: 'sage-org', url: 'https://api.videasy.net/1movies/sources-with-title' },
+            { name: 'cypher-org', url: 'https://api.videasy.net/moviebox/sources-with-title' },
+            { name: 'yoru-org', url: 'https://api.videasy.net/cdn/sources-with-title' },
+            { name: 'reyna-org', url: 'https://api.videasy.net/primewire/sources-with-title' },
+            { name: 'omen-org', url: 'https://api.videasy.net/onionplay/sources-with-title' },
+            { name: 'breach-org', url: 'https://api.videasy.net/m4uhd/sources-with-title' },
+            { name: 'vyse-org', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
+            { name: 'killjoy-ger', url: 'https://api.videasy.net/meine/sources-with-title?language=german' },
+            { name: 'harbor-ita', url: 'https://api.videasy.net/meine/sources-with-title?language=italian' },
+            { name: 'chamber-fr', url: 'https://api.videasy.net/meine/sources-with-title?language=french' },
+            { name: 'fade-hin', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
+            { name: 'gekko-lat', url: 'https://api.videasy.net/cuevana-latino/sources-with-title' },
+            { name: 'kayo-spa', url: 'https://api.videasy.net/cuevana-spanish/sources-with-title' },
+            { name: 'raze-por', url: 'https://api.videasy.net/superflix/sources-with-title' },
+            { name: 'phoenix-por', url: 'https://api.videasy.net/overflix/sources-with-title' },
+            { name: 'astra-por', url: 'https://api.videasy.net/visioncine/sources-with-title' },
+        ];
+        const sources = [];
+        const subtitles = [];
+        const [tmdbId, type, episode, season] = getParts(id);
+        yield Promise.all(servers.map((server) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('step 1');
+                const url = type === 'tv'
+                    ? `${server.url}?mediaType=tv&tmdbId=${tmdbId}&seasonId=${season}&episodeId=${episode}`
+                    : `${server.url}?mediaType=movie&tmdbId=${tmdbId}`;
+                console.log('step 2');
+                const { data: encData } = yield axios_1.default.get(url);
+                console.log('step 3');
+                const { data: decData } = yield axios_1.default.post('https://enc-dec.app/api/dec-videasy', {
+                    text: encData,
+                    id: tmdbId,
+                });
+                console.log('step 3');
+                const result = decData.result;
+                console.log(result);
+                if (result && typeof result === 'object') {
+                    // Add sources from the decrypted data
+                    if (result.sources && Array.isArray(result.sources)) {
+                        result.sources.forEach((source) => {
+                            var _a;
+                            sources.push({
+                                url: source.url,
+                                isM3U8: ((_a = source.url) === null || _a === void 0 ? void 0 : _a.includes('.m3u8')) || false,
+                                quality: source.quality || 'default',
+                                name: server.name,
+                            });
+                        });
+                    }
+                    // Add subtitles if available
+                    if (result.subtitles && Array.isArray(result.subtitles)) {
+                        result.subtitles.forEach((subtitle) => {
+                            subtitles.push({
+                                url: subtitle.url,
+                                lang: subtitle.lang || subtitle.language || 'Unknown',
+                            });
+                        });
+                    }
+                }
+            }
+            catch (err) {
+                // ignore bad ones
+                console.log(server.name, 'this failed');
+            }
+        })));
+        return {
+            servers,
+            sources,
+            subtitles,
+        };
+    });
+}
+function getHexaSourcesAndServers(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const sources = [];
+        const subtitles = [];
+        const servers = [];
+        const [tmdbId, type, episode, season] = getParts(id);
+        try {
+            // Generate 32-byte hex key (64 hex characters)
+            const key = crypto_js_1.default.lib.WordArray.random(32).toString(crypto_js_1.default.enc.Hex);
+            const url = type === 'tv'
+                ? `https://themoviedb.hexa.watch/api/tmdb/tv/${tmdbId}/season/${season}/episode/${episode}/images`
+                : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
+            // Get encrypted text with API key in header
+            const { data: encData } = yield axios_1.default.get(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+                    'Accept': 'plain/text',
+                    'X-Api-Key': key,
+                },
+            });
+            // Decrypt using the API
+            const { data: decData } = yield axios_1.default.post('https://enc-dec.app/api/dec-hexa', {
+                text: encData,
+                key: key,
+            });
+            const result = decData.result;
+            if (result && typeof result === 'object') {
+                // Add sources from the decrypted data
+                if (result.sources && Array.isArray(result.sources)) {
+                    result.sources.forEach((source) => {
+                        var _a;
+                        sources.push({
+                            url: source.url,
+                            isM3U8: ((_a = source.url) === null || _a === void 0 ? void 0 : _a.includes('.m3u8')) || false,
+                            quality: source.quality || 'default',
+                            name: `hexa-${source.server}`,
+                        });
+                        servers.push({
+                            name: `hexa-${source.server}`,
+                            url: source.url,
+                        });
+                    });
+                }
+                // Add subtitles if available
+                if (result.subtitles && Array.isArray(result.subtitles)) {
+                    result.subtitles.forEach((subtitle) => {
+                        subtitles.push({
+                            url: subtitle.url,
+                            lang: subtitle.lang || subtitle.language || 'Unknown',
+                        });
+                    });
+                }
+            }
+        }
+        catch (err) {
+            // ignore errors
+            console.log(err);
+        }
+        return {
+            servers,
+            sources,
+            subtitles,
+        };
+    });
+}
 function getMultiServers(id) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const servers = [];
-            const [{ servers: oneoneoneServers }, { servers: vidsrcServers }] = yield Promise.all([
+            // Fetch from all sources, handle errors individually
+            const results = yield Promise.allSettled([
+                // getDummySourcesAndServers(id),
                 get111MoviesSourcesAndServers(id),
                 getVidsrcSourcesAndServers(id),
+                getVideasySourcesAndServers(id),
+                getHexaSourcesAndServers(id),
             ]);
-            servers.push(...oneoneoneServers, ...vidsrcServers);
+            // Add servers from successful results only
+            results.forEach((result) => {
+                if (result.status === 'fulfilled') {
+                    servers.push(...result.value.servers);
+                }
+            });
             return servers;
         }
         catch (error) {
@@ -247,20 +420,37 @@ function getMultiServers(id) {
 }
 function getMultiSources(id, server) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         try {
-            const [_b, _c] = yield Promise.all([
+            // Fetch from all sources, handle errors individually
+            const results = yield Promise.allSettled([
+                // getDummySourcesAndServers(id),
                 get111MoviesSourcesAndServers(id),
                 getVidsrcSourcesAndServers(id),
-            ]), { servers: _ } = _b, oneoneoneSources = __rest(_b, ["servers"]), { servers: __ } = _c, vidsrcSources = __rest(_c, ["servers"]);
-            const allSources = Object.assign(Object.assign(Object.assign({}, oneoneoneSources), vidsrcSources), { sources: [...(oneoneoneSources.sources || []), ...(vidsrcSources.sources || [])], subtitles: [...(oneoneoneSources.subtitles || []), ...(vidsrcSources.subtitles || [])] });
-            const matchedSources = ((_a = allSources.sources) === null || _a === void 0 ? void 0 : _a.filter((source) => source.name === server)) || [];
+                getVideasySourcesAndServers(id),
+                getHexaSourcesAndServers(id),
+            ]);
+            const allSources = [];
+            const allSubtitles = [];
+            // Collect sources and subtitles from successful results only
+            results.forEach((result) => {
+                if (result.status === 'fulfilled') {
+                    const _a = result.value, { servers: _ } = _a, sourceData = __rest(_a, ["servers"]);
+                    if (sourceData.sources) {
+                        allSources.push(...sourceData.sources);
+                    }
+                    if (sourceData.subtitles) {
+                        allSubtitles.push(...sourceData.subtitles);
+                    }
+                }
+            });
+            console.log({ allSources, allSubtitles });
+            const matchedSources = allSources.filter((source) => source.name === server);
             if (matchedSources.length === 0) {
                 throw new Error(`No sources found for server: ${server}`);
             }
             return {
                 sources: matchedSources,
-                subtitles: allSources.subtitles || [],
+                subtitles: allSubtitles,
             };
         }
         catch (error) {

@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { URL as PolyURL, URLSearchParams as PolyURLSearchParams } from './utils/url-polyfill';
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './utils';

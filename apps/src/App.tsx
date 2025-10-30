@@ -9,8 +9,8 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      <Anime />
-      {/* <Movies /> */}
+      {/* <Anime /> */}
+      <Movies />
       {/* <ProviderManagerDemo /> */}
       {/* <Manga/> */}
       {/* <Meta /> */}
