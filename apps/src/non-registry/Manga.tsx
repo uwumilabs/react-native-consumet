@@ -11,14 +11,14 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IMangaResult>> => {
   try {
-    const animekai = new MANGA.MangaDex();
-    const search = await animekai.search('sakamoto days');
+    const animekai = new MANGA.AsuraScans();
+    const search = await animekai.search('Solo leveling');
     console.log(search);
     const info = await animekai.fetchMangaInfo(search.results[0]!.id);
     console.log(info);
     const s = info.chapters && (await animekai.fetchChapterPages(info.chapters[0]!.id));
+    console.log('chapters page', s);
     console.log('sources end');
-    console.log(s);
     if (!search || !search.results) {
       throw new Error('Invalid response format from API');
     }

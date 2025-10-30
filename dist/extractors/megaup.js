@@ -14,70 +14,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaUp = void 0;
 const axios_1 = __importDefault(require("axios"));
-//extractor for https://animekai.to
-// Keys required for the decryption to work are loaded dynamically from
-// https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json
 const models_1 = require("../models");
 class MegaUp extends models_1.VideoExtractor {
     constructor() {
         super();
         this.serverName = 'MegaUp';
         this.sources = [];
-        this.homeKeys = [];
-        this.megaKeys = [];
-        this.keysChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-~!*()'.".split('');
-        this.GenerateToken = (n) => {
-            n = encodeURIComponent(n);
-            const l = n.length;
-            let o = [];
-            for (var i = 0; i < l; i++) {
-                const kc = this.homeKeys[this.keysChar.indexOf(n.charAt(i))];
-                const c = kc === null || kc === void 0 ? void 0 : kc.charAt(i % kc.length);
-                o.push(c);
+        this.apiBase = 'https://enc-dec.app/api';
+        this.GenerateToken = (n) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = yield axios_1.default.get(`${this.apiBase}/enc-kai?text=${encodeURIComponent(n)}`);
+                return res.data.result;
             }
-            return btoa(o.join('')).replace(/\//g, '_').replace(/\+/g, '-').replace(/\=/g, '');
-        };
-        this.DecodeIframeData = (n) => {
-            n = atob(n.replace(/_/g, '/').replace(/-/g, '+'));
-            const l = n.length;
-            let o = [];
-            for (var i = 0; i < l; i++) {
-                const c = n.charCodeAt(i);
-                const k = this.megaKeys[c];
-                o.push(k === null || k === void 0 ? void 0 : k.charCodeAt(i % k.length));
+            catch (error) {
+                throw new Error(error.message);
             }
-            return decodeURIComponent(String.fromCharCode.apply(null, o.filter((val) => val !== undefined)));
-        };
-        this.Decode = (n) => {
-            var _a, _b;
-            n = atob(n.replace(/_/g, '/').replace(/-/g, '+'));
-            const l = n.length;
-            let o = [];
-            for (var i = 0; i < l; i++) {
-                const c = n.charCodeAt(i);
-                let cp = '';
-                for (var j = 0; j < this.homeKeys.length; j++) {
-                    var ck = (_a = this.homeKeys[j]) === null || _a === void 0 ? void 0 : _a.charCodeAt(i % ((_b = this.homeKeys[j]) === null || _b === void 0 ? void 0 : _b.length));
-                    if (ck === c) {
-                        cp = this.keysChar[j];
-                        break;
-                    }
-                }
-                if (cp) {
-                    o.push(cp);
-                }
-                else {
-                    o.push('%');
-                }
+        });
+        this.DecodeIframeData = (n) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = yield axios_1.default.post(`${this.apiBase}/dec-kai`, { text: n });
+                return res.data.result;
             }
-            return decodeURIComponent(o.join(''));
-        };
+            catch (error) {
+                throw new Error(error.message);
+            }
+        });
+        this.Decode = (n) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const res = yield axios_1.default.post(`${this.apiBase}/dec-mega`, {
+                    text: n,
+                    agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+                }, { headers: { 'Content-Type': 'application/json' } });
+                return res.data.result;
+            }
+            catch (error) {
+                throw new Error(error.message);
+            }
+        });
         this.extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.kaiKeysReady;
-                const url = videoUrl.href.replace(/\/(e|e2)\//, '/media/');
-                const res = yield axios_1.default.get(url);
-                const decrypted = JSON.parse(this.DecodeIframeData(res.data.result).replace(/\\/g, ''));
+                const url = videoUrl.href.replace('/e/', '/media/');
+                const res = yield axios_1.default.get(url, {
+                    headers: {
+                        'Connection': 'keep-alive',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+                    },
+                });
+                const decrypted = yield this.Decode(res.data.result);
                 const data = {
                     sources: decrypted.sources.map((s) => ({
                         url: s.file,
@@ -86,6 +69,7 @@ class MegaUp extends models_1.VideoExtractor {
                     subtitles: decrypted.tracks.map((t) => ({
                         kind: t.kind,
                         url: t.file,
+                        lang: t.label || 'English',
                     })),
                     download: decrypted.download,
                 };
@@ -93,20 +77,6 @@ class MegaUp extends models_1.VideoExtractor {
             }
             catch (error) {
                 throw new Error(error.message);
-            }
-        });
-        this.kaiKeysReady = this.loadKAIKEYS();
-    }
-    loadKAIKEYS() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const extraction_keys = 'https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json';
-            const response = yield axios_1.default.get(extraction_keys);
-            const keys = yield response.data;
-            for (var i = 0; i < keys.kai.length; i++) {
-                this.homeKeys.push(atob(keys.kai[i]));
-            }
-            for (var i = 0; i < keys.mega.length; i++) {
-                this.megaKeys.push(atob(keys.mega[i]));
             }
         });
     }
