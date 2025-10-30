@@ -1,101 +1,81 @@
 import axios from 'axios';
-//extractor for https://animekai.to
-
-// Keys required for the decryption to work are loaded dynamically from
-// https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json
 
 import { type ISource, type IVideo, VideoExtractor } from '../models';
 
 export class MegaUp extends VideoExtractor {
   protected serverName: string = 'MegaUp';
   protected sources: IVideo[] = [];
-  private homeKeys: string[] = [];
-  private megaKeys: string[] = [];
-  private kaiKeysReady: Promise<void>;
+  protected apiBase: string = 'https://enc-dec.app/api';
 
   constructor() {
     super();
-    this.kaiKeysReady = this.loadKAIKEYS();
   }
 
-  private async loadKAIKEYS(): Promise<void> {
-    const extraction_keys = 'https://raw.githubusercontent.com/amarullz/kaicodex/main/generated/keys.json';
-
-    const response = await axios.get(extraction_keys);
-    const keys = await response.data;
-
-    for (var i = 0; i < keys.kai.length; i++) {
-      this.homeKeys.push(atob(keys.kai[i]));
+  GenerateToken = async (n: string): Promise<string> => {
+    try {
+      const res = await axios.get(`${this.apiBase}/enc-kai?text=${encodeURIComponent(n)}`);
+      return res.data.result;
+    } catch (error) {
+      throw new Error((error as Error).message);
     }
-    for (var i = 0; i < keys.mega.length; i++) {
-      this.megaKeys.push(atob(keys.mega[i]));
-    }
-  }
-
-  private keysChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-~!*()'.".split('');
-
-  GenerateToken = (n: string) => {
-    n = encodeURIComponent(n);
-    const l = n.length;
-    let o = [];
-    for (var i = 0; i < l; i++) {
-      const kc = this.homeKeys[this.keysChar.indexOf(n.charAt(i))];
-      const c = kc?.charAt(i % kc.length!);
-      o.push(c);
-    }
-    return btoa(o.join('')).replace(/\//g, '_').replace(/\+/g, '-').replace(/\=/g, '');
   };
 
-  DecodeIframeData = (n: string) => {
-    n = atob(n.replace(/_/g, '/').replace(/-/g, '+'));
-    const l = n.length;
-    let o = [];
-    for (var i = 0; i < l; i++) {
-      const c = n.charCodeAt(i);
-      const k = this.megaKeys[c];
-      o.push(k?.charCodeAt(i % k.length!));
+  DecodeIframeData = async (
+    n: string
+  ): Promise<{
+    url: string;
+    skip: {
+      intro: [number, number];
+      outro: [number, number];
+    };
+  }> => {
+    try {
+      const res = await axios.post(`${this.apiBase}/dec-kai`, { text: n });
+      return res.data.result;
+    } catch (error) {
+      throw new Error((error as Error).message);
     }
-    return decodeURIComponent(String.fromCharCode.apply(null, o.filter((val) => val !== undefined) as number[]));
   };
 
-  Decode = (n: string) => {
-    n = atob(n.replace(/_/g, '/').replace(/-/g, '+'));
-    const l = n.length;
-    let o = [];
-    for (var i = 0; i < l; i++) {
-      const c = n.charCodeAt(i);
-      let cp = '';
-      for (var j = 0; j < this.homeKeys.length; j++) {
-        var ck = this.homeKeys[j]?.charCodeAt(i % this.homeKeys[j]?.length!);
-        if (ck === c) {
-          cp = this.keysChar[j]!;
-          break;
-        }
-      }
-      if (cp) {
-        o.push(cp);
-      } else {
-        o.push('%');
-      }
+  Decode = async (
+    n: string
+  ): Promise<{ sources: { file: string }[]; tracks: { kind: string; file: string }[]; download: string }> => {
+    try {
+      const res = await axios.post(
+        `${this.apiBase}/dec-mega`,
+        {
+          text: n,
+          agent:
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      return res.data.result;
+    } catch (error) {
+      throw new Error((error as Error).message);
     }
-    return decodeURIComponent(o.join(''));
   };
 
   override extract = async (videoUrl: URL): Promise<ISource> => {
     try {
-      await this.kaiKeysReady;
-
-      const url = videoUrl.href.replace(/\/(e|e2)\//, '/media/');
-      const res = await axios.get(url);
-      const decrypted = JSON.parse(this.DecodeIframeData(res.data.result).replace(/\\/g, ''));
+      const url = videoUrl.href.replace('/e/', '/media/');
+      const res = await axios.get(url, {
+        headers: {
+          'Connection': 'keep-alive',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+        },
+      });
+      const decrypted = await this.Decode(res.data.result);
       const data: ISource = {
         sources: decrypted.sources.map((s: { file: string }) => ({
           url: s.file,
           isM3U8: s.file.includes('.m3u8') || s.file.endsWith('m3u8'),
         })),
-        subtitles: decrypted.tracks.map((t: { kind: any; file: any }) => ({
+        subtitles: decrypted.tracks.map((t: { kind: any; file: any; label?: string }) => ({
           kind: t.kind,
           url: t.file,
+          lang: t.label || 'English',
         })),
         download: decrypted.download,
       };
@@ -105,4 +85,5 @@ export class MegaUp extends VideoExtractor {
     }
   };
 }
+
 export default MegaUp;

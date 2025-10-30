@@ -2,15 +2,26 @@ import { type ISource, type IVideo, VideoExtractor } from '../models';
 export declare class MegaUp extends VideoExtractor {
     protected serverName: string;
     protected sources: IVideo[];
-    private homeKeys;
-    private megaKeys;
-    private kaiKeysReady;
+    protected apiBase: string;
     constructor();
-    private loadKAIKEYS;
-    private keysChar;
-    GenerateToken: (n: string) => string;
-    DecodeIframeData: (n: string) => string;
-    Decode: (n: string) => string;
+    GenerateToken: (n: string) => Promise<string>;
+    DecodeIframeData: (n: string) => Promise<{
+        url: string;
+        skip: {
+            intro: [number, number];
+            outro: [number, number];
+        };
+    }>;
+    Decode: (n: string) => Promise<{
+        sources: {
+            file: string;
+        }[];
+        tracks: {
+            kind: string;
+            file: string;
+        }[];
+        download: string;
+    }>;
     extract: (videoUrl: URL) => Promise<ISource>;
 }
 export default MegaUp;

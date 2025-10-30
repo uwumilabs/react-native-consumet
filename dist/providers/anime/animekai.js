@@ -16,13 +16,13 @@ const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const extractors_1 = require("../../extractors");
 const axios_1 = __importDefault(require("axios"));
-const { GenerateToken, DecodeIframeData, Decode } = new extractors_1.MegaUp();
+const { GenerateToken, DecodeIframeData } = new extractors_1.MegaUp();
 class AnimeKai extends models_1.AnimeParser {
     constructor(customBaseURL) {
         super();
         this.name = 'AnimeKai';
-        this.baseUrl = 'https://animekai.to';
-        this.logo = 'https://animekai.to/assets/uploads/37585a39fe8c8d8fafaa2c7bfbf5374ecac859ea6a0288a6da2c61f5.png';
+        this.baseUrl = 'https://anikai.to/';
+        this.logo = 'https://anikai.to//assets/uploads/37585a39fe8c8d8fafaa2c7bfbf5374ecac859ea6a0288a6da2c61f5.png';
         this.classPath = 'ANIME.AnimeKai';
         /**
          * @param id Anime id
@@ -119,7 +119,7 @@ class AnimeKai extends models_1.AnimeParser {
                 }
                 info.season = $('.entity-scroll > .detail').find("div:contains('Premiered') > span").text().trim();
                 const ani_id = $('.rate-box#anime-rating').attr('data-id');
-                const episodesAjax = yield axios_1.default.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${GenerateToken(ani_id)}`, {
+                const episodesAjax = yield axios_1.default.get(`${this.baseUrl}/ajax/episodes/list?ani_id=${ani_id}&_=${yield GenerateToken(ani_id)}`, {
                     headers: Object.assign({ 'X-Requested-With': 'XMLHttpRequest', 'Referer': `${this.baseUrl}/watch/${id}` }, this.Headers()),
                 });
                 const $$ = (0, cheerio_1.load)(episodesAjax.data.result);
@@ -262,31 +262,35 @@ class AnimeKai extends models_1.AnimeParser {
          * @param subOrDub sub or dub (default `sub`) (optional)
          */
         this.fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = models_1.SubOrDub.SUB) {
-            if (!episodeId.startsWith(this.baseUrl + '/ajax'))
-                episodeId = `${this.baseUrl}/ajax/links/list?token=${episodeId.split('$token=')[1]}&_=${GenerateToken(episodeId.split('$token=')[1])}`;
+            if (!episodeId.startsWith(this.baseUrl + '/ajax')) {
+                const token = episodeId.split('$token=')[1];
+                if (!token) {
+                    throw new Error('Invalid episodeId format: missing token');
+                }
+                episodeId = `${this.baseUrl}/ajax/links/list?token=${token}&_=${yield GenerateToken(token)}`;
+            }
             try {
-                const { data } = yield axios_1.default.get(episodeId, {
-                    headers: this.Headers(),
-                });
+                const { data } = yield axios_1.default.get(episodeId, { headers: this.Headers() });
                 const $ = (0, cheerio_1.load)(data.result);
                 const servers = [];
-                const serverItems = $(`.server-items.lang-group[data-id="${subOrDub}"] .server`);
+                const subOrDubStr = subOrDub === models_1.SubOrDub.SUB ? 'softsub' : 'dub';
+                const serverItems = $(`.server-items.lang-group[data-id="${subOrDubStr}"] .server`);
                 yield Promise.all(serverItems.map((i, server) => __awaiter(this, void 0, void 0, function* () {
                     const id = $(server).attr('data-lid');
-                    const { data } = yield axios_1.default.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${GenerateToken(id)}`, {
+                    const { data } = yield axios_1.default.get(`${this.baseUrl}/ajax/links/view?id=${id}&_=${yield GenerateToken(id)}`, {
                         headers: this.Headers(),
                     });
-                    const decodedData = JSON.parse(Decode(data.result));
+                    const decodedIframeData = yield DecodeIframeData(data.result);
                     servers.push({
-                        name: `MegaUp ${$(server).text().trim()}`, //megaup is the only server for now
-                        url: decodedData.url,
+                        name: `MegaUp ${$(server).text().trim()}`.toLowerCase(), //megaup is the only server for now
+                        url: decodedIframeData.url,
                         intro: {
-                            start: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.intro[0],
-                            end: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.intro[1],
+                            start: decodedIframeData === null || decodedIframeData === void 0 ? void 0 : decodedIframeData.skip.intro[0],
+                            end: decodedIframeData === null || decodedIframeData === void 0 ? void 0 : decodedIframeData.skip.intro[1],
                         },
                         outro: {
-                            start: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.outro[0],
-                            end: decodedData === null || decodedData === void 0 ? void 0 : decodedData.skip.outro[1],
+                            start: decodedIframeData === null || decodedIframeData === void 0 ? void 0 : decodedIframeData.skip.outro[0],
+                            end: decodedIframeData === null || decodedIframeData === void 0 ? void 0 : decodedIframeData.skip.outro[1],
                         },
                     });
                 })));
@@ -552,7 +556,8 @@ class AnimeKai extends models_1.AnimeParser {
     }
     Headers() {
         return {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+            'Connection': 'keep-alive',
             'Accept': 'text/html, */*; q=0.01',
             'Accept-Language': 'en-US,en;q=0.5',
             'Sec-GPC': '1',
@@ -563,7 +568,7 @@ class AnimeKai extends models_1.AnimeParser {
             'Pragma': 'no-cache',
             'Cache-Control': 'no-cache',
             'Referer': `${this.baseUrl}/`,
-            'Cookie': 'usertype=guest; session=hxYne0BNXguMc8zK1FHqQKXPmmoANzBBOuNPM64a; cf_clearance=WfGWV1bKGAaNySbh.yzCyuobBOtjg0ncfPwMhtsvsrs-1737611098-1.2.1.1-zWHcaytuokjFTKbCAxnSPDc_BWAeubpf9TAAVfuJ2vZuyYXByqZBXAZDl_VILwkO5NOLck8N0C4uQr4yGLbXRcZ_7jfWUvfPGayTADQLuh.SH.7bvhC7DmxrMGZ8SW.hGKEQzRJf8N7h6ZZ27GMyqOfz1zfrOiu9W30DhEtW2N7FAXUPrdolyKjCsP1AK3DqsDtYOiiPNLnu47l.zxK80XogfBRQkiGecCBaeDOJHenjn._Zgykkr.F_2bj2C3AS3A5mCpZSlWK5lqhV6jQSQLF9wKWitHye39V.6NoE3RE',
+            'Cookie': '__p_mov=1; usertype=guest; session=vLrU4aKItp0QltI2asH83yugyWDsSSQtyl9sxWKO',
         };
     }
 }
