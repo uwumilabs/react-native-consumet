@@ -25,7 +25,7 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.HiMovies();
+    const movies = new MOVIES.MultiStream();
     const search = await movies.search('jujutsu');
     console.log('Search Results:', search);
 

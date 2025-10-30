@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { URL as PolyURL, URLSearchParams as PolyURLSearchParams } from './utils/url-polyfill';
 
 // Polyfill global scope if they don't exist
