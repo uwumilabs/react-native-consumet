@@ -120,8 +120,8 @@ export interface ExtractorRegistry {
   ) => {
     extract: (url: URL) => Promise<any>;
   };
-  MegaUp: new (ctx: ExtractorContext) => {
-    extract: (url: URL) => Promise<any>;
+  MegaUp: (ctx?: ExtractorContext) => {
+    extract: (url: PolyURL) => Promise<any>;
   };
 }
 

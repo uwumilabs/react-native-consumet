@@ -9,6 +9,11 @@
       "name": "Kwik",
       "version": "1.1.0",
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/kwik.js"
+    },
+    {
+      "name": "MegaUp",
+      "version": "1.0.0",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaup.js"
     }
   ],
   "extensions": [
@@ -59,6 +64,30 @@
       "dubbed": true,
       "isSourceEmbed": true,
       "haveMultiServers": false
+    },
+    {
+      "id": "animekai",
+      "name": "AnimeKai",
+      "description": "High-quality anime streaming from AnimeKai with multiple servers and subtitles",
+      "version": "1.0.0",
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animekai/create-animekai.js",
+      "factoryName": "createAnimeKai",
+      "baseUrl": "https://anikai.to",
+      "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
+      "languages": ["en", "ja"],
+      "nsfw": false,
+      "status": "stable",
+      "lastUpdated": "2025-08-05T00:00:00Z",
+      "extractors": ["MegaUp"],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": true
     },
     {
       "id": "himovies",

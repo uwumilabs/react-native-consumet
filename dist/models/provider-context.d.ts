@@ -66,8 +66,8 @@ export interface ExtractorRegistry {
     Voe: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
     };
-    MegaUp: new (ctx: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
+    MegaUp: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL) => Promise<any>;
     };
 }
 export type ProviderConfig = {

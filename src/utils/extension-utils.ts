@@ -82,7 +82,7 @@ export const defaultExtractors = {
   VizCloud: VizCloud,
   VidHide: VidHide,
   Voe: Voe,
-  MegaUp: MegaUp,
+  MegaUp: (ctx?: ExtractorContext) => MegaUp(ctx || defaultExtractorContext),
 };
 
 export const extractors = {
