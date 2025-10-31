@@ -40,6 +40,6 @@ const vidhide_1 = __importDefault(require("./vidhide"));
 exports.VidHide = vidhide_1.default;
 const voe_1 = __importDefault(require("./voe"));
 exports.Voe = voe_1.default;
-const megaup_1 = __importDefault(require("./megaup"));
-exports.MegaUp = megaup_1.default;
+const megaup_1 = require("./megaup");
+Object.defineProperty(exports, "MegaUp", { enumerable: true, get: function () { return megaup_1.MegaUp; } });
 //# sourceMappingURL=index.js.map

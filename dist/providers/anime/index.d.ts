@@ -6,7 +6,8 @@ import AnimeDrive from './animedrive';
 import Anify from './anify';
 import Marin from './marin';
 import AnimeUnity from './animeunity';
-import AnimeKai from './animekai';
+import AnimeKai from './animekai/animekai';
+import createAnimeKai from './animekai/create-animekai';
 declare const _default: {
     AnimePahe: typeof AnimePahe;
     createAnimePahe: typeof createAnimePahe;
@@ -17,6 +18,7 @@ declare const _default: {
     Marin: typeof Marin;
     AnimeUnity: typeof AnimeUnity;
     AnimeKai: typeof AnimeKai;
+    createAnimeKai: typeof createAnimeKai;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map

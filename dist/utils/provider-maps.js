@@ -19,6 +19,9 @@ exports.animeProviders = {
     get AnimePahe() {
         return require('../providers/anime/animepahe/animepahe').default;
     },
+    get AnimeKai() {
+        return require('../providers/anime/animekai/animekai').default;
+    },
 };
 exports.movieProviders = {
     get HiMovies() {

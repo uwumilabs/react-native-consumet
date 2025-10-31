@@ -58,7 +58,7 @@ exports.defaultExtractors = {
     VizCloud: extractors_1.VizCloud,
     VidHide: extractors_1.VidHide,
     Voe: extractors_1.Voe,
-    MegaUp: extractors_1.MegaUp,
+    MegaUp: (ctx) => (0, extractors_1.MegaUp)(ctx || exports.defaultExtractorContext),
 };
 exports.extractors = {
     GogoCDN: exports.defaultExtractors.GogoCDN,

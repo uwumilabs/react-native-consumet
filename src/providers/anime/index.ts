@@ -6,7 +6,8 @@ import AnimeDrive from './animedrive';
 import Anify from './anify';
 import Marin from './marin';
 import AnimeUnity from './animeunity';
-import AnimeKai from './animekai';
+import AnimeKai from './animekai/animekai';
+import createAnimeKai from './animekai/create-animekai';
 
 export default {
   AnimePahe,
@@ -18,4 +19,5 @@ export default {
   Marin,
   AnimeUnity,
   AnimeKai,
+  createAnimeKai,
 };

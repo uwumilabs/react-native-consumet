@@ -1,24 +1,47 @@
 // build-test-string.js - Run this in Node.js
 const fs = require('fs');
 const path = require('path');
-// Read your actual test.js file
-const testPath = path.join(__dirname, '../../../../dist/extractors/kwik.js');
-const actualTestCode = fs.readFileSync(testPath, 'utf8');
 
-// Create React Native compatible file
-const rnCode = `// Auto-generated from test.js
-export const testCodeString = ${JSON.stringify(actualTestCode)};
+// Read extractor test file
+const testExtrPath = path.join(__dirname, '../../../dist/extractors/megaup.js');
+const extractorTestCode = fs.readFileSync(testExtrPath, 'utf8');
+
+// Read extension test file
+const testExtPath = path.join(__dirname, '../../../dist/providers/anime/animekai/create-animekai.js');
+const extensionTestCode = fs.readFileSync(testExtPath, 'utf8');
+
+// Create React Native compatible file for extractor
+const rnExtrCode = `// Auto-generated from test.js
+export const testCodeString = ${JSON.stringify(extractorTestCode)};
 
 export default testCodeString;
 
 // CommonJS compatibility  
 module.exports = { testCodeString };`;
 
-// Write to RN-compatible file
-const outputPath = path.join(__dirname, 'test-code-generated.js');
-fs.writeFileSync(outputPath, rnCode, 'utf8');
+// Create React Native compatible file for extension
+const rnExtCode = `// Auto-generated from test.js
+export const testCodeString = ${JSON.stringify(extensionTestCode)};
 
-console.log('Generated test code string');
-console.log(`Original: ${testPath}`);
-console.log(`Generated: ${outputPath}`);
-console.log(`Size: ${actualTestCode.length} characters`);
+export default testCodeString;
+
+// CommonJS compatibility  
+module.exports = { testCodeString };`;
+
+// Write to RN-compatible files
+const outputExtrPath = path.join(__dirname, 'test-extr-code-generated.js');
+fs.writeFileSync(outputExtrPath, rnExtrCode, 'utf8');
+
+const outputExtPath = path.join(__dirname, 'test-ext-code-generated.js');
+fs.writeFileSync(outputExtPath, rnExtCode, 'utf8');
+
+console.log('Generated test code strings');
+console.log('\nExtractor:');
+console.log(`  Original: ${testExtrPath}`);
+console.log(`  Generated: ${outputExtrPath}`);
+console.log(`  Size: ${extractorTestCode.length} characters`);
+
+console.log('\nExtension:');
+console.log(`  Original: ${testExtPath}`);
+console.log(`  Generated: ${outputExtPath}`);
+console.log(`  Size: ${extensionTestCode.length} characters`);

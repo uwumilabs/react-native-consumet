@@ -14,14 +14,16 @@ import {
 } from 'react-native-consumet';
 import { AnimeParser, SubOrDub } from '../../../src/models';
 // @ts-ignore
-import * as testCode from './test-code-generated.js';
-import type Zoro from '../../../src/providers/anime/zoro/zoro';
+import * as testExtCode from './test-ext-code-generated.js';
+// @ts-ignore
+import * as testExtrCode from './test-extr-code-generated.js';
+import type AnimeKai from '../../../src/providers/anime/animekai/animekai';
 
 const ExtAnime = () => {
   const [results, setResults] = useState<IAnimeResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('zoro');
+  const [selectedExtension, setSelectedExtension] = useState<string>('animekai');
   const [provider, setProvider] = useState<AnimeParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
@@ -63,15 +65,15 @@ const ExtAnime = () => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
 
-      const providerInstance = (await manager.loadExtension(extensionId)) as Zoro;
+      // const providerInstance = (await manager.loadExtension(extensionId)) as AnimeKai;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      // const providerInstance = await manager.executeProviderCode<'AnimePahe'>(
-      //   `${testCode.testCodeString}`,
-      //   'createAnimePahe',
-      //   // @ts-ignore
-      //   metadata
-      // );
+      const providerInstance = await manager.executeProviderCode<'AnimeKai'>(
+        `${testExtCode.testCodeString}`,
+        'createAnimeKai',
+        // @ts-ignore
+        metadata
+      );
       setProvider(providerInstance);
 
       console.log('✅ Anime extension loaded successfully:', {
@@ -105,15 +107,17 @@ const ExtAnime = () => {
           console.log(servers);
           console.log(
             'Resolved:',
-            extractorManager.extractBaseExtractorName('upcloud'),
+            extractorManager.extractBaseExtractorName('megaup'),
             extractorManager.extractBaseExtractorName(servers[1]?.name!)
           );
           const metadata = extractorManager.getExtractorMetadata(servers[1]?.name!);
           const megacloudExtractor = await extractorManager.executeExtractorCode(
-            `${testCode.testCodeString}`,
+            `${testExtrCode.testCodeString}`,
             metadata!
           );
-          const links = await megacloudExtractor.extract(new PolyURL(servers[1]?.url!));
+          const links = await megacloudExtractor.extract(
+            new PolyURL('https://4spromax.site/e/k5OoYX22WS2JcOLzELNI6RfpCQ')
+          );
           console.log('📹 Extracted video links:', links);
         }
       } else {
