@@ -38,6 +38,7 @@ function MegaUp(ctx) {
         }
     });
     const extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d;
         try {
             const mediaUrl = videoUrl.href.replace('/e/', '/media/');
             const { data } = yield client.get(mediaUrl, {
@@ -47,11 +48,45 @@ function MegaUp(ctx) {
                 },
             });
             const decrypted = yield decodeSources(data.result);
+            const defaultSource = {
+                url: (_a = decrypted.sources[0]) === null || _a === void 0 ? void 0 : _a.file,
+                isM3U8: (_b = decrypted.sources[0]) === null || _b === void 0 ? void 0 : _b.file.includes('.m3u8'),
+                quality: 'auto',
+            };
+            //split sources into multiple qualities if available
+            const { data: sourceRes } = yield client.get((_c = decrypted.sources[0]) === null || _c === void 0 ? void 0 : _c.file, {
+                headers: {
+                    'Connection': 'keep-alive',
+                    'User-Agent': userAgent,
+                },
+            });
+            if (sourceRes.includes('#EXT-X-STREAM-INF')) {
+                const lines = sourceRes.split('\n');
+                const qualitySources = [];
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith('#EXT-X-STREAM-INF')) {
+                        const resolutionMatch = lines[i].match(/RESOLUTION=\d+x(\d+)/);
+                        const quality = resolutionMatch ? `${resolutionMatch[1]}p` : `quality${qualitySources.length + 1}`;
+                        const url = ((_d = decrypted.sources[0]) === null || _d === void 0 ? void 0 : _d.file.split('/list')[0]) + '/' + lines[i + 1];
+                        qualitySources.push({
+                            url,
+                            isM3U8: true,
+                            quality,
+                        });
+                    }
+                }
+                return {
+                    sources: [qualitySources, defaultSource].flat(),
+                    subtitles: decrypted.tracks.map((track) => ({
+                        kind: track.kind,
+                        url: track.file,
+                        lang: track.label || 'English',
+                    })),
+                    download: decrypted.download,
+                };
+            }
             return {
-                sources: decrypted.sources.map((source) => ({
-                    url: source.file,
-                    isM3U8: source.file.includes('.m3u8') || source.file.endsWith('m3u8'),
-                })),
+                sources: [defaultSource],
                 subtitles: decrypted.tracks.map((track) => ({
                     kind: track.kind,
                     url: track.file,

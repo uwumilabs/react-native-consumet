@@ -105,7 +105,7 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.Zoro());
+      const anime = new META.Anilist(new ANIME.AnimeKai());
       const searchResult = await anime.search('sakamoto days');
       console.log('Anime Search Result:', searchResult);
 
