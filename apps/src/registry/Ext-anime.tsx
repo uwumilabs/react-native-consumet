@@ -65,15 +65,15 @@ const ExtAnime = () => {
     try {
       console.log(`📥 Loading anime extension: ${extensionId}`);
 
-      // const providerInstance = (await manager.loadExtension(extensionId)) as AnimeKai;
+      const providerInstance = (await manager.loadExtension(extensionId)) as AnimeKai;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'AnimeKai'>(
-        `${testExtCode.testCodeString}`,
-        'createAnimeKai',
-        // @ts-ignore
-        metadata
-      );
+      // const providerInstance = await manager.executeProviderCode<'AnimeKai'>(
+      //   `${testExtCode.testCodeString}`,
+      //   'createAnimeKai',
+      //   // @ts-ignore
+      //   metadata
+      // );
       setProvider(providerInstance);
 
       console.log('✅ Anime extension loaded successfully:', {
@@ -111,13 +111,8 @@ const ExtAnime = () => {
             extractorManager.extractBaseExtractorName(servers[1]?.name!)
           );
           const metadata = extractorManager.getExtractorMetadata(servers[1]?.name!);
-          const megacloudExtractor = await extractorManager.executeExtractorCode(
-            `${testExtrCode.testCodeString}`,
-            metadata!
-          );
-          const links = await megacloudExtractor.extract(
-            new PolyURL('https://4spromax.site/e/k5OoYX22WS2JcOLzELNI6RfpCQ')
-          );
+          const extractor = await extractorManager.executeExtractorCode(`${testExtrCode.testCodeString}`, metadata!);
+          const links = await extractor.extract(new PolyURL(servers[1]?.url!));
           console.log('📹 Extracted video links:', links);
         }
       } else {

@@ -49,11 +49,47 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
 
       const decrypted = await decodeSources(data.result);
 
+      const defaultSource: IVideo = {
+        url: decrypted.sources[0]?.file!,
+        isM3U8: decrypted.sources[0]?.file.includes('.m3u8'),
+        quality: 'auto',
+      };
+
+      //split sources into multiple qualities if available
+      const { data: sourceRes } = await client.get(decrypted.sources[0]?.file!, {
+        headers: {
+          'Connection': 'keep-alive',
+          'User-Agent': userAgent,
+        },
+      });
+
+      if (sourceRes.includes('#EXT-X-STREAM-INF')) {
+        const lines = sourceRes.split('\n');
+        const qualitySources: ISource['sources'] = [];
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('#EXT-X-STREAM-INF')) {
+            const resolutionMatch = lines[i].match(/RESOLUTION=\d+x(\d+)/);
+            const quality = resolutionMatch ? `${resolutionMatch[1]}p` : `quality${qualitySources.length + 1}`;
+            const url = decrypted.sources[0]?.file!.split('/list')[0] + '/' + lines[i + 1];
+            qualitySources.push({
+              url,
+              isM3U8: true,
+              quality,
+            });
+          }
+        }
+        return {
+          sources: [qualitySources, defaultSource].flat(),
+          subtitles: decrypted.tracks.map((track) => ({
+            kind: track.kind,
+            url: track.file,
+            lang: track.label || 'English',
+          })),
+          download: decrypted.download,
+        };
+      }
       return {
-        sources: decrypted.sources.map((source) => ({
-          url: source.file,
-          isM3U8: source.file.includes('.m3u8') || source.file.endsWith('m3u8'),
-        })),
+        sources: [defaultSource],
         subtitles: decrypted.tracks.map((track) => ({
           kind: track.kind,
           url: track.file,

@@ -1,1 +1,1 @@
-{"version":3,"file":"megaup.d.ts","sourceRoot":"","sources":["../../src/extractors/megaup.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAGnG;;GAEG;AACH,wBAAgB,MAAM,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAiE7D;AAED,eAAe,MAAM,CAAC"}
+{"version":3,"file":"megaup.d.ts","sourceRoot":"","sources":["../../src/extractors/megaup.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAGnG;;GAEG;AACH,wBAAgB,MAAM,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAqG7D;AAED,eAAe,MAAM,CAAC"}
