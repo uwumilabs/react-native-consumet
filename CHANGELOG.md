@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 (2025-11-01)
+
+* feat(megaup): improve extractor with multi-quality and better source handling ([17ca0e8](https://github.com/2004durgesh/react-native-consumet/commit/17ca0e8))
+* refactor: move example from apps/bare-example to apps/ ([afa8059](https://github.com/2004durgesh/react-native-consumet/commit/afa8059))
+* refactor(animekai): implement animekai factory function and megaup factory function ([76a059a](https://github.com/2004durgesh/react-native-consumet/commit/76a059a))
+* fix(megaup|animekai): update megaup extractor to use external api for iframe decoding ([cbc8dc3](https://github.com/2004durgesh/react-native-consumet/commit/cbc8dc3))
+* chore: bump example app versions and add new servers in multistream ([47837ee](https://github.com/2004durgesh/react-native-consumet/commit/47837ee))
+* chore(docs): update readme [skip ci] ([797f18f](https://github.com/2004durgesh/react-native-consumet/commit/797f18f))
+* fix(megacloud): quality and url parsing in megacloud extractor ([bfdb929](https://github.com/2004durgesh/react-native-consumet/commit/bfdb929))
+
 ## 1.1.0 (2025-10-10)
 
 * feat: multi-quality support and add  property in registry ([1f9344a](https://github.com/2004durgesh/react-native-consumet/commit/1f9344a))
