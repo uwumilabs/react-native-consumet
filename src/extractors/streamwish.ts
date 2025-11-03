@@ -1,13 +1,15 @@
+// @ts-nocheck
 import axios from 'axios';
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
 import { USER_AGENT } from '../utils/constants';
+import type { PolyURL } from '../utils';
 
 class StreamWish extends VideoExtractor {
   protected override serverName = 'streamwish';
   protected override sources: IVideo[] = [];
 
   override extract = async (
-    videoUrl: URL,
+    videoUrl: PolyURL,
     referer?: string
   ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {

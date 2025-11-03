@@ -1,11 +1,9 @@
-import DramaCool from './dramacool';
 import MultiMovies from './multimovies';
 import NetflixMirror from './netflixmirror';
 import MultiStream from './multistream';
 import HiMovies from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
 declare const _default: {
-    DramaCool: typeof DramaCool;
     MultiMovies: typeof MultiMovies;
     NetflixMirror: typeof NetflixMirror;
     HiMovies: typeof HiMovies;

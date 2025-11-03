@@ -10,14 +10,13 @@ import {
   type IMovieResult,
   type ISearch,
 } from '../../models';
-import { MixDrop, StreamTape, StreamWish, VidHide } from '../../extractors';
-import { USER_AGENT } from '../../utils';
+import { StreamWish, VidHide } from '../../extractors';
+import { PolyURL, USER_AGENT } from '../../utils';
 
 class MultiMovies extends MovieParser {
   override readonly name = 'MultiMovies';
-  protected override baseUrl = 'https://multimovies.asia';
-  protected override logo =
-    'https://multimovies.asia/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+  protected override baseUrl = 'https://multimovies.cheap';
+  protected override logo = `${this.baseUrl}/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png`;
   protected override classPath = 'MOVIES.MultiMovies';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
   constructor(customBaseURL?: string) {
@@ -48,9 +47,9 @@ class MultiMovies extends MovieParser {
     try {
       let url;
       if (page === 1) {
-        url = `${this.proxiedBaseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
+        url = `${this.baseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
       } else {
-        url = `${this.proxiedBaseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
+        url = `${this.baseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
       }
       const { data } = await axios.get(url);
       const $ = load(data);
@@ -74,8 +73,8 @@ class MultiMovies extends MovieParser {
           const episodes = episodesInfo?.episodes || [];
 
           for (const episode of episodes) {
-            if (episode.season !== null) {
-              seasonSet.add(episode.season!);
+            if (episode.season != null) {
+              seasonSet.add(episode.season);
             }
           }
           searchResult.results.push({
@@ -85,7 +84,7 @@ class MultiMovies extends MovieParser {
             image: $(el).find('.thumbnail img').attr('src') ?? '',
             rating: parseFloat($(el).find('.meta .rating').text().replace('IMDb ', '')) || 0,
             releaseDate: $(el).find('.meta .year').text().trim(),
-            season: seasonSet.size,
+            seasons: seasonSet.size,
             description: $(el).find('.contenido p').text().trim(),
             type: $(el).find('.thumbnail a').attr('href')?.includes('/movies/') ? TvType.MOVIE : TvType.TVSERIES,
           });
@@ -103,23 +102,11 @@ class MultiMovies extends MovieParser {
    * @param mediaId media link or id
    */
   override fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
-    if (!mediaId.startsWith(this.proxiedBaseUrl)) {
-      mediaId = `${this.proxiedBaseUrl}/${mediaId}`;
+    if (!mediaId.startsWith(this.baseUrl)) {
+      mediaId = `${this.baseUrl}/${mediaId}`;
     }
-
-    // Extract the clean media ID from the proxied URL
-    let cleanId = mediaId;
-    if (mediaId.includes('?url=')) {
-      // If it's a proxied URL, extract the original URL and then get the path
-      const originalUrl = decodeURIComponent(mediaId.split('?url=')[1]!);
-      cleanId = originalUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
-    } else {
-      // If it's not proxied, clean it normally
-      cleanId = mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
-    }
-
     const movieInfo: IMovieInfo = {
-      id: cleanId,
+      id: mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '')!,
       title: '',
       url: mediaId,
     };
@@ -232,59 +219,47 @@ class MultiMovies extends MovieParser {
     fileId?: string
   ): Promise<ISource> => {
     if (episodeId.startsWith('http')) {
-      const serverUrl = new URL(episodeId);
+      const serverUrl = new PolyURL(episodeId);
+      const referer = serverUrl.origin;
       switch (server) {
-        case StreamingServers.MixDrop:
-          return {
-            headers: { Referer: serverUrl.href },
-            sources: await new MixDrop().extract(serverUrl),
-            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
-          };
         case StreamingServers.StreamWish:
           return {
-            headers: { Referer: serverUrl.href },
-            ...(await new StreamWish().extract(serverUrl, this.baseUrl)),
+            headers: { Referer: referer },
+            ...(await new StreamWish().extract(serverUrl, referer)),
             download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '',
-          };
-        case StreamingServers.StreamTape:
-          return {
-            headers: { Referer: serverUrl.href },
-            sources: await new StreamTape().extract(serverUrl),
-            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         case StreamingServers.VidHide:
           return {
-            headers: { Referer: serverUrl.href },
+            headers: { Referer: referer },
             sources: await new VidHide().extract(serverUrl),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         default:
           return {
-            headers: { Referer: serverUrl.href },
-            ...(await new StreamWish().extract(serverUrl)),
-            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
+            headers: { Referer: referer },
+            ...(await new StreamWish().extract(serverUrl, referer)),
+            download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '',
           };
       }
     }
 
     try {
-      const servers = await this.fetchEpisodeServers(episodeId);
+      const servers = await this.fetchEpisodeServers(episodeId, episodeId);
       const i = servers.findIndex((s) => s.name.toLowerCase() === server.toLowerCase());
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
 
       const serverUrl: URL = new URL(servers[i]!.url);
-      let extractedFileId = '';
+      let fileId = '';
 
       if (!episodeId.startsWith('http')) {
         const { fileId: id } = await this.getServer(`${this.baseUrl}/${episodeId}`);
-        extractedFileId = id ?? '';
+        fileId = id ?? '';
       }
-      // extractedFileId to be used for download link
-      return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, extractedFileId);
+      // fileId to be used for download link
+      return await this.fetchEpisodeSources(serverUrl.href, mediaId, server, fileId);
     } catch (err) {
-      //console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -292,8 +267,9 @@ class MultiMovies extends MovieParser {
   /**
    *
    * @param episodeId takes episode link or movie id
+   * @param mediaId takes movie link or id (found on movie info object, this is just a placeholder for compatibility)
    */
-  override fetchEpisodeServers = async (episodeId: string): Promise<IEpisodeServer[]> => {
+  override fetchEpisodeServers = async (episodeId: string, mediaId: string): Promise<IEpisodeServer[]> => {
     if (!episodeId.startsWith(this.baseUrl)) {
       episodeId = `${this.baseUrl}/${episodeId}`;
     }
@@ -302,7 +278,6 @@ class MultiMovies extends MovieParser {
       const { servers } = await this.getServer(episodeId);
       return servers;
     } catch (err) {
-      //console.log(err);
       throw new Error((err as Error).message);
     }
   };
@@ -314,7 +289,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await axios.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
+      const { data } = await axios.get(`${this.baseUrl}/trending/page/${page}/`);
       const $ = load(data);
       const navSelector = 'div.pagination';
 
@@ -347,7 +322,7 @@ class MultiMovies extends MovieParser {
       results: [],
     };
     try {
-      const { data } = await axios.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
+      const { data } = await axios.get(`${this.baseUrl}/genre/${genre}/page/${page}`);
 
       const $ = load(data);
       const navSelector = 'div.pagination';
@@ -375,12 +350,9 @@ class MultiMovies extends MovieParser {
   };
 
   private async getServer(url: string): Promise<{ servers: IEpisodeServer[]; fileId: string }> {
-    //console.log(`Fetching server for URL: ${url}`);
     try {
-      //console.log('step1');
-      const { data } = await axios.get(this.customProxyUrl + url);
+      const { data } = await axios.get(url);
       const $ = load(data);
-      //console.log('step2');
       // Extract player config
       const playerConfig = {
         postId: $('#player-option-1').attr('data-post'),
@@ -401,15 +373,20 @@ class MultiMovies extends MovieParser {
       const headers = {
         'User-Agent': USER_AGENT,
       };
-      //console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
-      const response = await fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
+
+      // const playerRes = await axios.post(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData, {
+      //   headers,
+      // });
+      const res = await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
         method: 'POST',
-        headers: headers,
-        body: formData,
+        headers: {
+          ...headers,
+          //'Content-Type':'multipart/form-data',
+        },
+        body: formData as any,
       });
-      const playerRes = await response.json();
-      // console.log('playerRes', playerRes);
-      const iframeUrl = playerRes?.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes?.embed_url;
+      const playerRes = await res.json();
+      const iframeUrl = playerRes.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.embed_url;
 
       // Handle non-multimovies case
       if (!iframeUrl.includes('multimovies')) {
@@ -419,17 +396,27 @@ class MultiMovies extends MovieParser {
             fileId: iframeUrl.split('/').pop() ?? '',
           };
         }
-        let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
-        const redirectResponse = await axios.head(playerBaseUrl, {
-          headers,
-        });
+        // let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
+        // const redirectResponse = await axios.head(playerBaseUrl, {
+        //   headers: headers,
+        //   maxRedirects: 5,
+        //   validateStatus: () => true,
+        // });
+        // const redirectResponse = await fetch(playerBaseUrl, {
+        //   method: 'HEAD',
+        //   headers: headers,
+        //   redirect: 'follow',
+        // });
 
-        // Update base URL if redirect occurred
-        if (redirectResponse) {
-          playerBaseUrl = redirectResponse.request?.responseURL?.split('/').slice(0, 3).join('/');
-        }
+        // const isRedirected = redirectResponse.request._redirectable._isRedirect ? redirectResponse : null;
+        // const finalResponse = true ? redirectResponse : null;
+
+        // // Update base URL if redirect occurred
+        // if (finalResponse) {
+        //   playerBaseUrl = finalResponse?.url;
+        // }
+
         const fileId = iframeUrl.split('/').pop();
-
         if (!fileId) {
           throw new Error('No player ID found');
         }
@@ -437,37 +424,41 @@ class MultiMovies extends MovieParser {
         const streamRequestData = new FormData();
         streamRequestData.append('sid', fileId);
 
-        const streamResponse = await fetch(`${playerBaseUrl}/embedhelper.php`, {
-          headers: headers,
-          body: streamRequestData,
+        // const streamResponse = await axios.post(`https://pro.gtxgamer.site/embedhelper.php`, streamRequestData, {
+        //   headers,
+        // });
+        const streamRes = await fetch(`https://pro.gtxgamer.site/embedhelper.php`, {
           method: 'POST',
+          headers: {
+            ...headers,
+            // 'Content-Type':'multipart/form-data',
+          },
+          body: streamRequestData as any,
         });
-        const streamResponseData = await streamResponse.json();
-        if (!streamResponseData) {
+        const streamResponse = await streamRes.json();
+        if (!streamResponse) {
           throw new Error('No stream data found');
         }
 
-        const streamDetails = streamResponseData;
-        const mresultKeys = new Set(Object.keys(JSON.parse(atob(streamDetails.mresult))));
-        const siteUrlsKeys = new Set(Object.keys(streamDetails.siteUrls));
-
+        // Decode and parse mresult
+        const decodedMresult = JSON.parse(atob(streamResponse.mresult));
+        const mresultKeys = Object.keys(decodedMresult);
         // Find common keys
-        const commonKeys = [...mresultKeys].filter((key) => siteUrlsKeys.has(key));
+        const commonKeys = mresultKeys.filter((key) => streamResponse.siteUrls.hasOwnProperty(key));
 
         // Convert to a Set (if needed)
         const commonStreamSites = new Set(commonKeys);
         const servers = Array.from(commonStreamSites).map((site) => {
           return {
             name:
-              streamDetails.siteFriendlyNames[site] === 'StreamHG'
+              streamResponse.siteFriendlyNames[site] === 'StreamHG'
                 ? 'StreamWish'
-                : streamDetails.siteFriendlyNames[site] === 'EarnVids'
+                : streamResponse.siteFriendlyNames[site] === 'EarnVids'
                   ? 'VidHide'
-                  : streamDetails.siteFriendlyNames[site],
-            url: streamDetails.siteUrls[site] + JSON.parse(atob(streamDetails.mresult))[site],
+                  : streamResponse.siteFriendlyNames[site],
+            url: streamResponse.siteUrls[site] + JSON.parse(atob(streamResponse.mresult))[site],
           };
         });
-
         return { servers, fileId };
       } else {
         return {
@@ -476,7 +467,7 @@ class MultiMovies extends MovieParser {
         };
       }
     } catch (err) {
-      //console.log(err);
+      console.log(err);
       throw new Error((err as Error).message);
     }
   }

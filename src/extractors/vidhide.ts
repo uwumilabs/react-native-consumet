@@ -1,11 +1,13 @@
+// @ts-nocheck
 import axios from 'axios';
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import type { PolyURL } from '../utils';
 
 class VidHide extends VideoExtractor {
   protected override serverName = 'VidHide';
   protected override sources: IVideo[] = [];
 
-  override extract = async (videoUrl: URL): Promise<IVideo[]> => {
+  override extract = async (videoUrl: PolyURL): Promise<IVideo[]> => {
     try {
       const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
         sources: [],

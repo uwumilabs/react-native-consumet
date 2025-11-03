@@ -25,8 +25,8 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.MultiStream();
-    const search = await movies.search('jujutsu');
+    const movies = new MOVIES.MultiMovies();
+    const search = await movies.search('Kantara chapter 1');
     console.log('Search Results:', search);
 
     if (!search || !search.results || search.results.length === 0) {
