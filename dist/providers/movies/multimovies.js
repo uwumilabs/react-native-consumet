@@ -21,8 +21,8 @@ class MultiMovies extends models_1.MovieParser {
     constructor(customBaseURL) {
         super();
         this.name = 'MultiMovies';
-        this.baseUrl = 'https://multimovies.asia';
-        this.logo = 'https://multimovies.asia/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png';
+        this.baseUrl = 'https://multimovies.cheap';
+        this.logo = `${this.baseUrl}/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png`;
         this.classPath = 'MOVIES.MultiMovies';
         this.supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
         this.proxiedBaseUrl = 'https://m3u8proxy.durgeshdwivedi81.workers.dev/v2?url=' + encodeURIComponent(this.baseUrl);
@@ -41,10 +41,10 @@ class MultiMovies extends models_1.MovieParser {
             try {
                 let url;
                 if (page === 1) {
-                    url = `${this.proxiedBaseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
+                    url = `${this.baseUrl}/?s=${query.replace(/[\W_]+/g, '+')}`;
                 }
                 else {
-                    url = `${this.proxiedBaseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
+                    url = `${this.baseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, '+')}`;
                 }
                 const { data } = yield axios_1.default.get(url);
                 const $ = (0, cheerio_1.load)(data);
@@ -60,7 +60,7 @@ class MultiMovies extends models_1.MovieParser {
                     const episodesInfo = yield this.fetchMediaInfo(href);
                     const episodes = (episodesInfo === null || episodesInfo === void 0 ? void 0 : episodesInfo.episodes) || [];
                     for (const episode of episodes) {
-                        if (episode.season !== null) {
+                        if (episode.season != null) {
                             seasonSet.add(episode.season);
                         }
                     }
@@ -71,7 +71,7 @@ class MultiMovies extends models_1.MovieParser {
                         image: (_d = $(el).find('.thumbnail img').attr('src')) !== null && _d !== void 0 ? _d : '',
                         rating: parseFloat($(el).find('.meta .rating').text().replace('IMDb ', '')) || 0,
                         releaseDate: $(el).find('.meta .year').text().trim(),
-                        season: seasonSet.size,
+                        seasons: seasonSet.size,
                         description: $(el).find('.contenido p').text().trim(),
                         type: ((_e = $(el).find('.thumbnail a').attr('href')) === null || _e === void 0 ? void 0 : _e.includes('/movies/')) ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
                     });
@@ -88,22 +88,11 @@ class MultiMovies extends models_1.MovieParser {
          */
         this.fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-            if (!mediaId.startsWith(this.proxiedBaseUrl)) {
-                mediaId = `${this.proxiedBaseUrl}/${mediaId}`;
-            }
-            // Extract the clean media ID from the proxied URL
-            let cleanId = mediaId;
-            if (mediaId.includes('?url=')) {
-                // If it's a proxied URL, extract the original URL and then get the path
-                const originalUrl = decodeURIComponent(mediaId.split('?url=')[1]);
-                cleanId = originalUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
-            }
-            else {
-                // If it's not proxied, clean it normally
-                cleanId = mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
+            if (!mediaId.startsWith(this.baseUrl)) {
+                mediaId = `${this.baseUrl}/${mediaId}`;
             }
             const movieInfo = {
-                id: cleanId,
+                id: mediaId.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, ''),
                 title: '',
                 url: mediaId,
             };
@@ -204,57 +193,46 @@ class MultiMovies extends models_1.MovieParser {
         this.fetchEpisodeSources = (episodeId_1, mediaId_1, ...args_1) => __awaiter(this, [episodeId_1, mediaId_1, ...args_1], void 0, function* (episodeId, mediaId, //just placeholder for compatibility with tmdb
         server = models_1.StreamingServers.StreamWish, fileId) {
             if (episodeId.startsWith('http')) {
-                const serverUrl = new URL(episodeId);
+                const serverUrl = new utils_1.PolyURL(episodeId);
+                const referer = serverUrl.origin;
                 switch (server) {
-                    case models_1.StreamingServers.MixDrop:
-                        return {
-                            headers: { Referer: serverUrl.href },
-                            sources: yield new extractors_1.MixDrop().extract(serverUrl),
-                            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
-                        };
                     case models_1.StreamingServers.StreamWish:
-                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new extractors_1.StreamWish().extract(serverUrl, this.baseUrl))), { download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '' });
-                    case models_1.StreamingServers.StreamTape:
-                        return {
-                            headers: { Referer: serverUrl.href },
-                            sources: yield new extractors_1.StreamTape().extract(serverUrl),
-                            download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
-                        };
+                        return Object.assign(Object.assign({ headers: { Referer: referer } }, (yield new extractors_1.StreamWish().extract(serverUrl, referer))), { download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '' });
                     case models_1.StreamingServers.VidHide:
                         return {
-                            headers: { Referer: serverUrl.href },
+                            headers: { Referer: referer },
                             sources: yield new extractors_1.VidHide().extract(serverUrl),
                             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
                         };
                     default:
-                        return Object.assign(Object.assign({ headers: { Referer: serverUrl.href } }, (yield new extractors_1.StreamWish().extract(serverUrl))), { download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '' });
+                        return Object.assign(Object.assign({ headers: { Referer: referer } }, (yield new extractors_1.StreamWish().extract(serverUrl, referer))), { download: fileId ? `${serverUrl.href.toString().replace('/e/', '/f/')}/${fileId}` : '' });
                 }
             }
             try {
-                const servers = yield this.fetchEpisodeServers(episodeId);
+                const servers = yield this.fetchEpisodeServers(episodeId, episodeId);
                 const i = servers.findIndex((s) => s.name.toLowerCase() === server.toLowerCase());
                 if (i === -1) {
                     throw new Error(`Server ${server} not found`);
                 }
                 const serverUrl = new URL(servers[i].url);
-                let extractedFileId = '';
+                let fileId = '';
                 if (!episodeId.startsWith('http')) {
                     const { fileId: id } = yield this.getServer(`${this.baseUrl}/${episodeId}`);
-                    extractedFileId = id !== null && id !== void 0 ? id : '';
+                    fileId = id !== null && id !== void 0 ? id : '';
                 }
-                // extractedFileId to be used for download link
-                return yield this.fetchEpisodeSources(serverUrl.href, mediaId, server, extractedFileId);
+                // fileId to be used for download link
+                return yield this.fetchEpisodeSources(serverUrl.href, mediaId, server, fileId);
             }
             catch (err) {
-                //console.log(err);
                 throw new Error(err.message);
             }
         });
         /**
          *
          * @param episodeId takes episode link or movie id
+         * @param mediaId takes movie link or id (found on movie info object, this is just a placeholder for compatibility)
          */
-        this.fetchEpisodeServers = (episodeId) => __awaiter(this, void 0, void 0, function* () {
+        this.fetchEpisodeServers = (episodeId, mediaId) => __awaiter(this, void 0, void 0, function* () {
             if (!episodeId.startsWith(this.baseUrl)) {
                 episodeId = `${this.baseUrl}/${episodeId}`;
             }
@@ -263,7 +241,6 @@ class MultiMovies extends models_1.MovieParser {
                 return servers;
             }
             catch (err) {
-                //console.log(err);
                 throw new Error(err.message);
             }
         });
@@ -274,7 +251,7 @@ class MultiMovies extends models_1.MovieParser {
                 results: [],
             };
             try {
-                const { data } = yield axios_1.default.get(`${this.proxiedBaseUrl}/trending/page/${page}/`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/trending/page/${page}/`);
                 const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pagination';
                 result.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
@@ -306,7 +283,7 @@ class MultiMovies extends models_1.MovieParser {
                 results: [],
             };
             try {
-                const { data } = yield axios_1.default.get(`${this.proxiedBaseUrl}/genre/${genre}/page/${page}`);
+                const { data } = yield axios_1.default.get(`${this.baseUrl}/genre/${genre}/page/${page}`);
                 const $ = (0, cheerio_1.load)(data);
                 const navSelector = 'div.pagination';
                 result.hasNextPage = $(navSelector).find('#nextpagination').length > 0;
@@ -345,13 +322,10 @@ class MultiMovies extends models_1.MovieParser {
     }
     getServer(url) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f;
-            //console.log(`Fetching server for URL: ${url}`);
+            var _a, _b, _c, _d;
             try {
-                //console.log('step1');
-                const { data } = yield axios_1.default.get(this.customProxyUrl + url);
+                const { data } = yield axios_1.default.get(url);
                 const $ = (0, cheerio_1.load)(data);
-                //console.log('step2');
                 // Extract player config
                 const playerConfig = {
                     postId: $('#player-option-1').attr('data-post'),
@@ -369,15 +343,16 @@ class MultiMovies extends models_1.MovieParser {
                 const headers = {
                     'User-Agent': utils_1.USER_AGENT,
                 };
-                //console.log(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData);
-                const response = yield fetch(this.customProxyUrl + `${this.baseUrl}/wp-admin/admin-ajax.php`, {
+                // const playerRes = await axios.post(`${this.baseUrl}/wp-admin/admin-ajax.php`, formData, {
+                //   headers,
+                // });
+                const res = yield fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
                     method: 'POST',
-                    headers: headers,
+                    headers: Object.assign({}, headers),
                     body: formData,
                 });
-                const playerRes = yield response.json();
-                // console.log('playerRes', playerRes);
-                const iframeUrl = ((_b = (_a = playerRes === null || playerRes === void 0 ? void 0 : playerRes.embed_url) === null || _a === void 0 ? void 0 : _a.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)) === null || _b === void 0 ? void 0 : _b[1]) || (playerRes === null || playerRes === void 0 ? void 0 : playerRes.embed_url);
+                const playerRes = yield res.json();
+                const iframeUrl = ((_b = (_a = playerRes.embed_url) === null || _a === void 0 ? void 0 : _a.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)) === null || _b === void 0 ? void 0 : _b[1]) || playerRes.embed_url;
                 // Handle non-multimovies case
                 if (!iframeUrl.includes('multimovies')) {
                     if (iframeUrl.includes('dhcplay')) {
@@ -386,44 +361,56 @@ class MultiMovies extends models_1.MovieParser {
                             fileId: (_c = iframeUrl.split('/').pop()) !== null && _c !== void 0 ? _c : '',
                         };
                     }
-                    let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
-                    const redirectResponse = yield axios_1.default.head(playerBaseUrl, {
-                        headers,
-                    });
-                    // Update base URL if redirect occurred
-                    if (redirectResponse) {
-                        playerBaseUrl = (_e = (_d = redirectResponse.request) === null || _d === void 0 ? void 0 : _d.responseURL) === null || _e === void 0 ? void 0 : _e.split('/').slice(0, 3).join('/');
-                    }
+                    // let playerBaseUrl = iframeUrl.split('/').slice(0, 3).join('/');
+                    // const redirectResponse = await axios.head(playerBaseUrl, {
+                    //   headers: headers,
+                    //   maxRedirects: 5,
+                    //   validateStatus: () => true,
+                    // });
+                    // const redirectResponse = await fetch(playerBaseUrl, {
+                    //   method: 'HEAD',
+                    //   headers: headers,
+                    //   redirect: 'follow',
+                    // });
+                    // const isRedirected = redirectResponse.request._redirectable._isRedirect ? redirectResponse : null;
+                    // const finalResponse = true ? redirectResponse : null;
+                    // // Update base URL if redirect occurred
+                    // if (finalResponse) {
+                    //   playerBaseUrl = finalResponse?.url;
+                    // }
                     const fileId = iframeUrl.split('/').pop();
                     if (!fileId) {
                         throw new Error('No player ID found');
                     }
                     const streamRequestData = new FormData();
                     streamRequestData.append('sid', fileId);
-                    const streamResponse = yield fetch(`${playerBaseUrl}/embedhelper.php`, {
-                        headers: headers,
-                        body: streamRequestData,
+                    // const streamResponse = await axios.post(`https://pro.gtxgamer.site/embedhelper.php`, streamRequestData, {
+                    //   headers,
+                    // });
+                    const streamRes = yield fetch(`https://pro.gtxgamer.site/embedhelper.php`, {
                         method: 'POST',
+                        headers: Object.assign({}, headers),
+                        body: streamRequestData,
                     });
-                    const streamResponseData = yield streamResponse.json();
-                    if (!streamResponseData) {
+                    const streamResponse = yield streamRes.json();
+                    if (!streamResponse) {
                         throw new Error('No stream data found');
                     }
-                    const streamDetails = streamResponseData;
-                    const mresultKeys = new Set(Object.keys(JSON.parse(atob(streamDetails.mresult))));
-                    const siteUrlsKeys = new Set(Object.keys(streamDetails.siteUrls));
+                    // Decode and parse mresult
+                    const decodedMresult = JSON.parse(atob(streamResponse.mresult));
+                    const mresultKeys = Object.keys(decodedMresult);
                     // Find common keys
-                    const commonKeys = [...mresultKeys].filter((key) => siteUrlsKeys.has(key));
+                    const commonKeys = mresultKeys.filter((key) => streamResponse.siteUrls.hasOwnProperty(key));
                     // Convert to a Set (if needed)
                     const commonStreamSites = new Set(commonKeys);
                     const servers = Array.from(commonStreamSites).map((site) => {
                         return {
-                            name: streamDetails.siteFriendlyNames[site] === 'StreamHG'
+                            name: streamResponse.siteFriendlyNames[site] === 'StreamHG'
                                 ? 'StreamWish'
-                                : streamDetails.siteFriendlyNames[site] === 'EarnVids'
+                                : streamResponse.siteFriendlyNames[site] === 'EarnVids'
                                     ? 'VidHide'
-                                    : streamDetails.siteFriendlyNames[site],
-                            url: streamDetails.siteUrls[site] + JSON.parse(atob(streamDetails.mresult))[site],
+                                    : streamResponse.siteFriendlyNames[site],
+                            url: streamResponse.siteUrls[site] + JSON.parse(atob(streamResponse.mresult))[site],
                         };
                     });
                     return { servers, fileId };
@@ -431,12 +418,12 @@ class MultiMovies extends models_1.MovieParser {
                 else {
                     return {
                         servers: [{ name: 'StreamWish', url: iframeUrl }],
-                        fileId: (_f = iframeUrl.split('/').pop()) !== null && _f !== void 0 ? _f : '',
+                        fileId: (_d = iframeUrl.split('/').pop()) !== null && _d !== void 0 ? _d : '',
                     };
                 }
             }
             catch (err) {
-                //console.log(err);
+                console.log(err);
                 throw new Error(err.message);
             }
         });

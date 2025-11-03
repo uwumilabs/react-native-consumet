@@ -1,8 +1,9 @@
 import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import type { PolyURL } from '../utils';
 declare class StreamWish extends VideoExtractor {
     protected serverName: string;
     protected sources: IVideo[];
-    extract: (videoUrl: URL, referer?: string) => Promise<{
+    extract: (videoUrl: PolyURL, referer?: string) => Promise<{
         sources: IVideo[];
     } & {
         subtitles: ISubtitle[];

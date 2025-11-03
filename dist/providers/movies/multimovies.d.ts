@@ -30,8 +30,9 @@ declare class MultiMovies extends MovieParser {
     /**
      *
      * @param episodeId takes episode link or movie id
+     * @param mediaId takes movie link or id (found on movie info object, this is just a placeholder for compatibility)
      */
-    fetchEpisodeServers: (episodeId: string) => Promise<IEpisodeServer[]>;
+    fetchEpisodeServers: (episodeId: string, mediaId: string) => Promise<IEpisodeServer[]>;
     fetchPopular: (page?: number) => Promise<ISearch<IMovieResult>>;
     fetchByGenre: (genre: string, page?: number) => Promise<ISearch<IMovieResult>>;
     private getServer;
