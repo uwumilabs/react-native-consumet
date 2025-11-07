@@ -1,5 +1,12 @@
 # Changelog
 
+## <small>1.2.1 (2025-11-07)</small>
+
+* fix: update repository url's to reflect new ownership [skip ci] ([df7fe91](https://github.com/uwumilabs/react-native-consumet/commit/df7fe91))
+* fix(multimovies): fix multimovies fetch calls ([38e53c5](https://github.com/uwumilabs/react-native-consumet/commit/38e53c5))
+* refactor(multimovies): implement multimovies factory function ([ef13f39](https://github.com/uwumilabs/react-native-consumet/commit/ef13f39))
+* refactor(yflix): implement yflix as a factory function ([5cc0914](https://github.com/uwumilabs/react-native-consumet/commit/5cc0914))
+
 ## 1.2.0 (2025-11-01)
 
 * feat(megaup): improve extractor with multi-quality and better source handling ([17ca0e8](https://github.com/uwumilabs/react-native-consumet/commit/17ca0e8))
