@@ -3,14 +3,16 @@
 // import {
 //   MovieParser,
 //   TvType,
-//   IMovieInfo,
-//   IEpisodeServer,
+//   type IMovieInfo,
+//   type IEpisodeServer,
 //   StreamingServers,
-//   ISource,
-//   IMovieResult,
-//   ISearch,
+//   type ISource,
+//   type IMovieResult,
+//   type ISearch,
 // } from '../../models';
 // import { MegaUp } from '../../extractors';
+// import axios from 'axios';
+// import { PolyURL } from '../../utils';
 
 // class YFlix extends MovieParser {
 //   override readonly name = 'YFlix';
@@ -20,7 +22,7 @@
 //   protected override classPath = 'MOVIES.YFlix';
 //   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
 //   constructor(customBaseURL?: string) {
-//     super(...arguments);
+//     super();
 //     if (customBaseURL) {
 //       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
 //         this.baseUrl = customBaseURL;
@@ -44,9 +46,7 @@
 //       results: [],
 //     };
 //     try {
-//       const { data } = await this.client.get(
-//         `${this.baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`
-//       );
+//       const { data } = await axios.get(`${this.baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`);
 
 //       const $ = load(data);
 
@@ -62,11 +62,8 @@
 //           url: `${this.baseUrl}${$(el).find('div.inner > a').attr('href')}`,
 //           image: $(el).find('img').attr('data-src') || $(el).find('img').attr('src'),
 //           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-//           seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]) : undefined,
-//           type:
-//             $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie'
-//               ? TvType.MOVIE
-//               : TvType.TVSERIES,
+//           seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]!) : undefined,
+//           type: $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie' ? TvType.MOVIE : TvType.TVSERIES,
 //         });
 //       });
 
@@ -91,7 +88,7 @@
 //       url: mediaId,
 //     };
 //     try {
-//       const { data } = await this.client.get(mediaId);
+//       const { data } = await axios.get(mediaId);
 //       const $ = load(data);
 //       const recommendationsArray: IMovieResult[] = [];
 
@@ -102,11 +99,8 @@
 //           title: $(el).find('div.info > a').text().trim()!,
 //           image: $(el).find('img').attr('data-src') || $(el).find('img').attr('src'),
 //           releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-//           seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]) : undefined,
-//           type:
-//             $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie'
-//               ? TvType.MOVIE
-//               : TvType.TVSERIES,
+//           seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]!) : undefined,
+//           type: $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie' ? TvType.MOVIE : TvType.TVSERIES,
 //         });
 //       });
 
@@ -120,7 +114,7 @@
 //       movieInfo.genres = $('ul.mics > li:contains(Genres:) a')
 //         .map((i, el) => $(el).text().split('&'))
 //         .get()
-//         .map(v => v.trim());
+//         .map((v) => v.trim());
 //       movieInfo.casts = $('ul.mics > li:contains(Casts:) a')
 //         .map((i, el) => $(el).text())
 //         .get();
@@ -135,7 +129,7 @@
 //       movieInfo.recommendations = recommendationsArray as any;
 
 //       //   if (movieInfo.type === TvType.TVSERIES) {
-//       //     const { data } = await this.client.get(ajaxReqUrl(uid, 'tv', true));
+//       //     const { data } = await axios.get(ajaxReqUrl(uid, 'tv', true));
 //       //     const $$ = load(data);
 //       //     const seasonsIds = $$('.dropdown-menu > a')
 //       //       .map((i, el) => $(el).attr('data-id'))
@@ -144,7 +138,7 @@
 //       //     movieInfo.episodes = [];
 //       //     let season = 1;
 //       //     for (const id of seasonsIds) {
-//       //       const { data } = await this.client.get(ajaxReqUrl(id, 'season'));
+//       //       const { data } = await axios.get(ajaxReqUrl(id, 'season'));
 //       //       const $$$ = load(data);
 
 //       //       $$$('.nav > li')
@@ -170,12 +164,12 @@
 //       //       },
 //       //     ];
 //       //   }
-//       const episodesAjax = await this.client.get(
+//       const episodesAjax = await axios.get(
 //         `${this.baseUrl}/ajax/episodes/list?id=${uid}&_=${await this.GenerateToken(uid!)}`,
 //         {
 //           headers: {
 //             'X-Requested-With': 'XMLHttpRequest',
-//             Referer: `${this.baseUrl}/watch/${mediaId}`,
+//             'Referer': `${this.baseUrl}/watch/${mediaId}`,
 //           },
 //         }
 //       );
@@ -226,17 +220,17 @@
 //     server: StreamingServers = StreamingServers.MegaUp
 //   ): Promise<ISource> => {
 //     if (episodeId.startsWith('http')) {
-//       const serverUrl = new URL(episodeId);
+//       const serverUrl = new PolyURL(episodeId);
 //       switch (server) {
 //         case StreamingServers.MegaUp:
 //           return {
 //             headers: { Referer: serverUrl.href },
-//             ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+//             ...(await MegaUp().extract(serverUrl)),
 //           };
 //         default:
 //           return {
 //             headers: { Referer: serverUrl.href },
-//             ...(await new MegaUp(this.proxyConfig, this.adapter).extract(serverUrl)),
+//             ...(await MegaUp().extract(serverUrl)),
 //           };
 //       }
 //     }
@@ -244,19 +238,19 @@
 //     try {
 //       const servers = await this.fetchEpisodeServers(episodeId, mediaId);
 
-//       const i = servers.findIndex(s => s.name.toLowerCase().includes(server)); //for now only megaup is available, hence directly using it
+//       const i = servers.findIndex((s) => s.name.toLowerCase().includes(server)); //for now only megaup is available, hence directly using it
 
 //       if (i === -1) {
 //         throw new Error(`Server ${server} not found`);
 //       }
 
-//       const serverUrl: URL = new URL(servers[i].url);
+//       const serverUrl: URL = new URL(servers[i]?.url!);
 //       const subsUrl = serverUrl.searchParams.get('sub.list');
 
 //       // Fetch subtitles and sources in parallel
 //       const [extraSubtitles, sources] = await Promise.all([
 //         subsUrl
-//           ? this.client
+//           ? axios
 //               .get(subsUrl, {
 //                 headers: { Referer: serverUrl.href },
 //               })
@@ -293,7 +287,7 @@
 //    */
 //   override fetchEpisodeServers = async (episodeId: string, mediaId: string): Promise<IEpisodeServer[]> => {
 //     try {
-//       const { data } = await this.client.get(
+//       const { data } = await axios.get(
 //         `${this.baseUrl}/ajax/links/list?eid=${episodeId}&_=${await this.GenerateToken(episodeId)}`
 //       );
 //       const $ = load(data.result);
@@ -303,7 +297,7 @@
 //       await Promise.all(
 //         serverItems.map(async (i, server) => {
 //           const id = $(server).attr('data-lid');
-//           const { data } = await this.client.get(
+//           const { data } = await axios.get(
 //             `${this.baseUrl}/ajax/links/view?id=${id}&_=${await this.GenerateToken(id!)}`
 //           );
 //           const decodedIframeData = await this.DecodeIframeData(data.result);
@@ -321,7 +315,7 @@
 
 //   fetchRecentMovies = async (): Promise<IMovieResult[]> => {
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/home`);
+//       const { data } = await axios.get(`${this.baseUrl}/home`);
 //       const $ = load(data);
 
 //       const movies = $(
@@ -352,7 +346,7 @@
 
 //   fetchRecentTvShows = async (): Promise<IMovieResult[]> => {
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/home`);
+//       const { data } = await axios.get(`${this.baseUrl}/home`);
 //       const $ = load(data);
 
 //       const tvshows = $(
@@ -364,17 +358,9 @@
 //             title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
 //             url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
 //             image: $(el).find('div.film-poster > img').attr('data-src'),
-//             season: $(el)
-//               .find('div.film-detail > div.fd-infor > span:nth-child(1)')
-//               .text()
-//               .replace('SS', '')
-//               .trim(),
+//             season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
 //             latestEpisode:
-//               $(el)
-//                 .find('div.film-detail > div.fd-infor > span:nth-child(3)')
-//                 .text()
-//                 .replace('EPS', '')
-//                 .trim() || null,
+//               $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
 //             type:
 //               $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
 //                 ? TvType.MOVIE
@@ -391,7 +377,7 @@
 
 //   fetchTrendingMovies = async (): Promise<IMovieResult[]> => {
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/home`);
+//       const { data } = await axios.get(`${this.baseUrl}/home`);
 //       const $ = load(data);
 
 //       const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
@@ -420,7 +406,7 @@
 
 //   fetchTrendingTvShows = async (): Promise<IMovieResult[]> => {
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/home`);
+//       const { data } = await axios.get(`${this.baseUrl}/home`);
 //       const $ = load(data);
 
 //       const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
@@ -430,17 +416,9 @@
 //             title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
 //             url: `${this.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
 //             image: $(el).find('div.film-poster > img').attr('data-src'),
-//             season: $(el)
-//               .find('div.film-detail > div.fd-infor > span:nth-child(1)')
-//               .text()
-//               .replace('SS', '')
-//               .trim(),
+//             season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
 //             latestEpisode:
-//               $(el)
-//                 .find('div.film-detail > div.fd-infor > span:nth-child(3)')
-//                 .text()
-//                 .replace('EPS', '')
-//                 .trim() || null,
+//               $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
 //             type:
 //               $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
 //                 ? TvType.MOVIE
@@ -464,11 +442,10 @@
 //     const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
 
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/country/${country}/?page=${page}`);
+//       const { data } = await axios.get(`${this.baseUrl}/country/${country}/?page=${page}`);
 //       const $ = load(data);
 
-//       result.hasNextPage =
-//         $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
+//       result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
 
 //       $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
 //         .each((i, el) => {
@@ -488,11 +465,7 @@
 //             .replace('SS', '')
 //             .trim();
 //           const latestEpisode =
-//             $(el)
-//               .find('div.film-detail > div.fd-infor > span:nth-child(3)')
-//               .text()
-//               .replace('EPS', '')
-//               .trim() ?? null;
+//             $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
 //           if (resultItem.type === TvType.TVSERIES) {
 //             resultItem.season = season;
 //             resultItem.latestEpisode = latestEpisode;
@@ -516,14 +489,13 @@
 //       results: [],
 //     };
 //     try {
-//       const { data } = await this.client.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
+//       const { data } = await axios.get(`${this.baseUrl}/genre/${genre}?page=${page}`);
 
 //       const $ = load(data);
 
 //       const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
 
-//       result.hasNextPage =
-//         $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
+//       result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
 
 //       $('.film_list-wrap > div.flw-item')
 //         .each((i, el) => {
@@ -543,11 +515,7 @@
 //             .replace('SS', '')
 //             .trim();
 //           const latestEpisode =
-//             $(el)
-//               .find('div.film-detail > div.fd-infor > span:nth-child(3)')
-//               .text()
-//               .replace('EPS', '')
-//               .trim() ?? null;
+//             $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
 //           if (resultItem.type === TvType.TVSERIES) {
 //             resultItem.season = season;
 //             resultItem.latestEpisode = latestEpisode;
@@ -567,7 +535,7 @@
 
 //   private GenerateToken = async (n: string): Promise<string> => {
 //     try {
-//       const res = await this.client.get(`${this.apiBase}/enc-movies-flix?text=${encodeURIComponent(n)}`);
+//       const res = await axios.get(`${this.apiBase}/enc-movies-flix?text=${encodeURIComponent(n)}`);
 //       return res.data.result;
 //     } catch (error) {
 //       throw new Error((error as Error).message);
@@ -580,21 +548,12 @@
 //     url: string;
 //   }> => {
 //     try {
-//       const res = await this.client.post(`${this.apiBase}/dec-movies-flix`, { text: n });
+//       const res = await axios.post(`${this.apiBase}/dec-movies-flix`, { text: n });
 //       return res.data.result;
 //     } catch (error) {
 //       throw new Error((error as Error).message);
 //     }
 //   };
 // }
-
-// (async () => {
-//   const movie = new YFlix();
-//   const search = await movie.search('true detective');
-//   const movieInfo = await movie.fetchMediaInfo(search.results[0].id);
-//   //   // const recentTv = await movie.fetchTrendingTvShows();
-//   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0].id, movieInfo.id);
-//   console.log(genre);
-// })();
 
 // export default YFlix;

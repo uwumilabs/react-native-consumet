@@ -3,11 +3,13 @@ import { type AnimePaheProviderInstance } from './create-animepahe';
 export declare class AnimePahe extends AnimeParser {
     private instance;
     logo: string;
+    name: string;
+    baseUrl: string;
+    classPath: string;
+    isNSFW: boolean;
+    isWorking: boolean;
+    isDubAvailableSeparately: boolean;
     constructor(customBaseURL?: string);
-    get name(): string;
-    get baseUrl(): string;
-    set baseUrl(value: string);
-    get classPath(): string;
     /**
      * @param query Search query
      */

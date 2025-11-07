@@ -5,7 +5,13 @@ import createZoro, { type ZoroProviderInstance } from './create-zoro';
 // Backward compatibility wrapper class
 export class Zoro extends AnimeParser {
   private instance: ZoroProviderInstance;
-  public logo: string;
+  override logo: string;
+  override name: string;
+  override baseUrl: string;
+  override classPath: string;
+  override isNSFW: boolean;
+  override isWorking: boolean;
+  override readonly isDubAvailableSeparately: boolean;
 
   constructor(customBaseURL?: string) {
     super();
@@ -14,7 +20,14 @@ export class Zoro extends AnimeParser {
     const defaultContext = createProviderContext();
 
     this.instance = createZoro(defaultContext, customBaseURL);
+
     this.logo = this.instance.logo;
+    this.name = this.instance.name;
+    this.baseUrl = this.instance.baseUrl;
+    this.classPath = this.instance.classPath;
+    this.isNSFW = this.instance.isNSFW ?? false;
+    this.isWorking = this.instance.isWorking ?? true;
+    this.isDubAvailableSeparately = this.instance.isDubAvailableSeparately ?? false;
 
     // Bind all methods to preserve proper typing
     this.search = this.instance.search;
@@ -46,19 +59,6 @@ export class Zoro extends AnimeParser {
     this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
   }
 
-  // Getters for required AnimeParser properties
-  get name() {
-    return this.instance.name;
-  }
-  get baseUrl() {
-    return this.instance.baseUrl;
-  }
-  set baseUrl(value: string) {
-    this.instance.baseUrl = value;
-  }
-  get classPath() {
-    return this.instance.classPath;
-  }
   /**
    * @param query Search query
    * @param page Page number (optional)

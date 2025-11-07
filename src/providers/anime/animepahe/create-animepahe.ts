@@ -335,17 +335,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
   // Return the functional provider object
   return {
-    // Configuration
-    name: config.name,
-    get baseUrl() {
-      return config.baseUrl;
-    },
-    set baseUrl(value: string) {
-      config.baseUrl = value.startsWith('http') ? value : `http://${value}`;
-    },
-    logo: config.logo,
-    classPath: config.classPath,
-
+    ...config,
     // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchAnimeInfo,

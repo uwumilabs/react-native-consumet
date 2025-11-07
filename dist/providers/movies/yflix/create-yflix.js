@@ -9,24 +9,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createHiMovies = createHiMovies;
-function createHiMovies(ctx, customBaseURL) {
+exports.createYFlix = createYFlix;
+function createYFlix(ctx, customBaseURL) {
     const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL } = ctx;
-    const { MegaCloud } = extractors;
-    const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
-    const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);
+    const { MegaUp } = extractors;
+    const { TvType: TvTypeEnum, StreamingServers: StreamingServersEnum } = enums;
+    const apiBase = 'https://enc-dec.app/api';
+    const baseUrl = createCustomBaseUrl('https://yflix.to', customBaseURL);
     const config = {
-        name: 'HiMovies',
+        name: 'YFlix',
         languages: 'all',
-        classPath: 'MOVIES.HiMovies',
-        logo: 'https://himovies.sx/images/group_1/theme_1/favicon.png',
+        classPath: 'MOVIES.YFlix',
+        logo: `${baseUrl}/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png`,
         baseUrl,
         isNSFW: false,
         isWorking: true,
     };
     const supportedTypes = new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+    const GenerateToken = (n) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            const res = yield axios.get(`${apiBase}/enc-movies-flix?text=${encodeURIComponent(n)}`);
+            return res.data.result;
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    });
+    const DecodeIframeData = (n) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            const res = yield axios.post(`${apiBase}/dec-movies-flix`, { text: n });
+            return res.data.result;
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    });
     /**
-     * Search for movies/TV shows
+     *
      * @param query search query string
      * @param page page number (default 1) (optional)
      */
@@ -37,43 +56,24 @@ function createHiMovies(ctx, customBaseURL) {
             results: [],
         };
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
+            const { data } = yield axios.get(`${baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, '+')}&page=${page}`);
             const $ = load(data);
-            const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
+            const navSelector = 'nav.navigation > ul.pagination';
             searchResult.hasNextPage =
                 $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
-            const initialResults = [];
-            $('.film_list-wrap > div.flw-item').each((i, el) => {
+            $('.film-section > div.item').each((i, el) => {
                 var _a;
-                const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-                initialResults.push({
-                    id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
-                    title: $(el).find('div.film-detail > h2 > a').attr('title'),
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-                    image: $(el).find('div.film-poster > img').attr('data-src'),
+                const releaseDate = $(el).find('div.metadata > span:nth-child(2)').text();
+                searchResult.results.push({
+                    id: (_a = $(el).find('div.inner > a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/watch/')[1],
+                    title: $(el).find('div.info > a').text().trim(),
+                    url: `${baseUrl}${$(el).find('div.inner > a').attr('href')}`,
+                    image: $(el).find('img').attr('data-src') || $(el).find('img').attr('src'),
                     releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                     seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]) : undefined,
-                    type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                        ? TvTypeEnum.MOVIE
-                        : TvTypeEnum.TVSERIES,
+                    type: $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie' ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES,
                 });
             });
-            // Fetch media info for all results in parallel
-            const mediaInfoPromises = initialResults.map((result) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const mediaInfo = yield fetchMediaInfo(result.id);
-                    if (mediaInfo.releaseDate) {
-                        const year = new Date(mediaInfo.releaseDate).getFullYear();
-                        result.releaseDate = year.toString();
-                    }
-                    return result;
-                }
-                catch (err) {
-                    // Return original result if fetchMediaInfo fails
-                    return result;
-                }
-            }));
-            searchResult.results = yield Promise.all(mediaInfoPromises);
             return searchResult;
         }
         catch (err) {
@@ -81,16 +81,16 @@ function createHiMovies(ctx, customBaseURL) {
         }
     });
     /**
-     * Fetch media info
+     *
      * @param mediaId media link or id
      */
     const fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
         var _a;
-        if (!mediaId.startsWith(config.baseUrl)) {
-            mediaId = `${config.baseUrl}/${mediaId}`;
+        if (!mediaId.startsWith(baseUrl)) {
+            mediaId = `${baseUrl}/watch/${mediaId}`;
         }
         const movieInfo = {
-            id: mediaId.split('sx/').pop(),
+            id: mediaId.split('to/').pop(),
             title: '',
             url: mediaId,
         };
@@ -98,145 +98,124 @@ function createHiMovies(ctx, customBaseURL) {
             const { data } = yield axios.get(mediaId);
             const $ = load(data);
             const recommendationsArray = [];
-            $('section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item').each((i, el) => {
-                var _a, _b, _c;
+            $('section.movie-related > div.film-section > div.item').each((i, el) => {
+                var _a;
+                const releaseDate = $(el).find('div.metadata > span:nth-child(2)').text();
                 recommendationsArray.push({
-                    id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
-                    title: $(el).find('div.film-detail > h3.film-name > a').text(),
-                    image: $(el).find('div.film-poster > img').attr('data-src'),
-                    duration: (_b = $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text().replace('m', '')) !== null && _b !== void 0 ? _b : null,
-                    type: $(el).find('div.film-detail > div.fd-infor > span.fdi-type').text() === 'TV'
-                        ? TvTypeEnum.TVSERIES
-                        : ((_c = TvTypeEnum.MOVIE) !== null && _c !== void 0 ? _c : null),
+                    id: (_a = $(el).find('div.inner > a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/watch/')[1],
+                    title: $(el).find('div.info > a').text().trim(),
+                    image: $(el).find('img').attr('data-src') || $(el).find('img').attr('src'),
+                    releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
+                    seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]) : undefined,
+                    type: $(el).find('div.metadata > span:nth-child(1)').text() === 'Movie' ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES,
                 });
             });
-            const uid = $('.detail_page-watch').attr('data-id');
-            movieInfo.cover = (_a = $('div.cover_follow').attr('style')) === null || _a === void 0 ? void 0 : _a.slice(22).replace(')', '').replace(';', '');
-            movieInfo.title = $('.heading-name > a:nth-child(1)').text();
-            movieInfo.image = $('.film-poster > img:nth-child(1)').attr('src');
+            const uid = $('#movie-rating').attr('data-id');
+            movieInfo.cover = (_a = $('div.detail-bg').attr('style')) === null || _a === void 0 ? void 0 : _a.slice(22).replace(')', '').replace(';', '');
+            movieInfo.title = $('h1.title').text();
+            movieInfo.image = $('.poster  img').attr('src');
             movieInfo.description = $('.description').text().trim();
-            movieInfo.type = movieInfo.id.includes('tv/') ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE;
-            movieInfo.releaseDate = $('div.row-line:contains(Released:)').text().replace('Released:', '').trim();
-            movieInfo.genres = $('div.row-line:contains(Genre:) a')
+            movieInfo.releaseDate = $('ul.mics > li:contains(Released:)').text().replace('Released:', '').trim();
+            movieInfo.genres = $('ul.mics > li:contains(Genres:) a')
                 .map((i, el) => $(el).text().split('&'))
                 .get()
                 .map((v) => v.trim());
-            movieInfo.casts = $('.row-line:contains(Casts:) a')
+            movieInfo.casts = $('ul.mics > li:contains(Casts:) a')
                 .map((i, el) => $(el).text())
                 .get();
-            movieInfo.production = $('.row-line:contains(Production:) a').text().trim();
-            movieInfo.country = $('.row-line:contains(Country:) a').text().trim();
-            movieInfo.duration = $('.row-line:contains(Duration:)')
-                .text()
-                .replace('Duration:', '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            movieInfo.rating = parseFloat($('.dp-i-stats > span.item:nth-child(3)').text().replace('IMDB:', '').trim());
+            movieInfo.country = $('ul.mics > li:contains(Country:) a').text().trim();
+            movieInfo.rating = parseFloat($('.metadata > span.IMDb').text().replace('IMDb', '').trim());
             movieInfo.recommendations = recommendationsArray;
-            const ajaxReqUrl = (id, type, isSeasons = false) => `${config.baseUrl}/ajax/${type === 'movie' ? type : ``}${isSeasons ? 'season/list' : 'season/episodes'}/${id}`;
-            if (movieInfo.type === TvTypeEnum.TVSERIES) {
-                const { data } = yield axios.get(ajaxReqUrl(uid, 'tv', true));
-                const $$ = load(data);
-                const seasonsIds = $$('.dropdown-menu > a')
-                    .map((i, el) => $(el).attr('data-id'))
-                    .get();
-                movieInfo.episodes = [];
-                let season = 1;
-                for (const id of seasonsIds) {
-                    const { data } = yield axios.get(ajaxReqUrl(id, 'season'));
-                    const $$$ = load(data);
-                    $$$('.nav > li')
-                        .map((i, el) => {
-                        var _a;
-                        const episode = {
-                            id: $$$(el).find('a').attr('id').split('-')[1],
-                            title: $$$(el).find('a').attr('title'),
-                            number: parseInt($$$(el).find('a').attr('title').split(':')[0].slice(3).trim()),
-                            season: season,
-                            url: `${config.baseUrl}/ajax/episode/servers/${$$$(el).find('a').attr('id').split('-')[1]}`,
-                        };
-                        (_a = movieInfo.episodes) === null || _a === void 0 ? void 0 : _a.push(episode);
-                    })
-                        .get();
-                    season++;
-                }
-            }
-            else {
-                movieInfo.episodes = [
-                    {
-                        id: uid,
-                        title: movieInfo.title,
-                        url: `${config.baseUrl}/ajax/episode/list/${uid}`,
-                    },
-                ];
-            }
+            const episodesAjax = yield axios.get(`${baseUrl}/ajax/episodes/list?id=${uid}&_=${yield GenerateToken(uid)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Referer': `${baseUrl}/watch/${mediaId}`,
+                },
+            });
+            const $$ = load(episodesAjax.data.result);
+            movieInfo.episodes = [];
+            $$('.episodes').each((_, el) => {
+                const season = parseInt($$(el).attr('data-season'), 10);
+                $$(el)
+                    .find('li a')
+                    .each((_, link) => {
+                    var _a, _b, _c, _d;
+                    const $link = $(link);
+                    const id = ((_a = $link.attr('eid')) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+                    const url = baseUrl + ((_b = $link.attr('href')) === null || _b === void 0 ? void 0 : _b.trim()) || '';
+                    const number = parseInt($link.attr('num') || '', 10);
+                    const releaseDate = ((_c = $link.attr('title')) === null || _c === void 0 ? void 0 : _c.trim()) || '';
+                    const title = $link.find('span:last-child').text().trim();
+                    (_d = movieInfo.episodes) === null || _d === void 0 ? void 0 : _d.push({
+                        id,
+                        title,
+                        url,
+                        number,
+                        season,
+                        releaseDate,
+                    });
+                });
+            });
             return movieInfo;
         }
         catch (err) {
-            //console.log(err);
+            console.log(err);
             throw new Error(err.message);
         }
     });
     /**
-     * Fetch episode sources
+     *
      * @param episodeId episode id
      * @param mediaId media id
-     * @param server server type (default `MegaCloud`) (optional)
+     * @param server server type (default `MegaUp`) (optional)
      */
-    const fetchEpisodeSources = (episodeId_1, mediaId_1, ...args_1) => __awaiter(this, [episodeId_1, mediaId_1, ...args_1], void 0, function* (episodeId, mediaId, server = StreamingServersEnum.MegaCloud) {
+    const fetchEpisodeSources = (episodeId_1, mediaId_1, ...args_1) => __awaiter(this, [episodeId_1, mediaId_1, ...args_1], void 0, function* (episodeId, mediaId, server = StreamingServersEnum.MegaUp) {
+        var _a;
         if (episodeId.startsWith('http')) {
             const serverUrl = new PolyURL(episodeId);
             switch (server) {
-                case StreamingServersEnum.MegaCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
-                case StreamingServersEnum.UpCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                case StreamingServersEnum.MegaUp:
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaUp().extract(serverUrl)));
                 default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaUp().extract(serverUrl)));
             }
         }
         try {
             const servers = yield fetchEpisodeServers(episodeId, mediaId);
-            const i = servers.findIndex((s) => s.name === server);
+            const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
             if (i === -1) {
                 throw new Error(`Server ${server} not found`);
             }
-            const serverUrl = new URL(servers[i].url);
-            return yield fetchEpisodeSources(serverUrl.href, mediaId, server);
+            const serverUrl = new URL((_a = servers[i]) === null || _a === void 0 ? void 0 : _a.url);
+            const sources = yield fetchEpisodeSources(serverUrl.href, mediaId, server);
+            return sources;
         }
         catch (err) {
+            console.log(err, 'err');
             throw new Error(err.message);
         }
     });
     /**
-     * Fetch episode servers
+     *
      * @param episodeId takes episode link or movie id
      * @param mediaId takes movie link or id (found on movie info object)
      */
     const fetchEpisodeServers = (episodeId, mediaId) => __awaiter(this, void 0, void 0, function* () {
-        if (!episodeId.startsWith(config.baseUrl + '/ajax') && !mediaId.includes('movie')) {
-            episodeId = `${config.baseUrl}/ajax/episode/servers/${episodeId}`;
-        }
-        else {
-            episodeId = `${config.baseUrl}/ajax/episode/list/${episodeId}`;
-        }
         try {
-            const { data } = yield axios.get(episodeId);
-            const $ = load(data);
-            const servers = $('ul.nav > li')
-                .map((i, el) => ({
-                name: $(el).find('a').attr('title').slice(6).toLowerCase().replace('server', '').trim(),
-                url: `${config.baseUrl}/ajax/episode/sources/${$(el).find('a').attr('data-id')}`,
-            }))
-                .get();
-            const finalServers = yield Promise.all(servers.map((server) => __awaiter(this, void 0, void 0, function* () {
-                const { data } = yield axios.get(server.url);
-                return {
-                    name: server.name,
-                    url: data.link,
-                };
+            const { data } = yield axios.get(`${baseUrl}/ajax/links/list?eid=${episodeId}&_=${yield GenerateToken(episodeId)}`);
+            const $ = load(data.result);
+            const servers = [];
+            const serverItems = $('ul > li.server');
+            yield Promise.all(serverItems.map((i, server) => __awaiter(this, void 0, void 0, function* () {
+                const id = $(server).attr('data-lid');
+                const { data } = yield axios.get(`${baseUrl}/ajax/links/view?id=${id}&_=${yield GenerateToken(id)}`);
+                const decodedIframeData = yield DecodeIframeData(data.result);
+                servers.push({
+                    name: `MegaUp ${$(server).text().trim()}`.toLowerCase(),
+                    url: decodedIframeData.url,
+                });
             })));
-            return finalServers;
+            return servers;
         }
         catch (err) {
             throw new Error(err.message);
@@ -244,7 +223,7 @@ function createHiMovies(ctx, customBaseURL) {
     });
     const fetchRecentMovies = () => __awaiter(this, void 0, void 0, function* () {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`);
+            const { data } = yield axios.get(`${baseUrl}/home`);
             const $ = load(data);
             const movies = $('section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                 .map((i, el) => {
@@ -253,7 +232,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const movie = {
                     id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
                     title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                     duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
@@ -272,7 +251,7 @@ function createHiMovies(ctx, customBaseURL) {
     });
     const fetchRecentTvShows = () => __awaiter(this, void 0, void 0, function* () {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`);
+            const { data } = yield axios.get(`${baseUrl}/home`);
             const $ = load(data);
             const tvshows = $('section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item')
                 .map((i, el) => {
@@ -280,7 +259,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const tvshow = {
                     id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
                     title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
                     latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
@@ -299,7 +278,7 @@ function createHiMovies(ctx, customBaseURL) {
     });
     const fetchTrendingMovies = () => __awaiter(this, void 0, void 0, function* () {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`);
+            const { data } = yield axios.get(`${baseUrl}/home`);
             const $ = load(data);
             const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
                 .map((i, el) => {
@@ -308,7 +287,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const movie = {
                     id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
                     title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
                     duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
@@ -327,7 +306,7 @@ function createHiMovies(ctx, customBaseURL) {
     });
     const fetchTrendingTvShows = () => __awaiter(this, void 0, void 0, function* () {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`);
+            const { data } = yield axios.get(`${baseUrl}/home`);
             const $ = load(data);
             const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
                 .map((i, el) => {
@@ -335,7 +314,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const tvshow = {
                     id: (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1),
                     title: $(el).find('div.film-detail > h3.film-name > a').attr('title'),
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
                     latestEpisode: $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
@@ -360,7 +339,7 @@ function createHiMovies(ctx, customBaseURL) {
         };
         const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/country/${country}/?page=${page}`);
+            const { data } = yield axios.get(`${baseUrl}/country/${country}/?page=${page}`);
             const $ = load(data);
             result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
             $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
@@ -369,7 +348,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const resultItem = {
                     id: (_b = (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1)) !== null && _b !== void 0 ? _b : '',
                     title: (_c = $(el).find('div.film-detail > h2.film-name > a').attr('title')) !== null && _c !== void 0 ? _c : '',
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
                         ? TvTypeEnum.MOVIE
@@ -405,7 +384,7 @@ function createHiMovies(ctx, customBaseURL) {
             results: [],
         };
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/genre/${genre}?page=${page}`);
+            const { data } = yield axios.get(`${baseUrl}/genre/${genre}?page=${page}`);
             const $ = load(data);
             const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
             result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
@@ -415,7 +394,7 @@ function createHiMovies(ctx, customBaseURL) {
                 const resultItem = {
                     id: (_b = (_a = $(el).find('div.film-poster > a').attr('href')) === null || _a === void 0 ? void 0 : _a.slice(1)) !== null && _b !== void 0 ? _b : '',
                     title: (_c = $(el).find('div.film-detail > h2 > a').attr('title')) !== null && _c !== void 0 ? _c : '',
-                    url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
+                    url: `${baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
                     image: $(el).find('div.film-poster > img').attr('data-src'),
                     type: $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
                         ? TvTypeEnum.MOVIE
@@ -444,9 +423,7 @@ function createHiMovies(ctx, customBaseURL) {
             throw new Error(err.message);
         }
     });
-    // Return the functional provider object
     return Object.assign(Object.assign({}, config), { supportedTypes,
-        // Core methods, pass only the necessary methods, dont pass helpers or unused methods
         search,
         fetchMediaInfo,
         fetchEpisodeSources,
@@ -458,4 +435,4 @@ function createHiMovies(ctx, customBaseURL) {
         fetchByCountry,
         fetchByGenre });
 }
-//# sourceMappingURL=create-himovies.js.map
+//# sourceMappingURL=create-yflix.js.map

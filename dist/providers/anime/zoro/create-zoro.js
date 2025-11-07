@@ -518,17 +518,7 @@ function createZoro(ctx, customBaseURL) {
         }
     });
     // Return the functional provider object
-    return {
-        // Configuration
-        name: config.name,
-        get baseUrl() {
-            return config.baseUrl;
-        },
-        set baseUrl(value) {
-            config.baseUrl = value.startsWith('http') ? value : `http://${value}`;
-        },
-        logo: config.logo,
-        classPath: config.classPath,
+    return Object.assign(Object.assign({}, config), { 
         // Core methods, pass only the necessary methods, dont pass helpers or unused methods
         search,
         fetchAdvancedSearch,
@@ -556,8 +546,7 @@ function createZoro(ctx, customBaseURL) {
         fetchWatchList,
         fetchAnimeInfo,
         fetchEpisodeSources,
-        fetchEpisodeServers,
-    };
+        fetchEpisodeServers });
 }
 // Default export for backward compatibility
 exports.default = createZoro;

@@ -40,6 +40,17 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
   const extract = async (videoUrl: PolyURL): Promise<ISource> => {
     try {
       const mediaUrl = videoUrl.href.replace('/e/', '/media/');
+      const subsUrl = videoUrl.searchParams.get('sub.list');
+      let externalSubs: { kind: string; url: string; lang: string }[] = [];
+      if (subsUrl) {
+        externalSubs = await axios.get(subsUrl).then((res) =>
+          res.data.map((sub: { kind: string; file: string; label: string }) => ({
+            kind: sub.kind,
+            url: sub.file,
+            lang: sub.label,
+          }))
+        );
+      }
       const { data } = await client.get(mediaUrl, {
         headers: {
           'Connection': 'keep-alive',
@@ -80,21 +91,27 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
         }
         return {
           sources: [qualitySources, defaultSource].flat(),
-          subtitles: decrypted.tracks.map((track) => ({
-            kind: track.kind,
-            url: track.file,
-            lang: track.label || 'English',
-          })),
+          subtitles: [
+            ...decrypted.tracks.map((track) => ({
+              kind: track.kind,
+              url: track.file,
+              lang: track.label || 'English',
+            })),
+            ...(externalSubs.length > 0 ? externalSubs : []),
+          ],
           download: decrypted.download,
         };
       }
       return {
         sources: [defaultSource],
-        subtitles: decrypted.tracks.map((track) => ({
-          kind: track.kind,
-          url: track.file,
-          lang: track.label || 'English',
-        })),
+        subtitles: [
+          ...decrypted.tracks.map((track) => ({
+            kind: track.kind,
+            url: track.file,
+            lang: track.label || track.kind,
+          })),
+          ...(externalSubs.length > 0 ? externalSubs : []),
+        ],
         download: decrypted.download,
       };
     } catch (error) {

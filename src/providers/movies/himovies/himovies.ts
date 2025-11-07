@@ -5,7 +5,13 @@ import { createHiMovies, type HiMoviesProviderInstance } from './create-himovies
 // Backward compatibility wrapper class
 class HiMovies extends MovieParser {
   private instance: HiMoviesProviderInstance;
-  public logo: string;
+  override logo: string;
+  override name: string;
+  override baseUrl: string;
+  override classPath: string;
+  override supportedTypes: Set<any>;
+  override isNSFW: boolean;
+  override isWorking: boolean;
   constructor(customBaseURL?: string) {
     super();
 
@@ -13,7 +19,14 @@ class HiMovies extends MovieParser {
     const defaultContext = createProviderContext();
 
     this.instance = createHiMovies(defaultContext, customBaseURL);
+
     this.logo = this.instance.logo;
+    this.name = this.instance.name;
+    this.baseUrl = this.instance.baseUrl;
+    this.classPath = this.instance.classPath;
+    this.supportedTypes = this.instance.supportedTypes;
+    this.isNSFW = this.instance.isNSFW;
+    this.isWorking = this.instance.isWorking ?? true;
 
     // Bind all methods to preserve proper typing
     this.search = this.instance.search;
@@ -28,22 +41,6 @@ class HiMovies extends MovieParser {
     this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
   }
 
-  // Proxy all methods to the instance
-  get supportedTypes() {
-    return this.instance.supportedTypes;
-  }
-  get name() {
-    return this.instance.name;
-  }
-  get baseUrl() {
-    return this.instance.baseUrl;
-  }
-  set baseUrl(value: string) {
-    this.instance.baseUrl = value;
-  }
-  get classPath() {
-    return this.instance.classPath;
-  }
   /**
    *
    * @param query search query string

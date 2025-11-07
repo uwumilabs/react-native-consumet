@@ -32,6 +32,9 @@ export const movieProviders = {
   get MultiStream() {
     return require('../providers/movies/multistream').default;
   },
+  get YFlix() {
+    return require('../providers/movies/yflix/yflix').default;
+  },
 };
 
 const metaProviders = {

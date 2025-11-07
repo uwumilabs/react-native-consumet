@@ -3,12 +3,13 @@ import { type HiMoviesProviderInstance } from './create-himovies';
 declare class HiMovies extends MovieParser {
     private instance;
     logo: string;
+    name: string;
+    baseUrl: string;
+    classPath: string;
+    supportedTypes: Set<any>;
+    isNSFW: boolean;
+    isWorking: boolean;
     constructor(customBaseURL?: string);
-    get supportedTypes(): Set<import("../../../models").TvType>;
-    get name(): string;
-    get baseUrl(): string;
-    set baseUrl(value: string);
-    get classPath(): string;
     /**
      *
      * @param query search query string

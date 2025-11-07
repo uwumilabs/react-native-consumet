@@ -25,9 +25,8 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.MultiMovies();
-    console.log(movies);
-    const search = await movies.search('Kantara chapter 1');
+    const movies = new MOVIES.YFlix();
+    const search = await movies.search('True Detective');
     console.log('Search Results:', search);
 
     if (!search || !search.results || search.results.length === 0) {

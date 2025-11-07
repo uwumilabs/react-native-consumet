@@ -54,7 +54,7 @@
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animepahe/create-animepahe.js",
             "factoryName": "createAnimePahe",
             "baseUrl": "https://animepahe.si",
-            "logo": "https://animepahe.si//web-app-manifest-512x512.png",
+            "logo": "https://animepahe.si/web-app-manifest-512x512.png",
             "languages": ["en", "ja"],
             "nsfw": false,
             "status": "stable",
@@ -114,7 +114,7 @@
         {
             "id": "multimovies",
             "name": "MultiMovies",
-            "description": "Movies and TV shows streaming from HiMovies",
+            "description": "Movies and TV shows streaming from MultiMovies",
             "version": "1.0.0",
             "author": {
                 "name": "RNConsumet Team",
@@ -123,13 +123,35 @@
             "category": "movies",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/multimovies/create-multimovies.js",
             "factoryName": "createMultiMovies",
-            "baseUrl": "https://multimovies.cheap",
-            "logo": "https://multimovies.cheap/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
+            "baseUrl": "https://multimovies.center",
+            "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
+            "languages": ["all"],
+            "nsfw": false,
+            "status": "alpha",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["StreamWish", "VidHide"],
+            "isSourceEmbed": true,
+            "haveMultiServers": true
+        },
+        {
+            "id": "yflix",
+            "name": "YFlix",
+            "description": "Movies and TV shows streaming from YFlix",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "movies",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/yflix/create-yflix.js",
+            "factoryName": "createYFlix",
+            "baseUrl": "https://yflix.to",
+            "logo": "https://yflix.to/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
             "languages": ["all"],
             "nsfw": false,
             "status": "stable",
             "lastUpdated": "2025-08-05T00:00:00Z",
-            "extractors": ["StreamWish", "VidHide"],
+            "extractors": ["MegaUp"],
             "isSourceEmbed": true,
             "haveMultiServers": true
         }

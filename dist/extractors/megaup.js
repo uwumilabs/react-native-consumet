@@ -41,6 +41,15 @@ function MegaUp(ctx) {
         var _a, _b, _c, _d;
         try {
             const mediaUrl = videoUrl.href.replace('/e/', '/media/');
+            const subsUrl = videoUrl.searchParams.get('sub.list');
+            let externalSubs = [];
+            if (subsUrl) {
+                externalSubs = yield axios_1.default.get(subsUrl).then((res) => res.data.map((sub) => ({
+                    kind: sub.kind,
+                    url: sub.file,
+                    lang: sub.label,
+                })));
+            }
             const { data } = yield client.get(mediaUrl, {
                 headers: {
                     'Connection': 'keep-alive',
@@ -77,21 +86,27 @@ function MegaUp(ctx) {
                 }
                 return {
                     sources: [qualitySources, defaultSource].flat(),
-                    subtitles: decrypted.tracks.map((track) => ({
-                        kind: track.kind,
-                        url: track.file,
-                        lang: track.label || 'English',
-                    })),
+                    subtitles: [
+                        ...decrypted.tracks.map((track) => ({
+                            kind: track.kind,
+                            url: track.file,
+                            lang: track.label || 'English',
+                        })),
+                        ...(externalSubs.length > 0 ? externalSubs : []),
+                    ],
                     download: decrypted.download,
                 };
             }
             return {
                 sources: [defaultSource],
-                subtitles: decrypted.tracks.map((track) => ({
-                    kind: track.kind,
-                    url: track.file,
-                    lang: track.label || 'English',
-                })),
+                subtitles: [
+                    ...decrypted.tracks.map((track) => ({
+                        kind: track.kind,
+                        url: track.file,
+                        lang: track.label || track.kind,
+                    })),
+                    ...(externalSubs.length > 0 ? externalSubs : []),
+                ],
                 download: decrypted.download,
             };
         }
