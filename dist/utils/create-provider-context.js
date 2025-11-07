@@ -131,6 +131,8 @@ function createProviderContext(config = {}) {
         NativeConsumet: {
             getDdosGuardCookiesWithWebView: NativeConsumet_1.getDdosGuardCookiesWithWebView,
             makeGetRequestWithWebView: NativeConsumet_1.makeGetRequestWithWebView,
+            makePostRequestWithWebView: NativeConsumet_1.makePostRequestWithWebView,
+            makePostRequest: NativeConsumet_1.makePostRequest,
             multiply: NativeConsumet_1.multiply,
             bypassDdosGuard: NativeConsumet_1.bypassDdosGuard,
             deobfuscateScript: NativeConsumet_1.deobfuscateScript,

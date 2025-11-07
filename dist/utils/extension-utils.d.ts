@@ -1,4 +1,4 @@
-import { AsianLoad, Filemoon, GogoCDN, MixDrop, Mp4Player, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe } from '../extractors';
+import { AsianLoad, Filemoon, GogoCDN, MixDrop, Mp4Player, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, VidMoly, VizCloud, Voe } from '../extractors';
 import type { ExtractorContext } from '../models';
 export declare const defaultAxios: import("axios").AxiosInstance;
 export declare const defaultExtractorContext: ExtractorContext;
@@ -16,10 +16,10 @@ export declare const defaultExtractors: {
     StreamLare: typeof StreamLare;
     StreamSB: typeof StreamSB;
     StreamTape: typeof StreamTape;
-    StreamWish: typeof StreamWish;
+    StreamWish: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     VidMoly: typeof VidMoly;
     VizCloud: typeof VizCloud;
-    VidHide: typeof VidHide;
+    VidHide: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     Voe: typeof Voe;
     MegaUp: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
@@ -30,7 +30,7 @@ export declare const extractors: {
     MixDrop: typeof MixDrop;
     Kwik: (ctx: ExtractorContext) => import("../models").IVideoExtractor;
     RapidCloud: typeof RapidCloud;
-    StreamWish: typeof StreamWish;
+    StreamWish: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     Filemoon: typeof Filemoon;
     Voe: typeof Voe;
     AsianLoad: typeof AsianLoad;

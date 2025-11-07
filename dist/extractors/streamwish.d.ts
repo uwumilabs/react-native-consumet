@@ -1,13 +1,8 @@
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-import type { PolyURL } from '../utils';
-declare class StreamWish extends VideoExtractor {
-    protected serverName: string;
-    protected sources: IVideo[];
-    extract: (videoUrl: PolyURL, referer?: string) => Promise<{
-        sources: IVideo[];
-    } & {
-        subtitles: ISubtitle[];
-    }>;
-}
-export default StreamWish;
+import { type ExtractorContext, type IVideoExtractor } from '../models';
+/**
+ * StreamWish extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export declare function StreamWish(ctx: ExtractorContext): IVideoExtractor;
 //# sourceMappingURL=streamwish.d.ts.map

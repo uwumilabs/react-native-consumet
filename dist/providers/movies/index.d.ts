@@ -1,4 +1,5 @@
-import MultiMovies from './multimovies';
+import MultiMovies from './multimovies/multimovies';
+import { createMultiMovies } from './multimovies/create-multimovies';
 import NetflixMirror from './netflixmirror';
 import MultiStream from './multistream';
 import HiMovies from './himovies/himovies';
@@ -9,6 +10,7 @@ declare const _default: {
     HiMovies: typeof HiMovies;
     MultiStream: typeof MultiStream;
     createHiMovies: typeof createHiMovies;
+    createMultiMovies: typeof createMultiMovies;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map

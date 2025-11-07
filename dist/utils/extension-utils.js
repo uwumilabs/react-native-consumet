@@ -33,6 +33,8 @@ exports.defaultExtractorContext = {
     NativeConsumet: {
         getDdosGuardCookiesWithWebView: NativeConsumet_1.getDdosGuardCookiesWithWebView,
         makeGetRequestWithWebView: NativeConsumet_1.makeGetRequestWithWebView,
+        makePostRequestWithWebView: NativeConsumet_1.makePostRequestWithWebView,
+        makePostRequest: NativeConsumet_1.makePostRequest,
         multiply: NativeConsumet_1.multiply,
         bypassDdosGuard: NativeConsumet_1.bypassDdosGuard,
         deobfuscateScript: NativeConsumet_1.deobfuscateScript,
@@ -53,10 +55,10 @@ exports.defaultExtractors = {
     StreamLare: extractors_1.StreamLare,
     StreamSB: extractors_1.StreamSB,
     StreamTape: extractors_1.StreamTape,
-    StreamWish: extractors_1.StreamWish,
+    StreamWish: (ctx) => (0, extractors_1.StreamWish)(ctx || exports.defaultExtractorContext),
     VidMoly: extractors_1.VidMoly,
     VizCloud: extractors_1.VizCloud,
-    VidHide: extractors_1.VidHide,
+    VidHide: (ctx) => (0, extractors_1.VidHide)(ctx || exports.defaultExtractorContext),
     Voe: extractors_1.Voe,
     MegaUp: (ctx) => (0, extractors_1.MegaUp)(ctx || exports.defaultExtractorContext),
 };

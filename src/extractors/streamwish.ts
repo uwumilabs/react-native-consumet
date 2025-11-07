@@ -1,17 +1,17 @@
-// @ts-nocheck
-import axios from 'axios';
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-import { USER_AGENT } from '../utils/constants';
-import type { PolyURL } from '../utils';
+import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor, type ISubtitle } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
 
-class StreamWish extends VideoExtractor {
-  protected override serverName = 'streamwish';
-  protected override sources: IVideo[] = [];
+/**
+ * StreamWish extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export function StreamWish(ctx: ExtractorContext): IVideoExtractor {
+  const serverName = 'StreamWish';
+  const sources: IVideo[] = [];
+  const { axios, USER_AGENT, PolyURL } = ctx;
 
-  override extract = async (
-    videoUrl: PolyURL,
-    referer?: string
-  ): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
+  const extract = async (videoUrl: PolyURL, referer?: string): Promise<ISource> => {
     try {
       const options = {
         headers: {
@@ -55,15 +55,10 @@ class StreamWish extends VideoExtractor {
             p = p.replace(regex, k[c]!);
           }
         }
-
-        // console.log('Decoded String:', p);
-      } else {
-        //console.log('No match found');
       }
+
       let link = p.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)![0];
-      // console.log('Decoded Links:', link);
       const subtitleMatches = p?.match(/{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g) ?? [];
-      // console.log(subtitleMatches, 'subtitleMatches');
       const subtitles: ISubtitle[] = subtitleMatches.map((sub) => {
         const lang = sub?.match(/label:"([^"]+)"/)?.[1] ?? '';
         const url = sub?.match(/file:"([^"]+)"/)?.[1] ?? '';
@@ -79,19 +74,24 @@ class StreamWish extends VideoExtractor {
           url: url,
         };
       });
+
       if (link.includes('hls2"')) {
         link = link.replace('hls2"', '').replace(new RegExp('"', 'g'), '');
       }
-      const linkParser = new URL(link);
+
+      const linkParser = new PolyURL(link);
       linkParser.searchParams.set('i', '0.4');
-      this.sources.push({
-        quality: 'default',
-        url: linkParser.href,
-        isM3U8: link.includes('.m3u8'),
-      });
+
+      const videoSources: IVideo[] = [
+        {
+          quality: 'default',
+          url: linkParser.href,
+          isM3U8: link.includes('.m3u8'),
+        },
+      ];
 
       try {
-        const m3u8Content = await axios.get(this.sources[0]!.url, options);
+        const m3u8Content = await axios.get(videoSources[0]!.url, options);
 
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
@@ -101,22 +101,29 @@ class StreamWish extends VideoExtractor {
             const url = link.split('master.m3u8')[0] + video.split('\n')[1];
             const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
 
-            this.sources.push({
+            videoSources.push({
               url: url,
               quality: `${quality}p`,
               isM3U8: url.includes('.m3u8'),
             });
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // M3U8 parsing failed, continue with default source
+      }
 
       return {
-        sources: this.sources,
+        sources: videoSources,
         subtitles: subtitles,
       };
     } catch (err) {
       throw new Error((err as Error).message);
     }
   };
+
+  return {
+    serverName,
+    sources,
+    extract,
+  };
 }
-export default StreamWish;

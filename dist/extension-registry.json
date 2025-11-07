@@ -110,6 +110,28 @@
             "extractors": ["MegaCloud"],
             "isSourceEmbed": true,
             "haveMultiServers": true
+        },
+        {
+            "id": "multimovies",
+            "name": "MultiMovies",
+            "description": "Movies and TV shows streaming from HiMovies",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "movies",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/multimovies/create-multimovies.js",
+            "factoryName": "createMultiMovies",
+            "baseUrl": "https://multimovies.cheap",
+            "logo": "https://multimovies.cheap/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
+            "languages": ["all"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["StreamWish", "VidHide"],
+            "isSourceEmbed": true,
+            "haveMultiServers": true
         }
     ]
 }

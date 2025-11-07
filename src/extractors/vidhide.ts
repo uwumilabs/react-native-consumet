@@ -1,22 +1,28 @@
-// @ts-nocheck
-import axios from 'axios';
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-import type { PolyURL } from '../utils';
+import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
 
-class VidHide extends VideoExtractor {
-  protected override serverName = 'VidHide';
-  protected override sources: IVideo[] = [];
+/**
+ * VidHide extractor function
+ * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @returns Object with extract method implementing IVideoExtractor interface
+ */
+export function VidHide(ctx: ExtractorContext): IVideoExtractor {
+  const serverName = 'VidHide';
+  const sources: IVideo[] = [];
+  const { axios, USER_AGENT } = ctx;
 
-  override extract = async (videoUrl: PolyURL): Promise<IVideo[]> => {
+  const extract = async (videoUrl: PolyURL): Promise<ISource> => {
     try {
-      const result: { sources: IVideo[]; subtitles: ISubtitle[] } = {
-        sources: [],
-        subtitles: [],
-      };
-
-      const { data } = await axios.get(videoUrl.href).catch(() => {
-        throw new Error('Video not found');
-      });
+      const { data } = await axios
+        .get(videoUrl.href, {
+          headers: {
+            'User-Agent': USER_AGENT,
+            'Referer': videoUrl.origin,
+          },
+        })
+        .catch(() => {
+          throw new Error('Video not found');
+        });
 
       const unpackedData = eval(
         /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', '')
@@ -25,15 +31,18 @@ class VidHide extends VideoExtractor {
       const m3u8Link = links[0];
       const m3u8Content = await axios.get(m3u8Link, {
         headers: {
-          Referer: m3u8Link,
+          'Referer': m3u8Link,
+          'User-Agent': USER_AGENT,
         },
       });
 
-      result.sources.push({
-        quality: 'auto',
-        url: m3u8Link,
-        isM3U8: m3u8Link.includes('.m3u8'),
-      });
+      const videoSources: IVideo[] = [
+        {
+          quality: 'auto',
+          url: m3u8Link,
+          isM3U8: m3u8Link.includes('.m3u8'),
+        },
+      ];
 
       if (m3u8Content.data.includes('EXTM3U')) {
         const pathWithoutMaster = m3u8Link.split('/master.m3u8')[0];
@@ -44,7 +53,7 @@ class VidHide extends VideoExtractor {
           const url = video.split('\n')[1];
           const quality = video.split('RESOLUTION=')[1]?.split(',')[0].split('x')[1];
 
-          result.sources.push({
+          videoSources.push({
             url: `${pathWithoutMaster}/${url}`,
             quality: `${quality}p`,
             isM3U8: url.includes('.m3u8'),
@@ -52,10 +61,18 @@ class VidHide extends VideoExtractor {
         }
       }
 
-      return result.sources;
+      return {
+        sources: videoSources,
+        subtitles: [],
+      };
     } catch (err) {
       throw new Error((err as Error).message);
     }
   };
+
+  return {
+    serverName,
+    sources,
+    extract,
+  };
 }
-export default VidHide;

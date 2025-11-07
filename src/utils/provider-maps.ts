@@ -27,7 +27,7 @@ export const movieProviders = {
     return require('../providers/movies/himovies/himovies').default;
   },
   get MultiMovies() {
-    return require('../providers/movies/multimovies').default;
+    return require('../providers/movies/multimovies/multimovies').default;
   },
   get MultiStream() {
     return require('../providers/movies/multistream').default;

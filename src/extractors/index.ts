@@ -11,10 +11,10 @@ import StreamHub from './streamhub';
 import StreamLare from './streamlare';
 import StreamSB from './streamsb';
 import StreamTape from './streamtape';
-import StreamWish from './streamwish';
+import { StreamWish } from './streamwish';
 import VidMoly from './vidmoly';
 import VizCloud from './vizcloud';
-import VidHide from './vidhide';
+import { VidHide } from './vidhide';
 import Voe from './voe';
 import { MegaUp } from './megaup';
 
