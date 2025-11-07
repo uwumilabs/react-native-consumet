@@ -443,17 +443,7 @@ function createAnimeKai(ctx, customBaseURL) {
             throw new Error(error.message);
         }
     });
-    return {
-        name: config.name,
-        get baseUrl() {
-            return config.baseUrl;
-        },
-        set baseUrl(value) {
-            config.baseUrl = value.startsWith('http') ? value : `http://${value}`;
-        },
-        logo: config.logo,
-        classPath: config.classPath,
-        search,
+    return Object.assign(Object.assign({}, config), { search,
         fetchLatestCompleted,
         fetchRecentlyAdded,
         fetchRecentlyUpdated,
@@ -470,8 +460,7 @@ function createAnimeKai(ctx, customBaseURL) {
         fetchSearchSuggestions,
         fetchAnimeInfo,
         fetchEpisodeSources,
-        fetchEpisodeServers,
-    };
+        fetchEpisodeServers });
 }
 exports.default = createAnimeKai;
 //# sourceMappingURL=create-animekai.js.map

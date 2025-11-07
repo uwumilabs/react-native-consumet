@@ -1,5 +1,6 @@
-import { type IMovieInfo, type IEpisodeServer, type StreamingServers, type ISource, type IMovieResult, type ISearch, type ProviderContext } from '../../../models';
-export declare function createHiMovies(ctx: ProviderContext, customBaseURL?: string): {
+import { type IMovieInfo, type IEpisodeServer, type StreamingServers, type ISource, type IMovieResult, type ISearch } from '../../../models';
+import type { ProviderContext } from '../../../models/provider-context';
+export declare function createYFlix(ctx: ProviderContext, customBaseURL?: string): {
     supportedTypes: Set<import("../../../models").TvType>;
     search: (query: string, page?: number) => Promise<ISearch<IMovieResult>>;
     fetchMediaInfo: (mediaId: string) => Promise<IMovieInfo>;
@@ -20,5 +21,5 @@ export declare function createHiMovies(ctx: ProviderContext, customBaseURL?: str
     isWorking?: boolean;
     isDubAvailableSeparately?: boolean;
 };
-export type HiMoviesProviderInstance = ReturnType<typeof createHiMovies>;
-//# sourceMappingURL=create-himovies.d.ts.map
+export type YFlixProviderInstance = ReturnType<typeof createYFlix>;
+//# sourceMappingURL=create-yflix.d.ts.map

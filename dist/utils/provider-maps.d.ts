@@ -16,6 +16,7 @@ export declare const movieProviders: {
     readonly HiMovies: any;
     readonly MultiMovies: any;
     readonly MultiStream: any;
+    readonly YFlix: any;
 };
 declare const metaProviders: {
     readonly Anilist: any;

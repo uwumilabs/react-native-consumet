@@ -18,7 +18,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 // Provider metadata (catalog of built-in providers)
 import type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './utils';
 
-import ExtensionRegistry from './extension-registry.json';
+import extensionRegistry from './extension-registry.json';
 // Utils (contexts, and provider management)
 import {
   createProviderContext,
@@ -162,7 +162,7 @@ export type {
   ExtensionManifest,
   ExtractorInfo,
 };
-export { ExtensionRegistry };
+export { extensionRegistry as ExtensionRegistry };
 // Utils: context creation and provider management
 export {
   createProviderContext,

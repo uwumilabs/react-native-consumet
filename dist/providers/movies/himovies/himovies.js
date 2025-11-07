@@ -6,11 +6,18 @@ const create_himovies_1 = require("./create-himovies");
 // Backward compatibility wrapper class
 class HiMovies extends models_1.MovieParser {
     constructor(customBaseURL) {
+        var _a;
         super();
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, utils_1.createProviderContext)();
         this.instance = (0, create_himovies_1.createHiMovies)(defaultContext, customBaseURL);
         this.logo = this.instance.logo;
+        this.name = this.instance.name;
+        this.baseUrl = this.instance.baseUrl;
+        this.classPath = this.instance.classPath;
+        this.supportedTypes = this.instance.supportedTypes;
+        this.isNSFW = this.instance.isNSFW;
+        this.isWorking = (_a = this.instance.isWorking) !== null && _a !== void 0 ? _a : true;
         // Bind all methods to preserve proper typing
         this.search = this.instance.search;
         this.fetchRecentMovies = this.instance.fetchRecentMovies;
@@ -22,22 +29,6 @@ class HiMovies extends models_1.MovieParser {
         this.fetchMediaInfo = this.instance.fetchMediaInfo;
         this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
-    }
-    // Proxy all methods to the instance
-    get supportedTypes() {
-        return this.instance.supportedTypes;
-    }
-    get name() {
-        return this.instance.name;
-    }
-    get baseUrl() {
-        return this.instance.baseUrl;
-    }
-    set baseUrl(value) {
-        this.instance.baseUrl = value;
-    }
-    get classPath() {
-        return this.instance.classPath;
     }
 }
 // (async () => {

@@ -13,12 +13,13 @@ import {
 import { MovieParser, StreamingServers } from '../../../src/models';
 // @ts-ignore
 import * as testExtCode from './test-ext-code-generated.js';
-import type MultiMovies from '../../../src/providers/movies/multimovies/multimovies';
+// @ts-ignore
+import * as testExtrCode from './test-extr-code-generated.js';
 const ExtMovies = () => {
   const [results, setResults] = useState<IMovieResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('multimovies');
+  const [selectedExtension, setSelectedExtension] = useState<string>('yflix');
   const [provider, setProvider] = useState<MovieParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
@@ -63,12 +64,13 @@ const ExtMovies = () => {
       // const providerInstance = (await manager.loadExtension(extensionId)) as MultiMovies;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'AnimeKai'>(
+      const providerInstance = await manager.executeProviderCode<'YFlix'>(
         `${testExtCode.testCodeString}`,
-        'createMultiMovies',
+        'createYFlix',
         // @ts-ignore
         metadata
       );
+      console.log({ providerInstance });
       setProvider(providerInstance);
 
       console.log('✅ Movie extension loaded successfully:', {
@@ -77,7 +79,7 @@ const ExtMovies = () => {
         hasFetchMovieInfo: typeof providerInstance.fetchMediaInfo === 'function',
       });
 
-      const searchQuery = 'Avengers';
+      const searchQuery = 'True Detective';
       const searchResults = (await providerInstance.search(searchQuery)) as ISearch<IMovieResult>;
 
       console.log('🎯 Movie search results:', searchResults);
@@ -88,27 +90,30 @@ const ExtMovies = () => {
 
         const info = await providerInstance.fetchMediaInfo(searchResults.results[0]!.id);
         console.log('📺 Movie info fetched:', info);
+        const servers = await providerInstance.fetchEpisodeServers(
+          info.episodes[0].id,
+          (searchResults as any).results[0].id
+        );
+        console.log(servers);
 
         if (info.episodes && info.episodes.length > 0 && info.episodes[0]) {
-          const sources = await providerInstance.fetchEpisodeSources(info.episodes[0].id, info.id);
-          console.log('🎬 Episode sources fetched:', sources);
+          const sources1 = await providerInstance.fetchEpisodeSources(info.episodes[0].id, info.id, servers[0].name);
+          const sources2 = await providerInstance.fetchEpisodeSources(info.episodes[0].id, info.id, servers[1].name);
+          console.log('🎬 Episode sources fetched:', { sources1, sources2 });
           const extractorManager = new ExtractorManager(ExtensionRegistry);
 
           // Load specific extractor dynamically from extension registry
           // const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
           // load the code itself
-          const metadata = extractorManager.getExtractorMetadata(StreamingServers.MegaCloud);
-          const servers = await providerInstance.fetchEpisodeServers(
-            info.episodes[0].id,
-            (searchResults as any).results[0].id
+          const metadata = extractorManager.getExtractorMetadata(StreamingServers.MegaUp);
+
+          const megacloudExtractor = await extractorManager.executeExtractorCode(
+            `${testExtrCode.testCodeString}`,
+            metadata!
           );
-          console.log(servers);
-          // const megacloudExtractor = await extractorManager.executeExtractorCode(
-          //   `${testCode.testCodeString}`,
-          //   metadata!
-          // );
-          // const links = await megacloudExtractor.extract(new PolyURL(servers[1]?.url!), 'https://himovies.sx');
-          // console.log('📹 Extracted video links:', links);
+          const links1 = await megacloudExtractor.extract(new PolyURL(servers[0]?.url!), 'https://himovies.sx');
+          const links2 = await megacloudExtractor.extract(new PolyURL(servers[1]?.url!), 'https://himovies.sx');
+          console.log('📹 Extracted video links:', { links1, links2 });
         }
       } else {
         console.log('⚠️ No movie search results found');

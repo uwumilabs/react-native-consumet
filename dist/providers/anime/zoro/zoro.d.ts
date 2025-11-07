@@ -3,11 +3,13 @@ import { type ZoroProviderInstance } from './create-zoro';
 export declare class Zoro extends AnimeParser {
     private instance;
     logo: string;
+    name: string;
+    baseUrl: string;
+    classPath: string;
+    isNSFW: boolean;
+    isWorking: boolean;
+    readonly isDubAvailableSeparately: boolean;
     constructor(customBaseURL?: string);
-    get name(): string;
-    get baseUrl(): string;
-    set baseUrl(value: string);
-    get classPath(): string;
     /**
      * @param query Search query
      * @param page Page number (optional)

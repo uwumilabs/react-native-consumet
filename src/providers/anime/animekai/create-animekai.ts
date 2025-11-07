@@ -543,16 +543,7 @@ function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
   };
 
   return {
-    name: config.name,
-    get baseUrl() {
-      return config.baseUrl;
-    },
-    set baseUrl(value: string) {
-      config.baseUrl = value.startsWith('http') ? value : `http://${value}`;
-    },
-    logo: config.logo,
-    classPath: config.classPath,
-
+    ...config,
     search,
     fetchLatestCompleted,
     fetchRecentlyAdded,
