@@ -70,14 +70,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/2004durgesh/react-native-consumet.git"
+    "url": "git+https://github.com/uwumilabs/react-native-consumet.git"
   },
   "author": "Durgesh Kumar Dwivedi <durgeshdwivedi81@gmail.com> (https://github.com/2004durgesh)",
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/2004durgesh/react-native-consumet/issues"
+    "url": "https://github.com/uwumilabs/react-native-consumet/issues"
   },
-  "homepage": "https://github.com/2004durgesh/react-native-consumet#readme",
+  "homepage": "https://github.com/uwumilabs/react-native-consumet#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
@@ -144,7 +144,17 @@
         "preset": {
           "name": "conventionalcommits"
         },
-        "infile": "CHANGELOG.md"
+        "infile": "CHANGELOG.md",
+        "ignoreRecommendedBump": false,
+        "strictLatest": true,
+        "writerOpts": {
+          "groupBy": "type"
+        },
+        "context": {
+          "host": "https://github.com",
+          "owner": "uwumilabs",
+          "repository": "react-native-consumet"
+        }
       }
     },
     "hooks": {

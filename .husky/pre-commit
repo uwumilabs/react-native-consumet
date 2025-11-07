@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+
 yarn prepare
 
 # Run zoro test but don't fail if it errors
@@ -14,13 +15,18 @@ echo "🛠 Running TypeScript check..."
 yarn typecheck
 echo "✅ TypeScript check completed"
 
-echo "📦 Building dist folder..."
-yarn build:clean
-if [ -d "dist" ]; then
-  echo "✅ Dist folder exists, adding to git..."
-  git add dist/
-  echo "✅ Dist folder added to commit"
+# Check if src/ or scripts/ folders have changes
+if git diff --cached --name-only | grep -qE '^(src/|scripts/)'; then
+  echo "📦 Changes detected in src/ or scripts/, building dist folder..."
+  yarn build:clean
+  if [ -d "dist" ]; then
+    echo "✅ Dist folder exists, adding to git..."
+    git add dist/
+    echo "✅ Dist folder added to commit"
+  else
+    echo "❌ Dist folder not found after build!"
+    exit 1
+  fi
 else
-  echo "❌ Dist folder not found after build!"
-  exit 1
+  echo "⏭️ No changes in src/ or scripts/, skipping dist build"
 fi
