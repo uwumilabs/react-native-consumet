@@ -7,7 +7,7 @@ const testExtrPath = path.join(__dirname, '../../../dist/extractors/megaup.js');
 const extractorTestCode = fs.readFileSync(testExtrPath, 'utf8');
 
 // Read extension test file
-const testExtPath = path.join(__dirname, '../../../dist/providers/anime/animekai/create-animekai.js');
+const testExtPath = path.join(__dirname, '../../../dist/providers/movies/multimovies/create-multimovies.js');
 const extensionTestCode = fs.readFileSync(testExtPath, 'utf8');
 
 // Create React Native compatible file for extractor

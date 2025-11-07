@@ -29,6 +29,8 @@ import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 import {
   getDdosGuardCookiesWithWebView,
   makeGetRequestWithWebView,
+  makePostRequestWithWebView,
+  makePostRequest,
   multiply,
   bypassDdosGuard,
   deobfuscateScript,
@@ -56,6 +58,8 @@ export const defaultExtractorContext: ExtractorContext = {
   NativeConsumet: {
     getDdosGuardCookiesWithWebView,
     makeGetRequestWithWebView,
+    makePostRequestWithWebView,
+    makePostRequest,
     multiply,
     bypassDdosGuard,
     deobfuscateScript,
@@ -77,10 +81,10 @@ export const defaultExtractors = {
   StreamLare: StreamLare,
   StreamSB: StreamSB,
   StreamTape: StreamTape,
-  StreamWish: StreamWish,
+  StreamWish: (ctx?: ExtractorContext) => StreamWish(ctx || defaultExtractorContext),
   VidMoly: VidMoly,
   VizCloud: VizCloud,
-  VidHide: VidHide,
+  VidHide: (ctx?: ExtractorContext) => VidHide(ctx || defaultExtractorContext),
   Voe: Voe,
   MegaUp: (ctx?: ExtractorContext) => MegaUp(ctx || defaultExtractorContext),
 };

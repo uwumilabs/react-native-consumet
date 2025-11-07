@@ -7,6 +7,8 @@ import {
   bypassDdosGuard,
   getDdosGuardCookiesWithWebView,
   makeGetRequestWithWebView,
+  makePostRequestWithWebView,
+  makePostRequest,
   multiply,
   deobfuscateScript,
 } from '../NativeConsumet';
@@ -26,6 +28,8 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
     NativeConsumet: {
       getDdosGuardCookiesWithWebView,
       makeGetRequestWithWebView,
+      makePostRequestWithWebView,
+      makePostRequest,
       multiply,
       bypassDdosGuard,
       deobfuscateScript,

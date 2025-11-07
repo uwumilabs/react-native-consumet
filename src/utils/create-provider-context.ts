@@ -19,6 +19,8 @@ import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 import {
   getDdosGuardCookiesWithWebView,
   makeGetRequestWithWebView,
+  makePostRequestWithWebView,
+  makePostRequest,
   multiply,
   bypassDdosGuard,
   deobfuscateScript,
@@ -108,6 +110,8 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     NativeConsumet: {
       getDdosGuardCookiesWithWebView,
       makeGetRequestWithWebView,
+      makePostRequestWithWebView,
+      makePostRequest,
       multiply,
       bypassDdosGuard,
       deobfuscateScript,

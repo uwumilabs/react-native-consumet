@@ -18,6 +18,7 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
     private val tag by lazy { javaClass.simpleName }
     private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
     private val deobfuscator by lazy { DeobfuscatorModule(reactContext) }
+    private val httpRequestModule by lazy { HttpRequestModule(reactContext) }
 
     companion object {
         const val NAME = "Consumet"
@@ -42,7 +43,17 @@ class ConsumetModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     override fun makeGetRequestWithWebView(url: String, headers: ReadableMap, promise: Promise) {
-        ddosGuardHelper.makeGetRequestWithWebView(url, headers, promise)
+        httpRequestModule.makeGetRequestWithWebView(url, headers, promise)
+    }
+
+    @ReactMethod
+    override fun makePostRequestWithWebView(url: String, headers: ReadableMap, body: String, promise: Promise) {
+        httpRequestModule.makePostRequestWithWebView(url, headers, body, promise)
+    }
+
+    @ReactMethod
+    override fun makePostRequest(url: String, headers: ReadableMap, body: String, promise: Promise) {
+        httpRequestModule.makePostRequest(url, headers, body, promise)
     }
 
     @ReactMethod

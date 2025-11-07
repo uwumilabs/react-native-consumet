@@ -7,7 +7,7 @@ import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
-import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, multiply, deobfuscateScript } from '../NativeConsumet';
+import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, multiply, deobfuscateScript } from '../NativeConsumet';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -51,8 +51,8 @@ export interface ExtractorRegistry {
     StreamTape?: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
     };
-    StreamWish: new (proxyConfig?: any, adapter?: any) => {
-        extract: (url: URL) => Promise<any>;
+    StreamWish: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL, referer?: string) => Promise<any>;
     };
     VidMoly: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
@@ -60,8 +60,8 @@ export interface ExtractorRegistry {
     VizCloud: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
     };
-    VidHide: new (proxyConfig?: any, adapter?: any) => {
-        extract: (url: URL) => Promise<any>;
+    VidHide: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL, referer?: string) => Promise<any>;
     };
     Voe: new (proxyConfig?: any, adapter?: any) => {
         extract: (url: URL) => Promise<any>;
@@ -109,6 +109,8 @@ export interface ProviderContext {
     NativeConsumet: {
         getDdosGuardCookiesWithWebView: typeof getDdosGuardCookiesWithWebView;
         makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
+        makePostRequestWithWebView: typeof makePostRequestWithWebView;
+        makePostRequest: typeof makePostRequest;
         multiply: typeof multiply;
         bypassDdosGuard: typeof bypassDdosGuard;
         deobfuscateScript: typeof deobfuscateScript;

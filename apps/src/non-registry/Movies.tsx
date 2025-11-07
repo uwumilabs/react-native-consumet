@@ -26,6 +26,7 @@ const fetchData = async (): Promise<{
 }> => {
   try {
     const movies = new MOVIES.MultiMovies();
+    console.log(movies);
     const search = await movies.search('Kantara chapter 1');
     console.log('Search Results:', search);
 
