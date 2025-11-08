@@ -10,7 +10,7 @@ if ! yarn test zoro.test.ts; then
 fi
 
 # All other checks are strict
-yarn lint-staged
+yarn lint && yarn prettier && git add .
 echo "🛠 Running TypeScript check..."
 yarn typecheck
 echo "✅ TypeScript check completed"
