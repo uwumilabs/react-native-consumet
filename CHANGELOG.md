@@ -1,5 +1,9 @@
 # Changelog
 
+## <small>1.2.2 (2025-11-08)</small>
+
+* fix(tmdb): add release date validation before year filtering ([5c5e239](https://github.com/uwumilabs/react-native-consumet/commit/5c5e239))
+
 ## <small>1.2.1 (2025-11-07)</small>
 
 * fix: update repository url's to reflect new ownership [skip ci] ([df7fe91](https://github.com/uwumilabs/react-native-consumet/commit/df7fe91))
