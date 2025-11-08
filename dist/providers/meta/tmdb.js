@@ -354,7 +354,7 @@ class TMDB extends models_1.MovieParser {
                     return result;
             });
             // if extraData contains a year, filter out the results that don't match the year
-            if (extraData && extraData.year) {
+            if (extraData && extraData.year && findMedia.results.some((result) => result.releaseDate)) {
                 findMedia.results = findMedia.results.filter((result) => {
                     var _a;
                     return ((_a = String(result.releaseDate).split('-')[0]) === null || _a === void 0 ? void 0 : _a.trim()) === String(extraData.year).trim();

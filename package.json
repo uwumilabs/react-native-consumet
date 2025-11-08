@@ -61,7 +61,8 @@
     ],
     "*.{json,md,html,css}": [
       "prettier --write"
-    ]
+    ],
+    "dist/**": []
   },
   "keywords": [
     "react-native",
