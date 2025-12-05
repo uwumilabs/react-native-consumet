@@ -19,7 +19,7 @@ const ExtMovies = () => {
   const [results, setResults] = useState<IMovieResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('yflix');
+  const [selectedExtension, setSelectedExtension] = useState<string>('multimovies');
   const [provider, setProvider] = useState<MovieParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
@@ -64,9 +64,9 @@ const ExtMovies = () => {
       // const providerInstance = (await manager.loadExtension(extensionId)) as MultiMovies;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'YFlix'>(
+      const providerInstance = await manager.executeProviderCode<'MultiMovies'>(
         `${testExtCode.testCodeString}`,
-        'createYFlix',
+        'createMultiMovies',
         // @ts-ignore
         metadata
       );

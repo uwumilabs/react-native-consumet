@@ -95,7 +95,7 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
             ...decrypted.tracks.map((track) => ({
               kind: track.kind,
               url: track.file,
-              lang: track.label || 'English',
+              lang: track.label || track.kind || 'English',
             })),
             ...(externalSubs.length > 0 ? externalSubs : []),
           ],
