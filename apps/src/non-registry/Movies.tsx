@@ -25,7 +25,7 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.YFlix();
+    const movies = new MOVIES.HiMovies();
     const search = await movies.search('True Detective');
     console.log('Search Results:', search);
 

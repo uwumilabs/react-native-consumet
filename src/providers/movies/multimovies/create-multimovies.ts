@@ -381,42 +381,46 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
         throw new Error('Missing player configuration');
       }
 
-      const formData = new FormData();
-      formData.append('action', 'doo_player_ajax');
-      formData.append('post', playerConfig.postId);
-      formData.append('nume', playerConfig.nume);
-      formData.append('type', playerConfig.type);
-
       const headers = {
         'User-Agent': USER_AGENT,
+        'Content-Type': 'application/x-www-form-urlencoded',
       };
 
-      //   const { data: playerRes } = await axios.post(`${baseUrl}/wp-admin/admin-ajax.php`, formData, {
-      //     headers,
-      //   });
+      // Convert FormData to URL-encoded string for native POST request
+      const urlEncodedBody = `action=doo_player_ajax&post=${playerConfig.postId}&nume=${playerConfig.nume}&type=${playerConfig.type}`;
+
       console.log(`${baseUrl}/wp-admin/admin-ajax.php`);
-      const res = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
-        method: 'POST',
-        headers: {
-          ...headers,
-          //'Content-Type':'multipart/form-data',
-        },
-        body: formData as any,
-      });
-      const postTestOkHttp = await makePostRequest(
+
+      // Test with WebView first
+      console.time('POST Request - WebView');
+      const postTestWebView = await NativeConsumet.makePostRequestWithWebView(
         `${baseUrl}/wp-admin/admin-ajax.php`,
-        {
-          ...headers,
-          //'Content-Type':'multipart/form-data',
-        },
-        formData as any
+        headers,
+        urlEncodedBody
       );
+      console.timeEnd('POST Request - WebView');
+      console.log('POST Response (WebView):', {
+        status: postTestWebView.status,
+        response: postTestWebView.response,
+        cookies: postTestWebView.cookies,
+        contentType: postTestWebView.contentType,
+      });
+
+      console.time('POST Request - OkHttp');
+      const postTestOkHttp = await makePostRequest(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
       console.timeEnd('POST Request - OkHttp');
       console.log('POST Response (OkHttp):', {
         statusCode: postTestOkHttp.statusCode,
-        body: postTestOkHttp.body, // Full response body
+        body: postTestOkHttp.body,
         headers: postTestOkHttp.headers,
       });
+
+      const res = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
+        method: 'POST',
+        headers: headers,
+        body: urlEncodedBody,
+      });
+
       const playerRes = await res.json();
       console.log({ playerRes });
       const iframeUrl = playerRes.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.embed_url;

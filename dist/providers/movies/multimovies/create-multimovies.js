@@ -336,29 +336,35 @@ function createMultiMovies(ctx, customBaseURL) {
             if (!playerConfig.postId || !playerConfig.nume || !playerConfig.type) {
                 throw new Error('Missing player configuration');
             }
-            const formData = new FormData();
-            formData.append('action', 'doo_player_ajax');
-            formData.append('post', playerConfig.postId);
-            formData.append('nume', playerConfig.nume);
-            formData.append('type', playerConfig.type);
             const headers = {
                 'User-Agent': USER_AGENT,
+                'Content-Type': 'application/x-www-form-urlencoded',
             };
-            //   const { data: playerRes } = await axios.post(`${baseUrl}/wp-admin/admin-ajax.php`, formData, {
-            //     headers,
-            //   });
+            // Convert FormData to URL-encoded string for native POST request
+            const urlEncodedBody = `action=doo_player_ajax&post=${playerConfig.postId}&nume=${playerConfig.nume}&type=${playerConfig.type}`;
             console.log(`${baseUrl}/wp-admin/admin-ajax.php`);
-            const res = yield fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
-                method: 'POST',
-                headers: Object.assign({}, headers),
-                body: formData,
+            // Test with WebView first
+            console.time('POST Request - WebView');
+            const postTestWebView = yield NativeConsumet.makePostRequestWithWebView(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
+            console.timeEnd('POST Request - WebView');
+            console.log('POST Response (WebView):', {
+                status: postTestWebView.status,
+                response: postTestWebView.response,
+                cookies: postTestWebView.cookies,
+                contentType: postTestWebView.contentType,
             });
-            const postTestOkHttp = yield makePostRequest(`${baseUrl}/wp-admin/admin-ajax.php`, Object.assign({}, headers), formData);
+            console.time('POST Request - OkHttp');
+            const postTestOkHttp = yield makePostRequest(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
             console.timeEnd('POST Request - OkHttp');
             console.log('POST Response (OkHttp):', {
                 statusCode: postTestOkHttp.statusCode,
-                body: postTestOkHttp.body, // Full response body
+                body: postTestOkHttp.body,
                 headers: postTestOkHttp.headers,
+            });
+            const res = yield fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
+                method: 'POST',
+                headers: headers,
+                body: urlEncodedBody,
             });
             const playerRes = yield res.json();
             console.log({ playerRes });
