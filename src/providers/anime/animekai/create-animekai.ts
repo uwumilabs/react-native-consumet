@@ -441,34 +441,53 @@ function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
     const { data } = await axios.get(requestUrl, { headers: buildHeaders() });
     const $ = load(data.result);
     const servers: IEpisodeServer[] = [];
-    const subOrDubKey = subOrDub === SubOrDubEnum.SUB ? 'softsub' : 'dub';
 
-    const serverItems = $(`.server-items.lang-group[data-id="${subOrDubKey}"] .server`);
-    await Promise.all(
-      serverItems.map(async (_, server) => {
+    // Define server groups based on subOrDub parameter
+    const serverGroups =
+      subOrDub === SubOrDubEnum.SUB
+        ? [
+            { selector: '.server-items.lang-group[data-id="sub"] .server', type: 'hardsub' },
+            { selector: '.server-items.lang-group[data-id="softsub"] .server', type: 'softsub' },
+          ]
+        : [{ selector: '.server-items.lang-group[data-id="dub"] .server', type: 'dub' }];
+
+    const serverPromises: Promise<void>[] = [];
+
+    for (const group of serverGroups) {
+      $(group.selector).each((_, server) => {
         const serverId = $(server).attr('data-lid');
         if (!serverId) return;
 
-        const viewToken = await GenerateToken(serverId);
-        const { data: linkData } = await axios.get(`${config.baseUrl}/ajax/links/view?id=${serverId}&_=${viewToken}`, {
-          headers: buildHeaders(),
-        });
-        const decoded = await DecodeIframeData(linkData.result);
+        const serverName = $(server).text().trim();
+        const serverType = group.type;
 
-        servers.push({
-          name: `MegaUp ${$(server).text().trim()}`.toLowerCase(),
-          url: decoded.url,
-          intro: {
-            start: decoded.skip.intro[0],
-            end: decoded.skip.intro[1],
-          },
-          outro: {
-            start: decoded.skip.outro[0],
-            end: decoded.skip.outro[1],
-          },
-        });
-      })
-    );
+        serverPromises.push(
+          (async () => {
+            const viewToken = await GenerateToken(serverId);
+            const { data: linkData } = await axios.get(
+              `${config.baseUrl}/ajax/links/view?id=${serverId}&_=${viewToken}`,
+              { headers: buildHeaders() }
+            );
+            const decoded = await DecodeIframeData(linkData.result);
+
+            servers.push({
+              name: `megaup ${serverName}-${serverType}`.toLowerCase(),
+              url: decoded.url,
+              intro: {
+                start: decoded.skip.intro[0],
+                end: decoded.skip.intro[1],
+              },
+              outro: {
+                start: decoded.skip.outro[0],
+                end: decoded.skip.outro[1],
+              },
+            });
+          })()
+        );
+      });
+    }
+
+    await Promise.all(serverPromises);
 
     return servers;
   };
@@ -498,10 +517,10 @@ function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
 
     try {
       const servers = await fetchEpisodeServers(episodeId, subOrDub);
-      const i = servers.findIndex((s) => s.name.toLowerCase().includes(server)); //for now only megaup is available, hence directly using it
+      const i = servers.findIndex((s) => s.name.includes(server.toLowerCase()));
 
       if (i === -1) {
-        throw new Error(`Server ${server} not found`);
+        throw new Error(`Server ${server} not found. Available servers: ${servers.map((s) => s.name).join(', ')}`);
       }
 
       const serverUrl: URL = new URL(servers[i]!.url);
