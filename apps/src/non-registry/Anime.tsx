@@ -12,15 +12,15 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const anime = new ANIME.AnimeKai();
+    const anime = new ANIME.AnimePahe();
     const search = await anime.search('dandadan');
     console.log(search);
     const info = await anime.fetchAnimeInfo(search.results[0]!.id);
     console.log(info);
-    const servers = info.episodes && (await anime.fetchEpisodeServers(info.episodes[0]!.id, SubOrDub.DUB));
+    const servers = info.episodes && (await anime.fetchEpisodeServers(info.episodes[0]!.id, SubOrDub.SUB));
     const sources =
       info.episodes &&
-      (await anime.fetchEpisodeSources(info.episodes[0]!.id, servers![1]?.name as StreamingServers, SubOrDub.DUB));
+      (await anime.fetchEpisodeSources(info.episodes[0]!.id, servers![1]?.name as StreamingServers, SubOrDub.SUB));
     console.log(sources, servers);
     console.log('sources end');
     if (!search || !search.results) {

@@ -25,7 +25,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     name: 'AnimePahe',
     languages: 'en',
     classPath: 'ANIME.AnimePahe',
-    logo: 'https://animepahe.si//web-app-manifest-512x512.png',
+    logo: 'https://animepahe.si/web-app-manifest-512x512.png',
     baseUrl,
     isNSFW: false,
     isWorking: true,
@@ -52,7 +52,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
   function Headers(sessionId: string | false) {
     const headers: Record<string, string> = {
-      'authority': 'animepahe.ru',
+      'authority': 'animepahe.si',
       'accept': 'application/json, text/javascript, */*; q=0.01',
       'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
