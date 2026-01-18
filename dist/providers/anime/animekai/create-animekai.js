@@ -370,30 +370,41 @@ function createAnimeKai(ctx, customBaseURL) {
         const { data } = yield axios.get(requestUrl, { headers: buildHeaders() });
         const $ = load(data.result);
         const servers = [];
-        const subOrDubKey = subOrDub === SubOrDubEnum.SUB ? 'softsub' : 'dub';
-        const serverItems = $(`.server-items.lang-group[data-id="${subOrDubKey}"] .server`);
-        yield Promise.all(serverItems.map((_, server) => __awaiter(this, void 0, void 0, function* () {
-            const serverId = $(server).attr('data-lid');
-            if (!serverId)
-                return;
-            const viewToken = yield GenerateToken(serverId);
-            const { data: linkData } = yield axios.get(`${config.baseUrl}/ajax/links/view?id=${serverId}&_=${viewToken}`, {
-                headers: buildHeaders(),
+        // Define server groups based on subOrDub parameter
+        const serverGroups = subOrDub === SubOrDubEnum.SUB
+            ? [
+                { selector: '.server-items.lang-group[data-id="sub"] .server', type: 'hardsub' },
+                { selector: '.server-items.lang-group[data-id="softsub"] .server', type: 'softsub' },
+            ]
+            : [{ selector: '.server-items.lang-group[data-id="dub"] .server', type: 'dub' }];
+        const serverPromises = [];
+        for (const group of serverGroups) {
+            $(group.selector).each((_, server) => {
+                const serverId = $(server).attr('data-lid');
+                if (!serverId)
+                    return;
+                const serverName = $(server).text().trim();
+                const serverType = group.type;
+                serverPromises.push((() => __awaiter(this, void 0, void 0, function* () {
+                    const viewToken = yield GenerateToken(serverId);
+                    const { data: linkData } = yield axios.get(`${config.baseUrl}/ajax/links/view?id=${serverId}&_=${viewToken}`, { headers: buildHeaders() });
+                    const decoded = yield DecodeIframeData(linkData.result);
+                    servers.push({
+                        name: `megaup ${serverName}-${serverType}`.toLowerCase(),
+                        url: decoded.url,
+                        intro: {
+                            start: decoded.skip.intro[0],
+                            end: decoded.skip.intro[1],
+                        },
+                        outro: {
+                            start: decoded.skip.outro[0],
+                            end: decoded.skip.outro[1],
+                        },
+                    });
+                }))());
             });
-            const decoded = yield DecodeIframeData(linkData.result);
-            servers.push({
-                name: `MegaUp ${$(server).text().trim()}`.toLowerCase(),
-                url: decoded.url,
-                intro: {
-                    start: decoded.skip.intro[0],
-                    end: decoded.skip.intro[1],
-                },
-                outro: {
-                    start: decoded.skip.outro[0],
-                    end: decoded.skip.outro[1],
-                },
-            });
-        })));
+        }
+        yield Promise.all(serverPromises);
         return servers;
     });
     const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaUp, subOrDub = SubOrDubEnum.SUB) {
@@ -409,9 +420,9 @@ function createAnimeKai(ctx, customBaseURL) {
         }
         try {
             const servers = yield fetchEpisodeServers(episodeId, subOrDub);
-            const i = servers.findIndex((s) => s.name.toLowerCase().includes(server)); //for now only megaup is available, hence directly using it
+            const i = servers.findIndex((s) => s.name.includes(server.toLowerCase()));
             if (i === -1) {
-                throw new Error(`Server ${server} not found`);
+                throw new Error(`Server ${server} not found. Available servers: ${servers.map((s) => s.name).join(', ')}`);
             }
             const serverUrl = new URL(servers[i].url);
             const sources = yield fetchEpisodeSources(serverUrl.href, server, subOrDub);
