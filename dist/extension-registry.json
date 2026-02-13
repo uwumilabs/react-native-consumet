@@ -154,6 +154,28 @@
             "extractors": ["MegaUp"],
             "isSourceEmbed": true,
             "haveMultiServers": true
+        },
+        {
+            "id": "tollywood",
+            "name": "Tollywood",
+            "description": "Telugu and Tollywood movies streaming from MovieRulz with multiple servers",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "movies",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/tollywood/create-tollywood.js",
+            "factoryName": "createTollywood",
+            "baseUrl": "https://www.5movierulz.tires",
+            "logo": "https://www.5movierulz.tires/favicon.ico",
+            "languages": ["te", "hi", "en"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2025-08-05T00:00:00Z",
+            "extractors": ["StreamTape"],
+            "isSourceEmbed": true,
+            "haveMultiServers": true
         }
     ]
 }

@@ -7,4 +7,4 @@ declare class StreamP2P extends VideoExtractor {
     extract(videoUrl: URL): Promise<IVideo[] | ISource>;
 }
 export default StreamP2P;
-//# sourceMappingURL=streamp2p.d.ts.map
+//# sourceMappingURL=StreamP2P.d.ts.map

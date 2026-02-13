@@ -7,6 +7,8 @@ import HiMovies from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
 import YFlix from './yflix/yflix';
 import { createYFlix } from './yflix/create-yflix';
+import Tollywood from './tollywood/tollywood';
+import { createTollywood } from './tollywood/create-tollywood';
 
 export default {
   // DramaCool,
@@ -14,8 +16,10 @@ export default {
   NetflixMirror,
   HiMovies,
   YFlix,
+  Tollywood,
   MultiStream,
   createHiMovies,
   createMultiMovies,
   createYFlix,
+  createTollywood,
 };

@@ -64,4 +64,4 @@ class StreamP2P extends video_extractor_1.default {
     }
 }
 exports.default = StreamP2P;
-//# sourceMappingURL=streamp2p.js.map
+//# sourceMappingURL=StreamP2P.js.map
