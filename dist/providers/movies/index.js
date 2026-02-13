@@ -12,15 +12,19 @@ const himovies_1 = __importDefault(require("./himovies/himovies"));
 const create_himovies_1 = require("./himovies/create-himovies");
 const yflix_1 = __importDefault(require("./yflix/yflix"));
 const create_yflix_1 = require("./yflix/create-yflix");
+const tollywood_1 = __importDefault(require("./tollywood/tollywood"));
+const create_tollywood_1 = require("./tollywood/create-tollywood");
 exports.default = {
     // DramaCool,
     MultiMovies: multimovies_1.default,
     NetflixMirror: netflixmirror_1.default,
     HiMovies: himovies_1.default,
     YFlix: yflix_1.default,
+    Tollywood: tollywood_1.default,
     MultiStream: multistream_1.default,
     createHiMovies: create_himovies_1.createHiMovies,
     createMultiMovies: create_multimovies_1.createMultiMovies,
     createYFlix: create_yflix_1.createYFlix,
+    createTollywood: create_tollywood_1.createTollywood,
 };
 //# sourceMappingURL=index.js.map
