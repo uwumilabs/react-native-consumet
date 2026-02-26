@@ -878,6 +878,7 @@ class Anilist extends models_1.AnimeParser {
                 Promise.resolve((0, utils_2.findSimilarTitles)((title === null || title === void 0 ? void 0 : title.english) || '', findAnime.results)),
                 Promise.resolve((0, utils_2.findSimilarTitles)((title === null || title === void 0 ? void 0 : title.romaji) || '', findAnime.results)),
             ]);
+            // console.log({ mappedEng, mappedRom });
             // Use Set for efficient deduplication
             const uniqueResults = Array.from(new Set([...mappedEng, ...mappedRom].map((item) => JSON.stringify(item)))).map((str) => JSON.parse(str));
             // Sort by similarity score

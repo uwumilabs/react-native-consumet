@@ -1,3 +1,8 @@
+declare global {
+    interface String {
+        replaceAll(searchValue: string | RegExp, replaceValue: string | ((match: string, ...args: any[]) => string)): string;
+    }
+}
 export { USER_AGENT, days, ANIFY_URL } from './constants';
 export declare const splitAuthor: (authors: string) => string[];
 export declare const floorID: (id: string) => number;

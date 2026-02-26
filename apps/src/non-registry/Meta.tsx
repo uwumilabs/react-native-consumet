@@ -20,7 +20,7 @@ const { width } = Dimensions.get('window');
 // --- Main App Component ---
 export default function Meta() {
   // State to manage which tab is active
-  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('movies');
+  const [activeTab, setActiveTab] = useState<'movies' | 'anime'>('anime');
 
   // --- State for Movies Tab ---
   interface MovieFetchState {
@@ -105,8 +105,8 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AnimeKai());
-      const searchResult = await anime.search('sakamoto days');
+      const anime = new META.Anilist(new ANIME.Zoro());
+      const searchResult = await anime.search('demon slayer infinity castle');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {

@@ -3,6 +3,16 @@ import { compareTwoStrings } from 'string-similarity';
 import { load } from 'cheerio';
 // import * as blurhash from 'blurhash';
 
+// Polyfill declaration for String.replaceAll (ES2021) when targeting < ES2021
+declare global {
+  interface String {
+    replaceAll(
+      searchValue: string | RegExp,
+      replaceValue: string | ((match: string, ...args: any[]) => string)
+    ): string;
+  }
+}
+
 // Re-export constants from constants.ts to maintain backward compatibility
 export { USER_AGENT, days, ANIFY_URL } from './constants';
 import { days } from './constants';
@@ -182,22 +192,40 @@ export function findSimilarTitles(inputTitle: string, titles: any[]): any[] {
   const results: (any & { similarity: number })[] = [];
 
   titles?.forEach((titleObj: any) => {
-    const title = cleanTitle(
-      titleObj?.title
-        ?.toLowerCase()
-        ?.replace(/\([^\)]*\)/g, '')
-        .trim() || ''
+    const input = cleanTitle(inputTitle?.toLowerCase() || '');
+
+    const candidateTitles: string[] = [titleObj?.title, titleObj?.japaneseTitle].filter(
+      (t): t is string => typeof t === 'string' && t.trim().length > 0
     );
 
-    // Calculate similarity score between inputTitle and title
-    const similarity = compareTwoStrings(cleanTitle(inputTitle?.toLowerCase() || ''), title);
+    const bestSimilarity = candidateTitles
+      .map((candidate) =>
+        compareTwoStrings(
+          input,
+          cleanTitle(
+            candidate
+              ?.toLowerCase()
+              ?.replace(/\([^\)]*\)/g, '')
+              .trim() || ''
+          )
+        )
+      )
+      .reduce((max, val) => (val > max ? val : max), 0);
+
+    const similarity = bestSimilarity;
 
     if (similarity > 0.6) {
       results.push({ ...titleObj, similarity });
     }
   });
 
-  const isSubAvailable = results.some((result) => result.episodes && result.episodes.sub > 0);
+  const getSubCount = (result: any): number => {
+    if (typeof result?.episodes?.sub === 'number') return result.episodes.sub;
+    if (typeof result?.sub === 'number') return result.sub;
+    return 0;
+  };
+
+  const isSubAvailable = results.some((result) => getSubCount(result) > 0);
 
   // If episodes.sub is available, sort the results
   if (isSubAvailable) {
@@ -207,7 +235,7 @@ export function findSimilarTitles(inputTitle: string, titles: any[]): any[] {
         return b.similarity - a.similarity;
       }
       // If similarity is the same, sort by episodes.sub in descending order
-      return (b.episodes?.sub || 0) - (a.episodes?.sub || 0);
+      return getSubCount(b) - getSubCount(a);
     });
   }
 
@@ -251,13 +279,13 @@ export function cleanTitle(title: string | undefined | null): string {
   return transformSpecificVariations(
     removeSpecialChars(
       title
-        .replace(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
-        .replace(/(th|rd|nd|st) (Season|season)/gim, '')
-        .replace(/\([^\(]*\)$/gim, '')
-        .replace(/season/g, '')
-        .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match: any) => romanToArabic(match).toString())
-        .replace(/ {2}/g, ' ')
-        .replace(/"/g, '')
+        .replaceAll(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
+        .replaceAll(/(th|rd|nd|st) (Season|season)/gim, '')
+        .replaceAll(/\([^\(]*\)$/gim, '')
+        .replaceAll('season', '')
+        .replaceAll(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
+        .replaceAll('  ', ' ')
+        .replaceAll('"', '')
         .trimEnd()
     )
   );
@@ -267,15 +295,15 @@ export function removeSpecialChars(title: string | undefined | null): string {
   if (!title) return '';
 
   return title
-    .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
-    .replace(/[^A-Za-z0-9\-= ]/gim, '')
-    .replace(/ {2}/g, ' ');
+    .replaceAll(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
+    .replaceAll(/[^A-Za-z0-9\-= ]/gim, '')
+    .replaceAll('  ', ' ');
 }
 
 export function transformSpecificVariations(title: string | undefined | null): string {
   if (!title) return '';
 
-  return title.replace(/yuu/g, 'yu').replace(/ ou/g, ' oh');
+  return title.replaceAll('yuu', 'yu').replaceAll(' ou', ' oh');
 }
 
 export function sanitizeTitle(title: string): string {

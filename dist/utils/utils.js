@@ -20,7 +20,6 @@ exports.stringSearch = stringSearch;
 const string_similarity_1 = require("string-similarity");
 // import sharp from 'sharp';
 const cheerio_1 = require("cheerio");
-// import * as blurhash from 'blurhash';
 // Re-export constants from constants.ts to maintain backward compatibility
 var constants_1 = require("./constants");
 Object.defineProperty(exports, "USER_AGENT", { enumerable: true, get: function () { return constants_1.USER_AGENT; } });
@@ -192,25 +191,37 @@ exports.getHashFromImage = getHashFromImage;
 function findSimilarTitles(inputTitle, titles) {
     const results = [];
     titles === null || titles === void 0 ? void 0 : titles.forEach((titleObj) => {
-        var _a, _b;
-        const title = cleanTitle(((_b = (_a = titleObj === null || titleObj === void 0 ? void 0 : titleObj.title) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === null || _b === void 0 ? void 0 : _b.replace(/\([^\)]*\)/g, '').trim()) || '');
-        // Calculate similarity score between inputTitle and title
-        const similarity = (0, string_similarity_1.compareTwoStrings)(cleanTitle((inputTitle === null || inputTitle === void 0 ? void 0 : inputTitle.toLowerCase()) || ''), title);
+        const input = cleanTitle((inputTitle === null || inputTitle === void 0 ? void 0 : inputTitle.toLowerCase()) || '');
+        const candidateTitles = [titleObj === null || titleObj === void 0 ? void 0 : titleObj.title, titleObj === null || titleObj === void 0 ? void 0 : titleObj.japaneseTitle].filter((t) => typeof t === 'string' && t.trim().length > 0);
+        const bestSimilarity = candidateTitles
+            .map((candidate) => {
+            var _a;
+            return (0, string_similarity_1.compareTwoStrings)(input, cleanTitle(((_a = candidate === null || candidate === void 0 ? void 0 : candidate.toLowerCase()) === null || _a === void 0 ? void 0 : _a.replace(/\([^\)]*\)/g, '').trim()) || ''));
+        })
+            .reduce((max, val) => (val > max ? val : max), 0);
+        const similarity = bestSimilarity;
         if (similarity > 0.6) {
             results.push(Object.assign(Object.assign({}, titleObj), { similarity }));
         }
     });
-    const isSubAvailable = results.some((result) => result.episodes && result.episodes.sub > 0);
+    const getSubCount = (result) => {
+        var _a;
+        if (typeof ((_a = result === null || result === void 0 ? void 0 : result.episodes) === null || _a === void 0 ? void 0 : _a.sub) === 'number')
+            return result.episodes.sub;
+        if (typeof (result === null || result === void 0 ? void 0 : result.sub) === 'number')
+            return result.sub;
+        return 0;
+    };
+    const isSubAvailable = results.some((result) => getSubCount(result) > 0);
     // If episodes.sub is available, sort the results
     if (isSubAvailable) {
         return results.sort((a, b) => {
-            var _a, _b;
             // First sort by similarity in descending order
             if (b.similarity !== a.similarity) {
                 return b.similarity - a.similarity;
             }
             // If similarity is the same, sort by episodes.sub in descending order
-            return (((_a = b.episodes) === null || _a === void 0 ? void 0 : _a.sub) || 0) - (((_b = a.episodes) === null || _b === void 0 ? void 0 : _b.sub) || 0);
+            return getSubCount(b) - getSubCount(a);
         });
     }
     // If episodes.sub is not available, return the original list
@@ -246,27 +257,27 @@ function cleanTitle(title) {
     if (!title)
         return '';
     return transformSpecificVariations(removeSpecialChars(title
-        .replace(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
-        .replace(/(th|rd|nd|st) (Season|season)/gim, '')
-        .replace(/\([^\(]*\)$/gim, '')
-        .replace(/season/g, '')
-        .replace(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
-        .replace(/ {2}/g, ' ')
-        .replace(/"/g, '')
+        .replaceAll(/[^A-Za-z0-9!@#$%^&*() ]/gim, ' ')
+        .replaceAll(/(th|rd|nd|st) (Season|season)/gim, '')
+        .replaceAll(/\([^\(]*\)$/gim, '')
+        .replaceAll('season', '')
+        .replaceAll(/\b(IX|IV|V?I{0,3})\b/gi, (match) => romanToArabic(match).toString())
+        .replaceAll('  ', ' ')
+        .replaceAll('"', '')
         .trimEnd()));
 }
 function removeSpecialChars(title) {
     if (!title)
         return '';
     return title
-        .replace(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
-        .replace(/[^A-Za-z0-9\-= ]/gim, '')
-        .replace(/ {2}/g, ' ');
+        .replaceAll(/[^A-Za-z0-9!@#$%^&*()\-= ]/gim, ' ')
+        .replaceAll(/[^A-Za-z0-9\-= ]/gim, '')
+        .replaceAll('  ', ' ');
 }
 function transformSpecificVariations(title) {
     if (!title)
         return '';
-    return title.replace(/yuu/g, 'yu').replace(/ ou/g, ' oh');
+    return title.replaceAll('yuu', 'yu').replaceAll(' ou', ' oh');
 }
 function sanitizeTitle(title) {
     let resTitle = title.replace(/ *(\(dub\)|\(sub\)|\(uncensored\)|\(uncut\)|\(subbed\)|\(dubbed\))/i, '');
