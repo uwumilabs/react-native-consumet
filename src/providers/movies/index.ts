@@ -1,7 +1,8 @@
 // import DramaCool from './dramacool';
 import MultiMovies from './multimovies/multimovies';
 import { createMultiMovies } from './multimovies/create-multimovies';
-import NetflixMirror from './netflixmirror';
+import NetflixMirror from './netflixmirror/netflixmirror';
+import { createNetflixMirror } from './netflixmirror/create-netflixmirror';
 import MultiStream from './multistream';
 import HiMovies from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
@@ -17,5 +18,6 @@ export default {
   MultiStream,
   createHiMovies,
   createMultiMovies,
+  createNetflixMirror,
   createYFlix,
 };

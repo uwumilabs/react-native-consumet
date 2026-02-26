@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import DramaCool from './dramacool';
 const multimovies_1 = __importDefault(require("./multimovies/multimovies"));
 const create_multimovies_1 = require("./multimovies/create-multimovies");
-const netflixmirror_1 = __importDefault(require("./netflixmirror"));
+const netflixmirror_1 = __importDefault(require("./netflixmirror/netflixmirror"));
+const create_netflixmirror_1 = require("./netflixmirror/create-netflixmirror");
 const multistream_1 = __importDefault(require("./multistream"));
 const himovies_1 = __importDefault(require("./himovies/himovies"));
 const create_himovies_1 = require("./himovies/create-himovies");
@@ -21,6 +22,7 @@ exports.default = {
     MultiStream: multistream_1.default,
     createHiMovies: create_himovies_1.createHiMovies,
     createMultiMovies: create_multimovies_1.createMultiMovies,
+    createNetflixMirror: create_netflixmirror_1.createNetflixMirror,
     createYFlix: create_yflix_1.createYFlix,
 };
 //# sourceMappingURL=index.js.map

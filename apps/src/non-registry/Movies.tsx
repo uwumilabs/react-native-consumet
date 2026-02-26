@@ -25,8 +25,8 @@ const fetchData = async (): Promise<{
   videoUrl: string | null;
 }> => {
   try {
-    const movies = new MOVIES.HiMovies();
-    const search = await movies.search('True Detective');
+    const movies = new MOVIES.NetflixMirror();
+    const search = await movies.search('family man');
     console.log('Search Results:', search);
 
     if (!search || !search.results || search.results.length === 0) {

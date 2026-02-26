@@ -7,7 +7,7 @@ jest.setTimeout(120000);
 const netflixmirror = new MOVIES.NetflixMirror();
 
 test('Search: returns a filled array of movies/TV.', async () => {
-  const data = await netflixmirror.search('jujutsu kaisen');
+  const data = await netflixmirror.search('stranger things');
   expect(data.results).not.toEqual([]);
 });
 
