@@ -1,3 +1,13 @@
+
+
+## [1.2.3](https://github.com/uwumilabs/react-native-consumet/compare/v1.2.2...v1.2.3) (2026-02-26)
+
+
+### Bug Fixes
+
+* **animepahe:** correct logo url ([8f310eb](https://github.com/uwumilabs/react-native-consumet/commit/8f310eb534790064a5c388378c1c2caaef3b782e))
+* language fallback in megaup ([af114c8](https://github.com/uwumilabs/react-native-consumet/commit/af114c85502ca35d79edde08e66d66664c2e2cc1))
+
 # Changelog
 
 ## <small>1.2.2 (2025-11-08)</small>
