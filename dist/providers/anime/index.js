@@ -13,6 +13,8 @@ const marin_1 = __importDefault(require("./marin"));
 const animeunity_1 = __importDefault(require("./animeunity"));
 const animekai_1 = __importDefault(require("./animekai/animekai"));
 const create_animekai_1 = __importDefault(require("./animekai/create-animekai"));
+const aniwatchtv_1 = __importDefault(require("./aniwatchtv/aniwatchtv"));
+const create_aniwatchtv_1 = __importDefault(require("./aniwatchtv/create-aniwatchtv"));
 exports.default = {
     AnimePahe: animepahe_1.default,
     createAnimePahe: create_animepahe_1.default,
@@ -24,5 +26,7 @@ exports.default = {
     AnimeUnity: animeunity_1.default,
     AnimeKai: animekai_1.default,
     createAnimeKai: create_animekai_1.default,
+    AniWatchTv: aniwatchtv_1.default,
+    createAniWatchTv: create_aniwatchtv_1.default,
 };
 //# sourceMappingURL=index.js.map

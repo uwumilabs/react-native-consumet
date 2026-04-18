@@ -20,6 +20,9 @@ export const animeProviders = {
   get AnimeKai() {
     return require('../providers/anime/animekai/animekai').default;
   },
+  get AniWatchTv() {
+    return require('../providers/anime/aniwatchtv/aniwatchtv').default;
+  },
 };
 
 export const movieProviders = {

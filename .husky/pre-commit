@@ -3,10 +3,10 @@ set -e
 
 yarn prepare
 
-# Run zoro test but don't fail if it errors
-echo "🧪 Running Zoro test (errors allowed)..."
-if ! yarn test zoro.test.ts; then
-  echo "⚠️ Zoro test failed, but continuing..."
+# Run aniwatchtv test but don't fail if it errors
+echo "🧪 Running AniWatchTv test (errors allowed)..."
+if ! yarn test aniwatchtv.test.ts; then
+  echo "⚠️ AniWatchTv test failed, but continuing..."
 fi
 
 # All other checks are strict

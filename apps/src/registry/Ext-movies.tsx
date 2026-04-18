@@ -19,7 +19,7 @@ const ExtMovies = () => {
   const [results, setResults] = useState<IMovieResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableExtensions, setAvailableExtensions] = useState<any[]>([]);
-  const [selectedExtension, setSelectedExtension] = useState<string>('multimovies');
+  const [selectedExtension, setSelectedExtension] = useState<string>('himovies');
   const [provider, setProvider] = useState<MovieParser | null>(null);
   const [providerManager, setProviderManager] = useState<ProviderManager | null>(null);
 
@@ -64,9 +64,9 @@ const ExtMovies = () => {
       // const providerInstance = (await manager.loadExtension(extensionId)) as MultiMovies;
       const metadata = manager.getExtensionMetadata(extensionId);
       // @ts-ignore
-      const providerInstance = await manager.executeProviderCode<'MultiMovies'>(
+      const providerInstance = await manager.executeProviderCode<'HiMovies'>(
         `${testExtCode.testCodeString}`,
-        'createMultiMovies',
+        'createHiMovies',
         // @ts-ignore
         metadata
       );
@@ -105,7 +105,7 @@ const ExtMovies = () => {
           // Load specific extractor dynamically from extension registry
           // const megacloudExtractor = await extractorManager.loadExtractor('megacloud');
           // load the code itself
-          const metadata = extractorManager.getExtractorMetadata(StreamingServers.MegaUp);
+          const metadata = extractorManager.getExtractorMetadata(StreamingServers.MegaCloud);
 
           const megacloudExtractor = await extractorManager.executeExtractorCode(
             `${testExtrCode.testCodeString}`,

@@ -3,11 +3,11 @@ const fs = require('fs');
 const path = require('path');
 
 // Read extractor test file
-const testExtrPath = path.join(__dirname, '../../../dist/extractors/megaup.js');
+const testExtrPath = path.join(__dirname, '../../../dist/extractors/megacloud.js');
 const extractorTestCode = fs.readFileSync(testExtrPath, 'utf8');
 
 // Read extension test file
-const testExtPath = path.join(__dirname, '../../../dist/providers/movies/multimovies/create-multimovies.js');
+const testExtPath = path.join(__dirname, '../../../dist/providers/movies/himovies/create-himovies.js');
 const extensionTestCode = fs.readFileSync(testExtPath, 'utf8');
 
 // Create React Native compatible file for extractor

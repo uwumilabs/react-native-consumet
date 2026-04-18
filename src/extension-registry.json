@@ -2,7 +2,7 @@
   "extractors": [
     {
       "name": "MegaCloud",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megacloud.js"
     },
     {
@@ -19,8 +19,8 @@
   "extensions": [
     {
       "id": "zoro",
-      "name": "Zoro",
-      "description": "High-quality anime streaming from Zoro (hianime.to) with multiple servers and subtitles",
+      "name": "AniWatchTv",
+      "description": "High-quality anime streaming from AniWatchTv (hianime.to) with multiple servers and subtitles",
       "version": "1.1.0",
       "author": {
         "name": "RNConsumet Team",
@@ -84,6 +84,30 @@
       "status": "stable",
       "lastUpdated": "2025-08-05T00:00:00Z",
       "extractors": ["MegaUp"],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": true
+    },
+    {
+      "id": "aniwatchtv",
+      "name": "AniWatchTv",
+      "description": "Aniwatch is a Free anime streaming website which you can watch English Subbed and Dubbed Anime online with No Account and Daily update",
+      "version": "1.0.0",
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/zoro/create-zoro.js",
+      "factoryName": "createAniWatchTv",
+      "baseUrl": "https://aniwatchtv.to",
+      "logo": "https://aniwatchtv.to/favicon-32x32.png",
+      "languages": ["en", "ja"],
+      "nsfw": false,
+      "status": "alpha",
+      "lastUpdated": "2025-08-05T00:00:00Z",
+      "extractors": ["MegaCloud"],
       "subbed": true,
       "dubbed": true,
       "isSourceEmbed": true,

@@ -24,36 +24,24 @@ function MegaCloud(ctx) {
      */
     function getSources(embed_url, site) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
+            var _a;
             const regex = /\/([^/?]+)(?=\?)/;
             const xrax = (_a = embed_url.toString().match(regex)) === null || _a === void 0 ? void 0 : _a[1];
             const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
-            const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}}`;
-            const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
-            // console.log(`🔗 Fetching sources from: ${url} with key type: ${getKeyType}`);
-            //gets the base64 encoded string from the URL and key in parallel
-            let key;
+            const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
+            // console.log(`🔗 Fetching sources from: ${url}`);
             const headers = {
                 'Accept': '*/*',
                 'X-Requested-With': 'XMLHttpRequest',
                 'Referer': site,
                 'User-Agent': USER_AGENT,
             };
-            try {
-                const { data: keyData } = yield (axios === null || axios === void 0 ? void 0 : axios.get('https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'));
-                key = keyData;
-            }
-            catch (err) {
-                console.error('❌ Error fetching key:', err);
-                return;
-            }
-            // console.log(`🔗 Fetched data: ${key[getKeyType]}`);
             let videoTag;
             let embedRes;
             try {
                 embedRes = yield (axios === null || axios === void 0 ? void 0 : axios.get(embed_url.href, { headers }));
                 const $ = load(embedRes.data);
-                videoTag = $('#megacloud-player');
+                videoTag = $('[id$="-player"]');
             }
             catch (error) {
                 console.error('❌ Error fetching embed URL:', error);
@@ -66,7 +54,7 @@ function MegaCloud(ctx) {
             const rawText = embedRes.data;
             let nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
             if (!nonceMatch) {
-                const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b.*?\b([a-zA-Z0-9]{16})\b.*?\b([a-zA-Z0-9]{16})\b/);
+                const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
                 if (altMatch)
                     nonceMatch = [altMatch.slice(1).join('')];
             }
@@ -77,24 +65,10 @@ function MegaCloud(ctx) {
             const { data: encryptedResData } = yield axios.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
                 headers,
             });
-            // console.log(
-            //   `🔗 Encrypted response:`,
-            //   encryptedResData,
-            //   `${embed_url.origin}${basePath}/getSources?id=${xrax}&_k=${nonce}`
-            // );
-            const encrypted = encryptedResData.encrypted;
             const sources = encryptedResData.sources;
             let videoSrc = [];
-            if (encrypted) {
-                const decodeUrl = 'https://script.google.com/macros/s/AKfycbxHbYHbrGMXYD2-bC-C43D3njIbU-wGiYQuJL61H4vyy6YVXkybMNNEPJNPPuZrD1gRVA/exec';
-                const params = new URLSearchParams({
-                    encrypted_data: sources,
-                    nonce: nonce,
-                    secret: key[getKeyType],
-                });
-                const decodeRes = yield axios.get(`${decodeUrl}?${params.toString()}`);
-                videoSrc = JSON.parse((_b = decodeRes.data.replace(/\n/g, ' ').match(/\\\[.*?\\\\]/)) === null || _b === void 0 ? void 0 : _b[0]);
-                // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
+            if (encryptedResData.encrypted) {
+                console.warn('❌ API returned encrypted sources which we are no longer decrypting. Returning empty array.');
             }
             else {
                 videoSrc = sources;
@@ -108,7 +82,7 @@ function MegaCloud(ctx) {
         });
     }
     // @ts-ignore
-    const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://hianime.to') {
+    const extract = (embedIframeURL_1, ...args_1) => __awaiter(this, [embedIframeURL_1, ...args_1], void 0, function* (embedIframeURL, referer = 'https://himovies.sx') {
         var _a, _b, _c, _d;
         const extractedData = {
             subtitles: [],
@@ -116,7 +90,6 @@ function MegaCloud(ctx) {
             outro: { start: 0, end: 0 },
             sources: [],
         };
-        // console.log(ctx);
         try {
             const resp = yield getSources(embedIframeURL, referer);
             if (!resp)

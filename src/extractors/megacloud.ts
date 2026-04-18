@@ -18,11 +18,8 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
     const xrax = embed_url.toString().match(regex)?.[1];
     const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
 
-    const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}}`;
-    const getKeyType = url.includes('mega') ? 'mega' : url.includes('videostr') ? 'vidstr' : 'rabbit';
-    // console.log(`🔗 Fetching sources from: ${url} with key type: ${getKeyType}`);
-    //gets the base64 encoded string from the URL and key in parallel
-    let key;
+    const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
+    // console.log(`🔗 Fetching sources from: ${url}`);
 
     const headers = {
       'Accept': '*/*',
@@ -31,22 +28,12 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
       'User-Agent': USER_AGENT,
     };
 
-    try {
-      const { data: keyData } = await axios?.get(
-        'https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json'
-      );
-      key = keyData;
-    } catch (err) {
-      console.error('❌ Error fetching key:', err);
-      return;
-    }
-    // console.log(`🔗 Fetched data: ${key[getKeyType]}`);
     let videoTag;
     let embedRes;
     try {
       embedRes = await axios?.get(embed_url.href, { headers });
       const $ = load(embedRes.data);
-      videoTag = $('#megacloud-player');
+      videoTag = $('[id$="-player"]');
     } catch (error) {
       console.error('❌ Error fetching embed URL:', error);
       return;
@@ -61,7 +48,7 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
 
     let nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
     if (!nonceMatch) {
-      const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b.*?\b([a-zA-Z0-9]{16})\b.*?\b([a-zA-Z0-9]{16})\b/);
+      const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
       if (altMatch) nonceMatch = [altMatch.slice(1).join('')];
     }
 
@@ -75,28 +62,11 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
         headers,
       }
     );
-    // console.log(
-    //   `🔗 Encrypted response:`,
-    //   encryptedResData,
-    //   `${embed_url.origin}${basePath}/getSources?id=${xrax}&_k=${nonce}`
-    // );
-    const encrypted = encryptedResData.encrypted;
     const sources = encryptedResData.sources;
     let videoSrc = [];
 
-    if (encrypted) {
-      const decodeUrl =
-        'https://script.google.com/macros/s/AKfycbxHbYHbrGMXYD2-bC-C43D3njIbU-wGiYQuJL61H4vyy6YVXkybMNNEPJNPPuZrD1gRVA/exec';
-
-      const params = new URLSearchParams({
-        encrypted_data: sources,
-        nonce: nonce,
-        secret: key[getKeyType],
-      });
-
-      const decodeRes = await axios.get(`${decodeUrl}?${params.toString()}`);
-      videoSrc = JSON.parse(decodeRes.data.replace(/\n/g, ' ').match(/\\\[.*?\\\\]/)?.[0]);
-      // console.log(`🔗 Video URL: ${videoUrl}`, decodeRes.data.match(/"file":"(.*?)"/));
+    if (encryptedResData.encrypted) {
+      console.warn('❌ API returned encrypted sources which we are no longer decrypting. Returning empty array.');
     } else {
       videoSrc = sources;
     }
@@ -108,14 +78,13 @@ export function MegaCloud(ctx: ExtractorContext): IVideoExtractor {
     };
   }
   // @ts-ignore
-  const extract = async (embedIframeURL: PolyURL, referer = 'https://hianime.to'): Promise<ISource> => {
+  const extract = async (embedIframeURL: PolyURL, referer = 'https://himovies.sx'): Promise<ISource> => {
     const extractedData: ISource = {
       subtitles: [],
       intro: { start: 0, end: 0 },
       outro: { start: 0, end: 0 },
       sources: [],
     };
-    // console.log(ctx);
     try {
       const resp = await getSources(embedIframeURL, referer);
 

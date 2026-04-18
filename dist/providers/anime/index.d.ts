@@ -8,6 +8,8 @@ import Marin from './marin';
 import AnimeUnity from './animeunity';
 import AnimeKai from './animekai/animekai';
 import createAnimeKai from './animekai/create-animekai';
+import AniWatchTv from './aniwatchtv/aniwatchtv';
+import createAniWatchTv from './aniwatchtv/create-aniwatchtv';
 declare const _default: {
     AnimePahe: typeof AnimePahe;
     createAnimePahe: typeof createAnimePahe;
@@ -19,6 +21,8 @@ declare const _default: {
     AnimeUnity: typeof AnimeUnity;
     AnimeKai: typeof AnimeKai;
     createAnimeKai: typeof createAnimeKai;
+    AniWatchTv: typeof AniWatchTv;
+    createAniWatchTv: typeof createAniWatchTv;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map
