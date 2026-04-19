@@ -38,6 +38,7 @@ import Anify from '../anime/anify';
 import Zoro from '../anime/zoro/zoro';
 import AnimeKai from '../anime/animekai/animekai';
 import AnimePahe from '../anime/animepahe/animepahe';
+import AniWatchTv from '../anime/aniwatchtv/aniwatchtv';
 import Mangasee123 from '../manga/mangasee123';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 
@@ -1145,7 +1146,12 @@ class Anilist extends AnimeParser {
 
     let possibleAnimeEpisodes: IAnimeEpisode[] = [];
     let fillerEpisodes: { 'number': string; 'filler-bool': boolean }[] = [];
-    if (this.provider instanceof Zoro || this.provider instanceof AnimeKai || this.provider instanceof AnimePahe) {
+    if (
+      this.provider instanceof Zoro ||
+      this.provider instanceof AnimeKai ||
+      this.provider instanceof AnimePahe ||
+      this.provider instanceof AniWatchTv
+    ) {
       try {
         // console.time('fetchEpisodesListById');
         const [animeMetaData, providerEpisodes] = await Promise.all([

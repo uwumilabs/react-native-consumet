@@ -105,8 +105,8 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.Zoro());
-      const searchResult = await anime.search('demon slayer infinity castle');
+      const anime = new META.Anilist(new ANIME.AniWatchTv());
+      const searchResult = await anime.search('jujutsu kaisen');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {
