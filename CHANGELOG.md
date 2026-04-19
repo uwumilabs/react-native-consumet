@@ -1,5 +1,17 @@
 
 
+## [1.3.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.2.3...v1.3.0) (2026-04-19)
+
+
+### Features
+
+* **aniwatchtv:** introduce new anime provider ([9304d71](https://github.com/uwumilabs/react-native-consumet/commit/9304d71994f263d512807e07b499964245e29968))
+
+
+### Bug Fixes
+
+* **meta:** add aniwatchtv in anilist ([266577a](https://github.com/uwumilabs/react-native-consumet/commit/266577ace0802346d69b50c219f9da1007e0b82e))
+
 ## [1.2.3](https://github.com/uwumilabs/react-native-consumet/compare/v1.2.2...v1.2.3) (2026-02-26)
 
 
