@@ -99,7 +99,7 @@
         "url": "https://github.com/uwumilabs"
       },
       "category": "anime",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/zoro/create-zoro.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/aniwatchtv/create-aniwatchtv.js",
       "factoryName": "createAniWatchTv",
       "baseUrl": "https://aniwatchtv.to",
       "logo": "https://aniwatchtv.to/favicon-32x32.png",
