@@ -105,7 +105,7 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AniWatchTv());
+      const anime = new META.Anilist(new ANIME.AnimePahe());
       const searchResult = await anime.search('jujutsu kaisen');
       console.log('Anime Search Result:', searchResult);
 

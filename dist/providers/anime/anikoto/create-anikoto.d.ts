@@ -1,5 +1,5 @@
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type WatchListType, type ProviderContext } from '../../../models';
-declare function createAniWatchTv(ctx: ProviderContext, customBaseURL?: string): {
+declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchAdvancedSearch: (page?: number, type?: string, status?: string, rated?: string, score?: number, season?: string, language?: string, startDate?: {
         year: number;
@@ -44,6 +44,6 @@ declare function createAniWatchTv(ctx: ProviderContext, customBaseURL?: string):
     isWorking?: boolean;
     isDubAvailableSeparately?: boolean;
 };
-export type AniWatchTvProviderInstance = ReturnType<typeof createAniWatchTv>;
-export default createAniWatchTv;
-//# sourceMappingURL=create-aniwatchtv.d.ts.map
+export type AniKotoProviderInstance = ReturnType<typeof createAniKoto>;
+export default createAniKoto;
+//# sourceMappingURL=create-anikoto.d.ts.map

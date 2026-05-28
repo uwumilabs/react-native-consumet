@@ -72,7 +72,7 @@ function Kwik(ctx) {
         return lines.join('\n');
     }
     // @ts-ignore
-    const extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://animepahe.si/') {
+    const extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://animepahe.pw/') {
         const extractedData = {
             // subtitles: [],
             // intro: { start: 0, end: 0 },

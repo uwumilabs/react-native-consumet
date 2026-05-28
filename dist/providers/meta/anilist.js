@@ -20,7 +20,7 @@ const anify_1 = __importDefault(require("../anime/anify"));
 const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
 const animekai_1 = __importDefault(require("../anime/animekai/animekai"));
 const animepahe_1 = __importDefault(require("../anime/animepahe/animepahe"));
-const aniwatchtv_1 = __importDefault(require("../anime/aniwatchtv/aniwatchtv"));
+const anikoto_1 = __importDefault(require("../anime/anikoto/anikoto"));
 const mangasee123_1 = __importDefault(require("../manga/mangasee123"));
 const utils_2 = require("../../utils/utils");
 class Anilist extends models_1.AnimeParser {
@@ -1003,7 +1003,7 @@ class Anilist extends models_1.AnimeParser {
             if (this.provider instanceof zoro_1.default ||
                 this.provider instanceof animekai_1.default ||
                 this.provider instanceof animepahe_1.default ||
-                this.provider instanceof aniwatchtv_1.default) {
+                this.provider instanceof anikoto_1.default) {
                 try {
                     // console.time('fetchEpisodesListById');
                     const [animeMetaData, providerEpisodes] = yield Promise.all([

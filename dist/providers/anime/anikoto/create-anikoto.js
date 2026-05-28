@@ -9,17 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-function createAniWatchTv(ctx, customBaseURL) {
+function createAniKoto(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
     const { StreamSB, MegaCloud, StreamTape } = extractors;
     const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum, WatchListType: WatchListTypeEnum, } = enums;
     // Provider configuration - use the standardized base URL creation
-    const baseUrl = createCustomBaseUrl('https://aniwatchtv.to', customBaseURL);
+    const baseUrl = createCustomBaseUrl('https://anikototv.to', customBaseURL);
     const config = {
-        name: 'AniWatchTv',
+        name: 'AniKoto',
         languages: 'en',
-        classPath: 'ANIME.AniWatchTv',
-        logo: 'https://aniwatchtv.to/favicon-32x32.png',
+        classPath: 'ANIME.AniKoto',
+        logo: 'https://anikototv.to/favicon-32x32.png',
         baseUrl,
         isNSFW: false,
         isWorking: true,
@@ -32,7 +32,7 @@ function createAniWatchTv(ctx, customBaseURL) {
     // Main provider functions
     const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
         const normalizedPage = normalizePageNumber(page);
-        return scrapeCardPage(`${config.baseUrl}/search?keyword=${decodeURIComponent(query)}&page=${normalizedPage}`);
+        return scrapeCardPage(`${config.baseUrl}/filter?keyword=${decodeURIComponent(query)}&page=${normalizedPage}`);
     });
     const fetchAdvancedSearch = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1, type, status, rated, score, season, language, startDate, endDate, sort, genres) {
         const normalizedPage = normalizePageNumber(page);
@@ -265,33 +265,39 @@ function createAniWatchTv(ctx, customBaseURL) {
     });
     const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
         try {
-            const animeUrl = `${config.baseUrl}/${id}`;
+            const animeUrl = `${config.baseUrl}/watch/${id}`;
             const response = yield fetch(animeUrl);
             const data = yield response.text();
             const $ = load(data);
             const info = {
                 id: id,
-                title: $('.anisc-detail h2.film-name').text().trim(),
+                title: $('.binfo .info h1.title').text().trim(),
                 url: animeUrl,
                 genres: [],
                 totalEpisodes: 0,
             };
-            info.image = $('.film-poster img').attr('src');
-            info.description = $('.film-description .text').text().trim();
-            // Extract genres
-            $('.item-list a[href*="/genre/"]').each((_, el) => {
-                var _a;
-                (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push($(el).text().trim());
-            });
+            info.japaneseTitle = $('.binfo .info h1.title').attr('data-jp');
+            info.image = $('.binfo .poster img').attr('src');
+            info.description = $('.binfo .info .synopsis .content').text().trim();
             // Extract other info from the info list
-            $('.anisc-info .item').each((_, item) => {
-                const label = $(item).find('.item-head').text().trim().toLowerCase();
-                const value = $(item).find('.name').text().trim() || $(item).text().replace($(item).find('.item-head').text(), '').trim();
-                if (label.includes('studio'))
-                    info.studios = [value];
-                if (label.includes('duration'))
+            $('.binfo .bmeta .meta > div').each((_, item) => {
+                var _a;
+                const text = $(item).text().trim().toLowerCase();
+                let value = $(item).find('span').text().trim();
+                // Fallback for simple "Label: Value"
+                if (!value) {
+                    value = ((_a = $(item).text().split(':')[1]) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+                }
+                if (text.startsWith('studios:')) {
+                    info.studios = $(item)
+                        .find('a')
+                        .map((_, el) => $(el).text().trim())
+                        .get();
+                }
+                else if (text.startsWith('duration:')) {
                     info.duration = value;
-                if (label.includes('status')) {
+                }
+                else if (text.startsWith('status:')) {
                     switch (value) {
                         case 'Finished Airing':
                             info.status = MediaStatusEnum.COMPLETED;
@@ -307,18 +313,25 @@ function createAniWatchTv(ctx, customBaseURL) {
                             break;
                     }
                 }
-                if (label.includes('type'))
+                else if (text.startsWith('type:')) {
                     info.type = value;
-                if (label.includes('score'))
+                }
+                else if (text.startsWith('mal:')) {
                     info.rating = parseFloat(value);
-                if (label.includes('premiered'))
+                }
+                else if (text.startsWith('premiered:')) {
                     info.releaseDate = value;
-                if (label.includes('japanese'))
-                    info.japaneseTitle = value;
+                }
+                else if (text.startsWith('genres:')) {
+                    info.genres = $(item)
+                        .find('a')
+                        .map((_, el) => $(el).text().trim())
+                        .get();
+                }
             });
             // Check for sub/dub availability
-            const hasSub = $('div.film-stats div.tick div.tick-item.tick-sub').length > 0;
-            const hasDub = $('div.film-stats div.tick div.tick-item.tick-dub').length > 0;
+            const hasSub = $('.binfo .meta.icons .sub').length > 0;
+            const hasDub = $('.binfo .meta.icons .dub').length > 0;
             if (hasSub) {
                 info.subOrDub = SubOrDubEnum.SUB;
                 info.hasSub = hasSub;
@@ -330,30 +343,26 @@ function createAniWatchTv(ctx, customBaseURL) {
             if (hasSub && hasDub) {
                 info.subOrDub = SubOrDubEnum.BOTH;
             }
-            // Fetch episodes
-            const episodesResponse = yield fetch(`${config.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Referer': `${config.baseUrl}/watch/${id}`,
-                },
-            });
-            const episodesData = yield episodesResponse.json();
-            const $$ = load(episodesData.html);
-            const episodeElements = $$('div.detail-infor-content > div > a');
-            const subCount = parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0;
-            const dubCount = parseInt($('div.film-stats div.tick div.tick-item.tick-dub').text().trim()) || 0;
+            //stop execution for 2 seconds
+            setTimeout(() => { }, 2000);
+            const episodeElements = $('#w-episodes');
+            console.log(episodeElements.html());
+            // Sub/dub count can be stored on other elements as well for ep count, update if possible if it matches the DOM
+            const subCount = parseInt($('.binfo .meta.icons .sub').text().trim() || '0') || 0;
+            const dubCount = parseInt($('.binfo .meta.icons .dub').text().trim() || '0') || 0;
             info.totalEpisodes = episodeElements.length;
             info.episodes = [];
             episodeElements.each((i, el) => {
-                var _a, _b;
-                const $el = $$(el);
+                var _a;
+                const $el = $(el);
+                const $li = $el.parent();
                 const href = $el.attr('href') || '';
-                const number = parseInt($el.attr('data-number') || '0');
+                const number = parseInt($el.attr('data-num') || '0');
                 (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
-                    id: ((_b = href.split('/')[2]) === null || _b === void 0 ? void 0 : _b.replace('?ep=', '$episode$')) || '',
+                    id: "href.split('/watch/')[1]!",
                     number: number,
-                    title: $el.attr('title'),
-                    isFiller: $el.hasClass('ssl-item-filler'),
+                    title: $li.attr('title'),
+                    isFiller: $el.hasClass('filler'),
                     isSubbed: number <= subCount,
                     isDubbed: number <= dubCount,
                     url: config.baseUrl + href,
@@ -432,30 +441,32 @@ function createAniWatchTv(ctx, customBaseURL) {
     const scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
         try {
             const results = [];
-            $('.flw-item').each((i, ele) => {
-                var _a;
+            $('#list-items .item').each((i, ele) => {
                 const card = $(ele);
-                const atag = card.find('.film-name a');
-                const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
-                const watchList = card.find('.dropdown-menu .added').text().trim();
-                const typeTexts = card
-                    .find('.fdi-item')
-                    .map((_, el) => $(el).text().trim())
-                    .get();
-                const type = typeTexts[0] || 'Unknown';
+                const atag = card.find('.name.d-title');
+                const href = atag.attr('href') || card.find('.ani.poster a').attr('href');
+                let type = 'Unknown';
+                let eps = 0;
+                const metaItem = card.find('.m-item').eq(1);
+                if (metaItem.find('label').length > 0) {
+                    type = metaItem.find('label').text().trim();
+                }
+                if (metaItem.find('span').length > 0) {
+                    eps = parseInt(metaItem.find('span').text().trim(), 10) || 0;
+                }
+                const subText = card.find('.ep-status.sub span').text().trim();
+                const dubText = card.find('.ep-status.dub span').text().trim();
+                const totalText = card.find('.ep-status.total span').text().trim();
                 results.push({
-                    id: id,
+                    id: href === null || href === void 0 ? void 0 : href.split('/watch/')[1],
                     title: atag.text().trim(),
-                    url: `${config.baseUrl}${atag.attr('href')}`,
-                    image: card.find('img').attr('data-src') || card.find('img').attr('src'),
-                    duration: card.find('.fdi-duration').text().trim(),
-                    watchList: watchList || WatchListTypeEnum.NONE,
-                    japaneseTitle: atag.attr('data-jname'),
+                    url: href ? (href.startsWith('http') ? href : `${config.baseUrl}${href}`) : '',
+                    image: card.find('.ani.poster img').attr('src') || card.find('.ani.poster img').attr('data-src'),
+                    japaneseTitle: atag.attr('data-jp'),
                     type: type,
-                    nsfw: card.find('.tick-rate').text().trim() === '18+' ? true : false,
-                    sub: parseInt(card.find('.tick-item.tick-sub').text().trim(), 10) || 0,
-                    dub: parseInt(card.find('.tick-item.tick-dub').text().trim(), 10) || 0,
-                    episodes: parseInt(card.find('.tick-item.tick-eps').text().trim(), 10) || 0,
+                    sub: parseInt(subText, 10) || 0,
+                    dub: parseInt(dubText, 10) || 0,
+                    episodes: parseInt(totalText, 10) || eps || 0,
                 });
             });
             return results;
@@ -482,7 +493,7 @@ function createAniWatchTv(ctx, customBaseURL) {
             const $ = load(data);
             const pagination = $('ul.pagination');
             res.currentPage = parseInt(pagination.find('.page-item.active').text().trim(), 10) || 1;
-            const nextPage = pagination.find('a[title=Next]').attr('href');
+            const nextPage = pagination.find('a[rel=next]').attr('href') || pagination.find('a[title=Next]').attr('href');
             if (nextPage !== undefined && nextPage !== '') {
                 res.hasNextPage = true;
             }
@@ -538,5 +549,5 @@ function createAniWatchTv(ctx, customBaseURL) {
         fetchEpisodeServers });
 }
 // Default export for backward compatibility
-exports.default = createAniWatchTv;
-//# sourceMappingURL=create-aniwatchtv.js.map
+exports.default = createAniKoto;
+//# sourceMappingURL=create-anikoto.js.map

@@ -22,8 +22,8 @@ exports.animeProviders = {
     get AnimeKai() {
         return require('../providers/anime/animekai/animekai').default;
     },
-    get AniWatchTv() {
-        return require('../providers/anime/aniwatchtv/aniwatchtv').default;
+    get AniKoto() {
+        return require('../providers/anime/anikoto/anikoto').default;
     },
 };
 exports.movieProviders = {

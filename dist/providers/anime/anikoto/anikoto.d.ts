@@ -1,5 +1,5 @@
 import { AnimeParser } from '../../../models';
-import { type AniWatchTvProviderInstance } from './create-aniwatchtv';
+import { type AniKotoProviderInstance } from './create-anikoto';
 export declare class AniWatchTv extends AnimeParser {
     private instance;
     logo: string;
@@ -14,7 +14,7 @@ export declare class AniWatchTv extends AnimeParser {
      * @param query Search query
      * @param page Page number (optional)
      */
-    search: AniWatchTvProviderInstance['search'];
+    search: AniKotoProviderInstance['search'];
     /**
      * Fetch advanced anime search results with various filters.
      *
@@ -31,104 +31,104 @@ export declare class AniWatchTv extends AnimeParser {
      * @param genres Array of genres (Optional): action, adventure, cars, comedy, dementia, demons, mystery, drama, ecchi, fantasy, game, historical, horror, kids, magic, martial_arts, mecha, music, parody, samurai, romance, school, sci_fi, shoujo, shoujo_ai, shounen, shounen_ai, space, sports, super_power, vampire, harem, military, slice_of_life, supernatural, police, psychological, thriller, seinen, isekai, josei
      * @returns A Promise resolving to the search results.
      */
-    fetchAdvancedSearch: AniWatchTvProviderInstance['fetchAdvancedSearch'];
+    fetchAdvancedSearch: AniKotoProviderInstance['fetchAdvancedSearch'];
     /**
      * @param page number
      */
-    fetchTopAiring: AniWatchTvProviderInstance['fetchTopAiring'];
+    fetchTopAiring: AniKotoProviderInstance['fetchTopAiring'];
     /**
      * @param page number
      */
-    fetchMostPopular: AniWatchTvProviderInstance['fetchMostPopular'];
+    fetchMostPopular: AniKotoProviderInstance['fetchMostPopular'];
     /**
      * @param page number
      */
-    fetchMostFavorite: AniWatchTvProviderInstance['fetchMostFavorite'];
+    fetchMostFavorite: AniKotoProviderInstance['fetchMostFavorite'];
     /**
      * @param page number
      */
-    fetchLatestCompleted: AniWatchTvProviderInstance['fetchLatestCompleted'];
+    fetchLatestCompleted: AniKotoProviderInstance['fetchLatestCompleted'];
     /**
      * @param page number
      */
-    fetchRecentlyUpdated: AniWatchTvProviderInstance['fetchRecentlyUpdated'];
+    fetchRecentlyUpdated: AniKotoProviderInstance['fetchRecentlyUpdated'];
     /**
      * @param page number
      */
-    fetchRecentlyAdded: AniWatchTvProviderInstance['fetchRecentlyAdded'];
+    fetchRecentlyAdded: AniKotoProviderInstance['fetchRecentlyAdded'];
     /**
      * @param page number
      */
-    fetchTopUpcoming: AniWatchTvProviderInstance['fetchTopUpcoming'];
+    fetchTopUpcoming: AniKotoProviderInstance['fetchTopUpcoming'];
     /**
      * @param studio Studio id, e.g. "toei-animation"
      * @param page page number (optional) `default 1`
      */
-    fetchStudio: AniWatchTvProviderInstance['fetchStudio'];
+    fetchStudio: AniKotoProviderInstance['fetchStudio'];
     /**
      * @param page number
      */
-    fetchSubbedAnime: AniWatchTvProviderInstance['fetchSubbedAnime'];
+    fetchSubbedAnime: AniKotoProviderInstance['fetchSubbedAnime'];
     /**
      * @param page number
      */
-    fetchDubbedAnime: AniWatchTvProviderInstance['fetchDubbedAnime'];
+    fetchDubbedAnime: AniKotoProviderInstance['fetchDubbedAnime'];
     /**
      * @param page number
      */
-    fetchMovie: AniWatchTvProviderInstance['fetchMovie'];
+    fetchMovie: AniKotoProviderInstance['fetchMovie'];
     /**
      * @param page number
      */
-    fetchTV: AniWatchTvProviderInstance['fetchTV'];
+    fetchTV: AniKotoProviderInstance['fetchTV'];
     /**
      * @param page number
      */
-    fetchOVA: AniWatchTvProviderInstance['fetchOVA'];
+    fetchOVA: AniKotoProviderInstance['fetchOVA'];
     /**
      * @param page number
      */
-    fetchONA: AniWatchTvProviderInstance['fetchONA'];
+    fetchONA: AniKotoProviderInstance['fetchONA'];
     /**
      * @param page number
      */
-    fetchSpecial: AniWatchTvProviderInstance['fetchSpecial'];
-    fetchGenres: AniWatchTvProviderInstance['fetchGenres'];
+    fetchSpecial: AniKotoProviderInstance['fetchSpecial'];
+    fetchGenres: AniKotoProviderInstance['fetchGenres'];
     /**
      * @param page number
      */
-    genreSearch: AniWatchTvProviderInstance['genreSearch'];
+    genreSearch: AniKotoProviderInstance['genreSearch'];
     /**
      * Fetches the schedule for a given date.
      * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
      * @returns A promise that resolves to an object containing the search results.
      */
-    fetchSchedule: AniWatchTvProviderInstance['fetchSchedule'];
-    fetchSpotlight: AniWatchTvProviderInstance['fetchSpotlight'];
-    fetchSearchSuggestions: AniWatchTvProviderInstance['fetchSearchSuggestions'];
+    fetchSchedule: AniKotoProviderInstance['fetchSchedule'];
+    fetchSpotlight: AniKotoProviderInstance['fetchSpotlight'];
+    fetchSearchSuggestions: AniKotoProviderInstance['fetchSearchSuggestions'];
     /**
      * Fetches the list of episodes that the user is currently watching.
      * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)
      * @returns A promise that resolves to an array of anime episodes.
      */
-    fetchContinueWatching: AniWatchTvProviderInstance['fetchContinueWatching'];
-    fetchWatchList: AniWatchTvProviderInstance['fetchWatchList'];
+    fetchContinueWatching: AniKotoProviderInstance['fetchContinueWatching'];
+    fetchWatchList: AniKotoProviderInstance['fetchWatchList'];
     /**
      * @param id Anime id
      */
-    fetchAnimeInfo: AniWatchTvProviderInstance['fetchAnimeInfo'];
+    fetchAnimeInfo: AniKotoProviderInstance['fetchAnimeInfo'];
     /**
      *
      * @param episodeId Episode id
      * @param server server type (default `VidCloud`) (optional)
      * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
      */
-    fetchEpisodeSources: AniWatchTvProviderInstance['fetchEpisodeSources'];
+    fetchEpisodeSources: AniKotoProviderInstance['fetchEpisodeSources'];
     /**
      * Method not implemented in AniWatchTv provider.
      * @param episodeId Episode id
      */
-    fetchEpisodeServers: AniWatchTvProviderInstance['fetchEpisodeServers'];
+    fetchEpisodeServers: AniKotoProviderInstance['fetchEpisodeServers'];
 }
 export default AniWatchTv;
-//# sourceMappingURL=aniwatchtv.d.ts.map
+//# sourceMappingURL=anikoto.d.ts.map

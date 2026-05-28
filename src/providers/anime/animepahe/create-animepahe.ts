@@ -19,13 +19,13 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
   const { getDdosGuardCookiesWithWebView, multiply, bypassDdosGuard } = NativeConsumet;
   // Provider configuration - use the standardized base URL creation
-  const baseUrl = createCustomBaseUrl('https://animepahe.si', customBaseURL);
+  const baseUrl = createCustomBaseUrl('https://animepahe.pw', customBaseURL);
 
   const config: ProviderConfig = {
     name: 'AnimePahe',
     languages: 'en',
     classPath: 'ANIME.AnimePahe',
-    logo: 'https://animepahe.si/web-app-manifest-512x512.png',
+    logo: 'https://animepahe.pw/web-app-manifest-512x512.png',
     baseUrl,
     isNSFW: false,
     isWorking: true,

@@ -38,7 +38,7 @@ import Anify from '../anime/anify';
 import Zoro from '../anime/zoro/zoro';
 import AnimeKai from '../anime/animekai/animekai';
 import AnimePahe from '../anime/animepahe/animepahe';
-import AniWatchTv from '../anime/aniwatchtv/aniwatchtv';
+import AniWatchTv from '../anime/anikoto/anikoto';
 import Mangasee123 from '../manga/mangasee123';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 

@@ -11,7 +11,7 @@ export declare const animeProviders: {
     readonly Zoro: any;
     readonly AnimePahe: any;
     readonly AnimeKai: any;
-    readonly AniWatchTv: any;
+    readonly AniKoto: any;
 };
 export declare const movieProviders: {
     readonly HiMovies: any;

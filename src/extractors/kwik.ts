@@ -73,7 +73,7 @@ export function Kwik(ctx: ExtractorContext): IVideoExtractor {
     return lines.join('\n');
   }
   // @ts-ignore
-  const extract = async (videoUrl: PolyURL, referer = 'https://animepahe.si/'): Promise<ISource> => {
+  const extract = async (videoUrl: PolyURL, referer = 'https://animepahe.pw/'): Promise<ISource> => {
     const extractedData: ISource = {
       // subtitles: [],
       // intro: { start: 0, end: 0 },

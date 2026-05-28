@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AniWatchTv = void 0;
 const models_1 = require("../../../models");
 const create_provider_context_1 = require("../../../utils/create-provider-context");
-const create_aniwatchtv_1 = __importDefault(require("./create-aniwatchtv"));
+const create_anikoto_1 = __importDefault(require("./create-anikoto"));
 // Backward compatibility wrapper class
 class AniWatchTv extends models_1.AnimeParser {
     constructor(customBaseURL) {
@@ -14,7 +14,7 @@ class AniWatchTv extends models_1.AnimeParser {
         super();
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, create_provider_context_1.createProviderContext)();
-        this.instance = (0, create_aniwatchtv_1.default)(defaultContext, customBaseURL);
+        this.instance = (0, create_anikoto_1.default)(defaultContext, customBaseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -68,4 +68,4 @@ exports.default = AniWatchTv;
 //   );
 //   // console.log(sources);
 // })();
-//# sourceMappingURL=aniwatchtv.js.map
+//# sourceMappingURL=anikoto.js.map

@@ -8,8 +8,8 @@ import Marin from './marin';
 import AnimeUnity from './animeunity';
 import AnimeKai from './animekai/animekai';
 import createAnimeKai from './animekai/create-animekai';
-import AniWatchTv from './aniwatchtv/aniwatchtv';
-import createAniWatchTv from './aniwatchtv/create-aniwatchtv';
+import AniKoto from './anikoto/anikoto';
+import createAniKoto from './anikoto/create-anikoto';
 
 export default {
   AnimePahe,
@@ -22,6 +22,6 @@ export default {
   AnimeUnity,
   AnimeKai,
   createAnimeKai,
-  AniWatchTv,
-  createAniWatchTv,
+  AniKoto,
+  createAniKoto,
 };
