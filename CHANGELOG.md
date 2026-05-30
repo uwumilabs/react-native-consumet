@@ -1,5 +1,13 @@
 
 
+## [1.3.1](https://github.com/uwumilabs/react-native-consumet/compare/v1.3.0...v1.3.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* json again ([630fa9c](https://github.com/uwumilabs/react-native-consumet/commit/630fa9c920db2201e62e58243ab197ca64974744))
+* **json:** correct the name of zoro ([4a02336](https://github.com/uwumilabs/react-native-consumet/commit/4a02336ab78586411deb8294ccf2183cd6ba37fb))
+
 ## [1.3.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.2.3...v1.3.0) (2026-04-19)
 
 
