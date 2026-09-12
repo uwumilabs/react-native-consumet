@@ -1,5 +1,13 @@
 
 
+## [1.4.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.3.1...v1.4.0) (2026-09-12)
+
+
+### Features
+
+* implememnt anikoto ([94b258b](https://github.com/uwumilabs/react-native-consumet/commit/94b258b5b079886f9a36d035a9ecce4a0900f5af))
+* implement vegamovies ([9035b9c](https://github.com/uwumilabs/react-native-consumet/commit/9035b9cd0148411053092e53700f45dde1ca5391))
+
 ## [1.3.1](https://github.com/uwumilabs/react-native-consumet/compare/v1.3.0...v1.3.1) (2026-05-30)
 
 
