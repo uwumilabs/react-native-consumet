@@ -8,6 +8,8 @@ import HiMovies from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
 import YFlix from './yflix/yflix';
 import { createYFlix } from './yflix/create-yflix';
+import VegaMovies from './vegamovies/vegamovies';
+import { createVegaMovies } from './vegamovies/create-vegamovies';
 
 export default {
   // DramaCool,
@@ -15,9 +17,13 @@ export default {
   NetflixMirror,
   HiMovies,
   YFlix,
+  VegaMovies,
   MultiStream,
   createHiMovies,
   createMultiMovies,
   createNetflixMirror,
   createYFlix,
+  createVegaMovies,
 };
+
+export { VegaMovies, createVegaMovies } from './vegamovies/vegamovies';

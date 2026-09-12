@@ -18,5 +18,8 @@ import { VidHide } from './vidhide';
 import Voe from './voe';
 import { MegaUp } from './megaup';
 import { MegaPlay } from './megaplay';
-export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, MegaPlay, };
+import { GDFlix } from './gdflix';
+import { Gofile } from './gofile';
+import { HubCloud } from './hubcloud';
+export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, MegaPlay, GDFlix, Gofile, HubCloud, };
 //# sourceMappingURL=index.d.ts.map

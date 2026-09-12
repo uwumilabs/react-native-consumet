@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.MegaPlay = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
 require("react-native-get-random-values");
 const url_polyfill_1 = require("./utils/url-polyfill");
 Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
@@ -59,6 +59,9 @@ Object.defineProperty(exports, "VidHide", { enumerable: true, get: function () {
 Object.defineProperty(exports, "Voe", { enumerable: true, get: function () { return extractors_1.Voe; } });
 Object.defineProperty(exports, "MegaUp", { enumerable: true, get: function () { return extractors_1.MegaUp; } });
 Object.defineProperty(exports, "MegaPlay", { enumerable: true, get: function () { return extractors_1.MegaPlay; } });
+Object.defineProperty(exports, "GDFlix", { enumerable: true, get: function () { return extractors_1.GDFlix; } });
+Object.defineProperty(exports, "Gofile", { enumerable: true, get: function () { return extractors_1.Gofile; } });
+Object.defineProperty(exports, "HubCloud", { enumerable: true, get: function () { return extractors_1.HubCloud; } });
 // Models (domain types, enums, and constants)
 const models_1 = require("./models");
 Object.defineProperty(exports, "StreamingServers", { enumerable: true, get: function () { return models_1.StreamingServers; } });

@@ -18,6 +18,9 @@ import { VidHide } from './vidhide';
 import Voe from './voe';
 import { MegaUp } from './megaup';
 import { MegaPlay } from './megaplay';
+import { GDFlix } from './gdflix';
+import { Gofile } from './gofile';
+import { HubCloud } from './hubcloud';
 
 export {
   AsianLoad,
@@ -40,4 +43,7 @@ export {
   Voe,
   MegaUp,
   MegaPlay,
+  GDFlix,
+  Gofile,
+  HubCloud,
 };

@@ -170,6 +170,10 @@ export interface IVideo {
    */
   url: string;
   /**
+   * The name of the server providing this video stream
+   */
+  server?: string;
+  /**
    * The Quality of the video should include the `p` suffix
    */
   quality?: string;
@@ -214,6 +218,9 @@ export enum StreamingServers {
   Multi = 'multi',
   Kwik = 'kwik',
   MegaPlay = 'megaplay',
+  GDFlix = 'gdflix',
+  Gofile = 'gofile',
+  HubCloud = 'hubcloud',
 }
 
 export enum MediaStatus {

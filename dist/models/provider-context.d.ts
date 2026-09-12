@@ -72,6 +72,15 @@ export interface ExtractorRegistry {
     MegaPlay: (ctx?: ExtractorContext) => {
         extract: (url: PolyURL, referer?: string) => Promise<any>;
     };
+    GDFlix: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
+    };
+    Gofile: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
+    };
+    HubCloud: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
+    };
 }
 export type ProviderConfig = {
     name: string;

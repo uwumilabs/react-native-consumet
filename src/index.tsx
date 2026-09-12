@@ -52,6 +52,9 @@ import {
   Voe,
   MegaUp,
   MegaPlay,
+  GDFlix,
+  Gofile,
+  HubCloud,
 } from './extractors';
 
 // Models (domain types, enums, and constants)
@@ -129,6 +132,9 @@ export {
   VidHide,
   Voe,
   MegaPlay,
+  GDFlix,
+  Gofile,
+  HubCloud,
 };
 
 // Models: TypeScript types

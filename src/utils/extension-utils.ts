@@ -22,6 +22,9 @@ import {
   Voe,
   MegaUp,
   MegaPlay,
+  GDFlix,
+  Gofile,
+  HubCloud,
 } from '../extractors';
 import { load } from 'cheerio';
 import { USER_AGENT } from './utils';
@@ -89,6 +92,9 @@ export const defaultExtractors = {
   Voe: Voe,
   MegaUp: (ctx?: ExtractorContext) => MegaUp(ctx || defaultExtractorContext),
   MegaPlay: (ctx?: ExtractorContext) => MegaPlay(ctx || defaultExtractorContext),
+  GDFlix: (ctx?: ExtractorContext) => GDFlix(ctx || defaultExtractorContext),
+  Gofile: (ctx?: ExtractorContext) => Gofile(ctx || defaultExtractorContext),
+  HubCloud: (ctx?: ExtractorContext) => HubCloud(ctx || defaultExtractorContext),
 };
 
 export const extractors = {
@@ -107,6 +113,9 @@ export const extractors = {
   MegaCloud: defaultExtractors.MegaCloud,
   MegaUp: defaultExtractors.MegaUp,
   MegaPlay: defaultExtractors.MegaPlay,
+  GDFlix: defaultExtractors.GDFlix,
+  Gofile: defaultExtractors.Gofile,
+  HubCloud: defaultExtractors.HubCloud,
 };
 
 // Type definitions for provider and extractor instances

@@ -62,6 +62,9 @@ exports.defaultExtractors = {
     Voe: extractors_1.Voe,
     MegaUp: (ctx) => (0, extractors_1.MegaUp)(ctx || exports.defaultExtractorContext),
     MegaPlay: (ctx) => (0, extractors_1.MegaPlay)(ctx || exports.defaultExtractorContext),
+    GDFlix: (ctx) => (0, extractors_1.GDFlix)(ctx || exports.defaultExtractorContext),
+    Gofile: (ctx) => (0, extractors_1.Gofile)(ctx || exports.defaultExtractorContext),
+    HubCloud: (ctx) => (0, extractors_1.HubCloud)(ctx || exports.defaultExtractorContext),
 };
 exports.extractors = {
     GogoCDN: exports.defaultExtractors.GogoCDN,
@@ -79,5 +82,8 @@ exports.extractors = {
     MegaCloud: exports.defaultExtractors.MegaCloud,
     MegaUp: exports.defaultExtractors.MegaUp,
     MegaPlay: exports.defaultExtractors.MegaPlay,
+    GDFlix: exports.defaultExtractors.GDFlix,
+    Gofile: exports.defaultExtractors.Gofile,
+    HubCloud: exports.defaultExtractors.HubCloud,
 };
 //# sourceMappingURL=extension-utils.js.map

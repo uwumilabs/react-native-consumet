@@ -23,6 +23,9 @@ export declare const defaultExtractors: {
     Voe: typeof Voe;
     MegaUp: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     MegaPlay: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    GDFlix: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    Gofile: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    HubCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export declare const extractors: {
     GogoCDN: typeof GogoCDN;
@@ -40,6 +43,9 @@ export declare const extractors: {
     MegaCloud: (ctx: ExtractorContext) => import("../models").IVideoExtractor;
     MegaUp: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     MegaPlay: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    GDFlix: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    Gofile: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    HubCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export type Extractor = keyof typeof extractors;
 //# sourceMappingURL=extension-utils.d.ts.map

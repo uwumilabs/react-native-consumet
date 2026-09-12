@@ -39,6 +39,9 @@ exports.movieProviders = {
     get YFlix() {
         return require('../providers/movies/yflix/yflix').default;
     },
+    get VegaMovies() {
+        return require('../providers/movies/vegamovies/vegamovies').default;
+    },
 };
 const metaProviders = {
     get Anilist() {

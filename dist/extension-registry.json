@@ -19,6 +19,21 @@
             "name": "MegaPlay",
             "version": "1.0.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaplay.js"
+        },
+        {
+            "name": "GDFlix",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/gdflix.js"
+        },
+        {
+            "name": "Gofile",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/gofile.js"
+        },
+        {
+            "name": "HubCloud",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/hubcloud.js"
         }
     ],
     "extensions": [
@@ -136,6 +151,28 @@
             "lastUpdated": "2025-08-05T00:00:00Z",
             "extractors": ["MegaUp"],
             "isSourceEmbed": true,
+            "haveMultiServers": true
+        },
+        {
+            "id": "vegamovies",
+            "name": "VegaMovies",
+            "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "movies",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/vegamovies/create-vegamovies.js",
+            "factoryName": "createVegaMovies",
+            "baseUrl": "https://new2.vegamovies.futbol",
+            "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
+            "languages": ["all"],
+            "nsfw": false,
+            "status": "working",
+            "lastUpdated": "2026-09-12T00:00:00Z",
+            "extractors": ["HubCloud", "GDFlix"],
+            "isSourceEmbed": false,
             "haveMultiServers": true
         }
     ]

@@ -44,6 +44,9 @@ var StreamingServers;
     StreamingServers["Multi"] = "multi";
     StreamingServers["Kwik"] = "kwik";
     StreamingServers["MegaPlay"] = "megaplay";
+    StreamingServers["GDFlix"] = "gdflix";
+    StreamingServers["Gofile"] = "gofile";
+    StreamingServers["HubCloud"] = "hubcloud";
 })(StreamingServers || (exports.StreamingServers = StreamingServers = {}));
 var MediaStatus;
 (function (MediaStatus) {
