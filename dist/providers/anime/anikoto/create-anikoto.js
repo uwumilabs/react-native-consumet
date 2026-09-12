@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 function createAniKoto(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
     const { MegaPlay } = extractors;
-    const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum, } = enums;
+    const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
     // Provider configuration
     const baseUrl = createCustomBaseUrl('https://anikototv.to', customBaseURL);
     const config = {
@@ -225,7 +225,9 @@ function createAniKoto(ctx, customBaseURL) {
     const fetchSchedule = (date) => __awaiter(this, void 0, void 0, function* () {
         var _a;
         try {
-            const res = yield axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, { headers: ajaxHeaders() });
+            const res = yield axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
+                headers: ajaxHeaders(),
+            });
             const html = ((_a = res.data) === null || _a === void 0 ? void 0 : _a.result) || res.data;
             const $ = load(html);
             const results = [];
@@ -287,7 +289,9 @@ function createAniKoto(ctx, customBaseURL) {
     const fetchSearchSuggestions = (query) => __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
         try {
-            const res = yield axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, { headers: ajaxHeaders() });
+            const res = yield axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
+                headers: ajaxHeaders(),
+            });
             const html = ((_b = (_a = res.data) === null || _a === void 0 ? void 0 : _a.result) === null || _b === void 0 ? void 0 : _b.html) || ((_c = res.data) === null || _c === void 0 ? void 0 : _c.result) || res.data;
             const $ = load(html);
             const suggestions = [];
@@ -323,11 +327,12 @@ function createAniKoto(ctx, customBaseURL) {
             const { data: pageHtml } = yield axios.get(watchUrl, { headers: defaultHeaders });
             const $ = load(pageHtml);
             const title = $('#w-info .title.d-title, h1.title').first().text().trim();
-            const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') ||
-                ((_a = $('#w-info .names').text().split(';')[1]) === null || _a === void 0 ? void 0 : _a.trim()) ||
-                title;
+            const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') || ((_a = $('#w-info .names').text().split(';')[1]) === null || _a === void 0 ? void 0 : _a.trim()) || title;
             const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
-            const description = $('#w-info .synopsis .content, .synopsis').text().replace(/\[more\]/g, '').trim();
+            const description = $('#w-info .synopsis .content, .synopsis')
+                .text()
+                .replace(/\[more\]/g, '')
+                .trim();
             // Extract anime ID (data-id e.g. 7174)
             const dataId = $('#watch-main').attr('data-id') ||
                 $('.layout-page-watchtv').attr('data-id') ||
@@ -364,21 +369,27 @@ function createAniKoto(ctx, customBaseURL) {
                         status = MediaStatusEnum.NOT_YET_AIRED;
                 }
                 else if (text.includes('Genres:')) {
-                    $(el).find('a').each((_, a) => {
+                    $(el)
+                        .find('a')
+                        .each((_, a) => {
                         const g = $(a).text().trim();
                         if (g && !genres.includes(g))
                             genres.push(g);
                     });
                 }
                 else if (text.includes('Studios:')) {
-                    $(el).find('a').each((_, a) => {
+                    $(el)
+                        .find('a')
+                        .each((_, a) => {
                         const st = $(a).text().trim();
                         if (st && !studios.includes(st))
                             studios.push(st);
                     });
                 }
                 else if (text.includes('Producers:')) {
-                    $(el).find('a').each((_, a) => {
+                    $(el)
+                        .find('a')
+                        .each((_, a) => {
                         const pr = $(a).text().trim();
                         if (pr && pr !== 'unknown' && !producers.includes(pr))
                             producers.push(pr);
@@ -449,7 +460,9 @@ function createAniKoto(ctx, customBaseURL) {
         try {
             const dataIds = episodeId.includes('$episode$') ? episodeId.split('$episode$')[1] : episodeId;
             const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
-            const res = yield axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, { headers: ajaxHeaders() });
+            const res = yield axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
+                headers: ajaxHeaders(),
+            });
             const html = ((_a = res.data) === null || _a === void 0 ? void 0 : _a.result) || res.data;
             const $ = load(html);
             const rawServers = [];

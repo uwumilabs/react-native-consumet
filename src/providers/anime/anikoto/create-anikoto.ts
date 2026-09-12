@@ -1,4 +1,3 @@
-import type { CheerioAPI } from 'cheerio';
 import {
   type ISearch,
   type IAnimeInfo,
@@ -16,11 +15,7 @@ import {
 function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaPlay } = extractors;
-  const {
-    StreamingServers: StreamingServersEnum,
-    SubOrDub: SubOrDubEnum,
-    MediaStatus: MediaStatusEnum,
-  } = enums;
+  const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
 
   // Provider configuration
   const baseUrl = createCustomBaseUrl('https://anikototv.to', customBaseURL);
@@ -281,10 +276,9 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
 
   const fetchSchedule = async (date: string): Promise<IAnimeResult[]> => {
     try {
-      const res = await axios.get(
-        `${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`,
-        { headers: ajaxHeaders() }
-      );
+      const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
+        headers: ajaxHeaders(),
+      });
       const html = res.data?.result || res.data;
       const $ = load(html);
       const results: IAnimeResult[] = [];
@@ -351,10 +345,9 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
 
   const fetchSearchSuggestions = async (query: string): Promise<IAnimeResult[]> => {
     try {
-      const res = await axios.get(
-        `${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`,
-        { headers: ajaxHeaders() }
-      );
+      const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
+        headers: ajaxHeaders(),
+      });
       const html = res.data?.result?.html || res.data?.result || res.data;
       const $ = load(html);
       const suggestions: IAnimeResult[] = [];
@@ -394,12 +387,13 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
 
       const title = $('#w-info .title.d-title, h1.title').first().text().trim();
       const japaneseTitle =
-        $('#w-info .title.d-title').attr('data-jp') ||
-        $('#w-info .names').text().split(';')[1]?.trim() ||
-        title;
+        $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
 
       const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
-      const description = $('#w-info .synopsis .content, .synopsis').text().replace(/\[more\]/g, '').trim();
+      const description = $('#w-info .synopsis .content, .synopsis')
+        .text()
+        .replace(/\[more\]/g, '')
+        .trim();
 
       // Extract anime ID (data-id e.g. 7174)
       const dataId =
@@ -433,20 +427,26 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
           else if (s.includes('airing') || s.includes('ongoing')) status = MediaStatusEnum.ONGOING;
           else if (s.includes('not yet')) status = MediaStatusEnum.NOT_YET_AIRED;
         } else if (text.includes('Genres:')) {
-          $(el).find('a').each((_, a) => {
-            const g = $(a).text().trim();
-            if (g && !genres.includes(g)) genres.push(g);
-          });
+          $(el)
+            .find('a')
+            .each((_, a) => {
+              const g = $(a).text().trim();
+              if (g && !genres.includes(g)) genres.push(g);
+            });
         } else if (text.includes('Studios:')) {
-          $(el).find('a').each((_, a) => {
-            const st = $(a).text().trim();
-            if (st && !studios.includes(st)) studios.push(st);
-          });
+          $(el)
+            .find('a')
+            .each((_, a) => {
+              const st = $(a).text().trim();
+              if (st && !studios.includes(st)) studios.push(st);
+            });
         } else if (text.includes('Producers:')) {
-          $(el).find('a').each((_, a) => {
-            const pr = $(a).text().trim();
-            if (pr && pr !== 'unknown' && !producers.includes(pr)) producers.push(pr);
-          });
+          $(el)
+            .find('a')
+            .each((_, a) => {
+              const pr = $(a).text().trim();
+              if (pr && pr !== 'unknown' && !producers.includes(pr)) producers.push(pr);
+            });
         } else if (text.includes('Duration:')) {
           duration = $(el).find('span').text().trim();
         } else if (text.includes('MAL:')) {
@@ -517,10 +517,9 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
       const dataIds = episodeId.includes('$episode$') ? episodeId.split('$episode$')[1]! : episodeId;
       const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
 
-      const res = await axios.get(
-        `${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`,
-        { headers: ajaxHeaders() }
-      );
+      const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
+        headers: ajaxHeaders(),
+      });
 
       const html = res.data?.result || res.data;
       const $ = load(html);

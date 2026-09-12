@@ -31,9 +31,7 @@ function MegaPlay(ctx) {
         var _a, _b, _c, _d, _e, _f, _g;
         try {
             const embedHref = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
-            const urlObj = typeof videoUrl === 'object' && videoUrl.origin
-                ? videoUrl
-                : new (ctx.PolyURL || URL)(embedHref);
+            const urlObj = typeof videoUrl === 'object' && videoUrl.origin ? videoUrl : new (ctx.PolyURL || URL)(embedHref);
             const origin = urlObj.origin || 'https://megaplay.buzz';
             const pageReferer = referer || embedHref;
             const pageHeaders = {
@@ -62,7 +60,9 @@ function MegaPlay(ctx) {
             let defSourcesJson = null;
             let defStreamUrl = null;
             try {
-                const { data: resData } = yield client.get(`${origin}/stream/getSources?id=${mediaId}${sQuery}`, { headers: ajaxHeaders });
+                const { data: resData } = yield client.get(`${origin}/stream/getSources?id=${mediaId}${sQuery}`, {
+                    headers: ajaxHeaders,
+                });
                 defSourcesJson = typeof resData === 'string' ? JSON.parse(resData) : resData;
                 defStreamUrl =
                     ((_b = defSourcesJson === null || defSourcesJson === void 0 ? void 0 : defSourcesJson.sources) === null || _b === void 0 ? void 0 : _b.file) ||
@@ -74,7 +74,9 @@ function MegaPlay(ctx) {
             let newSourcesJson = null;
             let newStreamUrl = null;
             try {
-                const { data: newResData } = yield client.get(`${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`, { headers: ajaxHeaders });
+                const { data: newResData } = yield client.get(`${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`, {
+                    headers: ajaxHeaders,
+                });
                 newSourcesJson = typeof newResData === 'string' ? JSON.parse(newResData) : newResData;
                 newStreamUrl =
                     ((_d = newSourcesJson === null || newSourcesJson === void 0 ? void 0 : newSourcesJson.sources) === null || _d === void 0 ? void 0 : _d.file) ||
@@ -111,9 +113,7 @@ function MegaPlay(ctx) {
                             const line = (_f = lines[i]) === null || _f === void 0 ? void 0 : _f.trim();
                             if (line && line.startsWith('#EXT-X-STREAM-INF')) {
                                 const resolutionMatch = line.match(/RESOLUTION=\d+x(\d+)/);
-                                const quality = resolutionMatch
-                                    ? `${resolutionMatch[1]}p`
-                                    : `quality_${extractedSources.length + 1}`;
+                                const quality = resolutionMatch ? `${resolutionMatch[1]}p` : `quality_${extractedSources.length + 1}`;
                                 const nextLine = (_g = lines[i + 1]) === null || _g === void 0 ? void 0 : _g.trim();
                                 if (nextLine && !nextLine.startsWith('#')) {
                                     const variantUrl = nextLine.startsWith('http://') || nextLine.startsWith('https://')
@@ -154,7 +154,7 @@ function MegaPlay(ctx) {
                 sources: finalSources,
                 subtitles,
                 headers: {
-                    'Referer': `${origin}/`,
+                    Referer: `${origin}/`,
                 },
                 intro: intro ? { start: intro.start, end: intro.end } : undefined,
                 outro: outro ? { start: outro.start, end: outro.end } : undefined,

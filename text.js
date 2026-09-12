@@ -15,7 +15,7 @@ async function extractMegaPlayStream(url, quality = 'auto', server = 'Megaplay',
   const defaultHeaders = {
     'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer':url,
+    'Referer': url,
     ...(options.headers || {}),
   };
 
@@ -35,7 +35,7 @@ async function extractMegaPlayStream(url, quality = 'auto', server = 'Megaplay',
   }
 
   const $ = cheerio.load(res.data);
-  console.log($.html())
+  console.log($.html());
   const playerDiv = $('#megaplay-player');
 
   if (!playerDiv.length) {
@@ -66,7 +66,8 @@ async function extractMegaPlayStream(url, quality = 'auto', server = 'Megaplay',
     });
 
     sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
-    defStreamUrl = sourcesJson?.sources?.file || (Array.isArray(sourcesJson?.sources) ? sourcesJson.sources[0]?.file : null);
+    defStreamUrl =
+      sourcesJson?.sources?.file || (Array.isArray(sourcesJson?.sources) ? sourcesJson.sources[0]?.file : null);
   } catch (err) {
     console.log(`[Megaplay] Error fetching /getSources: ${err.message}`);
   }
@@ -85,7 +86,9 @@ async function extractMegaPlayStream(url, quality = 'auto', server = 'Megaplay',
     });
 
     newSourcesJson = typeof newSourcesRes.data === 'string' ? JSON.parse(newSourcesRes.data) : newSourcesRes.data;
-    newStreamUrl = newSourcesJson?.sources?.file || (Array.isArray(newSourcesJson?.sources) ? newSourcesJson.sources[0]?.file : null);
+    newStreamUrl =
+      newSourcesJson?.sources?.file ||
+      (Array.isArray(newSourcesJson?.sources) ? newSourcesJson.sources[0]?.file : null);
   } catch (err) {
     console.log(`[Megaplay] Error fetching /getSourcesNew: ${err.message}`);
   }

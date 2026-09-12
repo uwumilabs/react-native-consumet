@@ -1,12 +1,6 @@
 import axios from 'axios';
 
-import {
-  type ExtractorContext,
-  type ISource,
-  type IVideo,
-  type IVideoExtractor,
-  type ISubtitle,
-} from '../models';
+import { type ExtractorContext, type ISource, type IVideo, type IVideoExtractor, type ISubtitle } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
 
 /**
@@ -26,10 +20,7 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
   const extract = async (videoUrl: PolyURL, referer?: string): Promise<ISource> => {
     try {
       const embedHref = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
-      const urlObj =
-        typeof videoUrl === 'object' && videoUrl.origin
-          ? videoUrl
-          : new (ctx.PolyURL || URL)(embedHref);
+      const urlObj = typeof videoUrl === 'object' && videoUrl.origin ? videoUrl : new (ctx.PolyURL || URL)(embedHref);
       const origin = urlObj.origin || 'https://megaplay.buzz';
       const pageReferer = referer || embedHref;
 
@@ -66,10 +57,9 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
       let defSourcesJson: any = null;
       let defStreamUrl: string | null = null;
       try {
-        const { data: resData } = await client.get(
-          `${origin}/stream/getSources?id=${mediaId}${sQuery}`,
-          { headers: ajaxHeaders }
-        );
+        const { data: resData } = await client.get(`${origin}/stream/getSources?id=${mediaId}${sQuery}`, {
+          headers: ajaxHeaders,
+        });
         defSourcesJson = typeof resData === 'string' ? JSON.parse(resData) : resData;
         defStreamUrl =
           defSourcesJson?.sources?.file ||
@@ -81,10 +71,9 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
       let newSourcesJson: any = null;
       let newStreamUrl: string | null = null;
       try {
-        const { data: newResData } = await client.get(
-          `${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`,
-          { headers: ajaxHeaders }
-        );
+        const { data: newResData } = await client.get(`${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`, {
+          headers: ajaxHeaders,
+        });
         newSourcesJson = typeof newResData === 'string' ? JSON.parse(newResData) : newResData;
         newStreamUrl =
           newSourcesJson?.sources?.file ||
@@ -126,17 +115,15 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
               const line = lines[i]?.trim();
               if (line && line.startsWith('#EXT-X-STREAM-INF')) {
                 const resolutionMatch = line.match(/RESOLUTION=\d+x(\d+)/);
-                const quality = resolutionMatch
-                  ? `${resolutionMatch[1]}p`
-                  : `quality_${extractedSources.length + 1}`;
+                const quality = resolutionMatch ? `${resolutionMatch[1]}p` : `quality_${extractedSources.length + 1}`;
                 const nextLine = lines[i + 1]?.trim();
                 if (nextLine && !nextLine.startsWith('#')) {
                   const variantUrl =
                     nextLine.startsWith('http://') || nextLine.startsWith('https://')
                       ? nextLine
                       : nextLine.startsWith('/')
-                      ? `${streamOrigin}${nextLine}`
-                      : `${streamBasePath}/${nextLine}`;
+                        ? `${streamOrigin}${nextLine}`
+                        : `${streamBasePath}/${nextLine}`;
 
                   extractedSources.push({
                     url: variantUrl,
@@ -152,8 +139,7 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
         }
       }
 
-      const finalSources =
-        extractedSources.length > 0 ? [...extractedSources, defaultSource] : [defaultSource];
+      const finalSources = extractedSources.length > 0 ? [...extractedSources, defaultSource] : [defaultSource];
 
       const tracks = defSourcesJson?.tracks || newSourcesJson?.tracks || [];
       const subtitles: ISubtitle[] = [];
@@ -175,7 +161,7 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
         sources: finalSources,
         subtitles,
         headers: {
-          'Referer': `${origin}/`,
+          Referer: `${origin}/`,
         },
         intro: intro ? { start: intro.start, end: intro.end } : undefined,
         outro: outro ? { start: outro.start, end: outro.end } : undefined,
