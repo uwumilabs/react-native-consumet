@@ -14,6 +14,11 @@
             "name": "MegaUp",
             "version": "1.1.1",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaup.js"
+        },
+        {
+            "name": "MegaPlay",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaplay.js"
         }
     ],
     "extensions": [
@@ -60,6 +65,30 @@
             "status": "stable",
             "lastUpdated": "2025-08-05T00:00:00Z",
             "extractors": ["MegaUp"],
+            "subbed": true,
+            "dubbed": true,
+            "isSourceEmbed": true,
+            "haveMultiServers": true
+        },
+        {
+            "id": "anikoto",
+            "name": "AniKoto",
+            "description": "High-quality anime streaming from AniKoto with multiple servers and subtitles",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "anime",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/anikoto/create-anikoto.js",
+            "factoryName": "createAniKoto",
+            "baseUrl": "https://anikototv.to",
+            "logo": "https://anikototv.to/favicon-32x32.png",
+            "languages": ["en"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2026-09-12T00:00:00Z",
+            "extractors": ["MegaPlay"],
             "subbed": true,
             "dubbed": true,
             "isSourceEmbed": true,

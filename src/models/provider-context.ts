@@ -119,6 +119,9 @@ export interface ExtractorRegistry {
   MegaUp: (ctx?: ExtractorContext) => {
     extract: (url: PolyURL) => Promise<any>;
   };
+  MegaPlay: (ctx?: ExtractorContext) => {
+    extract: (url: PolyURL, referer?: string) => Promise<any>;
+  };
 }
 
 export type ProviderConfig = {

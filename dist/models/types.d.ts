@@ -198,7 +198,8 @@ export declare enum StreamingServers {
     MegaCloud = "megacloud",
     Luffy = "luffy",
     Multi = "multi",
-    Kwik = "kwik"
+    Kwik = "kwik",
+    MegaPlay = "megaplay"
 }
 export declare enum MediaStatus {
     ONGOING = "Ongoing",

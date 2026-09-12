@@ -43,6 +43,7 @@ var StreamingServers;
     StreamingServers["Luffy"] = "luffy";
     StreamingServers["Multi"] = "multi";
     StreamingServers["Kwik"] = "kwik";
+    StreamingServers["MegaPlay"] = "megaplay";
 })(StreamingServers || (exports.StreamingServers = StreamingServers = {}));
 var MediaStatus;
 (function (MediaStatus) {

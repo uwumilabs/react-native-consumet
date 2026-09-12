@@ -213,6 +213,7 @@ export enum StreamingServers {
   Luffy = 'luffy',
   Multi = 'multi',
   Kwik = 'kwik',
+  MegaPlay = 'megaplay',
 }
 
 export enum MediaStatus {

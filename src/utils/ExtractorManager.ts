@@ -28,7 +28,10 @@ export class ExtractorManager {
    * Initialize static extractors as fallbacks
    */
   private initializeStaticExtractors(): void {
-    this.staticExtractors = defaultExtractors;
+    this.staticExtractors = { ...defaultExtractors };
+    for (const [key, value] of Object.entries(defaultExtractors)) {
+      this.staticExtractors[key.toLowerCase()] = value;
+    }
   }
 
   /**
@@ -283,6 +286,9 @@ export class ExtractorManager {
         StreamTape: 'streamtape',
         VidStreaming: 'vidstreaming',
         MegaCloud: 'megacloud',
+        MegaUp: 'megaup',
+        MegaPlay: 'megaplay',
+        Kwik: 'kwik',
       },
       MediaStatus: {
         COMPLETED: 'completed',

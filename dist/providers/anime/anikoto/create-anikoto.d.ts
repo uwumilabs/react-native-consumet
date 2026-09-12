@@ -1,11 +1,11 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type WatchListType, type ProviderContext } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext } from '../../../models';
 declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
-    fetchAdvancedSearch: (page?: number, type?: string, status?: string, rated?: string, score?: number, season?: string, language?: string, startDate?: {
+    fetchAdvancedSearch: (page?: number, type?: string, status?: string, rated?: string, score?: number, season?: string, language?: string, _startDate?: {
         year: number;
         month: number;
         day: number;
-    }, endDate?: {
+    }, _endDate?: {
         year: number;
         month: number;
         day: number;
@@ -17,7 +17,7 @@ declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
     fetchRecentlyUpdated: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchRecentlyAdded: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchTopUpcoming: (page?: number) => Promise<ISearch<IAnimeResult>>;
-    fetchStudio: (studio: string, page?: number) => Promise<ISearch<IAnimeResult>>;
+    fetchStudio: (studioId: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchSubbedAnime: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchDubbedAnime: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchMovie: (page?: number) => Promise<ISearch<IAnimeResult>>;
@@ -25,16 +25,14 @@ declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
     fetchOVA: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchONA: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchSpecial: (page?: number) => Promise<ISearch<IAnimeResult>>;
-    fetchGenres: (page?: number) => Promise<ISearch<IAnimeResult>>;
+    fetchGenres: () => Promise<string[]>;
     genreSearch: (genre: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchSchedule: (date: string) => Promise<IAnimeResult[]>;
     fetchSpotlight: () => Promise<IAnimeResult[]>;
     fetchSearchSuggestions: (query: string) => Promise<IAnimeResult[]>;
-    fetchContinueWatching: () => Promise<IAnimeResult[]>;
-    fetchWatchList: (watchListType: WatchListType) => Promise<IAnimeResult[]>;
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
+    fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrDub) => Promise<IEpisodeServer[]>;
     fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
-    fetchEpisodeServers: (episodeId: string, subOrDub: SubOrDub) => Promise<IEpisodeServer[]>;
     name: string;
     languages: string[] | string;
     classPath: string;

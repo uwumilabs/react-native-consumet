@@ -61,6 +61,7 @@ exports.defaultExtractors = {
     VidHide: (ctx) => (0, extractors_1.VidHide)(ctx || exports.defaultExtractorContext),
     Voe: extractors_1.Voe,
     MegaUp: (ctx) => (0, extractors_1.MegaUp)(ctx || exports.defaultExtractorContext),
+    MegaPlay: (ctx) => (0, extractors_1.MegaPlay)(ctx || exports.defaultExtractorContext),
 };
 exports.extractors = {
     GogoCDN: exports.defaultExtractors.GogoCDN,
@@ -76,5 +77,7 @@ exports.extractors = {
     StreamLare: exports.defaultExtractors.StreamLare,
     VidMoly: exports.defaultExtractors.VidMoly,
     MegaCloud: exports.defaultExtractors.MegaCloud,
+    MegaUp: exports.defaultExtractors.MegaUp,
+    MegaPlay: exports.defaultExtractors.MegaPlay,
 };
 //# sourceMappingURL=extension-utils.js.map

@@ -12,7 +12,7 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const anime = new ANIME.AnimePahe();
+    const anime = new ANIME.AniKoto();
     const search = await anime.search('dandadan');
     console.log(search);
     const info = await anime.fetchAnimeInfo(search.results[0]!.id);

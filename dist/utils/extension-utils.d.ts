@@ -22,6 +22,7 @@ export declare const defaultExtractors: {
     VidHide: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     Voe: typeof Voe;
     MegaUp: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    MegaPlay: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export declare const extractors: {
     GogoCDN: typeof GogoCDN;
@@ -37,6 +38,8 @@ export declare const extractors: {
     StreamLare: typeof StreamLare;
     VidMoly: typeof VidMoly;
     MegaCloud: (ctx: ExtractorContext) => import("../models").IVideoExtractor;
+    MegaUp: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    MegaPlay: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export type Extractor = keyof typeof extractors;
 //# sourceMappingURL=extension-utils.d.ts.map

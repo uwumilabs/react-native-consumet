@@ -51,6 +51,7 @@ import {
   VidHide,
   Voe,
   MegaUp,
+  MegaPlay,
 } from './extractors';
 
 // Models (domain types, enums, and constants)
@@ -127,6 +128,7 @@ export {
   MegaCloud,
   VidHide,
   Voe,
+  MegaPlay,
 };
 
 // Models: TypeScript types

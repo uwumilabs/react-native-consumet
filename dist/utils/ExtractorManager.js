@@ -34,7 +34,10 @@ class ExtractorManager {
      * Initialize static extractors as fallbacks
      */
     initializeStaticExtractors() {
-        this.staticExtractors = extension_utils_1.defaultExtractors;
+        this.staticExtractors = Object.assign({}, extension_utils_1.defaultExtractors);
+        for (const [key, value] of Object.entries(extension_utils_1.defaultExtractors)) {
+            this.staticExtractors[key.toLowerCase()] = value;
+        }
     }
     /**
      * Load extractors from the unified extension registry
@@ -263,6 +266,9 @@ class ExtractorManager {
                 StreamTape: 'streamtape',
                 VidStreaming: 'vidstreaming',
                 MegaCloud: 'megacloud',
+                MegaUp: 'megaup',
+                MegaPlay: 'megaplay',
+                Kwik: 'kwik',
             },
             MediaStatus: {
                 COMPLETED: 'completed',

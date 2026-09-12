@@ -28,6 +28,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoHeaders?: Record<string, string>;
   }
   const [movieState, setMovieState] = useState<MovieFetchState>({
     data: [],
@@ -43,6 +44,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoHeaders?: Record<string, string>;
   }
   const [animeState, setAnimeState] = useState<AnimeFetchState>({
     data: [],
@@ -71,6 +73,7 @@ export default function Meta() {
       console.log('Movie Info:', info);
 
       let videoUrl: string | null = null;
+      let videoHeaders: Record<string, string> | undefined = undefined;
       if (info.seasons[0].episodes && info.seasons[0].episodes.length > 0) {
         const firstEpisodeId = info.seasons[0].episodes[0].id;
         const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
@@ -81,6 +84,7 @@ export default function Meta() {
             (prev.quality || 0) > (current.quality || 0) ? prev : current
           );
           videoUrl = highestQualitySource.url;
+          videoHeaders = sources.headers;
         }
       }
 
@@ -89,6 +93,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoHeaders,
       });
     } catch (error: unknown) {
       console.error('Error in fetchMoviesData:', error);
@@ -105,7 +110,7 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AnimePahe());
+      const anime = new META.Anilist(new ANIME.AniKoto());
       const searchResult = await anime.search('jujutsu kaisen');
       console.log('Anime Search Result:', searchResult);
 
@@ -121,6 +126,7 @@ export default function Meta() {
       }
 
       let videoUrl: string | null = null;
+      let videoHeaders: Record<string, string> | undefined = undefined;
       if (animeEpisodes && animeEpisodes.length > 0) {
         const firstEpisodeId = animeEpisodes![0]?.id;
         const sources = await anime.fetchEpisodeSources(firstEpisodeId!);
@@ -131,6 +137,7 @@ export default function Meta() {
             (prev.quality || 0) > (current.quality || 0) ? prev : current
           );
           videoUrl = highestQualitySource.url;
+          videoHeaders = sources.headers;
         }
       }
 
@@ -139,6 +146,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoHeaders,
       });
     } catch (error: unknown) {
       console.error('Error in fetchAnimeData:', error);
@@ -231,7 +239,10 @@ export default function Meta() {
                 {movieState.videoSource && (
                   <View style={styles.videoPlayerContainer}>
                     <Video
-                      source={{ uri: movieState.videoSource }}
+                      source={{
+                        uri: movieState.videoSource,
+                        headers: movieState.videoHeaders,
+                      }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
@@ -288,7 +299,10 @@ export default function Meta() {
                 {animeState.videoSource && (
                   <View style={styles.videoPlayerContainer}>
                     <Video
-                      source={{ uri: animeState.videoSource }}
+                      source={{
+                        uri: animeState.videoSource,
+                        headers: animeState.videoHeaders,
+                      }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"

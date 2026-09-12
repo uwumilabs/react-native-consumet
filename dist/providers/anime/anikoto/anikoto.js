@@ -3,12 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AniWatchTv = void 0;
+exports.AniWatchTv = exports.AniKoto = void 0;
 const models_1 = require("../../../models");
 const create_provider_context_1 = require("../../../utils/create-provider-context");
 const create_anikoto_1 = __importDefault(require("./create-anikoto"));
-// Backward compatibility wrapper class
-class AniWatchTv extends models_1.AnimeParser {
+class AniKoto extends models_1.AnimeParser {
     constructor(customBaseURL) {
         var _a, _b, _c;
         super();
@@ -45,27 +44,12 @@ class AniWatchTv extends models_1.AnimeParser {
         this.fetchSchedule = this.instance.fetchSchedule;
         this.fetchSpotlight = this.instance.fetchSpotlight;
         this.fetchSearchSuggestions = this.instance.fetchSearchSuggestions;
-        this.fetchContinueWatching = this.instance.fetchContinueWatching;
-        this.fetchWatchList = this.instance.fetchWatchList;
         this.fetchAnimeInfo = this.instance.fetchAnimeInfo;
         this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
     }
 }
-exports.AniWatchTv = AniWatchTv;
-exports.default = AniWatchTv;
-// (async () => {
-//   // tsx ./src/providers/anime/aniwatchtv/aniwatchtv.ts
-//   const aniwatchtv = new AniWatchTv();
-//   const anime = await aniwatchtv.search('Dandadan');
-//   const info = await aniwatchtv.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-19413');
-//   // console.log(info.episodes);
-//   const sources = await aniwatchtv.fetchEpisodeServers(
-//     'solo-leveling-season-2-arise-from-the-shadow-19413$episode$131394',
-//     // 'megacloud-hd-2',
-//     // undefined,
-//     SubOrDub.DUB
-//   );
-//   // console.log(sources);
-// })();
+exports.AniKoto = AniKoto;
+exports.AniWatchTv = AniKoto;
+exports.default = AniKoto;
 //# sourceMappingURL=anikoto.js.map

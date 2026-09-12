@@ -19,13 +19,16 @@ import {
   type IAnimeEpisode,
   type IAnimeResult,
   ProviderManager,
+  ExtractorManager,
   ExtensionRegistry,
   type AnimeProvider,
 } from 'react-native-consumet';
 import Video from 'react-native-video';
-import Zoro from '../../../src/providers/anime/zoro/zoro';
+import AniKoto from '../../../src/providers/anime/anikoto/anikoto';
 // @ts-ignore
-import * as testCode from './test-code-generated.js';
+import * as testExtCode from './test-ext-code-generated.js';
+// @ts-ignore
+import * as testExtrCode from './test-extr-code-generated.js';
 // Get screen width for responsive video player
 const { width } = Dimensions.get('window');
 
@@ -40,6 +43,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoHeaders?: Record<string, string>;
   }
   const [movieState, setMovieState] = useState<MovieFetchState>({
     data: [],
@@ -55,6 +59,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoHeaders?: Record<string, string>;
   }
   const [animeState, setAnimeState] = useState<AnimeFetchState>({
     data: [],
@@ -85,6 +90,7 @@ export default function Meta() {
       console.log('Movie Info:', info);
 
       let videoUrl: string | null = null;
+      let videoHeaders: Record<string, string> | undefined = undefined;
       if (info.seasons[0].episodes && info.seasons[0].episodes.length > 0) {
         const firstEpisodeId = info.seasons[0].episodes[0].id;
         const sources = await movies.fetchEpisodeSources(firstEpisodeId, info.id);
@@ -95,6 +101,7 @@ export default function Meta() {
             (prev.quality || 0) > (current.quality || 0) ? prev : current
           );
           videoUrl = highestQualitySource.url;
+          videoHeaders = sources.headers;
         }
       }
 
@@ -103,6 +110,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoHeaders,
       });
     } catch (error: unknown) {
       console.error('Error in fetchMoviesData:', error);
@@ -119,24 +127,47 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const manager = new ProviderManager(ExtensionRegistry);
-      /** this example loads extension code from github itself */
-      // const providerInstance = await manager.loadExtension("AnimePahe");
-      const metadata = manager.getExtensionMetadata('zoro');
-      /** this example loads code from local */
+      // 1. Dynamically execute MegaPlay extractor code from test string
+      let customExtractors: Record<string, any> | undefined = undefined;
+      try {
+        const extractorManager = new ExtractorManager(ExtensionRegistry);
+        const extractorMetadata = extractorManager.getExtractorMetadata('megaplay');
+        if (extractorMetadata) {
+          const megaplayInstance = await extractorManager.executeExtractorCode(
+            testExtrCode.testCodeString,
+            extractorMetadata
+          );
+          console.log('✅ Successfully executed MegaPlay extractor code dynamically!');
+          customExtractors = {
+            MegaPlay: () => megaplayInstance,
+          };
+        }
+      } catch (extractorErr) {
+        console.warn('⚠️ Could not dynamically execute MegaPlay extractor code, fallback to built-in:', extractorErr);
+      }
+
+      // 2. Initialize ProviderManager with optional custom extractors
+      const manager = new ProviderManager(ExtensionRegistry, {
+        ...(customExtractors ? { extractors: customExtractors } : {}),
+      });
+
+      // 3. Dynamically execute AniKoto provider code from test string
+      const metadata = manager.getExtensionMetadata('anikoto');
       const providerInstance = await manager.executeProviderCode<AnimeProvider>(
-        `${testCode.testCodeString}`,
+        `${testExtCode.testCodeString}`,
         metadata.factoryName,
         metadata as typeof metadata & { id: AnimeProvider }
       );
-      console.log(providerInstance instanceof Zoro);
+      console.log('Is AniKoto instance:', providerInstance instanceof AniKoto);
+
+      // 4. Use Anilist with the dynamically loaded AniKoto provider
       const anime = new META.Anilist(providerInstance);
 
-      const searchResult = await anime.search('sakamoto days');
+      const searchResult = await anime.search('jujutsu kaisen');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {
-        throw new Error('No anime found for "the apothecary diaries season 2"');
+        throw new Error('No anime found for "jujutsu kaisen"');
       }
 
       const animeEpisodes = await anime.fetchEpisodesListById(searchResult.results[0]?.id!);
@@ -147,6 +178,7 @@ export default function Meta() {
       }
 
       let videoUrl: string | null = null;
+      let videoHeaders: Record<string, string> | undefined = undefined;
       if (animeEpisodes && animeEpisodes.length > 0) {
         const firstEpisodeId = animeEpisodes![0]?.id;
         const sources = await anime.fetchEpisodeSources(firstEpisodeId!);
@@ -157,6 +189,7 @@ export default function Meta() {
             (prev.quality || 0) > (current.quality || 0) ? prev : current
           );
           videoUrl = highestQualitySource.url;
+          videoHeaders = sources.headers;
         }
       }
 
@@ -165,6 +198,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoHeaders,
       });
     } catch (error: unknown) {
       console.error('Error in fetchAnimeData:', error);
@@ -257,10 +291,16 @@ export default function Meta() {
                 {movieState.videoSource && (
                   <View style={styles.videoPlayerContainer}>
                     <Video
-                      source={{ uri: movieState.videoSource }}
+                      source={{
+                        uri: movieState.videoSource,
+                        headers: movieState.videoHeaders,
+                      }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
+                      volume={1.0}
+                      muted={false}
+                      ignoreSilentSwitch="ignore"
                       onLoad={(e) => console.log('Video Loaded (Movies)', e)}
                       onError={(e) => console.log('Video Error (Movies):', e)}
                       poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
@@ -314,10 +354,16 @@ export default function Meta() {
                 {animeState.videoSource && (
                   <View style={styles.videoPlayerContainer}>
                     <Video
-                      source={{ uri: animeState.videoSource }}
+                      source={{
+                        uri: animeState.videoSource,
+                        headers: animeState.videoHeaders,
+                      }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
+                      volume={1.0}
+                      muted={false}
+                      ignoreSilentSwitch="ignore"
                       onLoad={(e) => console.log('Video Loaded (Anime)', e)}
                       onError={(e) => console.log('Video Error (Anime):', e)}
                       poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
@@ -325,7 +371,7 @@ export default function Meta() {
                     />
                   </View>
                 )}
-                <Text style={styles.listTitle}>Episodes for "Sakamoto Days"</Text>
+                <Text style={styles.listTitle}>Episodes for "Jujutsu Kaisen"</Text>
                 <FlatList
                   data={animeState.data}
                   renderItem={({ item }) => (

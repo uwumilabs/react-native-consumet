@@ -1,6 +1,6 @@
 import { AnimeParser } from '../../../models';
 import { type AniKotoProviderInstance } from './create-anikoto';
-export declare class AniWatchTv extends AnimeParser {
+export declare class AniKoto extends AnimeParser {
     private instance;
     logo: string;
     name: string;
@@ -11,124 +11,134 @@ export declare class AniWatchTv extends AnimeParser {
     readonly isDubAvailableSeparately: boolean;
     constructor(customBaseURL?: string);
     /**
-     * @param query Search query
-     * @param page Page number (optional)
+     * Search for anime titles
+     * @param query Search keyword
+     * @param page Page number (default: 1)
      */
     search: AniKotoProviderInstance['search'];
     /**
-     * Fetch advanced anime search results with various filters.
-     *
-     * @param page Page number (default: 1)
-     * @param type One of (Optional): movie, tv, ova, ona, special, music
-     * @param status One of (Optional): finished_airing, currently_airing, not_yet_aired
-     * @param rated One of (Optional): g, pg, pg_13, r, r_plus, rx
-     * @param score Number from 1 to 10 (Optional)
-     * @param season One of (Optional): spring, summer, fall, winter
-     * @param language One of (Optional): sub, dub, sub_dub
-     * @param startDate Start date object { year, month, day } (Optional)
-     * @param endDate End date object { year, month, day } (Optional)
-     * @param sort One of (Optional): recently_added, recently_updated, score, name_az, released_date, most_watched
-     * @param genres Array of genres (Optional): action, adventure, cars, comedy, dementia, demons, mystery, drama, ecchi, fantasy, game, historical, horror, kids, magic, martial_arts, mecha, music, parody, samurai, romance, school, sci_fi, shoujo, shoujo_ai, shounen, shounen_ai, space, sports, super_power, vampire, harem, military, slice_of_life, supernatural, police, psychological, thriller, seinen, isekai, josei
-     * @returns A Promise resolving to the search results.
+     * Fetch advanced anime search results with various filters
      */
     fetchAdvancedSearch: AniKotoProviderInstance['fetchAdvancedSearch'];
     /**
-     * @param page number
+     * Fetch top airing anime
+     * @param page Page number (default: 1)
      */
     fetchTopAiring: AniKotoProviderInstance['fetchTopAiring'];
     /**
-     * @param page number
+     * Fetch most popular anime
+     * @param page Page number (default: 1)
      */
     fetchMostPopular: AniKotoProviderInstance['fetchMostPopular'];
     /**
-     * @param page number
+     * Fetch most favorite anime
+     * @param page Page number (default: 1)
      */
     fetchMostFavorite: AniKotoProviderInstance['fetchMostFavorite'];
     /**
-     * @param page number
+     * Fetch latest completed anime
+     * @param page Page number (default: 1)
      */
     fetchLatestCompleted: AniKotoProviderInstance['fetchLatestCompleted'];
     /**
-     * @param page number
+     * Fetch recently updated anime
+     * @param page Page number (default: 1)
      */
     fetchRecentlyUpdated: AniKotoProviderInstance['fetchRecentlyUpdated'];
     /**
-     * @param page number
+     * Fetch recently added anime
+     * @param page Page number (default: 1)
      */
     fetchRecentlyAdded: AniKotoProviderInstance['fetchRecentlyAdded'];
     /**
-     * @param page number
+     * Fetch top upcoming anime
+     * @param page Page number (default: 1)
      */
     fetchTopUpcoming: AniKotoProviderInstance['fetchTopUpcoming'];
     /**
-     * @param studio Studio id, e.g. "toei-animation"
-     * @param page page number (optional) `default 1`
+     * Fetch anime by studio
+     * @param studioId Studio slug / id
+     * @param page Page number (default: 1)
      */
     fetchStudio: AniKotoProviderInstance['fetchStudio'];
     /**
-     * @param page number
+     * Fetch subbed anime
+     * @param page Page number (default: 1)
      */
     fetchSubbedAnime: AniKotoProviderInstance['fetchSubbedAnime'];
     /**
-     * @param page number
+     * Fetch dubbed anime
+     * @param page Page number (default: 1)
      */
     fetchDubbedAnime: AniKotoProviderInstance['fetchDubbedAnime'];
     /**
-     * @param page number
+     * Fetch movie anime
+     * @param page Page number (default: 1)
      */
     fetchMovie: AniKotoProviderInstance['fetchMovie'];
     /**
-     * @param page number
+     * Fetch TV series anime
+     * @param page Page number (default: 1)
      */
     fetchTV: AniKotoProviderInstance['fetchTV'];
     /**
-     * @param page number
+     * Fetch OVA anime
+     * @param page Page number (default: 1)
      */
     fetchOVA: AniKotoProviderInstance['fetchOVA'];
     /**
-     * @param page number
+     * Fetch ONA anime
+     * @param page Page number (default: 1)
      */
     fetchONA: AniKotoProviderInstance['fetchONA'];
     /**
-     * @param page number
+     * Fetch special anime
+     * @param page Page number (default: 1)
      */
     fetchSpecial: AniKotoProviderInstance['fetchSpecial'];
+    /**
+     * Fetch genres list
+     */
     fetchGenres: AniKotoProviderInstance['fetchGenres'];
     /**
-     * @param page number
+     * Search anime by genre
+     * @param genre Genre name / slug
+     * @param page Page number (default: 1)
      */
     genreSearch: AniKotoProviderInstance['genreSearch'];
     /**
-     * Fetches the schedule for a given date.
-     * @param date The date in format 'YYYY-MM-DD'. Defaults to the current date.
-     * @returns A promise that resolves to an object containing the search results.
+     * Fetch anime release schedule
+     * @param date Date in YYYY-MM-DD format
      */
     fetchSchedule: AniKotoProviderInstance['fetchSchedule'];
+    /**
+     * Fetch spotlight anime from homepage
+     */
     fetchSpotlight: AniKotoProviderInstance['fetchSpotlight'];
+    /**
+     * Fetch search suggestions
+     * @param query Search query
+     */
     fetchSearchSuggestions: AniKotoProviderInstance['fetchSearchSuggestions'];
     /**
-     * Fetches the list of episodes that the user is currently watching.
-     * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)
-     * @returns A promise that resolves to an array of anime episodes.
-     */
-    fetchContinueWatching: AniKotoProviderInstance['fetchContinueWatching'];
-    fetchWatchList: AniKotoProviderInstance['fetchWatchList'];
-    /**
-     * @param id Anime id
+     * Fetch anime info and episode list
+     * @param id Anime slug / id
      */
     fetchAnimeInfo: AniKotoProviderInstance['fetchAnimeInfo'];
     /**
-     *
+     * Fetch episode video sources
      * @param episodeId Episode id
-     * @param server server type (default `VidCloud`) (optional)
-     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
+     * @param server Server type (default: MegaPlay)
+     * @param subOrDub Sub or Dub (default: Sub)
      */
     fetchEpisodeSources: AniKotoProviderInstance['fetchEpisodeSources'];
     /**
-     * Method not implemented in AniWatchTv provider.
+     * Fetch episode servers
      * @param episodeId Episode id
+     * @param subOrDub Sub or Dub (default: Sub)
      */
     fetchEpisodeServers: AniKotoProviderInstance['fetchEpisodeServers'];
 }
-export default AniWatchTv;
+export { AniKoto as AniWatchTv };
+export default AniKoto;
 //# sourceMappingURL=anikoto.d.ts.map

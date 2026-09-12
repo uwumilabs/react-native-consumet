@@ -21,6 +21,7 @@ import {
   VidHide,
   Voe,
   MegaUp,
+  MegaPlay,
 } from '../extractors';
 import { load } from 'cheerio';
 import { USER_AGENT } from './utils';
@@ -87,6 +88,7 @@ export const defaultExtractors = {
   VidHide: (ctx?: ExtractorContext) => VidHide(ctx || defaultExtractorContext),
   Voe: Voe,
   MegaUp: (ctx?: ExtractorContext) => MegaUp(ctx || defaultExtractorContext),
+  MegaPlay: (ctx?: ExtractorContext) => MegaPlay(ctx || defaultExtractorContext),
 };
 
 export const extractors = {
@@ -103,6 +105,8 @@ export const extractors = {
   StreamLare: defaultExtractors.StreamLare,
   VidMoly: defaultExtractors.VidMoly,
   MegaCloud: defaultExtractors.MegaCloud,
+  MegaUp: defaultExtractors.MegaUp,
+  MegaPlay: defaultExtractors.MegaPlay,
 };
 
 // Type definitions for provider and extractor instances
