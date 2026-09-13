@@ -18,9 +18,9 @@ exports.VidHide = VidHide;
 function VidHide(ctx) {
     const serverName = 'VidHide';
     const sources = [];
-    const { axios, USER_AGENT } = ctx;
+    const { axios, USER_AGENT, NativeConsumet } = ctx;
     const extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+        var _a, _b, _c, _d;
         try {
             const { data } = yield axios
                 .get(videoUrl.href, {
@@ -32,9 +32,16 @@ function VidHide(ctx) {
                 .catch(() => {
                 throw new Error('Video not found');
             });
-            const unpackedData = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))[2].replace('eval', ''));
-            const links = (_a = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g)) !== null && _a !== void 0 ? _a : [];
+            const packedScript = (_b = (_a = /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))) === null || _a === void 0 ? void 0 : _a[2]) === null || _b === void 0 ? void 0 : _b.replace('eval', '');
+            if (!packedScript)
+                throw new Error('No packed script found');
+            const unpackedData = yield NativeConsumet.deobfuscateScript(packedScript);
+            if (!unpackedData)
+                throw new Error('Failed to deobfuscate script');
+            const links = (_c = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g)) !== null && _c !== void 0 ? _c : [];
             const m3u8Link = links[0];
+            if (!m3u8Link)
+                throw new Error('No m3u8 link found');
             const m3u8Content = yield axios.get(m3u8Link, {
                 headers: {
                     'Referer': m3u8Link,
@@ -55,7 +62,7 @@ function VidHide(ctx) {
                     if (!video.includes('m3u8'))
                         continue;
                     const url = video.split('\n')[1];
-                    const quality = (_b = video.split('RESOLUTION=')[1]) === null || _b === void 0 ? void 0 : _b.split(',')[0].split('x')[1];
+                    const quality = (_d = video.split('RESOLUTION=')[1]) === null || _d === void 0 ? void 0 : _d.split(',')[0].split('x')[1];
                     videoSources.push({
                         url: `${pathWithoutMaster}/${url}`,
                         quality: `${quality}p`,
@@ -78,4 +85,5 @@ function VidHide(ctx) {
         extract,
     };
 }
+exports.default = VidHide;
 //# sourceMappingURL=vidhide.js.map

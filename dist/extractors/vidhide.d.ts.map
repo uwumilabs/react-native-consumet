@@ -1,1 +1,1 @@
-{"version":3,"file":"vidhide.d.ts","sourceRoot":"","sources":["../../src/extractors/vidhide.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAGnG;;;;GAIG;AACH,wBAAgB,OAAO,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CAqE9D"}
+{"version":3,"file":"vidhide.d.ts","sourceRoot":"","sources":["../../src/extractors/vidhide.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAA6B,KAAK,eAAe,EAAE,MAAM,WAAW,CAAC;AAGnG;;;;GAIG;AACH,wBAAgB,OAAO,CAAC,GAAG,EAAE,gBAAgB,GAAG,eAAe,CA2E9D;AAED,eAAe,OAAO,CAAC"}

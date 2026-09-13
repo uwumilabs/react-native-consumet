@@ -34,6 +34,11 @@
             "name": "HubCloud",
             "version": "1.0.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/hubcloud.js"
+        },
+        {
+            "name": "VidHide",
+            "version": "1.0.0",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/vidhide.js"
         }
     ],
     "extensions": [
@@ -110,6 +115,30 @@
             "haveMultiServers": true
         },
         {
+            "id": "anineko",
+            "name": "AniNeko",
+            "description": "Anime streaming from AniNeko with hard-sub, soft-sub and dub support",
+            "version": "1.0.0",
+            "author": {
+                "name": "RNConsumet Team",
+                "url": "https://github.com/uwumilabs"
+            },
+            "category": "anime",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/anineko/create-anineko.js",
+            "factoryName": "createAniNeko",
+            "baseUrl": "https://anineko.to",
+            "logo": "https://anineko.to/favicon.ico",
+            "languages": ["en", "ja"],
+            "nsfw": false,
+            "status": "stable",
+            "lastUpdated": "2026-09-13T00:00:00Z",
+            "extractors": ["VidHide"],
+            "subbed": true,
+            "dubbed": true,
+            "isSourceEmbed": true,
+            "haveMultiServers": true
+        },
+        {
             "id": "multimovies",
             "name": "MultiMovies",
             "description": "Movies and TV shows streaming from MultiMovies",
@@ -169,7 +198,7 @@
             "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
             "languages": ["all"],
             "nsfw": false,
-            "status": "working",
+            "status": "alpha",
             "lastUpdated": "2026-09-12T00:00:00Z",
             "extractors": ["HubCloud", "GDFlix"],
             "isSourceEmbed": false,

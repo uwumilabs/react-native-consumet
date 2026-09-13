@@ -1,12 +1,14 @@
 /**
- * Ext-anime — registry-powered anime browser.
+ * AnimeScreen — interactive anime browser with live provider switching.
  *
- * Providers are fetched dynamically from the extension registry (GitHub CDN)
- * via ProviderManager. Everything else — search, detail sheet, player — is
- * identical to the non-registry AnimeScreen.
+ * Flow:
+ *   Header chip (provider name) → ProviderSheet → switch provider
+ *   Search bar → 3-col poster grid
+ *   Tap card   → detail sheet  (episodes + synopsis)
+ *   Tap episode → full-screen video player
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,18 +25,11 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import {
-  ProviderManager,
-  ExtensionRegistry,
-  SubOrDub,
-  type IAnimeResult,
-  type IAnimeInfo,
-  type IAnimeEpisode,
-} from 'react-native-consumet';
+import { SubOrDub, type IAnimeResult, type IAnimeInfo, type IAnimeEpisode } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
+import { ANIME_PROVIDERS, type AnimeProviderDef } from '../providers';
 import { ProviderSheet } from '../components/ProviderSheet';
-import LOCAL_DIST_MAP from './local-dist-map';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -42,12 +37,6 @@ const { width } = Dimensions.get('window');
 const COLS = 3;
 const CARD_W = (width - PAD * 2 - GAP * (COLS - 1)) / COLS;
 const CARD_H = CARD_W * 1.5;
-
-const STATUS_EMOJI: Record<string, string> = {
-  stable: '🟢',
-  working: '🟡',
-  deprecated: '🟠',
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,18 +54,20 @@ const parseQuality = (q?: string) => {
   return isNaN(n) ? 0 : n;
 };
 
-type VideoState = { url: string; headers?: Record<string, string>; isM3U8: boolean };
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type VideoState = {
+  url: string;
+  headers?: Record<string, string>;
+  isM3U8: boolean;
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExtAnimeScreen() {
-  // Registry / provider
-  const [manager] = useState(() => new ProviderManager(ExtensionRegistry));
-  const [extensions, setExtensions] = useState<any[]>([]);
-  const [activeExt, setActiveExt] = useState<any | null>(null);
-  const providerRef = useRef<any>(null);
-  const [providerLoading, setProvLoading] = useState(false);
-  const [providerErr, setProviderErr] = useState<string | null>(null);
+export default function AnimeScreen() {
+  // Provider
+  const [providerDef, setProviderDef] = useState<AnimeProviderDef>(ANIME_PROVIDERS[0]!);
+  const providerRef = useRef<ReturnType<AnimeProviderDef['make']>>(ANIME_PROVIDERS[0]!.make());
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Search
@@ -100,50 +91,25 @@ export default function ExtAnimeScreen() {
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoErr, setVideoErr] = useState<string | null>(null);
 
-  // ── Init: discover extensions ───────────────────────────────────────────────
+  // ── Provider switch ─────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const exts: any[] = manager.getExtensionsByCategory('anime');
-    setExtensions(exts);
-    const first = exts.find((e) => e.status !== 'deprecated') ?? exts[0];
-    if (first) loadExtension(first);
-  }, []);
-
-  // ── Load provider from registry ─────────────────────────────────────────────
-
-  const loadExtension = useCallback(
-    async (ext: any) => {
-      setActiveExt(ext);
-      providerRef.current = null;
-      setProvLoading(true);
-      setProviderErr(null);
+  const switchProvider = useCallback(
+    (key: string) => {
+      const def = ANIME_PROVIDERS.find((p) => p.key === key);
+      if (!def || def.key === providerDef.key) return;
+      providerRef.current = def.make();
+      setProviderDef(def);
+      // Reset all state
       setQuery('');
       setResults([]);
       setSearchErr(null);
       setDetailOpen(false);
+      setDetailInfo(null);
+      setEpisodes([]);
       setPlayerOpen(false);
       setVideoState(null);
-      try {
-        const localCode = LOCAL_DIST_MAP[ext.id];
-        if (!localCode) throw new Error(`No local dist found for extension: ${ext.id}`);
-        const metadata = manager.getExtensionMetadata(ext.id);
-        const p = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
-        providerRef.current = p;
-      } catch (e: any) {
-        setProviderErr(e?.message ?? `Failed to load ${ext.name}`);
-      } finally {
-        setProvLoading(false);
-      }
     },
-    [manager]
-  );
-
-  const switchExtension = useCallback(
-    (key: string) => {
-      const ext = extensions.find((e) => e.id === key);
-      if (ext && ext.id !== activeExt?.id) loadExtension(ext);
-    },
-    [extensions, activeExt, loadExtension]
+    [providerDef.key]
   );
 
   // ── Search ──────────────────────────────────────────────────────────────────
@@ -160,7 +126,6 @@ export default function ExtAnimeScreen() {
   }, [query]);
 
   const runSearch = useCallback(async (q: string) => {
-    if (!providerRef.current) return;
     setSearching(true);
     setSearchErr(null);
     try {
@@ -183,7 +148,7 @@ export default function ExtAnimeScreen() {
     setLoadingDetail(true);
     setDetailOpen(true);
     try {
-      const info: IAnimeInfo = await providerRef.current.fetchAnimeInfo(item.id);
+      const info: IAnimeInfo = await (providerRef.current as any).fetchAnimeInfo(item.id);
       setDetailInfo(info);
       setEpisodes(info.episodes ?? []);
     } catch (e: any) {
@@ -203,7 +168,7 @@ export default function ExtAnimeScreen() {
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
-        const src: any = await providerRef.current.fetchEpisodeSources(ep.id, undefined, subOrDub);
+        const src: any = await (providerRef.current as any).fetchEpisodeSources(ep.id, undefined, subOrDub);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -224,14 +189,6 @@ export default function ExtAnimeScreen() {
     setVideoErr(null);
   };
 
-  // ── Provider-sheet items (map extensions → ProviderItem) ───────────────────
-
-  const sheetItems = extensions.map((e) => ({
-    key: e.id,
-    label: e.name,
-    emoji: STATUS_EMOJI[e.status as string] ?? '📦',
-  }));
-
   // ── Sub-components ──────────────────────────────────────────────────────────
 
   const PosterCard = ({ item }: { item: IAnimeResult }) => (
@@ -239,7 +196,7 @@ export default function ExtAnimeScreen() {
       {item.image ? (
         <Image source={{ uri: item.image as string }} style={S.cardImg} resizeMode="cover" />
       ) : (
-        <View style={[S.cardImg, S.cardPlaceholder]} />
+        <View style={[S.cardImg, S.cardImgPlaceholder]} />
       )}
       <View style={S.cardOverlay}>
         <Text style={S.cardTitle} numberOfLines={2}>
@@ -262,6 +219,8 @@ export default function ExtAnimeScreen() {
       onRequestClose={() => setDetailOpen(false)}>
       <SafeAreaView style={S.modalRoot}>
         <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+
+        {/* Bar */}
         <View style={S.modalBar}>
           <TouchableOpacity onPress={() => setDetailOpen(false)} style={S.modalClose}>
             <Text style={S.modalCloseText}>✕</Text>
@@ -284,6 +243,7 @@ export default function ExtAnimeScreen() {
           </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Cover banner */}
             {(detailInfo?.cover ?? detailInfo?.image) ? (
               <Image
                 source={{ uri: (detailInfo?.cover ?? detailInfo?.image) as string }}
@@ -294,23 +254,28 @@ export default function ExtAnimeScreen() {
               <View style={S.coverBanner} />
             )}
 
+            {/* Poster + meta row */}
             <View style={S.infoRow}>
               {detailInfo?.image ? (
                 <Image source={{ uri: detailInfo.image as string }} style={S.posterThumb} resizeMode="cover" />
               ) : (
-                <View style={[S.posterThumb, S.cardPlaceholder]} />
+                <View style={[S.posterThumb, S.cardImgPlaceholder]} />
               )}
+
               <View style={S.infoMeta}>
                 <Text style={S.infoTitle} numberOfLines={3}>
                   {resolveTitle(detailInfo?.title)}
                 </Text>
-                {detailInfo?.releaseDate ? <Text style={S.infoSub}>{detailInfo.releaseDate}</Text> : null}
+                {detailInfo?.releaseDate ? <Text style={S.infoSubText}>{detailInfo.releaseDate}</Text> : null}
                 {detailInfo?.type ? (
                   <View style={S.typeBadge}>
                     <Text style={S.typeBadgeText}>{detailInfo.type}</Text>
                   </View>
                 ) : null}
-                {episodes.length > 0 ? <Text style={S.epCount}>{episodes.length} Episodes</Text> : null}
+                {detailInfo?.rating ? (
+                  <Text style={S.ratingText}>★ {String(detailInfo.rating).slice(0, 3)}</Text>
+                ) : null}
+                {episodes.length > 0 ? <Text style={S.epCountText}>{episodes.length} Episodes</Text> : null}
               </View>
             </View>
 
@@ -325,8 +290,8 @@ export default function ExtAnimeScreen() {
               </ScrollView>
             ) : null}
 
-            {/* Sub/Dub toggle */}
-            {activeExt?.subbed && activeExt?.dubbed ? (
+            {/* Sub / Dub toggle (only if provider supports separate dub) */}
+            {providerDef.isDubSeparate ? (
               <View style={S.toggleRow}>
                 <TouchableOpacity
                   style={[S.toggleBtn, subOrDub === SubOrDub.SUB && S.toggleBtnSub]}
@@ -359,16 +324,19 @@ export default function ExtAnimeScreen() {
               </View>
             ) : null}
 
+            {/* Synopsis */}
             {detailInfo?.description ? (
               <View style={S.section}>
                 <Text style={S.sectionTitle}>Synopsis</Text>
                 <Text style={S.synopsis}>{detailInfo.description}</Text>
               </View>
             ) : null}
+
             <View style={{ height: 50 }} />
           </ScrollView>
         )}
 
+        {/* Loading overlay while fetching stream */}
         {loadingVideo ? (
           <View style={S.videoLoadOverlay}>
             <ActivityIndicator size="large" color={colors.accent} />
@@ -398,20 +366,26 @@ export default function ExtAnimeScreen() {
           </View>
         ) : videoState ? (
           <Video
-            source={{ uri: videoState.url, headers: videoState.headers, ...(videoState.isM3U8 ? { type: 'hls' } : {}) }}
+            source={{
+              uri: videoState.url,
+              headers: videoState.headers,
+              ...(videoState.isM3U8 ? { type: 'hls' } : {}),
+            }}
             style={StyleSheet.absoluteFill}
             controls
             resizeMode="contain"
             onError={(e) => {
-              console.log('[ExtAnime] video error', JSON.stringify(e));
+              console.log('[Anime] video error:', JSON.stringify(e));
               setVideoErr(JSON.stringify((e as any)?.error ?? e));
             }}
-            onLoad={(e) => console.log('[ExtAnime] video loaded', e)}
+            onLoad={(e) => console.log('[Anime] video loaded', e)}
           />
         ) : null}
+
         <TouchableOpacity style={S.playerBack} onPress={closePlayer}>
           <Text style={S.playerBackText}>←</Text>
         </TouchableOpacity>
+
         {currentEp && !loadingVideo && !videoErr ? (
           <View style={S.playerLabel}>
             <Text style={S.playerLabelText} numberOfLines={1}>
@@ -432,123 +406,92 @@ export default function ExtAnimeScreen() {
     <SafeAreaView style={S.root}>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
 
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <View style={S.header}>
         <View style={S.headerLeft}>
           <Text style={S.headerLogo}>◈</Text>
           <Text style={S.headerTitle}>Anime</Text>
-          <View style={S.registryBadge}>
-            <Text style={S.registryBadgeText}>REGISTRY</Text>
-          </View>
         </View>
-        <TouchableOpacity
-          style={S.providerChip}
-          onPress={() => setSheetOpen(true)}
-          activeOpacity={0.75}
-          disabled={providerLoading}>
-          {providerLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
-          ) : (
-            <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
-          )}
-          <Text style={S.providerLabel} numberOfLines={1}>
-            {activeExt?.name ?? '…'}
-          </Text>
+        {/* Provider chip */}
+        <TouchableOpacity style={S.providerChip} onPress={() => setSheetOpen(true)} activeOpacity={0.75}>
+          <Text style={S.providerEmoji}>{providerDef.emoji}</Text>
+          <Text style={S.providerLabel}>{providerDef.label}</Text>
           <Text style={S.providerCaret}>▾</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Extension loading state */}
-      {providerLoading ? (
+      {/* ── Search ──────────────────────────────────────────────────────────── */}
+      <View style={S.searchWrap}>
+        <View style={S.searchBar}>
+          <Text style={S.searchIcon}>⊙</Text>
+          <TextInput
+            style={S.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder={`Search on ${providerDef.label}…`}
+            placeholderTextColor={colors.dim}
+            returnKeyType="search"
+            autoCorrect={false}
+            onSubmitEditing={() => {
+              const q = query.trim();
+              if (q.length >= 2) runSearch(q);
+            }}
+          />
+          {query.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => {
+                setQuery('');
+                setResults([]);
+                setSearchErr(null);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={S.clearIcon}>✕</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+
+      {/* ── Body ─────────────────────────────────────────────────────────────── */}
+      {searching ? (
         <View style={S.center}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={S.loadingTitle}>Loading {activeExt?.name}…</Text>
-          <Text style={S.mutedText}>Loading from local dist…</Text>
+          <Text style={S.mutedText}>Searching {providerDef.label}…</Text>
         </View>
-      ) : providerErr ? (
+      ) : isIdle ? (
+        <View style={S.center}>
+          <Text style={S.idleEmoji}>🎌</Text>
+          <Text style={S.idleTitle}>Find something to watch</Text>
+          <Text style={S.idleHint}>Type a title to search {providerDef.label}</Text>
+        </View>
+      ) : searchErr ? (
         <View style={S.center}>
           <Text style={S.errEmoji}>⚠️</Text>
-          <Text style={S.errText}>{providerErr}</Text>
-          <TouchableOpacity style={S.retryBtn} onPress={() => activeExt && loadExtension(activeExt)}>
-            <Text style={S.retryText}>Retry</Text>
+          <Text style={S.errText}>{searchErr}</Text>
+          <TouchableOpacity style={S.retryBtn} onPress={() => query.trim().length >= 2 && runSearch(query.trim())}>
+            <Text style={S.retryText}>Try again</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <>
-          {/* Search */}
-          <View style={S.searchWrap}>
-            <View style={S.searchBar}>
-              <Text style={S.searchIcon}>⊙</Text>
-              <TextInput
-                style={S.searchInput}
-                value={query}
-                onChangeText={setQuery}
-                placeholder={`Search on ${activeExt?.name ?? '…'}…`}
-                placeholderTextColor={colors.dim}
-                returnKeyType="search"
-                autoCorrect={false}
-                onSubmitEditing={() => {
-                  const q = query.trim();
-                  if (q.length >= 2) runSearch(q);
-                }}
-              />
-              {query.length > 0 ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    setQuery('');
-                    setResults([]);
-                    setSearchErr(null);
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Text style={S.clearIcon}>✕</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Body */}
-          {searching ? (
-            <View style={S.center}>
-              <ActivityIndicator size="large" color={colors.accent} />
-              <Text style={S.mutedText}>Searching…</Text>
-            </View>
-          ) : isIdle ? (
-            <View style={S.center}>
-              <Text style={S.idleEmoji}>🎌</Text>
-              <Text style={S.idleTitle}>Find something to watch</Text>
-              <Text style={S.idleHint}>Search on {activeExt?.name ?? 'the registry provider'}</Text>
-            </View>
-          ) : searchErr ? (
-            <View style={S.center}>
-              <Text style={S.errEmoji}>⚠️</Text>
-              <Text style={S.errText}>{searchErr}</Text>
-              <TouchableOpacity style={S.retryBtn} onPress={() => query.trim().length >= 2 && runSearch(query.trim())}>
-                <Text style={S.retryText}>Try again</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <FlatList
-              data={results}
-              keyExtractor={(item) => item.id}
-              numColumns={COLS}
-              renderItem={({ item }) => <PosterCard item={item} />}
-              columnWrapperStyle={{ gap: GAP }}
-              contentContainerStyle={S.grid}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-        </>
+        <FlatList
+          data={results}
+          keyExtractor={(item) => item.id}
+          numColumns={COLS}
+          renderItem={({ item }) => <PosterCard item={item} />}
+          columnWrapperStyle={{ gap: GAP }}
+          contentContainerStyle={S.grid}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
       <DetailModal />
       <PlayerModal />
 
+      {/* Provider picker sheet */}
       <ProviderSheet
         visible={sheetOpen}
-        title="Registry — Anime Extensions"
-        providers={sheetItems}
-        selectedKey={activeExt?.id ?? ''}
-        onSelect={switchExtension}
+        providers={ANIME_PROVIDERS}
+        selectedKey={providerDef.key}
+        onSelect={switchProvider}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>
@@ -559,6 +502,8 @@ export default function ExtAnimeScreen() {
 
 const S = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -569,16 +514,9 @@ const S = StyleSheet.create({
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerLogo: { fontSize: 22, color: colors.accent },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
-  registryBadge: {
-    backgroundColor: colors.accentFaded,
-    borderRadius: R.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  registryBadgeText: { fontSize: 9, fontWeight: '800', color: colors.accentLight, letterSpacing: 0.8 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: 0.3 },
+
+  // Provider chip
   providerChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -591,8 +529,10 @@ const S = StyleSheet.create({
     borderColor: colors.border,
   },
   providerEmoji: { fontSize: 14 },
-  providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub, maxWidth: 90 },
+  providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub },
   providerCaret: { fontSize: 11, color: colors.muted },
+
+  // Search
   searchWrap: { paddingHorizontal: PAD, paddingBottom: 14 },
   searchBar: {
     flexDirection: 'row',
@@ -608,10 +548,20 @@ const S = StyleSheet.create({
   searchIcon: { fontSize: 16, color: colors.muted },
   searchInput: { flex: 1, fontSize: 15, color: colors.text, padding: 0 },
   clearIcon: { fontSize: 13, color: colors.muted, padding: 4 },
+
+  // Grid
   grid: { paddingHorizontal: PAD, paddingBottom: 30, gap: GAP },
-  card: { width: CARD_W, height: CARD_H, borderRadius: R.md, overflow: 'hidden', backgroundColor: colors.card },
+
+  // Poster card
+  card: {
+    width: CARD_W,
+    height: CARD_H,
+    borderRadius: R.md,
+    overflow: 'hidden',
+    backgroundColor: colors.card,
+  },
   cardImg: { ...StyleSheet.absoluteFillObject },
-  cardPlaceholder: { backgroundColor: colors.cardAlt },
+  cardImgPlaceholder: { backgroundColor: colors.cardAlt },
   cardOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -633,7 +583,9 @@ const S = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent,
   },
-  cardBadgeText: { fontSize: 9, fontWeight: '700', color: colors.accentLight },
+  cardBadgeText: { fontSize: 9, fontWeight: '700', color: colors.accentLight, letterSpacing: 0.4 },
+
+  // Detail modal
   modalRoot: { flex: 1, backgroundColor: colors.bg },
   modalBar: {
     flexDirection: 'row',
@@ -672,7 +624,7 @@ const S = StyleSheet.create({
   },
   infoMeta: { flex: 1, paddingTop: 44, gap: 5 },
   infoTitle: { fontSize: 17, fontWeight: '700', color: colors.text, lineHeight: 22 },
-  infoSub: { fontSize: 13, color: colors.muted },
+  infoSubText: { fontSize: 13, color: colors.muted },
   typeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.accentFaded,
@@ -684,7 +636,10 @@ const S = StyleSheet.create({
     marginTop: 2,
   },
   typeBadgeText: { fontSize: 11, fontWeight: '700', color: colors.accentLight },
-  epCount: { fontSize: 13, color: colors.muted, marginTop: 4 },
+  ratingText: { fontSize: 13, color: colors.warn, fontWeight: '600' },
+  epCountText: { fontSize: 13, color: colors.muted, marginTop: 4 },
+
+  // Genres
   genreRow: { paddingHorizontal: PAD, paddingBottom: 4, gap: 6 },
   genreChip: {
     backgroundColor: colors.card,
@@ -695,6 +650,8 @@ const S = StyleSheet.create({
     borderColor: colors.border,
   },
   genreText: { fontSize: 12, color: colors.muted, fontWeight: '600' },
+
+  // Sub/Dub toggle
   toggleRow: {
     flexDirection: 'row',
     marginHorizontal: PAD,
@@ -712,8 +669,18 @@ const S = StyleSheet.create({
   toggleBtnDub: { backgroundColor: colors.dub },
   toggleText: { fontSize: 13, fontWeight: '700', color: colors.muted, letterSpacing: 0.6 },
   toggleTextOn: { color: '#fff' },
+
+  // Section
   section: { paddingHorizontal: PAD, marginTop: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textSub, marginBottom: 12 },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textSub,
+    marginBottom: 12,
+    letterSpacing: 0.2,
+  },
+
+  // Episode grid
   epGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   epPill: {
     width: 44,
@@ -728,7 +695,11 @@ const S = StyleSheet.create({
   epPillActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   epPillNum: { fontSize: 13, fontWeight: '600', color: colors.muted },
   epPillNumActive: { color: '#fff' },
+
+  // Synopsis
   synopsis: { fontSize: 14, color: colors.muted, lineHeight: 22 },
+
+  // Video loading overlay
   videoLoadOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.overlay,
@@ -736,6 +707,8 @@ const S = StyleSheet.create({
     justifyContent: 'center',
     gap: 14,
   },
+
+  // Player
   playerRoot: { flex: 1, backgroundColor: '#000' },
   playerBack: {
     position: 'absolute',
@@ -766,8 +739,9 @@ const S = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
+
+  // Shared
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },
-  loadingTitle: { fontSize: 16, fontWeight: '700', color: colors.textSub },
   mutedText: { fontSize: 14, color: colors.muted },
   idleEmoji: { fontSize: 52, marginBottom: 4 },
   idleTitle: { fontSize: 18, fontWeight: '700', color: colors.textSub },

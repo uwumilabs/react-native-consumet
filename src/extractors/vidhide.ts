@@ -9,7 +9,7 @@ import type { PolyURL } from '../utils/url-polyfill';
 export function VidHide(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'VidHide';
   const sources: IVideo[] = [];
-  const { axios, USER_AGENT } = ctx;
+  const { axios, USER_AGENT, NativeConsumet } = ctx;
 
   const extract = async (videoUrl: PolyURL): Promise<ISource> => {
     try {
@@ -24,11 +24,17 @@ export function VidHide(ctx: ExtractorContext): IVideoExtractor {
           throw new Error('Video not found');
         });
 
-      const unpackedData = eval(
-        /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', '')
-      );
+      const packedScript = /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))?.[2]?.replace('eval', '');
+
+      if (!packedScript) throw new Error('No packed script found');
+
+      const unpackedData = await NativeConsumet.deobfuscateScript(packedScript);
+      if (!unpackedData) throw new Error('Failed to deobfuscate script');
+
       const links = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g) ?? [];
       const m3u8Link = links[0];
+      if (!m3u8Link) throw new Error('No m3u8 link found');
+
       const m3u8Content = await axios.get(m3u8Link, {
         headers: {
           'Referer': m3u8Link,
@@ -76,3 +82,5 @@ export function VidHide(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
+
+export default VidHide;

@@ -5,4 +5,5 @@ import { type ExtractorContext, type IVideoExtractor } from '../models';
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 export declare function VidHide(ctx: ExtractorContext): IVideoExtractor;
+export default VidHide;
 //# sourceMappingURL=vidhide.d.ts.map

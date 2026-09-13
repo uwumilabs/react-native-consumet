@@ -271,6 +271,10 @@ class ExtractorManager {
                 MegaUp: 'megaup',
                 MegaPlay: 'megaplay',
                 Kwik: 'kwik',
+                VidHide: 'vidhide',
+                HubCloud: 'hubcloud',
+                GDFlix: 'gdflix',
+                Gofile: 'gofile',
             },
             MediaStatus: {
                 COMPLETED: 'completed',

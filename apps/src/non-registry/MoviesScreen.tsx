@@ -1,12 +1,14 @@
 /**
- * Ext-anime — registry-powered anime browser.
+ * MoviesScreen — interactive movie/TV browser with live provider switching.
  *
- * Providers are fetched dynamically from the extension registry (GitHub CDN)
- * via ProviderManager. Everything else — search, detail sheet, player — is
- * identical to the non-registry AnimeScreen.
+ * Flow:
+ *   Header chip (provider name) → ProviderSheet → switch provider (TMDB-wrapped)
+ *   Search bar → 2-col poster grid
+ *   Tap card   → detail sheet  (seasons + episode list)
+ *   Tap episode → full-screen video player
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,127 +25,78 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import {
-  ProviderManager,
-  ExtensionRegistry,
-  SubOrDub,
-  type IAnimeResult,
-  type IAnimeInfo,
-  type IAnimeEpisode,
-} from 'react-native-consumet';
+import { type IMovieResult, type IMovieEpisode } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
+import { MOVIE_PROVIDERS, makeTmdb, type MovieProviderDef } from '../providers';
 import { ProviderSheet } from '../components/ProviderSheet';
-import LOCAL_DIST_MAP from './local-dist-map';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const { width } = Dimensions.get('window');
-const COLS = 3;
-const CARD_W = (width - PAD * 2 - GAP * (COLS - 1)) / COLS;
+const COLS = 2;
+const CARD_W = (width - PAD * 2 - GAP) / COLS;
 const CARD_H = CARD_W * 1.5;
-
-const STATUS_EMOJI: Record<string, string> = {
-  stable: '🟢',
-  working: '🟡',
-  deprecated: '🟠',
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const resolveTitle = (title: unknown): string => {
-  if (typeof title === 'string') return title;
-  if (title && typeof title === 'object') {
-    const t = title as Record<string, string | undefined>;
-    return t.english ?? t.romaji ?? t.native ?? '';
-  }
-  return String(title ?? '');
-};
+const resolveTitle = (title: unknown): string => (typeof title === 'string' ? title : String(title ?? ''));
 
 const parseQuality = (q?: string) => {
   const n = parseInt(q ?? '0');
   return isNaN(n) ? 0 : n;
 };
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 type VideoState = { url: string; headers?: Record<string, string>; isM3U8: boolean };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExtAnimeScreen() {
-  // Registry / provider
-  const [manager] = useState(() => new ProviderManager(ExtensionRegistry));
-  const [extensions, setExtensions] = useState<any[]>([]);
-  const [activeExt, setActiveExt] = useState<any | null>(null);
-  const providerRef = useRef<any>(null);
-  const [providerLoading, setProvLoading] = useState(false);
-  const [providerErr, setProviderErr] = useState<string | null>(null);
+export default function MoviesScreen() {
+  // Provider
+  const [providerDef, setProviderDef] = useState<MovieProviderDef>(MOVIE_PROVIDERS[0]!);
+  const providerRef = useRef<any>(makeTmdb(MOVIE_PROVIDERS[0]!));
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Search
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<IAnimeResult[]>([]);
+  const [results, setResults] = useState<IMovieResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchErr, setSearchErr] = useState<string | null>(null);
 
   // Detail
   const [detailOpen, setDetailOpen] = useState(false);
-  const [detailInfo, setDetailInfo] = useState<IAnimeInfo | null>(null);
-  const [episodes, setEpisodes] = useState<IAnimeEpisode[]>([]);
+  const [detailItem, setDetailItem] = useState<IMovieResult | null>(null);
+  const [mediaInfo, setMediaInfo] = useState<any | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailErr, setDetailErr] = useState<string | null>(null);
-  const [subOrDub, setSubOrDub] = useState<SubOrDub>(SubOrDub.SUB);
+  const [activeSeason, setActiveSeason] = useState(0);
 
   // Player
   const [playerOpen, setPlayerOpen] = useState(false);
-  const [currentEp, setCurrentEp] = useState<IAnimeEpisode | null>(null);
+  const [currentEp, setCurrentEp] = useState<IMovieEpisode | null>(null);
   const [videoState, setVideoState] = useState<VideoState | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoErr, setVideoErr] = useState<string | null>(null);
 
-  // ── Init: discover extensions ───────────────────────────────────────────────
+  // ── Provider switch ─────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const exts: any[] = manager.getExtensionsByCategory('anime');
-    setExtensions(exts);
-    const first = exts.find((e) => e.status !== 'deprecated') ?? exts[0];
-    if (first) loadExtension(first);
-  }, []);
-
-  // ── Load provider from registry ─────────────────────────────────────────────
-
-  const loadExtension = useCallback(
-    async (ext: any) => {
-      setActiveExt(ext);
-      providerRef.current = null;
-      setProvLoading(true);
-      setProviderErr(null);
+  const switchProvider = useCallback(
+    (key: string) => {
+      const def = MOVIE_PROVIDERS.find((p) => p.key === key);
+      if (!def || def.key === providerDef.key) return;
+      providerRef.current = makeTmdb(def);
+      setProviderDef(def);
       setQuery('');
       setResults([]);
       setSearchErr(null);
       setDetailOpen(false);
+      setMediaInfo(null);
       setPlayerOpen(false);
       setVideoState(null);
-      try {
-        const localCode = LOCAL_DIST_MAP[ext.id];
-        if (!localCode) throw new Error(`No local dist found for extension: ${ext.id}`);
-        const metadata = manager.getExtensionMetadata(ext.id);
-        const p = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
-        providerRef.current = p;
-      } catch (e: any) {
-        setProviderErr(e?.message ?? `Failed to load ${ext.name}`);
-      } finally {
-        setProvLoading(false);
-      }
     },
-    [manager]
-  );
-
-  const switchExtension = useCallback(
-    (key: string) => {
-      const ext = extensions.find((e) => e.id === key);
-      if (ext && ext.id !== activeExt?.id) loadExtension(ext);
-    },
-    [extensions, activeExt, loadExtension]
+    [providerDef.key]
   );
 
   // ── Search ──────────────────────────────────────────────────────────────────
@@ -160,13 +113,12 @@ export default function ExtAnimeScreen() {
   }, [query]);
 
   const runSearch = useCallback(async (q: string) => {
-    if (!providerRef.current) return;
     setSearching(true);
     setSearchErr(null);
     try {
       const res = await providerRef.current.search(q);
-      setResults((res as any).results ?? []);
-      if (!(res as any).results?.length) setSearchErr(`No results for "${q}"`);
+      setResults((res.results ?? []) as IMovieResult[]);
+      if (!res.results?.length) setSearchErr(`No results for "${q}"`);
     } catch (e: any) {
       setSearchErr(e?.message ?? 'Search failed');
     } finally {
@@ -176,18 +128,18 @@ export default function ExtAnimeScreen() {
 
   // ── Detail ──────────────────────────────────────────────────────────────────
 
-  const openDetail = useCallback(async (item: IAnimeResult) => {
-    setDetailInfo(null);
-    setEpisodes([]);
+  const openDetail = useCallback(async (item: IMovieResult) => {
+    setDetailItem(item);
+    setMediaInfo(null);
     setDetailErr(null);
     setLoadingDetail(true);
     setDetailOpen(true);
+    setActiveSeason(0);
     try {
-      const info: IAnimeInfo = await providerRef.current.fetchAnimeInfo(item.id);
-      setDetailInfo(info);
-      setEpisodes(info.episodes ?? []);
+      const info = await providerRef.current.fetchMediaInfo(item.id!, item.type as string);
+      setMediaInfo(info);
     } catch (e: any) {
-      setDetailErr(e?.message ?? 'Failed to load episodes');
+      setDetailErr(e?.message ?? 'Failed to load info');
     } finally {
       setLoadingDetail(false);
     }
@@ -196,14 +148,15 @@ export default function ExtAnimeScreen() {
   // ── Player ──────────────────────────────────────────────────────────────────
 
   const playEpisode = useCallback(
-    async (ep: IAnimeEpisode) => {
+    async (ep: IMovieEpisode) => {
+      if (!mediaInfo) return;
       setCurrentEp(ep);
       setVideoState(null);
       setVideoErr(null);
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
-        const src: any = await providerRef.current.fetchEpisodeSources(ep.id, undefined, subOrDub);
+        const src = await providerRef.current.fetchEpisodeSources(ep.id!, mediaInfo.id);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -215,7 +168,7 @@ export default function ExtAnimeScreen() {
         setLoadingVideo(false);
       }
     },
-    [subOrDub]
+    [mediaInfo]
   );
 
   const closePlayer = () => {
@@ -224,17 +177,14 @@ export default function ExtAnimeScreen() {
     setVideoErr(null);
   };
 
-  // ── Provider-sheet items (map extensions → ProviderItem) ───────────────────
-
-  const sheetItems = extensions.map((e) => ({
-    key: e.id,
-    label: e.name,
-    emoji: STATUS_EMOJI[e.status as string] ?? '📦',
-  }));
+  // Derive episode list for the active season
+  const seasons: any[] = mediaInfo?.seasons ?? [];
+  const seasonEps: IMovieEpisode[] =
+    seasons.length > 0 ? (seasons[activeSeason]?.episodes ?? []) : (mediaInfo?.episodes ?? []);
 
   // ── Sub-components ──────────────────────────────────────────────────────────
 
-  const PosterCard = ({ item }: { item: IAnimeResult }) => (
+  const PosterCard = ({ item }: { item: IMovieResult }) => (
     <TouchableOpacity onPress={() => openDetail(item)} style={S.card} activeOpacity={0.75}>
       {item.image ? (
         <Image source={{ uri: item.image as string }} style={S.cardImg} resizeMode="cover" />
@@ -245,10 +195,13 @@ export default function ExtAnimeScreen() {
         <Text style={S.cardTitle} numberOfLines={2}>
           {resolveTitle(item.title)}
         </Text>
+        {item.type || item.releaseDate ? (
+          <Text style={S.cardMeta}>{[item.type, item.releaseDate].filter(Boolean).join('  ·  ')}</Text>
+        ) : null}
       </View>
-      {item.type ? (
-        <View style={S.cardBadge}>
-          <Text style={S.cardBadgeText}>{item.type}</Text>
+      {item.rating ? (
+        <View style={S.ratingBadge}>
+          <Text style={S.ratingBadgeText}>★ {String(item.rating).slice(0, 3)}</Text>
         </View>
       ) : null}
     </TouchableOpacity>
@@ -262,12 +215,13 @@ export default function ExtAnimeScreen() {
       onRequestClose={() => setDetailOpen(false)}>
       <SafeAreaView style={S.modalRoot}>
         <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+
         <View style={S.modalBar}>
           <TouchableOpacity onPress={() => setDetailOpen(false)} style={S.modalClose}>
             <Text style={S.modalCloseText}>✕</Text>
           </TouchableOpacity>
           <Text style={S.modalBarTitle} numberOfLines={1}>
-            {detailInfo ? resolveTitle(detailInfo.title) : '…'}
+            {detailItem ? resolveTitle(detailItem.title) : '…'}
           </Text>
           <View style={{ width: 36 }} />
         </View>
@@ -275,96 +229,102 @@ export default function ExtAnimeScreen() {
         {loadingDetail ? (
           <View style={S.center}>
             <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={S.mutedText}>Loading episodes…</Text>
+            <Text style={S.mutedText}>Loading…</Text>
           </View>
         ) : detailErr ? (
           <View style={S.center}>
             <Text style={S.errEmoji}>⚠️</Text>
             <Text style={S.errText}>{detailErr}</Text>
+            <TouchableOpacity style={S.retryBtn} onPress={() => detailItem && openDetail(detailItem)}>
+              <Text style={S.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
-            {(detailInfo?.cover ?? detailInfo?.image) ? (
-              <Image
-                source={{ uri: (detailInfo?.cover ?? detailInfo?.image) as string }}
-                style={S.coverBanner}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={S.coverBanner} />
-            )}
+            {/* Cover banner */}
+            <Image
+              source={{ uri: (detailItem?.cover ?? detailItem?.image) as string | undefined }}
+              style={S.coverBanner}
+              resizeMode="cover"
+            />
 
+            {/* Poster + meta */}
             <View style={S.infoRow}>
-              {detailInfo?.image ? (
-                <Image source={{ uri: detailInfo.image as string }} style={S.posterThumb} resizeMode="cover" />
+              {detailItem?.image ? (
+                <Image source={{ uri: detailItem.image as string }} style={S.posterThumb} resizeMode="cover" />
               ) : (
                 <View style={[S.posterThumb, S.cardPlaceholder]} />
               )}
               <View style={S.infoMeta}>
                 <Text style={S.infoTitle} numberOfLines={3}>
-                  {resolveTitle(detailInfo?.title)}
+                  {resolveTitle(detailItem?.title)}
                 </Text>
-                {detailInfo?.releaseDate ? <Text style={S.infoSub}>{detailInfo.releaseDate}</Text> : null}
-                {detailInfo?.type ? (
+                {detailItem?.releaseDate ? <Text style={S.infoSub}>{detailItem.releaseDate}</Text> : null}
+                {detailItem?.type ? (
                   <View style={S.typeBadge}>
-                    <Text style={S.typeBadgeText}>{detailInfo.type}</Text>
+                    <Text style={S.typeBadgeText}>{detailItem.type}</Text>
                   </View>
                 ) : null}
-                {episodes.length > 0 ? <Text style={S.epCount}>{episodes.length} Episodes</Text> : null}
+                {detailItem?.rating ? (
+                  <Text style={S.ratingText}>★ {String(detailItem.rating).slice(0, 3)}</Text>
+                ) : null}
               </View>
             </View>
 
-            {/* Genres */}
-            {detailInfo?.genres?.length ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.genreRow}>
-                {detailInfo.genres.map((g) => (
-                  <View key={g} style={S.genreChip}>
-                    <Text style={S.genreText}>{g}</Text>
-                  </View>
+            {/* Season tabs */}
+            {seasons.length > 1 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={S.seasonBar}
+                contentContainerStyle={{ paddingHorizontal: PAD, gap: 8 }}>
+                {seasons.map((s: any, i: number) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[S.seasonTab, activeSeason === i && S.seasonTabActive]}
+                    onPress={() => setActiveSeason(i)}>
+                    <Text style={[S.seasonTabText, activeSeason === i && S.seasonTabTextActive]}>
+                      {s.title ?? `Season ${i + 1}`}
+                    </Text>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             ) : null}
 
-            {/* Sub/Dub toggle */}
-            {activeExt?.subbed && activeExt?.dubbed ? (
-              <View style={S.toggleRow}>
-                <TouchableOpacity
-                  style={[S.toggleBtn, subOrDub === SubOrDub.SUB && S.toggleBtnSub]}
-                  onPress={() => setSubOrDub(SubOrDub.SUB)}>
-                  <Text style={[S.toggleText, subOrDub === SubOrDub.SUB && S.toggleTextOn]}>SUB</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[S.toggleBtn, subOrDub === SubOrDub.DUB && S.toggleBtnDub]}
-                  onPress={() => setSubOrDub(SubOrDub.DUB)}>
-                  <Text style={[S.toggleText, subOrDub === SubOrDub.DUB && S.toggleTextOn]}>DUB</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
-
-            {/* Episode grid */}
-            {episodes.length > 0 ? (
+            {/* Episodes */}
+            {seasonEps.length > 0 ? (
               <View style={S.section}>
-                <Text style={S.sectionTitle}>Episodes</Text>
+                <Text style={S.sectionTitle}>
+                  {seasons.length > 1 ? 'Episodes' : seasonEps.length === 1 ? 'Play' : 'Episodes'}
+                </Text>
                 <View style={S.epGrid}>
-                  {episodes.map((ep) => (
+                  {seasonEps.map((ep: IMovieEpisode) => (
                     <TouchableOpacity
                       key={ep.id}
                       style={[S.epPill, currentEp?.id === ep.id && S.epPillActive]}
                       onPress={() => playEpisode(ep)}
                       activeOpacity={0.7}>
-                      <Text style={[S.epPillNum, currentEp?.id === ep.id && S.epPillNumActive]}>{ep.number}</Text>
+                      <Text style={[S.epPillNum, currentEp?.id === ep.id && S.epPillNumActive]}>
+                        {ep.number ?? '▶'}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </View>
-            ) : null}
-
-            {detailInfo?.description ? (
-              <View style={S.section}>
-                <Text style={S.sectionTitle}>Synopsis</Text>
-                <Text style={S.synopsis}>{detailInfo.description}</Text>
+            ) : !loadingDetail ? (
+              <View style={[S.center, { minHeight: 80 }]}>
+                <Text style={S.mutedText}>No episodes available</Text>
               </View>
             ) : null}
+
+            {/* Overview */}
+            {(detailItem as any)?.description ? (
+              <View style={S.section}>
+                <Text style={S.sectionTitle}>Overview</Text>
+                <Text style={S.synopsis}>{(detailItem as any).description}</Text>
+              </View>
+            ) : null}
+
             <View style={{ height: 50 }} />
           </ScrollView>
         )}
@@ -398,25 +358,30 @@ export default function ExtAnimeScreen() {
           </View>
         ) : videoState ? (
           <Video
-            source={{ uri: videoState.url, headers: videoState.headers, ...(videoState.isM3U8 ? { type: 'hls' } : {}) }}
+            source={{
+              uri: videoState.url,
+              headers: videoState.headers,
+              ...(videoState.isM3U8 ? { type: 'hls' } : {}),
+            }}
             style={StyleSheet.absoluteFill}
             controls
             resizeMode="contain"
             onError={(e) => {
-              console.log('[ExtAnime] video error', JSON.stringify(e));
+              console.log('[Movies] video error:', JSON.stringify(e));
               setVideoErr(JSON.stringify((e as any)?.error ?? e));
             }}
-            onLoad={(e) => console.log('[ExtAnime] video loaded', e)}
+            onLoad={(e) => console.log('[Movies] video loaded', e)}
           />
         ) : null}
+
         <TouchableOpacity style={S.playerBack} onPress={closePlayer}>
           <Text style={S.playerBackText}>←</Text>
         </TouchableOpacity>
+
         {currentEp && !loadingVideo && !videoErr ? (
           <View style={S.playerLabel}>
             <Text style={S.playerLabelText} numberOfLines={1}>
-              Ep {currentEp.number}
-              {currentEp.title ? `  ·  ${currentEp.title}` : ''}
+              {currentEp.title ?? `Episode ${currentEp.number}`}
             </Text>
           </View>
         ) : null}
@@ -435,109 +400,76 @@ export default function ExtAnimeScreen() {
       {/* Header */}
       <View style={S.header}>
         <View style={S.headerLeft}>
-          <Text style={S.headerLogo}>◈</Text>
-          <Text style={S.headerTitle}>Anime</Text>
-          <View style={S.registryBadge}>
-            <Text style={S.registryBadgeText}>REGISTRY</Text>
-          </View>
+          <Text style={S.headerTitle}>Movies & TV</Text>
         </View>
-        <TouchableOpacity
-          style={S.providerChip}
-          onPress={() => setSheetOpen(true)}
-          activeOpacity={0.75}
-          disabled={providerLoading}>
-          {providerLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
-          ) : (
-            <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
-          )}
-          <Text style={S.providerLabel} numberOfLines={1}>
-            {activeExt?.name ?? '…'}
-          </Text>
+        <TouchableOpacity style={S.providerChip} onPress={() => setSheetOpen(true)} activeOpacity={0.75}>
+          <Text style={S.providerEmoji}>{providerDef.emoji}</Text>
+          <Text style={S.providerLabel}>{providerDef.label}</Text>
           <Text style={S.providerCaret}>▾</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Extension loading state */}
-      {providerLoading ? (
+      {/* Search */}
+      <View style={S.searchWrap}>
+        <View style={S.searchBar}>
+          <Text style={S.searchIcon}>⊙</Text>
+          <TextInput
+            style={S.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder={`Search on ${providerDef.label}…`}
+            placeholderTextColor={colors.dim}
+            returnKeyType="search"
+            autoCorrect={false}
+            onSubmitEditing={() => {
+              const q = query.trim();
+              if (q.length >= 2) runSearch(q);
+            }}
+          />
+          {query.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => {
+                setQuery('');
+                setResults([]);
+                setSearchErr(null);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={S.clearIcon}>✕</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Body */}
+      {searching ? (
         <View style={S.center}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={S.loadingTitle}>Loading {activeExt?.name}…</Text>
-          <Text style={S.mutedText}>Loading from local dist…</Text>
+          <Text style={S.mutedText}>Searching {providerDef.label}…</Text>
         </View>
-      ) : providerErr ? (
+      ) : isIdle ? (
+        <View style={S.center}>
+          <Text style={S.idleEmoji}>🍿</Text>
+          <Text style={S.idleTitle}>Find something to watch</Text>
+          <Text style={S.idleHint}>Search a movie or TV show on {providerDef.label}</Text>
+        </View>
+      ) : searchErr ? (
         <View style={S.center}>
           <Text style={S.errEmoji}>⚠️</Text>
-          <Text style={S.errText}>{providerErr}</Text>
-          <TouchableOpacity style={S.retryBtn} onPress={() => activeExt && loadExtension(activeExt)}>
-            <Text style={S.retryText}>Retry</Text>
+          <Text style={S.errText}>{searchErr}</Text>
+          <TouchableOpacity style={S.retryBtn} onPress={() => query.trim().length >= 2 && runSearch(query.trim())}>
+            <Text style={S.retryText}>Try again</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <>
-          {/* Search */}
-          <View style={S.searchWrap}>
-            <View style={S.searchBar}>
-              <Text style={S.searchIcon}>⊙</Text>
-              <TextInput
-                style={S.searchInput}
-                value={query}
-                onChangeText={setQuery}
-                placeholder={`Search on ${activeExt?.name ?? '…'}…`}
-                placeholderTextColor={colors.dim}
-                returnKeyType="search"
-                autoCorrect={false}
-                onSubmitEditing={() => {
-                  const q = query.trim();
-                  if (q.length >= 2) runSearch(q);
-                }}
-              />
-              {query.length > 0 ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    setQuery('');
-                    setResults([]);
-                    setSearchErr(null);
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Text style={S.clearIcon}>✕</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Body */}
-          {searching ? (
-            <View style={S.center}>
-              <ActivityIndicator size="large" color={colors.accent} />
-              <Text style={S.mutedText}>Searching…</Text>
-            </View>
-          ) : isIdle ? (
-            <View style={S.center}>
-              <Text style={S.idleEmoji}>🎌</Text>
-              <Text style={S.idleTitle}>Find something to watch</Text>
-              <Text style={S.idleHint}>Search on {activeExt?.name ?? 'the registry provider'}</Text>
-            </View>
-          ) : searchErr ? (
-            <View style={S.center}>
-              <Text style={S.errEmoji}>⚠️</Text>
-              <Text style={S.errText}>{searchErr}</Text>
-              <TouchableOpacity style={S.retryBtn} onPress={() => query.trim().length >= 2 && runSearch(query.trim())}>
-                <Text style={S.retryText}>Try again</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <FlatList
-              data={results}
-              keyExtractor={(item) => item.id}
-              numColumns={COLS}
-              renderItem={({ item }) => <PosterCard item={item} />}
-              columnWrapperStyle={{ gap: GAP }}
-              contentContainerStyle={S.grid}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-        </>
+        <FlatList
+          data={results}
+          keyExtractor={(item) => item.id ?? String(Math.random())}
+          numColumns={COLS}
+          renderItem={({ item }) => <PosterCard item={item} />}
+          columnWrapperStyle={{ gap: GAP }}
+          contentContainerStyle={S.grid}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
       <DetailModal />
@@ -545,10 +477,10 @@ export default function ExtAnimeScreen() {
 
       <ProviderSheet
         visible={sheetOpen}
-        title="Registry — Anime Extensions"
-        providers={sheetItems}
-        selectedKey={activeExt?.id ?? ''}
-        onSelect={switchExtension}
+        title="Movie Provider"
+        providers={MOVIE_PROVIDERS}
+        selectedKey={providerDef.key}
+        onSelect={switchProvider}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>
@@ -568,17 +500,7 @@ const S = StyleSheet.create({
     paddingBottom: 10,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerLogo: { fontSize: 22, color: colors.accent },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
-  registryBadge: {
-    backgroundColor: colors.accentFaded,
-    borderRadius: R.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  registryBadgeText: { fontSize: 9, fontWeight: '800', color: colors.accentLight, letterSpacing: 0.8 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: 0.3 },
   providerChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -591,7 +513,7 @@ const S = StyleSheet.create({
     borderColor: colors.border,
   },
   providerEmoji: { fontSize: 14 },
-  providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub, maxWidth: 90 },
+  providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub },
   providerCaret: { fontSize: 11, color: colors.muted },
   searchWrap: { paddingHorizontal: PAD, paddingBottom: 14 },
   searchBar: {
@@ -617,23 +539,24 @@ const S = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(0,0,0,0.72)',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0,0,0,0.75)',
   },
-  cardTitle: { fontSize: 11, fontWeight: '600', color: colors.text, lineHeight: 15 },
-  cardBadge: {
+  cardTitle: { fontSize: 13, fontWeight: '600', color: colors.text, lineHeight: 17 },
+  cardMeta: { fontSize: 11, color: colors.muted, marginTop: 3 },
+  ratingBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: colors.accentFaded,
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: R.sm,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.warn,
   },
-  cardBadgeText: { fontSize: 9, fontWeight: '700', color: colors.accentLight },
+  ratingBadgeText: { fontSize: 10, fontWeight: '700', color: colors.warn },
   modalRoot: { flex: 1, backgroundColor: colors.bg },
   modalBar: {
     flexDirection: 'row',
@@ -660,17 +583,17 @@ const S = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: 8,
   },
-  coverBanner: { width: '100%', height: 190, backgroundColor: colors.card },
-  infoRow: { flexDirection: 'row', padding: PAD, gap: 14, marginTop: -40 },
+  coverBanner: { width: '100%', height: 200, backgroundColor: colors.card },
+  infoRow: { flexDirection: 'row', padding: PAD, gap: 14, marginTop: -45 },
   posterThumb: {
-    width: 90,
-    height: 130,
+    width: 95,
+    height: 138,
     borderRadius: R.md,
     backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.border,
   },
-  infoMeta: { flex: 1, paddingTop: 44, gap: 5 },
+  infoMeta: { flex: 1, paddingTop: 50, gap: 5 },
   infoTitle: { fontSize: 17, fontWeight: '700', color: colors.text, lineHeight: 22 },
   infoSub: { fontSize: 13, color: colors.muted },
   typeBadge: {
@@ -684,40 +607,25 @@ const S = StyleSheet.create({
     marginTop: 2,
   },
   typeBadgeText: { fontSize: 11, fontWeight: '700', color: colors.accentLight },
-  epCount: { fontSize: 13, color: colors.muted, marginTop: 4 },
-  genreRow: { paddingHorizontal: PAD, paddingBottom: 4, gap: 6 },
-  genreChip: {
-    backgroundColor: colors.card,
+  ratingText: { fontSize: 13, color: colors.warn, fontWeight: '600' },
+  seasonBar: { marginTop: 8 },
+  seasonTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: R.full,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  genreText: { fontSize: 12, color: colors.muted, fontWeight: '600' },
-  toggleRow: {
-    flexDirection: 'row',
-    marginHorizontal: PAD,
-    marginVertical: 12,
-    backgroundColor: colors.card,
-    borderRadius: R.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignSelf: 'flex-start',
-    gap: 4,
-  },
-  toggleBtn: { paddingHorizontal: 20, paddingVertical: 7, borderRadius: R.full },
-  toggleBtnSub: { backgroundColor: colors.sub },
-  toggleBtnDub: { backgroundColor: colors.dub },
-  toggleText: { fontSize: 13, fontWeight: '700', color: colors.muted, letterSpacing: 0.6 },
-  toggleTextOn: { color: '#fff' },
+  seasonTabActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  seasonTabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  seasonTabTextActive: { color: '#fff' },
   section: { paddingHorizontal: PAD, marginTop: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textSub, marginBottom: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textSub, marginBottom: 12, letterSpacing: 0.2 },
   epGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   epPill: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: R.md,
     backgroundColor: colors.card,
     alignItems: 'center',
@@ -767,7 +675,6 @@ const S = StyleSheet.create({
     textShadowRadius: 4,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },
-  loadingTitle: { fontSize: 16, fontWeight: '700', color: colors.textSub },
   mutedText: { fontSize: 14, color: colors.muted },
   idleEmoji: { fontSize: 52, marginBottom: 4 },
   idleTitle: { fontSize: 18, fontWeight: '700', color: colors.textSub },
