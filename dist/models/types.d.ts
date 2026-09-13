@@ -206,7 +206,8 @@ export declare enum StreamingServers {
     MegaPlay = "megaplay",
     GDFlix = "gdflix",
     Gofile = "gofile",
-    HubCloud = "hubcloud"
+    HubCloud = "hubcloud",
+    FlixCloud = "flixcloud"
 }
 export declare enum MediaStatus {
     ONGOING = "Ongoing",

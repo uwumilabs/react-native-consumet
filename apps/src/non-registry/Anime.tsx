@@ -12,16 +12,17 @@ interface FetchState {
 
 const fetchData = async (): Promise<ISearch<IAnimeResult>> => {
   try {
-    const anime = new ANIME.AniKoto();
+    const anime = new ANIME.AniNeko();
     const search = await anime.search('dandadan');
     console.log(search);
     const info = await anime.fetchAnimeInfo(search.results[0]!.id);
     console.log(info);
     const servers = info.episodes && (await anime.fetchEpisodeServers(info.episodes[0]!.id, SubOrDub.SUB));
+    console.log(servers);
     const sources =
       info.episodes &&
-      (await anime.fetchEpisodeSources(info.episodes[0]!.id, servers![1]?.name as StreamingServers, SubOrDub.SUB));
-    console.log(sources, servers);
+      (await anime.fetchEpisodeSources(info.episodes[0]!.id, servers![0]?.name as StreamingServers, SubOrDub.SUB));
+    console.log(sources);
     console.log('sources end');
     if (!search || !search.results) {
       throw new Error('Invalid response format from API');

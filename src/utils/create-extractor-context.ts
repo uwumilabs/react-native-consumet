@@ -1,4 +1,5 @@
 import { load } from 'cheerio';
+import CryptoJS from 'crypto-js';
 import type { ExtractorContext } from '../models';
 import { defaultAxios } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
@@ -20,6 +21,7 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
   return {
     axios: config.axios || defaultAxios,
     load: config.load || load,
+    CryptoJS,
     USER_AGENT:
       config.userAgent ||
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',

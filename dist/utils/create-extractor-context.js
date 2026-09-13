@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createExtractorContext = createExtractorContext;
 const cheerio_1 = require("cheerio");
+const crypto_js_1 = __importDefault(require("crypto-js"));
 const extension_utils_1 = require("./extension-utils");
 const url_polyfill_1 = require("./url-polyfill");
 const NativeConsumet_1 = require("../NativeConsumet");
@@ -12,6 +16,7 @@ function createExtractorContext(config = {}) {
     return {
         axios: config.axios || extension_utils_1.defaultAxios,
         load: config.load || cheerio_1.load,
+        CryptoJS: crypto_js_1.default,
         USER_AGENT: config.userAgent ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         PolyURL: url_polyfill_1.PolyURL,

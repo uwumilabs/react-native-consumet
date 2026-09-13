@@ -21,6 +21,7 @@ import { MegaPlay } from './megaplay';
 import { GDFlix } from './gdflix';
 import { Gofile } from './gofile';
 import { HubCloud } from './hubcloud';
+import { FlixCloud } from './flixcloud';
 
 export {
   AsianLoad,
@@ -46,4 +47,5 @@ export {
   GDFlix,
   Gofile,
   HubCloud,
+  FlixCloud,
 };

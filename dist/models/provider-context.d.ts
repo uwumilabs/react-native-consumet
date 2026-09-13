@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
+import type CryptoJS from 'crypto-js';
 import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
 import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
@@ -81,6 +82,9 @@ export interface ExtractorRegistry {
     HubCloud: (ctx?: ExtractorContext) => {
         extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
     };
+    FlixCloud: (ctx?: ExtractorContext) => {
+        extract: (url: PolyURL, referer?: string) => Promise<any>;
+    };
 }
 export type ProviderConfig = {
     name: string;
@@ -99,6 +103,8 @@ export type ProviderConfig = {
 export interface ProviderContext {
     axios: AxiosInstance;
     load: (html: string) => CheerioAPI;
+    /** CryptoJS library — use instead of importing crypto-js directly */
+    CryptoJS: typeof CryptoJS;
     USER_AGENT: string;
     AnimeParser: typeof AnimeParser;
     MovieParser: typeof MovieParser;

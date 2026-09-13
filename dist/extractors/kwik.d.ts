@@ -5,4 +5,5 @@ import { type ExtractorContext, type IVideoExtractor } from '../models';
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 export declare function Kwik(ctx: ExtractorContext): IVideoExtractor;
+export default Kwik;
 //# sourceMappingURL=kwik.d.ts.map

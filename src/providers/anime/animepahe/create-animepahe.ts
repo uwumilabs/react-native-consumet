@@ -14,11 +14,22 @@ import {
 } from '../../../models';
 
 function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
+  const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet, CryptoJS, axios } = ctx;
   const { Kwik } = extractors;
+  const { makeGetRequestWithWebView } = NativeConsumet;
+
+  const extractorCtx = {
+    axios,
+    load,
+    CryptoJS,
+    USER_AGENT: ctx.USER_AGENT,
+    PolyURL: ctx.PolyURL,
+    PolyURLSearchParams: ctx.PolyURLSearchParams,
+    NativeConsumet,
+  };
+
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
-  const { getDdosGuardCookiesWithWebView, multiply, bypassDdosGuard } = NativeConsumet;
-  // Provider configuration - use the standardized base URL creation
+
   const baseUrl = createCustomBaseUrl('https://animepahe.pw', customBaseURL);
 
   const config: ProviderConfig = {
@@ -31,81 +42,95 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     isWorking: true,
     isDubAvailableSeparately: true,
   };
-  let ddgCookie:
-    | {
-        cookie: string;
-      }
-    | null
-    | string = null;
-  const initDdgCookie = async (): Promise<void> => {
+
+  const UA =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
+
+  // ── WebView helpers ────────────────────────────────────────────────────────
+  let _challengePassed = false;
+  const ensureChallengePassed = async () => {
+    if (_challengePassed) return;
+    await makeGetRequestWithWebView(config.baseUrl, { 'User-Agent': UA });
+    _challengePassed = true;
+  };
+
+  const withRetry = async <T>(fn: () => Promise<T>, retries = 2): Promise<T> => {
     try {
-      try {
-        ddgCookie = await getDdosGuardCookiesWithWebView(config.baseUrl);
-        // console.log('DDoS-Guard cookie obtained (WebView):', ans,ddgCookie);
-      } catch (err) {
-        console.error('Failed to bypass DDoS-Guard with WebView:', err);
+      return await fn();
+    } catch (err: any) {
+      const msg = String(err?.message ?? err);
+      const isQuic = msg.includes('QUIC') || msg.includes('ERR_QUIC');
+      const isJsonOrEmpty =
+        msg.includes('JSON Parse error') ||
+        msg.includes('Unexpected token') ||
+        msg.includes('Unexpected character') ||
+        msg.includes('Empty response');
+      if (retries > 0 && (isQuic || isJsonOrEmpty)) {
+        if (isJsonOrEmpty) await new Promise((r) => setTimeout(r, 800));
+        return withRetry(fn, retries - 1);
       }
-    } catch (error) {
-      console.error('Failed to initialize DDoS-Guard cookie:', error);
+      throw err;
     }
   };
 
-  function Headers(sessionId: string | false) {
-    const headers: Record<string, string> = {
-      'authority': 'animepahe.si',
-      'accept': 'application/json, text/javascript, */*; q=0.01',
-      'sec-ch-ua': '"Not A(Brand";v="99", "Microsoft Edge";v="121", "Chromium";v="121"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'sec-fetch-dest': 'empty',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-site': 'same-origin',
-      'x-requested-with': 'XMLHttpRequest',
-      'Referer': sessionId ? `${config.baseUrl}/anime/${sessionId}` : `${config.baseUrl}`,
-      'user-agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    };
-
-    if (ddgCookie) {
-      headers.Cookie = typeof ddgCookie === 'object' && ddgCookie !== null ? ddgCookie.cookie : ddgCookie || '';
-    }
-
-    return headers;
-  }
-
-  const fetchEpisodes = async (session: string, page: number): Promise<IAnimeEpisode[]> => {
-    const res = await axios.get(`${config.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, {
-      headers: Headers(session),
+  // Fetches an HTML page through the WebView (bypasses DDoS-Guard JS challenge).
+  const webViewGet = async (url: string, referer?: string): Promise<string> => {
+    return withRetry(async () => {
+      const res = await makeGetRequestWithWebView(url, {
+        'User-Agent': UA,
+        'Referer': referer ?? config.baseUrl,
+      });
+      return res.html ?? '';
     });
-    const epData = res.data.data;
-
-    return [
-      ...epData.map(
-        (item: any): IAnimeEpisode => ({
-          id: `${session}/${item.session}`,
-          number: item.episode,
-          title: item.title,
-          image: item.snapshot,
-          duration: item.duration,
-          isSubbed: item.audio === 'jpn' || item.audio === 'eng',
-          isDubbed: item.audio === 'eng',
-          releaseDate: item.created_at,
-          url: `${config.baseUrl}/play/${session}/${item.session}`,
-        })
-      ),
-    ] as IAnimeEpisode[];
   };
+
+  const webViewGetJson = async <T = any>(url: string, referer?: string): Promise<T> => {
+    return withRetry(async () => {
+      const res = await makeGetRequestWithWebView(url, {
+        'User-Agent': UA,
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Referer': referer ?? config.baseUrl,
+      });
+      const raw = (res.html ?? '').replace(/<[^>]*>/g, '').trim();
+      console.log(raw);
+
+      if (!raw) throw new Error(`[AnimePahe] Empty response from ${url}`);
+      return JSON.parse(raw) as T;
+    });
+  };
+
+  // ── Episode list ───────────────────────────────────────────────────────────
+
+  const mapEpisode = (session: string, item: any): IAnimeEpisode => ({
+    id: `${session}/${item.session}`,
+    number: item.episode,
+    title: item.title,
+    image: item.snapshot,
+    duration: item.duration,
+    isSubbed: item.audio === 'jpn' || item.audio === 'eng',
+    isDubbed: item.audio === 'eng',
+    releaseDate: item.created_at,
+    url: `${config.baseUrl}/play/${session}/${item.session}`,
+  });
+
+  const fetchEpisodePage = async (session: string, page: number): Promise<IAnimeEpisode[]> => {
+    const data = await webViewGetJson<{ data: any[] }>(
+      `${config.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`,
+      `${config.baseUrl}/anime/${session}`
+    );
+    return data.data.map((item: any) => mapEpisode(session, item));
+  };
+
+  // ── Public methods ─────────────────────────────────────────────────────────
 
   const search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
     try {
-      if (!ddgCookie) {
-        await initDdgCookie();
-      }
-      const { data } = await axios.get(`${config.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`, {
-        headers: Headers(false),
-      });
-
-      const res = {
+      await ensureChallengePassed();
+      const data = await webViewGetJson<{ data: any[] }>(
+        `${config.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`
+      );
+      return {
         results: data.data.map((item: any) => ({
           id: item.session,
           title: item.title,
@@ -115,35 +140,23 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
           type: item.type,
         })),
       };
-
-      return res;
     } catch (err) {
-      //console.log(err);
       throw new Error((err as Error).message);
     }
   };
 
   const fetchAnimeInfo = async (id: string, episodePage: number = -1): Promise<IAnimeInfo> => {
-    const animeInfo: IAnimeInfo = {
-      id: id,
-      title: '',
-    };
+    const animeInfo: IAnimeInfo = { id, title: '' };
     try {
-      if (!ddgCookie) {
-        await initDdgCookie();
-      }
-      const res = await fetch(`${config.baseUrl}/anime/${id}`, {
-        headers: Headers(id),
-      });
-      const data = await res.text();
-      const $ = load(data);
+      const html = await webViewGet(`${config.baseUrl}/anime/${id}`);
+      const $ = load(html);
 
       animeInfo.title = $('div.title-wrapper > h1 > span').first().text();
       animeInfo.image = $('div.anime-poster a').attr('href');
       animeInfo.cover = `https:${$('div.anime-cover').attr('data-src')}`;
       animeInfo.description = $('div.anime-summary').text().trim();
       animeInfo.genres = $('div.anime-genre ul li')
-        .map((i, el) => $(el).find('a').attr('title'))
+        .map((_, el) => $(el).find('a').attr('title'))
         .get();
       animeInfo.hasSub = true;
 
@@ -165,8 +178,9 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
         .trim();
       animeInfo.studios = $('div.anime-info > p:contains("Studio:")').text().replace('Studio:', '').trim().split('\n');
       animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace('Episodes:', ''));
+
       animeInfo.recommendations = [];
-      $('div.anime-recommendation .col-sm-6').each((i, el) => {
+      $('div.anime-recommendation .col-sm-6').each((_, el) => {
         animeInfo.recommendations?.push({
           id: $(el).find('.col-2 > a').attr('href')?.split('/')[2]!,
           title: $(el).find('.col-2 > a').attr('title')!,
@@ -178,7 +192,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
       });
 
       animeInfo.relations = [];
-      $('div.anime-relation .col-sm-6').each((i, el) => {
+      $('div.anime-relation .col-sm-6').each((_, el) => {
         animeInfo.relations?.push({
           id: $(el).find('.col-2 > a').attr('href')?.split('/')[2]!,
           title: $(el).find('.col-2 > a').attr('title')!,
@@ -192,36 +206,17 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
       animeInfo.episodes = [];
       if (episodePage < 0) {
-        const {
-          data: { last_page, data },
-        } = await axios.get(`${config.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, {
-          headers: Headers(id),
-        });
-
-        animeInfo.episodePages = last_page;
-
-        animeInfo.episodes.push(
-          ...data.map(
-            (item: any) =>
-              ({
-                id: `${id}/${item.session}`,
-                number: item.episode,
-                title: item.title,
-                image: item.snapshot,
-                duration: item.duration,
-                isSubbed: item.audio === 'jpn' || item.audio === 'eng',
-                isDubbed: item.audio === 'eng',
-                releaseDate: item.created_at,
-                url: `${config.baseUrl}/play/${id}/${item.session}`,
-              }) as IAnimeEpisode
-          )
+        const firstPage = await webViewGetJson<{ last_page: number; data: any[] }>(
+          `${config.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`,
+          `${config.baseUrl}/anime/${id}`
         );
-
-        for (let i = 1; i < last_page; i++) {
-          animeInfo.episodes.push(...(await fetchEpisodes(id, i + 1)));
+        animeInfo.episodePages = firstPage.last_page;
+        animeInfo.episodes.push(...firstPage.data.map((item: any) => mapEpisode(id, item)));
+        for (let i = 2; i <= firstPage.last_page; i++) {
+          animeInfo.episodes.push(...(await fetchEpisodePage(id, i)));
         }
       } else {
-        animeInfo.episodes.push(...(await fetchEpisodes(id, episodePage)));
+        animeInfo.episodes.push(...(await fetchEpisodePage(id, episodePage)));
       }
 
       return animeInfo;
@@ -236,16 +231,11 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     subOrDub: SubOrDub = SubOrDubEnum.SUB
   ): Promise<ISource> => {
     try {
-      if (!ddgCookie) {
-        await initDdgCookie();
-      }
-      const { data } = await axios.get(`${config.baseUrl}/play/${episodeId}`, {
-        headers: Headers(episodeId.split('/')[0]!),
-      });
+      const html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
+      const $ = load(html);
 
-      const $ = load(data);
       const links = $('div#resolutionMenu > button')
-        .map((i, el) => ({
+        .map((_, el) => ({
           url: $(el).attr('data-src')!,
           quality: $(el).text(),
           audio: $(el).attr('data-audio'),
@@ -253,37 +243,22 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
         .get();
 
       const downloads = $('div#pickDownload > a')
-        .map((i, el) => ({
-          url: $(el).attr('href')!,
-          quality: $(el).text(),
-        }))
+        .map((_, el) => ({ url: $(el).attr('href')!, quality: $(el).text() }))
         .get();
 
-      const iSource: ISource = {
-        headers: {
-          Referer: 'https://kwik.si/',
-        },
-        sources: [],
-      };
-
+      const iSource: ISource = { headers: { Referer: 'https://kwik.cx/' }, sources: [] };
       iSource.download = downloads;
 
-      // Filter links based on subOrDub parameter
       const filteredLinks = links.filter((link) => {
         const isDub = link.audio === 'eng';
-        if (subOrDub === SubOrDubEnum.DUB) {
-          return isDub;
-        } else if (subOrDub === SubOrDubEnum.SUB) {
-          return !isDub;
-        }
-        // For SubOrDubEnum.BOTH, return all links
+        if (subOrDub === SubOrDubEnum.DUB) return isDub;
+        if (subOrDub === SubOrDubEnum.SUB) return !isDub;
         return true;
       });
 
-      // Extract sources from filtered links
       for (const link of filteredLinks) {
-        const res = await Kwik().extract(new PolyURL(link.url));
-        if (res && res.sources && res.sources.length > 0) {
+        const res = await Kwik(extractorCtx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
+        if (res?.sources?.length) {
           res.sources.forEach((source: any) => {
             iSource.sources.push({
               ...source,
@@ -302,27 +277,17 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
   const fetchEpisodeServers = async (episodeId: string, subOrDub: SubOrDub): Promise<IEpisodeServer[]> => {
     try {
-      if (!ddgCookie) {
-        await initDdgCookie();
-      }
-      const { data } = await axios.get(`${config.baseUrl}/play/${episodeId}`, {
-        headers: Headers(episodeId.split('/')[0]!),
-      });
-
-      const $ = load(data);
+      const html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
+      const $ = load(html);
       const servers: IEpisodeServer[] = [];
 
-      $('div#resolutionMenu > button').each((i, el) => {
+      $('div#resolutionMenu > button').each((_, el) => {
         const audio = $(el).attr('data-audio');
         const fansub = $(el).attr('data-fansub');
         const src = $(el).attr('data-src');
         const resolution = $(el).attr('data-resolution');
-
         if ((subOrDub === SubOrDubEnum.DUB && audio === 'eng') || (subOrDub === SubOrDubEnum.SUB && audio !== 'eng')) {
-          servers.push({
-            url: src!,
-            name: `kwik-${fansub}-${resolution}`,
-          });
+          servers.push({ url: src!, name: `kwik-${fansub}-${resolution}` });
         }
       });
 
@@ -333,10 +298,8 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     }
   };
 
-  // Return the functional provider object
   return {
     ...config,
-    // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchAnimeInfo,
     fetchEpisodeSources,
@@ -344,8 +307,5 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   };
 }
 
-// Type definition for the provider instance returned by createAnimePahe
 export type AnimePaheProviderInstance = ReturnType<typeof createAnimePahe>;
-
-// Default export for backward compatibility
 export default createAnimePahe;

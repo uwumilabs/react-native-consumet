@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExtractorManager = void 0;
+const crypto_js_1 = __importDefault(require("crypto-js"));
 const models_1 = require("../models");
 const create_extractor_context_1 = __importDefault(require("./create-extractor-context"));
 const extension_utils_1 = require("./extension-utils");
@@ -226,6 +227,7 @@ class ExtractorManager {
           const __awaiter = context.__awaiter;
           const axios = context.axios;
           const load = context.load;
+          const CryptoJS = context.CryptoJS;
           const sharedUtils = context.sharedUtils;
           
           try {
@@ -371,6 +373,7 @@ class ExtractorManager {
             // Provide extractor context for context-aware extractors
             axios: extractorContext.axios,
             load: extractorContext.load,
+            CryptoJS: crypto_js_1.default,
             console,
             URL: extractorContext.PolyURL,
             URLSearchParams: extractorContext.PolyURLSearchParams,

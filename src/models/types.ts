@@ -221,6 +221,7 @@ export enum StreamingServers {
   GDFlix = 'gdflix',
   Gofile = 'gofile',
   HubCloud = 'hubcloud',
+  FlixCloud = 'flixcloud',
 }
 
 export enum MediaStatus {

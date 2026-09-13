@@ -47,6 +47,7 @@ var StreamingServers;
     StreamingServers["GDFlix"] = "gdflix";
     StreamingServers["Gofile"] = "gofile";
     StreamingServers["HubCloud"] = "hubcloud";
+    StreamingServers["FlixCloud"] = "flixcloud";
 })(StreamingServers || (exports.StreamingServers = StreamingServers = {}));
 var MediaStatus;
 (function (MediaStatus) {

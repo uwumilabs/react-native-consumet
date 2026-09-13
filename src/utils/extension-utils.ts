@@ -1,4 +1,5 @@
 import axios from 'axios';
+import CryptoJS from 'crypto-js';
 
 // Import extractors for fallback compatibility
 import {
@@ -25,6 +26,7 @@ import {
   GDFlix,
   Gofile,
   HubCloud,
+  FlixCloud,
 } from '../extractors';
 import { load } from 'cheerio';
 import { USER_AGENT } from './utils';
@@ -56,6 +58,7 @@ export const defaultAxios = axios.create({
 export const defaultExtractorContext: ExtractorContext = {
   axios: defaultAxios,
   load: load,
+  CryptoJS,
   USER_AGENT: USER_AGENT,
   PolyURL: PolyURL,
   PolyURLSearchParams: PolyURLSearchParams,
@@ -95,6 +98,7 @@ export const defaultExtractors = {
   GDFlix: (ctx?: ExtractorContext) => GDFlix(ctx || defaultExtractorContext),
   Gofile: (ctx?: ExtractorContext) => Gofile(ctx || defaultExtractorContext),
   HubCloud: (ctx?: ExtractorContext) => HubCloud(ctx || defaultExtractorContext),
+  FlixCloud: (ctx?: ExtractorContext) => FlixCloud(ctx || defaultExtractorContext),
 };
 
 export const extractors = {
@@ -116,6 +120,7 @@ export const extractors = {
   GDFlix: defaultExtractors.GDFlix,
   Gofile: defaultExtractors.Gofile,
   HubCloud: defaultExtractors.HubCloud,
+  FlixCloud: defaultExtractors.FlixCloud,
 };
 
 // Type definitions for provider and extractor instances

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.MegaUp = exports.Voe = exports.VidHide = exports.VizCloud = exports.VidMoly = exports.StreamWish = exports.StreamTape = exports.StreamSB = exports.StreamLare = exports.StreamHub = exports.MegaCloud = exports.RapidCloud = exports.Mp4Upload = exports.Mp4Player = exports.MixDrop = exports.Kwik = exports.GogoCDN = exports.Filemoon = exports.AsianLoad = void 0;
+exports.FlixCloud = exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.MegaUp = exports.Voe = exports.VidHide = exports.VizCloud = exports.VidMoly = exports.StreamWish = exports.StreamTape = exports.StreamSB = exports.StreamLare = exports.StreamHub = exports.MegaCloud = exports.RapidCloud = exports.Mp4Upload = exports.Mp4Player = exports.MixDrop = exports.Kwik = exports.GogoCDN = exports.Filemoon = exports.AsianLoad = void 0;
 const asianload_1 = __importDefault(require("./asianload"));
 exports.AsianLoad = asianload_1.default;
 const filemoon_1 = __importDefault(require("./filemoon"));
@@ -50,4 +50,6 @@ const gofile_1 = require("./gofile");
 Object.defineProperty(exports, "Gofile", { enumerable: true, get: function () { return gofile_1.Gofile; } });
 const hubcloud_1 = require("./hubcloud");
 Object.defineProperty(exports, "HubCloud", { enumerable: true, get: function () { return hubcloud_1.HubCloud; } });
+const flixcloud_1 = require("./flixcloud");
+Object.defineProperty(exports, "FlixCloud", { enumerable: true, get: function () { return flixcloud_1.FlixCloud; } });
 //# sourceMappingURL=index.js.map

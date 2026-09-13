@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
+import type CryptoJS from 'crypto-js';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
 import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, multiply, deobfuscateScript } from '../NativeConsumet';
 /**
@@ -9,6 +10,8 @@ import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWit
 export interface ExtractorContext {
     axios: AxiosInstance;
     load: (html: string) => CheerioAPI;
+    /** CryptoJS library — use instead of importing crypto-js directly */
+    CryptoJS: typeof CryptoJS;
     USER_AGENT?: string;
     PolyURL: typeof PolyURL;
     PolyURLSearchParams: typeof PolyURLSearchParams;

@@ -28,6 +28,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoIsM3U8: boolean;
     videoHeaders?: Record<string, string>;
   }
   const [movieState, setMovieState] = useState<MovieFetchState>({
@@ -35,6 +36,7 @@ export default function Meta() {
     isLoading: true,
     error: null,
     videoSource: null,
+    videoIsM3U8: false,
   });
   const [movieRefreshing, setMovieRefreshing] = useState(false);
 
@@ -44,6 +46,7 @@ export default function Meta() {
     isLoading: boolean;
     error: string | null | Error;
     videoSource: string | null;
+    videoIsM3U8: boolean;
     videoHeaders?: Record<string, string>;
   }
   const [animeState, setAnimeState] = useState<AnimeFetchState>({
@@ -51,6 +54,7 @@ export default function Meta() {
     isLoading: true,
     error: null,
     videoSource: null,
+    videoIsM3U8: false,
   });
   const [animeRefreshing, setAnimeRefreshing] = useState(false);
 
@@ -59,7 +63,7 @@ export default function Meta() {
   // Function to fetch Movies data
   const fetchMoviesData = async () => {
     try {
-      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.NetflixMirror());
+      const movies = new META.TMDB('5201b54eb0968700e693a30576d7d4dc', new MOVIES.VegaMovies());
       const search = await movies.search('squid game');
       console.log('Movies Search Results:', search);
 
@@ -73,6 +77,7 @@ export default function Meta() {
       console.log('Movie Info:', info);
 
       let videoUrl: string | null = null;
+      let videoIsM3U8 = false;
       let videoHeaders: Record<string, string> | undefined = undefined;
       if (info.seasons[0].episodes && info.seasons[0].episodes.length > 0) {
         const firstEpisodeId = info.seasons[0].episodes[0].id;
@@ -80,10 +85,15 @@ export default function Meta() {
         console.log('Movie Episode Sources:', sources);
 
         if (sources.sources && sources.sources.length > 0) {
-          const highestQualitySource = sources.sources.reduce((prev, current) =>
-            (prev.quality || 0) > (current.quality || 0) ? prev : current
+          const parseQuality = (q?: string) => {
+            const n = parseInt(q ?? '0');
+            return isNaN(n) ? 0 : n;
+          };
+          const best = sources.sources.reduce((prev, cur) =>
+            parseQuality(cur.quality) > parseQuality(prev.quality) ? cur : prev
           );
-          videoUrl = highestQualitySource.url;
+          videoUrl = best.url;
+          videoIsM3U8 = best.isM3U8 ?? false;
           videoHeaders = sources.headers;
         }
       }
@@ -93,6 +103,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoIsM3U8,
         videoHeaders,
       });
     } catch (error: unknown) {
@@ -110,8 +121,8 @@ export default function Meta() {
   // Function to fetch Anime data
   const fetchAnimeData = async () => {
     try {
-      const anime = new META.Anilist(new ANIME.AniKoto());
-      const searchResult = await anime.search('jujutsu kaisen');
+      const anime = new META.Anilist(new ANIME.AniNeko());
+      const searchResult = await anime.search('re:zero season 3');
       console.log('Anime Search Result:', searchResult);
 
       if (!searchResult || !searchResult.results || searchResult.results.length === 0) {
@@ -126,17 +137,25 @@ export default function Meta() {
       }
 
       let videoUrl: string | null = null;
+      let videoIsM3U8 = false;
       let videoHeaders: Record<string, string> | undefined = undefined;
       if (animeEpisodes && animeEpisodes.length > 0) {
         const firstEpisodeId = animeEpisodes![0]?.id;
+        const servers = await anime.fetchEpisodeServers(firstEpisodeId!);
+        console.log('Anime Episode Servers:', servers);
         const sources = await anime.fetchEpisodeSources(firstEpisodeId!);
         console.log('Anime Episode Sources:', sources);
 
         if (sources.sources && sources.sources.length > 0) {
-          const highestQualitySource = sources.sources.reduce((prev, current) =>
-            (prev.quality || 0) > (current.quality || 0) ? prev : current
+          const parseQuality = (q?: string) => {
+            const n = parseInt(q ?? '0');
+            return isNaN(n) ? 0 : n;
+          };
+          const best = sources.sources.reduce((prev, cur) =>
+            parseQuality(cur.quality) > parseQuality(prev.quality) ? cur : prev
           );
-          videoUrl = highestQualitySource.url;
+          videoUrl = best.url;
+          videoIsM3U8 = best.isM3U8 ?? false;
           videoHeaders = sources.headers;
         }
       }
@@ -146,6 +165,7 @@ export default function Meta() {
         isLoading: false,
         error: null,
         videoSource: videoUrl,
+        videoIsM3U8,
         videoHeaders,
       });
     } catch (error: unknown) {
@@ -242,12 +262,15 @@ export default function Meta() {
                       source={{
                         uri: movieState.videoSource,
                         headers: movieState.videoHeaders,
+                        // Force ExoPlayer to use HlsMediaSource — auto-detect
+                        // fails when the URL has no .m3u8 extension.
+                        ...(movieState.videoIsM3U8 ? { type: 'hls' } : {}),
                       }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
                       onLoad={(e) => console.log('Video Loaded (Movies)', e)}
-                      onError={(e) => console.log('Video Error (Movies):', e)}
+                      onError={(e) => console.log('Video Error (Movies):', JSON.stringify(e))}
                       poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
                       posterResizeMode="cover"
                     />
@@ -302,12 +325,15 @@ export default function Meta() {
                       source={{
                         uri: animeState.videoSource,
                         headers: animeState.videoHeaders,
+                        // Force ExoPlayer to use HlsMediaSource — auto-detect
+                        // fails when the URL has no .m3u8 extension.
+                        ...(animeState.videoIsM3U8 ? { type: 'hls' } : {}),
                       }}
                       style={styles.videoPlayer}
                       controls={true}
                       resizeMode="contain"
                       onLoad={(e) => console.log('Video Loaded (Anime)', e)}
-                      onError={(e) => console.log('Video Error (Anime):', e)}
+                      onError={(e) => console.log('Video Error (Anime):', JSON.stringify(e))}
                       poster="https://placehold.co/400x250/cccccc/333333?text=Loading+Video"
                       posterResizeMode="cover"
                     />
@@ -357,6 +383,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     paddingVertical: 10,
+    paddingTop: 50,
   },
   tabButton: {
     paddingVertical: 8,

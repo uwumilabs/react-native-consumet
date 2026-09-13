@@ -26,6 +26,7 @@ export declare const defaultExtractors: {
     GDFlix: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     Gofile: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     HubCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    FlixCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export declare const extractors: {
     GogoCDN: typeof GogoCDN;
@@ -46,6 +47,7 @@ export declare const extractors: {
     GDFlix: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     Gofile: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
     HubCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
+    FlixCloud: (ctx?: ExtractorContext) => import("../models").IVideoExtractor;
 };
 export type Extractor = keyof typeof extractors;
 //# sourceMappingURL=extension-utils.d.ts.map

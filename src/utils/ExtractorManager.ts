@@ -1,3 +1,4 @@
+import CryptoJS from 'crypto-js';
 import type { ExtractorContext, IVideoExtractor, ExtractorContextConfig } from '../models';
 import { StreamingServers } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
@@ -245,6 +246,7 @@ export class ExtractorManager {
           const __awaiter = context.__awaiter;
           const axios = context.axios;
           const load = context.load;
+          const CryptoJS = context.CryptoJS;
           const sharedUtils = context.sharedUtils;
           
           try {
@@ -390,6 +392,7 @@ export class ExtractorManager {
       // Provide extractor context for context-aware extractors
       axios: extractorContext.axios,
       load: extractorContext.load,
+      CryptoJS,
       console,
       URL: extractorContext.PolyURL,
       URLSearchParams: extractorContext.PolyURLSearchParams,

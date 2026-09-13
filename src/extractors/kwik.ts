@@ -1,4 +1,5 @@
 import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
 
 /**
  * Kwik extractor function
@@ -8,106 +9,86 @@ import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor 
 export function Kwik(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'kwik';
   const sources: IVideo[] = [];
-  const { axios, load, USER_AGENT, PolyURL } = ctx;
-  function unPack(code: string) {
-    function indent(code: string[]) {
-      try {
-        let tabs = 0,
-          old = -1,
-          add = '';
-        for (let i = 0; i < code.length; i++) {
-          if (code[i]!.includes('{')) tabs++;
-          if (code[i]!.includes('}')) tabs--;
+  const { load, USER_AGENT, NativeConsumet } = ctx;
 
-          if (old !== tabs) {
-            old = tabs;
-            add = '';
-            while (old > 0) {
-              add += '\t';
-              old--;
-            }
-            old = tabs;
-          }
+  const ua =
+    USER_AGENT ||
+    'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36';
 
-          code[i] = add + code[i];
-        }
-      } finally {
-        // let GC cleanup
-      }
-      return code;
+  function unpackPacked(packed: string): string | null {
+    const re =
+      /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
+
+    const m = packed.match(re);
+    if (!m) return null;
+
+    const encoded = m[1]!;
+    const base = parseInt(m[2]!, 10);
+    const count = parseInt(m[3]!, 10);
+    const words = m[4]!.split(m[5]!);
+
+    function decode(n: number): string {
+      const prefix = n < base ? '' : decode(Math.floor(n / base));
+      const rem = n % base;
+      return prefix + (rem > 35 ? String.fromCharCode(rem + 29) : rem.toString(36));
     }
 
-    let captured = '';
+    let result = encoded;
+    for (let i = count - 1; i >= 0; i--) {
+      const word = words[i];
+      if (word) result = result.replace(new RegExp(`\\b${decode(i)}\\b`, 'g'), word);
+    }
 
-    // fake environment
-    const env = {
-      eval: function (c: string) {
-        captured = c;
-      },
-      window: {},
-      document: {},
-    };
-
-    // Instead of `with`, run inside a Function with env injected
-    const runner = new Function(
-      'env',
-      `
-    const { eval, window, document } = env;
-    ${code}
-  `
-    );
-
-    runner(env);
-
-    // prettify captured code
-    captured = (captured + '')
-      .replace(/;/g, ';\n')
-      .replace(/{/g, '\n{\n')
-      .replace(/}/g, '\n}\n')
-      .replace(/\n;\n/g, ';\n')
-      .replace(/\n\n/g, '\n');
-
-    let lines = captured.split('\n');
-    lines = indent(lines);
-
-    return lines.join('\n');
+    return result;
   }
+
   // @ts-ignore
-  const extract = async (videoUrl: PolyURL, referer = 'https://animepahe.pw/'): Promise<ISource> => {
-    const extractedData: ISource = {
-      // subtitles: [],
-      // intro: { start: 0, end: 0 },
-      // outro: { start: 0, end: 0 },
-      sources: [],
-    };
+  const extract = async (videoUrl: PolyURL, referer = 'https://animepahe.ru/'): Promise<ISource> => {
+    const kwikUrl = typeof videoUrl === 'string' ? videoUrl : (videoUrl as any).href;
+    const kwikHost = kwikUrl.match(/^https?:\/\/([^/]+)/)?.[1] ?? 'kwik.cx';
 
-    try {
-      const response = await fetch(`${videoUrl.href}`, {
-        headers: {
-          'Referer': referer,
-          'User-Agent': USER_AGENT!,
-        },
-      });
+    const { html } = await NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
+      'Referer': referer,
+      'User-Agent': ua,
+    });
 
-      const data = await response.text();
+    const $ = load(html);
+    let packedScript: string | null = null;
 
-      const unpackedSourceCode = unPack(data.match(/<script\b[^>]*>\s*(eval\([\s\S]*?\))\s*<\/script>/i)![1]!);
-      const re = /https?:\/\/[^'"\s]+?\.m3u8(?:\?[^'"\s]*)?/i;
-      const source = unpackedSourceCode.match(re)![0]!;
-      extractedData.sources.push({
-        url: source,
-        isM3U8: source.includes('.m3u8'),
-      });
+    $('script').each((_, el) => {
+      const text = $(el).html() ?? '';
+      if (text.includes('eval(function(p,a,c,k,e,')) {
+        packedScript = text;
+        return false;
+      }
+    });
 
-      return extractedData;
-    } catch (err) {
-      throw new Error((err as Error).message);
+    if (!packedScript) {
+      const m = html.match(/eval\(function\(p,a,c,k,e,[dr]\)[\s\S]+?\.split\(['"]\|['"]\)[\s\S]+?\)/);
+      packedScript = m?.[0] ?? null;
     }
+
+    if (!packedScript) throw new Error('[Kwik] No packed script found');
+
+    const unpacked = unpackPacked(packedScript);
+    if (!unpacked) throw new Error('[Kwik] Failed to unpack script');
+
+    const sourceMatch =
+      unpacked.match(/const\s+source\s*=\s*'([^']+)'/) ||
+      unpacked.match(/const\s+source\s*=\s*"([^"]+)"/) ||
+      unpacked.match(/['"]?(https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
+
+    if (!sourceMatch?.[1]) throw new Error('[Kwik] No source URL found');
+
+    const m3u8 = sourceMatch[1];
+
+    return {
+      sources: [{ url: m3u8, isM3U8: m3u8.includes('.m3u8') }],
+      headers: { Referer: `https://${kwikHost}/` },
+    };
   };
 
-  return {
-    serverName,
-    sources,
-    extract,
-  };
+  return { serverName, sources, extract };
 }
+
+export default Kwik;

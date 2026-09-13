@@ -21,5 +21,6 @@ import { MegaPlay } from './megaplay';
 import { GDFlix } from './gdflix';
 import { Gofile } from './gofile';
 import { HubCloud } from './hubcloud';
-export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, MegaPlay, GDFlix, Gofile, HubCloud, };
+import { FlixCloud } from './flixcloud';
+export { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Player, Mp4Upload, RapidCloud, MegaCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, VidHide, Voe, MegaUp, MegaPlay, GDFlix, Gofile, HubCloud, FlixCloud, };
 //# sourceMappingURL=index.d.ts.map

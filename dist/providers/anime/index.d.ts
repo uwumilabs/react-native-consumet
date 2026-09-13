@@ -10,6 +10,10 @@ import AnimeKai from './animekai/animekai';
 import createAnimeKai from './animekai/create-animekai';
 import AniKoto from './anikoto/anikoto';
 import createAniKoto from './anikoto/create-anikoto';
+import ReAnime from './reanime/reanime';
+import createReanime from './reanime/create-reanime';
+import AniNeko from './anineko/anineko';
+import createAniNeko from './anineko/create-anineko';
 declare const _default: {
     AnimePahe: typeof AnimePahe;
     createAnimePahe: typeof createAnimePahe;
@@ -23,6 +27,10 @@ declare const _default: {
     createAnimeKai: typeof createAnimeKai;
     AniKoto: typeof AniKoto;
     createAniKoto: typeof createAniKoto;
+    ReAnime: typeof ReAnime;
+    createReanime: typeof createReanime;
+    AniNeko: typeof AniNeko;
+    createAniNeko: typeof createAniNeko;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extractors = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
 const axios_1 = __importDefault(require("axios"));
+const crypto_js_1 = __importDefault(require("crypto-js"));
 // Import extractors for fallback compatibility
 const extractors_1 = require("../extractors");
 const cheerio_1 = require("cheerio");
@@ -27,6 +28,7 @@ exports.defaultAxios = axios_1.default.create({
 exports.defaultExtractorContext = {
     axios: exports.defaultAxios,
     load: cheerio_1.load,
+    CryptoJS: crypto_js_1.default,
     USER_AGENT: utils_1.USER_AGENT,
     PolyURL: url_polyfill_1.PolyURL,
     PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
@@ -65,6 +67,7 @@ exports.defaultExtractors = {
     GDFlix: (ctx) => (0, extractors_1.GDFlix)(ctx || exports.defaultExtractorContext),
     Gofile: (ctx) => (0, extractors_1.Gofile)(ctx || exports.defaultExtractorContext),
     HubCloud: (ctx) => (0, extractors_1.HubCloud)(ctx || exports.defaultExtractorContext),
+    FlixCloud: (ctx) => (0, extractors_1.FlixCloud)(ctx || exports.defaultExtractorContext),
 };
 exports.extractors = {
     GogoCDN: exports.defaultExtractors.GogoCDN,
@@ -85,5 +88,6 @@ exports.extractors = {
     GDFlix: exports.defaultExtractors.GDFlix,
     Gofile: exports.defaultExtractors.Gofile,
     HubCloud: exports.defaultExtractors.HubCloud,
+    FlixCloud: exports.defaultExtractors.FlixCloud,
 };
 //# sourceMappingURL=extension-utils.js.map
