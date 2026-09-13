@@ -1,5 +1,13 @@
 
 
+## [1.5.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.4.0...v1.5.0) (2026-09-13)
+
+
+### Features
+
+* add anineko and reanime anime providers, flixcloud extractor, and cryptojs context support ([bfaf48f](https://github.com/uwumilabs/react-native-consumet/commit/bfaf48f94851634edeef5c121fa96111683a48f8))
+* improve apps ([8160a71](https://github.com/uwumilabs/react-native-consumet/commit/8160a7186516d48627278dcf17abd1d907e6f755))
+
 ## [1.4.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.3.1...v1.4.0) (2026-09-12)
 
 
