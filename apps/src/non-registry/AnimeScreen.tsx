@@ -90,6 +90,14 @@ export default function AnimeScreen() {
   const [videoState, setVideoState] = useState<VideoState | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoErr, setVideoErr] = useState<string | null>(null);
+  const [availableServers, setAvailableServers] = useState<any[]>([]);
+  const [selectedServer, setSelectedServer] = useState<string | null>(null);
+
+  // Direct URL test
+  const [directUrlOpen, setDirectUrlOpen] = useState(false);
+  const [directUrl, setDirectUrl] = useState('');
+  const [directReferer, setDirectReferer] = useState('');
+  const [directUserAgent, setDirectUserAgent] = useState('');
 
   // ── Provider switch ─────────────────────────────────────────────────────────
 
@@ -131,6 +139,7 @@ export default function AnimeScreen() {
     try {
       const res = await providerRef.current.search(q);
       setResults((res as any).results ?? []);
+      console.log('[Anime] search results', (res as any).results);
       if (!(res as any).results?.length) setSearchErr(`No results for "${q}"`);
     } catch (e: any) {
       setSearchErr(e?.message ?? 'Search failed');
@@ -151,6 +160,8 @@ export default function AnimeScreen() {
       const info: IAnimeInfo = await (providerRef.current as any).fetchAnimeInfo(item.id);
       setDetailInfo(info);
       setEpisodes(info.episodes ?? []);
+      console.log('[Anime] detail info', info);
+      console.log('[Anime] episodes', info.episodes);
     } catch (e: any) {
       setDetailErr(e?.message ?? 'Failed to load episodes');
     } finally {
@@ -161,14 +172,22 @@ export default function AnimeScreen() {
   // ── Player ──────────────────────────────────────────────────────────────────
 
   const playEpisode = useCallback(
-    async (ep: IAnimeEpisode) => {
+    async (ep: IAnimeEpisode, serverName?: string) => {
       setCurrentEp(ep);
       setVideoState(null);
       setVideoErr(null);
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
-        const src: any = await (providerRef.current as any).fetchEpisodeSources(ep.id, undefined, subOrDub);
+        if (!serverName) {
+          const servers: any[] = await (providerRef.current as any).fetchEpisodeServers(ep.id, subOrDub);
+          console.log('[Anime] episode servers', servers);
+          setAvailableServers(servers);
+          serverName = servers[0]?.name;
+          setSelectedServer(serverName ?? null);
+        }
+        const src: any = await (providerRef.current as any).fetchEpisodeSources(ep.id, serverName, subOrDub);
+        console.log('[Anime] episode sources', src);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -187,6 +206,27 @@ export default function AnimeScreen() {
     setPlayerOpen(false);
     setVideoState(null);
     setVideoErr(null);
+    setAvailableServers([]);
+    setSelectedServer(null);
+  };
+
+  const playDirectUrl = () => {
+    const url = directUrl.trim();
+    if (!url) return;
+    setDirectUrlOpen(false);
+    setCurrentEp(null);
+    setVideoState(null);
+    setVideoErr(null);
+    setAvailableServers([]);
+    setSelectedServer(null);
+    setPlayerOpen(true);
+    const isM3U8 = url.includes('.m3u8');
+    const referer = directReferer.trim();
+    const ua = directUserAgent.trim();
+    const headers: Record<string, string> = {};
+    if (referer) headers['Referer'] = referer;
+    if (ua) headers['User-Agent'] = ua;
+    setVideoState({ url, isM3U8, headers: Object.keys(headers).length ? headers : undefined });
   };
 
   // ── Sub-components ──────────────────────────────────────────────────────────
@@ -369,7 +409,7 @@ export default function AnimeScreen() {
             source={{
               uri: videoState.url,
               headers: videoState.headers,
-              ...(videoState.isM3U8 ? { type: 'hls' } : {}),
+              ...(videoState.isM3U8 && Platform.OS === 'ios' ? { type: 'hls' } : {}),
             }}
             style={StyleSheet.absoluteFill}
             controls
@@ -394,6 +434,28 @@ export default function AnimeScreen() {
             </Text>
           </View>
         ) : null}
+
+        {availableServers.length > 0 && !loadingVideo ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={S.serverRow}
+            contentContainerStyle={S.serverRowContent}>
+            {availableServers.map((s: any) => (
+              <TouchableOpacity
+                key={s.name}
+                style={[S.serverChip, selectedServer === s.name && S.serverChipActive]}
+                onPress={() => {
+                  if (currentEp && s.name !== selectedServer) {
+                    setSelectedServer(s.name);
+                    playEpisode(currentEp, s.name);
+                  }
+                }}>
+                <Text style={S.serverChipText}>{s.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : null}
       </View>
     </Modal>
   );
@@ -412,13 +474,58 @@ export default function AnimeScreen() {
           <Text style={S.headerLogo}>◈</Text>
           <Text style={S.headerTitle}>Anime</Text>
         </View>
-        {/* Provider chip */}
-        <TouchableOpacity style={S.providerChip} onPress={() => setSheetOpen(true)} activeOpacity={0.75}>
-          <Text style={S.providerEmoji}>{providerDef.emoji}</Text>
-          <Text style={S.providerLabel}>{providerDef.label}</Text>
-          <Text style={S.providerCaret}>▾</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity style={S.providerChip} onPress={() => setDirectUrlOpen(true)} activeOpacity={0.75}>
+            <Text style={S.providerLabel}>🔗</Text>
+          </TouchableOpacity>
+          {/* Provider chip */}
+          <TouchableOpacity style={S.providerChip} onPress={() => setSheetOpen(true)} activeOpacity={0.75}>
+            <Text style={S.providerEmoji}>{providerDef.emoji}</Text>
+            <Text style={S.providerLabel}>{providerDef.label}</Text>
+            <Text style={S.providerCaret}>▾</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* ── Direct URL modal ─────────────────────────────────────────────────── */}
+      <Modal visible={directUrlOpen} transparent animationType="fade" onRequestClose={() => setDirectUrlOpen(false)}>
+        <TouchableOpacity style={S.directOverlay} activeOpacity={1} onPress={() => setDirectUrlOpen(false)}>
+          <TouchableOpacity activeOpacity={1} style={S.directCard}>
+            <Text style={S.directTitle}>Play direct URL</Text>
+            <TextInput
+              style={S.directInput}
+              value={directUrl}
+              onChangeText={setDirectUrl}
+              placeholder="Paste video URL…"
+              placeholderTextColor={colors.dim}
+              autoCapitalize="none"
+              autoCorrect={false}
+              multiline
+            />
+            <TextInput
+              style={[S.directInput, { minHeight: 0 }]}
+              value={directReferer}
+              onChangeText={setDirectReferer}
+              placeholder="Referer (optional)…"
+              placeholderTextColor={colors.dim}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TextInput
+              style={[S.directInput, { minHeight: 0 }]}
+              value={directUserAgent}
+              onChangeText={setDirectUserAgent}
+              placeholder="User-Agent (optional)…"
+              placeholderTextColor={colors.dim}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity style={S.directPlayBtn} onPress={playDirectUrl}>
+              <Text style={S.directPlayText}>▶ Play</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* ── Search ──────────────────────────────────────────────────────────── */}
       <View style={S.searchWrap}>
@@ -739,6 +846,57 @@ const S = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
+  serverRow: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 40 : 16,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  serverRowContent: { paddingHorizontal: 12, gap: 8 },
+  serverChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: R.full,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  serverChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(0,0,0,0.85)' },
+  serverChipText: { fontSize: 12, color: '#fff', fontWeight: '600' },
+  directOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    padding: PAD,
+  },
+  directCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  directTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
+  directInput: {
+    backgroundColor: colors.bg,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    fontSize: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 60,
+  },
+  directPlayBtn: {
+    backgroundColor: colors.accent,
+    borderRadius: R.full,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  directPlayText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   // Shared
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },

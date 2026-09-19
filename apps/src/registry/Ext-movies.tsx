@@ -42,6 +42,13 @@ const STATUS_EMOJI: Record<string, string> = {
   deprecated: '🟠',
 };
 
+type MetaMovies = 'tmdb' | null;
+
+const META_MOVIE_SHEET_ITEMS = [
+  { key: 'none', label: 'None', emoji: '⬜' },
+  { key: 'tmdb', label: 'TMDB', emoji: '🔵' },
+];
+
 const resolveTitle = (t: unknown) => (typeof t === 'string' ? t : String(t ?? ''));
 const parseQuality = (q?: string) => {
   const n = parseInt(q ?? '0');
@@ -57,10 +64,13 @@ export default function ExtMoviesScreen() {
   const [manager] = useState(() => new ProviderManager(ExtensionRegistry));
   const [extensions, setExtensions] = useState<any[]>([]);
   const [activeExt, setActiveExt] = useState<any | null>(null);
-  const providerRef = useRef<any>(null); // META.TMDB-wrapped
+  const [activeMeta, setActiveMeta] = useState<MetaMovies>(null);
+  const providerRef = useRef<any>(null);
+  const innerProviderRef = useRef<any>(null);
   const [providerLoading, setProvLoading] = useState(false);
   const [providerErr, setProviderErr] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [metaSheetOpen, setMetaSheetOpen] = useState(false);
 
   // Search
   const [query, setQuery] = useState('');
@@ -94,10 +104,17 @@ export default function ExtMoviesScreen() {
 
   // ── Load extension ──────────────────────────────────────────────────────────
 
+  const wrapWithMeta = useCallback((inner: any, meta: MetaMovies) => {
+    if (!inner) return inner;
+    if (meta === 'tmdb') return new META.TMDB(TMDB_KEY, inner);
+    return inner;
+  }, []);
+
   const loadExtension = useCallback(
     async (ext: any) => {
       setActiveExt(ext);
       providerRef.current = null;
+      innerProviderRef.current = null;
       setProvLoading(true);
       setProviderErr(null);
       setQuery('');
@@ -111,14 +128,15 @@ export default function ExtMoviesScreen() {
         if (!localCode) throw new Error(`No local dist found for extension: ${ext.id}`);
         const metadata = manager.getExtensionMetadata(ext.id);
         const inner = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
-        providerRef.current = new META.TMDB(TMDB_KEY, inner as any);
+        innerProviderRef.current = inner;
+        providerRef.current = wrapWithMeta(inner, activeMeta);
       } catch (e: any) {
         setProviderErr(e?.message ?? `Failed to load ${ext.name}`);
       } finally {
         setProvLoading(false);
       }
     },
-    [manager]
+    [manager, activeMeta, wrapWithMeta]
   );
 
   const switchExtension = useCallback(
@@ -127,6 +145,19 @@ export default function ExtMoviesScreen() {
       if (ext && ext.id !== activeExt?.id) loadExtension(ext);
     },
     [extensions, activeExt, loadExtension]
+  );
+
+  const switchMeta = useCallback(
+    (key: string) => {
+      const meta = key === 'none' ? null : (key as MetaMovies);
+      setActiveMeta(meta);
+      if (innerProviderRef.current) {
+        providerRef.current = wrapWithMeta(innerProviderRef.current, meta);
+        setResults([]);
+        setSearchErr(null);
+      }
+    },
+    [wrapWithMeta]
   );
 
   // ── Search ──────────────────────────────────────────────────────────────────
@@ -148,6 +179,7 @@ export default function ExtMoviesScreen() {
     setSearchErr(null);
     try {
       const res = await providerRef.current.search(q);
+      console.log('[ExtMovies] search results', res.results ?? []);
       setResults((res.results ?? []) as IMovieResult[]);
       if (!res.results?.length) setSearchErr(`No results for "${q}"`);
     } catch (e: any) {
@@ -168,9 +200,11 @@ export default function ExtMoviesScreen() {
     setActiveSeason(0);
     try {
       const info = await providerRef.current.fetchMediaInfo(item.id!, item.type as string);
+      console.log('[ExtMovies] media info', info);
       setMediaInfo(info);
     } catch (e: any) {
       setDetailErr(e?.message ?? 'Failed to load info');
+      console.log('[ExtMovies] fetchMediaInfo error', e);
     } finally {
       setLoadingDetail(false);
     }
@@ -187,7 +221,10 @@ export default function ExtMoviesScreen() {
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
+        const servers: any[] = await providerRef.current.fetchEpisodeServers(ep.id!, mediaInfo.id);
+        console.log('[ExtMovies] episode servers', servers);
         const src = await providerRef.current.fetchEpisodeSources(ep.id!, mediaInfo.id);
+        console.log('[ExtMovies] episode sources', src);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -213,12 +250,13 @@ export default function ExtMoviesScreen() {
   const seasonEps: IMovieEpisode[] =
     seasons.length > 0 ? (seasons[activeSeason]?.episodes ?? []) : (mediaInfo?.episodes ?? []);
 
-  // Sheet items
   const sheetItems = extensions.map((e) => ({
     key: e.id,
     label: e.name,
     emoji: STATUS_EMOJI[e.status as string] ?? '📦',
   }));
+
+  const activeMetaLabel = activeMeta === 'tmdb' ? 'TMDB' : 'None';
 
   // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -389,7 +427,11 @@ export default function ExtMoviesScreen() {
           </View>
         ) : videoState ? (
           <Video
-            source={{ uri: videoState.url, headers: videoState.headers, ...(videoState.isM3U8 ? { type: 'hls' } : {}) }}
+            source={{
+              uri: videoState.url,
+              headers: videoState.headers,
+              ...(videoState.isM3U8 && Platform.OS === 'ios' ? { type: 'hls' } : {}),
+            }}
             style={StyleSheet.absoluteFill}
             controls
             resizeMode="contain"
@@ -430,21 +472,35 @@ export default function ExtMoviesScreen() {
             <Text style={S.registryBadgeText}>REGISTRY</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={S.providerChip}
-          onPress={() => setSheetOpen(true)}
-          activeOpacity={0.75}
-          disabled={providerLoading}>
-          {providerLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
-          ) : (
-            <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
-          )}
-          <Text style={S.providerLabel} numberOfLines={1}>
-            {activeExt?.name ?? '…'}
-          </Text>
-          <Text style={S.providerCaret}>▾</Text>
-        </TouchableOpacity>
+        <View style={S.headerRight}>
+          {/* META chip */}
+          <TouchableOpacity
+            style={[S.providerChip, activeMeta && S.metaChipActive]}
+            onPress={() => setMetaSheetOpen(true)}
+            activeOpacity={0.75}>
+            <Text style={S.providerEmoji}>🔵</Text>
+            <Text style={S.providerLabel} numberOfLines={1}>
+              {activeMetaLabel}
+            </Text>
+            <Text style={S.providerCaret}>▾</Text>
+          </TouchableOpacity>
+          {/* Provider chip */}
+          <TouchableOpacity
+            style={S.providerChip}
+            onPress={() => setSheetOpen(true)}
+            activeOpacity={0.75}
+            disabled={providerLoading}>
+            {providerLoading ? (
+              <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
+            ) : (
+              <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
+            )}
+            <Text style={S.providerLabel} numberOfLines={1}>
+              {activeExt?.name ?? '…'}
+            </Text>
+            <Text style={S.providerCaret}>▾</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Extension loading state */}
@@ -534,11 +590,19 @@ export default function ExtMoviesScreen() {
 
       <ProviderSheet
         visible={sheetOpen}
-        title="Registry — Movie Extensions"
+        title="Streaming Provider"
         providers={sheetItems}
         selectedKey={activeExt?.id ?? ''}
         onSelect={switchExtension}
         onClose={() => setSheetOpen(false)}
+      />
+      <ProviderSheet
+        visible={metaSheetOpen}
+        title="META Layer"
+        providers={META_MOVIE_SHEET_ITEMS}
+        selectedKey={activeMeta ?? 'none'}
+        onSelect={switchMeta}
+        onClose={() => setMetaSheetOpen(false)}
       />
     </SafeAreaView>
   );
@@ -557,6 +621,7 @@ const S = StyleSheet.create({
     paddingBottom: 10,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   registryBadge: {
     backgroundColor: colors.accentFaded,
@@ -577,6 +642,10 @@ const S = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  metaChipActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentFaded,
   },
   providerEmoji: { fontSize: 14 },
   providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub, maxWidth: 90 },

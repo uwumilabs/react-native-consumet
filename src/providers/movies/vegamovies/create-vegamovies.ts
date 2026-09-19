@@ -240,8 +240,8 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
    */
   const fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
     let fullUrl = mediaId;
-    if (!fullUrl.startsWith('http')) {
-      fullUrl = `${config.baseUrl}/${mediaId.replace(/^\//, '')}`;
+    if (!fullUrl?.startsWith('http')) {
+      fullUrl = `${config.baseUrl}/${(mediaId ?? '').replace(/^\//, '')}`;
     }
 
     const cleanId = fullUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
@@ -277,7 +277,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
         $('.entry-content img[data-src]').attr('data-src') ||
         $('.entry-content img').first().attr('src') ||
         '';
-      if (image.startsWith('//')) {
+      if (image?.startsWith('//')) {
         image = `https:${image}`;
       }
       movieInfo.image = image;
@@ -361,7 +361,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
             }
 
             const btnHref = btn.attr('href');
-            if (btnHref && btnHref.startsWith('http')) {
+            if (btnHref && btnHref?.startsWith('http')) {
               seasonPacks.push({
                 title: blockText,
                 season: seasonNum,
@@ -429,7 +429,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
                   nextP.find('.btn-outline').attr('href') ||
                   nextP.find('a[href]').first().attr('href');
 
-                if (link && link.startsWith('http') && !eps.some((e) => e.url === link)) {
+                if (link && link?.startsWith('http') && !eps.some((e) => e.url === link)) {
                   eps.push({
                     id: link,
                     title: epTitle,
@@ -488,7 +488,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
                 : nextP.find('.dwd-button, .btn-outline').first().parent('a');
 
           const btnHref = btn.attr('href');
-          if (btnHref && btnHref.startsWith('http') && !episodesList.some((e) => e.url === btnHref)) {
+          if (btnHref && btnHref?.startsWith('http') && !episodesList.some((e) => e.url === btnHref)) {
             count++;
             episodesList.push({
               id: btnHref,
@@ -504,7 +504,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
         if (episodesList.length === 0) {
           $('a[href*="nexdrive.fit"], a[href*="vcloud"], a[href*="hubcloud"]').each((i, el) => {
             const href = $(el).attr('href');
-            if (href && href.startsWith('http') && !episodesList.some((e) => e.url === href)) {
+            if (href && href?.startsWith('http') && !episodesList.some((e) => e.url === href)) {
               episodesList.push({
                 id: href,
                 title: `${movieInfo.title} Option ${i + 1}`,
@@ -546,7 +546,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
     const servers: IEpisodeServer[] = [];
 
     let resolvedUrl = episodeId;
-    if (!resolvedUrl.startsWith('http')) {
+    if (!resolvedUrl?.startsWith('http')) {
       try {
         const info = await fetchMediaInfo(episodeId);
         const firstEp = info.episodes?.[0];
@@ -556,7 +556,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
       } catch {}
     }
 
-    if (!resolvedUrl.startsWith('http')) {
+    if (!resolvedUrl?.startsWith('http')) {
       return [{ name: 'HubCloud', url: episodeId }];
     }
 
@@ -653,7 +653,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
     let resolvedUrl = episodeId;
 
     // If episodeId is not an HTTP URL, resolve via fetchMediaInfo
-    if (!resolvedUrl.startsWith('http')) {
+    if (!resolvedUrl?.startsWith('http')) {
       const info = await fetchMediaInfo(episodeId);
       const firstEp = info.episodes?.[0];
       if (firstEp?.url) {
@@ -739,7 +739,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
               );
 
               const fpStreamUrl = fpRes2.data?.data?.[0];
-              if (fpStreamUrl && fpStreamUrl.startsWith('http')) {
+              if (fpStreamUrl && fpStreamUrl?.startsWith('http')) {
                 extraSources.push({
                   url: fpStreamUrl,
                   server: 'Filepress',

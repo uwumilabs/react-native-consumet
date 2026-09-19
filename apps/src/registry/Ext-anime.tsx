@@ -26,6 +26,7 @@ import {
 import {
   ProviderManager,
   ExtensionRegistry,
+  META,
   SubOrDub,
   type IAnimeResult,
   type IAnimeInfo,
@@ -48,6 +49,14 @@ const STATUS_EMOJI: Record<string, string> = {
   working: '🟡',
   deprecated: '🟠',
 };
+
+type MetaAnime = 'anilist' | 'mal' | null;
+
+const META_SHEET_ITEMS = [
+  { key: 'none', label: 'None', emoji: '⬜' },
+  { key: 'anilist', label: 'AniList', emoji: '🔵' },
+  { key: 'mal', label: 'MyAnimeList', emoji: '🔵' },
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -74,10 +83,13 @@ export default function ExtAnimeScreen() {
   const [manager] = useState(() => new ProviderManager(ExtensionRegistry));
   const [extensions, setExtensions] = useState<any[]>([]);
   const [activeExt, setActiveExt] = useState<any | null>(null);
+  const [activeMeta, setActiveMeta] = useState<MetaAnime>(null);
   const providerRef = useRef<any>(null);
+  const innerProviderRef = useRef<any>(null);
   const [providerLoading, setProvLoading] = useState(false);
   const [providerErr, setProviderErr] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [metaSheetOpen, setMetaSheetOpen] = useState(false);
 
   // Search
   const [query, setQuery] = useState('');
@@ -111,10 +123,18 @@ export default function ExtAnimeScreen() {
 
   // ── Load provider from registry ─────────────────────────────────────────────
 
+  const wrapWithMeta = useCallback((inner: any, meta: MetaAnime) => {
+    if (!inner) return inner;
+    if (meta === 'anilist') return new META.Anilist(inner);
+    if (meta === 'mal') return new META.Myanimelist(inner);
+    return inner;
+  }, []);
+
   const loadExtension = useCallback(
     async (ext: any) => {
       setActiveExt(ext);
       providerRef.current = null;
+      innerProviderRef.current = null;
       setProvLoading(true);
       setProviderErr(null);
       setQuery('');
@@ -127,15 +147,16 @@ export default function ExtAnimeScreen() {
         const localCode = LOCAL_DIST_MAP[ext.id];
         if (!localCode) throw new Error(`No local dist found for extension: ${ext.id}`);
         const metadata = manager.getExtensionMetadata(ext.id);
-        const p = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
-        providerRef.current = p;
+        const inner = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
+        innerProviderRef.current = inner;
+        providerRef.current = wrapWithMeta(inner, activeMeta);
       } catch (e: any) {
         setProviderErr(e?.message ?? `Failed to load ${ext.name}`);
       } finally {
         setProvLoading(false);
       }
     },
-    [manager]
+    [manager, activeMeta, wrapWithMeta]
   );
 
   const switchExtension = useCallback(
@@ -144,6 +165,19 @@ export default function ExtAnimeScreen() {
       if (ext && ext.id !== activeExt?.id) loadExtension(ext);
     },
     [extensions, activeExt, loadExtension]
+  );
+
+  const switchMeta = useCallback(
+    (key: string) => {
+      const meta = key === 'none' ? null : (key as MetaAnime);
+      setActiveMeta(meta);
+      if (innerProviderRef.current) {
+        providerRef.current = wrapWithMeta(innerProviderRef.current, meta);
+        setResults([]);
+        setSearchErr(null);
+      }
+    },
+    [wrapWithMeta]
   );
 
   // ── Search ──────────────────────────────────────────────────────────────────
@@ -166,6 +200,7 @@ export default function ExtAnimeScreen() {
     try {
       const res = await providerRef.current.search(q);
       setResults((res as any).results ?? []);
+      console.log('[ExtAnime] search results', (res as any).results);
       if (!(res as any).results?.length) setSearchErr(`No results for "${q}"`);
     } catch (e: any) {
       setSearchErr(e?.message ?? 'Search failed');
@@ -186,6 +221,8 @@ export default function ExtAnimeScreen() {
       const info: IAnimeInfo = await providerRef.current.fetchAnimeInfo(item.id);
       setDetailInfo(info);
       setEpisodes(info.episodes ?? []);
+      console.log('[ExtAnime] detail info', info);
+      console.log('[ExtAnime] episodes', info.episodes);
     } catch (e: any) {
       setDetailErr(e?.message ?? 'Failed to load episodes');
     } finally {
@@ -203,7 +240,10 @@ export default function ExtAnimeScreen() {
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
+        const servers: any[] = await providerRef.current.fetchEpisodeServers(ep.id, subOrDub);
+        console.log('[ExtAnime] episode servers', servers);
         const src: any = await providerRef.current.fetchEpisodeSources(ep.id, undefined, subOrDub);
+        console.log('[ExtAnime] episode sources', src);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -231,6 +271,8 @@ export default function ExtAnimeScreen() {
     label: e.name,
     emoji: STATUS_EMOJI[e.status as string] ?? '📦',
   }));
+
+  const activeMetaLabel = activeMeta === 'anilist' ? 'AniList' : activeMeta === 'mal' ? 'MAL' : 'None';
 
   // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -398,7 +440,11 @@ export default function ExtAnimeScreen() {
           </View>
         ) : videoState ? (
           <Video
-            source={{ uri: videoState.url, headers: videoState.headers, ...(videoState.isM3U8 ? { type: 'hls' } : {}) }}
+            source={{
+              uri: videoState.url,
+              headers: videoState.headers,
+              ...(videoState.isM3U8 && Platform.OS === 'ios' ? { type: 'hls' } : {}),
+            }}
             style={StyleSheet.absoluteFill}
             controls
             resizeMode="contain"
@@ -441,21 +487,35 @@ export default function ExtAnimeScreen() {
             <Text style={S.registryBadgeText}>REGISTRY</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={S.providerChip}
-          onPress={() => setSheetOpen(true)}
-          activeOpacity={0.75}
-          disabled={providerLoading}>
-          {providerLoading ? (
-            <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
-          ) : (
-            <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
-          )}
-          <Text style={S.providerLabel} numberOfLines={1}>
-            {activeExt?.name ?? '…'}
-          </Text>
-          <Text style={S.providerCaret}>▾</Text>
-        </TouchableOpacity>
+        <View style={S.headerRight}>
+          {/* META chip */}
+          <TouchableOpacity
+            style={[S.providerChip, activeMeta && S.metaChipActive]}
+            onPress={() => setMetaSheetOpen(true)}
+            activeOpacity={0.75}>
+            <Text style={S.providerEmoji}>🔵</Text>
+            <Text style={S.providerLabel} numberOfLines={1}>
+              {activeMetaLabel}
+            </Text>
+            <Text style={S.providerCaret}>▾</Text>
+          </TouchableOpacity>
+          {/* Provider chip */}
+          <TouchableOpacity
+            style={S.providerChip}
+            onPress={() => setSheetOpen(true)}
+            activeOpacity={0.75}
+            disabled={providerLoading}>
+            {providerLoading ? (
+              <ActivityIndicator size="small" color={colors.accent} style={{ width: 18 }} />
+            ) : (
+              <Text style={S.providerEmoji}>{STATUS_EMOJI[activeExt?.status] ?? '📦'}</Text>
+            )}
+            <Text style={S.providerLabel} numberOfLines={1}>
+              {activeExt?.name ?? '…'}
+            </Text>
+            <Text style={S.providerCaret}>▾</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Extension loading state */}
@@ -545,11 +605,19 @@ export default function ExtAnimeScreen() {
 
       <ProviderSheet
         visible={sheetOpen}
-        title="Registry — Anime Extensions"
+        title="Streaming Provider"
         providers={sheetItems}
         selectedKey={activeExt?.id ?? ''}
         onSelect={switchExtension}
         onClose={() => setSheetOpen(false)}
+      />
+      <ProviderSheet
+        visible={metaSheetOpen}
+        title="META Layer"
+        providers={META_SHEET_ITEMS}
+        selectedKey={activeMeta ?? 'none'}
+        onSelect={switchMeta}
+        onClose={() => setMetaSheetOpen(false)}
       />
     </SafeAreaView>
   );
@@ -568,6 +636,7 @@ const S = StyleSheet.create({
     paddingBottom: 10,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerLogo: { fontSize: 22, color: colors.accent },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   registryBadge: {
@@ -589,6 +658,10 @@ const S = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  metaChipActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentFaded,
   },
   providerEmoji: { fontSize: 14 },
   providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub, maxWidth: 90 },

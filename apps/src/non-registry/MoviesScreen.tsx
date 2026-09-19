@@ -28,7 +28,7 @@ import {
 import { type IMovieResult, type IMovieEpisode } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
-import { MOVIE_PROVIDERS, makeTmdb, type MovieProviderDef } from '../providers';
+import { MOVIE_PROVIDERS, type MovieProviderDef } from '../providers';
 import { ProviderSheet } from '../components/ProviderSheet';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ type VideoState = { url: string; headers?: Record<string, string>; isM3U8: boole
 export default function MoviesScreen() {
   // Provider
   const [providerDef, setProviderDef] = useState<MovieProviderDef>(MOVIE_PROVIDERS[0]!);
-  const providerRef = useRef<any>(makeTmdb(MOVIE_PROVIDERS[0]!));
+  const providerRef = useRef<any>(MOVIE_PROVIDERS[0]!.makeInner());
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Search
@@ -79,6 +79,8 @@ export default function MoviesScreen() {
   const [videoState, setVideoState] = useState<VideoState | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoErr, setVideoErr] = useState<string | null>(null);
+  const [availableServers, setAvailableServers] = useState<any[]>([]);
+  const [selectedServer, setSelectedServer] = useState<string | null>(null);
 
   // ── Provider switch ─────────────────────────────────────────────────────────
 
@@ -86,7 +88,7 @@ export default function MoviesScreen() {
     (key: string) => {
       const def = MOVIE_PROVIDERS.find((p) => p.key === key);
       if (!def || def.key === providerDef.key) return;
-      providerRef.current = makeTmdb(def);
+      providerRef.current = def.makeInner();
       setProviderDef(def);
       setQuery('');
       setResults([]);
@@ -118,6 +120,7 @@ export default function MoviesScreen() {
     try {
       const res = await providerRef.current.search(q);
       setResults((res.results ?? []) as IMovieResult[]);
+      console.log('[Movies] search results', res.results);
       if (!res.results?.length) setSearchErr(`No results for "${q}"`);
     } catch (e: any) {
       setSearchErr(e?.message ?? 'Search failed');
@@ -138,6 +141,7 @@ export default function MoviesScreen() {
     try {
       const info = await providerRef.current.fetchMediaInfo(item.id!, item.type as string);
       setMediaInfo(info);
+      console.log('[Movies] media info', info);
     } catch (e: any) {
       setDetailErr(e?.message ?? 'Failed to load info');
     } finally {
@@ -148,7 +152,7 @@ export default function MoviesScreen() {
   // ── Player ──────────────────────────────────────────────────────────────────
 
   const playEpisode = useCallback(
-    async (ep: IMovieEpisode) => {
+    async (ep: IMovieEpisode, serverName?: string) => {
       if (!mediaInfo) return;
       setCurrentEp(ep);
       setVideoState(null);
@@ -156,7 +160,15 @@ export default function MoviesScreen() {
       setLoadingVideo(true);
       setPlayerOpen(true);
       try {
-        const src = await providerRef.current.fetchEpisodeSources(ep.id!, mediaInfo.id);
+        if (!serverName) {
+          const servers: any[] = await providerRef.current.fetchEpisodeServers(ep.id!, mediaInfo.id);
+          console.log('[Movies] episode servers', servers);
+          setAvailableServers(servers);
+          serverName = servers[0]?.name;
+          setSelectedServer(serverName ?? null);
+        }
+        const src = await providerRef.current.fetchEpisodeSources(ep.id!, mediaInfo.id, serverName);
+        console.log('[Movies] episode sources', src);
         if (!src.sources?.length) throw new Error('No video sources returned');
         const best = src.sources.reduce((a: any, b: any) =>
           parseQuality(b.quality) > parseQuality(a.quality) ? b : a
@@ -175,6 +187,8 @@ export default function MoviesScreen() {
     setPlayerOpen(false);
     setVideoState(null);
     setVideoErr(null);
+    setAvailableServers([]);
+    setSelectedServer(null);
   };
 
   // Derive episode list for the active season
@@ -361,7 +375,7 @@ export default function MoviesScreen() {
             source={{
               uri: videoState.url,
               headers: videoState.headers,
-              ...(videoState.isM3U8 ? { type: 'hls' } : {}),
+              ...(videoState.isM3U8 && Platform.OS === 'ios' ? { type: 'hls' } : {}),
             }}
             style={StyleSheet.absoluteFill}
             controls
@@ -384,6 +398,28 @@ export default function MoviesScreen() {
               {currentEp.title ?? `Episode ${currentEp.number}`}
             </Text>
           </View>
+        ) : null}
+
+        {availableServers.length > 0 && !loadingVideo ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={S.serverRow}
+            contentContainerStyle={S.serverRowContent}>
+            {availableServers.map((s: any) => (
+              <TouchableOpacity
+                key={s.name}
+                style={[S.serverChip, selectedServer === s.name && S.serverChipActive]}
+                onPress={() => {
+                  if (currentEp && s.name !== selectedServer) {
+                    setSelectedServer(s.name);
+                    playEpisode(currentEp, s.name);
+                  }
+                }}>
+                <Text style={S.serverChipText}>{s.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         ) : null}
       </View>
     </Modal>
@@ -674,6 +710,24 @@ const S = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
+  serverRow: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 40 : 16,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  serverRowContent: { paddingHorizontal: 12, gap: 8 },
+  serverChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: R.full,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  serverChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(0,0,0,0.85)' },
+  serverChipText: { fontSize: 12, color: '#fff', fontWeight: '600' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },
   mutedText: { fontSize: 14, color: colors.muted },
   idleEmoji: { fontSize: 52, marginBottom: 4 },

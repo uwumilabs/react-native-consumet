@@ -5,7 +5,7 @@
  * Never hardcode provider instances in screens; import from here instead.
  */
 
-import { ANIME, MOVIES, META } from 'react-native-consumet';
+import { ANIME, MOVIES } from 'react-native-consumet';
 
 // ── Anime ─────────────────────────────────────────────────────────────────────
 
@@ -71,11 +71,8 @@ export type MovieProviderDef = {
   key: string;
   label: string;
   emoji: string;
-  /** Creates the raw movie parser that gets wrapped by META.TMDB */
   makeInner: () => InstanceType<typeof MOVIES.VegaMovies>;
 };
-
-const TMDB_KEY = '5201b54eb0968700e693a30576d7d4dc';
 
 export const MOVIE_PROVIDERS: MovieProviderDef[] = [
   {
@@ -109,6 +106,3 @@ export const MOVIE_PROVIDERS: MovieProviderDef[] = [
     makeInner: () => new MOVIES.NetflixMirror() as any,
   },
 ];
-
-/** Wraps a movie provider in META.TMDB for normalised TMDB metadata + IDs */
-export const makeTmdb = (def: MovieProviderDef) => new META.TMDB(TMDB_KEY, def.makeInner() as any) as any;

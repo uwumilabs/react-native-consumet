@@ -186,7 +186,7 @@
             "id": "vegamovies",
             "name": "VegaMovies",
             "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "author": {
                 "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"

@@ -193,8 +193,8 @@ function createVegaMovies(ctx, customBaseURL) {
     const fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
         let fullUrl = mediaId;
-        if (!fullUrl.startsWith('http')) {
-            fullUrl = `${config.baseUrl}/${mediaId.replace(/^\//, '')}`;
+        if (!(fullUrl === null || fullUrl === void 0 ? void 0 : fullUrl.startsWith('http'))) {
+            fullUrl = `${config.baseUrl}/${(mediaId !== null && mediaId !== void 0 ? mediaId : '').replace(/^\//, '')}`;
         }
         const cleanId = fullUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
         const movieInfo = {
@@ -219,7 +219,7 @@ function createVegaMovies(ctx, customBaseURL) {
                 $('.entry-content img[data-src]').attr('data-src') ||
                 $('.entry-content img').first().attr('src') ||
                 '';
-            if (image.startsWith('//')) {
+            if (image === null || image === void 0 ? void 0 : image.startsWith('//')) {
                 image = `https:${image}`;
             }
             movieInfo.image = image;
@@ -282,7 +282,7 @@ function createVegaMovies(ctx, customBaseURL) {
                                 .first();
                         }
                         const btnHref = btn.attr('href');
-                        if (btnHref && btnHref.startsWith('http')) {
+                        if (btnHref && (btnHref === null || btnHref === void 0 ? void 0 : btnHref.startsWith('http'))) {
                             seasonPacks.push({
                                 title: blockText,
                                 season: seasonNum,
@@ -341,7 +341,7 @@ function createVegaMovies(ctx, customBaseURL) {
                                 nextP.find('.btn-outline').parent().attr('href') ||
                                 nextP.find('.btn-outline').attr('href') ||
                                 nextP.find('a[href]').first().attr('href');
-                            if (link && link.startsWith('http') && !eps.some((e) => e.url === link)) {
+                            if (link && (link === null || link === void 0 ? void 0 : link.startsWith('http')) && !eps.some((e) => e.url === link)) {
                                 eps.push({
                                     id: link,
                                     title: epTitle,
@@ -393,7 +393,7 @@ function createVegaMovies(ctx, customBaseURL) {
                             ? nextP.find('.dwd-button, .btn-outline').first()
                             : nextP.find('.dwd-button, .btn-outline').first().parent('a');
                     const btnHref = btn.attr('href');
-                    if (btnHref && btnHref.startsWith('http') && !episodesList.some((e) => e.url === btnHref)) {
+                    if (btnHref && (btnHref === null || btnHref === void 0 ? void 0 : btnHref.startsWith('http')) && !episodesList.some((e) => e.url === btnHref)) {
                         count++;
                         episodesList.push({
                             id: btnHref,
@@ -408,7 +408,7 @@ function createVegaMovies(ctx, customBaseURL) {
                 if (episodesList.length === 0) {
                     $('a[href*="nexdrive.fit"], a[href*="vcloud"], a[href*="hubcloud"]').each((i, el) => {
                         const href = $(el).attr('href');
-                        if (href && href.startsWith('http') && !episodesList.some((e) => e.url === href)) {
+                        if (href && (href === null || href === void 0 ? void 0 : href.startsWith('http')) && !episodesList.some((e) => e.url === href)) {
                             episodesList.push({
                                 id: href,
                                 title: `${movieInfo.title} Option ${i + 1}`,
@@ -447,7 +447,7 @@ function createVegaMovies(ctx, customBaseURL) {
         var _a;
         const servers = [];
         let resolvedUrl = episodeId;
-        if (!resolvedUrl.startsWith('http')) {
+        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
             try {
                 const info = yield fetchMediaInfo(episodeId);
                 const firstEp = (_a = info.episodes) === null || _a === void 0 ? void 0 : _a[0];
@@ -457,7 +457,7 @@ function createVegaMovies(ctx, customBaseURL) {
             }
             catch (_b) { }
         }
-        if (!resolvedUrl.startsWith('http')) {
+        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
             return [{ name: 'HubCloud', url: episodeId }];
         }
         // If already direct V-Cloud / HubCloud link
@@ -538,7 +538,7 @@ function createVegaMovies(ctx, customBaseURL) {
         var _a, _b, _c, _d, _e, _f;
         let resolvedUrl = episodeId;
         // If episodeId is not an HTTP URL, resolve via fetchMediaInfo
-        if (!resolvedUrl.startsWith('http')) {
+        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
             const info = yield fetchMediaInfo(episodeId);
             const firstEp = (_a = info.episodes) === null || _a === void 0 ? void 0 : _a[0];
             if (firstEp === null || firstEp === void 0 ? void 0 : firstEp.url) {
@@ -607,7 +607,7 @@ function createVegaMovies(ctx, customBaseURL) {
                                 },
                             });
                             const fpStreamUrl = (_e = (_d = fpRes2.data) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e[0];
-                            if (fpStreamUrl && fpStreamUrl.startsWith('http')) {
+                            if (fpStreamUrl && (fpStreamUrl === null || fpStreamUrl === void 0 ? void 0 : fpStreamUrl.startsWith('http'))) {
                                 extraSources.push({
                                     url: fpStreamUrl,
                                     server: 'Filepress',
