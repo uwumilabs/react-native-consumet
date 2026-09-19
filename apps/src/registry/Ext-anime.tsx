@@ -219,10 +219,11 @@ export default function ExtAnimeScreen() {
     setDetailOpen(true);
     try {
       const info: IAnimeInfo = await providerRef.current.fetchAnimeInfo(item.id);
+      const episodes: IAnimeEpisode[] = await providerRef.current.fetchEpisodesListById(item.id);
       setDetailInfo(info);
-      setEpisodes(info.episodes ?? []);
+      setEpisodes(episodes);
       console.log('[ExtAnime] detail info', info);
-      console.log('[ExtAnime] episodes', info.episodes);
+      console.log('[ExtAnime] episodes', episodes);
     } catch (e: any) {
       setDetailErr(e?.message ?? 'Failed to load episodes');
     } finally {

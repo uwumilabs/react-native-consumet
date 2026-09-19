@@ -465,12 +465,16 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
           const epHtml = epRes.data?.result || epRes.data;
           const $ep = load(epHtml);
 
-          $ep('li a').each((_, a) => {
-            const anchor = $ep(a);
+          $ep('li').each((_, li) => {
+            const listItem = $ep(li);
+            const anchor = listItem.find('a').first();
             const dataIds = anchor.attr('data-ids') || anchor.attr('data-id') || '';
             const numAttr = anchor.attr('data-num') || anchor.attr('data-slug') || anchor.find('b').text().trim();
             const num = parseInt(numAttr, 10) || 1;
-            const epTitle = anchor.find('.d-title').text().trim() || `Episode ${num}`;
+            const epTitle = listItem.attr('title') || anchor.find('.d-title').text().trim() || `Episode ${num}`;
+            const isFiller = anchor.hasClass('filler');
+            const isSubbed = anchor.attr('data-sub') === '1';
+            const isDubbed = anchor.attr('data-dub') === '1';
 
             if (dataIds) {
               episodes.push({
@@ -478,6 +482,9 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
                 number: num,
                 title: epTitle,
                 url: `${config.baseUrl}/watch/${animeSlug}/ep-${num}`,
+                isFiller,
+                isSubbed,
+                isDubbed,
               });
             }
           });
