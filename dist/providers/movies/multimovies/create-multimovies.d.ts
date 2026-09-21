@@ -1,6 +1,6 @@
 import { type IMovieInfo, type IEpisodeServer, type StreamingServers, type ISource, type IMovieResult, type ISearch, type ProviderContext } from '../../../models';
 export declare function createMultiMovies(ctx: ProviderContext, customBaseURL?: string): {
-    supportedTypes: Set<import("../../../models").TvType>;
+    supportedTypes: Set<import("../../..").TvType>;
     search: (query: string, page?: number) => Promise<ISearch<IMovieResult>>;
     fetchMediaInfo: (mediaId: string) => Promise<IMovieInfo>;
     fetchEpisodeSources: (episodeId: string, mediaId?: string, server?: StreamingServers, fileId?: string) => Promise<ISource>;

@@ -6,8 +6,15 @@ const utils_1 = require("../../../utils");
 const create_vegamovies_1 = require("./create-vegamovies");
 // Backward compatibility wrapper class
 class VegaMovies extends models_1.MovieParser {
+    instance;
+    logo;
+    name;
+    baseUrl;
+    classPath;
+    supportedTypes;
+    isNSFW;
+    isWorking;
     constructor(customBaseURL) {
-        var _a;
         super();
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, utils_1.createProviderContext)();
@@ -18,7 +25,7 @@ class VegaMovies extends models_1.MovieParser {
         this.classPath = this.instance.classPath;
         this.supportedTypes = this.instance.supportedTypes;
         this.isNSFW = this.instance.isNSFW;
-        this.isWorking = (_a = this.instance.isWorking) !== null && _a !== void 0 ? _a : true;
+        this.isWorking = this.instance.isWorking ?? true;
         // Bind all methods to preserve proper typing
         this.search = this.instance.search;
         this.fetchMediaInfo = this.instance.fetchMediaInfo;
@@ -29,6 +36,19 @@ class VegaMovies extends models_1.MovieParser {
         this.fetchRecentTVShows = this.instance.fetchRecentTVShows;
         this.fetchByFilter = this.instance.fetchByFilter;
     }
+    // Expose search as an instance method (already bound in constructor)
+    search;
+    // Expose fetchMediaInfo
+    fetchMediaInfo;
+    // Expose fetchEpisodeSources
+    fetchEpisodeSources;
+    // Expose fetchEpisodeServers
+    fetchEpisodeServers;
+    // Additional public methods
+    fetchLatest;
+    fetchRecentMovies;
+    fetchRecentTVShows;
+    fetchByFilter;
 }
 exports.VegaMovies = VegaMovies;
 var create_vegamovies_2 = require("./create-vegamovies");

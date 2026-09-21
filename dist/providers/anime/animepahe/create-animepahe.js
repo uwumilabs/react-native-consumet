@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 function createAnimePahe(ctx, customBaseURL) {
     const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet, CryptoJS, axios } = ctx;
@@ -37,19 +28,18 @@ function createAnimePahe(ctx, customBaseURL) {
     const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
     // ── WebView helpers ────────────────────────────────────────────────────────
     let _challengePassed = false;
-    const ensureChallengePassed = () => __awaiter(this, void 0, void 0, function* () {
+    const ensureChallengePassed = async () => {
         if (_challengePassed)
             return;
-        yield makeGetRequestWithWebView(config.baseUrl, { 'User-Agent': UA });
+        await makeGetRequestWithWebView(config.baseUrl, { 'User-Agent': UA });
         _challengePassed = true;
-    });
-    const withRetry = (fn_1, ...args_1) => __awaiter(this, [fn_1, ...args_1], void 0, function* (fn, retries = 2) {
-        var _a;
+    };
+    const withRetry = async (fn, retries = 2) => {
         try {
-            return yield fn();
+            return await fn();
         }
         catch (err) {
-            const msg = String((_a = err === null || err === void 0 ? void 0 : err.message) !== null && _a !== void 0 ? _a : err);
+            const msg = String(err?.message ?? err);
             const isQuic = msg.includes('QUIC') || msg.includes('ERR_QUIC');
             const isJsonOrEmpty = msg.includes('JSON Parse error') ||
                 msg.includes('Unexpected token') ||
@@ -57,39 +47,37 @@ function createAnimePahe(ctx, customBaseURL) {
                 msg.includes('Empty response');
             if (retries > 0 && (isQuic || isJsonOrEmpty)) {
                 if (isJsonOrEmpty)
-                    yield new Promise((r) => setTimeout(r, 800));
+                    await new Promise((r) => setTimeout(r, 800));
                 return withRetry(fn, retries - 1);
             }
             throw err;
         }
-    });
+    };
     // Fetches an HTML page through the WebView (bypasses DDoS-Guard JS challenge).
-    const webViewGet = (url, referer) => __awaiter(this, void 0, void 0, function* () {
-        return withRetry(() => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const res = yield makeGetRequestWithWebView(url, {
+    const webViewGet = async (url, referer) => {
+        return withRetry(async () => {
+            const res = await makeGetRequestWithWebView(url, {
                 'User-Agent': UA,
-                'Referer': referer !== null && referer !== void 0 ? referer : config.baseUrl,
+                'Referer': referer ?? config.baseUrl,
             });
-            return (_a = res.html) !== null && _a !== void 0 ? _a : '';
-        }));
-    });
-    const webViewGetJson = (url, referer) => __awaiter(this, void 0, void 0, function* () {
-        return withRetry(() => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const res = yield makeGetRequestWithWebView(url, {
+            return res.html ?? '';
+        });
+    };
+    const webViewGetJson = async (url, referer) => {
+        return withRetry(async () => {
+            const res = await makeGetRequestWithWebView(url, {
                 'User-Agent': UA,
                 'Accept': 'application/json, text/javascript, */*; q=0.01',
                 'X-Requested-With': 'XMLHttpRequest',
-                'Referer': referer !== null && referer !== void 0 ? referer : config.baseUrl,
+                'Referer': referer ?? config.baseUrl,
             });
-            const raw = ((_a = res.html) !== null && _a !== void 0 ? _a : '').replace(/<[^>]*>/g, '').trim();
+            const raw = (res.html ?? '').replace(/<[^>]*>/g, '').trim();
             console.log(raw);
             if (!raw)
                 throw new Error(`[AnimePahe] Empty response from ${url}`);
             return JSON.parse(raw);
-        }));
-    });
+        });
+    };
     // ── Episode list ───────────────────────────────────────────────────────────
     const mapEpisode = (session, item) => ({
         id: `${session}/${item.session}`,
@@ -102,15 +90,15 @@ function createAnimePahe(ctx, customBaseURL) {
         releaseDate: item.created_at,
         url: `${config.baseUrl}/play/${session}/${item.session}`,
     });
-    const fetchEpisodePage = (session, page) => __awaiter(this, void 0, void 0, function* () {
-        const data = yield webViewGetJson(`${config.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, `${config.baseUrl}/anime/${session}`);
+    const fetchEpisodePage = async (session, page) => {
+        const data = await webViewGetJson(`${config.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, `${config.baseUrl}/anime/${session}`);
         return data.data.map((item) => mapEpisode(session, item));
-    });
+    };
     // ── Public methods ─────────────────────────────────────────────────────────
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    const search = async (query, page = 1) => {
         try {
-            yield ensureChallengePassed();
-            const data = yield webViewGetJson(`${config.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`);
+            await ensureChallengePassed();
+            const data = await webViewGetJson(`${config.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`);
             return {
                 results: data.data.map((item) => ({
                     id: item.session,
@@ -125,11 +113,11 @@ function createAnimePahe(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
-    const fetchAnimeInfo = (id_1, ...args_1) => __awaiter(this, [id_1, ...args_1], void 0, function* (id, episodePage = -1) {
+    };
+    const fetchAnimeInfo = async (id, episodePage = -1) => {
         const animeInfo = { id, title: '' };
         try {
-            const html = yield webViewGet(`${config.baseUrl}/anime/${id}`);
+            const html = await webViewGet(`${config.baseUrl}/anime/${id}`);
             const $ = load(html);
             animeInfo.title = $('div.title-wrapper > h1 > span').first().text();
             animeInfo.image = $('div.anime-poster a').attr('href');
@@ -159,24 +147,22 @@ function createAnimePahe(ctx, customBaseURL) {
             animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace('Episodes:', ''));
             animeInfo.recommendations = [];
             $('div.anime-recommendation .col-sm-6').each((_, el) => {
-                var _a, _b, _c;
-                (_a = animeInfo.recommendations) === null || _a === void 0 ? void 0 : _a.push({
-                    id: (_b = $(el).find('.col-2 > a').attr('href')) === null || _b === void 0 ? void 0 : _b.split('/')[2],
+                animeInfo.recommendations?.push({
+                    id: $(el).find('.col-2 > a').attr('href')?.split('/')[2],
                     title: $(el).find('.col-2 > a').attr('title'),
                     image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
-                    url: `${config.baseUrl}/anime/${(_c = $(el).find('.col-2 > a').attr('href')) === null || _c === void 0 ? void 0 : _c.split('/')[2]}`,
+                    url: `${config.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
                     releaseDate: $(el).find('div.col-9 > a').text().trim(),
                     status: $(el).find('div.col-9 > strong').text().trim(),
                 });
             });
             animeInfo.relations = [];
             $('div.anime-relation .col-sm-6').each((_, el) => {
-                var _a, _b, _c;
-                (_a = animeInfo.relations) === null || _a === void 0 ? void 0 : _a.push({
-                    id: (_b = $(el).find('.col-2 > a').attr('href')) === null || _b === void 0 ? void 0 : _b.split('/')[2],
+                animeInfo.relations?.push({
+                    id: $(el).find('.col-2 > a').attr('href')?.split('/')[2],
                     title: $(el).find('.col-2 > a').attr('title'),
                     image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
-                    url: `${config.baseUrl}/anime/${(_c = $(el).find('.col-2 > a').attr('href')) === null || _c === void 0 ? void 0 : _c.split('/')[2]}`,
+                    url: `${config.baseUrl}/anime/${$(el).find('.col-2 > a').attr('href')?.split('/')[2]}`,
                     releaseDate: $(el).find('div.col-9 > a').text().trim(),
                     status: $(el).find('div.col-9 > strong').text().trim(),
                     relationType: $(el).find('h4 > span').text().trim(),
@@ -184,26 +170,25 @@ function createAnimePahe(ctx, customBaseURL) {
             });
             animeInfo.episodes = [];
             if (episodePage < 0) {
-                const firstPage = yield webViewGetJson(`${config.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, `${config.baseUrl}/anime/${id}`);
+                const firstPage = await webViewGetJson(`${config.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, `${config.baseUrl}/anime/${id}`);
                 animeInfo.episodePages = firstPage.last_page;
                 animeInfo.episodes.push(...firstPage.data.map((item) => mapEpisode(id, item)));
                 for (let i = 2; i <= firstPage.last_page; i++) {
-                    animeInfo.episodes.push(...(yield fetchEpisodePage(id, i)));
+                    animeInfo.episodes.push(...(await fetchEpisodePage(id, i)));
                 }
             }
             else {
-                animeInfo.episodes.push(...(yield fetchEpisodePage(id, episodePage)));
+                animeInfo.episodes.push(...(await fetchEpisodePage(id, episodePage)));
             }
             return animeInfo;
         }
         catch (err) {
             throw new Error(err.message);
         }
-    });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.Kwik, subOrDub = SubOrDubEnum.SUB) {
-        var _a;
+    };
+    const fetchEpisodeSources = async (episodeId, server = StreamingServersEnum.Kwik, subOrDub = SubOrDubEnum.SUB) => {
         try {
-            const html = yield webViewGet(`${config.baseUrl}/play/${episodeId}`);
+            const html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
             const $ = load(html);
             const links = $('div#resolutionMenu > button')
                 .map((_, el) => ({
@@ -226,10 +211,13 @@ function createAnimePahe(ctx, customBaseURL) {
                 return true;
             });
             for (const link of filteredLinks) {
-                const res = yield Kwik(extractorCtx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
-                if ((_a = res === null || res === void 0 ? void 0 : res.sources) === null || _a === void 0 ? void 0 : _a.length) {
+                const res = await Kwik(extractorCtx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
+                if (res?.sources?.length) {
                     res.sources.forEach((source) => {
-                        iSource.sources.push(Object.assign(Object.assign({}, source), { quality: (link.quality.match(/(\d{3,4})p/) || [])[0] }));
+                        iSource.sources.push({
+                            ...source,
+                            quality: (link.quality.match(/(\d{3,4})p/) || [])[0],
+                        });
                     });
                 }
             }
@@ -239,10 +227,10 @@ function createAnimePahe(ctx, customBaseURL) {
             console.log(err);
             throw new Error(err.message);
         }
-    });
-    const fetchEpisodeServers = (episodeId, subOrDub) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchEpisodeServers = async (episodeId, subOrDub) => {
         try {
-            const html = yield webViewGet(`${config.baseUrl}/play/${episodeId}`);
+            const html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
             const $ = load(html);
             const servers = [];
             $('div#resolutionMenu > button').each((_, el) => {
@@ -260,11 +248,14 @@ function createAnimePahe(ctx, customBaseURL) {
             console.log(err);
             throw new Error(err.message);
         }
-    });
-    return Object.assign(Object.assign({}, config), { search,
+    };
+    return {
+        ...config,
+        search,
         fetchAnimeInfo,
         fetchEpisodeSources,
-        fetchEpisodeServers });
+        fetchEpisodeServers,
+    };
 }
 exports.default = createAnimePahe;
 //# sourceMappingURL=create-animepahe.js.map

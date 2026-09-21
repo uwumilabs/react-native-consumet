@@ -1,6 +1,7 @@
+import axios from 'axios';
 import { AsianLoad, Filemoon, GogoCDN, MixDrop, Mp4Player, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, VidMoly, VizCloud, Voe } from '../extractors';
 import type { ExtractorContext } from '../models';
-export declare const defaultAxios: import("axios").AxiosInstance;
+export declare const defaultAxios: axios.AxiosInstance;
 export declare const defaultExtractorContext: ExtractorContext;
 export declare const defaultExtractors: {
     AsianLoad: typeof AsianLoad;

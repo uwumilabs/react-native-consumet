@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createNetflixMirror = createNetflixMirror;
 const OTT_PLATFORMS = [
@@ -35,8 +26,8 @@ function createNetflixMirror(ctx, customBaseURL) {
         'X-Requested-With': 'XMLHttpRequest',
         'Referer': `${config.baseUrl}/home`,
     };
-    const getCookies = (...args_1) => __awaiter(this, [...args_1], void 0, function* (ottCode = 'nf') {
-        const res = yield fetch(config.baseUrl + '/p.php', {
+    const getCookies = async (ottCode = 'nf') => {
+        const res = await fetch(config.baseUrl + '/p.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'init=1',
@@ -50,15 +41,15 @@ function createNetflixMirror(ctx, customBaseURL) {
         const tHashMatch = /t_hash=([^;]+)/.exec(setCookie);
         const t_hash = tHashMatch ? tHashMatch[1] : '';
         return `t_hash_t=${t_hash_t}; t_hash=${t_hash}; ott=${ottCode}`;
-    });
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    };
+    const search = async (query, page = 1) => {
         try {
-            const resultSets = yield Promise.allSettled(OTT_PLATFORMS.map((_a) => __awaiter(this, [_a], void 0, function* ({ code, label }) {
-                const { data } = yield axios.get(`${config.baseUrl}/search.php?s=${encodeURIComponent(query)}&t=x`, { headers: Object.assign(Object.assign({}, headers), { Cookie: yield getCookies(code) }) });
+            const resultSets = await Promise.allSettled(OTT_PLATFORMS.map(async ({ code, label }) => {
+                const { data } = await axios.get(`${config.baseUrl}/search.php?s=${encodeURIComponent(query)}&t=x`, { headers: { ...headers, Cookie: await getCookies(code) } });
                 if (!data.searchResult || !Array.isArray(data.searchResult))
                     return [];
                 return data.searchResult.map((item) => ({ id: item.id, title: item.t, label }));
-            })));
+            }));
             // Merge results: deduplicate by id, collect all platform labels
             const map = new Map();
             for (const settled of resultSets) {
@@ -84,22 +75,24 @@ function createNetflixMirror(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`NetMirror search failed: ${err.message}`);
         }
-    });
-    const fetchPostData = (id) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchPostData = async (id) => {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/post.php?id=${id}&t=x`, {
-                headers: Object.assign(Object.assign({}, headers), { Cookie: yield getCookies() }),
+            const { data } = await axios.get(`${config.baseUrl}/post.php?id=${id}&t=x`, {
+                headers: {
+                    ...headers,
+                    Cookie: await getCookies(),
+                },
             });
             return data;
         }
         catch (err) {
             throw new Error(`NetMirror fetchPostData failed: ${err.message}`);
         }
-    });
-    const fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    };
+    const fetchMediaInfo = async (mediaId) => {
         try {
-            const postData = yield fetchPostData(mediaId);
+            const postData = await fetchPostData(mediaId);
             const isTvShow = postData.type === 't';
             const movieInfo = {
                 id: mediaId,
@@ -107,7 +100,7 @@ function createNetflixMirror(ctx, customBaseURL) {
                 type: isTvShow ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
                 image: `https://imgcdn.kim/poster/780/${mediaId}.jpg`,
                 cover: `https://imgcdn.kim/poster/1920/${mediaId}.jpg`,
-                genres: ((_a = postData.genre) === null || _a === void 0 ? void 0 : _a.split(',').map((g) => g.trim())) || [],
+                genres: postData.genre?.split(',').map((g) => g.trim()) || [],
                 duration: postData.runtime,
                 description: postData.desc || postData.m_desc || '',
                 // rating is a string in the response, but IMovieInfo expects a number.
@@ -167,26 +160,28 @@ function createNetflixMirror(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`NetMirror fetchMediaInfo failed: ${err.message}`);
         }
-    });
-    const fetchEpisodeServers = (episodeId, mediaId) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchEpisodeServers = async (episodeId, mediaId) => {
         return [
             {
                 name: 'NetMirror',
                 url: `${config.baseUrl}/playlist.php?id=${episodeId}`,
             },
         ];
-    });
-    const fetchEpisodeSources = (episodeId, mediaId) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    };
+    const fetchEpisodeSources = async (episodeId, mediaId) => {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/playlist.php?id=${episodeId}&t=Video&tm=${Date.now()}`, {
-                headers: Object.assign(Object.assign({}, headers), { Cookie: yield getCookies() }),
+            const { data } = await axios.get(`${config.baseUrl}/playlist.php?id=${episodeId}&t=Video&tm=${Date.now()}`, {
+                headers: {
+                    ...headers,
+                    Cookie: await getCookies(),
+                },
             });
             if (!data || !Array.isArray(data) || data.length === 0) {
                 throw new Error('No playlist data received');
             }
             const playlist = data[0];
-            if (!(playlist === null || playlist === void 0 ? void 0 : playlist.sources) || !Array.isArray(playlist.sources)) {
+            if (!playlist?.sources || !Array.isArray(playlist.sources)) {
                 throw new Error('No sources in playlist');
             }
             const sources = playlist.sources.map((s) => {
@@ -203,7 +198,9 @@ function createNetflixMirror(ctx, customBaseURL) {
                     isM3U8: true,
                 };
             });
-            const subtitles = (_a = playlist.tracks) === null || _a === void 0 ? void 0 : _a.filter((t) => t.kind === 'captions').map((t) => ({
+            const subtitles = playlist.tracks
+                ?.filter((t) => t.kind === 'captions')
+                .map((t) => ({
                 url: t.file.startsWith('//') ? `https:${t.file}` : t.file,
                 lang: t.label || t.language || 'Unknown',
             }));
@@ -216,23 +213,29 @@ function createNetflixMirror(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`NetMirror fetchEpisodeSources failed: ${err.message}`);
         }
-    });
-    const fetchHlsPlaylist = (episodeId) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchHlsPlaylist = async (episodeId) => {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/hls/${episodeId}`, {
-                headers: Object.assign(Object.assign({}, headers), { Cookie: yield getCookies() }),
+            const { data } = await axios.get(`${config.baseUrl}/hls/${episodeId}`, {
+                headers: {
+                    ...headers,
+                    Cookie: await getCookies(),
+                },
             });
             return data;
         }
         catch (err) {
             throw new Error(`NetMirror fetchHlsPlaylist failed: ${err.message}`);
         }
-    });
-    return Object.assign(Object.assign({}, config), { supportedTypes,
+    };
+    return {
+        ...config,
+        supportedTypes,
         search,
         fetchMediaInfo,
         fetchEpisodeServers,
         fetchEpisodeSources,
-        fetchHlsPlaylist });
+        fetchHlsPlaylist,
+    };
 }
 //# sourceMappingURL=create-netflixmirror.js.map

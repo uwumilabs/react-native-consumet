@@ -21,10 +21,10 @@ import {
   ActivityIndicator,
   StyleSheet,
   Dimensions,
-  SafeAreaView,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { SubOrDub, type IAnimeResult, type IAnimeInfo, type IAnimeEpisode } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
@@ -258,7 +258,7 @@ export default function AnimeScreen() {
       presentationStyle="pageSheet"
       onRequestClose={() => setDetailOpen(false)}>
       <SafeAreaView style={S.modalRoot}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+        <StatusBar barStyle="light-content" />
 
         {/* Bar */}
         <View style={S.modalBar}>
@@ -466,7 +466,7 @@ export default function AnimeScreen() {
 
   return (
     <SafeAreaView style={S.root}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar barStyle="light-content" />
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <View style={S.header}>
@@ -667,7 +667,7 @@ const S = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.card,
   },
-  cardImg: { ...StyleSheet.absoluteFillObject },
+  cardImg: { ...StyleSheet.absoluteFill },
   cardImgPlaceholder: { backgroundColor: colors.cardAlt },
   cardOverlay: {
     position: 'absolute',
@@ -808,7 +808,7 @@ const S = StyleSheet.create({
 
   // Video loading overlay
   videoLoadOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',

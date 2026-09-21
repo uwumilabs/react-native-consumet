@@ -224,7 +224,6 @@ export class ProviderManager {
           const Promise = context.Promise;
           const Object = context.Object;
           const fetch = context.fetch;
-          const __awaiter = context.__awaiter;
           
           try {
             ${code}
@@ -326,7 +325,6 @@ export class ProviderManager {
       Promise,
       Object,
       fetch: customFetch,
-      __awaiter: this.createAwaiterHelper(),
       URL: this.providerContext.PolyURL,
       URLSearchParams: this.providerContext.PolyURLSearchParams,
     };
@@ -373,37 +371,6 @@ export class ProviderManager {
         PLAN_TO_WATCH: 'plan_to_watch',
         NONE: 'none',
       },
-    };
-  }
-
-  /**
-   * Create __awaiter helper for compatibility
-   */
-  private createAwaiterHelper() {
-    return (thisArg: any, _arguments: any, P: any, generator: any) => {
-      function adopt(value: any) {
-        return value instanceof P ? value : new P((resolve: any) => resolve(value));
-      }
-      return new (P || (P = Promise))((resolve: any, reject: any) => {
-        function fulfilled(value: any) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value: any) {
-          try {
-            step(generator.throw(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result: any) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
     };
   }
 

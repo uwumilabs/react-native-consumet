@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../../../models");
 const url_polyfill_1 = require("../../../utils/url-polyfill");
@@ -40,10 +31,10 @@ function createReanime(ctx, customBaseURL) {
     const hdrs = (referer) => ({
         'User-Agent': UA,
         'Accept': 'application/json',
-        'Referer': referer !== null && referer !== void 0 ? referer : `${baseUrl}/`,
+        'Referer': referer ?? `${baseUrl}/`,
     });
     const toMediaStatus = (s) => {
-        switch (s === null || s === void 0 ? void 0 : s.toLowerCase()) {
+        switch (s?.toLowerCase()) {
             case 'releasing':
                 return MediaStatusEnum.ONGOING;
             case 'finished':
@@ -56,43 +47,40 @@ function createReanime(ctx, customBaseURL) {
                 return MediaStatusEnum.UNKNOWN;
         }
     };
-    const pickTitle = (t) => (t === null || t === void 0 ? void 0 : t.english) || (t === null || t === void 0 ? void 0 : t.romaji) || (t === null || t === void 0 ? void 0 : t.native) || '';
-    const pickCover = (c) => (c === null || c === void 0 ? void 0 : c.extra_large) || (c === null || c === void 0 ? void 0 : c.large) || (c === null || c === void 0 ? void 0 : c.medium) || '';
-    const watchPageHtml = (animeId, epNumber, lang) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    const pickTitle = (t) => t?.english || t?.romaji || t?.native || '';
+    const pickCover = (c) => c?.extra_large || c?.large || c?.medium || '';
+    const watchPageHtml = async (animeId, epNumber, lang) => {
         const url = `${baseUrl}/watch/${animeId}?ep=${epNumber}&lang=${lang}`;
-        const res = yield makeGetRequestWithWebView(url, { 'User-Agent': UA, 'Referer': `${baseUrl}/` });
-        return (_a = res.html) !== null && _a !== void 0 ? _a : '';
-    });
-    const fetchEpisodeLinks = (animeId, epNumber) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        const res = await makeGetRequestWithWebView(url, { 'User-Agent': UA, 'Referer': `${baseUrl}/` });
+        return res.html ?? '';
+    };
+    const fetchEpisodeLinks = async (animeId, epNumber) => {
         const tz = encodeURIComponent('America/New_York');
         const apiUrl = `${apiBase}/watch/${animeId}?ep=${epNumber}&tz=${tz}`;
-        const res = yield makeGetRequestWithWebView(apiUrl, {
+        const res = await makeGetRequestWithWebView(apiUrl, {
             'User-Agent': UA,
             'Accept': 'application/json',
             'Referer': `${baseUrl}/watch/${animeId}?ep=${epNumber}`,
         });
         // Strip any HTML scaffolding the WebView adds around the JSON body
-        const jsonText = ((_a = res.html) !== null && _a !== void 0 ? _a : '').replace(/<[^>]*>/g, '').trim();
+        const jsonText = (res.html ?? '').replace(/<[^>]*>/g, '').trim();
         if (!jsonText)
             return [];
         try {
             const parsed = JSON.parse(jsonText);
             return Array.isArray(parsed.episode_links) ? parsed.episode_links : [];
         }
-        catch (_b) {
+        catch {
             return [];
         }
-    });
+    };
     const parseServersWithUrls = (html, subOrDub) => {
-        var _a;
         const $ = load(html);
         const seen = new Set();
         const servers = [];
         const targetLabel = subOrDub === SubOrDubEnum.DUB ? 'DUB:' : 'SUB:';
         // iframe src is decoded by cheerio (html entities → chars)
-        const iframeSrc = (_a = $('#video-player').attr('src')) !== null && _a !== void 0 ? _a : '';
+        const iframeSrc = $('#video-player').attr('src') ?? '';
         $('span').each((_, spanEl) => {
             if ($(spanEl).text().trim() === targetLabel) {
                 $(spanEl)
@@ -112,46 +100,41 @@ function createReanime(ctx, customBaseURL) {
         });
         return servers;
     };
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1, limit = 20) {
-        var _a, _b;
+    const search = async (query, page = 1, limit = 20) => {
         const offset = (page - 1) * limit;
-        const { data } = yield axios.get(`${apiBase}/search`, {
+        const { data } = await axios.get(`${apiBase}/search`, {
             params: { q: query, limit, offset },
             headers: hdrs(),
         });
-        const total = (_a = data.total) !== null && _a !== void 0 ? _a : 0;
-        const results = ((_b = data.results) !== null && _b !== void 0 ? _b : []).map((item) => {
-            var _a, _b, _c;
-            return ({
-                id: item.anime_id,
-                title: pickTitle(item.title),
-                url: `${baseUrl}/anime/${item.anime_id}`,
-                image: pickCover(item.cover_image),
-                type: item.format,
-                status: toMediaStatus(item.status),
-                genres: (_a = item.genres) !== null && _a !== void 0 ? _a : [],
-                sub: (_b = item.subbed) !== null && _b !== void 0 ? _b : 0,
-                dub: (_c = item.dubbed) !== null && _c !== void 0 ? _c : 0,
-            });
-        });
+        const total = data.total ?? 0;
+        const results = (data.results ?? []).map((item) => ({
+            id: item.anime_id,
+            title: pickTitle(item.title),
+            url: `${baseUrl}/anime/${item.anime_id}`,
+            image: pickCover(item.cover_image),
+            type: item.format,
+            status: toMediaStatus(item.status),
+            genres: item.genres ?? [],
+            sub: item.subbed ?? 0,
+            dub: item.dubbed ?? 0,
+        }));
         return {
             currentPage: page,
             hasNextPage: offset + limit < total,
             totalResults: total,
             results,
         };
-    });
-    const fetchEpisodes = (animeId) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d;
+    };
+    const fetchEpisodes = async (animeId) => {
         const episodes = [];
         let page = 1;
         const limit = 100;
         while (true) {
-            const { data } = yield axios.get(`${apiBase}/anime/${animeId}/episodes`, {
+            const { data } = await axios.get(`${apiBase}/anime/${animeId}/episodes`, {
                 params: { page, limit },
                 headers: hdrs(`${baseUrl}/anime/${animeId}`),
             });
-            const batch = (_a = data.data) !== null && _a !== void 0 ? _a : [];
+            const batch = data.data ?? [];
             for (const ep of batch) {
                 episodes.push({
                     id: `${animeId}/${ep.episode_number}`,
@@ -159,9 +142,9 @@ function createReanime(ctx, customBaseURL) {
                     title: ep.title || `Episode ${ep.episode_number}`,
                     image: ep.thumbnail || undefined,
                     releaseDate: ep.aired || undefined,
-                    isFiller: (_b = ep.is_filler) !== null && _b !== void 0 ? _b : false,
-                    isSubbed: (_c = ep.subbed) !== null && _c !== void 0 ? _c : false,
-                    isDubbed: (_d = ep.dubbed) !== null && _d !== void 0 ? _d : false,
+                    isFiller: ep.is_filler ?? false,
+                    isSubbed: ep.subbed ?? false,
+                    isDubbed: ep.dubbed ?? false,
                     url: `${baseUrl}/watch/${animeId}?ep=${ep.episode_number}`,
                 });
             }
@@ -170,39 +153,38 @@ function createReanime(ctx, customBaseURL) {
             page++;
         }
         return episodes;
-    });
-    const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
-        const { data: anime } = yield axios.get(`${apiBase}/anime/${id}`, {
+    };
+    const fetchAnimeInfo = async (id) => {
+        const { data: anime } = await axios.get(`${apiBase}/anime/${id}`, {
             headers: hdrs(`${baseUrl}/anime/${id}`),
         });
         const info = {
-            id: (_a = anime.anime_id) !== null && _a !== void 0 ? _a : id,
+            id: anime.anime_id ?? id,
             title: pickTitle(anime.title),
             url: `${baseUrl}/anime/${id}`,
             image: pickCover(anime.cover_image),
             cover: anime.banner_image || undefined,
-            description: (_b = anime.description) === null || _b === void 0 ? void 0 : _b.replace(/<[^>]*>/g, '').trim(),
+            description: anime.description?.replace(/<[^>]*>/g, '').trim(),
             status: toMediaStatus(anime.status),
             type: anime.format,
             releaseDate: anime.season_year ? String(anime.season_year) : undefined,
-            genres: (_c = anime.genres) !== null && _c !== void 0 ? _c : [],
-            studios: ((_d = anime.studios) !== null && _d !== void 0 ? _d : []).filter((s) => s.is_main).map((s) => s.name),
+            genres: anime.genres ?? [],
+            studios: (anime.studios ?? []).filter((s) => s.is_main).map((s) => s.name),
             totalEpisodes: anime.episodes || anime.subbed || 0,
-            sub: (_e = anime.subbed) !== null && _e !== void 0 ? _e : 0,
-            dub: (_f = anime.dubbed) !== null && _f !== void 0 ? _f : 0,
-            hasSub: ((_g = anime.subbed) !== null && _g !== void 0 ? _g : 0) > 0,
-            hasDub: ((_h = anime.dubbed) !== null && _h !== void 0 ? _h : 0) > 0,
+            sub: anime.subbed ?? 0,
+            dub: anime.dubbed ?? 0,
+            hasSub: (anime.subbed ?? 0) > 0,
+            hasDub: (anime.dubbed ?? 0) > 0,
         };
-        info.episodes = yield fetchEpisodes(id);
+        info.episodes = await fetchEpisodes(id);
         return info;
-    });
-    const fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = SubOrDubEnum.SUB) {
+    };
+    const fetchEpisodeServers = async (episodeId, subOrDub = SubOrDubEnum.SUB) => {
         const parts = episodeId.split('/');
         const animeId = parts[0];
         const epNumber = Number(parts[1]);
         const isDub = subOrDub === SubOrDubEnum.DUB;
-        const episodeLinks = yield fetchEpisodeLinks(animeId, epNumber);
+        const episodeLinks = await fetchEpisodeLinks(animeId, epNumber);
         if (episodeLinks.length > 0) {
             return episodeLinks
                 .filter((l) => l.serverName && l.dataLink)
@@ -214,19 +196,19 @@ function createReanime(ctx, customBaseURL) {
             }));
         }
         const lang = isDub ? 'dub' : 'sub';
-        const html = yield watchPageHtml(animeId, epNumber, lang);
+        const html = await watchPageHtml(animeId, epNumber, lang);
         const servers = parseServersWithUrls(html, subOrDub);
         if (!servers.length)
             throw new Error('[ReAnime] No servers found — user may not be logged in');
         return servers;
-    });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = models_1.StreamingServers.FlixCloud, subOrDub = SubOrDubEnum.SUB) {
+    };
+    const fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.FlixCloud, subOrDub = SubOrDubEnum.SUB) => {
         const parts = episodeId.split('/');
         const animeId = parts[0];
         const epNumber = parts[1];
         const lang = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
         const watchUrl = `${baseUrl}/watch/${animeId}?ep=${epNumber}&lang=${lang}`;
-        const servers = yield fetchEpisodeServers(episodeId, subOrDub);
+        const servers = await fetchEpisodeServers(episodeId, subOrDub);
         const idx = servers.findIndex((s) => s.name.includes(server.toLowerCase()));
         if (idx === -1) {
             throw new Error(`[ReAnime] Server "${server}" not found. Available: ${servers.map((s) => s.name).join(', ')}`);
@@ -235,11 +217,14 @@ function createReanime(ctx, customBaseURL) {
         if (!picked.url)
             throw new Error(`[ReAnime] No embed URL for server "${picked.name}" — user may not be logged in`);
         return extractors.FlixCloud(extractorCtx).extract(new url_polyfill_1.PolyURL(picked.url), watchUrl);
-    });
-    return Object.assign(Object.assign({}, config), { search,
+    };
+    return {
+        ...config,
+        search,
         fetchAnimeInfo,
         fetchEpisodeServers,
-        fetchEpisodeSources });
+        fetchEpisodeSources,
+    };
 }
 exports.default = createReanime;
 //# sourceMappingURL=create-reanime.js.map

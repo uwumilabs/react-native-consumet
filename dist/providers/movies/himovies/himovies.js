@@ -5,8 +5,15 @@ const utils_1 = require("../../../utils");
 const create_himovies_1 = require("./create-himovies");
 // Backward compatibility wrapper class
 class HiMovies extends models_1.MovieParser {
+    instance;
+    logo;
+    name;
+    baseUrl;
+    classPath;
+    supportedTypes;
+    isNSFW;
+    isWorking;
     constructor(customBaseURL) {
-        var _a;
         super();
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, utils_1.createProviderContext)();
@@ -17,7 +24,7 @@ class HiMovies extends models_1.MovieParser {
         this.classPath = this.instance.classPath;
         this.supportedTypes = this.instance.supportedTypes;
         this.isNSFW = this.instance.isNSFW;
-        this.isWorking = (_a = this.instance.isWorking) !== null && _a !== void 0 ? _a : true;
+        this.isWorking = this.instance.isWorking ?? true;
         // Bind all methods to preserve proper typing
         this.search = this.instance.search;
         this.fetchRecentMovies = this.instance.fetchRecentMovies;
@@ -30,6 +37,36 @@ class HiMovies extends models_1.MovieParser {
         this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
     }
+    /**
+     *
+     * @param query search query string
+     * @param page page number (default 1) (optional)
+     */
+    search;
+    fetchRecentMovies;
+    fetchRecentTvShows;
+    fetchTrendingMovies;
+    fetchTrendingTvShows;
+    fetchByCountry;
+    fetchByGenre;
+    /**
+     *
+     * @param mediaId media link or id
+     */
+    fetchMediaInfo;
+    /**
+     *
+     * @param episodeId episode id
+     * @param mediaId media id
+     * @param server server type (default `MegaCloud`) (optional)
+     */
+    fetchEpisodeSources;
+    /**
+     *
+     * @param episodeId takes episode link or movie id
+     * @param mediaId takes movie link or id (found on movie info object)
+     */
+    fetchEpisodeServers;
 }
 // (async () => {
 //   const movie = new HiMovies();

@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VidHide = VidHide;
 /**
@@ -19,10 +10,9 @@ function VidHide(ctx) {
     const serverName = 'VidHide';
     const sources = [];
     const { axios, USER_AGENT, NativeConsumet } = ctx;
-    const extract = (videoUrl) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d;
+    const extract = async (videoUrl) => {
         try {
-            const { data } = yield axios
+            const { data } = await axios
                 .get(videoUrl.href, {
                 headers: {
                     'User-Agent': USER_AGENT,
@@ -32,17 +22,17 @@ function VidHide(ctx) {
                 .catch(() => {
                 throw new Error('Video not found');
             });
-            const packedScript = (_b = (_a = /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))) === null || _a === void 0 ? void 0 : _a[2]) === null || _b === void 0 ? void 0 : _b.replace('eval', '');
+            const packedScript = /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))?.[2]?.replace('eval', '');
             if (!packedScript)
                 throw new Error('No packed script found');
-            const unpackedData = yield NativeConsumet.deobfuscateScript(packedScript);
+            const unpackedData = await NativeConsumet.deobfuscateScript(packedScript);
             if (!unpackedData)
                 throw new Error('Failed to deobfuscate script');
-            const links = (_c = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g)) !== null && _c !== void 0 ? _c : [];
+            const links = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g) ?? [];
             const m3u8Link = links[0];
             if (!m3u8Link)
                 throw new Error('No m3u8 link found');
-            const m3u8Content = yield axios.get(m3u8Link, {
+            const m3u8Content = await axios.get(m3u8Link, {
                 headers: {
                     'Referer': m3u8Link,
                     'User-Agent': USER_AGENT,
@@ -58,11 +48,11 @@ function VidHide(ctx) {
             if (m3u8Content.data.includes('EXTM3U')) {
                 const pathWithoutMaster = m3u8Link.split('/master.m3u8')[0];
                 const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
-                for (const video of videoList !== null && videoList !== void 0 ? videoList : []) {
+                for (const video of videoList ?? []) {
                     if (!video.includes('m3u8'))
                         continue;
                     const url = video.split('\n')[1];
-                    const quality = (_d = video.split('RESOLUTION=')[1]) === null || _d === void 0 ? void 0 : _d.split(',')[0].split('x')[1];
+                    const quality = video.split('RESOLUTION=')[1]?.split(',')[0].split('x')[1];
                     videoSources.push({
                         url: `${pathWithoutMaster}/${url}`,
                         quality: `${quality}p`,
@@ -78,7 +68,7 @@ function VidHide(ctx) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
+    };
     return {
         serverName,
         sources,

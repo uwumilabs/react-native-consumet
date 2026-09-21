@@ -32,15 +32,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -72,16 +63,16 @@ function createProviderContext(config = {}) {
                 return target[prop];
             }
             // For dynamic extractors, return an async loader
-            return (...args) => __awaiter(this, void 0, void 0, function* () {
+            return async (...args) => {
                 try {
                     // Dynamically import and create ExtractorManager to avoid circular dependency
-                    const { ExtractorManager } = yield Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
+                    const { ExtractorManager } = await Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
                     const extractorManager = new ExtractorManager(extension_registry_json_1.default, {
                         axios: config.axios || extension_utils_1.defaultExtractorContext.axios,
                         load: config.load || extension_utils_1.defaultExtractorContext.load,
                         userAgent: config.userAgent || extension_utils_1.defaultExtractorContext.USER_AGENT,
                     });
-                    const extractor = yield extractorManager.loadExtractor(prop.toLowerCase());
+                    const extractor = await extractorManager.loadExtractor(prop.toLowerCase());
                     return extractor.extract(args[0], ...args.slice(1));
                 }
                 catch (error) {
@@ -92,7 +83,7 @@ function createProviderContext(config = {}) {
                     }
                     throw new Error(`Extractor '${prop}' not found in dynamic or static extractors`);
                 }
-            });
+            };
         },
     });
     // Create base URL normalization utility

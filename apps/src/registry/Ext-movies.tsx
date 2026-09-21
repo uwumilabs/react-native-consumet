@@ -18,10 +18,10 @@ import {
   ActivityIndicator,
   StyleSheet,
   Dimensions,
-  SafeAreaView,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProviderManager, ExtensionRegistry, META, type IMovieResult, type IMovieEpisode } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
@@ -290,7 +290,7 @@ export default function ExtMoviesScreen() {
       presentationStyle="pageSheet"
       onRequestClose={() => setDetailOpen(false)}>
       <SafeAreaView style={S.modalRoot}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+        <StatusBar barStyle="light-content" />
         <View style={S.modalBar}>
           <TouchableOpacity onPress={() => setDetailOpen(false)} style={S.modalClose}>
             <Text style={S.modalCloseText}>✕</Text>
@@ -462,7 +462,7 @@ export default function ExtMoviesScreen() {
 
   return (
     <SafeAreaView style={S.root}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <View style={S.header}>
@@ -667,7 +667,7 @@ const S = StyleSheet.create({
   clearIcon: { fontSize: 13, color: colors.muted, padding: 4 },
   grid: { paddingHorizontal: PAD, paddingBottom: 30, gap: GAP },
   card: { width: CARD_W, height: CARD_H, borderRadius: R.md, overflow: 'hidden', backgroundColor: colors.card },
-  cardImg: { ...StyleSheet.absoluteFillObject },
+  cardImg: { ...StyleSheet.absoluteFill },
   cardPlaceholder: { backgroundColor: colors.cardAlt },
   cardOverlay: {
     position: 'absolute',
@@ -773,7 +773,7 @@ const S = StyleSheet.create({
   epPillNumActive: { color: '#fff' },
   synopsis: { fontSize: 14, color: colors.muted, lineHeight: 22 },
   videoLoadOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',

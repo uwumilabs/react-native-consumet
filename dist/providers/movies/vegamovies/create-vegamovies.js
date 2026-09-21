@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createVegaMovies = createVegaMovies;
 const cleanTitle = (raw) => {
@@ -125,8 +116,7 @@ function createVegaMovies(ctx, customBaseURL) {
      * @param query search query string
      * @param page page number (default 1)
      */
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
-        var _a;
+    const search = async (query, page = 1) => {
         const searchResult = {
             currentPage: page,
             hasNextPage: false,
@@ -135,11 +125,14 @@ function createVegaMovies(ctx, customBaseURL) {
         // Primary: Typesense search.php endpoint
         try {
             const searchUrl = `${config.baseUrl}/search.php?q=${encodeURIComponent(query)}&page=${page}`;
-            const { data } = yield axios.get(searchUrl, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(searchUrl, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             if (data && Array.isArray(data.hits) && data.hits.length > 0) {
-                const perPage = ((_a = data.request_params) === null || _a === void 0 ? void 0 : _a.per_page) || 15;
+                const perPage = data.request_params?.per_page || 15;
                 const total = typeof data.found === 'number' ? data.found : 0;
                 searchResult.hasNextPage = page * perPage < total;
                 for (const hit of data.hits) {
@@ -165,7 +158,7 @@ function createVegaMovies(ctx, customBaseURL) {
                 return searchResult;
             }
         }
-        catch (_b) {
+        catch {
             // Fallback to HTML scraping search
         }
         // Fallback: WordPress HTML search
@@ -173,8 +166,11 @@ function createVegaMovies(ctx, customBaseURL) {
             const fallbackUrl = page === 1
                 ? `${config.baseUrl}/?s=${encodeURIComponent(query)}`
                 : `${config.baseUrl}/page/${page}/?s=${encodeURIComponent(query)}`;
-            const { data } = yield axios.get(fallbackUrl, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(fallbackUrl, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             const $ = load(data);
             searchResult.results = parseHtmlGrid(data);
@@ -185,16 +181,15 @@ function createVegaMovies(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
+    };
     /**
      * Fetch media information (including seasons and episodes)
      * @param mediaId media link or slug ID
      */
-    const fetchMediaInfo = (mediaId) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+    const fetchMediaInfo = async (mediaId) => {
         let fullUrl = mediaId;
-        if (!(fullUrl === null || fullUrl === void 0 ? void 0 : fullUrl.startsWith('http'))) {
-            fullUrl = `${config.baseUrl}/${(mediaId !== null && mediaId !== void 0 ? mediaId : '').replace(/^\//, '')}`;
+        if (!fullUrl?.startsWith('http')) {
+            fullUrl = `${config.baseUrl}/${(mediaId ?? '').replace(/^\//, '')}`;
         }
         const cleanId = fullUrl.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/|\/$/g, '');
         const movieInfo = {
@@ -203,8 +198,11 @@ function createVegaMovies(ctx, customBaseURL) {
             url: fullUrl,
         };
         try {
-            const { data } = yield axios.get(fullUrl, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(fullUrl, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             const $ = load(data);
             // Title extraction
@@ -219,7 +217,7 @@ function createVegaMovies(ctx, customBaseURL) {
                 $('.entry-content img[data-src]').attr('data-src') ||
                 $('.entry-content img').first().attr('src') ||
                 '';
-            if (image === null || image === void 0 ? void 0 : image.startsWith('//')) {
+            if (image?.startsWith('//')) {
                 image = `https:${image}`;
             }
             movieInfo.image = image;
@@ -230,18 +228,18 @@ function createVegaMovies(ctx, customBaseURL) {
                 synopsis = synopsisHeader.next('p').text().trim();
             }
             if (!synopsis) {
-                synopsis = ((_a = $('meta[property="og:description"]').attr('content')) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+                synopsis = $('meta[property="og:description"]').attr('content')?.trim() || '';
             }
             movieInfo.description = synopsis;
             // IMDb ID
-            const imdbMatch = ((_b = $('a[href*="imdb.com"]').attr('href')) === null || _b === void 0 ? void 0 : _b.match(/tt\d+/)) || data.match(/tt\d{7,}/);
-            if (imdbMatch === null || imdbMatch === void 0 ? void 0 : imdbMatch[0]) {
+            const imdbMatch = $('a[href*="imdb.com"]').attr('href')?.match(/tt\d+/) || data.match(/tt\d{7,}/);
+            if (imdbMatch?.[0]) {
                 movieInfo.imdbId = imdbMatch[0];
             }
             // Rating
             const ratingText = $('.imdb-score, .starstruck-rating').text();
             const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
-            if (ratingMatch === null || ratingMatch === void 0 ? void 0 : ratingMatch[1]) {
+            if (ratingMatch?.[1]) {
                 movieInfo.rating = parseFloat(ratingMatch[1]);
             }
             // Release year
@@ -282,7 +280,7 @@ function createVegaMovies(ctx, customBaseURL) {
                                 .first();
                         }
                         const btnHref = btn.attr('href');
-                        if (btnHref && (btnHref === null || btnHref === void 0 ? void 0 : btnHref.startsWith('http'))) {
+                        if (btnHref && btnHref?.startsWith('http')) {
                             seasonPacks.push({
                                 title: blockText,
                                 season: seasonNum,
@@ -314,9 +312,12 @@ function createVegaMovies(ctx, customBaseURL) {
                     }
                 }
                 // Fetch episodes from each season pack's intermediate page
-                const packResults = yield Promise.allSettled(Array.from(selectedPacksBySeason.values()).map((pack) => __awaiter(this, void 0, void 0, function* () {
-                    const res = yield axios.get(pack.url, {
-                        headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: fullUrl }),
+                const packResults = await Promise.allSettled(Array.from(selectedPacksBySeason.values()).map(async (pack) => {
+                    const res = await axios.get(pack.url, {
+                        headers: {
+                            ...defaultHeaders,
+                            Referer: fullUrl,
+                        },
                     });
                     const $ep = load(res.data);
                     const eps = [];
@@ -341,7 +342,7 @@ function createVegaMovies(ctx, customBaseURL) {
                                 nextP.find('.btn-outline').parent().attr('href') ||
                                 nextP.find('.btn-outline').attr('href') ||
                                 nextP.find('a[href]').first().attr('href');
-                            if (link && (link === null || link === void 0 ? void 0 : link.startsWith('http')) && !eps.some((e) => e.url === link)) {
+                            if (link && link?.startsWith('http') && !eps.some((e) => e.url === link)) {
                                 eps.push({
                                     id: link,
                                     title: epTitle,
@@ -353,7 +354,7 @@ function createVegaMovies(ctx, customBaseURL) {
                         }
                     });
                     return eps;
-                })));
+                }));
                 for (const r of packResults) {
                     if (r.status === 'fulfilled' && Array.isArray(r.value)) {
                         episodesList.push(...r.value);
@@ -393,7 +394,7 @@ function createVegaMovies(ctx, customBaseURL) {
                             ? nextP.find('.dwd-button, .btn-outline').first()
                             : nextP.find('.dwd-button, .btn-outline').first().parent('a');
                     const btnHref = btn.attr('href');
-                    if (btnHref && (btnHref === null || btnHref === void 0 ? void 0 : btnHref.startsWith('http')) && !episodesList.some((e) => e.url === btnHref)) {
+                    if (btnHref && btnHref?.startsWith('http') && !episodesList.some((e) => e.url === btnHref)) {
                         count++;
                         episodesList.push({
                             id: btnHref,
@@ -408,7 +409,7 @@ function createVegaMovies(ctx, customBaseURL) {
                 if (episodesList.length === 0) {
                     $('a[href*="nexdrive.fit"], a[href*="vcloud"], a[href*="hubcloud"]').each((i, el) => {
                         const href = $(el).attr('href');
-                        if (href && (href === null || href === void 0 ? void 0 : href.startsWith('http')) && !episodesList.some((e) => e.url === href)) {
+                        if (href && href?.startsWith('http') && !episodesList.some((e) => e.url === href)) {
                             episodesList.push({
                                 id: href,
                                 title: `${movieInfo.title} Option ${i + 1}`,
@@ -437,35 +438,34 @@ function createVegaMovies(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
+    };
     /**
      * Fetch available servers for a given episode
      * @param episodeId episode URL or intermediate link
      * @param mediaId optional media link or slug
      */
-    const fetchEpisodeServers = (episodeId, mediaId) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    const fetchEpisodeServers = async (episodeId, mediaId) => {
         const servers = [];
         let resolvedUrl = episodeId;
-        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
+        if (!resolvedUrl?.startsWith('http')) {
             try {
-                const info = yield fetchMediaInfo(episodeId);
-                const firstEp = (_a = info.episodes) === null || _a === void 0 ? void 0 : _a[0];
-                if (firstEp === null || firstEp === void 0 ? void 0 : firstEp.url) {
+                const info = await fetchMediaInfo(episodeId);
+                const firstEp = info.episodes?.[0];
+                if (firstEp?.url) {
                     resolvedUrl = firstEp.url;
                 }
             }
-            catch (_b) { }
+            catch { }
         }
-        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
+        if (!resolvedUrl?.startsWith('http')) {
             return [{ name: 'HubCloud', url: episodeId }];
         }
         // If already direct V-Cloud / HubCloud link
         if (resolvedUrl.includes('vcloud') || resolvedUrl.includes('hubcloud')) {
             try {
                 const hubCloudExtractor = HubCloud(ctx);
-                const hubRes = yield hubCloudExtractor.extract(new PolyURL(resolvedUrl));
-                if ((hubRes === null || hubRes === void 0 ? void 0 : hubRes.sources) && hubRes.sources.length > 0) {
+                const hubRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
+                if (hubRes?.sources && hubRes.sources.length > 0) {
                     for (const s of hubRes.sources) {
                         const sName = s.server || s.quality || 'HubCloud';
                         if (!servers.some((srv) => srv.name === sName)) {
@@ -477,7 +477,7 @@ function createVegaMovies(ctx, customBaseURL) {
                     }
                 }
             }
-            catch (_c) { }
+            catch { }
             if (!servers.some((s) => s.name.toLowerCase() === 'hubcloud')) {
                 servers.push({ name: 'HubCloud', url: resolvedUrl });
             }
@@ -485,16 +485,19 @@ function createVegaMovies(ctx, customBaseURL) {
         }
         // If intermediate page (e.g. nexdrive.fit)
         try {
-            const { data } = yield axios.get(resolvedUrl, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(resolvedUrl, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             const $ = load(data);
             const vcloudLink = $('a[href*="vcloud"], a[href*="hubcloud"]').attr('href');
             if (vcloudLink) {
                 try {
                     const hubCloudExtractor = HubCloud(ctx);
-                    const hubRes = yield hubCloudExtractor.extract(new PolyURL(vcloudLink));
-                    if ((hubRes === null || hubRes === void 0 ? void 0 : hubRes.sources) && hubRes.sources.length > 0) {
+                    const hubRes = await hubCloudExtractor.extract(new PolyURL(vcloudLink));
+                    if (hubRes?.sources && hubRes.sources.length > 0) {
                         for (const s of hubRes.sources) {
                             const sName = s.server || s.quality || 'HubCloud';
                             if (!servers.some((srv) => srv.name === sName)) {
@@ -506,7 +509,7 @@ function createVegaMovies(ctx, customBaseURL) {
                         }
                     }
                 }
-                catch (_d) { }
+                catch { }
                 if (!servers.some((s) => s.name.toLowerCase() === 'hubcloud')) {
                     servers.push({ name: 'HubCloud', url: vcloudLink });
                 }
@@ -520,28 +523,27 @@ function createVegaMovies(ctx, customBaseURL) {
                 servers.push({ name: 'Filepress', url: filepressLink });
             }
         }
-        catch (_e) {
+        catch {
             // Ignore intermediate page parse error
         }
         if (servers.length === 0) {
             servers.push({ name: 'HubCloud', url: resolvedUrl });
         }
         return servers;
-    });
+    };
     /**
      * Fetch streaming sources for an episode
      * @param episodeId episode URL (vcloud link, nexdrive intermediate link, or slug)
      * @param mediaId media link or slug (optional)
      * @param server requested server (default HubCloud)
      */
-    const fetchEpisodeSources = (episodeId_1, mediaId_1, ...args_1) => __awaiter(this, [episodeId_1, mediaId_1, ...args_1], void 0, function* (episodeId, mediaId, server = StreamingServersEnum.HubCloud) {
-        var _a, _b, _c, _d, _e, _f;
+    const fetchEpisodeSources = async (episodeId, mediaId, server = StreamingServersEnum.HubCloud) => {
         let resolvedUrl = episodeId;
         // If episodeId is not an HTTP URL, resolve via fetchMediaInfo
-        if (!(resolvedUrl === null || resolvedUrl === void 0 ? void 0 : resolvedUrl.startsWith('http'))) {
-            const info = yield fetchMediaInfo(episodeId);
-            const firstEp = (_a = info.episodes) === null || _a === void 0 ? void 0 : _a[0];
-            if (firstEp === null || firstEp === void 0 ? void 0 : firstEp.url) {
+        if (!resolvedUrl?.startsWith('http')) {
+            const info = await fetchMediaInfo(episodeId);
+            const firstEp = info.episodes?.[0];
+            if (firstEp?.url) {
                 resolvedUrl = firstEp.url;
             }
             else {
@@ -558,22 +560,22 @@ function createVegaMovies(ctx, customBaseURL) {
         // If not a direct cloud link (e.g. intermediate dotlink / nexdrive page)
         if (!resolvedUrl.includes('cloud')) {
             try {
-                const dotlinkRes = yield axios.get(resolvedUrl, { headers: defaultHeaders });
+                const dotlinkRes = await axios.get(resolvedUrl, { headers: defaultHeaders });
                 const dotlinkText = dotlinkRes.data;
                 // Extract vlink (HubCloud / V-Cloud)
                 const vlinkMatch = dotlinkText.match(/<a\s+href="([^"]*cloud\.[^"]*)"/i);
-                if (vlinkMatch === null || vlinkMatch === void 0 ? void 0 : vlinkMatch[1]) {
+                if (vlinkMatch?.[1]) {
                     resolvedUrl = vlinkMatch[1];
                 }
                 // Extract FastDL direct stream if available
                 const fastdlMatch = dotlinkText.match(/<a\s+href="([^"]*fastdl\.[^"]*)"/i);
-                if (fastdlMatch === null || fastdlMatch === void 0 ? void 0 : fastdlMatch[1]) {
+                if (fastdlMatch?.[1]) {
                     try {
-                        const fdlRes = yield axios.get(fastdlMatch[1], {
-                            headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: resolvedUrl }),
+                        const fdlRes = await axios.get(fastdlMatch[1], {
+                            headers: { ...defaultHeaders, Referer: resolvedUrl },
                         });
                         const reurlMatch = fdlRes.data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
-                        if (reurlMatch === null || reurlMatch === void 0 ? void 0 : reurlMatch[1]) {
+                        if (reurlMatch?.[1]) {
                             extraSources.push({
                                 url: reurlMatch[1],
                                 server: 'FastDL',
@@ -582,7 +584,7 @@ function createVegaMovies(ctx, customBaseURL) {
                             });
                         }
                     }
-                    catch (_g) { }
+                    catch { }
                 }
                 // Extract Filepress stream if available (as in reference stream.ts)
                 try {
@@ -592,22 +594,22 @@ function createVegaMovies(ctx, customBaseURL) {
                     if (filepressLink) {
                         const filepressID = filepressLink.split('/').filter(Boolean).pop();
                         const filepressBaseUrl = filepressLink.split('/').slice(0, 3).join('/');
-                        const fpRes1 = yield axios.post(`${filepressBaseUrl}/api/file/downlaod/`, { id: filepressID, method: 'indexDownlaod', captchaValue: null }, {
+                        const fpRes1 = await axios.post(`${filepressBaseUrl}/api/file/downlaod/`, { id: filepressID, method: 'indexDownlaod', captchaValue: null }, {
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Referer': filepressBaseUrl,
                             },
                         });
-                        if (((_b = fpRes1.data) === null || _b === void 0 ? void 0 : _b.status) && ((_c = fpRes1.data) === null || _c === void 0 ? void 0 : _c.data)) {
+                        if (fpRes1.data?.status && fpRes1.data?.data) {
                             const fpToken = fpRes1.data.data;
-                            const fpRes2 = yield axios.post(`${filepressBaseUrl}/api/file/downlaod2/`, { id: fpToken, method: 'indexDownlaod', captchaValue: null }, {
+                            const fpRes2 = await axios.post(`${filepressBaseUrl}/api/file/downlaod2/`, { id: fpToken, method: 'indexDownlaod', captchaValue: null }, {
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'Referer': filepressBaseUrl,
                                 },
                             });
-                            const fpStreamUrl = (_e = (_d = fpRes2.data) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e[0];
-                            if (fpStreamUrl && (fpStreamUrl === null || fpStreamUrl === void 0 ? void 0 : fpStreamUrl.startsWith('http'))) {
+                            const fpStreamUrl = fpRes2.data?.data?.[0];
+                            if (fpStreamUrl && fpStreamUrl?.startsWith('http')) {
                                 extraSources.push({
                                     url: fpStreamUrl,
                                     server: 'Filepress',
@@ -618,15 +620,18 @@ function createVegaMovies(ctx, customBaseURL) {
                         }
                     }
                 }
-                catch (_h) { }
+                catch { }
             }
-            catch (_j) { }
+            catch { }
         }
         // If resolvedUrl is a FastDL link directly
         if (resolvedUrl.includes('fastdl.zip')) {
             try {
-                const { data } = yield axios.get(resolvedUrl, {
-                    headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: 'https://nexdrive.fit/' }),
+                const { data } = await axios.get(resolvedUrl, {
+                    headers: {
+                        ...defaultHeaders,
+                        Referer: 'https://nexdrive.fit/',
+                    },
                 });
                 const reurlMatch = data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
                 const directUrl = reurlMatch ? reurlMatch[1] : resolvedUrl;
@@ -636,7 +641,7 @@ function createVegaMovies(ctx, customBaseURL) {
                     download: directUrl,
                 };
             }
-            catch (_k) { }
+            catch { }
         }
         // HubCloud extraction
         let hubCloudSources = [];
@@ -644,19 +649,23 @@ function createVegaMovies(ctx, customBaseURL) {
         if (resolvedUrl.includes('cloud')) {
             try {
                 const hubCloudExtractor = HubCloud(ctx);
-                const hubCloudRes = yield hubCloudExtractor.extract(new PolyURL(resolvedUrl));
-                if ((hubCloudRes === null || hubCloudRes === void 0 ? void 0 : hubCloudRes.sources) && Array.isArray(hubCloudRes.sources)) {
-                    hubCloudSources = hubCloudRes.sources.map((s) => (Object.assign(Object.assign({}, s), { server: s.server || s.quality || 'HubCloud', quality: s.quality && s.quality !== 'auto' && !/\b(?:server|worker|storage|drain|bot|cloud)\b/i.test(s.quality)
+                const hubCloudRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
+                if (hubCloudRes?.sources && Array.isArray(hubCloudRes.sources)) {
+                    hubCloudSources = hubCloudRes.sources.map((s) => ({
+                        ...s,
+                        server: s.server || s.quality || 'HubCloud',
+                        quality: s.quality && s.quality !== 'auto' && !/\b(?:server|worker|storage|drain|bot|cloud)\b/i.test(s.quality)
                             ? s.quality
                             : epQuality !== 'auto'
                                 ? epQuality
-                                : 'auto' })));
+                                : 'auto',
+                    }));
                     if (hubCloudRes.headers) {
                         hubHeaders = hubCloudRes.headers;
                     }
                 }
             }
-            catch (_l) { }
+            catch { }
         }
         let allSources = [...extraSources, ...hubCloudSources];
         // Filter or prioritize requested server if specified and not 'hubcloud'
@@ -674,14 +683,14 @@ function createVegaMovies(ctx, customBaseURL) {
         return {
             headers: hubHeaders,
             sources: allSources,
-            download: (_f = allSources[0]) === null || _f === void 0 ? void 0 : _f.url,
+            download: allSources[0]?.url,
         };
-    });
+    };
     /**
      * Fetch latest releases from homepage
      * @param page page number (default 1)
      */
-    const fetchLatest = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    const fetchLatest = async (page = 1) => {
         const searchResult = {
             currentPage: page,
             hasNextPage: false,
@@ -689,8 +698,11 @@ function createVegaMovies(ctx, customBaseURL) {
         };
         try {
             const url = page === 1 ? `${config.baseUrl}/` : `${config.baseUrl}/page/${page}/`;
-            const { data } = yield axios.get(url, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(url, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             const $ = load(data);
             searchResult.results = parseHtmlGrid(data);
@@ -701,25 +713,25 @@ function createVegaMovies(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
+    };
     /**
      * Fetch recent movies
      */
-    const fetchRecentMovies = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    const fetchRecentMovies = async (page = 1) => {
         return fetchByFilter('category/movies-by-genres', page);
-    });
+    };
     /**
      * Fetch recent TV shows
      */
-    const fetchRecentTVShows = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    const fetchRecentTVShows = async (page = 1) => {
         return fetchByFilter('web-series', page);
-    });
+    };
     /**
      * Fetch movies/shows by category filter
      * @param filter path filter (e.g. 'web-series/netflix')
      * @param page page number (default 1)
      */
-    const fetchByFilter = (filter_1, ...args_1) => __awaiter(this, [filter_1, ...args_1], void 0, function* (filter, page = 1) {
+    const fetchByFilter = async (filter, page = 1) => {
         const searchResult = {
             currentPage: page,
             hasNextPage: false,
@@ -728,8 +740,11 @@ function createVegaMovies(ctx, customBaseURL) {
         try {
             const cleanFilter = filter.replace(/^\/|\/$/g, '');
             const url = page === 1 ? `${config.baseUrl}/${cleanFilter}/` : `${config.baseUrl}/${cleanFilter}/page/${page}/`;
-            const { data } = yield axios.get(url, {
-                headers: Object.assign(Object.assign({}, defaultHeaders), { Referer: config.baseUrl }),
+            const { data } = await axios.get(url, {
+                headers: {
+                    ...defaultHeaders,
+                    Referer: config.baseUrl,
+                },
             });
             const $ = load(data);
             searchResult.results = parseHtmlGrid(data);
@@ -740,8 +755,10 @@ function createVegaMovies(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
-    return Object.assign(Object.assign({}, config), { supportedTypes,
+    };
+    return {
+        ...config,
+        supportedTypes,
         search,
         fetchMediaInfo,
         fetchEpisodeServers,
@@ -749,6 +766,7 @@ function createVegaMovies(ctx, customBaseURL) {
         fetchLatest,
         fetchRecentMovies,
         fetchRecentTVShows,
-        fetchByFilter });
+        fetchByFilter,
+    };
 }
 //# sourceMappingURL=create-vegamovies.js.map

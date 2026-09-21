@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 function createAnimeSuge(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
@@ -38,14 +29,14 @@ function createAnimeSuge(ctx, customBaseURL) {
         'X-Requested-With': 'XMLHttpRequest',
     };
     // Main provider functions
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    const search = async (query, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/filter?keyword=${decodeURIComponent(query)}&page=${normalizedPage}`);
-    });
-    const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchAnimeInfo = async (id) => {
         try {
             const animeUrl = `${config.baseUrl}/${id}`;
-            const { data } = yield axios.get(animeUrl);
+            const { data } = await axios.get(animeUrl);
             const $ = load(data);
             const info = {
                 id: id,
@@ -58,8 +49,7 @@ function createAnimeSuge(ctx, customBaseURL) {
             info.description = $('.film-description .text').text().trim();
             // Extract genres
             $('.item-list a[href*="/genre/"]').each((_, el) => {
-                var _a;
-                (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push($(el).text().trim());
+                info.genres?.push($(el).text().trim());
             });
             // Extract other info from the info list
             $('.anisc-info .item').each((_, item) => {
@@ -110,7 +100,7 @@ function createAnimeSuge(ctx, customBaseURL) {
             }
             const dataId = $('.container').attr('data-id');
             // Fetch episodes
-            const { data: epData } = yield axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
+            const { data: epData } = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
                 headers: headers,
             });
             const $$ = load(epData.html);
@@ -121,12 +111,11 @@ function createAnimeSuge(ctx, customBaseURL) {
             info.totalEpisodes = episodeElements.length;
             info.episodes = [];
             episodeElements.each((i, el) => {
-                var _a, _b;
                 const $el = $$(el);
                 const href = $el.attr('href') || '';
                 const number = parseInt($el.attr('data-number') || '0');
-                (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
-                    id: ((_b = href.split('/')[2]) === null || _b === void 0 ? void 0 : _b.replace('?ep=', '$episode$')) || '',
+                info.episodes?.push({
+                    id: href.split('/')[2]?.replace('?ep=', '$episode$') || '',
                     number: number,
                     title: $el.attr('title'),
                     isFiller: $el.hasClass('ssl-item-filler'),
@@ -140,39 +129,45 @@ function createAnimeSuge(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrDubEnum.SUB) {
+    };
+    const fetchEpisodeSources = async (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrDubEnum.SUB) => {
         if (episodeId.startsWith('http')) {
             const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.MegaCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                    return {
+                        headers: { Referer: serverUrl.href },
+                        ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+                    };
                 default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                    return {
+                        headers: { Referer: serverUrl.href },
+                        ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+                    };
             }
         }
         if (!episodeId.includes('$episode$'))
             throw new Error('Invalid episode id');
         episodeId = `${config.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
         try {
-            const servers = yield fetchEpisodeServers(episodeId.split('?ep=')[1], subOrDub);
+            const servers = await fetchEpisodeServers(episodeId.split('?ep=')[1], subOrDub);
             const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
             if (i === -1) {
                 throw new Error(`Server ${server} not found`);
             }
             const serverUrl = new URL(servers[i].url);
-            return yield fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
+            return await fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
         }
         catch (err) {
             throw err;
         }
-    });
-    const fetchEpisodeServers = (episodeId, subOrDub) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchEpisodeServers = async (episodeId, subOrDub) => {
         try {
             if (episodeId.includes('$episode$'))
                 episodeId = episodeId.split('$episode$')[1];
-            const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
+            const data = await response.json();
             console.log(data);
             const $ = load(data.html);
             const scrapedServers = [];
@@ -180,7 +175,7 @@ function createAnimeSuge(ctx, customBaseURL) {
             try {
                 selector = `.ps_-block.ps_-block-sub.servers-${false ? 'raw' : subOrDub} > .ps__-list .server-item`;
             }
-            catch (_a) {
+            catch {
                 selector = `.ps_-block.ps_-block-sub.servers-${true ? 'raw' : subOrDub} > .ps__-list .server-item`;
             }
             $(selector).each((_, element) => {
@@ -193,39 +188,38 @@ function createAnimeSuge(ctx, customBaseURL) {
                     subOrDub: subOrDubValue,
                 });
             });
-            const servers = yield Promise.all(scrapedServers.map((server) => __awaiter(this, void 0, void 0, function* () {
-                const { data } = yield axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
+            const servers = await Promise.all(scrapedServers.map(async (server) => {
+                const { data } = await axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
                 return {
                     name: `megacloud-${server.name.toLowerCase()}`,
                     url: data.link,
                 };
-            })));
+            }));
             return servers;
         }
         catch (error) {
             throw new Error(`Failed to fetch episode servers: ${error}`);
         }
-    });
-    const scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const scrapeCard = async ($) => {
         try {
             const results = [];
             $('.item').each((i, ele) => {
-                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                 const card = $(ele);
                 const atag = card.find('.item-top a');
-                const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
-                const type = (_c = (_b = card.find('.item-status')) === null || _b === void 0 ? void 0 : _b.first()) === null || _c === void 0 ? void 0 : _c.text();
+                const id = atag.attr('href')?.split('/')[1].split('?')[0];
+                const type = card.find('.item-status')?.first()?.text();
                 results.push({
                     id: id,
                     title: atag.text(),
                     url: `${config.baseUrl}${atag.attr('href')}`,
-                    image: (_d = card.find('img')) === null || _d === void 0 ? void 0 : _d.attr('data-src'),
-                    duration: (_e = card.find('.fdi-duration')) === null || _e === void 0 ? void 0 : _e.text(),
+                    image: card.find('img')?.attr('data-src'),
+                    duration: card.find('.fdi-duration')?.text(),
                     type: type,
-                    nsfw: ((_f = card.find('.tick-rate')) === null || _f === void 0 ? void 0 : _f.text()) === '18+' ? true : false,
-                    sub: parseInt((_g = card.find('.tick-item.tick-sub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
-                    dub: parseInt((_h = card.find('.tick-item.tick-dub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
-                    episodes: parseInt((_j = card.find('.tick-item.tick-eps')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
+                    nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
+                    sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
+                    dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
+                    episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
                 });
             });
             return results;
@@ -234,9 +228,8 @@ function createAnimeSuge(ctx, customBaseURL) {
             //console.log(err);
             throw new Error(`Failed to scrape card: ${err}`);
         }
-    });
-    const scrapeCardPage = (url) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+    };
+    const scrapeCardPage = async (url) => {
         try {
             const res = {
                 currentPage: 0,
@@ -244,22 +237,22 @@ function createAnimeSuge(ctx, customBaseURL) {
                 totalPages: 0,
                 results: [],
             };
-            const { data } = yield axios.get(url);
+            const { data } = await axios.get(url);
             const $ = load(data);
             const pagination = $('ul.pagination');
-            res.currentPage = parseInt((_a = pagination.find('.page-item.active')) === null || _a === void 0 ? void 0 : _a.text());
-            const nextPage = (_b = pagination.find('a[title=next]')) === null || _b === void 0 ? void 0 : _b.attr('href');
+            res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
+            const nextPage = pagination.find('a[title=next]')?.attr('href');
             if (nextPage !== undefined && nextPage !== '') {
                 res.hasNextPage = true;
             }
-            const totalPages = (_c = pagination.find('a[title=Last]').attr('href')) === null || _c === void 0 ? void 0 : _c.split('=').pop();
+            const totalPages = pagination.find('a[title=Last]').attr('href')?.split('=').pop();
             if (totalPages === undefined || totalPages === '') {
                 res.totalPages = res.currentPage;
             }
             else {
                 res.totalPages = parseInt(totalPages);
             }
-            res.results = yield scrapeCard($);
+            res.results = await scrapeCard($);
             if (res.results.length === 0) {
                 res.currentPage = 0;
                 res.hasNextPage = false;
@@ -271,7 +264,7 @@ function createAnimeSuge(ctx, customBaseURL) {
             console.error('scrapeCardPage error:', err);
             throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
-    });
+    };
     // Return the functional provider object
     return {
         // Configuration

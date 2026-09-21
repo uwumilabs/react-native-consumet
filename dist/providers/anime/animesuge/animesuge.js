@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -18,6 +9,8 @@ const create_provider_context_1 = require("../../../utils/create-provider-contex
 const create_animesuge_1 = __importDefault(require("./create-animesuge"));
 // Backward compatibility wrapper class
 class AnimeSuge extends models_1.AnimeParser {
+    instance;
+    logo;
     constructor(customBaseURL) {
         super();
         // Use the context factory to create a complete context with all defaults
@@ -43,13 +36,34 @@ class AnimeSuge extends models_1.AnimeParser {
     get classPath() {
         return this.instance.classPath;
     }
+    /**
+     * @param query Search query
+     * @param page Page number (optional)
+     */
+    search;
+    /**
+     * @param id Anime id
+     */
+    fetchAnimeInfo;
+    /**
+     *
+     * @param episodeId Episode id
+     * @param server server type (default `VidCloud`) (optional)
+     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
+     */
+    fetchEpisodeSources;
+    /**
+     * Method not implemented in AnimeSuge provider.
+     * @param episodeId Episode id
+     */
+    fetchEpisodeServers;
 }
 exports.AnimeSuge = AnimeSuge;
 exports.default = AnimeSuge;
-(() => __awaiter(void 0, void 0, void 0, function* () {
+(async () => {
     // tsx ./src/providers/anime/animesuge/animesuge.ts
     const animesuge = new AnimeSuge();
-    const anime = yield animesuge.search('Dandadan');
+    const anime = await animesuge.search('Dandadan');
     //   const info = await animesuge.fetchAnimeInfo('solo-leveling-season-2-arise-from-the-shadow-19413');
     //   // console.log(info.episodes);
     //   const sources = await animesuge.fetchEpisodeServers(
@@ -59,5 +73,5 @@ exports.default = AnimeSuge;
     //     SubOrDub.DUB
     //   );
     console.log(anime);
-}))();
+})();
 //# sourceMappingURL=animesuge.js.map

@@ -8,8 +8,15 @@ const models_1 = require("../../../models");
 const create_provider_context_1 = require("../../../utils/create-provider-context");
 const create_reanime_1 = __importDefault(require("./create-reanime"));
 class ReAnime extends models_1.AnimeParser {
+    instance;
+    logo;
+    name;
+    baseUrl;
+    classPath;
+    isNSFW;
+    isWorking;
+    isDubAvailableSeparately;
     constructor(customBaseURL, cookie) {
-        var _a, _b, _c;
         super();
         const defaultContext = (0, create_provider_context_1.createProviderContext)();
         this.instance = (0, create_reanime_1.default)(defaultContext, customBaseURL);
@@ -17,14 +24,18 @@ class ReAnime extends models_1.AnimeParser {
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
         this.classPath = this.instance.classPath;
-        this.isNSFW = (_a = this.instance.isNSFW) !== null && _a !== void 0 ? _a : false;
-        this.isWorking = (_b = this.instance.isWorking) !== null && _b !== void 0 ? _b : true;
-        this.isDubAvailableSeparately = (_c = this.instance.isDubAvailableSeparately) !== null && _c !== void 0 ? _c : false;
+        this.isNSFW = this.instance.isNSFW ?? false;
+        this.isWorking = this.instance.isWorking ?? true;
+        this.isDubAvailableSeparately = this.instance.isDubAvailableSeparately ?? false;
         this.search = this.instance.search;
         this.fetchAnimeInfo = this.instance.fetchAnimeInfo;
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
         this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
     }
+    search;
+    fetchAnimeInfo;
+    fetchEpisodeServers;
+    fetchEpisodeSources;
 }
 exports.ReAnime = ReAnime;
 exports.default = ReAnime;

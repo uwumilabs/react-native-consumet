@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 function createZoro(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
@@ -30,11 +21,11 @@ function createZoro(ctx, customBaseURL) {
         return page <= 0 ? 1 : page;
     };
     // Main provider functions
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    const search = async (query, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/search?keyword=${decodeURIComponent(query)}&page=${normalizedPage}`);
-    });
-    const fetchAdvancedSearch = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1, type, status, rated, score, season, language, startDate, endDate, sort, genres) {
+    };
+    const fetchAdvancedSearch = async (page = 1, type, status, rated, score, season, language, startDate, endDate, sort, genres) => {
         const normalizedPage = normalizePageNumber(page);
         const mappings = {
             type: { movie: 1, tv: 2, ova: 3, ona: 4, special: 5, music: 6 },
@@ -120,99 +111,99 @@ function createZoro(ctx, customBaseURL) {
             }
         }
         return scrapeCardPage(`${config.baseUrl}/filter?${params.toString()}`);
-    });
-    const fetchTopAiring = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTopAiring = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/top-airing?page=${normalizedPage}`);
-    });
-    const fetchMostPopular = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMostPopular = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/most-popular?page=${normalizedPage}`);
-    });
-    const fetchMostFavorite = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMostFavorite = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/most-favorite?page=${normalizedPage}`);
-    });
-    const fetchLatestCompleted = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchLatestCompleted = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/completed?page=${normalizedPage}`);
-    });
-    const fetchRecentlyUpdated = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyUpdated = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/recently-updated?page=${normalizedPage}`);
-    });
-    const fetchRecentlyAdded = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyAdded = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/recently-added?page=${normalizedPage}`);
-    });
-    const fetchTopUpcoming = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTopUpcoming = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/top-upcoming?page=${normalizedPage}`);
-    });
-    const fetchStudio = (studio_1, ...args_1) => __awaiter(this, [studio_1, ...args_1], void 0, function* (studio, page = 1) {
+    };
+    const fetchStudio = async (studio, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/producer/${studio}?page=${normalizedPage}`);
-    });
-    const fetchSubbedAnime = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchSubbedAnime = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/subbed-anime?page=${normalizedPage}`);
-    });
-    const fetchDubbedAnime = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchDubbedAnime = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/dubbed-anime?page=${normalizedPage}`);
-    });
-    const fetchMovie = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMovie = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/movie?page=${normalizedPage}`);
-    });
-    const fetchTV = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTV = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/tv?page=${normalizedPage}`);
-    });
-    const fetchOVA = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchOVA = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/ova?page=${normalizedPage}`);
-    });
-    const fetchONA = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchONA = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/ona?page=${normalizedPage}`);
-    });
-    const fetchSpecial = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchSpecial = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/special?page=${normalizedPage}`);
-    });
-    const fetchGenres = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchGenres = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/genre?page=${normalizedPage}`);
-    });
-    const genreSearch = (genre_1, ...args_1) => __awaiter(this, [genre_1, ...args_1], void 0, function* (genre, page = 1) {
+    };
+    const genreSearch = async (genre, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/genre/${genre}?page=${normalizedPage}`);
-    });
-    const fetchSchedule = (date) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchSchedule = async (date) => {
         try {
-            const response = yield fetch(`${config.baseUrl}/ajax/schedule/list?tzOffset=-330&date=${date}`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/schedule/list?tzOffset=-330&date=${date}`);
+            const data = await response.json();
             const $ = load(data.html);
-            return yield scrapeCard($);
+            return await scrapeCard($);
         }
         catch (error) {
             throw new Error(`Failed to fetch schedule: ${error}`);
         }
-    });
-    const fetchSpotlight = () => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchSpotlight = async () => {
         try {
-            const response = yield fetch(config.baseUrl);
-            const data = yield response.text();
+            const response = await fetch(config.baseUrl);
+            const data = await response.text();
             const $ = load(data);
             const results = [];
             $('.deslide-item').each((_, element) => {
-                var _a, _b, _c;
-                const id = ((_a = $(element).find('a').attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1]) || '';
+                const id = $(element).find('a').attr('href')?.split('/')[1] || '';
                 const title = $(element).find('.desi-head-title').text().trim();
-                const poster = ((_c = (_b = $(element)
+                const poster = $(element)
                     .find('.desi-buttons-wrap .btn-secondary')
-                    .attr('href')) === null || _b === void 0 ? void 0 : _b.match(/url=([^&]+)/)) === null || _c === void 0 ? void 0 : _c[1]) || '';
+                    .attr('href')
+                    ?.match(/url=([^&]+)/)?.[1] || '';
                 const description = $(element).find('.desi-description').text().trim();
                 if (id) {
                     results.push({
@@ -229,45 +220,45 @@ function createZoro(ctx, customBaseURL) {
         catch (error) {
             throw new Error(`Failed to fetch spotlight: ${error}`);
         }
-    });
-    const fetchSearchSuggestions = (query) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchSearchSuggestions = async (query) => {
         try {
-            const response = yield fetch(`${config.baseUrl}/ajax/search/suggest?keyword=${encodeURIComponent(query)}`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/search/suggest?keyword=${encodeURIComponent(query)}`);
+            const data = await response.json();
             const $ = load(data.html);
-            return yield scrapeCard($);
+            return await scrapeCard($);
         }
         catch (error) {
             throw new Error(`Failed to fetch search suggestions: ${error}`);
         }
-    });
-    const fetchContinueWatching = () => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchContinueWatching = async () => {
         try {
-            const response = yield fetch(`${config.baseUrl}/ajax/home/widget/continue-watching`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/home/widget/continue-watching`);
+            const data = await response.json();
             const $ = load(data.html);
-            return yield scrapeCard($);
+            return await scrapeCard($);
         }
         catch (error) {
             throw new Error(`Failed to fetch continue watching: ${error}`);
         }
-    });
-    const fetchWatchList = (watchListType) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchWatchList = async (watchListType) => {
         try {
-            const response = yield fetch(`${config.baseUrl}/ajax/user/watchlist/${watchListType}`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/user/watchlist/${watchListType}`);
+            const data = await response.json();
             const $ = load(data.html);
-            return yield scrapeCard($);
+            return await scrapeCard($);
         }
         catch (error) {
             throw new Error(`Failed to fetch watch list: ${error}`);
         }
-    });
-    const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchAnimeInfo = async (id) => {
         try {
             const animeUrl = `${config.baseUrl}/${id}`;
-            const response = yield fetch(animeUrl);
-            const data = yield response.text();
+            const response = await fetch(animeUrl);
+            const data = await response.text();
             const $ = load(data);
             const info = {
                 id: id,
@@ -280,8 +271,7 @@ function createZoro(ctx, customBaseURL) {
             info.description = $('.film-description .text').text().trim();
             // Extract genres
             $('.item-list a[href*="/genre/"]').each((_, el) => {
-                var _a;
-                (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push($(el).text().trim());
+                info.genres?.push($(el).text().trim());
             });
             // Extract other info from the info list
             $('.anisc-info .item').each((_, item) => {
@@ -331,13 +321,13 @@ function createZoro(ctx, customBaseURL) {
                 info.subOrDub = SubOrDubEnum.BOTH;
             }
             // Fetch episodes
-            const episodesResponse = yield fetch(`${config.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
+            const episodesResponse = await fetch(`${config.baseUrl}/ajax/v2/episode/list/${id.split('-').pop()}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Referer': `${config.baseUrl}/watch/${id}`,
                 },
             });
-            const episodesData = yield episodesResponse.json();
+            const episodesData = await episodesResponse.json();
             const $$ = load(episodesData.html);
             const episodeElements = $$('div.detail-infor-content > div > a');
             const subCount = parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0;
@@ -345,12 +335,11 @@ function createZoro(ctx, customBaseURL) {
             info.totalEpisodes = episodeElements.length;
             info.episodes = [];
             episodeElements.each((i, el) => {
-                var _a, _b;
                 const $el = $$(el);
                 const href = $el.attr('href') || '';
                 const number = parseInt($el.attr('data-number') || '0');
-                (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
-                    id: ((_b = href.split('/')[2]) === null || _b === void 0 ? void 0 : _b.replace('?ep=', '$episode$')) || '',
+                info.episodes?.push({
+                    id: href.split('/')[2]?.replace('?ep=', '$episode$') || '',
                     number: number,
                     title: $el.attr('title'),
                     isFiller: $el.hasClass('ssl-item-filler'),
@@ -364,46 +353,52 @@ function createZoro(ctx, customBaseURL) {
         catch (err) {
             throw new Error(err.message);
         }
-    });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrDubEnum.SUB) {
+    };
+    const fetchEpisodeSources = async (episodeId, server = StreamingServersEnum.MegaCloud, subOrDub = SubOrDubEnum.SUB) => {
         if (episodeId.startsWith('http')) {
             const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.MegaCloud:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                    return {
+                        headers: { Referer: serverUrl.href },
+                        ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+                    };
                 default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaCloud().extract(serverUrl, config.baseUrl)));
+                    return {
+                        headers: { Referer: serverUrl.href },
+                        ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+                    };
             }
         }
         if (!episodeId.includes('$episode$'))
             throw new Error('Invalid episode id');
         episodeId = `${config.baseUrl}/watch/${episodeId.replace('$episode$', '?ep=').replace(/\$auto|\$sub|\$dub/gi, '')}`;
         try {
-            const servers = yield fetchEpisodeServers(episodeId.split('?ep=')[1], subOrDub);
+            const servers = await fetchEpisodeServers(episodeId.split('?ep=')[1], subOrDub);
             const i = servers.findIndex((s) => s.name.toLowerCase().includes(server));
             if (i === -1) {
                 throw new Error(`Server ${server} not found`);
             }
             const serverUrl = new URL(servers[i].url);
-            return yield fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
+            return await fetchEpisodeSources(serverUrl.href, server, SubOrDubEnum.SUB);
         }
         catch (err) {
             throw err;
         }
-    });
-    const fetchEpisodeServers = (episodeId, subOrDub) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchEpisodeServers = async (episodeId, subOrDub) => {
         try {
             if (episodeId.includes('$episode$'))
                 episodeId = episodeId.split('$episode$')[1];
-            const response = yield fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/v2/episode/servers?episodeId=${episodeId}`);
+            const data = await response.json();
             const $ = load(data.html);
             const scrapedServers = [];
             let selector;
             try {
                 selector = `.ps_-block.ps_-block-sub.servers-${false ? 'raw' : subOrDub} > .ps__-list .server-item`;
             }
-            catch (_a) {
+            catch {
                 selector = `.ps_-block.ps_-block-sub.servers-${true ? 'raw' : subOrDub} > .ps__-list .server-item`;
             }
             $(selector).each((_, element) => {
@@ -416,57 +411,60 @@ function createZoro(ctx, customBaseURL) {
                     subOrDub: subOrDubValue,
                 });
             });
-            const servers = yield Promise.all(scrapedServers.map((server) => __awaiter(this, void 0, void 0, function* () {
-                const { data } = yield axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
+            const servers = await Promise.all(scrapedServers.map(async (server) => {
+                const { data } = await axios.get(`https://hianime.to/ajax/v2/episode/sources?id=${server.sourcesId}`);
                 return {
                     name: `megacloud-${server.name.toLowerCase()}`,
                     url: data.link,
                 };
-            })));
+            }));
             return servers;
         }
         catch (error) {
             throw new Error(`Failed to fetch episode servers: ${error}`);
         }
-    });
-    const verifyLoginState = (connectSid) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const verifyLoginState = async (connectSid) => {
         try {
             const headers = {};
             if (connectSid) {
                 headers.Cookie = `connect.sid=${connectSid}`;
             }
-            const response = yield fetch(`${config.baseUrl}/ajax/login-state`, { headers });
-            const data = yield response.json();
+            const response = await fetch(`${config.baseUrl}/ajax/login-state`, { headers });
+            const data = await response.json();
             return data.is_login;
         }
         catch (err) {
             return false;
         }
-    });
-    const scrapeCard = ($) => __awaiter(this, void 0, void 0, function* () {
+    };
+    const scrapeCard = async ($) => {
         try {
             const results = [];
             $('.flw-item').each((i, ele) => {
-                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                 const card = $(ele);
                 const atag = card.find('.film-name a');
-                const id = (_a = atag.attr('href')) === null || _a === void 0 ? void 0 : _a.split('/')[1].split('?')[0];
+                const id = atag.attr('href')?.split('/')[1].split('?')[0];
                 const watchList = card.find('.dropdown-menu .added').text().trim();
-                const type = (_c = (_b = card
-                    .find('.fdi-item')) === null || _b === void 0 ? void 0 : _b.first()) === null || _c === void 0 ? void 0 : _c.text().replace(' (? eps)', '').replace(/\s\(\d+ eps\)/g, '');
+                const type = card
+                    .find('.fdi-item')
+                    ?.first()
+                    ?.text()
+                    .replace(' (? eps)', '')
+                    .replace(/\s\(\d+ eps\)/g, '');
                 results.push({
                     id: id,
                     title: atag.text(),
                     url: `${config.baseUrl}${atag.attr('href')}`,
-                    image: (_d = card.find('img')) === null || _d === void 0 ? void 0 : _d.attr('data-src'),
-                    duration: (_e = card.find('.fdi-duration')) === null || _e === void 0 ? void 0 : _e.text(),
+                    image: card.find('img')?.attr('data-src'),
+                    duration: card.find('.fdi-duration')?.text(),
                     watchList: watchList || WatchListTypeEnum.NONE,
                     japaneseTitle: atag.attr('data-jname'),
                     type: type,
-                    nsfw: ((_f = card.find('.tick-rate')) === null || _f === void 0 ? void 0 : _f.text()) === '18+' ? true : false,
-                    sub: parseInt((_g = card.find('.tick-item.tick-sub')) === null || _g === void 0 ? void 0 : _g.text()) || 0,
-                    dub: parseInt((_h = card.find('.tick-item.tick-dub')) === null || _h === void 0 ? void 0 : _h.text()) || 0,
-                    episodes: parseInt((_j = card.find('.tick-item.tick-eps')) === null || _j === void 0 ? void 0 : _j.text()) || 0,
+                    nsfw: card.find('.tick-rate')?.text() === '18+' ? true : false,
+                    sub: parseInt(card.find('.tick-item.tick-sub')?.text()) || 0,
+                    dub: parseInt(card.find('.tick-item.tick-dub')?.text()) || 0,
+                    episodes: parseInt(card.find('.tick-item.tick-eps')?.text()) || 0,
                 });
             });
             return results;
@@ -475,9 +473,8 @@ function createZoro(ctx, customBaseURL) {
             //console.log(err);
             throw new Error(`Failed to scrape card: ${err}`);
         }
-    });
-    const scrapeCardPage = (url, headers) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+    };
+    const scrapeCardPage = async (url, headers) => {
         try {
             const res = {
                 currentPage: 0,
@@ -485,26 +482,26 @@ function createZoro(ctx, customBaseURL) {
                 totalPages: 0,
                 results: [],
             };
-            const response = yield fetch(url, headers);
+            const response = await fetch(url, headers);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
             }
-            const data = yield response.text();
+            const data = await response.text();
             const $ = load(data);
             const pagination = $('ul.pagination');
-            res.currentPage = parseInt((_a = pagination.find('.page-item.active')) === null || _a === void 0 ? void 0 : _a.text());
-            const nextPage = (_b = pagination.find('a[title=Next]')) === null || _b === void 0 ? void 0 : _b.attr('href');
+            res.currentPage = parseInt(pagination.find('.page-item.active')?.text());
+            const nextPage = pagination.find('a[title=Next]')?.attr('href');
             if (nextPage !== undefined && nextPage !== '') {
                 res.hasNextPage = true;
             }
-            const totalPages = (_c = pagination.find('a[title=Last]').attr('href')) === null || _c === void 0 ? void 0 : _c.split('=').pop();
+            const totalPages = pagination.find('a[title=Last]').attr('href')?.split('=').pop();
             if (totalPages === undefined || totalPages === '') {
                 res.totalPages = res.currentPage;
             }
             else {
                 res.totalPages = parseInt(totalPages);
             }
-            res.results = yield scrapeCard($);
+            res.results = await scrapeCard($);
             if (res.results.length === 0) {
                 res.currentPage = 0;
                 res.hasNextPage = false;
@@ -516,9 +513,10 @@ function createZoro(ctx, customBaseURL) {
             console.error('scrapeCardPage error:', err);
             throw new Error(`Failed to scrape page ${url}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
-    });
+    };
     // Return the functional provider object
-    return Object.assign(Object.assign({}, config), { 
+    return {
+        ...config,
         // Core methods, pass only the necessary methods, dont pass helpers or unused methods
         search,
         fetchAdvancedSearch,
@@ -546,7 +544,8 @@ function createZoro(ctx, customBaseURL) {
         fetchWatchList,
         fetchAnimeInfo,
         fetchEpisodeSources,
-        fetchEpisodeServers });
+        fetchEpisodeServers,
+    };
 }
 // Default export for backward compatibility
 exports.default = createZoro;

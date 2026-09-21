@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -16,9 +7,10 @@ exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 const provider_maps_1 = require("./provider-maps");
 class ProviderManager {
+    providerContext;
+    loadedExtensions = new Map();
+    extensionManifest = new Map();
     constructor(registry, providerConfig = {}) {
-        this.loadedExtensions = new Map();
-        this.extensionManifest = new Map();
         this.providerContext = (0, create_provider_context_1.default)(providerConfig);
         this.loadRegistry(registry);
     }
@@ -29,7 +21,11 @@ class ProviderManager {
         try {
             registry.extensions.forEach((extension) => {
                 // Convert old format to new format if needed
-                const manifest = Object.assign(Object.assign({}, extension), { category: extension.category, factoryName: extension.factoryName });
+                const manifest = {
+                    ...extension,
+                    category: extension.category, // Cast to avoid type error
+                    factoryName: extension.factoryName,
+                };
                 // Store with a normalized key to enable case-insensitive lookup by id
                 if (typeof extension.id === 'string') {
                     this.extensionManifest.set(extension.id.toLowerCase(), manifest);
@@ -81,70 +77,68 @@ class ProviderManager {
     /**
      * Load an extension by ID from the extensionManifest
      */
-    loadExtension(extensionId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const metadata = this.getExtensionMetadata(extensionId);
-            if (!metadata) {
-                throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+    async loadExtension(extensionId) {
+        const metadata = this.getExtensionMetadata(extensionId);
+        if (!metadata) {
+            throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+        }
+        const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
+        // Check if already loaded
+        if (this.loadedExtensions.has(cacheKey)) {
+            //console.log(`📦 Extension '${extensionId}' already loaded`);
+            return this.loadedExtensions.get(cacheKey);
+        }
+        try {
+            //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
+            // Load the provider code
+            //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+            // Add fetch options for better React Native compatibility
+            const fetchOptions = {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain, application/javascript, */*',
+                    'Content-Type': 'application/javascript',
+                    'User-Agent': 'React-Native-Consumet/1.0.0',
+                },
+                timeout: 30000, // 30 second timeout
+            };
+            //console.log(`📡 Fetch options:`, fetchOptions);
+            const response = await fetch(metadata.main, fetchOptions);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
             }
-            const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
-            // Check if already loaded
-            if (this.loadedExtensions.has(cacheKey)) {
-                //console.log(`📦 Extension '${extensionId}' already loaded`);
-                return this.loadedExtensions.get(cacheKey);
+            const providerCode = await response.text();
+            // Execute the provider code
+            const factoryName = metadata.factoryName; // Use factory name directly
+            if (!factoryName) {
+                throw new Error(`No factory function available for extension ${extensionId}`);
             }
+            let providerInstance = await this.executeProviderCode(providerCode, factoryName, metadata);
+            // Attempt to attach the prototype from local provider classes so instanceof works in app code
             try {
-                //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
-                // Load the provider code
-                //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
-                // Add fetch options for better React Native compatibility
-                const fetchOptions = {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'text/plain, application/javascript, */*',
-                        'Content-Type': 'application/javascript',
-                        'User-Agent': 'React-Native-Consumet/1.0.0',
-                    },
-                    timeout: 30000, // 30 second timeout
-                };
-                //console.log(`📡 Fetch options:`, fetchOptions);
-                const response = yield fetch(metadata.main, fetchOptions);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
-                }
-                const providerCode = yield response.text();
-                // Execute the provider code
-                const factoryName = metadata.factoryName; // Use factory name directly
-                if (!factoryName) {
-                    throw new Error(`No factory function available for extension ${extensionId}`);
-                }
-                let providerInstance = yield this.executeProviderCode(providerCode, factoryName, metadata);
-                // Attempt to attach the prototype from local provider classes so instanceof works in app code
-                try {
-                    // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
-                    const lookupKey = metadata.name || extensionId;
-                    providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
-                }
-                catch (protoErr) {
-                    // Non-fatal – if we can't attach prototype, just proceed with the plain instance
-                    console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
-                }
-                // Cache the loaded extension
-                this.loadedExtensions.set(cacheKey, providerInstance);
-                //console.log(`✅ Extension '${extensionId}' loaded successfully`);
-                return providerInstance;
+                // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
+                const lookupKey = metadata.name || extensionId;
+                providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
             }
-            catch (error) {
-                console.error(`❌ Failed to load extension '${extensionId}':`, error);
-                console.error(`❌ Error details:`, {
-                    message: error instanceof Error ? error.message : String(error),
-                    name: error instanceof Error ? error.name : 'Unknown',
-                    stack: error instanceof Error ? error.stack : undefined,
-                    url: metadata.main,
-                });
-                throw error;
+            catch (protoErr) {
+                // Non-fatal – if we can't attach prototype, just proceed with the plain instance
+                console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
             }
-        });
+            // Cache the loaded extension
+            this.loadedExtensions.set(cacheKey, providerInstance);
+            //console.log(`✅ Extension '${extensionId}' loaded successfully`);
+            return providerInstance;
+        }
+        catch (error) {
+            console.error(`❌ Failed to load extension '${extensionId}':`, error);
+            console.error(`❌ Error details:`, {
+                message: error instanceof Error ? error.message : String(error),
+                name: error instanceof Error ? error.name : 'Unknown',
+                stack: error instanceof Error ? error.stack : undefined,
+                url: metadata.main,
+            });
+            throw error;
+        }
     }
     /**
      * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
@@ -172,16 +166,15 @@ class ProviderManager {
     /**
      * Execute provider code and create instance (extensionManifest-based)
      */
-    executeProviderCode(code, factoryName, metadata) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const context = this.createExecutionContext();
+    async executeProviderCode(code, factoryName, metadata) {
+        const context = this.createExecutionContext();
+        try {
+            // Create and execute the provider code
+            //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
+            // Add more robust error handling for React Native environment
+            let executeFunction;
             try {
-                // Create and execute the provider code
-                //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
-                // Add more robust error handling for React Native environment
-                let executeFunction;
-                try {
-                    executeFunction = new Function('context', `
+                executeFunction = new Function('context', `
           const exports = context.exports;
           const require = context.require;
           const module = context.module;
@@ -189,7 +182,6 @@ class ProviderManager {
           const Promise = context.Promise;
           const Object = context.Object;
           const fetch = context.fetch;
-          const __awaiter = context.__awaiter;
           
           try {
             ${code}
@@ -200,36 +192,35 @@ class ProviderManager {
           
           return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
           `);
-                }
-                catch (syntaxError) {
-                    console.error('Syntax error in provider code:', syntaxError);
-                    throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
-                }
-                const result = executeFunction(context);
-                const factory = result[factoryName];
-                if (!factory || typeof factory !== 'function') {
-                    throw new Error(`Factory function '${factoryName}' not found in extension`);
-                }
-                const instance = factory(this.providerContext);
-                let providerInstance = instance;
-                // Validate the instance has required methods
-                this.validateProviderInstance(instance, metadata.category);
-                // Attempt to attach the prototype from local provider classes so instanceof works in app code
-                try {
-                    // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
-                    const lookupKey = metadata.name;
-                    providerInstance = this.attachProviderPrototype(instance, lookupKey, metadata.category);
-                }
-                catch (protoErr) {
-                    // Non-fatal – if we can't attach prototype, just proceed with the plain instance
-                    console.warn(`⚠️  Could not attach prototype for '${metadata.name}':`, protoErr);
-                }
-                return providerInstance;
             }
-            catch (error) {
-                throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
+            catch (syntaxError) {
+                console.error('Syntax error in provider code:', syntaxError);
+                throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
             }
-        });
+            const result = executeFunction(context);
+            const factory = result[factoryName];
+            if (!factory || typeof factory !== 'function') {
+                throw new Error(`Factory function '${factoryName}' not found in extension`);
+            }
+            const instance = factory(this.providerContext);
+            let providerInstance = instance;
+            // Validate the instance has required methods
+            this.validateProviderInstance(instance, metadata.category);
+            // Attempt to attach the prototype from local provider classes so instanceof works in app code
+            try {
+                // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
+                const lookupKey = metadata.name;
+                providerInstance = this.attachProviderPrototype(instance, lookupKey, metadata.category);
+            }
+            catch (protoErr) {
+                // Non-fatal – if we can't attach prototype, just proceed with the plain instance
+                console.warn(`⚠️  Could not attach prototype for '${metadata.name}':`, protoErr);
+            }
+            return providerInstance;
+        }
+        catch (error) {
+            throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
     /**
      * Create execution context for provider code
@@ -256,9 +247,9 @@ class ProviderManager {
             'NativeConsumet': this.providerContext.NativeConsumet,
         };
         // Create fetch function using axios
-        const customFetch = (url_1, ...args_1) => __awaiter(this, [url_1, ...args_1], void 0, function* (url, options = {}) {
+        const customFetch = async (url, options = {}) => {
             try {
-                const response = yield this.providerContext.axios({
+                const response = await this.providerContext.axios({
                     url,
                     method: options.method || 'GET',
                     headers: options.headers || {},
@@ -270,14 +261,14 @@ class ProviderManager {
                     status: response.status,
                     statusText: response.statusText,
                     headers: response.headers,
-                    text: () => __awaiter(this, void 0, void 0, function* () { return response.data; }),
-                    json: () => __awaiter(this, void 0, void 0, function* () { return (typeof response.data === 'string' ? JSON.parse(response.data) : response.data); }),
+                    text: async () => response.data,
+                    json: async () => (typeof response.data === 'string' ? JSON.parse(response.data) : response.data),
                 };
             }
             catch (error) {
                 throw new Error(`fetch failed: ${error.message || error}`);
             }
-        });
+        };
         return {
             exports: {},
             require: (module) => mocks[module] || {},
@@ -286,7 +277,6 @@ class ProviderManager {
             Promise,
             Object,
             fetch: customFetch,
-            __awaiter: this.createAwaiterHelper(),
             URL: this.providerContext.PolyURL,
             URLSearchParams: this.providerContext.PolyURLSearchParams,
         };
@@ -335,38 +325,6 @@ class ProviderManager {
         };
     }
     /**
-     * Create __awaiter helper for compatibility
-     */
-    createAwaiterHelper() {
-        return (thisArg, _arguments, P, generator) => {
-            function adopt(value) {
-                return value instanceof P ? value : new P((resolve) => resolve(value));
-            }
-            return new (P || (P = Promise))((resolve, reject) => {
-                function fulfilled(value) {
-                    try {
-                        step(generator.next(value));
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
-                }
-                function rejected(value) {
-                    try {
-                        step(generator.throw(value));
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
-                }
-                function step(result) {
-                    result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-                }
-                step((generator = generator.apply(thisArg, _arguments || [])).next());
-            });
-        };
-    }
-    /**
      * Validate provider instance based on category
      */
     validateProviderInstance(instance, category) {
@@ -387,34 +345,30 @@ class ProviderManager {
     /**
      * Get anime provider
      */
-    getAnimeProvider(extensionId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const metadata = this.getExtensionMetadata(extensionId);
-            if (!metadata) {
-                throw new Error(`Extension '${extensionId}' not found`);
-            }
-            if (metadata.category !== 'anime') {
-                throw new Error(`Extension '${extensionId}' is not an anime provider`);
-            }
-            const instance = yield this.loadExtension(extensionId);
-            return instance;
-        });
+    async getAnimeProvider(extensionId) {
+        const metadata = this.getExtensionMetadata(extensionId);
+        if (!metadata) {
+            throw new Error(`Extension '${extensionId}' not found`);
+        }
+        if (metadata.category !== 'anime') {
+            throw new Error(`Extension '${extensionId}' is not an anime provider`);
+        }
+        const instance = await this.loadExtension(extensionId);
+        return instance;
     }
     /**
      * Get movie provider
      */
-    getMovieProvider(extensionId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const metadata = this.getExtensionMetadata(extensionId);
-            if (!metadata) {
-                throw new Error(`Extension '${extensionId}' not found`);
-            }
-            if (metadata.category !== 'movies') {
-                throw new Error(`Extension '${extensionId}' is not a movie provider`);
-            }
-            const instance = yield this.loadExtension(extensionId);
-            return instance;
-        });
+    async getMovieProvider(extensionId) {
+        const metadata = this.getExtensionMetadata(extensionId);
+        if (!metadata) {
+            throw new Error(`Extension '${extensionId}' not found`);
+        }
+        if (metadata.category !== 'movies') {
+            throw new Error(`Extension '${extensionId}' is not a movie provider`);
+        }
+        const instance = await this.loadExtension(extensionId);
+        return instance;
     }
     /**
      * Get the provider context
@@ -425,22 +379,20 @@ class ProviderManager {
     /**
      * Search across all loaded providers of a specific category
      */
-    searchAcrossProviders(category, query, page) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const extensions = this.getExtensionsByCategory(category);
-            const searchPromises = extensions.map((ext) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const provider = yield this.loadExtension(ext.id);
-                    const results = (yield provider.search(query, page));
-                    return { extensionId: ext.id, results };
-                }
-                catch (error) {
-                    console.error(`Search failed for ${ext.id}:`, error);
-                    return { extensionId: ext.id, results: { currentPage: page || 1, hasNextPage: false, results: [] } };
-                }
-            }));
-            return Promise.all(searchPromises);
+    async searchAcrossProviders(category, query, page) {
+        const extensions = this.getExtensionsByCategory(category);
+        const searchPromises = extensions.map(async (ext) => {
+            try {
+                const provider = await this.loadExtension(ext.id);
+                const results = (await provider.search(query, page));
+                return { extensionId: ext.id, results };
+            }
+            catch (error) {
+                console.error(`Search failed for ${ext.id}:`, error);
+                return { extensionId: ext.id, results: { currentPage: page || 1, hasNextPage: false, results: [] } };
+            }
         });
+        return Promise.all(searchPromises);
     }
 }
 exports.ProviderManager = ProviderManager;

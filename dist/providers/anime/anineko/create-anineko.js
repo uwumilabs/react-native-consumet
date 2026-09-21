@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 function createAniNeko(ctx, customBaseURL) {
     const { axios, load, enums, createCustomBaseUrl, USER_AGENT, PolyURL, extractors } = ctx;
@@ -30,7 +21,7 @@ function createAniNeko(ctx, customBaseURL) {
         'User-Agent': UA,
         'Accept': 'text/html,application/xhtml+xml,*/*;q=0.9',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': referer !== null && referer !== void 0 ? referer : `${baseUrl}/`,
+        'Referer': referer ?? `${baseUrl}/`,
     });
     // ── Card scraping ──────────────────────────────────────────────────────────
     const scrapeCards = (html) => {
@@ -38,15 +29,14 @@ function createAniNeko(ctx, customBaseURL) {
         const results = [];
         // Cards: article.nv-anime-card  (browse page layout from Kotlin extension)
         $('article.nv-anime-card').each((_, el) => {
-            var _a, _b;
             const card = $(el);
             const anchor = card.find('a').first();
-            const href = (_a = anchor.attr('href')) !== null && _a !== void 0 ? _a : '';
+            const href = anchor.attr('href') ?? '';
             // href = /watch/{slug}  →  id = {slug}
             const id = href.replace(/^\/watch\//, '').replace(/\/$/, '');
             if (!id)
                 return;
-            const title = card.find('h3.nv-anime-title a').text().trim() || ((_b = card.find('img').attr('alt')) === null || _b === void 0 ? void 0 : _b.trim()) || '';
+            const title = card.find('h3.nv-anime-title a').text().trim() || card.find('img').attr('alt')?.trim() || '';
             const image = card.find('img').attr('src') || card.find('img').attr('data-src') || undefined;
             // Badge: "TV", "Movie", "OVA" etc.
             const type = card.find('.nv-anime-badge, .badge').first().text().trim();
@@ -69,10 +59,13 @@ function createAniNeko(ctx, customBaseURL) {
         const hasNextPage = $('a[rel="next"], .pagination .next:not(.disabled) a').length > 0;
         return { total, hasNextPage };
     };
-    const fetchBrowsePage = (params_1, ...args_1) => __awaiter(this, [params_1, ...args_1], void 0, function* (params, page = 1) {
-        const qs = new URLSearchParams(Object.assign({ page: String(page) }, Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))));
+    const fetchBrowsePage = async (params, page = 1) => {
+        const qs = new URLSearchParams({
+            page: String(page),
+            ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])),
+        });
         const url = `${baseUrl}/browse?${qs}`;
-        const { data: html } = yield axios.get(url, { headers: hdrs() });
+        const { data: html } = await axios.get(url, { headers: hdrs() });
         const { total, hasNextPage } = parsePagination(html, page);
         return {
             currentPage: page,
@@ -80,7 +73,7 @@ function createAniNeko(ctx, customBaseURL) {
             totalResults: total,
             results: scrapeCards(html),
         };
-    });
+    };
     // ── Public browse / search ─────────────────────────────────────────────────
     // ── Filter constants (from Filters.kt) ────────────────────────────────────
     /** All valid genre values for genre[] param */
@@ -141,38 +134,38 @@ function createAniNeko(ctx, customBaseURL) {
         RecentlyAdded: 'recently_added',
         TitleAZ: 'title_az',
     };
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    const search = async (query, page = 1) => {
         return fetchBrowsePage({ keyword: query, sort: SORT.LatestUpdate }, page);
-    });
-    const fetchRecentlyUpdated = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyUpdated = async (page = 1) => {
         return fetchBrowsePage({ sort: SORT.LatestUpdate }, page);
-    });
-    const fetchNewReleases = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchNewReleases = async (page = 1) => {
         return fetchBrowsePage({ sort: SORT.ReleaseDate }, page);
-    });
-    const fetchRecentlyAdded = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyAdded = async (page = 1) => {
         return fetchBrowsePage({ sort: SORT.RecentlyAdded }, page);
-    });
+    };
     /**
      * Browse by genre — genre must be one of the GENRES constants.
      * Additional filters (type, status, language, year) can be passed as extra params.
      */
-    const genreSearch = (genre_1, ...args_1) => __awaiter(this, [genre_1, ...args_1], void 0, function* (genre, page = 1, extra) {
+    const genreSearch = async (genre, page = 1, extra) => {
         const params = new URLSearchParams({
             page: String(page),
             sort: SORT.LatestUpdate,
         });
         params.append('genre[]', genre);
-        if (extra === null || extra === void 0 ? void 0 : extra.type)
+        if (extra?.type)
             params.append('type[]', extra.type);
-        if (extra === null || extra === void 0 ? void 0 : extra.status)
+        if (extra?.status)
             params.append('status[]', extra.status);
-        if (extra === null || extra === void 0 ? void 0 : extra.language)
+        if (extra?.language)
             params.append('language[]', extra.language);
-        if (extra === null || extra === void 0 ? void 0 : extra.year)
+        if (extra?.year)
             params.append('year[]', String(extra.year));
         const url = `${baseUrl}/browse?${params}`;
-        const { data: html } = yield axios.get(url, { headers: hdrs() });
+        const { data: html } = await axios.get(url, { headers: hdrs() });
         const { total, hasNextPage } = parsePagination(html, page);
         return {
             currentPage: page,
@@ -180,17 +173,16 @@ function createAniNeko(ctx, customBaseURL) {
             totalResults: total,
             results: scrapeCards(html),
         };
-    });
+    };
     // ── Anime info ─────────────────────────────────────────────────────────────
-    const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
-        const { data: html } = yield axios.get(`${baseUrl}/watch/${id}`, { headers: hdrs() });
+    const fetchAnimeInfo = async (id) => {
+        const { data: html } = await axios.get(`${baseUrl}/watch/${id}`, { headers: hdrs() });
         const $ = load(html);
         const info = { id, title: '' };
         // Title — h1 or h2 on the info page
         info.title =
             $('h1.nv-anime-title, h1.anime-title, h1').first().text().trim() ||
-                ((_a = $('meta[property="og:title"]').attr('content')) === null || _a === void 0 ? void 0 : _a.trim()) ||
+                $('meta[property="og:title"]').attr('content')?.trim() ||
                 '';
         info.url = `${baseUrl}/watch/${id}`;
         info.image =
@@ -198,7 +190,7 @@ function createAniNeko(ctx, customBaseURL) {
                 $('img.nv-anime-poster, .poster img, img.cover').first().attr('src') ||
                 undefined;
         info.description =
-            ((_b = $('meta[property="og:description"]').attr('content')) === null || _b === void 0 ? void 0 : _b.trim()) ||
+            $('meta[property="og:description"]').attr('content')?.trim() ||
                 $('[class*="desc"], [class*="synopsis"], [class*="summary"]').first().text().trim() ||
                 undefined;
         // Meta fields — try common selector patterns
@@ -230,10 +222,9 @@ function createAniNeko(ctx, customBaseURL) {
         // Genres — links inside genre section
         info.genres = [];
         $('a[href*="/browse"][href*="genre"]').each((_, el) => {
-            var _a;
             const g = $(el).text().trim();
             if (g)
-                (_a = info.genres) === null || _a === void 0 ? void 0 : _a.push(g);
+                info.genres?.push(g);
         });
         // SUB / DUB / HSUB detection from episode badges
         let hasSub = false;
@@ -250,7 +241,6 @@ function createAniNeko(ctx, customBaseURL) {
         // Episodes
         info.episodes = [];
         $('div.nv-info-episode-grid article.nv-info-episode-item, .episode-item').each((_, el) => {
-            var _a;
             const item = $(el);
             // Links: watch href = /watch/{slug}/ep-{n}, download href = /download/{slug}/ep-{n}
             const watchHref = item.find('a[href*="/watch/"]').attr('href') || item.find('a').first().attr('href') || '';
@@ -266,7 +256,7 @@ function createAniNeko(ctx, customBaseURL) {
             const isDubbed = badgeText.includes('dub');
             const titleEl = item.find('[class*="title"], span').first();
             const title = titleEl.text().trim() || `Episode ${number}`;
-            (_a = info.episodes) === null || _a === void 0 ? void 0 : _a.push({
+            info.episodes?.push({
                 id: epId,
                 number,
                 title,
@@ -277,12 +267,12 @@ function createAniNeko(ctx, customBaseURL) {
         });
         info.totalEpisodes = info.episodes.length;
         return info;
-    });
+    };
     // ── Servers ────────────────────────────────────────────────────────────────
-    const fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = SubOrDubEnum.SUB) {
+    const fetchEpisodeServers = async (episodeId, subOrDub = SubOrDubEnum.SUB) => {
         // episodeId = "{slug}/ep-{n}"  or  a full URL (passthrough)
         const url = episodeId.startsWith('http') ? episodeId : `${baseUrl}/watch/${episodeId}`;
-        const { data: html } = yield axios.get(url, { headers: hdrs(`${baseUrl}/`) });
+        const { data: html } = await axios.get(url, { headers: hdrs(`${baseUrl}/`) });
         const $ = load(html);
         const servers = [];
         const seen = new Set();
@@ -298,8 +288,7 @@ function createAniNeko(ctx, customBaseURL) {
         const panelIds = subOrDub === SubOrDubEnum.DUB ? ['dub'] : ['hsub', 'sub'];
         for (const panelId of panelIds) {
             $(`div.lang-group[data-id="${panelId}"] button.server-video[data-video]`).each((_, btn) => {
-                var _a;
-                const embedUrl = (_a = $(btn).attr('data-video')) === null || _a === void 0 ? void 0 : _a.trim();
+                const embedUrl = $(btn).attr('data-video')?.trim();
                 if (!embedUrl)
                     return;
                 // Server name: button text excluding child <span>
@@ -323,7 +312,7 @@ function createAniNeko(ctx, customBaseURL) {
             });
         }
         return servers;
-    });
+    };
     // ── Sources ────────────────────────────────────────────────────────────────
     /**
      * Pick the right extractor based on the embed URL domain.
@@ -334,16 +323,15 @@ function createAniNeko(ctx, customBaseURL) {
      *   playmogo.com / dood.*                                → StreamTape (closest available)
      *   fallback                                              → VidHide
      */
-    const extractFromUrl = (embedUrl, pageUrl) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+    const extractFromUrl = async (embedUrl, pageUrl) => {
         const domain = new PolyURL(embedUrl).hostname.toLowerCase();
         // Vivibebe / vibevibe / bibiemb — direct M3U8 via regex
         if (domain.includes('vivibebe') || domain.includes('vibevibe') || domain.includes('bibiemb')) {
-            const { data: pageHtml } = yield axios.get(embedUrl, {
+            const { data: pageHtml } = await axios.get(embedUrl, {
                 headers: { 'User-Agent': UA, 'Referer': pageUrl },
             });
             const m3u8Match = pageHtml.match(/const\s+src\s*=\s*"([^"]+\.m3u8[^"]*)"/);
-            if (!(m3u8Match === null || m3u8Match === void 0 ? void 0 : m3u8Match[1]))
+            if (!m3u8Match?.[1])
                 throw new Error(`[AniNeko] Could not find M3U8 in ${domain}`);
             // Extract subtitles from URL params (sub, caption_1, c1_file, sub_1)
             const subUrl = new PolyURL(embedUrl).searchParams.get('sub') ||
@@ -361,37 +349,37 @@ function createAniNeko(ctx, customBaseURL) {
         }
         // Doodstream / playmogo — extract direct mp4 link via regex (no context extractor available)
         if (domain.includes('dood') || domain.includes('playmogo')) {
-            const { data: doodHtml } = yield axios.get(embedUrl, {
+            const { data: doodHtml } = await axios.get(embedUrl, {
                 headers: { 'User-Agent': UA, 'Referer': pageUrl },
             });
-            const mp4 = ((_a = doodHtml.match(/source\s+src="([^"]+\.mp4[^"]*)"/)) === null || _a === void 0 ? void 0 : _a[1]) || ((_b = doodHtml.match(/file:\s*["']([^"']+)["']/)) === null || _b === void 0 ? void 0 : _b[1]);
+            const mp4 = doodHtml.match(/source\s+src="([^"]+\.mp4[^"]*)"/)?.[1] || doodHtml.match(/file:\s*["']([^"']+)["']/)?.[1];
             if (!mp4)
                 throw new Error(`[AniNeko] Could not extract source from ${domain}`);
             return { sources: [{ url: mp4, isM3U8: false, quality: 'auto' }], subtitles: [] };
         }
         // OtakuHG / OtakuVid / default — VidHide
         return VidHide(ctx).extract(new PolyURL(embedUrl), pageUrl);
-    });
-    const fetchEpisodeSources = (episodeId_1, server_1, ...args_1) => __awaiter(this, [episodeId_1, server_1, ...args_1], void 0, function* (episodeId, server, subOrDub = SubOrDubEnum.SUB) {
-        var _a, _b;
+    };
+    const fetchEpisodeSources = async (episodeId, server, subOrDub = SubOrDubEnum.SUB) => {
         // Direct embed URL passthrough
         if (episodeId.startsWith('http')) {
             return extractFromUrl(episodeId, baseUrl);
         }
         const watchUrl = `${baseUrl}/watch/${episodeId}`;
-        const servers = yield fetchEpisodeServers(episodeId, subOrDub);
+        const servers = await fetchEpisodeServers(episodeId, subOrDub);
         if (servers.length === 0) {
             throw new Error(`[AniNeko] No servers found for episode ${episodeId}`);
         }
         // Server selection: match by server enum value (e.g. 'vidhide' matches 'hd-1-hardsub' via host name)
         // Prefer server param match, fall back to first available
-        const serverLower = (_a = server === null || server === void 0 ? void 0 : server.toLowerCase()) !== null && _a !== void 0 ? _a : '';
-        const picked = (_b = servers.find((s) => s.name.includes(serverLower))) !== null && _b !== void 0 ? _b : servers[0];
+        const serverLower = server?.toLowerCase() ?? '';
+        const picked = servers.find((s) => s.name.includes(serverLower)) ?? servers[0];
         if (!picked.url)
             throw new Error(`[AniNeko] No embed URL for server "${picked.name}"`);
         return extractFromUrl(picked.url, watchUrl);
-    });
-    return Object.assign(Object.assign({}, config), { 
+    };
+    return {
+        ...config,
         // filter constants — consumers can use these for UI filter pickers
         GENRES,
         TYPES,
@@ -406,7 +394,8 @@ function createAniNeko(ctx, customBaseURL) {
         genreSearch,
         fetchAnimeInfo,
         fetchEpisodeServers,
-        fetchEpisodeSources });
+        fetchEpisodeSources,
+    };
 }
 exports.default = createAniNeko;
 //# sourceMappingURL=create-anineko.js.map

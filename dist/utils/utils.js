@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterValidM3U8 = exports.getHashFromImage = exports.substringBeforeLast = exports.substringAfterLast = exports.substringBefore = exports.substringAfter = exports.calculateStringSimilarity = exports.isJson = exports.getDays = exports.capitalizeFirstLetter = exports.range = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.ANIFY_URL = exports.days = exports.USER_AGENT = void 0;
 exports.convertDuration = convertDuration;
@@ -46,7 +37,7 @@ const splitAuthor = (authors) => {
 exports.splitAuthor = splitAuthor;
 const floorID = (id) => {
     let imp = '';
-    for (let i = 0; i < (id === null || id === void 0 ? void 0 : id.length) - 3; i++) {
+    for (let i = 0; i < id?.length - 3; i++) {
         imp += id[i];
     }
     const idV = parseInt(imp);
@@ -88,7 +79,7 @@ const genElement = (s, e) => {
 exports.genElement = genElement;
 const range = ({ from = 0, to = 0, step = 1, length = Math.ceil((to - from) / step) }) => Array.from({ length }, (_, i) => from + i * step);
 exports.range = range;
-const capitalizeFirstLetter = (s) => (s === null || s === void 0 ? void 0 : s.charAt(0).toUpperCase()) + s.slice(1);
+const capitalizeFirstLetter = (s) => s?.charAt(0).toUpperCase() + s.slice(1);
 exports.capitalizeFirstLetter = capitalizeFirstLetter;
 const getDays = (day1, day2) => {
     const day1Index = constants_2.days.indexOf((0, exports.capitalizeFirstLetter)(day1)) - 1;
@@ -177,7 +168,7 @@ exports.substringBeforeLast = substringBeforeLast;
 //   return blurhash.encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
 // };
 const getHashFromImage = (url) => {
-    if ((url === null || url === void 0 ? void 0 : url.length) === 0) {
+    if (url?.length === 0) {
         return '';
     }
     else {
@@ -190,25 +181,24 @@ exports.getHashFromImage = getHashFromImage;
 // Function to find similar titles
 function findSimilarTitles(inputTitle, titles) {
     const results = [];
-    titles === null || titles === void 0 ? void 0 : titles.forEach((titleObj) => {
-        const input = cleanTitle((inputTitle === null || inputTitle === void 0 ? void 0 : inputTitle.toLowerCase()) || '');
-        const candidateTitles = [titleObj === null || titleObj === void 0 ? void 0 : titleObj.title, titleObj === null || titleObj === void 0 ? void 0 : titleObj.japaneseTitle].filter((t) => typeof t === 'string' && t.trim().length > 0);
+    titles?.forEach((titleObj) => {
+        const input = cleanTitle(inputTitle?.toLowerCase() || '');
+        const candidateTitles = [titleObj?.title, titleObj?.japaneseTitle].filter((t) => typeof t === 'string' && t.trim().length > 0);
         const bestSimilarity = candidateTitles
-            .map((candidate) => {
-            var _a;
-            return (0, string_similarity_1.compareTwoStrings)(input, cleanTitle(((_a = candidate === null || candidate === void 0 ? void 0 : candidate.toLowerCase()) === null || _a === void 0 ? void 0 : _a.replace(/\([^\)]*\)/g, '').trim()) || ''));
-        })
+            .map((candidate) => (0, string_similarity_1.compareTwoStrings)(input, cleanTitle(candidate
+            ?.toLowerCase()
+            ?.replace(/\([^\)]*\)/g, '')
+            .trim() || '')))
             .reduce((max, val) => (val > max ? val : max), 0);
         const similarity = bestSimilarity;
         if (similarity > 0.6) {
-            results.push(Object.assign(Object.assign({}, titleObj), { similarity }));
+            results.push({ ...titleObj, similarity });
         }
     });
     const getSubCount = (result) => {
-        var _a;
-        if (typeof ((_a = result === null || result === void 0 ? void 0 : result.episodes) === null || _a === void 0 ? void 0 : _a.sub) === 'number')
+        if (typeof result?.episodes?.sub === 'number')
             return result.episodes.sub;
-        if (typeof (result === null || result === void 0 ? void 0 : result.sub) === 'number')
+        if (typeof result?.sub === 'number')
             return result.sub;
         return 0;
     };
@@ -304,19 +294,22 @@ function stringSearch(string, pattern) {
     }
     return count;
 }
-const filterValidM3U8 = (m3u8Links_1, ...args_1) => __awaiter(void 0, [m3u8Links_1, ...args_1], void 0, function* (m3u8Links, options = {}) {
+const filterValidM3U8 = async (m3u8Links, options = {}) => {
     const { timeout = 10000, headers = {}, indicators = ['#EXT', '#EXTINF', '#EXT-X-', '#EXTM3U'], concurrency = 10, } = options;
     const validLinks = [];
     let index = 0;
-    const next = () => __awaiter(void 0, void 0, void 0, function* () {
+    const next = async () => {
         while (index < m3u8Links.length) {
             const currentIndex = index++;
             const url = m3u8Links[currentIndex];
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
             try {
-                const response = yield fetch(url, {
-                    headers: Object.assign({ 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }, headers),
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        ...headers,
+                    },
                     signal: controller.signal,
                 });
                 clearTimeout(timeoutId);
@@ -330,7 +323,7 @@ const filterValidM3U8 = (m3u8Links_1, ...args_1) => __awaiter(void 0, [m3u8Links
                     // console.info(`⚠️ Skipping non-M3U8 type: ${url}`);
                     continue;
                 }
-                const content = yield response.text();
+                const content = await response.text();
                 if (indicators.some((ind) => content.includes(ind))) {
                     validLinks.push(url);
                 }
@@ -344,10 +337,10 @@ const filterValidM3U8 = (m3u8Links_1, ...args_1) => __awaiter(void 0, [m3u8Links
                 // console.warn(`⚠️ Failed to validate M3U8 (${url}): ${reason}`);
             }
         }
-    });
+    };
     // Run N concurrent validators
-    yield Promise.all(Array.from({ length: concurrency }, () => next()));
+    await Promise.all(Array.from({ length: concurrency }, () => next()));
     return validLinks;
-});
+};
 exports.filterValidM3U8 = filterValidM3U8;
 //# sourceMappingURL=utils.js.map

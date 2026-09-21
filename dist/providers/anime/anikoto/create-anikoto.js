@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 function createAniKoto(ctx, customBaseURL) {
     const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
@@ -28,14 +19,18 @@ function createAniKoto(ctx, customBaseURL) {
     const defaultHeaders = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
-    const ajaxHeaders = (referer) => (Object.assign(Object.assign({}, defaultHeaders), { 'X-Requested-With': 'XMLHttpRequest', 'Referer': referer || config.baseUrl }));
+    const ajaxHeaders = (referer) => ({
+        ...defaultHeaders,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Referer': referer || config.baseUrl,
+    });
     const normalizePageNumber = (page) => {
         return page <= 0 ? 1 : page;
     };
     // Helper to scrape card lists across search, types, genres, statuses
-    const scrapeCardPage = (url_1, ...args_1) => __awaiter(this, [url_1, ...args_1], void 0, function* (url, page = 1) {
+    const scrapeCardPage = async (url, page = 1) => {
         try {
-            const { data } = yield axios.get(url, { headers: defaultHeaders });
+            const { data } = await axios.get(url, { headers: defaultHeaders });
             const $ = load(data);
             const results = [];
             $('.item').each((_, el) => {
@@ -83,13 +78,13 @@ function createAniKoto(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`[AniKoto] Failed to scrape card page: ${err.message}`);
         }
-    });
+    };
     // Main provider functions
-    const search = (query_1, ...args_1) => __awaiter(this, [query_1, ...args_1], void 0, function* (query, page = 1) {
+    const search = async (query, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchAdvancedSearch = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1, type, status, rated, score, season, language, _startDate, _endDate, sort, genres) {
+    };
+    const fetchAdvancedSearch = async (page = 1, type, status, rated, score, season, language, _startDate, _endDate, sort, genres) => {
         const normalizedPage = normalizePageNumber(page);
         const params = new URLSearchParams();
         params.set('page', String(normalizedPage));
@@ -113,70 +108,70 @@ function createAniKoto(ctx, customBaseURL) {
             }
         }
         return scrapeCardPage(`${config.baseUrl}/filter?${params.toString()}`, normalizedPage);
-    });
-    const fetchTopAiring = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTopAiring = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/status/currently-airing?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchMostPopular = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMostPopular = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/most-viewed?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchMostFavorite = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMostFavorite = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/filter?sort=most_favorite&page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchLatestCompleted = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchLatestCompleted = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/status/finished-airing?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchRecentlyUpdated = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyUpdated = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/latest-updated?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchRecentlyAdded = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchRecentlyAdded = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/new-release?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchTopUpcoming = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTopUpcoming = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/status/not-yet-aired?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchStudio = (studioId_1, ...args_1) => __awaiter(this, [studioId_1, ...args_1], void 0, function* (studioId, page = 1) {
+    };
+    const fetchStudio = async (studioId, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/studio/${studioId}?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchSubbedAnime = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchSubbedAnime = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/filter?language=1&page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchDubbedAnime = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchDubbedAnime = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/filter?language=2&page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchMovie = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchMovie = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/type/movie?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchTV = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchTV = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/type/tv?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchOVA = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchOVA = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/type/ova?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchONA = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchONA = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/type/ona?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchSpecial = (...args_1) => __awaiter(this, [...args_1], void 0, function* (page = 1) {
+    };
+    const fetchSpecial = async (page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         return scrapeCardPage(`${config.baseUrl}/type/special?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchGenres = () => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchGenres = async () => {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
+            const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
             const $ = load(data);
             const genres = [];
             $('a[href*="/genre/"]').each((_, el) => {
@@ -201,7 +196,7 @@ function createAniKoto(ctx, customBaseURL) {
                     'Supernatural',
                 ];
         }
-        catch (_a) {
+        catch {
             return [
                 'Action',
                 'Adventure',
@@ -216,19 +211,18 @@ function createAniKoto(ctx, customBaseURL) {
                 'Supernatural',
             ];
         }
-    });
-    const genreSearch = (genre_1, ...args_1) => __awaiter(this, [genre_1, ...args_1], void 0, function* (genre, page = 1) {
+    };
+    const genreSearch = async (genre, page = 1) => {
         const normalizedPage = normalizePageNumber(page);
         const cleanGenre = genre.toLowerCase().replace(/\s+/g, '-');
         return scrapeCardPage(`${config.baseUrl}/genre/${cleanGenre}?page=${normalizedPage}`, normalizedPage);
-    });
-    const fetchSchedule = (date) => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    };
+    const fetchSchedule = async (date) => {
         try {
-            const res = yield axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
+            const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
                 headers: ajaxHeaders(),
             });
-            const html = ((_a = res.data) === null || _a === void 0 ? void 0 : _a.result) || res.data;
+            const html = res.data?.result || res.data;
             const $ = load(html);
             const results = [];
             $('a.item').each((_, el) => {
@@ -254,10 +248,10 @@ function createAniKoto(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`[AniKoto] Failed to fetch schedule: ${err.message}`);
         }
-    });
-    const fetchSpotlight = () => __awaiter(this, void 0, void 0, function* () {
+    };
+    const fetchSpotlight = async () => {
         try {
-            const { data } = yield axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
+            const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
             const $ = load(data);
             const results = [];
             $('.swiper-slide.item').each((_, el) => {
@@ -285,14 +279,13 @@ function createAniKoto(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`[AniKoto] Failed to fetch spotlight: ${err.message}`);
         }
-    });
-    const fetchSearchSuggestions = (query) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+    };
+    const fetchSearchSuggestions = async (query) => {
         try {
-            const res = yield axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
+            const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
                 headers: ajaxHeaders(),
             });
-            const html = ((_b = (_a = res.data) === null || _a === void 0 ? void 0 : _a.result) === null || _b === void 0 ? void 0 : _b.html) || ((_c = res.data) === null || _c === void 0 ? void 0 : _c.result) || res.data;
+            const html = res.data?.result?.html || res.data?.result || res.data;
             const $ = load(html);
             const suggestions = [];
             $('a.item').each((_, el) => {
@@ -315,19 +308,18 @@ function createAniKoto(ctx, customBaseURL) {
             });
             return suggestions;
         }
-        catch (_d) {
+        catch {
             return [];
         }
-    });
-    const fetchAnimeInfo = (id) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+    };
+    const fetchAnimeInfo = async (id) => {
         try {
             const animeSlug = id.replace(/^\/watch\//, '').replace(/\/.*$/, '');
             const watchUrl = `${config.baseUrl}/watch/${animeSlug}`;
-            const { data: pageHtml } = yield axios.get(watchUrl, { headers: defaultHeaders });
+            const { data: pageHtml } = await axios.get(watchUrl, { headers: defaultHeaders });
             const $ = load(pageHtml);
             const title = $('#w-info .title.d-title, h1.title').first().text().trim();
-            const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') || ((_a = $('#w-info .names').text().split(';')[1]) === null || _a === void 0 ? void 0 : _a.trim()) || title;
+            const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
             const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
             const description = $('#w-info .synopsis .content, .synopsis')
                 .text()
@@ -407,10 +399,10 @@ function createAniKoto(ctx, customBaseURL) {
             const episodes = [];
             if (dataId) {
                 try {
-                    const epRes = yield axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
+                    const epRes = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
                         headers: ajaxHeaders(watchUrl),
                     });
-                    const epHtml = ((_b = epRes.data) === null || _b === void 0 ? void 0 : _b.result) || epRes.data;
+                    const epHtml = epRes.data?.result || epRes.data;
                     const $ep = load(epHtml);
                     $ep('li').each((_, li) => {
                         const listItem = $ep(li);
@@ -435,7 +427,7 @@ function createAniKoto(ctx, customBaseURL) {
                         }
                     });
                 }
-                catch (_c) {
+                catch {
                     // Keep empty episodes if request fails
                 }
             }
@@ -461,16 +453,15 @@ function createAniKoto(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`[AniKoto] Failed to fetch anime info: ${err.message}`);
         }
-    });
-    const fetchEpisodeServers = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, subOrDub = SubOrDubEnum.SUB) {
-        var _a, _b;
+    };
+    const fetchEpisodeServers = async (episodeId, subOrDub = SubOrDubEnum.SUB) => {
         try {
             const dataIds = episodeId.includes('$episode$') ? episodeId.split('$episode$')[1] : episodeId;
             const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
-            const res = yield axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
+            const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
                 headers: ajaxHeaders(),
             });
-            const html = ((_a = res.data) === null || _a === void 0 ? void 0 : _a.result) || res.data;
+            const html = res.data?.result || res.data;
             const $ = load(html);
             const rawServers = [];
             let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
@@ -490,8 +481,8 @@ function createAniKoto(ctx, customBaseURL) {
             const servers = [];
             for (const s of rawServers) {
                 try {
-                    const { data: linkData } = yield axios.get(`${config.baseUrl}/ajax/server?get=${encodeURIComponent(s.linkId)}`, { headers: ajaxHeaders() });
-                    const embedUrl = (_b = linkData === null || linkData === void 0 ? void 0 : linkData.result) === null || _b === void 0 ? void 0 : _b.url;
+                    const { data: linkData } = await axios.get(`${config.baseUrl}/ajax/server?get=${encodeURIComponent(s.linkId)}`, { headers: ajaxHeaders() });
+                    const embedUrl = linkData?.result?.url;
                     if (embedUrl) {
                         servers.push({
                             name: `megaplay-${s.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`,
@@ -499,7 +490,7 @@ function createAniKoto(ctx, customBaseURL) {
                         });
                     }
                 }
-                catch (_c) {
+                catch {
                     // Continue to next server
                 }
             }
@@ -508,30 +499,38 @@ function createAniKoto(ctx, customBaseURL) {
         catch (err) {
             throw new Error(`[AniKoto] Failed to fetch episode servers: ${err.message}`);
         }
-    });
-    const fetchEpisodeSources = (episodeId_1, ...args_1) => __awaiter(this, [episodeId_1, ...args_1], void 0, function* (episodeId, server = StreamingServersEnum.MegaPlay, subOrDub = SubOrDubEnum.SUB) {
+    };
+    const fetchEpisodeSources = async (episodeId, server = StreamingServersEnum.MegaPlay, subOrDub = SubOrDubEnum.SUB) => {
         if (episodeId.startsWith('http')) {
             const serverUrl = new PolyURL(episodeId);
             switch (server) {
                 case StreamingServersEnum.MegaPlay:
                 default:
-                    return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaPlay().extract(serverUrl, config.baseUrl)));
+                    return {
+                        headers: { Referer: serverUrl.href },
+                        ...(await MegaPlay().extract(serverUrl, config.baseUrl)),
+                    };
             }
         }
         try {
-            const servers = yield fetchEpisodeServers(episodeId, subOrDub);
+            const servers = await fetchEpisodeServers(episodeId, subOrDub);
             if (!servers.length) {
                 throw new Error(`[AniKoto] No servers available for episode: ${episodeId}`);
             }
             const matchedServer = servers.find((s) => s.name.toLowerCase().includes(String(server).toLowerCase())) || servers[0];
             const serverUrl = new PolyURL(matchedServer.url);
-            return Object.assign({ headers: { Referer: serverUrl.href } }, (yield MegaPlay().extract(serverUrl, config.baseUrl)));
+            return {
+                headers: { Referer: serverUrl.href },
+                ...(await MegaPlay().extract(serverUrl, config.baseUrl)),
+            };
         }
         catch (err) {
             throw new Error(`[AniKoto] Failed to fetch episode sources: ${err.message}`);
         }
-    });
-    return Object.assign(Object.assign({}, config), { search,
+    };
+    return {
+        ...config,
+        search,
         fetchAdvancedSearch,
         fetchTopAiring,
         fetchMostPopular,
@@ -555,7 +554,8 @@ function createAniKoto(ctx, customBaseURL) {
         fetchSearchSuggestions,
         fetchAnimeInfo,
         fetchEpisodeServers,
-        fetchEpisodeSources });
+        fetchEpisodeSources,
+    };
 }
 exports.default = createAniKoto;
 //# sourceMappingURL=create-anikoto.js.map

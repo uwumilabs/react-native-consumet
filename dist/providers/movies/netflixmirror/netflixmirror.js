@@ -5,8 +5,15 @@ const utils_1 = require("../../../utils");
 const create_netflixmirror_1 = require("./create-netflixmirror");
 // Backward compatibility wrapper class
 class NetflixMirror extends models_1.MovieParser {
+    instance;
+    logo;
+    name;
+    baseUrl;
+    classPath;
+    supportedTypes;
+    isNSFW;
+    isWorking;
     constructor(customBaseURL) {
-        var _a;
         super();
         // Use the context factory to create a complete context with all defaults
         const defaultContext = (0, utils_1.createProviderContext)();
@@ -17,7 +24,7 @@ class NetflixMirror extends models_1.MovieParser {
         this.classPath = this.instance.classPath;
         this.supportedTypes = this.instance.supportedTypes;
         this.isNSFW = this.instance.isNSFW;
-        this.isWorking = (_a = this.instance.isWorking) !== null && _a !== void 0 ? _a : true;
+        this.isWorking = this.instance.isWorking ?? true;
         // Bind all methods to preserve proper typing
         this.search = this.instance.search;
         this.fetchMediaInfo = this.instance.fetchMediaInfo;
@@ -25,6 +32,11 @@ class NetflixMirror extends models_1.MovieParser {
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
         this.fetchHlsPlaylist = this.instance.fetchHlsPlaylist;
     }
+    search;
+    fetchMediaInfo;
+    fetchEpisodeSources;
+    fetchEpisodeServers;
+    fetchHlsPlaylist;
 }
 exports.default = NetflixMirror;
 //# sourceMappingURL=netflixmirror.js.map

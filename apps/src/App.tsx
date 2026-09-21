@@ -18,7 +18,7 @@ export default function App() {
 
   return (
     <View style={S.root}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} translucent={false} />
+      <StatusBar barStyle="light-content" />
 
       {/* Screen area — keep all mounted so state survives tab switches */}
       <View style={[S.screen, tab !== 'anime' && S.hidden]}>

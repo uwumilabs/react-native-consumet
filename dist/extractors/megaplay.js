@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaPlay = MegaPlay;
 const MEGA_KEY_STR = 'i?LMTAx0Q6,:}50U';
@@ -52,12 +43,11 @@ function MegaPlay(ctx) {
             const decrypted = megaPlayDecrypt(m[1]);
             return decrypted || raw;
         }
-        catch (_a) {
+        catch {
             return raw;
         }
     }
     function extractStreamUrl(data) {
-        var _a, _b, _c, _d;
         if (!data || typeof data !== 'object')
             return null;
         // ── Case 1: encrypted payload  { enc: "base64url…" } ──────────────────
@@ -68,13 +58,13 @@ function MegaPlay(ctx) {
                     // Decrypted value might be JSON: { sources: [{ file: "..." }] }
                     try {
                         const parsed = JSON.parse(plain);
-                        const url = (typeof ((_a = parsed === null || parsed === void 0 ? void 0 : parsed.sources) === null || _a === void 0 ? void 0 : _a.file) === 'string' ? parsed.sources.file : null) ||
-                            (Array.isArray(parsed === null || parsed === void 0 ? void 0 : parsed.sources) && ((_b = parsed.sources[0]) === null || _b === void 0 ? void 0 : _b.file) ? String(parsed.sources[0].file) : null) ||
-                            (typeof (parsed === null || parsed === void 0 ? void 0 : parsed.file) === 'string' ? parsed.file : null);
+                        const url = (typeof parsed?.sources?.file === 'string' ? parsed.sources.file : null) ||
+                            (Array.isArray(parsed?.sources) && parsed.sources[0]?.file ? String(parsed.sources[0].file) : null) ||
+                            (typeof parsed?.file === 'string' ? parsed.file : null);
                         if (url)
                             return resolveSegmentUrl(url);
                     }
-                    catch (_e) {
+                    catch {
                         // not JSON — fall through and treat as raw URL
                     }
                     if (/^https?:\/\//i.test(plain) || plain.includes('.m3u8')) {
@@ -82,19 +72,18 @@ function MegaPlay(ctx) {
                     }
                 }
             }
-            catch (_f) {
+            catch {
                 // decrypt failed — fall through to plain sources
             }
         }
         // ── Case 2: plain / segment-token sources ──────────────────────────────
-        const rawUrl = (typeof ((_c = data === null || data === void 0 ? void 0 : data.sources) === null || _c === void 0 ? void 0 : _c.file) === 'string' ? data.sources.file : null) ||
-            (Array.isArray(data === null || data === void 0 ? void 0 : data.sources) && ((_d = data.sources[0]) === null || _d === void 0 ? void 0 : _d.file) ? String(data.sources[0].file) : null);
+        const rawUrl = (typeof data?.sources?.file === 'string' ? data.sources.file : null) ||
+            (Array.isArray(data?.sources) && data.sources[0]?.file ? String(data.sources[0].file) : null);
         if (rawUrl)
             return resolveSegmentUrl(rawUrl);
         return null;
     }
-    const extract = (videoUrl, referer) => __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g;
+    const extract = async (videoUrl, referer) => {
         const embedHref = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
         const urlObj = typeof videoUrl === 'object' && videoUrl.origin ? videoUrl : new (ctx.PolyURL || URL)(embedHref);
         const origin = urlObj.origin || 'https://megaplay.buzz';
@@ -102,14 +91,14 @@ function MegaPlay(ctx) {
         // ── Collect cookies across requests so the video player can send them ────
         const cookieJar = [];
         const parseCookies = (headers) => {
-            const raw = headers === null || headers === void 0 ? void 0 : headers['set-cookie'];
+            const raw = headers?.['set-cookie'];
             if (!raw)
                 return [];
             const arr = Array.isArray(raw) ? raw : [raw];
             // Keep only the name=value part (strip path/domain/etc.)
-            return arr.map((c) => { var _a; return (_a = c.split(';')[0]) !== null && _a !== void 0 ? _a : ''; }).filter(Boolean);
+            return arr.map((c) => c.split(';')[0] ?? '').filter(Boolean);
         };
-        const pageRes = yield client.get(embedHref, {
+        const pageRes = await client.get(embedHref, {
             headers: {
                 'User-Agent': userAgent,
                 'Referer': pageReferer,
@@ -126,22 +115,29 @@ function MegaPlay(ctx) {
         if (!mediaId) {
             throw new Error('[MegaPlay] Could not find data-id on player element');
         }
-        const sParam = (_a = urlObj.searchParams) === null || _a === void 0 ? void 0 : _a.get('s');
+        const sParam = urlObj.searchParams?.get('s');
         const sQuery = sParam ? `&s=${encodeURIComponent(sParam)}` : '';
         const cookieHeader = () => cookieJar.join('; ');
-        const ajaxHeaders = () => (Object.assign({ 'X-Requested-With': 'XMLHttpRequest', 'Referer': `${origin}/`, 'Origin': origin, 'User-Agent': userAgent, 'Accept': 'application/json, text/javascript, */*; q=0.01' }, (cookieJar.length ? { Cookie: cookieHeader() } : {})));
-        const fetchJson = (url) => __awaiter(this, void 0, void 0, function* () {
+        const ajaxHeaders = () => ({
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': `${origin}/`,
+            'Origin': origin,
+            'User-Agent': userAgent,
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            ...(cookieJar.length ? { Cookie: cookieHeader() } : {}),
+        });
+        const fetchJson = async (url) => {
             try {
-                const res = yield client.get(url, { headers: ajaxHeaders() });
+                const res = await client.get(url, { headers: ajaxHeaders() });
                 cookieJar.push(...parseCookies(res.headers));
                 const data = res.data;
                 return typeof data === 'string' ? JSON.parse(data) : data;
             }
-            catch (_a) {
+            catch {
                 return null;
             }
-        });
-        const [defSourcesJson, newSourcesJson] = yield Promise.all([
+        };
+        const [defSourcesJson, newSourcesJson] = await Promise.all([
             fetchJson(`${origin}/stream/getSources?id=${mediaId}${sQuery}`),
             fetchJson(`${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`),
         ]);
@@ -155,7 +151,7 @@ function MegaPlay(ctx) {
         const defaultSource = { url: cleanStreamUrl, isM3U8, quality: 'auto' };
         if (isM3U8) {
             try {
-                const { data: m3u8Data } = yield client.get(cleanStreamUrl, {
+                const { data: m3u8Data } = await client.get(cleanStreamUrl, {
                     headers: { 'Referer': `${origin}/`, 'User-Agent': userAgent },
                 });
                 if (typeof m3u8Data === 'string' && m3u8Data.includes('#EXT-X-STREAM-INF')) {
@@ -163,11 +159,11 @@ function MegaPlay(ctx) {
                     const streamBasePath = cleanStreamUrl.substring(0, cleanStreamUrl.lastIndexOf('/'));
                     const streamOrigin = new (ctx.PolyURL || URL)(cleanStreamUrl).origin;
                     for (let i = 0; i < lines.length; i++) {
-                        const line = (_b = lines[i]) === null || _b === void 0 ? void 0 : _b.trim();
-                        if (line === null || line === void 0 ? void 0 : line.startsWith('#EXT-X-STREAM-INF')) {
+                        const line = lines[i]?.trim();
+                        if (line?.startsWith('#EXT-X-STREAM-INF')) {
                             const resMatch = line.match(/RESOLUTION=\d+x(\d+)/);
                             const quality = resMatch ? `${resMatch[1]}p` : `quality_${extractedSources.length + 1}`;
-                            const next = (_c = lines[i + 1]) === null || _c === void 0 ? void 0 : _c.trim();
+                            const next = lines[i + 1]?.trim();
                             if (next && !next.startsWith('#')) {
                                 const variantUrl = next.startsWith('http://') || next.startsWith('https://')
                                     ? next
@@ -180,16 +176,16 @@ function MegaPlay(ctx) {
                     }
                 }
             }
-            catch (_h) {
+            catch {
                 // variants fetch failed — defaultSource will be used
             }
         }
         const finalSources = extractedSources.length > 0 ? [...extractedSources, defaultSource] : [defaultSource];
-        const tracks = (_e = (_d = defSourcesJson === null || defSourcesJson === void 0 ? void 0 : defSourcesJson.tracks) !== null && _d !== void 0 ? _d : newSourcesJson === null || newSourcesJson === void 0 ? void 0 : newSourcesJson.tracks) !== null && _e !== void 0 ? _e : [];
+        const tracks = defSourcesJson?.tracks ?? newSourcesJson?.tracks ?? [];
         const subtitles = [];
         if (Array.isArray(tracks)) {
             for (const track of tracks) {
-                if (track === null || track === void 0 ? void 0 : track.file) {
+                if (track?.file) {
                     subtitles.push({
                         url: String(track.file).replace(/\\/g, ''),
                         lang: track.label || track.kind || 'English',
@@ -197,8 +193,8 @@ function MegaPlay(ctx) {
                 }
             }
         }
-        const intro = (_f = defSourcesJson === null || defSourcesJson === void 0 ? void 0 : defSourcesJson.intro) !== null && _f !== void 0 ? _f : newSourcesJson === null || newSourcesJson === void 0 ? void 0 : newSourcesJson.intro;
-        const outro = (_g = defSourcesJson === null || defSourcesJson === void 0 ? void 0 : defSourcesJson.outro) !== null && _g !== void 0 ? _g : newSourcesJson === null || newSourcesJson === void 0 ? void 0 : newSourcesJson.outro;
+        const intro = defSourcesJson?.intro ?? newSourcesJson?.intro;
+        const outro = defSourcesJson?.outro ?? newSourcesJson?.outro;
         // Build player headers — these must be sent with every HLS request.
         // The CDN (fetch.nexabloom.top) is IP-bound: the URL is generated for the
         // requesting IP, so extraction and playback must share the same IP.
@@ -218,7 +214,7 @@ function MegaPlay(ctx) {
             outro: outro ? { start: outro.start, end: outro.end } : undefined,
             embedURL: embedHref,
         };
-    });
+    };
     return { serverName, sources, extract };
 }
 exports.default = MegaPlay;

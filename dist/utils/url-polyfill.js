@@ -53,7 +53,6 @@ function encodeComponent(str, allow = /[A-Za-z0-9\-._~]/) {
     return out;
 }
 function decodePercentEncoded(str) {
-    var _a, _b, _c, _d, _e, _f;
     // decode percent-encoded UTF-8 sequences
     try {
         // Replace + with %2B so decodeURIComponent doesn't convert + to space (we treat + literally)
@@ -86,20 +85,20 @@ function decodePercentEncoded(str) {
                 i++;
             }
             else if (b >= 0xc0 && b < 0xe0) {
-                const b2 = (_a = bytes[i + 1]) !== null && _a !== void 0 ? _a : 0x80;
+                const b2 = bytes[i + 1] ?? 0x80;
                 const code = ((b & 0x1f) << 6) | (b2 & 0x3f);
                 res += String.fromCharCode(code);
                 i += 2;
             }
             else if (b >= 0xe0 && b < 0xf0) {
-                const b2 = (_b = bytes[i + 1]) !== null && _b !== void 0 ? _b : 0x80;
-                const b3 = (_c = bytes[i + 2]) !== null && _c !== void 0 ? _c : 0x80;
+                const b2 = bytes[i + 1] ?? 0x80;
+                const b3 = bytes[i + 2] ?? 0x80;
                 const code = ((b & 0x0f) << 12) | ((b2 & 0x3f) << 6) | (b3 & 0x3f);
                 res += String.fromCharCode(code);
                 i += 3;
             }
             else if (b >= 0xf0) {
-                const b2 = (_d = bytes[i + 1]) !== null && _d !== void 0 ? _d : 0x80, b3 = (_e = bytes[i + 2]) !== null && _e !== void 0 ? _e : 0x80, b4 = (_f = bytes[i + 3]) !== null && _f !== void 0 ? _f : 0x80;
+                const b2 = bytes[i + 1] ?? 0x80, b3 = bytes[i + 2] ?? 0x80, b4 = bytes[i + 3] ?? 0x80;
                 const codePoint = ((b & 7) << 18) | ((b2 & 0x3f) << 12) | ((b3 & 0x3f) << 6) | (b4 & 0x3f);
                 const cp = codePoint - 0x10000;
                 res += String.fromCharCode(0xd800 + (cp >> 10), 0xdc00 + (cp & 0x3ff));
@@ -158,6 +157,7 @@ const DEFAULT_PORTS = {
    URLSearchParams Implementation
    ----------------------------- */
 class URLSearchParams {
+    _map;
     constructor(init) {
         this._map = new Map();
         if (!init)
@@ -418,6 +418,8 @@ function parseURLString(input, base) {
     };
 }
 class URL {
+    _p;
+    searchParams;
     constructor(input, base) {
         let baseParsed;
         if (base instanceof URL)
@@ -452,7 +454,7 @@ class URL {
             new URL(url, base);
             return true;
         }
-        catch (_a) {
+        catch {
             return false;
         }
     }
@@ -460,7 +462,7 @@ class URL {
         try {
             return new URL(url, base);
         }
-        catch (_a) {
+        catch {
             return null;
         }
     }

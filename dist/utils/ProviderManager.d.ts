@@ -48,10 +48,6 @@ export declare class ProviderManager {
      */
     private createModelsContext;
     /**
-     * Create __awaiter helper for compatibility
-     */
-    private createAwaiterHelper;
-    /**
      * Validate provider instance based on category
      */
     private validateProviderInstance;

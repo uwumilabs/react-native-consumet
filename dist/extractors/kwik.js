@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Kwik = Kwik;
 /**
@@ -44,19 +35,17 @@ function Kwik(ctx) {
         return result;
     }
     // @ts-ignore
-    const extract = (videoUrl_1, ...args_1) => __awaiter(this, [videoUrl_1, ...args_1], void 0, function* (videoUrl, referer = 'https://animepahe.ru/') {
-        var _a, _b, _c;
+    const extract = async (videoUrl, referer = 'https://animepahe.ru/') => {
         const kwikUrl = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
-        const kwikHost = (_b = (_a = kwikUrl.match(/^https?:\/\/([^/]+)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : 'kwik.cx';
-        const { html } = yield NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
+        const kwikHost = kwikUrl.match(/^https?:\/\/([^/]+)/)?.[1] ?? 'kwik.cx';
+        const { html } = await NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
             'Referer': referer,
             'User-Agent': ua,
         });
         const $ = load(html);
         let packedScript = null;
         $('script').each((_, el) => {
-            var _a;
-            const text = (_a = $(el).html()) !== null && _a !== void 0 ? _a : '';
+            const text = $(el).html() ?? '';
             if (text.includes('eval(function(p,a,c,k,e,')) {
                 packedScript = text;
                 return false;
@@ -64,7 +53,7 @@ function Kwik(ctx) {
         });
         if (!packedScript) {
             const m = html.match(/eval\(function\(p,a,c,k,e,[dr]\)[\s\S]+?\.split\(['"]\|['"]\)[\s\S]+?\)/);
-            packedScript = (_c = m === null || m === void 0 ? void 0 : m[0]) !== null && _c !== void 0 ? _c : null;
+            packedScript = m?.[0] ?? null;
         }
         if (!packedScript)
             throw new Error('[Kwik] No packed script found');
@@ -74,14 +63,14 @@ function Kwik(ctx) {
         const sourceMatch = unpacked.match(/const\s+source\s*=\s*'([^']+)'/) ||
             unpacked.match(/const\s+source\s*=\s*"([^"]+)"/) ||
             unpacked.match(/['"]?(https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
-        if (!(sourceMatch === null || sourceMatch === void 0 ? void 0 : sourceMatch[1]))
+        if (!sourceMatch?.[1])
             throw new Error('[Kwik] No source URL found');
         const m3u8 = sourceMatch[1];
         return {
             sources: [{ url: m3u8, isM3U8: m3u8.includes('.m3u8') }],
             headers: { Referer: `https://${kwikHost}/` },
         };
-    });
+    };
     return { serverName, sources, extract };
 }
 exports.default = Kwik;

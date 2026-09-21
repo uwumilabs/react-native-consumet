@@ -1,7 +1,7 @@
 import { type IMovieInfo, type IEpisodeServer, type StreamingServers, type ISource, type IMovieResult, type ISearch } from '../../../models';
 import type { ProviderContext } from '../../../models/provider-context';
 export declare function createYFlix(ctx: ProviderContext, customBaseURL?: string): {
-    supportedTypes: Set<import("../../../models").TvType>;
+    supportedTypes: Set<import("../../..").TvType>;
     search: (query: string, page?: number) => Promise<ISearch<IMovieResult>>;
     fetchMediaInfo: (mediaId: string) => Promise<IMovieInfo>;
     fetchEpisodeSources: (episodeId: string, mediaId: string, server?: StreamingServers) => Promise<ISource>;

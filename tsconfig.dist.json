@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
+    "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "node",
-    "lib": ["ES2015", "DOM"],
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
