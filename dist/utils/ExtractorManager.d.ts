@@ -52,6 +52,7 @@ export declare class ExtractorManager {
      * Create execution context for extractor code
      */
     private createExecutionContext;
+    private verifyCodeIntegrity;
 }
 export default ExtractorManager;
 //# sourceMappingURL=ExtractorManager.d.ts.map

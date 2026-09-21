@@ -36,6 +36,7 @@ React Native library providing access to entertainment media information (anime,
 - **[📚 Manga Providers](./docs/guides/manga.md)** - Manga reading providers
 - **[📖 Light Novel Providers](./docs/guides/light-novels.md)** - Light novel providers
 - **[🔍 Meta Providers](./docs/guides/meta.md)** - Metadata and search providers
+- **[🔒 Security Model](./docs/security.md)** - How dynamic code execution is protected
 
 ## Installation
 
@@ -89,6 +90,12 @@ const MyAnimeComponent = () => {
 - **🔍 Cross-Provider Search**: Search across multiple providers simultaneously
 - **📚 Comprehensive Documentation**: Detailed guides for every use case
 - **🤝 Active Community**: Open source with regular updates
+
+## 🔒 Security
+
+Provider and extractor code is fetched at runtime and executed via `new Function()`. The library protects against CDN compromise and MITM attacks using **SHA-256 subresource integrity** — every entry in `extension-registry.json` carries a hash of its compiled JS file, verified before execution. `factoryName` values are also validated as bare identifiers before being interpolated into the function template.
+
+See [docs/security.md](./docs/security.md) for the full threat model and guidance for custom registry consumers.
 
 ## 🤝 Contributing
 

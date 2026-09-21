@@ -9,6 +9,8 @@ export interface ExtractorInfo {
   version: string;
   /**github url path */
   main: string;
+  /** SHA-256 hex digest of the compiled JS file for integrity verification */
+  sha256?: string;
 }
 /**
  * Extension manifest interface for defining extension metadata
@@ -41,6 +43,9 @@ export interface ExtensionManifest {
 
   /** Factory function names exported by this extension */
   factoryName: string;
+
+  /** SHA-256 hex digest of the compiled JS file for integrity verification */
+  sha256?: string;
 
   /** Homepage URL */
   baseUrl: string;

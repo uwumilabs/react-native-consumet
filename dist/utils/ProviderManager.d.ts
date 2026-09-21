@@ -70,6 +70,11 @@ export declare class ProviderManager {
         extensionId: string;
         results: ISearch<IAnimeResult | IMovieResult>;
     }>>;
+    /**
+     * Verify SHA-256 integrity of fetched code against the bundled registry hash.
+     * Throws if hashes don't match. Warns (but allows) if no hash is present in registry.
+     */
+    private verifyCodeIntegrity;
 }
 export default ProviderManager;
 //# sourceMappingURL=ProviderManager.d.ts.map

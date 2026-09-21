@@ -199,6 +199,9 @@ export class ExtractorManager {
       }
       const extractorCode = await response.text();
 
+      // Integrity check — reject if hash doesn't match the bundled registry
+      this.verifyCodeIntegrity(extractorCode, metadata.sha256, metadata.name as string);
+
       // Execute the extractor code
       const extractorInstance = await this.executeExtractorCode(extractorCode, metadata);
 
@@ -374,6 +377,19 @@ export class ExtractorManager {
       URL: extractorContext.PolyURL,
       URLSearchParams: extractorContext.PolyURLSearchParams,
     };
+  }
+
+  private verifyCodeIntegrity(code: string, expectedHash: string | undefined, id: string): void {
+    if (!expectedHash) {
+      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
+      return;
+    }
+    const actual = CryptoJS.SHA256(code).toString(CryptoJS.enc.Hex);
+    if (actual !== expectedHash) {
+      throw new Error(
+        `Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`
+      );
+    }
   }
 }
 

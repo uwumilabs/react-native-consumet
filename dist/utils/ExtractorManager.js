@@ -177,6 +177,8 @@ class ExtractorManager {
                 throw new Error(`Failed to fetch extractor: ${response.status} ${response.statusText}`);
             }
             const extractorCode = await response.text();
+            // Integrity check — reject if hash doesn't match the bundled registry
+            this.verifyCodeIntegrity(extractorCode, metadata.sha256, metadata.name);
             // Execute the extractor code
             const extractorInstance = await this.executeExtractorCode(extractorCode, metadata);
             // Cache the loaded extractor
@@ -342,6 +344,16 @@ class ExtractorManager {
             URL: extractorContext.PolyURL,
             URLSearchParams: extractorContext.PolyURLSearchParams,
         };
+    }
+    verifyCodeIntegrity(code, expectedHash, id) {
+        if (!expectedHash) {
+            console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
+            return;
+        }
+        const actual = crypto_js_1.default.SHA256(code).toString(crypto_js_1.default.enc.Hex);
+        if (actual !== expectedHash) {
+            throw new Error(`Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`);
+        }
     }
 }
 exports.ExtractorManager = ExtractorManager;

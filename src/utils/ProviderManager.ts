@@ -1,9 +1,12 @@
+import CryptoJS from 'crypto-js';
 import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
+
+const FACTORY_NAME_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 export class ProviderManager {
   private providerContext: ProviderContext;
@@ -125,10 +128,16 @@ export class ProviderManager {
       }
       const providerCode = await response.text();
 
+      // Integrity check — reject if hash doesn't match the bundled registry
+      this.verifyCodeIntegrity(providerCode, metadata.sha256, extensionId as string);
+
       // Execute the provider code
       const factoryName = metadata.factoryName; // Use factory name directly
       if (!factoryName) {
         throw new Error(`No factory function available for extension ${extensionId}`);
+      }
+      if (!FACTORY_NAME_RE.test(factoryName)) {
+        throw new Error(`Invalid factoryName '${factoryName}' for extension '${extensionId}'`);
       }
       let providerInstance = await this.executeProviderCode(
         providerCode,
@@ -458,6 +467,23 @@ export class ProviderManager {
     });
 
     return Promise.all(searchPromises);
+  }
+
+  /**
+   * Verify SHA-256 integrity of fetched code against the bundled registry hash.
+   * Throws if hashes don't match. Warns (but allows) if no hash is present in registry.
+   */
+  private verifyCodeIntegrity(code: string, expectedHash: string | undefined, id: string): void {
+    if (!expectedHash) {
+      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
+      return;
+    }
+    const actual = CryptoJS.SHA256(code).toString(CryptoJS.enc.Hex);
+    if (actual !== expectedHash) {
+      throw new Error(
+        `Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`
+      );
+    }
   }
 }
 
