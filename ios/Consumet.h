@@ -1,5 +1,5 @@
 
-#import "generated/RNConsumetSpec/RNConsumetSpec.h"
+#import "RNConsumetSpec.h"
 
 @interface Consumet : NSObject <NativeConsumetSpec>
 
