@@ -64,11 +64,16 @@
             "factoryName": "createAnimePahe",
             "baseUrl": "https://animepahe.pw",
             "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
-            "languages": ["en", "ja"],
+            "languages": [
+                "en",
+                "ja"
+            ],
             "nsfw": false,
             "status": "stable",
             "lastUpdated": "2025-08-05T00:00:00Z",
-            "extractors": ["Kwik"],
+            "extractors": [
+                "Kwik"
+            ],
             "subbed": true,
             "dubbed": true,
             "isSourceEmbed": true,
@@ -89,11 +94,16 @@
             "factoryName": "createAnimeKai",
             "baseUrl": "https://anikai.to",
             "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
-            "languages": ["en", "ja"],
+            "languages": [
+                "en",
+                "ja"
+            ],
             "nsfw": false,
             "status": "deprecated",
             "lastUpdated": "2025-08-05T00:00:00Z",
-            "extractors": ["MegaUp"],
+            "extractors": [
+                "MegaUp"
+            ],
             "subbed": true,
             "dubbed": true,
             "isSourceEmbed": true,
@@ -114,11 +124,15 @@
             "factoryName": "createAniKoto",
             "baseUrl": "https://anikototv.to",
             "logo": "https://anikototv.to/favicon-32x32.png",
-            "languages": ["en"],
+            "languages": [
+                "en"
+            ],
             "nsfw": false,
             "status": "stable",
             "lastUpdated": "2026-09-12T00:00:00Z",
-            "extractors": ["MegaPlay"],
+            "extractors": [
+                "MegaPlay"
+            ],
             "subbed": true,
             "dubbed": true,
             "isSourceEmbed": true,
@@ -139,11 +153,16 @@
             "factoryName": "createAniNeko",
             "baseUrl": "https://anineko.to",
             "logo": "https://anineko.to/favicon.ico",
-            "languages": ["en", "ja"],
+            "languages": [
+                "en",
+                "ja"
+            ],
             "nsfw": false,
             "status": "stable",
             "lastUpdated": "2026-09-13T00:00:00Z",
-            "extractors": ["VidHide"],
+            "extractors": [
+                "VidHide"
+            ],
             "subbed": true,
             "dubbed": true,
             "isSourceEmbed": true,
@@ -164,11 +183,16 @@
             "factoryName": "createMultiMovies",
             "baseUrl": "https://multimovies.center",
             "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
-            "languages": ["all"],
+            "languages": [
+                "all"
+            ],
             "nsfw": false,
             "status": "deprecated",
             "lastUpdated": "2025-08-05T00:00:00Z",
-            "extractors": ["StreamWish", "VidHide"],
+            "extractors": [
+                "StreamWish",
+                "VidHide"
+            ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
             "sha256": "e1da462edda62e3593ca9ef31fbeaf50a2600c2d73e042818847ee39d603a20d"
@@ -187,11 +211,15 @@
             "factoryName": "createYFlix",
             "baseUrl": "https://yflix.to",
             "logo": "https://yflix.to/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png",
-            "languages": ["all"],
+            "languages": [
+                "all"
+            ],
             "nsfw": false,
             "status": "deprecated",
             "lastUpdated": "2025-08-05T00:00:00Z",
-            "extractors": ["MegaUp"],
+            "extractors": [
+                "MegaUp"
+            ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
             "sha256": "565ccb26748917ac0d1754d9e9680ead69005d49a1b549733105e6c47865378e"
@@ -210,11 +238,16 @@
             "factoryName": "createVegaMovies",
             "baseUrl": "https://new2.vegamovies.futbol",
             "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
-            "languages": ["all"],
+            "languages": [
+                "all"
+            ],
             "nsfw": false,
             "status": "alpha",
             "lastUpdated": "2026-09-12T00:00:00Z",
-            "extractors": ["HubCloud", "GDFlix"],
+            "extractors": [
+                "HubCloud",
+                "GDFlix"
+            ],
             "isSourceEmbed": false,
             "haveMultiServers": true,
             "sha256": "6dbe46ba7c1e034362065f45ed0156243cd91e026f9f874aa64bf64b12639f93"

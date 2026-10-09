@@ -1,5 +1,20 @@
 
 
+## [1.6.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.5.0...v1.6.0) (2026-10-09)
+
+
+### Features
+
+* add server selection, META providers, debug player, and HLS fix ([6586ec4](https://github.com/uwumilabs/react-native-consumet/commit/6586ec47dc3577bc23ccb8199cb0848dfb5ddf35))
+* **anikoto:** enhance episode extraction with additional attributes ([5d54e72](https://github.com/uwumilabs/react-native-consumet/commit/5d54e72095498aaab94f8458c2f8f03aae585e50))
+* **ios:** implement all native module methods with wkwebview/urlsession ([636bf62](https://github.com/uwumilabs/react-native-consumet/commit/636bf6235719229e09b1dc601ce2e8e8414d2521))
+* upgrade rn version to 0.87 and js compilation to es2022 ([ce84220](https://github.com/uwumilabs/react-native-consumet/commit/ce8422029ebf99e4aeebebe9478c00777e3cd1c3))
+
+
+### Bug Fixes
+
+* **security:** add SHA-256 integrity and factoryName validation for dynamic code execution ([1b63ebb](https://github.com/uwumilabs/react-native-consumet/commit/1b63ebbf44673637733885aabd44da3dd96fb04e))
+
 ## [1.5.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.4.0...v1.5.0) (2026-09-13)
 
 
