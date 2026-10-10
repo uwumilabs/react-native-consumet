@@ -4,13 +4,13 @@
             "name": "MegaCloud",
             "version": "1.3.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megacloud.js",
-            "sha256": "0fe05f158bb9dd5e1ab0b712da93dd0f6fbb4e9aa4249c88d4c84c24a279277f"
+            "sha256": "0a05aa5a3aabeebbc3b254a91c00ce3265a55585cdac01dbcbb91de5da6701a8"
         },
         {
             "name": "Kwik",
             "version": "1.2.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/kwik.js",
-            "sha256": "12b8fc266aacd3fb7b62f35efeb2ed3253350dc1ced3d09412cc6d9ace4c8535"
+            "sha256": "067dffc3e3b4b1d43cb78213dffa547fcb1700e0ff5e9697ce2d0d3d7602cf51"
         },
         {
             "name": "MegaUp",
@@ -40,7 +40,7 @@
             "name": "HubCloud",
             "version": "1.0.0",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/hubcloud.js",
-            "sha256": "aa3d48b6cc4d0d7cec4ae1c2897f5fee5db55f6aec8323d730a00a858c27a0e7"
+            "sha256": "4926baf9960e368c8cd6d3a83246bb346834897976a490c12792f4ee337e12a1"
         },
         {
             "name": "VidHide",
@@ -78,7 +78,7 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": false,
-            "sha256": "21f402ce947b31b6897485281a8d826f161a6a5e1962df086585f48818363f4b"
+            "sha256": "36a6ff40f3f74480a94f5c6a4df44b515db2474268ba3a28d60b2e4b57fbd0ed"
         },
         {
             "id": "animekai",
@@ -108,7 +108,7 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "b97e5912fc63c10dcb3387eb9ccf770d2861dff6d3ef19a10a5f1f5524dd6e4d"
+            "sha256": "9a3f29a7f765d01994dbc30f46dd64e31e75e2533823a6824f648f3290bf2228"
         },
         {
             "id": "anikoto",
@@ -137,7 +137,7 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "9ef371b7401343eae60cac0936fd82de9d080a28d945337121f6f83420e532a9"
+            "sha256": "7ebe1fd97e4cc856c0ce718f8b65156cadae568c9ed1febd8f53c3f0f5b12e59"
         },
         {
             "id": "anineko",
@@ -167,7 +167,7 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "0f27a6466d3a1c0ed802bd77d48d349467a36d7e8e9249055269385293f22dfd"
+            "sha256": "c239a1e51af9091c10b25425100e5c38900cda8c2f68621b39cd778bcad92cc0"
         },
         {
             "id": "multimovies",
@@ -195,7 +195,7 @@
             ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "e1da462edda62e3593ca9ef31fbeaf50a2600c2d73e042818847ee39d603a20d"
+            "sha256": "c71e42bcaf19048f5ea627165232cbd7b2721ad4b62a005393a4dd1d5975a7d5"
         },
         {
             "id": "yflix",
@@ -222,7 +222,7 @@
             ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "565ccb26748917ac0d1754d9e9680ead69005d49a1b549733105e6c47865378e"
+            "sha256": "fd366c226fb43af7f69f78b2fc652fcfa56fdc64f320224d3ae4918ee44d555c"
         },
         {
             "id": "vegamovies",
@@ -250,7 +250,7 @@
             ],
             "isSourceEmbed": false,
             "haveMultiServers": true,
-            "sha256": "6dbe46ba7c1e034362065f45ed0156243cd91e026f9f874aa64bf64b12639f93"
+            "sha256": "c4cc76209403d0623843b1560900b431b121480cebfb53bdc593ff56c4284973"
         }
     ]
 }

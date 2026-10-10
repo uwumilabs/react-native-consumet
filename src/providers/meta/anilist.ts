@@ -38,7 +38,7 @@ import Anify from '../anime/anify';
 import Zoro from '../anime/zoro/zoro';
 import AnimeKai from '../anime/animekai/animekai';
 import AnimePahe from '../anime/animepahe/animepahe';
-import AniWatchTv from '../anime/anikoto/anikoto';
+import AniKoto from '../anime/anikoto/anikoto';
 import Mangasee123 from '../manga/mangasee123';
 import { ANIFY_URL, findSimilarTitles, getHashFromImage } from '../../utils/utils';
 
@@ -1150,7 +1150,7 @@ class Anilist extends AnimeParser {
       this.provider instanceof Zoro ||
       this.provider instanceof AnimeKai ||
       this.provider instanceof AnimePahe ||
-      this.provider instanceof AniWatchTv
+      this.provider instanceof AniKoto
     ) {
       try {
         // console.time('fetchEpisodesListById');

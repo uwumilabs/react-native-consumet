@@ -219,7 +219,10 @@ export default function ExtAnimeScreen() {
     setDetailOpen(true);
     try {
       const info: IAnimeInfo = await providerRef.current.fetchAnimeInfo(item.id);
-      const episodes: IAnimeEpisode[] = await providerRef.current.fetchEpisodesListById(item.id);
+      const episodes: IAnimeEpisode[] =
+        typeof providerRef.current.fetchEpisodesListById === 'function'
+          ? await providerRef.current.fetchEpisodesListById(item.id)
+          : (info.episodes ?? []);
       setDetailInfo(info);
       setEpisodes(episodes);
       console.log('[ExtAnime] detail info', info);

@@ -1,266 +1,281 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../../models");
 /**
  * @attention Cloudflare bypass is **REQUIRED**.
  */
 class Marin extends models_1.AnimeParser {
-    name = 'Marin';
-    baseUrl = 'https://marin.moe';
-    logo = 'https://i.pinimg.com/736x/62/8d/3f/628d3f2e60b0aa8c8fa9598e8dae6320.jpg';
-    classPath = 'ANIME.Marin';
-    async getToken() {
-        const token = [];
-        const response = await axios_1.default.get('https://marin.moe/anime', {
-            headers: {
-                Referer: 'https://marin.moe/anime',
-                Cookie: '__ddg1_=;__ddg2_=;',
-            },
+  name = 'Marin';
+  baseUrl = 'https://marin.moe';
+  logo = 'https://i.pinimg.com/736x/62/8d/3f/628d3f2e60b0aa8c8fa9598e8dae6320.jpg';
+  classPath = 'ANIME.Marin';
+  async getToken() {
+    const token = [];
+    const response = await axios_1.default.get('https://marin.moe/anime', {
+      headers: {
+        Referer: 'https://marin.moe/anime',
+        Cookie: '__ddg1_=;__ddg2_=;'
+      }
+    });
+    token.push(response.headers['set-cookie'][1].replace('marin_session=', ''));
+    token.push(response.headers['set-cookie'][0].replace('XSRF-TOKEN=', ''));
+    return token;
+  }
+  recentEpisodes = (() => {
+    var _this = this;
+    return async function () {
+      let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      const token = await _this.getToken();
+      let data;
+      try {
+        const response = await axios_1.default.post('https://marin.moe/anime', {
+          page: page,
+          sort: 'rel-d',
+          filter: {
+            type: [],
+            status: [],
+            content_rating: [],
+            genre: [],
+            group: [],
+            production: [],
+            source: [],
+            resolution: [],
+            audio: [],
+            subtitle: []
+          },
+          search: ''
+        }, {
+          headers: {
+            'Origin': 'https://marin.moe/',
+            'Referer': 'https://marin.moe/anime',
+            'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
+            'x-inertia': true
+          }
         });
-        token.push(response.headers['set-cookie'][1].replace('marin_session=', ''));
-        token.push(response.headers['set-cookie'][0].replace('XSRF-TOKEN=', ''));
-        return token;
+        data = await response.data;
+      } catch (error) {
+        //console.log(error);
+      }
+      const response_data = {
+        currentPage: page,
+        hasNextPage: data.props.anime_list.meta.last_page > page,
+        results: data.props.anime_list.data.map(el => {
+          return {
+            id: el.slug,
+            title: el.title,
+            image: el.cover,
+            releaseDate: el.year,
+            type: el.type
+          };
+        })
+      };
+      return response_data;
+    };
+  })();
+  /**
+   * @param query Search query
+   */
+  search = (() => {
+    var _this2 = this;
+    return async function (query) {
+      let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      const token = await _this2.getToken();
+      let data;
+      try {
+        const response = await axios_1.default.post('https://marin.moe/anime', {
+          page: page,
+          sort: 'az-a',
+          filter: {
+            type: [],
+            status: [],
+            content_rating: [],
+            genre: [],
+            group: [],
+            production: [],
+            source: [],
+            resolution: [],
+            audio: [],
+            subtitle: []
+          },
+          search: query
+        }, {
+          headers: {
+            'Origin': 'https://marin.moe/',
+            'Referer': 'https://marin.moe/anime',
+            'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
+            'x-inertia': true
+          }
+        });
+        data = await response.data;
+      } catch (error) {
+        //console.log(error);
+      }
+      const response_data = {
+        currentPage: page,
+        hasNextPage: data.props.anime_list.meta.last_page > page,
+        results: data.props.anime_list.data.map(el => {
+          return {
+            id: el.slug,
+            title: el.title,
+            image: el.cover,
+            releaseDate: el.year,
+            type: el.type
+          };
+        })
+      };
+      return response_data;
+    };
+  })();
+  /**
+   * @param id Anime id
+   */
+  fetchAnimeInfo = async id => {
+    const token = await this.getToken();
+    let data;
+    try {
+      const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
+        headers: {
+          'Origin': 'https://marin.moe/',
+          'Referer': `https://marin.moe/anime/${id}`,
+          'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]?.split(';')[0]}; marin_session=${token[0]?.split(';')[0]};`,
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+          'x-inertia': true,
+          'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
+          'x-requested-with': 'XMLHttpRequest',
+          'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '=')
+        }
+      });
+      data = await response.data;
+      //console.log(data);
+    } catch (error) {
+      //console.log(error);
     }
-    recentEpisodes = async (page = 1) => {
-        const token = await this.getToken();
-        let data;
-        try {
-            const response = await axios_1.default.post('https://marin.moe/anime', {
-                page: page,
-                sort: 'rel-d',
-                filter: {
-                    type: [],
-                    status: [],
-                    content_rating: [],
-                    genre: [],
-                    group: [],
-                    production: [],
-                    source: [],
-                    resolution: [],
-                    audio: [],
-                    subtitle: [],
-                },
-                search: '',
-            }, {
-                headers: {
-                    'Origin': 'https://marin.moe/',
-                    'Referer': 'https://marin.moe/anime',
-                    'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-                    'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
-                    'x-inertia': true,
-                },
-            });
-            data = await response.data;
-        }
-        catch (error) {
-            //console.log(error);
-        }
-        const response_data = {
-            currentPage: page,
-            hasNextPage: data.props.anime_list.meta.last_page > page,
-            results: data.props.anime_list.data.map((el) => {
-                return {
-                    id: el.slug,
-                    title: el.title,
-                    image: el.cover,
-                    releaseDate: el.year,
-                    type: el.type,
-                };
-            }),
+    let episodes = data.props.episode_list.data;
+    if (data.props.anime.last_episode > 36) {
+      for (let index = 2; index < data.props.anime.last_episode / 36; index++) {
+        const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {
+          filter: {
+            episodes: true,
+            specials: true
+          },
+          eps_page: index
+        }, {
+          headers: {
+            'Origin': 'https://marin.moe/',
+            'Referer': `https://marin.moe/anime/${id}`,
+            'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${token[0].split(';')[0]};`,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'x-inertia': true,
+            'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
+            'x-requested-with': 'XMLHttpRequest',
+            'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '=')
+          }
+        });
+        const data = await response.data;
+        episodes = episodes.concat(data.props.episode_list.data);
+      }
+    }
+    //{"filter":{"episodes":true,"specials":true},"eps_page":2}
+    const response_data = {
+      id: id,
+      title: {
+        native: data.props.anime.alt_titles['Official Title'][0].text,
+        romaji: data.props.anime.title,
+        english: data.props.anime.alt_titles['Official Title'][1].text
+      },
+      synonyms: data.props.anime.alt_titles.Synonym?.map(el => {
+        return el.text;
+      }) || [],
+      image: data.props.anime.cover,
+      cover: data.props.anime.cover,
+      description: data.props.anime.description,
+      status: data.props.anime.status.name,
+      releaseDate: data.props.anime.release_date,
+      totalEpisodes: data.props.anime.last_episode,
+      currentEpisode: data.props.anime.last_episode,
+      genres: data.props.anime.genre_list.map(el => {
+        return el.name;
+      }),
+      studios: data.props.anime.production_list.map(el => {
+        return el.name;
+      }),
+      type: data.props.anime.type.name,
+      ageRating: data.props.anime.content_rating.name,
+      episodes: episodes.map(el => {
+        return {
+          id: `${id}/${el.sort}`,
+          title: el.title,
+          number: el.sort,
+          image: el.cover,
+          airdate: el.release_date
         };
-        return response_data;
+      })
     };
-    /**
-     * @param query Search query
-     */
-    search = async (query, page = 1) => {
-        const token = await this.getToken();
-        let data;
-        try {
-            const response = await axios_1.default.post('https://marin.moe/anime', {
-                page: page,
-                sort: 'az-a',
-                filter: {
-                    type: [],
-                    status: [],
-                    content_rating: [],
-                    genre: [],
-                    group: [],
-                    production: [],
-                    source: [],
-                    resolution: [],
-                    audio: [],
-                    subtitle: [],
-                },
-                search: query,
-            }, {
-                headers: {
-                    'Origin': 'https://marin.moe/',
-                    'Referer': 'https://marin.moe/anime',
-                    'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]}; marin_session=${token[0]};`,
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-                    'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
-                    'x-inertia': true,
-                },
-            });
-            data = await response.data;
+    return response_data;
+  };
+  /**
+   *
+   * @param episodeId Episode id
+   */
+  fetchEpisodeSources = async id => {
+    const token = await this.getToken();
+    const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${token[0].split(';')[0]};`;
+    let data;
+    try {
+      const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
+        headers: {
+          'Origin': 'https://marin.moe/',
+          'Referer': `https://marin.moe/anime/${id}`,
+          'Cookie': cookie,
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+          'x-inertia': true,
+          'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
+          'x-requested-with': 'XMLHttpRequest',
+          'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '=')
         }
-        catch (error) {
-            //console.log(error);
-        }
-        const response_data = {
-            currentPage: page,
-            hasNextPage: data.props.anime_list.meta.last_page > page,
-            results: data.props.anime_list.data.map((el) => {
-                return {
-                    id: el.slug,
-                    title: el.title,
-                    image: el.cover,
-                    releaseDate: el.year,
-                    type: el.type,
-                };
-            }),
+      });
+      data = await response.data;
+    } catch (error) {
+      //console.log(error);
+    }
+    const response_data = {
+      headers: {
+        Cookie: cookie
+      },
+      sources: data.props.video.data.mirror.map(el => {
+        return {
+          url: el.code.file,
+          quality: el.resolution,
+          isM3U8: false,
+          duration: el.code.duration,
+          thumbnail: el.code.thumbnail
         };
-        return response_data;
+      }),
+      sprites: data.props.video.data.mirror[0].code.sprite,
+      spriteVtt: data.props.video.data.mirror[0].code.vtt
     };
-    /**
-     * @param id Anime id
-     */
-    fetchAnimeInfo = async (id) => {
-        const token = await this.getToken();
-        let data;
-        try {
-            const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
-                headers: {
-                    'Origin': 'https://marin.moe/',
-                    'Referer': `https://marin.moe/anime/${id}`,
-                    'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1]?.split(';')[0]}; marin_session=${token[0]?.split(';')[0]};`,
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-                    'x-inertia': true,
-                    'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
-                    'x-requested-with': 'XMLHttpRequest',
-                    'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
-                },
-            });
-            data = await response.data;
-            //console.log(data);
-        }
-        catch (error) {
-            //console.log(error);
-        }
-        let episodes = data.props.episode_list.data;
-        if (data.props.anime.last_episode > 36) {
-            for (let index = 2; index < data.props.anime.last_episode / 36; index++) {
-                const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, { filter: { episodes: true, specials: true }, eps_page: index }, {
-                    headers: {
-                        'Origin': 'https://marin.moe/',
-                        'Referer': `https://marin.moe/anime/${id}`,
-                        'Cookie': `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${token[0].split(';')[0]};`,
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-                        'x-inertia': true,
-                        'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
-                        'x-requested-with': 'XMLHttpRequest',
-                        'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
-                    },
-                });
-                const data = await response.data;
-                episodes = episodes.concat(data.props.episode_list.data);
-            }
-        }
-        //{"filter":{"episodes":true,"specials":true},"eps_page":2}
-        const response_data = {
-            id: id,
-            title: {
-                native: data.props.anime.alt_titles['Official Title'][0].text,
-                romaji: data.props.anime.title,
-                english: data.props.anime.alt_titles['Official Title'][1].text,
-            },
-            synonyms: data.props.anime.alt_titles.Synonym?.map((el) => {
-                return el.text;
-            }) || [],
-            image: data.props.anime.cover,
-            cover: data.props.anime.cover,
-            description: data.props.anime.description,
-            status: data.props.anime.status.name,
-            releaseDate: data.props.anime.release_date,
-            totalEpisodes: data.props.anime.last_episode,
-            currentEpisode: data.props.anime.last_episode,
-            genres: data.props.anime.genre_list.map((el) => {
-                return el.name;
-            }),
-            studios: data.props.anime.production_list.map((el) => {
-                return el.name;
-            }),
-            type: data.props.anime.type.name,
-            ageRating: data.props.anime.content_rating.name,
-            episodes: episodes.map((el) => {
-                return {
-                    id: `${id}/${el.sort}`,
-                    title: el.title,
-                    number: el.sort,
-                    image: el.cover,
-                    airdate: el.release_date,
-                };
-            }),
-        };
-        return response_data;
-    };
-    /**
-     *
-     * @param episodeId Episode id
-     */
-    fetchEpisodeSources = async (id) => {
-        const token = await this.getToken();
-        const cookie = `__ddg1=;__ddg2_=; XSRF-TOKEN=${token[1].split(';')[0]}; marin_session=${token[0].split(';')[0]};`;
-        let data;
-        try {
-            const response = await axios_1.default.post(`https://marin.moe/anime/${id}`, {}, {
-                headers: {
-                    'Origin': 'https://marin.moe/',
-                    'Referer': `https://marin.moe/anime/${id}`,
-                    'Cookie': cookie,
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-                    'x-inertia': true,
-                    'x-inertia-version': '884345c4d568d16e3bb2fb3ae350cca9',
-                    'x-requested-with': 'XMLHttpRequest',
-                    'x-xsrf-token': token[1]?.split(';')[0].replace('%3D', '='),
-                },
-            });
-            data = await response.data;
-        }
-        catch (error) {
-            //console.log(error);
-        }
-        const response_data = {
-            headers: {
-                Cookie: cookie,
-            },
-            sources: data.props.video.data.mirror.map((el) => {
-                return {
-                    url: el.code.file,
-                    quality: el.resolution,
-                    isM3U8: false,
-                    duration: el.code.duration,
-                    thumbnail: el.code.thumbnail,
-                };
-            }),
-            sprites: data.props.video.data.mirror[0].code.sprite,
-            spriteVtt: data.props.video.data.mirror[0].code.vtt,
-        };
-        return response_data;
-    };
-    /**
-     *
-     * @param episodeId Episode id
-     */
-    fetchEpisodeServers = (episodeId) => {
-        throw new Error('Method not implemented.');
-    };
+    return response_data;
+  };
+  /**
+   *
+   * @param episodeId Episode id
+   */
+  fetchEpisodeServers = episodeId => {
+    throw new Error('Method not implemented.');
+  };
 }
 exports.default = Marin;
 // (async () => {
