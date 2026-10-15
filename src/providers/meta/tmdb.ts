@@ -6,6 +6,7 @@ import {
   type ISource,
   type IEpisodeServer,
   MovieParser,
+  MetaError,
   TvType,
   type IMovieResult,
   type IMovieInfo,
@@ -127,7 +128,7 @@ class TMDB extends MovieParser {
 
       return result;
     } catch (err) {
-      throw new Error((err as Error).message);
+      throw MetaError.from('tmdb', err);
     }
   };
 
@@ -171,7 +172,7 @@ class TMDB extends MovieParser {
 
       return search;
     } catch (err) {
-      throw new Error((err as Error).message);
+      throw MetaError.from('tmdb', err);
     }
   };
 
@@ -369,8 +370,8 @@ class TMDB extends MovieParser {
         });
       }
     } catch (err) {
-      //console.log(err);
-      throw new Error((err as Error).message);
+      // matchProvider absorbs provider failures, so anything here comes from TMDB's requests or data
+      throw MetaError.from('tmdb', err);
     }
 
     return info;

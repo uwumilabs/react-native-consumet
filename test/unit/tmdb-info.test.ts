@@ -1,5 +1,5 @@
 import TMDB from '../../src/providers/meta/tmdb';
-import { TvType } from '../../src/models';
+import { MetaError, TvType } from '../../src/models';
 import type { IMovieEpisode, IMovieInfo, IMovieProvider, IMovieSeason } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
 import show from './fixtures/tmdb/tv-84958.json';
@@ -300,5 +300,53 @@ describe('TMDB.fetchMediaInfo episode shape (META-6)', () => {
 
     expect(info.trailer).toBeUndefined();
     expect(info.duration).toBe(123);
+  });
+});
+
+describe('TMDB errors (META-7)', () => {
+  const httpError = (status: number) =>
+    Object.assign(new Error(`Request failed with status code ${status}`), { isAxiosError: true, response: { status } });
+
+  const expectMetaError = async (promise: Promise<unknown>, cause: Error, status: number) => {
+    const error = await promise.then(
+      () => undefined,
+      (e: unknown) => e
+    );
+    expect(error).toBeInstanceOf(MetaError);
+    expect(error).toMatchObject({ source: 'tmdb', status, cause, message: cause.message });
+  };
+
+  beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}));
+  afterEach(() => expect(console.error).not.toHaveBeenCalled());
+
+  it('throws a MetaError with the status and cause when the TMDB info request fails', async () => {
+    const cause = httpError(404);
+    jest.spyOn(metaHttp, 'get').mockRejectedValue(cause);
+    const provider = fakeProvider([]);
+
+    await expectMetaError(new TMDB(undefined, provider).fetchMediaInfo('0', 'tv'), cause, 404);
+    expect(provider.search).not.toHaveBeenCalled();
+  });
+
+  it('throws a MetaError when a season request fails', async () => {
+    const cause = httpError(503);
+    stubTmdb();
+    const get = metaHttp.get as jest.Mock;
+    const respond = get.getMockImplementation()!;
+    get.mockImplementation(async (url: string) => {
+      if (url.includes('/season/2')) throw cause;
+      return respond(url);
+    });
+
+    await expectMetaError(new TMDB(undefined, fakeProvider([])).fetchMediaInfo(SHOW_ID, 'tv'), cause, 503);
+  });
+
+  it('throws a MetaError when search or trending fails', async () => {
+    const cause = httpError(429);
+    jest.spyOn(metaHttp, 'get').mockRejectedValue(cause);
+    const tmdb = new TMDB(undefined, fakeProvider([]));
+
+    await expectMetaError(tmdb.search('loki'), cause, 429);
+    await expectMetaError(tmdb.fetchTrending('all'), cause, 429);
   });
 });

@@ -92,7 +92,7 @@ class TMDB extends models_1.MovieParser {
         });
         return result;
       } catch (err) {
-        throw new Error(err.message);
+        throw models_1.MetaError.from('tmdb', err);
       }
     };
   })();
@@ -133,7 +133,7 @@ class TMDB extends models_1.MovieParser {
         });
         return search;
       } catch (err) {
-        throw new Error(err.message);
+        throw models_1.MetaError.from('tmdb', err);
       }
     };
   })();
@@ -296,8 +296,8 @@ class TMDB extends models_1.MovieParser {
         });
       }
     } catch (err) {
-      //console.log(err);
-      throw new Error(err.message);
+      // matchProvider absorbs provider failures, so anything here comes from TMDB's requests or data
+      throw models_1.MetaError.from('tmdb', err);
     }
     return info;
   };

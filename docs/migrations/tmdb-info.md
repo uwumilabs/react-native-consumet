@@ -95,3 +95,11 @@ In uwumi:
   `META.TMDB(...).fetchMediaInfo(...)` calls.
 - uwumi's other reads of an episode `id` already handle `undefined`: `buildEpisodeRouteParams`,
   `EpisodeActionsSheet` and the `EpisodeList` key extractor.
+
+## Errors are `MetaError`
+
+When a TMDB request fails, `search`, `fetchTrending` and `fetchMediaInfo` throw a `MetaError` (exported
+from the package) instead of a plain `Error`. It has `source: 'tmdb'`, the HTTP `status` when there
+was one, and the original error as `cause`. The message is unchanged, and `MetaError` extends `Error`,
+so existing `catch` blocks keep working. Check `status === 429` to tell a rate limit from an outage.
+Provider failures don't throw from `fetchMediaInfo` (see above).
