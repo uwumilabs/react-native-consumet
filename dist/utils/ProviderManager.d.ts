@@ -4,6 +4,10 @@ import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 import { type AnimeProviderId, type MovieProviderId, type ProviderInstanceOf } from './provider-maps';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
+export interface ProviderLoadOptions {
+    /** Base URL for the provider; defaults to the registry entry's `baseUrl` (so domain moves are registry-only). */
+    baseUrl?: string;
+}
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;
@@ -29,7 +33,7 @@ export declare class ProviderManager {
     /**
      * Load an extension by ID from the extensionManifest
      */
-    loadExtension<T extends string>(extensionId: T): Promise<ProviderInstanceOf<T>>;
+    loadExtension<T extends string>(extensionId: T, options?: ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
     /**
      * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
      * and developer tooling understands the shape better.
@@ -43,7 +47,7 @@ export declare class ProviderManager {
      */
     executeProviderCode<T extends string>(code: string, factoryName: string, metadata: ExtensionManifest & {
         id: T;
-    }, options?: ExecuteCodeOptions): Promise<ProviderInstanceOf<T>>;
+    }, options?: ExecuteCodeOptions & ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
     /**
      * Create execution context for provider code
      */
@@ -59,11 +63,11 @@ export declare class ProviderManager {
     /**
      * Get anime provider
      */
-    getAnimeProvider(extensionId: AnimeProviderId): Promise<IAnimeProvider>;
+    getAnimeProvider(extensionId: AnimeProviderId, options?: ProviderLoadOptions): Promise<IAnimeProvider>;
     /**
      * Get movie provider
      */
-    getMovieProvider(extensionId: MovieProviderId): Promise<IMovieProvider>;
+    getMovieProvider(extensionId: MovieProviderId, options?: ProviderLoadOptions): Promise<IMovieProvider>;
     /**
      * Get the provider context
      */

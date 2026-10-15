@@ -4,7 +4,7 @@ import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 import type { AnimeProvider, MovieProvider, animeProviders, movieProviders, AnimeProviderId, MovieProviderId, KnownAnimeProviderId, KnownMovieProviderId, ProviderInstanceOf } from './utils';
 import extensionRegistry from './extension-registry.json';
 import { createProviderContext, ProviderManager, ExtractorManager, createExtractorContext, defaultAxios, defaultExtractorContext, defaultExtractors, verifyExtensionCode, IntegrityError } from './utils';
-import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './utils';
+import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions } from './utils';
 import { AsianLoad, Filemoon, GogoCDN, Kwik, MixDrop, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, StreamWish, VidMoly, VizCloud, Mp4Player, MegaCloud, VidHide, Voe, MegaUp, MegaPlay, GDFlix, Gofile, HubCloud } from './extractors';
 import { type IProviderStats, type ISearch, type IAnimeEpisode, type IAnimeInfo, type IAnimeResult, type IEpisodeServer, type IVideo, StreamingServers, MediaStatus, SubOrDub, type IMangaResult, type IMangaChapter, type IMangaInfo, type ILightNovelResult, type ILightNovelInfo, type ILightNovelChapter, type ILightNovelChapterContent, type IMangaChapterPage, TvType, type IMovieEpisode, type IMovieInfo, type ISource, type ISubtitle, type IMovieResult, type Intro, Genres, type INewsFeed, Topics, type INewsInfo, type FuzzyDate, type ITitle, MediaFormat, type ProxyConfig, type AniZipEpisode, type ProviderCapabilities, type IAnimeProvider, type IMovieProvider, type IMovieSeason, type ExtensionManifest, type ExtractorInfo } from './models';
 export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
@@ -14,5 +14,5 @@ export { GogoCDN, StreamSB, MixDrop, Kwik, RapidCloud, StreamTape, StreamLare, S
 export type { IProviderStats, IAnimeEpisode, IAnimeInfo, IAnimeResult, IEpisodeServer, IVideo, IMangaResult, IMangaChapter, IMangaInfo, ILightNovelResult, ILightNovelInfo, ILightNovelChapter, ILightNovelChapterContent, ISearch, IMangaChapterPage, IMovieEpisode, IMovieInfo, ISource, ISubtitle, IMovieResult, Intro, INewsFeed, INewsInfo, FuzzyDate, ITitle, ProxyConfig, AniZipEpisode, IMovieSeason, ProviderCapabilities, IAnimeProvider, IMovieProvider, ExtensionManifest, ExtractorInfo, };
 export { extensionRegistry as ExtensionRegistry };
 export { createProviderContext, ProviderManager, ExtractorManager, createExtractorContext, PolyURL, PolyURLSearchParams, defaultAxios, defaultExtractorContext, defaultExtractors, verifyExtensionCode, IntegrityError, };
-export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions };
+export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions };
 //# sourceMappingURL=index.d.ts.map

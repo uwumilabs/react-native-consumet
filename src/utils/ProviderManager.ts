@@ -27,6 +27,11 @@ import {
 } from './extension-integrity';
 import { fetchTextWithTimeout } from './fetch-with-timeout';
 
+export interface ProviderLoadOptions {
+  /** Base URL for the provider; defaults to the registry entry's `baseUrl` (so domain moves are registry-only). */
+  baseUrl?: string;
+}
+
 export class ProviderManager {
   private providerContext: ProviderContext;
   private loadedExtensions = new Map<string, any>();
@@ -106,13 +111,17 @@ export class ProviderManager {
   /**
    * Load an extension by ID from the extensionManifest
    */
-  async loadExtension<T extends string>(extensionId: T): Promise<ProviderInstanceOf<T>> {
+  async loadExtension<T extends string>(
+    extensionId: T,
+    options: ProviderLoadOptions = {}
+  ): Promise<ProviderInstanceOf<T>> {
     const metadata = this.getExtensionMetadata(extensionId as unknown as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
 
-    const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
+    // A base URL override builds a different instance, so it is part of the cache key.
+    const cacheKey = `${(metadata.id || String(extensionId)).toLowerCase()}|${options.baseUrl ?? ''}`;
 
     // Check if already loaded
     if (this.loadedExtensions.has(cacheKey)) {
@@ -142,7 +151,8 @@ export class ProviderManager {
       const providerInstance = await this.executeProviderCode(
         providerCode,
         metadata.factoryName,
-        metadata as ExtensionManifest & { id: T }
+        metadata as ExtensionManifest & { id: T },
+        { baseUrl: options.baseUrl }
       );
 
       // Cache the loaded extension
@@ -202,7 +212,7 @@ export class ProviderManager {
     code: string,
     factoryName: string,
     metadata: ExtensionManifest & { id: T },
-    options: ExecuteCodeOptions = {}
+    options: ExecuteCodeOptions & ProviderLoadOptions = {}
   ): Promise<ProviderInstanceOf<T>> {
     const id = String(metadata?.id ?? factoryName);
     assertValidIdentifier(factoryName, 'factoryName', id);
@@ -252,7 +262,7 @@ export class ProviderManager {
         throw new Error(`Factory function '${factoryName}' not found in extension`);
       }
 
-      const instance = factory(this.providerContext);
+      const instance = factory(this.providerContext, options.baseUrl ?? metadata.baseUrl);
       let providerInstance = instance;
       // Validate the instance has required methods
       this.validateProviderInstance(instance, metadata.category);
@@ -404,7 +414,7 @@ export class ProviderManager {
   /**
    * Get anime provider
    */
-  async getAnimeProvider(extensionId: AnimeProviderId): Promise<IAnimeProvider> {
+  async getAnimeProvider(extensionId: AnimeProviderId, options: ProviderLoadOptions = {}): Promise<IAnimeProvider> {
     const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -415,13 +425,13 @@ export class ProviderManager {
     }
 
     // The category was checked above, so the loaded provider is an anime provider.
-    return (await this.loadExtension(extensionId)) as IAnimeProvider;
+    return (await this.loadExtension(extensionId, options)) as IAnimeProvider;
   }
 
   /**
    * Get movie provider
    */
-  async getMovieProvider(extensionId: MovieProviderId): Promise<IMovieProvider> {
+  async getMovieProvider(extensionId: MovieProviderId, options: ProviderLoadOptions = {}): Promise<IMovieProvider> {
     const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -432,7 +442,7 @@ export class ProviderManager {
     }
 
     // The category was checked above, so the loaded provider is a movie provider.
-    return (await this.loadExtension(extensionId)) as IMovieProvider;
+    return (await this.loadExtension(extensionId, options)) as IMovieProvider;
   }
 
   /**

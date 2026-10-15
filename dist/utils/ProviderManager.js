@@ -84,11 +84,13 @@ class ProviderManager {
    * Load an extension by ID from the extensionManifest
    */
   async loadExtension(extensionId) {
+    let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
-    const cacheKey = (metadata.id || String(extensionId)).toLowerCase();
+    // A base URL override builds a different instance, so it is part of the cache key.
+    const cacheKey = `${(metadata.id || String(extensionId)).toLowerCase()}|${options.baseUrl ?? ''}`;
     // Check if already loaded
     if (this.loadedExtensions.has(cacheKey)) {
       //console.log(`📦 Extension '${extensionId}' already loaded`);
@@ -110,7 +112,9 @@ class ProviderManager {
       }
       const providerCode = response.text;
       // Verifies the code against the registry hash and the factory name, then attaches the prototype
-      const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
+      const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata, {
+        baseUrl: options.baseUrl
+      });
       // Cache the loaded extension
       this.loadedExtensions.set(cacheKey, providerInstance);
       //console.log(`✅ Extension '${extensionId}' loaded successfully`);
@@ -193,7 +197,7 @@ class ProviderManager {
       if (!factory || typeof factory !== 'function') {
         throw new Error(`Factory function '${factoryName}' not found in extension`);
       }
-      const instance = factory(this.providerContext);
+      const instance = factory(this.providerContext, options.baseUrl ?? metadata.baseUrl);
       let providerInstance = instance;
       // Validate the instance has required methods
       this.validateProviderInstance(instance, metadata.category);
@@ -344,6 +348,7 @@ class ProviderManager {
    * Get anime provider
    */
   async getAnimeProvider(extensionId) {
+    let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -352,12 +357,13 @@ class ProviderManager {
       throw new Error(`Extension '${extensionId}' is not an anime provider`);
     }
     // The category was checked above, so the loaded provider is an anime provider.
-    return await this.loadExtension(extensionId);
+    return await this.loadExtension(extensionId, options);
   }
   /**
    * Get movie provider
    */
   async getMovieProvider(extensionId) {
+    let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     const metadata = this.getExtensionMetadata(extensionId);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -366,7 +372,7 @@ class ProviderManager {
       throw new Error(`Extension '${extensionId}' is not a movie provider`);
     }
     // The category was checked above, so the loaded provider is a movie provider.
-    return await this.loadExtension(extensionId);
+    return await this.loadExtension(extensionId, options);
   }
   /**
    * Get the provider context

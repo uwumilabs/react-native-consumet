@@ -3,6 +3,7 @@ import { anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, anilistT
 export { USER_AGENT, splitAuthor, floorID, formatTitle, genElement, capitalizeFirstLetter, range, getDays, days, isJson, convertDuration, substringAfter, substringBefore, calculateStringSimilarity, anilistSearchQuery, anilistMediaDetailQuery, kitsuSearchQuery, anilistTrendingQuery, anilistPopularQuery, anilistAiringScheduleQuery, anilistGenresQuery, anilistAdvancedQuery, anilistSiteStatisticsQuery, anilistStaffInfoQuery, anilistCharacterQuery, };
 export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
+export type { ProviderLoadOptions } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
 export { verifyExtensionCode, IntegrityError } from './extension-integrity';
 export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './extension-integrity';

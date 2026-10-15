@@ -41,7 +41,7 @@ import {
   verifyExtensionCode,
   IntegrityError,
 } from './utils';
-import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './utils';
+import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions } from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -214,4 +214,4 @@ export {
   verifyExtensionCode,
   IntegrityError,
 };
-export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions };
+export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions };

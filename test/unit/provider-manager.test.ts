@@ -7,6 +7,7 @@ import type { AnimeProvider, MovieProvider } from '../../src/utils/provider-maps
 import AniKoto from '../../src/providers/anime/anikoto/anikoto';
 import Anilist from '../../src/providers/meta/anilist';
 import TMDB from '../../src/providers/meta/tmdb';
+import { sha256Hex } from '../../src/utils/extension-integrity';
 
 const readPublished = (main: string) =>
   fs.readFileSync(path.join(__dirname, '../..', main.replace(/.*\/refs\/heads\/[^/]+\//, '')), 'utf8');
@@ -70,5 +71,59 @@ describe('registry ids and prototypes (EXT-2)', () => {
       entry('vegamovies') as any
     );
     expect(new TMDB(undefined, movie)).toBeInstanceOf(TMDB);
+  });
+});
+
+describe('base URL from the registry (EXT-6)', () => {
+  const code = `
+    function createBaseUrlProbe(ctx, customBaseURL) {
+      return {
+        name: 'Probe',
+        baseUrl: customBaseURL,
+        search: async () => ({ results: [] }),
+        fetchAnimeInfo: async () => ({}),
+        fetchEpisodeSources: async () => ({ sources: [] }),
+        fetchEpisodeServers: async () => [],
+      };
+    }
+    exports.createBaseUrlProbe = createBaseUrlProbe;`;
+  const manifest = {
+    id: 'probe',
+    name: 'Probe',
+    version: '1.0.0',
+    category: 'anime',
+    factoryName: 'createBaseUrlProbe',
+    baseUrl: 'https://registry.example',
+    main: 'https://raw.githubusercontent.com/o/r/refs/heads/main/registry/extensions/probe/1.0.0.js',
+    sha256: sha256Hex(code),
+  } as any;
+  const probeRegistry = { extensions: [manifest], extractors: [] } as any;
+
+  beforeEach(() => {
+    global.fetch = jest.fn(async () => ({ ok: true, status: 200, statusText: 'OK', text: async () => code })) as any;
+  });
+
+  it("passes the entry's baseUrl to the factory", async () => {
+    const provider: any = await new ProviderManager(probeRegistry).executeProviderCode(code, 'createBaseUrlProbe', manifest);
+    expect(provider.baseUrl).toBe('https://registry.example');
+  });
+
+  it('lets the caller override it', async () => {
+    const provider: any = await new ProviderManager(probeRegistry).getAnimeProvider('probe', {
+      baseUrl: 'https://mirror.example',
+    });
+    expect(provider.baseUrl).toBe('https://mirror.example');
+  });
+
+  it('caches one instance per base URL', async () => {
+    const manager = new ProviderManager(probeRegistry);
+
+    const first = await manager.loadExtension('probe');
+    const again = await manager.loadExtension('probe');
+    const mirrored = await manager.loadExtension('probe', { baseUrl: 'https://mirror.example' });
+
+    expect(again).toBe(first);
+    expect(mirrored).not.toBe(first);
+    expect((mirrored as any).baseUrl).toBe('https://mirror.example');
   });
 });
