@@ -13,8 +13,6 @@ const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
-const anify_1 = __importDefault(require("../anime/anify"));
-const utils_2 = require("../../utils/utils");
 class Myanimelist extends models_1.AnimeParser {
   name = 'Myanimelist';
   baseUrl = 'https://myanimelist.net/';
@@ -23,7 +21,6 @@ class Myanimelist extends models_1.AnimeParser {
   anilistGraphqlUrl = 'https://graphql.anilist.co';
   kitsuGraphqlUrl = 'https://kitsu.app/api/graphql';
   malSyncUrl = 'https://api.malsync.moe';
-  anifyUrl = utils_2.ANIFY_URL;
   provider;
   /**
    * This class maps myanimelist to kitsu with any other anime provider.
@@ -74,8 +71,8 @@ class Myanimelist extends models_1.AnimeParser {
         }
       }
       if (hasEpisodes) await this.populateEpisodeList(episodes, url, ++count);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Best effort: keep the episodes found on earlier pages.
     }
   }
   search = (() => async function (query) {
@@ -135,28 +132,9 @@ class Myanimelist extends models_1.AnimeParser {
         const animeInfo = await _this.fetchMalInfoById(animeId);
         const titleWithLanguages = animeInfo?.title;
         let fillerEpisodes;
-        if (_this.provider instanceof zoro_1.default && !dub && (animeInfo.status === models_1.MediaStatus.ONGOING || (0, utils_1.range)({
-          from: 2000,
-          to: new Date().getFullYear() + 1
-        }).includes(animeInfo.startDate?.year))) {
-          try {
-            animeInfo.episodes = (await new anify_1.default(undefined, undefined, _this.provider.name.toLowerCase()).fetchAnimeInfo(animeId)).episodes?.map(item => ({
-              id: item.slug,
-              title: item.title,
-              description: item.description,
-              number: item.number,
-              image: item.image
-            }));
-            animeInfo.episodes?.reverse();
-          } catch (err) {
-            animeInfo.episodes = await _this.findAnimeSlug(titleWithLanguages?.english || titleWithLanguages?.romaji || titleWithLanguages?.native || titleWithLanguages?.userPreferred, animeInfo.season, animeInfo.startDate?.year, animeId, dub);
-            animeInfo.episodes = animeInfo.episodes?.map(episode => {
-              if (!episode.image) episode.image = animeInfo.image;
-              return episode;
-            });
-            return animeInfo;
-          }
-        } else animeInfo.episodes = await _this.findAnimeSlug(titleWithLanguages?.english || titleWithLanguages?.romaji || titleWithLanguages?.native || titleWithLanguages?.userPreferred, animeInfo.season, animeInfo.startDate?.year, animeId, dub);
+        animeInfo.episodes = await _this.findAnimeSlug(titleWithLanguages?.english || titleWithLanguages?.romaji || titleWithLanguages?.native || titleWithLanguages?.userPreferred, animeInfo.season, animeInfo.startDate?.year, animeId, dub).catch(err => {
+          throw models_1.MetaError.from('provider', err);
+        });
         if (fetchFiller) {
           // Optional enrichment: a missing or unreachable filler list must not fail the info call.
           fillerEpisodes = await meta_http_1.metaHttp.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeId}.json`, {
@@ -177,8 +155,7 @@ class Myanimelist extends models_1.AnimeParser {
         });
         return animeInfo;
       } catch (err) {
-        console.error(err);
-        throw err;
+        throw models_1.MetaError.from('mal', err);
       }
     };
   })();
@@ -189,10 +166,9 @@ class Myanimelist extends models_1.AnimeParser {
         for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
           args[_key - 1] = arguments[_key];
         }
-        if (episodeId.includes('/') && _this2.provider instanceof anify_1.default) return new anify_1.default().fetchEpisodeSources(episodeId, args[0], args[1]);
-        return _this2.provider.fetchEpisodeSources(episodeId, ...args);
+        return await _this2.provider.fetchEpisodeSources(episodeId, ...args);
       } catch (err) {
-        throw new Error(`Failed to fetch episode sources from ${_this2.provider.name}: ${err}`);
+        throw models_1.MetaError.from('provider', err, `Failed to fetch episode sources from ${_this2.provider.name}: ${err}`);
       }
     };
   })();
@@ -218,7 +194,6 @@ class Myanimelist extends models_1.AnimeParser {
     return await this.provider.fetchAnimeInfo(findAnime.results[0].id);
   };
   findAnimeSlug = async (title, season, startDate, malId, dub, externalLinks) => {
-    if (this.provider instanceof anify_1.default) return (await this.provider.fetchAnimeInfo(malId)).episodes;
     // console.log({ title });
     const slug = title?.replace(/[^0-9a-zA-Z]+/g, ' ');
     let possibleAnime;

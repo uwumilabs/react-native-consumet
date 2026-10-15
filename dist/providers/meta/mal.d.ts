@@ -7,7 +7,6 @@ declare class Myanimelist extends AnimeParser {
     private readonly anilistGraphqlUrl;
     private readonly kitsuGraphqlUrl;
     private readonly malSyncUrl;
-    private readonly anifyUrl;
     provider: AnimeParser | IAnimeProvider;
     /**
      * This class maps myanimelist to kitsu with any other anime provider.

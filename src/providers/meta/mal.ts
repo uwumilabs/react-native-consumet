@@ -14,11 +14,10 @@ import {
   MediaFormat,
   type ProviderCapabilities,
   type IAnimeProvider,
+  MetaError,
 } from '../../models';
-import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
+import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery } from '../../utils';
 import Zoro from '../anime/zoro/zoro';
-import Anify from '../anime/anify';
-import { ANIFY_URL } from '../../utils/utils';
 
 class Myanimelist extends AnimeParser {
   override readonly name = 'Myanimelist';
@@ -29,7 +28,6 @@ class Myanimelist extends AnimeParser {
   private readonly anilistGraphqlUrl = 'https://graphql.anilist.co';
   private readonly kitsuGraphqlUrl = 'https://kitsu.app/api/graphql';
   private readonly malSyncUrl = 'https://api.malsync.moe';
-  private readonly anifyUrl = ANIFY_URL;
   provider: AnimeParser | IAnimeProvider;
 
   /**
@@ -86,8 +84,8 @@ class Myanimelist extends AnimeParser {
       }
 
       if (hasEpisodes) await this.populateEpisodeList(episodes, url, ++count);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Best effort: keep the episodes found on earlier pages.
     }
   }
 
@@ -176,58 +174,18 @@ class Myanimelist extends AnimeParser {
         userPreferred: string;
       };
       let fillerEpisodes: { 'number': string; 'filler-bool': boolean }[];
-      if (
-        this.provider instanceof Zoro &&
-        !dub &&
-        (animeInfo.status === MediaStatus.ONGOING ||
-          range({ from: 2000, to: new Date().getFullYear() + 1 }).includes(animeInfo.startDate?.year!))
-      ) {
-        try {
-          animeInfo.episodes = (
-            await new Anify(
-              undefined,
-              undefined,
-              this.provider.name.toLowerCase() as 'gogoanime' | 'zoro' | '9anime' | 'animepahe'
-            ).fetchAnimeInfo(animeId)
-          ).episodes?.map((item: any) => ({
-            id: item.slug,
-            title: item.title,
-            description: item.description,
-            number: item.number,
-            image: item.image,
-          }));
-          animeInfo.episodes?.reverse();
-        } catch (err) {
-          animeInfo.episodes = await this.findAnimeSlug(
-            titleWithLanguages?.english ||
-              titleWithLanguages?.romaji ||
-              titleWithLanguages?.native ||
-              titleWithLanguages?.userPreferred,
-            animeInfo.season!,
-            animeInfo.startDate?.year!,
-            animeId,
-            dub
-          );
-
-          animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode) => {
-            if (!episode.image) episode.image = animeInfo.image;
-
-            return episode;
-          });
-
-          return animeInfo;
-        }
-      } else
-        animeInfo.episodes = await this.findAnimeSlug(
-          titleWithLanguages?.english ||
-            titleWithLanguages?.romaji ||
-            titleWithLanguages?.native ||
-            titleWithLanguages?.userPreferred,
-          animeInfo.season!,
-          animeInfo.startDate?.year!,
-          animeId,
-          dub
-        );
+      animeInfo.episodes = await this.findAnimeSlug(
+        titleWithLanguages?.english ||
+          titleWithLanguages?.romaji ||
+          titleWithLanguages?.native ||
+          titleWithLanguages?.userPreferred,
+        animeInfo.season!,
+        animeInfo.startDate?.year!,
+        animeId,
+        dub
+      ).catch((err) => {
+        throw MetaError.from('provider', err);
+      });
 
       if (fetchFiller) {
         // Optional enrichment: a missing or unreachable filler list must not fail the info call.
@@ -252,18 +210,15 @@ class Myanimelist extends AnimeParser {
 
       return animeInfo;
     } catch (err) {
-      console.error(err);
-      throw err;
+      throw MetaError.from('mal', err);
     }
   };
 
   override fetchEpisodeSources = async (episodeId: string, ...args: any): Promise<ISource> => {
     try {
-      if (episodeId.includes('/') && this.provider instanceof Anify)
-        return new Anify().fetchEpisodeSources(episodeId, args[0], args[1]);
-      return this.provider.fetchEpisodeSources(episodeId, ...args);
+      return await this.provider.fetchEpisodeSources(episodeId, ...args);
     } catch (err) {
-      throw new Error(`Failed to fetch episode sources from ${this.provider.name}: ${err}`);
+      throw MetaError.from('provider', err, `Failed to fetch episode sources from ${this.provider.name}: ${err}`);
     }
   };
 
@@ -308,8 +263,6 @@ class Myanimelist extends AnimeParser {
     dub: boolean,
     externalLinks?: any
   ): Promise<IAnimeEpisode[]> => {
-    if (this.provider instanceof Anify) return (await this.provider.fetchAnimeInfo(malId)).episodes!;
-
     // console.log({ title });
     const slug = title?.replace(/[^0-9a-zA-Z]+/g, ' ');
 

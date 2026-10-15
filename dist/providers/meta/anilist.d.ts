@@ -91,6 +91,7 @@ declare class Anilist extends AnimeParser {
      */
     fetchRandomAnime: () => Promise<IAnimeInfo>;
     /**
+     * @deprecated Reads from Anify, which is offline, so this always fails.
      * @param provider The provider to get the episode Ids from (optional) default: `gogoanime` (options: `gogoanime`, `zoro`)
      * @param page page number (optional)
      * @param perPage number of results per page (optional)
