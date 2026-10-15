@@ -40,7 +40,7 @@ describe.each(platforms)('$id', ({ provider, query, series }) => {
     expect(info!.title).toBe(series);
     expect(info!.type).toBe(TvType.TVSERIES);
     expect(new Set(info!.episodes!.map((e) => e.season)).size).toBeGreaterThan(1);
-    episodeId = info!.episodes![0]!.id;
+    episodeId = info!.episodes![0]!.id!;
   });
 
   test('fetchEpisodeSources: returns a real HLS stream, not the teaser', async () => {

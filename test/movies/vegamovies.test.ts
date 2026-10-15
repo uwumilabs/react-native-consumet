@@ -67,7 +67,7 @@ describe('VegaMovies Provider', () => {
   const getLiveEpisodeLink = () =>
     (liveEpisodeLink ??= vegaMovies
       .fetchMediaInfo('download-loki-2023-season-2-hindi-org-web-dl-web-series-480p-720p-1080p-2160p-4k')
-      .then((info) => info.episodes!.find((e) => e.id.includes('cloud'))!.id));
+      .then((info) => info.episodes!.find((e) => e.id?.includes('cloud'))!.id!));
 
   it('fetchEpisodeServers: returns available servers for an episode link', async () => {
     const servers = await vegaMovies.fetchEpisodeServers(await getLiveEpisodeLink());
@@ -91,7 +91,7 @@ describe('VegaMovies Provider', () => {
     expect(info.episodes).toBeDefined();
     expect(info.episodes!.length).toBeGreaterThan(0);
 
-    const firstEpId = info.episodes![0]!.id;
+    const firstEpId = info.episodes![0]!.id!;
     console.log('FIRST EPISODE ID:', firstEpId);
     const sources = await vegaMovies.fetchEpisodeSources(firstEpId, info.id);
     console.log('MERCY FOR NONE FIRST EP SOURCES:', JSON.stringify(sources, null, 2));

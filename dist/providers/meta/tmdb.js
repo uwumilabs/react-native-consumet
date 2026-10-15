@@ -167,7 +167,7 @@ class TMDB extends models_1.MovieParser {
       const InfoFromProvider = match?.info;
       if (match) info.providerId = match.id;
       //check if the movie so episode id does not show on tv shows
-      if (type === 'movie') info.episodeId = InfoFromProvider?.episodes[0]?.id;
+      if (type === 'movie') info.episodeId = InfoFromProvider?.episodes?.[0]?.id;
       info.title = data?.title || data?.name;
       //images
       info.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
@@ -190,11 +190,12 @@ class TMDB extends models_1.MovieParser {
         character: cast.character,
         image: `https://image.tmdb.org/t/p/original${cast.profile_path}`
       }));
-      info.trailer = {
-        id: data?.videos?.results[0]?.key,
-        site: data?.videos?.results[0]?.site,
-        url: `https://www.youtube.com/watch?v=${data?.videos?.results[0]?.key}`
-      };
+      const video = data?.videos?.results?.[0];
+      info.trailer = video?.key ? {
+        id: video.key,
+        site: video.site,
+        url: `https://www.youtube.com/watch?v=${video.key}`
+      } : undefined;
       info.mappings = {
         imdb: data?.external_ids?.imdb_id || undefined,
         tmdb: data?.id || undefined
@@ -222,8 +223,8 @@ class TMDB extends models_1.MovieParser {
       const totalSeasons = info?.totalSeasons || 0;
       if (type === 'tv' && totalSeasons > 0) {
         const seasonUrl = season => `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
-        info.seasons = [];
-        const seasons = info.seasons;
+        const seasons = [];
+        info.seasons = seasons;
         const providerEpisodes = InfoFromProvider?.episodes;
         info.nextAiringEpisode = data?.next_episode_to_air ? {
           season: data.next_episode_to_air?.season_number || undefined,
@@ -239,13 +240,15 @@ class TMDB extends models_1.MovieParser {
           } = await meta_http_1.metaHttp.get(seasonUrl(i.toString()));
           //find season in each episode (providerEpisodes)
           const seasonEpisodes = providerEpisodes?.filter(episode => episode.season === i);
-          const episodes = seasonData?.episodes?.length <= 0 ? undefined : seasonData?.episodes.map(episode => {
+          const tmdbEpisodes = seasonData?.episodes ?? [];
+          const episodes = tmdbEpisodes.map(episode => {
             //find episode in each season (seasonEpisodes)
             const episodeFromProvider = seasonEpisodes?.find(ep => ep.number === episode.episode_number);
             return {
               id: episodeFromProvider?.id,
               uniqueId: `${mediaId}-${type}-s${episode.season_number}-e${episode.episode_number}`,
               title: episode.name,
+              number: episode.episode_number,
               episode: episode.episode_number,
               season: episode.season_number,
               releaseDate: episode.air_date,
@@ -264,7 +267,7 @@ class TMDB extends models_1.MovieParser {
               hd: `https://image.tmdb.org/t/p/w780${seasonData.poster_path}`
             },
             episodes,
-            isReleased: seasonData?.episodes[0]?.air_date > new Date().toISOString() ? false : true
+            isReleased: tmdbEpisodes[0]?.air_date > new Date().toISOString() ? false : true
           });
         }
       } else {
@@ -276,14 +279,15 @@ class TMDB extends models_1.MovieParser {
             hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`
           },
           episodes: [{
-            id: InfoFromProvider?.episodes[0]?.id,
+            id: InfoFromProvider?.episodes?.[0]?.id,
             uniqueId: `${mediaId}-${type}-s1-e1`,
             title: data.title || data.original_title,
+            number: 1,
             episode: 1,
             season: 1,
             releaseDate: data.release_date,
             description: data.overview,
-            url: InfoFromProvider?.episodes[0]?.url,
+            url: InfoFromProvider?.episodes?.[0]?.url,
             image: !data?.backdrop_path ? undefined : {
               mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
               hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`

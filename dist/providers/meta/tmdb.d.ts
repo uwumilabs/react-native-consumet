@@ -1,4 +1,4 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, MovieParser, TvType, type IMovieResult, type IMovieInfo, type ProxyConfig } from '../../models';
+import { type ISearch, type IAnimeResult, type ISource, type IEpisodeServer, MovieParser, TvType, type IMovieResult, type IMovieInfo, type ProxyConfig } from '../../models';
 import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import type { AxiosAdapter } from 'axios';
 declare class TMDB extends MovieParser {
@@ -29,7 +29,7 @@ declare class TMDB extends MovieParser {
      * @param id media id (anime or movie/tv)
      * @param type movie or tv
      */
-    fetchMediaInfo: (mediaId: string, type: string) => Promise<IMovieInfo | IAnimeInfo>;
+    fetchMediaInfo: (mediaId: string, type: string) => Promise<IMovieInfo>;
     /**
      * Find the title on the provider and fetch the provider's info for it. Returns nothing when no
      * search result matches or the provider fails, so the TMDB metadata never depends on the provider.

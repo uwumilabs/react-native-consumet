@@ -397,13 +397,20 @@ export enum TvType {
 }
 
 export interface IMovieEpisode {
-  id: string;
+  /**
+   * Provider episode id. Providers always set it; TMDB meta leaves it unset for episodes TMDB lists
+   * but the provider doesn't have (nothing to play).
+   */
+  id?: string;
   uniqueId?: string;
   title: string;
   url?: string;
   number?: number;
+  /** @deprecated same as `number`; TMDB meta sets both */
+  episode?: number;
   season?: number;
   description?: string;
+  /** A URL from providers; TMDB meta gives `{ mobile, hd }` (300 px and 780 px wide stills) */
   image?:
     | string
     | {
@@ -475,7 +482,10 @@ export interface IMovieSeason {
     mobile?: string;
     hd?: string;
   };
+  /** Empty when the season has no episodes listed yet */
   episodes: IMovieEpisode[];
+  /** False when the season's first episode hasn't aired yet */
+  isReleased?: boolean;
 }
 
 export interface IMovieInfo extends IMovieResult {
@@ -484,17 +494,44 @@ export interface IMovieInfo extends IMovieResult {
    * provider as the media id). Unset when nothing matched; `id` stays the TMDB id either way.
    */
   providerId?: string;
+  /** TMDB meta only, for movies: the provider episode id that plays the movie */
+  episodeId?: string;
   cover?: string;
   recommendations?: IMovieResult[];
+  similar?: IMovieResult[];
   genres?: string[];
   description?: string;
   rating?: number;
   status?: MediaStatus;
-  duration?: string;
+  /** Text from providers; minutes (a number) from TMDB meta */
+  duration?: string | number;
   production?: string;
   casts?: string[];
   tags?: string[];
+  directors?: string[];
+  writers?: string[];
+  actors?: string[];
+  characters?: {
+    id: number;
+    name: string;
+    url?: string;
+    character?: string;
+    image?: string;
+  }[];
   totalEpisodes?: number;
+  totalSeasons?: number;
+  nextAiringEpisode?: {
+    season?: number;
+    episode?: number;
+    releaseDate?: string;
+    title?: string;
+    description?: string;
+    runtime?: number;
+  };
+  mappings?: {
+    imdb?: string;
+    tmdb?: number;
+  };
   trailer?: Trailer;
   seasons?: IMovieSeason[];
   episodes?: IMovieEpisode[];

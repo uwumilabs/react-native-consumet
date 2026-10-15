@@ -54,3 +54,44 @@ In uwumi:
   `mediaId={episodeData?.id ?? id}` to `mediaId={episodeData?.providerId ?? id}`.
 - An episode without an `id` isn't available on the provider. `buildEpisodeRouteParams` already
   returns `null` for it.
+
+## Episode, season and info types match the data
+
+`fetchMediaInfo` now returns `Promise<IMovieInfo>` instead of `Promise<IMovieInfo | IAnimeInfo>`. The
+movie types declare every field TMDB returns, so the result needs no cast.
+
+| Field                        | Before                                                        | After                                               |
+| ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
+| Episode `number`             | Not set                                                       | TMDB episode number (`1` for a movie)               |
+| Episode `episode`            | Episode number                                                | Unchanged, now declared and marked deprecated       |
+| Episode `id` (type)          | `string`, though `undefined` for episodes not on the provider | `string \| undefined`                               |
+| Season `episodes`            | `undefined` when TMDB lists no episodes for the season        | `[]`                                                |
+| `trailer`                    | `{ id: undefined, url: '…?v=undefined' }` with no TMDB video  | `undefined`                                         |
+| `IMovieInfo.duration` (type) | `string`                                                      | `string \| number` (TMDB gives minutes as a number) |
+| `fetchMediaInfo` return type | `IMovieInfo \| IAnimeInfo`                                    | `IMovieInfo`                                        |
+
+These fields were already returned and are now declared:
+
+- `IMovieInfo`: `episodeId`, `similar`, `directors`, `writers`, `actors`, `characters`,
+  `totalSeasons`, `nextAiringEpisode`, `mappings` (`{ imdb?: string; tmdb?: number }`).
+- `IMovieSeason`: `isReleased`.
+- `IMovieEpisode`: `episode`.
+
+Images are unchanged. TMDB episodes and seasons keep `image: { mobile, hd }` (300 px and 780 px
+wide), which `IMovieEpisode.image` (`string | { mobile?, hd? }`) and `IMovieSeason.image` already
+allow. Provider and anime episodes use a URL string.
+
+`IMovieEpisode.id` is optional for every movie episode, not just TMDB's. Code that passes an episode
+`id` where a `string` is required needs a guard or a non-null assertion.
+
+### What to change in an app
+
+- Read `number` rather than `episode`. Code that already reads `number ?? episode` keeps working.
+- Treat a missing episode `id` as "not available on this provider".
+
+In uwumi:
+
+- `src/hooks/queries/infoQueries.ts`: remove `as unknown as IMovieInfo` from both
+  `META.TMDB(...).fetchMediaInfo(...)` calls.
+- uwumi's other reads of an episode `id` already handle `undefined`: `buildEpisodeRouteParams`,
+  `EpisodeActionsSheet` and the `EpisodeList` key extractor.

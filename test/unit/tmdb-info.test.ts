@@ -1,6 +1,6 @@
 import TMDB from '../../src/providers/meta/tmdb';
 import { TvType } from '../../src/models';
-import type { IMovieInfo, IMovieProvider } from '../../src/models/types';
+import type { IMovieEpisode, IMovieInfo, IMovieProvider, IMovieSeason } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
 import show from './fixtures/tmdb/tv-84958.json';
 import season1 from './fixtures/tmdb/tv-84958-season-1.json';
@@ -43,10 +43,11 @@ const lokiEpisodes = [
   { id: 'loki-s2e1', number: 1, season: 2, url: 'https://provider.example/loki/s2e1' },
 ];
 
-const fetchInfo = (provider: IMovieProvider, id: string, type: string) =>
-  new TMDB(undefined, provider).fetchMediaInfo(id, type) as Promise<IMovieInfo>;
+// Typed as IMovieInfo without a cast, as apps use it (checked by `tsc -p test/tsconfig.json`).
+const fetchInfo = (provider: IMovieProvider, id: string, type: string): Promise<IMovieInfo> =>
+  new TMDB(undefined, provider).fetchMediaInfo(id, type);
 
-const allEpisodes = (info: IMovieInfo) => (info.seasons ?? []).flatMap((s) => s.episodes ?? []);
+const allEpisodes = (info: IMovieInfo) => (info.seasons ?? []).flatMap((s) => s.episodes);
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -207,5 +208,97 @@ describe('TMDB.fetchMediaInfo provider matching (META-5)', () => {
       );
       expect(provider.fetchMediaInfo).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('TMDB.fetchMediaInfo episode shape (META-6)', () => {
+  const still = (path: string) => ({
+    mobile: `https://image.tmdb.org/t/p/w300${path}`,
+    hd: `https://image.tmdb.org/t/p/w780${path}`,
+  });
+
+  it('sets number (and the older episode field) on every TV episode', async () => {
+    stubTmdb();
+    const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
+
+    const tmdbEpisodes = [...season1.episodes, ...season2.episodes];
+    expect(allEpisodes(info).map((e) => [e.season, e.number, e.episode])).toEqual(
+      tmdbEpisodes.map((e) => [e.season_number, e.episode_number, e.episode_number])
+    );
+  });
+
+  it('sets number on the single movie episode', async () => {
+    stubTmdb();
+    const info = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
+
+    expect(info.seasons).toHaveLength(1);
+    expect(info.seasons![0]!.episodes).toEqual([
+      expect.objectContaining({ number: 1, episode: 1, season: 1, title: movie.title, id: undefined }),
+    ]);
+  });
+
+  it('gives episodes and seasons { mobile, hd } images from TMDB stills and posters', async () => {
+    stubTmdb();
+    const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
+
+    const [s1] = info.seasons!;
+    expect(s1!.image).toEqual(still(season1.poster_path));
+    expect(s1!.episodes[0]!.image).toEqual(still(season1.episodes[0]!.still_path));
+  });
+
+  it('returns an empty episode list for a season TMDB has no episodes for', async () => {
+    stubTmdb({
+      [`tv/${SHOW_ID}/season/1`]: { ...season1, episodes: [] },
+      [`tv/${SHOW_ID}/season/2`]: { season_number: 2, poster_path: null },
+    });
+    const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
+
+    expect(info.seasons!.map((s) => s.episodes)).toEqual([[], []]);
+    expect(info.seasons![1]!.image).toBeUndefined();
+  });
+
+  it('returns the fields apps read with their declared types', async () => {
+    stubTmdb();
+    const provider = fakeProvider([{ id: 'tv/loki', title: 'Loki', type: TvType.TVSERIES }], {
+      id: 'tv/loki',
+      title: 'Loki',
+      episodes: lokiEpisodes,
+    });
+    const info = await fetchInfo(provider, SHOW_ID, 'tv');
+
+    // `tsc -p test/tsconfig.json` (not jest) rejects these lines if the movie types lack the fields.
+    const providerId: string | undefined = info.providerId;
+    const imdb: string | undefined = info.mappings?.imdb;
+    const totalSeasons: number | undefined = info.totalSeasons;
+    const character: string | undefined = info.characters?.[0]?.character;
+    const season: IMovieSeason = info.seasons![0]!;
+    const isReleased: boolean | undefined = season.isReleased;
+    const episode: IMovieEpisode = season.episodes[0]!;
+    const episodeId: string | undefined = episode.id;
+    const number: number | undefined = episode.number;
+
+    expect({ providerId, imdb, totalSeasons, character, isReleased, episodeId, number }).toEqual({
+      providerId: 'tv/loki',
+      imdb: 'tt9140554',
+      totalSeasons: 2,
+      character: 'Loki Laufeyson',
+      isReleased: true,
+      episodeId: 'loki-s1e1',
+      number: 1,
+    });
+    expect(info.trailer).toEqual({
+      id: 'R6o1UWEBVQA',
+      site: 'YouTube',
+      url: 'https://www.youtube.com/watch?v=R6o1UWEBVQA',
+    });
+    expect(info.nextAiringEpisode).toBeUndefined();
+  });
+
+  it('leaves trailer unset when TMDB has no videos', async () => {
+    stubTmdb({ [`movie/${MOVIE_ID}`]: { ...movie, videos: { results: [] } } });
+    const info = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
+
+    expect(info.trailer).toBeUndefined();
+    expect(info.duration).toBe(123);
   });
 });
