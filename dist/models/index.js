@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WatchListType = exports.MediaFormat = exports.Topics = exports.Genres = exports.MovieParser = exports.TvType = exports.MangaParser = exports.LightNovelParser = exports.SubOrDub = exports.MediaStatus = exports.StreamingServers = exports.VideoExtractor = exports.AnimeParser = exports.BaseParser = exports.BaseProvider = void 0;
+exports.WatchListType = exports.MediaFormat = exports.Topics = exports.Genres = exports.MovieParser = exports.TvType = exports.MangaParser = exports.LightNovelParser = exports.SubOrDub = exports.MediaStatus = exports.StreamingServers = exports.VideoExtractor = exports.AnimeParser = exports.BaseParser = exports.BaseProvider = exports.MetaError = void 0;
 const base_provider_1 = __importDefault(require("./base-provider"));
 exports.BaseProvider = base_provider_1.default;
 const base_parser_1 = __importDefault(require("./base-parser"));
@@ -18,6 +18,8 @@ const lightnovel_parser_1 = __importDefault(require("./lightnovel-parser"));
 exports.LightNovelParser = lightnovel_parser_1.default;
 const movie_parser_1 = __importDefault(require("./movie-parser"));
 exports.MovieParser = movie_parser_1.default;
+const meta_error_1 = require("./meta-error");
+Object.defineProperty(exports, "MetaError", { enumerable: true, get: function () { return meta_error_1.MetaError; } });
 const types_1 = require("./types");
 Object.defineProperty(exports, "StreamingServers", { enumerable: true, get: function () { return types_1.StreamingServers; } });
 Object.defineProperty(exports, "MediaStatus", { enumerable: true, get: function () { return types_1.MediaStatus; } });

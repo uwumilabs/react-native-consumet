@@ -112,6 +112,8 @@ import {
   type IMovieSeason,
   type ExtensionManifest,
   type ExtractorInfo,
+  MetaError,
+  type MetaErrorSource,
 } from './models';
 
 // ---------------------------------------------------------------------------
@@ -213,5 +215,7 @@ export {
   defaultExtractors,
   verifyExtensionCode,
   IntegrityError,
+  MetaError,
 };
+export type { MetaErrorSource };
 export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions };
