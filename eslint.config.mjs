@@ -59,6 +59,7 @@ export default defineConfig([
     ignores: [
       // Development Dependencies
       'node_modules/',
+      '.claude/',
       '.expo/',
       '.expo-shared/',
       '.vscode/',

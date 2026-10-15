@@ -90,3 +90,6 @@ nitrogen/
 
 # ai shit
 GEMINI.md
+
+# Local git worktrees
+.claude/worktrees/

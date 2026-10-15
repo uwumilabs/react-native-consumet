@@ -4,6 +4,9 @@ module.exports = {
   testEnvironment: 'node',
   // Offline unit tests by default; suites that hit live sites run with `yarn test:live`.
   testMatch: process.env.LIVE_TESTS === '1' ? ['**/test/**/*.test.ts'] : ['**/test/unit/**/*.test.ts'],
+  // Git worktrees under .claude/ hold copies of the repo.
+  modulePathIgnorePatterns: ['<rootDir>/.claude/'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.claude/'],
   setupFiles: ['<rootDir>/jest.setup.js'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
