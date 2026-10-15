@@ -93,6 +93,18 @@ const extractor = await extractorManager.loadExtractor('megacloud');
 const sources = await extractor.extract(embedUrl, referer);
 ```
 
+Providers loaded through a `ProviderManager` share one `ExtractorManager`, built from the same registry. When a provider calls `ctx.extractors.MegaPlay()`, the call runs the registry version of MegaPlay, hash-checked and fetched once, then cached. If the registry code can't be fetched or fails its hash, the bundled MegaPlay runs instead. An extractor that is in neither throws `Extractor '<name>' not found in the registry or the bundled extractors`.
+
+To share an extractor cache between your own code and the providers, pass your manager in:
+
+```typescript
+const extractorManager = new ExtractorManager(extensionRegistry);
+const providerManager = new ProviderManager(extensionRegistry, { extractorManager });
+// providerManager.getExtractorManager() === extractorManager
+```
+
+`createProviderContext()` without an `extractorManager` keeps the bundled extractors, as before.
+
 
 ## Usage Examples
 
@@ -511,7 +523,7 @@ export const useMultiProvider = () => {
 
 ```typescript
 class ProviderManager {
-  constructor(registry: typeof extensionRegistry, config?: ProviderContextConfig)
+  constructor(registry: typeof extensionRegistry, config?: ProviderContextConfig, integrityOptions?: IntegrityOptions)
   
   // Extension management
   getAvailableExtensions(): ExtensionManifest[]
@@ -540,6 +552,7 @@ class ProviderManager {
   
   // Context and metadata
   getProviderContext(): ProviderContext
+  getExtractorManager(): ExtractorManager // shared by every provider this manager loads
   
   // Provider code execution
   executeProviderCode<T extends AnimeProvider | MovieProvider>(
@@ -560,7 +573,7 @@ class ProviderManager {
 
 ```typescript
 class ExtractorManager {
-  constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig)
+  constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions)
   
   // Extractor loading
   loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultExtractors)[T]>

@@ -1,3 +1,4 @@
+import { ExtractorManager } from './ExtractorManager';
 import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeProvider, type IAnimeResult, type IMovieProvider, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
@@ -10,6 +11,7 @@ export interface ProviderLoadOptions {
 }
 export declare class ProviderManager {
     private providerContext;
+    private extractorManager;
     private loadedExtensions;
     private extensionManifest;
     private integrityOptions;
@@ -68,6 +70,10 @@ export declare class ProviderManager {
      * Get movie provider
      */
     getMovieProvider(extensionId: MovieProviderId, options?: ProviderLoadOptions): Promise<IMovieProvider>;
+    /**
+     * Get the extractor manager shared by the providers this manager loads
+     */
+    getExtractorManager(): ExtractorManager;
     /**
      * Get the provider context
      */

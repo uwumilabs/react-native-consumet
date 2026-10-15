@@ -1,4 +1,5 @@
 import createProviderContext from './create-provider-context';
+import { ExtractorManager } from './ExtractorManager';
 import type { ProviderContext } from '../models/provider-context';
 import {
   AnimeParser,
@@ -34,6 +35,7 @@ export interface ProviderLoadOptions {
 
 export class ProviderManager {
   private providerContext: ProviderContext;
+  private extractorManager: ExtractorManager;
   private loadedExtensions = new Map<string, any>();
   private extensionManifest = new Map<string, ExtensionManifest>();
   private integrityOptions: IntegrityOptions;
@@ -43,8 +45,17 @@ export class ProviderManager {
     providerConfig: ProviderContextConfig = {},
     integrityOptions: IntegrityOptions = {}
   ) {
-    this.providerContext = createProviderContext(providerConfig);
     this.integrityOptions = integrityOptions;
+    // One extractor manager for every provider this manager loads, built from the same registry,
+    // so providers run the registry (hash-verified) versions of their extractors.
+    this.extractorManager =
+      providerConfig.extractorManager ??
+      new ExtractorManager(
+        registry,
+        { axios: providerConfig.axios, load: providerConfig.load, userAgent: providerConfig.userAgent },
+        integrityOptions
+      );
+    this.providerContext = createProviderContext({ ...providerConfig, extractorManager: this.extractorManager });
     this.loadRegistry(registry);
   }
 
@@ -443,6 +454,13 @@ export class ProviderManager {
 
     // The category was checked above, so the loaded provider is a movie provider.
     return (await this.loadExtension(extensionId, options)) as IMovieProvider;
+  }
+
+  /**
+   * Get the extractor manager shared by the providers this manager loads
+   */
+  getExtractorManager(): ExtractorManager {
+    return this.extractorManager;
   }
 
   /**

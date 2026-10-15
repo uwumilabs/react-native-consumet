@@ -1,6 +1,7 @@
 import { load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 import type { ProviderContext, ProviderContextConfig } from '../models/provider-context';
+import type { ExtractorContext, IVideoExtractor } from '../models';
 import {
   AnimeParser,
   MovieParser,
@@ -15,7 +16,7 @@ import {
   Topics,
 } from '../models';
 
-import { defaultAxios, defaultExtractors, defaultExtractorContext } from './extension-utils';
+import { defaultAxios, defaultExtractors } from './extension-utils';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
 import {
   getDdosGuardCookiesWithWebView,
@@ -26,7 +27,6 @@ import {
   bypassDdosGuard,
   deobfuscateScript,
 } from '../NativeConsumet';
-import extensionRegistry from '../extension-registry.json';
 
 /**
  * Creates a provider context with sensible defaults for extensions
@@ -35,40 +35,56 @@ import extensionRegistry from '../extension-registry.json';
  * @returns Complete ProviderContext ready for use with extensions
  */
 export function createProviderContext(config: ProviderContextConfig = {}): ProviderContext {
-  // Create dynamic extractor proxy
+  const extractorManager = config.extractorManager;
+
+  // A factory shaped like the bundled ones (`X(ctx).extract(url)`) that runs the registry version of
+  // the extractor, verified and cached by the shared manager, falling back to the bundled version.
+  const registryBacked =
+    (name: string, bundled?: (ctx?: ExtractorContext) => IVideoExtractor) =>
+    (callerCtx?: ExtractorContext): IVideoExtractor => ({
+      serverName: name,
+      sources: [],
+      extract: async (...args: any[]) => {
+        let extractor: any;
+        try {
+          extractor = await extractorManager!.loadExtractor(name);
+        } catch (error) {
+          if (!bundled) throw error;
+        }
+        // When the registry copy can't be used, loadExtractor returns the bundled factory instead.
+        if (typeof extractor?.extract !== 'function') {
+          if (!bundled) throw new Error(`Extractor '${name}' is not available`);
+          extractor = bundled(callerCtx);
+        }
+        return extractor.extract(...(args as [any]));
+      },
+    });
+
   const finalExtractors = new Proxy(defaultExtractors, {
-    get: (target: any, prop: string) => {
-      // If it's a custom extractor, return it directly
+    get: (target: any, prop: string | symbol) => {
+      if (typeof prop !== 'string') return target[prop];
+
+      // Custom extractors from the config always win
       if (config.extractors && config.extractors[prop]) {
         return config.extractors[prop];
       }
 
-      // If it's a static extractor, return it directly for immediate access
+      // Extractors in the app's registry run their registry version
+      if (extractorManager?.getExtractorMetadata(prop)) {
+        return registryBacked(prop, target[prop]);
+      }
+
       if (target[prop]) {
         return target[prop];
       }
 
-      // For dynamic extractors, return an async loader
-      return async (...args: any[]) => {
-        try {
-          // Dynamically import and create ExtractorManager to avoid circular dependency
-          const { ExtractorManager } = await import('./ExtractorManager');
-          const extractorManager = new ExtractorManager(extensionRegistry, {
-            axios: config.axios || defaultExtractorContext.axios,
-            load: config.load || defaultExtractorContext.load,
-            userAgent: config.userAgent || defaultExtractorContext.USER_AGENT,
-          });
-          const extractor = await extractorManager.loadExtractor(prop.toLowerCase() as StreamingServers);
-          return extractor.extract(args[0], ...args.slice(1));
-        } catch (error) {
-          console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
-          // Fallback to static if available
-          if (target[prop]) {
-            return target[prop](...args);
-          }
-          throw new Error(`Extractor '${prop}' not found in dynamic or static extractors`);
-        }
-      };
+      return (): IVideoExtractor => ({
+        serverName: prop,
+        sources: [],
+        extract: async () => {
+          throw new Error(`Extractor '${prop}' not found in the registry or the bundled extractors`);
+        },
+      });
     },
   });
 
@@ -96,6 +112,7 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
     MovieParser: config.MovieParser || MovieParser,
     MangaParser: config.MangaParser || MangaParser,
     extractors: finalExtractors,
+    extractorManager,
     PolyURL: PolyURL,
     PolyURLSearchParams: PolyURLSearchParams,
     createCustomBaseUrl,

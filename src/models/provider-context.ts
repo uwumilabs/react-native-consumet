@@ -205,4 +205,11 @@ export interface ProviderContextConfig extends ExtractorContextConfig {
    * Custom MangaParser base class (optional) - for advanced use cases
    */
   MangaParser?: typeof MangaParser;
+
+  /**
+   * Extractor manager whose registry supplies extractors to providers (optional). When set,
+   * `ctx.extractors.X` runs the hash-verified registry version of X, falling back to the bundled
+   * one. Without it, providers use the bundled extractors.
+   */
+  extractorManager?: ExtractorManager;
 }

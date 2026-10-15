@@ -10,20 +10,32 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
+const ExtractorManager_1 = require("./ExtractorManager");
 const models_1 = require("../models");
 const provider_maps_1 = require("./provider-maps");
 const extension_integrity_1 = require("./extension-integrity");
 const fetch_with_timeout_1 = require("./fetch-with-timeout");
 class ProviderManager {
   providerContext;
+  extractorManager;
   loadedExtensions = new Map();
   extensionManifest = new Map();
   integrityOptions;
   constructor(registry) {
     let providerConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     let integrityOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    this.providerContext = (0, create_provider_context_1.default)(providerConfig);
     this.integrityOptions = integrityOptions;
+    // One extractor manager for every provider this manager loads, built from the same registry,
+    // so providers run the registry (hash-verified) versions of their extractors.
+    this.extractorManager = providerConfig.extractorManager ?? new ExtractorManager_1.ExtractorManager(registry, {
+      axios: providerConfig.axios,
+      load: providerConfig.load,
+      userAgent: providerConfig.userAgent
+    }, integrityOptions);
+    this.providerContext = (0, create_provider_context_1.default)({
+      ...providerConfig,
+      extractorManager: this.extractorManager
+    });
     this.loadRegistry(registry);
   }
   /**
@@ -373,6 +385,12 @@ class ProviderManager {
     }
     // The category was checked above, so the loaded provider is a movie provider.
     return await this.loadExtension(extensionId, options);
+  }
+  /**
+   * Get the extractor manager shared by the providers this manager loads
+   */
+  getExtractorManager() {
+    return this.extractorManager;
   }
   /**
    * Get the provider context

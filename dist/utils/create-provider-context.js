@@ -1,46 +1,5 @@
 "use strict";
 
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  var desc = Object.getOwnPropertyDescriptor(m, k);
-  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-    desc = {
-      enumerable: true,
-      get: function () {
-        return m[k];
-      }
-    };
-  }
-  Object.defineProperty(o, k2, desc);
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-var __importStar = this && this.__importStar || function () {
-  var ownKeys = function (o) {
-    ownKeys = Object.getOwnPropertyNames || function (o) {
-      var ar = [];
-      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-      return ar;
-    };
-    return ownKeys(o);
-  };
-  return function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-    __setModuleDefault(result, mod);
-    return result;
-  };
-}();
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -56,7 +15,6 @@ const models_1 = require("../models");
 const extension_utils_1 = require("./extension-utils");
 const url_polyfill_1 = require("./url-polyfill");
 const NativeConsumet_1 = require("../NativeConsumet");
-const extension_registry_json_1 = __importDefault(require("../extension-registry.json"));
 /**
  * Creates a provider context with sensible defaults for extensions
  *
@@ -65,43 +23,48 @@ const extension_registry_json_1 = __importDefault(require("../extension-registry
  */
 function createProviderContext() {
   let config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-  // Create dynamic extractor proxy
+  const extractorManager = config.extractorManager;
+  // A factory shaped like the bundled ones (`X(ctx).extract(url)`) that runs the registry version of
+  // the extractor, verified and cached by the shared manager, falling back to the bundled version.
+  const registryBacked = (name, bundled) => callerCtx => ({
+    serverName: name,
+    sources: [],
+    extract: async function () {
+      let extractor;
+      try {
+        extractor = await extractorManager.loadExtractor(name);
+      } catch (error) {
+        if (!bundled) throw error;
+      }
+      // When the registry copy can't be used, loadExtractor returns the bundled factory instead.
+      if (typeof extractor?.extract !== 'function') {
+        if (!bundled) throw new Error(`Extractor '${name}' is not available`);
+        extractor = bundled(callerCtx);
+      }
+      return extractor.extract(...arguments);
+    }
+  });
   const finalExtractors = new Proxy(extension_utils_1.defaultExtractors, {
     get: (target, prop) => {
-      // If it's a custom extractor, return it directly
+      if (typeof prop !== 'string') return target[prop];
+      // Custom extractors from the config always win
       if (config.extractors && config.extractors[prop]) {
         return config.extractors[prop];
       }
-      // If it's a static extractor, return it directly for immediate access
+      // Extractors in the app's registry run their registry version
+      if (extractorManager?.getExtractorMetadata(prop)) {
+        return registryBacked(prop, target[prop]);
+      }
       if (target[prop]) {
         return target[prop];
       }
-      // For dynamic extractors, return an async loader
-      return async function () {
-        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
+      return () => ({
+        serverName: prop,
+        sources: [],
+        extract: async () => {
+          throw new Error(`Extractor '${prop}' not found in the registry or the bundled extractors`);
         }
-        try {
-          // Dynamically import and create ExtractorManager to avoid circular dependency
-          const {
-            ExtractorManager
-          } = await Promise.resolve().then(() => __importStar(require('./ExtractorManager')));
-          const extractorManager = new ExtractorManager(extension_registry_json_1.default, {
-            axios: config.axios || extension_utils_1.defaultExtractorContext.axios,
-            load: config.load || extension_utils_1.defaultExtractorContext.load,
-            userAgent: config.userAgent || extension_utils_1.defaultExtractorContext.USER_AGENT
-          });
-          const extractor = await extractorManager.loadExtractor(prop.toLowerCase());
-          return extractor.extract(args[0], ...args.slice(1));
-        } catch (error) {
-          console.warn(`⚠️ Failed to load dynamic extractor '${prop}', falling back to static:`, error);
-          // Fallback to static if available
-          if (target[prop]) {
-            return target[prop](...args);
-          }
-          throw new Error(`Extractor '${prop}' not found in dynamic or static extractors`);
-        }
-      };
+      });
     }
   });
   // Create base URL normalization utility
@@ -124,6 +87,7 @@ function createProviderContext() {
     MovieParser: config.MovieParser || models_1.MovieParser,
     MangaParser: config.MangaParser || models_1.MangaParser,
     extractors: finalExtractors,
+    extractorManager,
     PolyURL: url_polyfill_1.PolyURL,
     PolyURLSearchParams: url_polyfill_1.PolyURLSearchParams,
     createCustomBaseUrl,
