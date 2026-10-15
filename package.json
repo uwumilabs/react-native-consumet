@@ -46,6 +46,8 @@
     "build": "tsc -p tsconfig.dist.json && node scripts/hermes-safe-dist.js",
     "build:clean": "del-cli dist && yarn build",
     "test": "jest",
+    "test:live": "LIVE_TESTS=1 jest",
+    "registry:check": "node scripts/prepare-registry.js --check",
     "typecheck": "tsc",
     "lint": "eslint --fix .",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",

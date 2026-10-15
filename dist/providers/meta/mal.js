@@ -8,7 +8,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+const meta_http_1 = require("../../utils/meta-http");
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
@@ -43,7 +43,7 @@ class Myanimelist extends models_1.AnimeParser {
     try {
       const {
         data
-      } = await axios_1.default.request({
+      } = await meta_http_1.metaHttp.request({
         method: 'get',
         url: `${url}?p=${count}`,
         headers: {
@@ -86,7 +86,7 @@ class Myanimelist extends models_1.AnimeParser {
     };
     const {
       data
-    } = await axios_1.default.request({
+    } = await meta_http_1.metaHttp.request({
       method: 'get',
       url: `https://myanimelist.net/anime.php?q=${query}&cat=anime&show=${50 * (page - 1)}`,
       headers: {
@@ -158,17 +158,15 @@ class Myanimelist extends models_1.AnimeParser {
           }
         } else animeInfo.episodes = await _this.findAnimeSlug(titleWithLanguages?.english || titleWithLanguages?.romaji || titleWithLanguages?.native || titleWithLanguages?.userPreferred, animeInfo.season, animeInfo.startDate?.year, animeId, dub);
         if (fetchFiller) {
-          const {
-            data: fillerData
-          } = await (0, axios_1.default)({
-            baseURL: `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeId}.json`,
-            method: 'GET',
-            validateStatus: () => true
-          });
-          if (!fillerData.toString().startsWith('404')) {
-            fillerEpisodes = [];
-            fillerEpisodes?.push(...fillerData.episodes);
-          }
+          // Optional enrichment: a missing or unreachable filler list must not fail the info call.
+          fillerEpisodes = await meta_http_1.metaHttp.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeId}.json`, {
+            timeout: meta_http_1.ENRICHMENT_TIMEOUT_MS
+          }).then(_ref => {
+            let {
+              data
+            } = _ref;
+            return Array.isArray(data?.episodes) ? data.episodes : [];
+          }).catch(() => []);
         }
         animeInfo.episodes = animeInfo.episodes?.map(episode => {
           if (!episode.image) episode.image = animeInfo.image;
@@ -250,7 +248,7 @@ class Myanimelist extends models_1.AnimeParser {
     return newEpisodeList;
   };
   findKitsuAnime = async (possibleProviderEpisodes, options, season, startDate) => {
-    const kitsuEpisodes = await axios_1.default.post(this.kitsuGraphqlUrl, options);
+    const kitsuEpisodes = await meta_http_1.metaHttp.post(this.kitsuGraphqlUrl, options);
     const episodesList = new Map();
     if (kitsuEpisodes?.data.data) {
       const {
@@ -316,7 +314,7 @@ class Myanimelist extends models_1.AnimeParser {
     };
     const {
       data
-    } = await axios_1.default.request({
+    } = await meta_http_1.metaHttp.request({
       method: 'GET',
       url: `https://myanimelist.net/anime/${id}`,
       headers: {

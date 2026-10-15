@@ -103,6 +103,12 @@ declare class Anilist extends AnimeParser {
      * @returns episode list **(without anime info)**
      */
     fetchEpisodesListById: (id: string, fetchFiller?: boolean) => Promise<IAnimeEpisode[]>;
+    /** Providers whose episode lists are merged with ani.zip metadata. */
+    private usesAniZipEpisodes;
+    /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
+    private fetchFillerEpisodes;
+    /** Overlay ani.zip titles, descriptions, images and keys onto the provider's episodes. */
+    private mergeAniZipEpisodes;
     /**
      * @param id anilist id
      * @returns anilist data for the anime **(without episodes)** (use `fetchEpisodesListById` to get the episodes) (use `fetchAnimeInfo` to get both)

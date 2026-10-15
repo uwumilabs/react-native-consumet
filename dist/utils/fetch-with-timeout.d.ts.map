@@ -1,0 +1,1 @@
+{"version":3,"file":"fetch-with-timeout.d.ts","sourceRoot":"","sources":["../../src/utils/fetch-with-timeout.ts"],"names":[],"mappings":"AAAA;;;GAGG;AACH,wBAAsB,oBAAoB,CACxC,GAAG,EAAE,MAAM,EACX,IAAI,GAAE,WAAgB,EACtB,SAAS,SAAQ,GAChB,OAAO,CAAC;IAAE,EAAE,EAAE,OAAO,CAAC;IAAC,MAAM,EAAE,MAAM,CAAC;IAAC,UAAU,EAAE,MAAM,CAAC;IAAC,IAAI,EAAE,MAAM,CAAA;CAAE,CAAC,CAa5E"}

@@ -9,17 +9,20 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.ProviderManager = void 0;
-const crypto_js_1 = __importDefault(require("crypto-js"));
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
 const provider_maps_1 = require("./provider-maps");
-const FACTORY_NAME_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+const extension_integrity_1 = require("./extension-integrity");
+const fetch_with_timeout_1 = require("./fetch-with-timeout");
 class ProviderManager {
   providerContext;
   loadedExtensions = new Map();
   extensionManifest = new Map();
+  integrityOptions;
   constructor(registry) {
     let providerConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    let integrityOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     this.providerContext = (0, create_provider_context_1.default)(providerConfig);
+    this.integrityOptions = integrityOptions;
     this.loadRegistry(registry);
   }
   /**
@@ -94,33 +97,19 @@ class ProviderManager {
       //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
       // Load the provider code
       //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
-      // Add fetch options for better React Native compatibility
-      const fetchOptions = {
+      const response = await (0, fetch_with_timeout_1.fetchTextWithTimeout)(metadata.main, {
         method: 'GET',
         headers: {
           'Accept': 'text/plain, application/javascript, */*',
-          'Content-Type': 'application/javascript',
           'User-Agent': 'React-Native-Consumet/1.0.0'
-        },
-        timeout: 30000 // 30 second timeout
-      };
-      //console.log(`📡 Fetch options:`, fetchOptions);
-      const response = await fetch(metadata.main, fetchOptions);
+        }
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
-      const providerCode = await response.text();
-      // Integrity check — reject if hash doesn't match the bundled registry
-      this.verifyCodeIntegrity(providerCode, metadata.sha256, extensionId);
-      // Execute the provider code
-      const factoryName = metadata.factoryName; // Use factory name directly
-      if (!factoryName) {
-        throw new Error(`No factory function available for extension ${extensionId}`);
-      }
-      if (!FACTORY_NAME_RE.test(factoryName)) {
-        throw new Error(`Invalid factoryName '${factoryName}' for extension '${extensionId}'`);
-      }
-      let providerInstance = await this.executeProviderCode(providerCode, factoryName, metadata);
+      const providerCode = response.text;
+      // Verifies the code against the registry hash and the factory name before running it
+      let providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
       // Attempt to attach the prototype from local provider classes so instanceof works in app code
       try {
         // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
@@ -164,9 +153,18 @@ class ProviderManager {
     return instance;
   }
   /**
-   * Execute provider code and create instance (extensionManifest-based)
+   * Execute provider code and create instance (extensionManifest-based).
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   *
+   * @throws IntegrityError before running anything if the hash or factory name is invalid
    */
   async executeProviderCode(code, factoryName, metadata) {
+    let options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+    const id = String(metadata?.id ?? factoryName);
+    (0, extension_integrity_1.assertValidIdentifier)(factoryName, 'factoryName', id);
+    if (!options.skipIntegrity) {
+      (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
+    }
     const context = this.createExecutionContext();
     try {
       // Create and execute the provider code
@@ -408,20 +406,6 @@ class ProviderManager {
       }
     });
     return Promise.all(searchPromises);
-  }
-  /**
-   * Verify SHA-256 integrity of fetched code against the bundled registry hash.
-   * Throws if hashes don't match. Warns (but allows) if no hash is present in registry.
-   */
-  verifyCodeIntegrity(code, expectedHash, id) {
-    if (!expectedHash) {
-      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
-      return;
-    }
-    const actual = crypto_js_1.default.SHA256(code).toString(crypto_js_1.default.enc.Hex);
-    if (actual !== expectedHash) {
-      throw new Error(`Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`);
-    }
   }
 }
 exports.ProviderManager = ProviderManager;

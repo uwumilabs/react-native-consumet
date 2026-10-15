@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { metaHttp } from '../../utils/meta-http';
 import {
   type ISearch,
   type IAnimeInfo,
@@ -64,7 +64,7 @@ class TMDB extends MovieParser {
     };
 
     try {
-      const { data } = await axios.get(trendingUrl);
+      const { data } = await metaHttp.get(trendingUrl);
 
       if (data.results.length < 1) return result;
 
@@ -135,7 +135,7 @@ class TMDB extends MovieParser {
     };
 
     try {
-      const { data } = await axios.get(searchUrl);
+      const { data } = await metaHttp.get(searchUrl);
 
       if (data.results.length < 1) return search;
 
@@ -180,7 +180,7 @@ class TMDB extends MovieParser {
 
     try {
       //request api to get media info from tmdb
-      const { data } = await axios.get(infoUrl);
+      const { data } = await metaHttp.get(infoUrl);
 
       //get provider id from title and year (if available) to get the correct provider id for the movie/tv series (e.g. flixhq)
       const providerId = await this.findIdFromTitle(data?.title || data?.name, {
@@ -288,7 +288,7 @@ class TMDB extends MovieParser {
           : undefined;
 
         for (let i = 1; i <= totalSeasons; i++) {
-          const { data: seasonData } = await axios.get(seasonUrl(i.toString()));
+          const { data: seasonData } = await metaHttp.get(seasonUrl(i.toString()));
 
           //find season in each episode (providerEpisodes)
           const seasonEpisodes = providerEpisodes?.filter((episode) => episode.season === i);

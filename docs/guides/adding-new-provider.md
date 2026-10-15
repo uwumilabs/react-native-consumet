@@ -170,7 +170,7 @@ Add a new entry to the `extensions` array:
     "url": "https://github.com/your-github"
   },
   "category": "anime", // or movies, manga, light-novels, meta
-  "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/main/dist/providers/anime/myanimewebsite.js", // Path to your compiled JS file
+  "distFile": "dist/providers/anime/myanimewebsite/create-myanimewebsite.js", // Build output to publish
   "factoryName": "createMyAnimeWebsite", // The name of the function you export
   "baseUrl": "https://www.myanimewebsite.com",
   "logo": "https://www.myanimewebsite.com/favicon.ico", // Link to provider's logo/favicon
@@ -188,7 +188,16 @@ Add a new entry to the `extensions` array:
 ```
 
 Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
-**Important**: The `main` field should point to the *compiled JavaScript file* in the `dist` directory, hosted on GitHub (e.g., `raw.githubusercontent.com`). You'll need to push your changes and then update this URL.
+
+Don't write `main` or `sha256` yourself. Build, then publish:
+
+```bash
+yarn build && node scripts/prepare-registry.js
+```
+
+This copies the build output to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match.
+
+**Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it. Run `yarn registry:check` to verify the registry without writing anything.
 
 ## Step 5: Write Tests
 

@@ -7,10 +7,12 @@ export interface ExtractorInfo {
   name: StreamingServers;
   /** version of the extractor */
   version: string;
-  /**github url path */
+  /** Immutable URL of this exact version (`registry/extractors/<name>/<version>.js`), written by prepare-registry */
   main: string;
   /** SHA-256 hex digest of the compiled JS file for integrity verification */
   sha256?: string;
+  /** Repo-relative build output this version is published from, e.g. `dist/extractors/kwik.js` */
+  distFile?: string;
 }
 /**
  * Extension manifest interface for defining extension metadata
@@ -38,7 +40,7 @@ export interface ExtensionManifest {
   /** Extension category */
   category: ProviderType;
 
-  /** Main entry point URL or file path */
+  /** Immutable URL of this exact version (`registry/extensions/<id>/<version>.js`), written by prepare-registry */
   main: string;
 
   /** Factory function names exported by this extension */
@@ -46,6 +48,9 @@ export interface ExtensionManifest {
 
   /** SHA-256 hex digest of the compiled JS file for integrity verification */
   sha256?: string;
+
+  /** Repo-relative build output this version is published from, e.g. `dist/providers/anime/anikoto/create-anikoto.js` */
+  distFile?: string;
 
   /** Homepage URL */
   baseUrl: string;

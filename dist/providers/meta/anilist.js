@@ -8,7 +8,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const anify_1 = __importDefault(require("../anime/anify"));
@@ -62,7 +62,7 @@ class Anilist extends models_1.AnimeParser {
         let {
           data,
           status
-        } = await axios_1.default.post(_this.anilistGraphqlUrl, options, {
+        } = await meta_http_1.metaHttp.post(_this.anilistGraphqlUrl, options, {
           validateStatus: () => true
         });
         if (status >= 500 || status === 429) data = await new anify_1.default().rawSearch(query, page);
@@ -176,7 +176,7 @@ class Anilist extends models_1.AnimeParser {
         let {
           data,
           status
-        } = await axios_1.default.post(_this2.anilistGraphqlUrl, options, {
+        } = await meta_http_1.metaHttp.post(_this2.anilistGraphqlUrl, options, {
           validateStatus: () => true
         });
         if (status >= 500 && !query) throw new Error('No results found');
@@ -262,7 +262,7 @@ class Anilist extends models_1.AnimeParser {
         let {
           data,
           status
-        } = await axios_1.default.post(_this3.anilistGraphqlUrl, options, {
+        } = await meta_http_1.metaHttp.post(_this3.anilistGraphqlUrl, options, {
           validateStatus: () => true
         });
         if (status === 404) throw new Error('Media not found. Perhaps the id is invalid or the anime is not in anilist');
@@ -470,16 +470,8 @@ class Anilist extends models_1.AnimeParser {
           },
           externalLinks: data.data.Media.externalLinks.filter(link => link.type === 'STREAMING')
         });
-        if (fetchFiller) {
-          const {
-            data: fillerData
-          } = await axios_1.default.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${animeInfo.malId}.json`, {
-            validateStatus: () => true
-          });
-          if (!fillerData.toString().startsWith('404')) {
-            fillerEpisodes = [];
-            fillerEpisodes?.push(...fillerData.episodes);
-          }
+        if (fetchFiller && animeInfo.malId) {
+          fillerEpisodes = await _this3.fetchFillerEpisodes(animeInfo.malId);
         }
         animeInfo.episodes = animeInfo.episodes?.map(episode => {
           if (!episode.image) {
@@ -505,8 +497,8 @@ class Anilist extends models_1.AnimeParser {
     var _this4 = this;
     return async function (episodeId) {
       try {
-        for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-          args[_key - 1] = arguments[_key];
+        for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key2 = 1; _key2 < _len; _key2++) {
+          args[_key2 - 1] = arguments[_key2];
         }
         if (_this4.provider instanceof anify_1.default) return new anify_1.default().fetchEpisodeSources(episodeId, args[0], args[1]);
         return _this4.provider.fetchEpisodeSources(episodeId, ...args);
@@ -545,7 +537,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.post(_this5.anilistGraphqlUrl, options);
+        } = await meta_http_1.metaHttp.post(_this5.anilistGraphqlUrl, options);
         const res = {
           currentPage: data.data.Page.pageInfo.currentPage,
           hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -605,7 +597,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.post(_this6.anilistGraphqlUrl, options);
+        } = await meta_http_1.metaHttp.post(_this6.anilistGraphqlUrl, options);
         const res = {
           currentPage: data.data.Page.pageInfo.currentPage,
           hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -674,7 +666,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.post(_this7.anilistGraphqlUrl, options);
+        } = await meta_http_1.metaHttp.post(_this7.anilistGraphqlUrl, options);
         const res = {
           currentPage: data.data.Page.pageInfo.currentPage,
           hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -731,7 +723,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.post(_this8.anilistGraphqlUrl, options);
+        } = await meta_http_1.metaHttp.post(_this8.anilistGraphqlUrl, options);
         const res = {
           currentPage: data.data.Page.pageInfo.currentPage,
           hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -813,14 +805,14 @@ class Anilist extends models_1.AnimeParser {
     try {
       // const {
       //   data: { data },
-      // } = await axios.post(this.anilistGraphqlUrl, options);
+      // } = await metaHttp.post(this.anilistGraphqlUrl, options);
       // const selectedAnime = Math.floor(
       //   Math.random() * data.SiteStatistics.anime.nodes[data.SiteStatistics.anime.nodes.length - 1].count
       // );
       // const { results } = await this.advancedSearch(undefined, 'ANIME', Math.ceil(selectedAnime / 50), 50);
       const {
         data: data
-      } = await axios_1.default.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
+      } = await meta_http_1.metaHttp.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
       const ids = data?.trim().split('\n');
       const selectedAnime = Math.floor(Math.random() * ids.length);
       return await this.fetchAnimeInfo(ids[selectedAnime]);
@@ -842,7 +834,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`${_this9.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
+        } = await meta_http_1.metaHttp.get(`${_this9.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
         const results = data?.map(item => {
           return {
             id: item.id.toString(),
@@ -897,146 +889,143 @@ class Anilist extends models_1.AnimeParser {
     var _this0 = this;
     return async function (id) {
       let fetchFiller = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-      const options = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        query: `query($id: Int = ${id}){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`
-      };
+      // ani.zip only needs the AniList id, so request it alongside the AniList query. It is
+      // optional enrichment: if it fails or times out, the provider's episodes are still returned.
+      const aniZipRequest = _this0.usesAniZipEpisodes() ? meta_http_1.metaHttp.get(`https://api.ani.zip/mappings?anilist_id=${encodeURIComponent(id)}`, {
+        timeout: meta_http_1.ENRICHMENT_TIMEOUT_MS
+      }).then(res => res.data) : undefined;
+      // Don't surface an unhandled rejection if the AniList query below fails first.
+      aniZipRequest?.catch(() => undefined);
       const {
         data: {
           data: {
             Media
           }
         }
-      } = await axios_1.default.post(_this0.anilistGraphqlUrl, options);
-      let possibleAnimeEpisodes = [];
-      let fillerEpisodes = [];
-      if (_this0.provider instanceof zoro_1.default || _this0.provider instanceof animekai_1.default || _this0.provider instanceof animepahe_1.default || _this0.provider instanceof anikoto_1.default) {
-        try {
-          // console.time('fetchEpisodesListById');
-          const [animeMetaData, providerEpisodes] = await Promise.all([axios_1.default.get(`https://api.ani.zip/mappings?anilist_id=${id}`).then(res => res.data), _this0.fetchDefaultEpisodeList(Media)]);
-          // console.timeEnd('fetchEpisodesListById');
-          //to get the actual episode ids we make use of fetchDefaultEpisodeList
-          const normalizedEpisodes = Object.entries(animeMetaData.episodes || {}).map(_ref => {
-            let [key, item] = _ref;
-            return {
-              title: item.title.en ?? item.title['x-jat'],
-              uniqueId: `${id}$ep=${item.episodeNumber ?? item.episode}`,
-              description: item.overview ?? item.summary,
-              number: item.episodeNumber ?? parseInt(item.episode),
-              image: item.image,
-              imageHash: (0, utils_2.getHashFromImage)(item.image),
-              releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc
-            };
-          });
-          function mergeEpisodes(normalizedEpisodes, providerEpisodes) {
-            const numberMap = new Map();
-            const dateMap = new Map();
-            const usedNormalized = new Set();
-            normalizedEpisodes.forEach(ep => {
-              if (ep.number) numberMap.set(ep.number, ep);
-              if (ep.releaseDate) {
-                const ts = new Date(ep.releaseDate).getTime();
-                dateMap.set(ts, ep);
-              }
-            });
-            return providerEpisodes.map((providerEp, index) => {
-              let normalizedEp = null;
-              const matchIfNotUsed = ep => ep && !usedNormalized.has(ep.uniqueId);
-              // Match by release date (within ±1 day)
-              if (providerEp.releaseDate) {
-                const ts = new Date(providerEp.releaseDate).getTime();
-                for (let [normTs, normEp] of dateMap) {
-                  if (Math.abs(ts - normTs) <= 86400000 && matchIfNotUsed(normEp)) {
-                    normalizedEp = normEp;
-                    break;
-                  }
-                }
-              }
-              // Match by episode number
-              if (!normalizedEp && providerEp.number != null) {
-                const ep = numberMap.get(providerEp.number);
-                if (matchIfNotUsed(ep)) normalizedEp = ep;
-              }
-              // Match by title similarity
-              if (!normalizedEp && providerEp.title) {
-                normalizedEp = normalizedEpisodes.find(normEp => matchIfNotUsed(normEp) && normEp.title?.includes(providerEp.title));
-              }
-              // Fallback to same index
-              if (!normalizedEp && matchIfNotUsed(normalizedEpisodes[index])) {
-                normalizedEp = normalizedEpisodes[index];
-              }
-              // Mark this normalized episode as used
-              if (normalizedEp) {
-                usedNormalized.add(normalizedEp.uniqueId);
-              }
-              if (!normalizedEp) return providerEp;
-              return {
-                ...providerEp,
-                number: normalizedEp.number || providerEp.number,
-                uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
-                title: normalizedEp.title || providerEp.title,
-                description: normalizedEp.description || providerEp.description,
-                image: normalizedEp.image || providerEp.image,
-                imageHash: normalizedEp.imageHash || providerEp.imageHash,
-                releaseDate: normalizedEp.releaseDate || providerEp.releaseDate
-              };
-            });
-          }
-          // console.log({
-          //   normalizedEpisodes,
-          //   providerEpisodes,
-          //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
-          // });
-          possibleAnimeEpisodes = mergeEpisodes(normalizedEpisodes, providerEpisodes);
-          if (!possibleAnimeEpisodes.length) {
-            possibleAnimeEpisodes = await _this0.fetchDefaultEpisodeList(Media);
-            possibleAnimeEpisodes = possibleAnimeEpisodes?.map(episode => {
-              if (!episode.image) {
-                episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-                episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
-              }
-              return episode;
-            });
-          }
-        } catch (err) {
-          possibleAnimeEpisodes = await _this0.fetchDefaultEpisodeList(Media);
-          possibleAnimeEpisodes = possibleAnimeEpisodes?.map(episode => {
-            if (!episode.image) {
-              episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-              episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
-            }
-            return episode;
-          });
-          return possibleAnimeEpisodes;
+      } = await meta_http_1.metaHttp.post(_this0.anilistGraphqlUrl, {
+        query: `query($id: Int){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
+        variables: {
+          id: Number(id)
         }
-      } else possibleAnimeEpisodes = await _this0.fetchDefaultEpisodeList(Media);
-      if (fetchFiller) {
-        const {
-          data: fillerData
-        } = await axios_1.default.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${Media.idMal}.json`, {
-          validateStatus: () => true
-        });
-        if (!fillerData.toString().startsWith('404')) {
-          fillerEpisodes = [];
-          fillerEpisodes?.push(...fillerData.episodes);
-        }
+      });
+      const fillerRequest = fetchFiller && Media.idMal ? _this0.fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
+      let possibleAnimeEpisodes;
+      if (aniZipRequest) {
+        const [aniZip, provider] = await Promise.allSettled([aniZipRequest, _this0.fetchDefaultEpisodeList(Media)]);
+        if (provider.status === 'rejected') throw provider.reason;
+        const providerEpisodes = provider.value ?? [];
+        possibleAnimeEpisodes = aniZip.status === 'fulfilled' ? _this0.mergeAniZipEpisodes(id, aniZip.value, providerEpisodes) : providerEpisodes;
+      } else {
+        possibleAnimeEpisodes = (await _this0.fetchDefaultEpisodeList(Media)) ?? [];
       }
-      possibleAnimeEpisodes = possibleAnimeEpisodes?.map(episode => {
-        if (!episode.image) {
-          episode.image = Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium;
-          episode.imageHash = (0, utils_2.getHashFromImage)(Media.coverImage.extraLarge ?? Media.coverImage.large ?? Media.coverImage.medium);
+      const fillerEpisodes = await fillerRequest;
+      const cover = Media.coverImage?.extraLarge ?? Media.coverImage?.large ?? Media.coverImage?.medium;
+      return possibleAnimeEpisodes.map(episode => {
+        if (!episode.image && cover) {
+          episode.image = cover;
+          episode.imageHash = (0, utils_2.getHashFromImage)(cover);
         }
-        if (fetchFiller && fillerEpisodes?.length > 0 && fillerEpisodes?.length >= Media.episodes) {
-          if (fillerEpisodes[episode.number - 1]) episode.isFiller = new Boolean(fillerEpisodes[episode.number - 1]['filler-bool']).valueOf();
+        // Every episode needs a stable key for watch progress, including ones ani.zip didn't match
+        // and every episode when ani.zip is unavailable.
+        if (!episode.uniqueId && episode.number != null) {
+          episode.uniqueId = `${id}$ep=${episode.number}`;
+        }
+        if (fillerEpisodes.length > 0 && fillerEpisodes.length >= Media.episodes) {
+          const filler = fillerEpisodes[episode.number - 1];
+          if (filler) episode.isFiller = Boolean(filler['filler-bool']);
         }
         return episode;
       });
-      return possibleAnimeEpisodes;
     };
   })();
+  /** Providers whose episode lists are merged with ani.zip metadata. */
+  usesAniZipEpisodes = () => this.provider instanceof zoro_1.default || this.provider instanceof animekai_1.default || this.provider instanceof animepahe_1.default || this.provider instanceof anikoto_1.default;
+  /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
+  fetchFillerEpisodes = async malId => {
+    try {
+      const {
+        data
+      } = await meta_http_1.metaHttp.get(`https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${malId}.json`, {
+        timeout: meta_http_1.ENRICHMENT_TIMEOUT_MS
+      });
+      return Array.isArray(data?.episodes) ? data.episodes : [];
+    } catch {
+      return [];
+    }
+  };
+  /** Overlay ani.zip titles, descriptions, images and keys onto the provider's episodes. */
+  mergeAniZipEpisodes = (id, animeMetaData, providerEpisodes) => {
+    const normalizedEpisodes = Object.entries(animeMetaData?.episodes || {}).map(_ref => {
+      let [_key, item] = _ref;
+      return {
+        title: item.title.en ?? item.title['x-jat'],
+        uniqueId: `${id}$ep=${item.episodeNumber ?? item.episode}`,
+        description: item.overview ?? item.summary,
+        number: item.episodeNumber ?? parseInt(item.episode),
+        image: item.image,
+        imageHash: (0, utils_2.getHashFromImage)(item.image),
+        releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc
+      };
+    });
+    const numberMap = new Map();
+    const dateMap = new Map();
+    const usedNormalized = new Set();
+    normalizedEpisodes.forEach(ep => {
+      if (ep.number) numberMap.set(ep.number, ep);
+      if (ep.releaseDate) {
+        const ts = new Date(ep.releaseDate).getTime();
+        dateMap.set(ts, ep);
+      }
+    });
+    return providerEpisodes.map((providerEp, index) => {
+      let normalizedEp = null;
+      const matchIfNotUsed = ep => ep && !usedNormalized.has(ep.uniqueId);
+      // Match by release date (within ±1 day)
+      if (providerEp.releaseDate) {
+        const ts = new Date(providerEp.releaseDate).getTime();
+        for (let [normTs, normEp] of dateMap) {
+          if (Math.abs(ts - normTs) <= 86400000 && matchIfNotUsed(normEp)) {
+            normalizedEp = normEp;
+            break;
+          }
+        }
+      }
+      // Match by episode number
+      if (!normalizedEp && providerEp.number != null) {
+        const ep = numberMap.get(providerEp.number);
+        if (matchIfNotUsed(ep)) normalizedEp = ep;
+      }
+      // Match by title similarity
+      const providerTitle = providerEp.title;
+      if (!normalizedEp && providerTitle) {
+        normalizedEp = normalizedEpisodes.find(normEp => matchIfNotUsed(normEp) && normEp.title?.includes(providerTitle));
+      }
+      // Fallback to same index
+      if (!normalizedEp && matchIfNotUsed(normalizedEpisodes[index])) {
+        normalizedEp = normalizedEpisodes[index];
+      }
+      // Mark this normalized episode as used
+      if (normalizedEp) {
+        usedNormalized.add(normalizedEp.uniqueId);
+      }
+      if (!normalizedEp) return providerEp;
+      // console.log({
+      //   normalizedEpisodes,
+      //   providerEpisodes,
+      //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
+      // });
+      return {
+        ...providerEp,
+        number: normalizedEp.number || providerEp.number,
+        uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
+        title: normalizedEp.title || providerEp.title,
+        description: normalizedEp.description || providerEp.description,
+        image: normalizedEp.image || providerEp.image,
+        imageHash: normalizedEp.imageHash || providerEp.imageHash,
+        releaseDate: normalizedEp.releaseDate || providerEp.releaseDate
+      };
+    });
+  };
   /**
    * @param id anilist id
    * @returns anilist data for the anime **(without episodes)** (use `fetchEpisodesListById` to get the episodes) (use `fetchAnimeInfo` to get both)
@@ -1056,7 +1045,7 @@ class Anilist extends models_1.AnimeParser {
     try {
       const {
         data
-      } = await axios_1.default.post(this.anilistGraphqlUrl, options).catch(() => {
+      } = await meta_http_1.metaHttp.post(this.anilistGraphqlUrl, options).catch(() => {
         throw new Error('Media not found');
       });
       animeInfo.malId = data.data.Media.idMal;
@@ -1221,7 +1210,7 @@ class Anilist extends models_1.AnimeParser {
     try {
       const {
         data
-      } = await axios_1.default.post(this.anilistGraphqlUrl, options).catch(err => {
+      } = await meta_http_1.metaHttp.post(this.anilistGraphqlUrl, options).catch(err => {
         throw new Error(err.message);
       });
       const staff = data.data.Staff;
@@ -1268,7 +1257,7 @@ class Anilist extends models_1.AnimeParser {
             Character
           }
         }
-      } = await axios_1.default.post(this.anilistGraphqlUrl, options);
+      } = await meta_http_1.metaHttp.post(this.anilistGraphqlUrl, options);
       const height = Character.description.match(/__Height:__(.*)/)?.[1].trim();
       const weight = Character.description.match(/__Weight:__(.*)/)?.[1].trim();
       const hairColor = Character.description.match(/__Hair Color:__(.*)/)?.[1].trim();
@@ -1389,7 +1378,7 @@ class Anilist extends models_1.AnimeParser {
       try {
         const {
           data
-        } = await axios_1.default.post(new Anilist().anilistGraphqlUrl, options);
+        } = await meta_http_1.metaHttp.post(new Anilist().anilistGraphqlUrl, options);
         const res = {
           currentPage: data.data.Page.pageInfo.currentPage,
           hasNextPage: data.data.Page.pageInfo.hasNextPage,
@@ -1432,8 +1421,8 @@ class Anilist extends models_1.AnimeParser {
     fetchChapterPages = (() => {
       var _this1 = this;
       return function (chapterId) {
-        for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-          args[_key2 - 1] = arguments[_key2];
+        for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key3 = 1; _key3 < _len2; _key3++) {
+          args[_key3 - 1] = arguments[_key3];
         }
         return _this1.provider.fetchChapterPages(chapterId, ...args);
       };
@@ -1455,7 +1444,7 @@ class Anilist extends models_1.AnimeParser {
         try {
           const {
             data
-          } = await axios_1.default.post(new Anilist().anilistGraphqlUrl, options).catch(err => {
+          } = await meta_http_1.metaHttp.post(new Anilist().anilistGraphqlUrl, options).catch(err => {
             throw new Error('Media not found');
           });
           mangaInfo.malId = data.data.Media.idMal;
@@ -1582,7 +1571,7 @@ class Anilist extends models_1.AnimeParser {
     const slug = title.replace(/[^0-9a-zA-Z]+/g, ' ');
     let possibleManga;
     if (malId) {
-      const malAsyncReq = await axios_1.default.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
+      const malAsyncReq = await meta_http_1.metaHttp.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
         validateStatus: () => true
       });
       if (malAsyncReq.status === 200) {

@@ -13,16 +13,21 @@ const crypto_js_1 = __importDefault(require("crypto-js"));
 const models_1 = require("../models");
 const create_extractor_context_1 = __importDefault(require("./create-extractor-context"));
 const extension_utils_1 = require("./extension-utils");
+const extension_integrity_1 = require("./extension-integrity");
+const fetch_with_timeout_1 = require("./fetch-with-timeout");
 class ExtractorManager {
   loadedExtractors = new Map();
   extractorRegistry = new Map();
   staticExtractors;
   extractorContext;
+  integrityOptions;
   // Map of server name aliases to their actual extractor names
   extractorAliases = new Map([['upcloud', 'megacloud'], ['akcloud', 'megacloud']]);
   constructor(registry) {
     let extractorConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    let integrityOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     this.extractorContext = (0, create_extractor_context_1.default)(extractorConfig);
+    this.integrityOptions = integrityOptions;
     this.initializeStaticExtractors();
     this.loadRegistry(registry);
     //console.log('🔧 Dynamic Extractor Manager initialized');
@@ -43,18 +48,11 @@ class ExtractorManager {
    */
   loadRegistry(registry) {
     try {
-      // Extract extractors from all extensions in the registry
-      registry.extensions.forEach(extension => {
-        if (extension.extractors) {
-          registry.extractors.forEach(extractor => {
-            const manifest = {
-              name: extractor.name,
-              version: extractor.version,
-              main: extractor.main
-            };
-            this.extractorRegistry.set(extractor.name.toLowerCase(), manifest);
-          });
-        }
+      // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
+      registry.extractors.forEach(extractor => {
+        this.extractorRegistry.set(String(extractor.name).toLowerCase(), {
+          ...extractor
+        });
       });
       // const totalExtractors = this.extractorRegistry.size;
       //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
@@ -166,24 +164,18 @@ class ExtractorManager {
         throw new Error(`Static extractor '${staticId}' not found`);
       }
       //console.log(`🔧 Loading dynamic extractor '${extractorId}' from ${metadata.main}`);
-      // Load the extractor code dynamically
-      const fetchOptions = {
+      const response = await (0, fetch_with_timeout_1.fetchTextWithTimeout)(metadata.main, {
         method: 'GET',
         headers: {
           'Accept': 'text/plain, application/javascript, */*',
-          'Content-Type': 'application/javascript',
           'User-Agent': 'React-Native-Consumet/1.0.0'
-        },
-        timeout: 30000
-      };
-      const response = await fetch(metadata.main, fetchOptions);
+        }
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch extractor: ${response.status} ${response.statusText}`);
       }
-      const extractorCode = await response.text();
-      // Integrity check — reject if hash doesn't match the bundled registry
-      this.verifyCodeIntegrity(extractorCode, metadata.sha256, metadata.name);
-      // Execute the extractor code
+      const extractorCode = response.text;
+      // Verifies the code against the registry hash and the extractor name before running it
       const extractorInstance = await this.executeExtractorCode(extractorCode, metadata);
       // Cache the loaded extractor
       this.loadedExtractors.set(extractorId, extractorInstance);
@@ -202,9 +194,18 @@ class ExtractorManager {
     }
   }
   /**
-   * Execute extractor code and create instance
+   * Execute extractor code and create instance.
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   *
+   * @throws IntegrityError before running anything if the hash or extractor name is invalid
    */
   async executeExtractorCode(code, metadata) {
+    let options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    // The name is interpolated into the generated code below.
+    (0, extension_integrity_1.assertValidIdentifier)(metadata?.name, 'extractor name', String(metadata?.name));
+    if (!options.skipIntegrity) {
+      (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
+    }
     const context = this.createExecutionContext();
     try {
       let executeFunction;
@@ -354,16 +355,6 @@ class ExtractorManager {
       URL: extractorContext.PolyURL,
       URLSearchParams: extractorContext.PolyURLSearchParams
     };
-  }
-  verifyCodeIntegrity(code, expectedHash, id) {
-    if (!expectedHash) {
-      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
-      return;
-    }
-    const actual = crypto_js_1.default.SHA256(code).toString(crypto_js_1.default.enc.Hex);
-    if (actual !== expectedHash) {
-      throw new Error(`Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`);
-    }
   }
 }
 exports.ExtractorManager = ExtractorManager;

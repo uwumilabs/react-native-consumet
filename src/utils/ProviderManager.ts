@@ -1,20 +1,30 @@
-import CryptoJS from 'crypto-js';
 import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
-
-const FACTORY_NAME_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+import {
+  assertValidIdentifier,
+  verifyExtensionCode,
+  type ExecuteCodeOptions,
+  type IntegrityOptions,
+} from './extension-integrity';
+import { fetchTextWithTimeout } from './fetch-with-timeout';
 
 export class ProviderManager {
   private providerContext: ProviderContext;
   private loadedExtensions = new Map<string, any>();
   private extensionManifest = new Map<string, ExtensionManifest>();
+  private integrityOptions: IntegrityOptions;
 
-  constructor(registry: typeof extensionRegistry, providerConfig: ProviderContextConfig = {}) {
+  constructor(
+    registry: typeof extensionRegistry,
+    providerConfig: ProviderContextConfig = {},
+    integrityOptions: IntegrityOptions = {}
+  ) {
     this.providerContext = createProviderContext(providerConfig);
+    this.integrityOptions = integrityOptions;
     this.loadRegistry(registry);
   }
 
@@ -109,39 +119,22 @@ export class ProviderManager {
       // Load the provider code
       //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
 
-      // Add fetch options for better React Native compatibility
-      const fetchOptions = {
+      const response = await fetchTextWithTimeout(metadata.main, {
         method: 'GET',
         headers: {
           'Accept': 'text/plain, application/javascript, */*',
-          'Content-Type': 'application/javascript',
           'User-Agent': 'React-Native-Consumet/1.0.0',
         },
-        timeout: 30000, // 30 second timeout
-      };
-
-      //console.log(`📡 Fetch options:`, fetchOptions);
-
-      const response = await fetch(metadata.main, fetchOptions);
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
-      const providerCode = await response.text();
+      const providerCode = response.text;
 
-      // Integrity check — reject if hash doesn't match the bundled registry
-      this.verifyCodeIntegrity(providerCode, metadata.sha256, extensionId as string);
-
-      // Execute the provider code
-      const factoryName = metadata.factoryName; // Use factory name directly
-      if (!factoryName) {
-        throw new Error(`No factory function available for extension ${extensionId}`);
-      }
-      if (!FACTORY_NAME_RE.test(factoryName)) {
-        throw new Error(`Invalid factoryName '${factoryName}' for extension '${extensionId}'`);
-      }
+      // Verifies the code against the registry hash and the factory name before running it
       let providerInstance = await this.executeProviderCode(
         providerCode,
-        factoryName,
+        metadata.factoryName,
         metadata as ExtensionManifest & { id: T }
       );
 
@@ -201,12 +194,16 @@ export class ProviderManager {
   }
 
   /**
-   * Execute provider code and create instance (extensionManifest-based)
+   * Execute provider code and create instance (extensionManifest-based).
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   *
+   * @throws IntegrityError before running anything if the hash or factory name is invalid
    */
   public async executeProviderCode<T extends AnimeProvider | MovieProvider>(
     code: string,
     factoryName: string,
-    metadata: ExtensionManifest & { id: T }
+    metadata: ExtensionManifest & { id: T },
+    options: ExecuteCodeOptions = {}
   ): Promise<
     T extends AnimeProvider
       ? InstanceType<(typeof animeProviders)[T]>
@@ -214,6 +211,12 @@ export class ProviderManager {
         ? InstanceType<(typeof movieProviders)[T]>
         : never
   > {
+    const id = String(metadata?.id ?? factoryName);
+    assertValidIdentifier(factoryName, 'factoryName', id);
+    if (!options.skipIntegrity) {
+      verifyExtensionCode(code, metadata, this.integrityOptions);
+    }
+
     const context = this.createExecutionContext();
 
     try {
@@ -467,23 +470,6 @@ export class ProviderManager {
     });
 
     return Promise.all(searchPromises);
-  }
-
-  /**
-   * Verify SHA-256 integrity of fetched code against the bundled registry hash.
-   * Throws if hashes don't match. Warns (but allows) if no hash is present in registry.
-   */
-  private verifyCodeIntegrity(code: string, expectedHash: string | undefined, id: string): void {
-    if (!expectedHash) {
-      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
-      return;
-    }
-    const actual = CryptoJS.SHA256(code).toString(CryptoJS.enc.Hex);
-    if (actual !== expectedHash) {
-      throw new Error(
-        `Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`
-      );
-    }
   }
 }
 

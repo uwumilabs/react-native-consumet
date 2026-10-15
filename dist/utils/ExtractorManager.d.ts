@@ -2,13 +2,15 @@ import type { IVideoExtractor, ExtractorContextConfig } from '../models';
 import { StreamingServers } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import extensionRegistry from '../extension-registry.json';
+import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export declare class ExtractorManager {
     private loadedExtractors;
     private extractorRegistry;
     private staticExtractors;
     private extractorContext;
+    private integrityOptions;
     private extractorAliases;
-    constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig);
+    constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions);
     /**
      * Initialize static extractors as fallbacks
      */
@@ -41,9 +43,12 @@ export declare class ExtractorManager {
      */
     loadExtractor(extractorId: StreamingServers): Promise<IVideoExtractor>;
     /**
-     * Execute extractor code and create instance
+     * Execute extractor code and create instance.
+     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+     *
+     * @throws IntegrityError before running anything if the hash or extractor name is invalid
      */
-    executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor>;
+    executeExtractorCode(code: string, metadata: ExtractorInfo, options?: ExecuteCodeOptions): Promise<IVideoExtractor>;
     /**
      * Create models context
      */
@@ -52,7 +57,6 @@ export declare class ExtractorManager {
      * Create execution context for extractor code
      */
     private createExecutionContext;
-    private verifyCodeIntegrity;
 }
 export default ExtractorManager;
 //# sourceMappingURL=ExtractorManager.d.ts.map

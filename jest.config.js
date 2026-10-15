@@ -2,7 +2,8 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/test/**/*.test.ts'],
+  // Offline unit tests by default; suites that hit live sites run with `yarn test:live`.
+  testMatch: process.env.LIVE_TESTS === '1' ? ['**/test/**/*.test.ts'] : ['**/test/unit/**/*.test.ts'],
   setupFiles: ['<rootDir>/jest.setup.js'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {

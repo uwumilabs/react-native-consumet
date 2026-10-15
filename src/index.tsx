@@ -28,7 +28,10 @@ import {
   defaultAxios,
   defaultExtractorContext,
   defaultExtractors,
+  verifyExtensionCode,
+  IntegrityError,
 } from './utils';
+import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -182,4 +185,7 @@ export {
   defaultAxios,
   defaultExtractorContext,
   defaultExtractors,
+  verifyExtensionCode,
+  IntegrityError,
 };
+export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions };

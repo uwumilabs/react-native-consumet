@@ -5,12 +5,20 @@ import type { ExtractorInfo } from '../models/extension-manifest';
 import createExtractorContext from './create-extractor-context';
 import { defaultExtractors } from './extension-utils';
 import extensionRegistry from '../extension-registry.json';
+import {
+  assertValidIdentifier,
+  verifyExtensionCode,
+  type ExecuteCodeOptions,
+  type IntegrityOptions,
+} from './extension-integrity';
+import { fetchTextWithTimeout } from './fetch-with-timeout';
 
 export class ExtractorManager {
   private loadedExtractors = new Map<string, any>();
   private extractorRegistry = new Map<string, ExtractorInfo>();
   private staticExtractors!: Record<string, any>;
   private extractorContext: ExtractorContext;
+  private integrityOptions: IntegrityOptions;
 
   // Map of server name aliases to their actual extractor names
   private extractorAliases: Map<string, string> = new Map([
@@ -18,8 +26,13 @@ export class ExtractorManager {
     ['akcloud', 'megacloud'],
   ]);
 
-  constructor(registry: typeof extensionRegistry, extractorConfig: ExtractorContextConfig = {}) {
+  constructor(
+    registry: typeof extensionRegistry,
+    extractorConfig: ExtractorContextConfig = {},
+    integrityOptions: IntegrityOptions = {}
+  ) {
     this.extractorContext = createExtractorContext(extractorConfig);
+    this.integrityOptions = integrityOptions;
     this.initializeStaticExtractors();
     this.loadRegistry(registry);
     //console.log('🔧 Dynamic Extractor Manager initialized');
@@ -40,18 +53,9 @@ export class ExtractorManager {
    */
   private loadRegistry(registry: typeof extensionRegistry): void {
     try {
-      // Extract extractors from all extensions in the registry
-      registry.extensions.forEach((extension: any) => {
-        if (extension.extractors) {
-          registry.extractors.forEach((extractor: any) => {
-            const manifest: ExtractorInfo = {
-              name: extractor.name,
-              version: extractor.version,
-              main: extractor.main,
-            };
-            this.extractorRegistry.set(extractor.name.toLowerCase(), manifest);
-          });
-        }
+      // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
+      registry.extractors.forEach((extractor: any) => {
+        this.extractorRegistry.set(String(extractor.name).toLowerCase(), { ...extractor } as ExtractorInfo);
       });
 
       // const totalExtractors = this.extractorRegistry.size;
@@ -182,27 +186,19 @@ export class ExtractorManager {
 
       //console.log(`🔧 Loading dynamic extractor '${extractorId}' from ${metadata.main}`);
 
-      // Load the extractor code dynamically
-      const fetchOptions = {
+      const response = await fetchTextWithTimeout(metadata.main, {
         method: 'GET',
         headers: {
           'Accept': 'text/plain, application/javascript, */*',
-          'Content-Type': 'application/javascript',
           'User-Agent': 'React-Native-Consumet/1.0.0',
         },
-        timeout: 30000,
-      };
-
-      const response = await fetch(metadata.main, fetchOptions);
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch extractor: ${response.status} ${response.statusText}`);
       }
-      const extractorCode = await response.text();
+      const extractorCode = response.text;
 
-      // Integrity check — reject if hash doesn't match the bundled registry
-      this.verifyCodeIntegrity(extractorCode, metadata.sha256, metadata.name as string);
-
-      // Execute the extractor code
+      // Verifies the code against the registry hash and the extractor name before running it
       const extractorInstance = await this.executeExtractorCode(extractorCode, metadata);
 
       // Cache the loaded extractor
@@ -226,9 +222,22 @@ export class ExtractorManager {
   }
 
   /**
-   * Execute extractor code and create instance
+   * Execute extractor code and create instance.
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   *
+   * @throws IntegrityError before running anything if the hash or extractor name is invalid
    */
-  public async executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor> {
+  public async executeExtractorCode(
+    code: string,
+    metadata: ExtractorInfo,
+    options: ExecuteCodeOptions = {}
+  ): Promise<IVideoExtractor> {
+    // The name is interpolated into the generated code below.
+    assertValidIdentifier(metadata?.name, 'extractor name', String(metadata?.name));
+    if (!options.skipIntegrity) {
+      verifyExtensionCode(code, metadata, this.integrityOptions);
+    }
+
     const context = this.createExecutionContext();
 
     try {
@@ -377,19 +386,6 @@ export class ExtractorManager {
       URL: extractorContext.PolyURL,
       URLSearchParams: extractorContext.PolyURLSearchParams,
     };
-  }
-
-  private verifyCodeIntegrity(code: string, expectedHash: string | undefined, id: string): void {
-    if (!expectedHash) {
-      console.warn(`⚠️  No integrity hash for '${id}' — skipping verification`);
-      return;
-    }
-    const actual = CryptoJS.SHA256(code).toString(CryptoJS.enc.Hex);
-    if (actual !== expectedHash) {
-      throw new Error(
-        `Integrity check failed for '${id}': expected ${expectedHash.slice(0, 12)}… got ${actual.slice(0, 12)}…`
-      );
-    }
   }
 }
 

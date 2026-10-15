@@ -1,95 +1,91 @@
 # Security Model
 
-react-native-consumet dynamically fetches and executes JavaScript provider/extractor code at runtime via `new Function()`. This document describes the threat model, mitigations in place, and guidance for library consumers.
+react-native-consumet downloads provider and extractor code at runtime and runs it with `new Function()`. This page describes what that code can do, what the library checks before running it, and what is still missing.
 
-## Threat Model
+## Trust model: extension code is fully trusted
 
-The dynamic code loading pattern introduces the following risks:
+There is **no sandbox**. Extension code runs in the app's own JavaScript runtime with the app's privileges:
 
-| Threat | Vector | Impact |
+- It receives a context with `axios`, `fetch`, `cheerio`, `CryptoJS`, URL helpers and **`NativeConsumet`** (WebView-backed GET/POST requests that carry the site's cookies, a direct POST client, DDoS-Guard bypass, and a script deobfuscator).
+- The provided context is a convenience, not a boundary: code can reach `globalThis` and, through any function's `.constructor`, `Function` itself, and from there anything the app's JS can reach.
+
+So the only security boundary is **which code gets to run**. Everything below is about making sure the code that runs is exactly the code that was published.
+
+| Threat | Vector | What stops it |
 |---|---|---|
-| **Compromised CDN** | Attacker replaces a dist file on GitHub/CDN | Arbitrary JS runs on the user's device |
-| **MITM** | Network attacker intercepts the fetch response | Arbitrary JS runs on the user's device |
-| **Registry tampering** | `extension-registry.json` is modified with a malicious `factoryName` | Code injection into the `new Function()` template |
-| **Data exfiltration** | Malicious code calls `fetch`/`axios` to an attacker's server | User data or tokens sent off-device |
+| Tampered or corrupted download | CDN compromise, MITM, truncated response | SHA-256 check before execution (below) |
+| Code injection through the registry | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below) |
+| A push to `main` changing what a published version runs | Rebuilding `dist/` | Immutable versioned files (below) |
+| A malicious registry | Apps that download the registry get URLs and hashes from the same place | **Not yet solved**, see Known gaps |
 
-In React Native / Hermes there is no shell, no `child_process`, no file-system access — so RCE is constrained to what the JS runtime can do (network requests, React Native bridge APIs).
+## What the library enforces
 
-## Mitigations
+### 1. SHA-256 integrity on every execution path
 
-### 1. SHA-256 Subresource Integrity
-
-Every entry in `extension-registry.json` carries a `sha256` field — the hex digest of its compiled JS file as it existed at release time:
+Every registry entry carries the `sha256` of its compiled file:
 
 ```json
-{
-  "id": "animepahe",
-  "main": "https://raw.githubusercontent.com/...",
-  "sha256": "21f402ce947b..."
-}
+{ "id": "animepahe", "main": "https://raw.githubusercontent.com/...", "sha256": "36a6ff40…" }
 ```
 
-At runtime, after fetching the remote file, both `ProviderManager` and `ExtractorManager` compute `CryptoJS.SHA256(code)` and compare against the bundled hash. A mismatch throws immediately before any code executes:
-
-```
-Integrity check failed for 'animepahe': expected 21f402ce947b… got deadbeef1234…
-```
-
-Because the registry JSON is bundled inside the app binary (not fetched at runtime), the expected hashes cannot be silently replaced by a network attacker.
-
-### 2. `factoryName` Identifier Validation
-
-`factoryName` from the registry is interpolated into the `new Function()` body as the return expression. Before interpolation, `ProviderManager` validates it against `/^[A-Za-z_$][A-Za-z0-9_$]*$/`:
+Before running any code, `ProviderManager` and `ExtractorManager` compare `SHA256(code)` with that hash. This applies to `loadExtension` / `loadExtractor` **and** to direct `executeProviderCode` / `executeExtractorCode` calls (the path apps that cache code use). Nothing runs on a mismatch:
 
 ```ts
-if (!FACTORY_NAME_RE.test(factoryName)) {
-  throw new Error(`Invalid factoryName '${factoryName}'`);
+import { IntegrityError } from 'react-native-consumet';
+
+try {
+  await providerManager.executeProviderCode(code, entry.factoryName, entry);
+} catch (e) {
+  if (e instanceof IntegrityError) {
+    // e.code: 'INTEGRITY_MISMATCH' | 'INTEGRITY_MISSING' | 'INVALID_IDENTIFIER'
+    // re-download the file, or ask the user to update the app
+  }
 }
 ```
 
-This prevents a tampered registry from injecting arbitrary code through the `factoryName` field.
+- **Missing hash:** an entry without `sha256` is rejected. Construct the manager with `{ allowUnhashed: true }` (third constructor argument) only for registries you control.
+- **Opting out:** `executeProviderCode(code, factoryName, metadata, { skipIntegrity: true })` (and the same for `executeExtractorCode`) runs code without the check. Use it only for code you already trust, such as files bundled with your app.
+- **Checking at install time:** apps that download and cache code should verify it when they store it, with `verifyExtensionCode(code, entry)`.
 
-### 3. HTTPS-Only Fetches
+### 2. Identifier validation
 
-All `main` URLs in the default registry use `https://raw.githubusercontent.com`. The fetch options do not disable certificate verification (React Native's default networking stack enforces TLS).
+`factoryName` (providers) and `name` (extractors) are interpolated into the generated function body, so both must match `/^[A-Za-z_$][A-Za-z0-9_$]*$/`. Anything else throws `IntegrityError` with code `INVALID_IDENTIFIER` before code is built.
 
-### 4. Minimal Context Surface
+### 3. Immutable versioned files
 
-The `new Function()` execution context exposes only:
+Each registry entry's `main` points at a published copy of one exact version, `registry/extensions/<id>/<version>.js` or `registry/extractors/<name>/<version>.js`, written by `scripts/prepare-registry.js`. Published files are never overwritten: changing an entry's code requires a new `version` and therefore a new URL, so rebuilding `dist/` on `main` doesn't change what any published registry entry serves.
 
-- `fetch` / `axios` — network (scoped, no shell)
-- `cheerio.load` — HTML parsing
-- `CryptoJS` — cryptographic helpers
-- `console` — logging
-- `Promise`, `Object`, `URL`, `URLSearchParams` — standard JS globals
+### 4. HTTPS and bounded downloads
 
-No React Native bridge APIs, no `NativeModules`, no device storage are exposed inside the sandbox.
+Registry URLs use `https://raw.githubusercontent.com`; the platform networking stack enforces TLS. Code downloads are aborted after 30 seconds instead of hanging.
 
-## Keeping Hashes Current
+## Known gaps
 
-Hashes are generated automatically by `scripts/prepare-registry.js`, which runs as part of the release flow (`after:bump` hook in `release-it`). When you:
+These are tracked in the roadmap and not solved yet:
 
-1. Modify a provider/extractor source file
-2. Run `yarn build` to recompile to `dist/`
-3. Cut a release (`yarn release`)
+- **Library versions up to 1.6.0** still carry registries whose URLs point straight at `dist/` on `main`. Rebuilding `dist/` changes what those versions download, so 1.6.0 fails integrity checks and older versions run the new code unchecked. Updating the library fixes this.
+- **Immutability is enforced by the publish script, not by GitHub.** Published files under `registry/` live on the `main` branch; nothing but review and `yarn registry:check` stops someone from editing one by hand.
+- **Unsigned remote registry (REG-6).** When an app downloads `extension-registry.json`, the URLs and hashes come from the same mutable place, so the hash only detects corruption, not a malicious push. A registry bundled in the app binary is trustworthy; a downloaded one is only as trustworthy as the repository.
+- **Versions up to 1.5.0** do not verify hashes at all.
+- **Native module (SEC-2).** On Android, WebView remote debugging is currently enabled in release builds, and cookies and headers are written to logcat. On iOS, cookies from the shared WebView data store are returned without filtering by domain.
 
-…the script recomputes all hashes and writes them back into `src/extension-registry.json` and `dist/extension-registry.json` before the release is tagged.
+## Publishing and checking the registry
 
-If you need to regenerate hashes manually (e.g. after `yarn build:clean`):
+`scripts/prepare-registry.js` publishes each entry's build output (`distFile`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. It runs in the release flow (`after:bump` in release-it). Run it yourself after rebuilding `dist/`:
 
 ```bash
-node scripts/prepare-registry.js
+yarn build && node scripts/prepare-registry.js
 ```
 
-## Guidance for Consumers
+It exits with an error, and writes nothing, if a build file is missing or if an entry's build output changed without a version bump. `yarn registry:check` runs the same checks without writing. The pre-commit hook rebuilds `dist/` but doesn't run these checks yet (REG-5).
 
-If you ship a custom `extension-registry.json` pointing to your own CDN:
+## Guidance for consumers
 
-1. **Always include `sha256`** for every `main` URL — the managers warn but allow execution when the field is absent, which defeats the protection.
-2. **Regenerate hashes after every dist rebuild** — a stale hash will cause runtime failures for your users.
-3. **Use HTTPS URLs** — HTTP allows MITM injection regardless of hash checking.
-4. **Keep the registry bundled** — do not fetch the registry itself from the network; it must be part of the app bundle so expected hashes are trusted.
+1. **Prefer a bundled registry**, or verify a downloaded one out of band; see the unsigned-registry gap above.
+2. **Verify cached code** with `verifyExtensionCode` when you store it, and handle `IntegrityError` by re-downloading.
+3. **Always ship `sha256`** in custom registries; don't rely on `allowUnhashed`.
+4. **Use HTTPS URLs** for all code.
 
-## Reporting Vulnerabilities
+## Reporting vulnerabilities
 
 Open a [GitHub issue](https://github.com/uwumilabs/react-native-consumet/issues) marked **[Security]** or contact the maintainers directly via the [Discord server](https://discord.gg/n7xVPxbG4R).

@@ -3,11 +3,13 @@ import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContex
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
 import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
+import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export declare class ProviderManager {
     private providerContext;
     private loadedExtensions;
     private extensionManifest;
-    constructor(registry: typeof extensionRegistry, providerConfig?: ProviderContextConfig);
+    private integrityOptions;
+    constructor(registry: typeof extensionRegistry, providerConfig?: ProviderContextConfig, integrityOptions?: IntegrityOptions);
     /**
      * Load and parse the extensionManifest
      */
@@ -34,11 +36,14 @@ export declare class ProviderManager {
      */
     private attachProviderPrototype;
     /**
-     * Execute provider code and create instance (extensionManifest-based)
+     * Execute provider code and create instance (extensionManifest-based).
+     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+     *
+     * @throws IntegrityError before running anything if the hash or factory name is invalid
      */
     executeProviderCode<T extends AnimeProvider | MovieProvider>(code: string, factoryName: string, metadata: ExtensionManifest & {
         id: T;
-    }): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
+    }, options?: ExecuteCodeOptions): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
     /**
      * Create execution context for provider code
      */
@@ -70,11 +75,6 @@ export declare class ProviderManager {
         extensionId: string;
         results: ISearch<IAnimeResult | IMovieResult>;
     }>>;
-    /**
-     * Verify SHA-256 integrity of fetched code against the bundled registry hash.
-     * Throws if hashes don't match. Warns (but allows) if no hash is present in registry.
-     */
-    private verifyCodeIntegrity;
 }
 export default ProviderManager;
 //# sourceMappingURL=ProviderManager.d.ts.map

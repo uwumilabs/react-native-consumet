@@ -24,7 +24,8 @@ export function VidHide(ctx: ExtractorContext): IVideoExtractor {
           throw new Error('Video not found');
         });
 
-      const packedScript = /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))?.[2]?.replace('eval', '');
+      // The packed `eval(function(p,a,c,k,e,d)...)` call can span lines; capture its argument up to </script>.
+      const packedScript = /eval(\(f.*?)\s*<\/script>/s.exec(data)?.[1];
 
       if (!packedScript) throw new Error('No packed script found');
 
@@ -57,7 +58,7 @@ export function VidHide(ctx: ExtractorContext): IVideoExtractor {
           if (!video.includes('m3u8')) continue;
 
           const url = video.split('\n')[1];
-          const quality = video.split('RESOLUTION=')[1]?.split(',')[0].split('x')[1];
+          const quality = /RESOLUTION=\d+x(\d+)/.exec(video)?.[1];
 
           videoSources.push({
             url: `${pathWithoutMaster}/${url}`,

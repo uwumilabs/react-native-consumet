@@ -8,7 +8,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const himovies_1 = __importDefault(require("../movies/himovies/himovies"));
@@ -49,7 +49,7 @@ class TMDB extends models_1.MovieParser {
       try {
         const {
           data
-        } = await axios_1.default.get(trendingUrl);
+        } = await meta_http_1.metaHttp.get(trendingUrl);
         if (data.results.length < 1) return result;
         result.hasNextPage = page + 1 <= data.total_pages;
         result.currentPage = page;
@@ -113,7 +113,7 @@ class TMDB extends models_1.MovieParser {
       try {
         const {
           data
-        } = await axios_1.default.get(searchUrl);
+        } = await meta_http_1.metaHttp.get(searchUrl);
         if (data.results.length < 1) return search;
         search.hasNextPage = page + 1 <= data.total_pages;
         search.currentPage = page;
@@ -152,7 +152,7 @@ class TMDB extends models_1.MovieParser {
       //request api to get media info from tmdb
       const {
         data
-      } = await axios_1.default.get(infoUrl);
+      } = await meta_http_1.metaHttp.get(infoUrl);
       //get provider id from title and year (if available) to get the correct provider id for the movie/tv series (e.g. flixhq)
       const providerId = await this.findIdFromTitle(data?.title || data?.name, {
         type: type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
@@ -234,7 +234,7 @@ class TMDB extends models_1.MovieParser {
         for (let i = 1; i <= totalSeasons; i++) {
           const {
             data: seasonData
-          } = await axios_1.default.get(seasonUrl(i.toString()));
+          } = await meta_http_1.metaHttp.get(seasonUrl(i.toString()));
           //find season in each episode (providerEpisodes)
           const seasonEpisodes = providerEpisodes?.filter(episode => episode.season === i);
           const episodes = seasonData?.episodes?.length <= 0 ? undefined : seasonData?.episodes.map(episode => {

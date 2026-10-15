@@ -4,6 +4,8 @@ export { USER_AGENT, splitAuthor, floorID, formatTitle, genElement, capitalizeFi
 export { createProviderContext } from './create-provider-context';
 export { ProviderManager } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
+export { verifyExtensionCode, IntegrityError } from './extension-integrity';
+export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './extension-integrity';
 export { createExtractorContext } from './create-extractor-context';
 export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';

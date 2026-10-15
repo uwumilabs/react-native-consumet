@@ -3,50 +3,58 @@
         {
             "name": "MegaCloud",
             "version": "1.3.1",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megacloud.js",
-            "sha256": "0a05aa5a3aabeebbc3b254a91c00ce3265a55585cdac01dbcbb91de5da6701a8"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.3.1.js",
+            "sha256": "0a05aa5a3aabeebbc3b254a91c00ce3265a55585cdac01dbcbb91de5da6701a8",
+            "distFile": "dist/extractors/megacloud.js"
         },
         {
             "name": "Kwik",
             "version": "1.2.1",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/kwik.js",
-            "sha256": "067dffc3e3b4b1d43cb78213dffa547fcb1700e0ff5e9697ce2d0d3d7602cf51"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.1.js",
+            "sha256": "067dffc3e3b4b1d43cb78213dffa547fcb1700e0ff5e9697ce2d0d3d7602cf51",
+            "distFile": "dist/extractors/kwik.js"
         },
         {
             "name": "MegaUp",
             "version": "1.1.1",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaup.js",
-            "sha256": "aefc6985990a7a9ae8708cb0d934141e4c5d9b8201be4f8c3c0ccba1f076cded"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaup/1.1.1.js",
+            "sha256": "aefc6985990a7a9ae8708cb0d934141e4c5d9b8201be4f8c3c0ccba1f076cded",
+            "distFile": "dist/extractors/megaup.js"
         },
         {
             "name": "MegaPlay",
             "version": "1.0.0",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/megaplay.js",
-            "sha256": "222e366316354e6da9f409f569f28b8d994e5468a7ff730cc7ee8ec372558117"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.0.js",
+            "sha256": "222e366316354e6da9f409f569f28b8d994e5468a7ff730cc7ee8ec372558117",
+            "distFile": "dist/extractors/megaplay.js"
         },
         {
             "name": "GDFlix",
             "version": "1.0.0",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/gdflix.js",
-            "sha256": "ba20cec33538ed8946bab85c39722064b5ac55b54b7ae32bc31d28e535a5b8d9"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gdflix/1.0.0.js",
+            "sha256": "ba20cec33538ed8946bab85c39722064b5ac55b54b7ae32bc31d28e535a5b8d9",
+            "distFile": "dist/extractors/gdflix.js"
         },
         {
             "name": "Gofile",
             "version": "1.0.0",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/gofile.js",
-            "sha256": "fd83b60e120f9faaa3f7585249d995d8e1a748b79c6e8f4e2d3a0dd1e22f740e"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gofile/1.0.0.js",
+            "sha256": "fd83b60e120f9faaa3f7585249d995d8e1a748b79c6e8f4e2d3a0dd1e22f740e",
+            "distFile": "dist/extractors/gofile.js"
         },
         {
             "name": "HubCloud",
             "version": "1.0.1",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/hubcloud.js",
-            "sha256": "4926baf9960e368c8cd6d3a83246bb346834897976a490c12792f4ee337e12a1"
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.0.1.js",
+            "sha256": "4926baf9960e368c8cd6d3a83246bb346834897976a490c12792f4ee337e12a1",
+            "distFile": "dist/extractors/hubcloud.js"
         },
         {
             "name": "VidHide",
-            "version": "1.0.0",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/extractors/vidhide.js",
-            "sha256": "156b64fb1902e9fee08626aa79e714efae1b41c2a4950b8650a16860fce2a847"
+            "version": "1.0.1",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.0.1.js",
+            "sha256": "251dad073c98ef734c22c4e60bb1430adb50281cb1916cef1e0171048e216c06",
+            "distFile": "dist/extractors/vidhide.js"
         }
     ],
     "extensions": [
@@ -60,7 +68,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animepahe/create-animepahe.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.2.js",
             "factoryName": "createAnimePahe",
             "baseUrl": "https://animepahe.pw",
             "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
@@ -78,7 +86,8 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": false,
-            "sha256": "36a6ff40f3f74480a94f5c6a4df44b515db2474268ba3a28d60b2e4b57fbd0ed"
+            "sha256": "36a6ff40f3f74480a94f5c6a4df44b515db2474268ba3a28d60b2e4b57fbd0ed",
+            "distFile": "dist/providers/anime/animepahe/create-animepahe.js"
         },
         {
             "id": "animekai",
@@ -90,7 +99,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/animekai/create-animekai.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animekai/1.1.1.js",
             "factoryName": "createAnimeKai",
             "baseUrl": "https://anikai.to",
             "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
@@ -108,7 +117,8 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "9a3f29a7f765d01994dbc30f46dd64e31e75e2533823a6824f648f3290bf2228"
+            "sha256": "9a3f29a7f765d01994dbc30f46dd64e31e75e2533823a6824f648f3290bf2228",
+            "distFile": "dist/providers/anime/animekai/create-animekai.js"
         },
         {
             "id": "anikoto",
@@ -120,7 +130,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/anikoto/create-anikoto.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anikoto/1.1.1.js",
             "factoryName": "createAniKoto",
             "baseUrl": "https://anikototv.to",
             "logo": "https://anikototv.to/favicon-32x32.png",
@@ -137,7 +147,8 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "7ebe1fd97e4cc856c0ce718f8b65156cadae568c9ed1febd8f53c3f0f5b12e59"
+            "sha256": "7ebe1fd97e4cc856c0ce718f8b65156cadae568c9ed1febd8f53c3f0f5b12e59",
+            "distFile": "dist/providers/anime/anikoto/create-anikoto.js"
         },
         {
             "id": "anineko",
@@ -149,7 +160,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/anime/anineko/create-anineko.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anineko/1.0.1.js",
             "factoryName": "createAniNeko",
             "baseUrl": "https://anineko.to",
             "logo": "https://anineko.to/favicon.ico",
@@ -167,7 +178,8 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "c239a1e51af9091c10b25425100e5c38900cda8c2f68621b39cd778bcad92cc0"
+            "sha256": "c239a1e51af9091c10b25425100e5c38900cda8c2f68621b39cd778bcad92cc0",
+            "distFile": "dist/providers/anime/anineko/create-anineko.js"
         },
         {
             "id": "multimovies",
@@ -179,7 +191,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/multimovies/create-multimovies.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/multimovies/1.0.1.js",
             "factoryName": "createMultiMovies",
             "baseUrl": "https://multimovies.center",
             "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
@@ -195,7 +207,8 @@
             ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "c71e42bcaf19048f5ea627165232cbd7b2721ad4b62a005393a4dd1d5975a7d5"
+            "sha256": "c71e42bcaf19048f5ea627165232cbd7b2721ad4b62a005393a4dd1d5975a7d5",
+            "distFile": "dist/providers/movies/multimovies/create-multimovies.js"
         },
         {
             "id": "yflix",
@@ -207,7 +220,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/yflix/create-yflix.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/yflix/1.0.1.js",
             "factoryName": "createYFlix",
             "baseUrl": "https://yflix.to",
             "logo": "https://yflix.to/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png",
@@ -222,7 +235,8 @@
             ],
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "fd366c226fb43af7f69f78b2fc652fcfa56fdc64f320224d3ae4918ee44d555c"
+            "sha256": "fd366c226fb43af7f69f78b2fc652fcfa56fdc64f320224d3ae4918ee44d555c",
+            "distFile": "dist/providers/movies/yflix/create-yflix.js"
         },
         {
             "id": "vegamovies",
@@ -234,7 +248,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/vegamovies/create-vegamovies.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/vegamovies/1.1.0.js",
             "factoryName": "createVegaMovies",
             "baseUrl": "https://new2.vegamovies.futbol",
             "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
@@ -251,7 +265,8 @@
             "isSourceEmbed": false,
             "isSourceDirect": true,
             "haveMultiServers": true,
-            "sha256": "44c5dce38d8e78f07f8ed35caf097bcaa2d5e1628378a1e0dcad059f8b6b826b"
+            "sha256": "44c5dce38d8e78f07f8ed35caf097bcaa2d5e1628378a1e0dcad059f8b6b826b",
+            "distFile": "dist/providers/movies/vegamovies/create-vegamovies.js"
         },
         {
             "id": "netflixmirror",
@@ -263,7 +278,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/netflixmirror/create-netflixmirror.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/netflixmirror/1.0.0.js",
             "factoryName": "createNetflixMirror",
             "baseUrl": "https://net52.cc",
             "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -277,7 +292,8 @@
             "isSourceEmbed": false,
             "isSourceDirect": true,
             "haveMultiServers": false,
-            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
+            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc",
+            "distFile": "dist/providers/movies/netflixmirror/create-netflixmirror.js"
         },
         {
             "id": "primemirror",
@@ -289,7 +305,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/netflixmirror/create-netflixmirror.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/primemirror/1.0.0.js",
             "factoryName": "createPrimeMirror",
             "baseUrl": "https://net52.cc",
             "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -303,7 +319,8 @@
             "isSourceEmbed": false,
             "isSourceDirect": true,
             "haveMultiServers": false,
-            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
+            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc",
+            "distFile": "dist/providers/movies/netflixmirror/create-netflixmirror.js"
         },
         {
             "id": "disneymirror",
@@ -315,7 +332,7 @@
                 "url": "https://github.com/uwumilabs"
             },
             "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/dist/providers/movies/netflixmirror/create-netflixmirror.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/disneymirror/1.0.0.js",
             "factoryName": "createDisneyMirror",
             "baseUrl": "https://net52.cc",
             "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -329,7 +346,8 @@
             "isSourceEmbed": false,
             "isSourceDirect": true,
             "haveMultiServers": false,
-            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
+            "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc",
+            "distFile": "dist/providers/movies/netflixmirror/create-netflixmirror.js"
         }
     ]
 }
