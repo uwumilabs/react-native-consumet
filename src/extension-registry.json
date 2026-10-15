@@ -249,6 +249,7 @@
         "GDFlix"
       ],
       "isSourceEmbed": false,
+      "isSourceDirect": true,
       "haveMultiServers": true,
       "sha256": "44c5dce38d8e78f07f8ed35caf097bcaa2d5e1628378a1e0dcad059f8b6b826b"
     },
@@ -274,6 +275,7 @@
       "lastUpdated": "2026-10-15T00:00:00Z",
       "extractors": [],
       "isSourceEmbed": false,
+      "isSourceDirect": true,
       "haveMultiServers": false,
       "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
     },
@@ -299,6 +301,7 @@
       "lastUpdated": "2026-10-15T00:00:00Z",
       "extractors": [],
       "isSourceEmbed": false,
+      "isSourceDirect": true,
       "haveMultiServers": false,
       "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
     },
@@ -324,6 +327,7 @@
       "lastUpdated": "2026-10-15T00:00:00Z",
       "extractors": [],
       "isSourceEmbed": false,
+      "isSourceDirect": true,
       "haveMultiServers": false,
       "sha256": "c4f7cfdf724504a2cb8c5a21f5ee63d7f3d696ab84bf4a713696fffc19dd91bc"
     }

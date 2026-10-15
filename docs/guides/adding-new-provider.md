@@ -181,9 +181,13 @@ Add a new entry to the `extensions` array:
   "extractors": ["MegaCloud", "StreamSB"], // List of extractors your provider uses
   "subbed": true, // For anime providers
   "dubbed": true, // For anime providers
-  "isSourceEmbed": true // true if the provider uses embed links that require extractors
+  "isSourceEmbed": true, // true if the provider uses embed links that require extractors
+  "isSourceDirect": false, // true if fetchEpisodeSources returns playable files itself (server names are not extractors)
+  "haveMultiServers": true // true if fetchEpisodeServers lists several servers the user can pick from
 }
 ```
+
+Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
 **Important**: The `main` field should point to the *compiled JavaScript file* in the `dist` directory, hosted on GitHub (e.g., `raw.githubusercontent.com`). You'll need to push your changes and then update this URL.
 
 ## Step 5: Write Tests
