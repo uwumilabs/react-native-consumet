@@ -11,6 +11,7 @@ import {
   type ProviderContext,
   type ProviderConfig,
   type Intro,
+  type ProviderCapabilities,
 } from '../../../models';
 
 function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
@@ -563,6 +564,7 @@ function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
 
   return {
     ...config,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
     search,
     fetchLatestCompleted,
     fetchRecentlyAdded,

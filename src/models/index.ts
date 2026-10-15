@@ -46,6 +46,7 @@ import {
   WatchListType,
   type AniZipEpisode,
   type IMovieSeason,
+  type ProviderCapabilities,
 } from './types';
 
 export {
@@ -96,6 +97,7 @@ export type {
   IStaff,
   AniZipEpisode,
   IMovieSeason,
+  ProviderCapabilities,
   ExtractorContext,
   ExtractorContextConfig,
   ProviderContextConfig,

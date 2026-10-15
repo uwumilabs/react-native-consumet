@@ -11,6 +11,7 @@ import {
   type ProviderConfig,
   type MediaStatus,
   type IAnimeEpisode,
+  type ProviderCapabilities,
 } from '../../../models';
 
 function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
@@ -300,6 +301,7 @@ function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 
   return {
     ...config,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
     search,
     fetchAnimeInfo,
     fetchEpisodeSources,

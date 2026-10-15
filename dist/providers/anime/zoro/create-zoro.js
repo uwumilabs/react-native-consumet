@@ -571,6 +571,10 @@ function createZoro(ctx, customBaseURL) {
   // Return the functional provider object
   return {
     ...config,
+    capabilities: {
+      aniZipEpisodes: true,
+      subDub: 'combined'
+    },
     // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchAdvancedSearch,

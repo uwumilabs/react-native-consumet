@@ -1,5 +1,6 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext, type ProviderCapabilities } from '../../../models';
 declare function createAnimeKai(ctx: ProviderContext, customBaseURL?: string): {
+    capabilities: ProviderCapabilities;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchLatestCompleted: (page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchRecentlyAdded: (page?: number) => Promise<ISearch<IAnimeResult>>;

@@ -404,6 +404,9 @@ function createAniNeko(ctx, customBaseURL) {
   };
   return {
     ...config,
+    capabilities: {
+      aniZipEpisodes: true
+    },
     // filter constants — consumers can use these for UI filter pickers
     GENRES,
     TYPES,

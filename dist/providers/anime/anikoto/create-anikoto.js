@@ -533,6 +533,9 @@ function createAniKoto(ctx, customBaseURL) {
   };
   return {
     ...config,
+    capabilities: {
+      aniZipEpisodes: true
+    },
     search,
     fetchAdvancedSearch,
     fetchTopAiring,

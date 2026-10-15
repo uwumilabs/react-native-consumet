@@ -20,6 +20,7 @@ import {
   type ITitle,
   type IStaff,
   type AniZipEpisode,
+  type ProviderCapabilities,
 } from '../../models';
 import {
   anilistSearchQuery,
@@ -1175,12 +1176,21 @@ class Anilist extends AnimeParser {
     });
   };
 
-  /** Providers whose episode lists are merged with ani.zip metadata. */
-  private usesAniZipEpisodes = () =>
-    this.provider instanceof Zoro ||
-    this.provider instanceof AnimeKai ||
-    this.provider instanceof AnimePahe ||
-    this.provider instanceof AniKoto;
+  /**
+   * Whether to merge the provider's episodes with ani.zip metadata. Providers declare this in
+   * `capabilities`, so registry-only providers (no class) can opt in. Code that predates
+   * capabilities falls back to the built-in provider classes.
+   */
+  private usesAniZipEpisodes = () => {
+    const capabilities = (this.provider as { capabilities?: ProviderCapabilities }).capabilities;
+    if (capabilities) return Boolean(capabilities.aniZipEpisodes);
+    return (
+      this.provider instanceof Zoro ||
+      this.provider instanceof AnimeKai ||
+      this.provider instanceof AnimePahe ||
+      this.provider instanceof AniKoto
+    );
+  };
 
   /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
   private fetchFillerEpisodes = async (malId: number): Promise<{ 'number': string; 'filler-bool': boolean }[]> => {

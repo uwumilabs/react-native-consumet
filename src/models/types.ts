@@ -8,6 +8,21 @@ export interface IProviderStats {
   isWorking: boolean;
 }
 
+/**
+ * What a provider supports, declared by the provider itself so the declaration arrives with
+ * registry code. Meta providers choose behaviour from this instead of the provider's class,
+ * which registry-only providers don't have.
+ */
+export interface ProviderCapabilities {
+  /** META.Anilist merges this provider's episode list with ani.zip titles, images and keys. */
+  aniZipEpisodes?: boolean;
+  /**
+   * `combined`: one entry whose episode ids end in `$both`; the caller picks `$sub` or `$dub`.
+   * `separate`: sub and dub are separate entries.
+   */
+  subDub?: 'separate' | 'combined';
+}
+
 export interface ITitle {
   romaji?: string;
   english?: string;

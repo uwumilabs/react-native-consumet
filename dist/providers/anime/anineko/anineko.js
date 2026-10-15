@@ -21,6 +21,7 @@ class AniNeko extends models_1.AnimeParser {
         const defaultContext = (0, create_provider_context_1.createProviderContext)();
         this.instance = (0, create_anineko_1.default)(defaultContext, customBaseURL);
         this.logo = this.instance.logo;
+        this.capabilities = this.instance.capabilities;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
         this.classPath = this.instance.classPath;

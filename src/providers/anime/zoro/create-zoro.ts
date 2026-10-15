@@ -11,6 +11,7 @@ import {
   type WatchListType,
   type ProviderContext,
   type ProviderConfig,
+  type ProviderCapabilities,
 } from '../../../models';
 
 function createZoro(ctx: ProviderContext, customBaseURL?: string) {
@@ -608,6 +609,7 @@ function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   // Return the functional provider object
   return {
     ...config,
+    capabilities: { aniZipEpisodes: true, subDub: 'combined' } as ProviderCapabilities,
     // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchAdvancedSearch,

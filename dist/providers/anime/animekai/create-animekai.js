@@ -508,6 +508,9 @@ function createAnimeKai(ctx, customBaseURL) {
   };
   return {
     ...config,
+    capabilities: {
+      aniZipEpisodes: true
+    },
     search,
     fetchLatestCompleted,
     fetchRecentlyAdded,

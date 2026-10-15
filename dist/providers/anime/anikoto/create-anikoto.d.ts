@@ -1,5 +1,6 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext, type ProviderCapabilities } from '../../../models';
 declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
+    capabilities: ProviderCapabilities;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchAdvancedSearch: (page?: number, type?: string, status?: string, rated?: string, score?: number, season?: string, language?: string, _startDate?: {
         year: number;

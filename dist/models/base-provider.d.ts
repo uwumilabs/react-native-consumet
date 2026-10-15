@@ -1,5 +1,9 @@
-import { type IProviderStats } from '.';
+import { type IProviderStats, type ProviderCapabilities } from '.';
 declare abstract class BaseProvider {
+    /**
+     * What the provider supports (see `ProviderCapabilities`); copied from the provider's factory output.
+     */
+    capabilities?: ProviderCapabilities;
     /**
      * Name of the provider
      */

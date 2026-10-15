@@ -10,6 +10,7 @@ import {
   type SubOrDub,
   type ProviderContext,
   type ProviderConfig,
+  type ProviderCapabilities,
 } from '../../../models';
 
 function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
@@ -612,6 +613,7 @@ function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
 
   return {
     ...config,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
     search,
     fetchAdvancedSearch,
     fetchTopAiring,

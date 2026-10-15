@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class BaseProvider {
     /**
+     * What the provider supports (see `ProviderCapabilities`); copied from the provider's factory output.
+     */
+    capabilities;
+    /**
      * Most providers are english based, but if the provider is not english based override this value.
      * must be in [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) format
      */

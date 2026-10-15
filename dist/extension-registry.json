@@ -62,13 +62,13 @@
             "id": "animepahe",
             "name": "AnimePahe",
             "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
-            "version": "1.2.2",
+            "version": "1.2.3",
             "author": {
                 "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.2.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.3.js",
             "factoryName": "createAnimePahe",
             "baseUrl": "https://animepahe.pw",
             "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
@@ -86,20 +86,20 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": false,
-            "sha256": "36a6ff40f3f74480a94f5c6a4df44b515db2474268ba3a28d60b2e4b57fbd0ed",
+            "sha256": "a6d706e70872a897c5c91418b0eed40db21a3b30981e009a8812e7b07502c9cb",
             "distFile": "dist/providers/anime/animepahe/create-animepahe.js"
         },
         {
             "id": "animekai",
             "name": "AnimeKai",
             "description": "High-quality anime streaming from AnimeKai with multiple servers and subtitles",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "author": {
                 "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animekai/1.1.1.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animekai/1.1.2.js",
             "factoryName": "createAnimeKai",
             "baseUrl": "https://anikai.to",
             "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
@@ -117,20 +117,20 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "9a3f29a7f765d01994dbc30f46dd64e31e75e2533823a6824f648f3290bf2228",
+            "sha256": "ee754e2942064e166d8f744cbc86691c746e876327fad6820911e1fc28357da2",
             "distFile": "dist/providers/anime/animekai/create-animekai.js"
         },
         {
             "id": "anikoto",
             "name": "AniKoto",
             "description": "High-quality anime streaming from AniKoto with multiple servers and subtitles",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "author": {
                 "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anikoto/1.1.1.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anikoto/1.1.2.js",
             "factoryName": "createAniKoto",
             "baseUrl": "https://anikototv.to",
             "logo": "https://anikototv.to/favicon-32x32.png",
@@ -147,20 +147,20 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "7ebe1fd97e4cc856c0ce718f8b65156cadae568c9ed1febd8f53c3f0f5b12e59",
+            "sha256": "27decf9e1f4f114f166fd4ac95257721e4691e279918ac51cdf7f2a434b08311",
             "distFile": "dist/providers/anime/anikoto/create-anikoto.js"
         },
         {
             "id": "anineko",
             "name": "AniNeko",
             "description": "Anime streaming from AniNeko with hard-sub, soft-sub and dub support",
-            "version": "1.0.1",
+            "version": "1.1.0",
             "author": {
                 "name": "RNConsumet Team",
                 "url": "https://github.com/uwumilabs"
             },
             "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anineko/1.0.1.js",
+            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anineko/1.1.0.js",
             "factoryName": "createAniNeko",
             "baseUrl": "https://anineko.to",
             "logo": "https://anineko.to/favicon.ico",
@@ -178,7 +178,7 @@
             "dubbed": true,
             "isSourceEmbed": true,
             "haveMultiServers": true,
-            "sha256": "c239a1e51af9091c10b25425100e5c38900cda8c2f68621b39cd778bcad92cc0",
+            "sha256": "d6ababeecfc2cb144c657f76be1f04b56c657d569dc66b0db0b121b520c4eb67",
             "distFile": "dist/providers/anime/anineko/create-anineko.js"
         },
         {

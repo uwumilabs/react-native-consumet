@@ -1,5 +1,6 @@
-import { type SubOrDub, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type ProviderContext } from '../../../models';
+import { type SubOrDub, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type ProviderContext, type ProviderCapabilities } from '../../../models';
 declare function createAnimePahe(ctx: ProviderContext, customBaseURL?: string): {
+    capabilities: ProviderCapabilities;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     fetchAnimeInfo: (id: string, episodePage?: number) => Promise<IAnimeInfo>;
     fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;

@@ -938,8 +938,16 @@ class Anilist extends models_1.AnimeParser {
       });
     };
   })();
-  /** Providers whose episode lists are merged with ani.zip metadata. */
-  usesAniZipEpisodes = () => this.provider instanceof zoro_1.default || this.provider instanceof animekai_1.default || this.provider instanceof animepahe_1.default || this.provider instanceof anikoto_1.default;
+  /**
+   * Whether to merge the provider's episodes with ani.zip metadata. Providers declare this in
+   * `capabilities`, so registry-only providers (no class) can opt in. Code that predates
+   * capabilities falls back to the built-in provider classes.
+   */
+  usesAniZipEpisodes = () => {
+    const capabilities = this.provider.capabilities;
+    if (capabilities) return Boolean(capabilities.aniZipEpisodes);
+    return this.provider instanceof zoro_1.default || this.provider instanceof animekai_1.default || this.provider instanceof animepahe_1.default || this.provider instanceof anikoto_1.default;
+  };
   /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
   fetchFillerEpisodes = async malId => {
     try {

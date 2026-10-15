@@ -9,6 +9,7 @@ import {
   type SubOrDub,
   type ProviderContext,
   type ProviderConfig,
+  type ProviderCapabilities,
 } from '../../../models';
 
 function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
@@ -467,6 +468,7 @@ function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
 
   return {
     ...config,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
     // filter constants — consumers can use these for UI filter pickers
     GENRES,
     TYPES,

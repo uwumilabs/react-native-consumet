@@ -12,6 +12,7 @@ import {
   SubOrDub,
   type IEpisodeServer,
   MediaFormat,
+  type ProviderCapabilities,
 } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
 import Zoro from '../anime/zoro/zoro';
@@ -323,7 +324,9 @@ class Myanimelist extends AnimeParser {
       return [];
     }
 
-    if (this.provider instanceof Zoro) {
+    const capabilities = (this.provider as { capabilities?: ProviderCapabilities }).capabilities;
+    const combinedSubDub = capabilities ? capabilities.subDub === 'combined' : this.provider instanceof Zoro;
+    if (combinedSubDub) {
       // Set the correct episode sub/dub request type
       possibleAnime.episodes.forEach((_: any, index: number) => {
         if (possibleAnime.subOrDub === SubOrDub.BOTH) {

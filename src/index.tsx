@@ -96,6 +96,7 @@ import {
   MediaFormat,
   type ProxyConfig,
   type AniZipEpisode,
+  type ProviderCapabilities,
   type IMovieSeason,
   type ExtensionManifest,
   type ExtractorInfo,
@@ -170,6 +171,7 @@ export type {
   ProxyConfig,
   AniZipEpisode,
   IMovieSeason,
+  ProviderCapabilities,
   ExtensionManifest,
   ExtractorInfo,
 };

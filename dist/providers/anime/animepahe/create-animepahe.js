@@ -268,6 +268,9 @@ function createAnimePahe(ctx, customBaseURL) {
   };
   return {
     ...config,
+    capabilities: {
+      aniZipEpisodes: true
+    },
     search,
     fetchAnimeInfo,
     fetchEpisodeSources,

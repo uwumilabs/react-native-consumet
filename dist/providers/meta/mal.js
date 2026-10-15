@@ -228,7 +228,9 @@ class Myanimelist extends models_1.AnimeParser {
     if (possibleAnime.subOrDub !== models_1.SubOrDub.BOTH && possibleAnime.subOrDub !== expectedType) {
       return [];
     }
-    if (this.provider instanceof zoro_1.default) {
+    const capabilities = this.provider.capabilities;
+    const combinedSubDub = capabilities ? capabilities.subDub === 'combined' : this.provider instanceof zoro_1.default;
+    if (combinedSubDub) {
       // Set the correct episode sub/dub request type
       possibleAnime.episodes.forEach((_, index) => {
         if (possibleAnime.subOrDub === models_1.SubOrDub.BOTH) {

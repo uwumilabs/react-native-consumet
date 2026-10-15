@@ -21,6 +21,7 @@ export class AniKoto extends AnimeParser {
     this.instance = createAniKoto(defaultContext, customBaseURL);
 
     this.logo = this.instance.logo;
+    this.capabilities = this.instance.capabilities;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
     this.classPath = this.instance.classPath;

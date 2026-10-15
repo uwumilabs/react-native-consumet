@@ -18,6 +18,7 @@ export class AniNeko extends AnimeParser {
     this.instance = createAniNeko(defaultContext, customBaseURL);
 
     this.logo = this.instance.logo;
+    this.capabilities = this.instance.capabilities;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
     this.classPath = this.instance.classPath;

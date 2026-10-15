@@ -153,6 +153,29 @@ async fetchEpisodeSources(episodeId: string, server: StreamingServers): Promise<
 }
 ```
 
+### Declaring Capabilities
+
+Meta providers decide how to treat your provider from what it declares, not from its class, so a provider shipped only through the registry gets the same treatment as a built-in one. Return a `capabilities` object from your factory:
+
+```typescript
+import { type ProviderCapabilities } from '../../../models';
+
+return {
+  ...config,
+  capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
+  search,
+  fetchAnimeInfo,
+  // ...
+};
+```
+
+| Capability | Meaning |
+|---|---|
+| `aniZipEpisodes` | `META.Anilist` merges your episode list with ani.zip titles, images and episode keys. Set it when your episode `number`s follow the anime's own numbering. |
+| `subDub` | `'combined'`: one entry whose episode ids end in `$both`, and the caller picks `$sub` or `$dub`. `'separate'`: sub and dub are separate entries. |
+
+If your provider has a class wrapper, copy the field across: `this.capabilities = this.instance.capabilities;`.
+
 ## Step 4: Add to `extension-registry.json`
 
 Once your provider is implemented, you need to register it in `src/extension-registry.json`. This file acts as a manifest for all available extensions.
