@@ -6,6 +6,7 @@ A powerful React Native library for accessing anime, movie, and media content th
 - [Basic Usage](#basic-usage)
 - [Why Use Extensions?](#why-use-extensions)
 - [Core Components](#core-components)
+- [Registry Versions and Compatibility](#registry-versions-and-compatibility)
 - [Usage Examples](#usage-examples)
 - [Custom HTTP Configuration](#custom-http-configuration)
 - [React Integration](#react-integration)
@@ -104,6 +105,73 @@ const providerManager = new ProviderManager(extensionRegistry, { extractorManage
 ```
 
 `createProviderContext()` without an `extractorManager` keeps the bundled extractors, as before.
+
+## Registry Versions and Compatibility
+
+A registry says which format it uses, and each entry says which extension context its code needs:
+
+```json
+{
+  "schemaVersion": 1,
+  "extractors": [{ "name": "Kwik", "version": "1.2.2", "minContextVersion": 1, "main": "…", "sha256": "…" }],
+  "extensions": [{ "id": "animepahe", "version": "1.2.4", "minContextVersion": 1, "factoryName": "createAnimePahe", "…": "…" }]
+}
+```
+
+- **`schemaVersion`** is the format of the registry file. This library reads up to `REGISTRY_SCHEMA_VERSION` (1). A registry without one reads as 1, which covers every registry published before the field existed. A newer `schemaVersion` throws a `RegistryError` with code `UNSUPPORTED_SCHEMA`. The number only goes up when older libraries would misread the file (a field removed, renamed or changing meaning). Adding an optional field doesn't change it.
+- **`minContextVersion`** is the lowest `CONTEXT_VERSION` the entry's code runs on. `CONTEXT_VERSION` is an integer the library exports (currently 1). It versions what the library gives extension code: the `ctx` helpers, the modules extension code can `require`, and its globals. An entry without `minContextVersion` needs 1. When a provider starts using something only a newer library provides, that library bumps `CONTEXT_VERSION` and the entry sets `minContextVersion` to the new value. Older apps then refuse the entry up front instead of failing mid-call with `undefined is not a function`.
+
+### Validation
+
+`new ProviderManager(registry)` and `new ExtractorManager(registry)` validate the registry, and so does `validateRegistry(registry)`. An invalid registry throws a `RegistryError` with code `INVALID_REGISTRY` and every problem listed in `issues`. Before this check, the managers logged the error and carried on with no entries. The check covers:
+
+- **Required fields.** Extensions need `id`, `name`, `description`, `version`, `author.name`, `category`, `main`, `factoryName`, `baseUrl`, `logo`, `status`, `lastUpdated` and `extractors`. Extractors need `name`, `version` and `main`.
+- **Types and formats.** `factoryName` and extractor `name` must be JavaScript identifiers, because they're interpolated into the code that runs the extension. `id` may only contain letters, digits, `-` and `_`. `version` must be semver (`1.2.3`). `sha256` must be 64 lowercase hex characters. `category` must be a `ProviderType`. Optional fields such as `aliases`, `languages` and the boolean flags must have the right type if present. Display fields such as `status` are only checked to be strings.
+- **Unique keys.** Two extensions can't share an `id`, and two extractors can't share a `name` (case-insensitive).
+
+Fields the schema doesn't know are ignored, so you can store extra data (such as a download time) next to `extensions` and `extractors`.
+
+### Incompatible entries
+
+An entry whose `minContextVersion` is higher than `CONTEXT_VERSION` stays in the manager, so `getAvailableExtensions()` and `getExtensionMetadata()` still return it and you can show it. Only its `id` (for extractors, its `name` and `aliases`) is validated, because it may use fields or values added after this library version. It never runs. `loadExtension`, `getAnimeProvider`, `getMovieProvider`, `loadExtractor`, `executeProviderCode` and `executeExtractorCode` (even with `skipIntegrity`) throw a `RegistryError` with code `INCOMPATIBLE_ENTRY` before any code is downloaded or run. When a provider calls `ctx.extractors.X()` and the registry's X is incompatible, the bundled X runs instead, the same fallback as for a failed hash.
+
+```typescript
+import { RegistryError, isCompatibleEntry, validateRegistry } from 'react-native-consumet';
+
+// Check a downloaded registry before storing it, and keep the previous one if it's rejected.
+// Store it whole: dropping `schemaVersion` would make a future format read as version 1.
+try {
+  validateRegistry(downloaded);
+  saveRegistry(downloaded);
+} catch (error) {
+  if (error instanceof RegistryError && error.updateRequired) showUpdatePrompt();
+  else reportBrokenRegistry(error);
+}
+
+// Mark entries this version of the app can't run
+const runnable = providerManager.getAvailableExtensions().filter((entry) => isCompatibleEntry(entry));
+
+// Cached code is refused the same way
+try {
+  await providerManager.executeProviderCode(cachedCode, metadata.factoryName, metadata);
+} catch (error) {
+  if (error instanceof RegistryError && error.code === 'INCOMPATIBLE_ENTRY') {
+    showUpdatePrompt(`${metadata.name} needs a newer version of the app`);
+  }
+}
+```
+
+`RegistryError` has these fields:
+
+| Field | Meaning |
+|---|---|
+| `code` | `INVALID_REGISTRY`, `UNSUPPORTED_SCHEMA` or `INCOMPATIBLE_ENTRY` |
+| `updateRequired` | `true` for `UNSUPPORTED_SCHEMA` and `INCOMPATIBLE_ENTRY`: a newer app version accepts it |
+| `issues` | Every problem found, e.g. `extensions[2] (anineko): factoryName must be a JavaScript identifier (got "create-anineko")` |
+| `id` | The extension id or extractor name, for `INCOMPATIBLE_ENTRY` |
+| `required` / `supported` | The `schemaVersion` or `minContextVersion` asked for, and what this library supports |
+
+`assertCompatibleEntry(entry)` throws the same `INCOMPATIBLE_ENTRY` error, for apps that check entries themselves.
 
 
 ## Usage Examples
@@ -523,7 +591,8 @@ export const useMultiProvider = () => {
 
 ```typescript
 class ProviderManager {
-  constructor(registry: typeof extensionRegistry, config?: ProviderContextConfig, integrityOptions?: IntegrityOptions)
+  // Throws RegistryError if the registry is invalid or uses a newer schemaVersion
+  constructor(registry: ExtensionRegistryData | typeof extensionRegistry, config?: ProviderContextConfig, integrityOptions?: IntegrityOptions)
   
   // Extension management
   getAvailableExtensions(): ExtensionManifest[]
@@ -573,7 +642,8 @@ class ProviderManager {
 
 ```typescript
 class ExtractorManager {
-  constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions)
+  // Throws RegistryError if the registry is invalid or uses a newer schemaVersion
+  constructor(registry: ExtensionRegistryData | typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions)
   
   // Extractor loading
   loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultExtractors)[T]>
