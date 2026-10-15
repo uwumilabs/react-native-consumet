@@ -1,26 +1,18 @@
 package com.consumet
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
 import com.facebook.react.bridge.Promise
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableNativeMap
-import java.util.regex.Pattern
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
+class DdosGuardHelper(private val context: Context) {
     private val client = OkHttpClient.Builder().build()
     private val cookieManager = CookieManager.getInstance()
     private val TAG = "DdosGuardModule"
@@ -153,58 +145,35 @@ class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
     private fun cookiesToHeaderString(cookies: List<Cookie>): String =
         cookies.joinToString("; ") { "${it.name}=${it.value}" }
 
+    /**
+     * Loads [url] in a hidden WebView and resolves with the Cookie header string for the loaded
+     * URL once it holds a `__ddg2_` cookie (a plain string, as the spec and iOS return). Rejects
+     * with COOKIE_ERROR when the page sets none, WEBVIEW_ERROR when the main document fails to
+     * load, and TIMEOUT after 30 seconds.
+     */
     fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
         Log.d(TAG, "getDdosGuardCookiesWithWebView called with url: $url")
         Handler(Looper.getMainLooper()).post {
-            // Inspectable only in debuggable host apps (see WebViewDebugging)
-            WebViewDebugging.enableIfHostAppDebuggable(reactContext)
-            val webView = WebView(reactContext)
-            webView.settings.javaScriptEnabled = true
-            webView.settings.domStorageEnabled = true
-            
-            // Add timeout handling
-            val timeoutHandler = Handler(Looper.getMainLooper())
-            val timeoutRunnable = Runnable {
-                Log.d(TAG, "WebView timeout reached for $url")
-                promise.reject("TIMEOUT", "WebView timeout reached")
-                webView.destroy()
+            val task = WebViewTask(context, promise)
+            task.onPageFinished = { _, loadedUrl ->
+                Log.d(TAG, "onPageFinished for url: $loadedUrl")
+                // Run on background thread to avoid ANR
+                Thread {
+                    val cookie = cookieManager.getCookie(loadedUrl)
+                    val hasDdg2 = cookie?.split(";")?.any { it.trim().substringBefore("=") == "__ddg2_" } == true
+
+                    Handler(Looper.getMainLooper()).post {
+                        if (hasDdg2) {
+                            task.resolve(cookie)
+                        } else {
+                            task.reject("COOKIE_ERROR", "No __ddg2_ cookie received")
+                        }
+                    }
+                }.start()
             }
 
-            webView.webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView, loadedUrl: String) {
-                    Log.d(TAG, "onPageFinished for url: $loadedUrl")
-                    timeoutHandler.removeCallbacks(timeoutRunnable)
-                    
-                    // Run on background thread to avoid ANR
-                    Thread {
-                        val cookieManager = android.webkit.CookieManager.getInstance()
-                        val cookie = cookieManager.getCookie(loadedUrl)
-                        
-                        Handler(Looper.getMainLooper()).post {
-                            if (!cookie.isNullOrEmpty() && cookie.contains("__ddg2_")) {
-                                val result = WritableNativeMap()
-                                result.putString("cookie", cookie)
-                                promise.resolve(result)
-                            } else {
-                                promise.reject("COOKIE_ERROR", "No __ddg2_ cookie received")
-                            }
-                            webView.destroy()
-                        }
-                    }.start()
-                }
-                
-                override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                    Log.e(TAG, "onReceivedError: ${error.description}")
-                    timeoutHandler.removeCallbacks(timeoutRunnable)
-                    promise.reject("WEBVIEW_ERROR", "WebView error: ${error.description}")
-                    webView.destroy()
-                }
-            }
-            
-            // Set 30 second timeout
             Log.d(TAG, "Loading url in WebView: $url")
-            timeoutHandler.postDelayed(timeoutRunnable, 30000)
-            webView.loadUrl(url)
+            task.start { webView -> webView.loadUrl(url) }
         }
     }
 }

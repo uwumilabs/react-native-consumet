@@ -11,7 +11,8 @@ jest.mock('react-native', () => {
       select: jest.fn((obj) => obj.android || obj.default),
     },
     // Add the TurboModuleRegistry mock: every NativeConsumet method rejects unless a test overrides it,
-    // so unit tests never depend on the native module or the network.
+    // so unit tests never depend on the native module or the network. It has exactly the methods of
+    // the Spec in src/NativeConsumet.ts; test/unit/native-contract.test.ts keeps the two in sync.
     TurboModuleRegistry: {
       getEnforcing: jest.fn((name) => {
         if (name === 'Consumet') {

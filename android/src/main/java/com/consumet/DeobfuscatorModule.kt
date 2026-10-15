@@ -20,7 +20,8 @@ class DeobfuscatorModule(private val reactContext: ReactApplicationContext) : Re
         fetchSynchronyScript { synchronyScript, error ->
             if (error != null) {
                 Log.e("Deobfuscator", "Failed to fetch script: ${error.message}", error)
-                promise.reject("NetworkError", error.message, error)
+                // Same codes as iOS: ParseError for an unexpected script format, else NetworkError.
+                promise.reject((error as? SynchronyFormatException)?.code ?: "NetworkError", error.message, error)
                 return@fetchSynchronyScript
             }
 
@@ -37,7 +38,12 @@ class DeobfuscatorModule(private val reactContext: ReactApplicationContext) : Re
                     engine.evaluate("new Deobfuscator().deobfuscateSource(sourceValue.get())") as? String
                 }
 
-                promise.resolve(result)
+                // Like iOS, resolve only with a string.
+                if (result == null) {
+                    promise.reject("EvaluationError", "Deobfuscator did not return a string")
+                } else {
+                    promise.resolve(result)
+                }
             } catch (e: Exception) {
                 Log.e("Deobfuscator", "Deobfuscation failed: ${e.message}", e)
                 promise.reject("EvaluationError", e.message, e)
@@ -72,7 +78,7 @@ class DeobfuscatorModule(private val reactContext: ReactApplicationContext) : Re
                         val (deob, trans) = match.destructured
                         val replacement = "const Deobfuscator = $deob, Transformer = $trans;"
                         originalScript.replace(match.value, replacement)
-                    } ?: throw IOException("Could not parse synchrony format")
+                    } ?: throw SynchronyFormatException("Could not parse Synchrony export format")
 
                     callback(transformedScript, null)
                 } catch (e: Exception) {
@@ -86,5 +92,9 @@ class DeobfuscatorModule(private val reactContext: ReactApplicationContext) : Re
 
     interface SourceWrapper {
         fun get(): String
+    }
+
+    private class SynchronyFormatException(message: String) : IOException(message) {
+        val code = "ParseError"
     }
 }

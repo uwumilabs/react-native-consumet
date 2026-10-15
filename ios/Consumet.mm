@@ -7,6 +7,10 @@ static NSString *const kDefaultUA =
     @"AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 "
     @"Safari/604.1";
 
+// Rejection codes shared with Android (see the contract in src/NativeConsumet.ts).
+static NSString *const kWebViewErrorCode = @"WEBVIEW_ERROR";
+static NSString *const kTimeoutCode = @"TIMEOUT";
+
 /**
  * One in-memory website data store for every request this module makes.
  * Cookies (such as a passed DDoS-Guard challenge) carry over between calls,
@@ -103,7 +107,7 @@ static void RCConsumetReadCookies(
  */
 @interface RCConsumetWebTask : NSObject <WKNavigationDelegate>
 @property(nonatomic, copy) void (^onFinish)(WKWebView *webView, NSString *url);
-@property(nonatomic, copy) void (^onError)(NSString *description);
+@property(nonatomic, copy) void (^onError)(NSString *code, NSString *description);
 - (void)loadRequest:(NSURLRequest *)request
           userAgent:(nullable NSString *)ua
        cookieHeader:(nullable NSString *)cookieHeader;
@@ -197,7 +201,25 @@ static void RCConsumetReadCookies(
     return;
   _done = YES;
   if (self.onError)
-    self.onError(@"WebView request timed out");
+    self.onError(kTimeoutCode, @"WebView request timed out");
+  [self cleanup];
+}
+
+- (void)_didFailWithError:(NSError *)error {
+  // A navigation cancelled because another one replaced it (a redirect or a
+  // script reload, as on challenge pages) is not a failure; the replacement
+  // navigation or the timeout settles the request. Android does not report
+  // these either.
+  if ([error.domain isEqualToString:NSURLErrorDomain] &&
+      error.code == NSURLErrorCancelled)
+    return;
+  if (_done)
+    return;
+  _done = YES;
+  [_timer invalidate];
+  _timer = nil;
+  if (self.onError)
+    self.onError(kWebViewErrorCode, error.localizedDescription);
   [self cleanup];
 }
 
@@ -223,30 +245,18 @@ static void RCConsumetReadCookies(
     self.onFinish(webView, webView.URL.absoluteString ?: @"");
 }
 
+// WKWebView reports only main-frame navigation failures here; failed
+// sub-resources (images, scripts, iframes) never reject the request.
 - (void)webView:(WKWebView *)webView
     didFailNavigation:(WKNavigation *)navigation
             withError:(NSError *)error {
-  if (_done)
-    return;
-  _done = YES;
-  [_timer invalidate];
-  _timer = nil;
-  if (self.onError)
-    self.onError(error.localizedDescription);
-  [self cleanup];
+  [self _didFailWithError:error];
 }
 
 - (void)webView:(WKWebView *)webView
     didFailProvisionalNavigation:(WKNavigation *)navigation
                        withError:(NSError *)error {
-  if (_done)
-    return;
-  _done = YES;
-  [_timer invalidate];
-  _timer = nil;
-  if (self.onError)
-    self.onError(error.localizedDescription);
-  [self cleanup];
+  [self _didFailWithError:error];
 }
 
 @end
@@ -404,13 +414,19 @@ RCT_EXPORT_MODULE()
     dispatch_semaphore_wait(
         sem2, dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC));
 
-    NSMutableArray<NSHTTPCookie *> *allCookies = [existing mutableCopy];
-    if (checkResp) {
-      [allCookies addObjectsFromArray:[NSHTTPCookie
-                                          cookiesWithResponseHeaderFields:
-                                              checkResp.allHeaderFields
-                                                                   forURL:url]];
+    NSArray<NSHTTPCookie *> *newCookies =
+        [checkResp isKindOfClass:[NSHTTPURLResponse class]]
+            ? [NSHTTPCookie
+                  cookiesWithResponseHeaderFields:checkResp.allHeaderFields
+                                           forURL:url]
+            : @[];
+    // Like Android: no cookie from the check request means the bypass failed.
+    if (newCookies.count == 0) {
+      reject(@"ERROR", @"Failed to get DDos-Guard cookie", nil);
+      return;
     }
+    NSMutableArray<NSHTTPCookie *> *allCookies = [existing mutableCopy];
+    [allCookies addObjectsFromArray:newCookies];
     resolve(@{@"cookie" : [self _cookieHeader:allCookies]});
   });
 }
@@ -442,8 +458,8 @@ RCT_EXPORT_MODULE()
             [ws _removeTask:wt];
           });
     };
-    task.onError = ^(NSString *desc) {
-      reject(@"WEBVIEW_ERROR", desc, nil);
+    task.onError = ^(NSString *code, NSString *desc) {
+      reject(code, desc, nil);
       [ws _removeTask:wt];
     };
 
@@ -497,8 +513,8 @@ RCT_EXPORT_MODULE()
                  }];
           });
     };
-    task.onError = ^(NSString *desc) {
-      reject(@"WEBVIEW_ERROR", desc, nil);
+    task.onError = ^(NSString *code, NSString *desc) {
+      reject(code, desc, nil);
       [ws _removeTask:wt];
     };
 
@@ -577,8 +593,8 @@ RCT_EXPORT_MODULE()
                  }];
           });
     };
-    task.onError = ^(NSString *desc) {
-      reject(@"WEBVIEW_ERROR", desc, nil);
+    task.onError = ^(NSString *code, NSString *desc) {
+      reject(code, desc, nil);
       [ws _removeTask:wt];
     };
 
@@ -747,17 +763,20 @@ RCT_EXPORT_MODULE()
       return;
     }
 
+    // A Synchrony exception reaches exceptionHandler and rejects, as on
+    // Android; the promise resolves only with a string.
     ctx[@"__src"] = source;
-    JSValue *result = [ctx evaluateScript:@"(function(){try{return new "
-                                          @"Deobfuscator().deobfuscateSource(__"
-                                          @"src);}catch(e){return null;}})()"];
+    JSValue *result =
+        [ctx evaluateScript:@"new Deobfuscator().deobfuscateSource(__src)"];
     if (jsErr) {
       reject(@"EvaluationError", jsErr, nil);
       return;
     }
-
-    (!result || result.isNull || result.isUndefined) ? resolve([NSNull null])
-                                                     : resolve(result.toString);
+    if (!result.isString) {
+      reject(@"EvaluationError", @"Deobfuscator did not return a string", nil);
+      return;
+    }
+    resolve(result.toString);
   });
 }
 

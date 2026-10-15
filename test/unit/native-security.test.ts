@@ -28,9 +28,11 @@ describe('Android WebView debugging (SEC-2)', () => {
   });
 
   it('is applied before every WebView the module creates', () => {
-    for (const { file, source } of kotlinSources) {
-      const created = source.match(/= WebView\(reactContext\)/g)?.length ?? 0;
-      const gated = source.match(/WebViewDebugging\.enableIfHostAppDebuggable\(reactContext\)/g)?.length ?? 0;
+    const constructed = kotlinSources.filter(({ source }) => /(?<![.\w])WebView\(\w+\)/.test(source));
+    expect(constructed.length).toBeGreaterThan(0);
+    for (const { file, source } of constructed) {
+      const created = source.match(/(?<![.\w])WebView\(\w+\)/g)!.length;
+      const gated = source.match(/WebViewDebugging\.enableIfHostAppDebuggable\(\w+\)/g)?.length ?? 0;
       expect({ file, gated }).toEqual({ file, gated: created });
     }
   });
