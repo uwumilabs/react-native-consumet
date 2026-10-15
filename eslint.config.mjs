@@ -1,23 +1,17 @@
 import { fixupConfigRules } from '@eslint/compat';
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
+import reactNativeConfig from '@react-native/eslint-config/flat';
+import prettierConfig from 'eslint-config-prettier';
 import prettier from 'eslint-plugin-prettier';
-import { defineConfig } from 'eslint/config';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import unusedImports from 'eslint-plugin-unused-imports';
+import { defineConfig } from 'eslint/config';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
+// The flat export loads its plugins from @react-native/eslint-config's own dependencies, so plugins
+// Yarn keeps nested under it (eslint-plugin-ft-flow) still resolve. The legacy config, loaded through
+// FlatCompat, resolved them from the repo root and failed to start.
 export default defineConfig([
+  ...fixupConfigRules(reactNativeConfig),
+  prettierConfig,
   {
-    extends: fixupConfigRules(compat.extends('@react-native', 'prettier')),
     plugins: { prettier, 'unused-imports': unusedImports },
     rules: {
       'react/react-in-jsx-scope': 'off',
@@ -70,11 +64,12 @@ export default defineConfig([
       '.ios/',
       '.github/',
       'apps/**/*',
-      'apps/**/*',
 
       // Build and Output
       'lib/',
       'dist/',
+      // Published copies of dist/ bundles (scripts/prepare-registry.js)
+      'registry/',
       'build/',
       'web-build/',
       '*.jsbundle',

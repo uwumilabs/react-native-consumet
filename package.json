@@ -50,7 +50,8 @@
     "registry:check": "node scripts/prepare-registry.js --check",
     "registry:prune": "node scripts/prune-registry.js",
     "typecheck": "tsc",
-    "lint": "eslint --fix .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
     "prepare": "bob build && yarn build",
     "prepublishOnly": "yarn build",
@@ -58,14 +59,12 @@
     "prettier": "prettier --write ."
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write --ignore-unknown"
     ],
-    "*.{json,md,html,css}": [
-      "prettier --write"
-    ],
-    "dist/**": []
+    "!(extension-registry).json": "prettier --write --ignore-unknown",
+    "*.{yml,yaml,css,html}": "prettier --write --ignore-unknown"
   },
   "keywords": [
     "react-native",
@@ -92,8 +91,6 @@
     "@babel/runtime": "^7.28.3",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/compat": "^1.2.7",
-    "@eslint/eslintrc": "^3.3.0",
-    "@eslint/js": "^9.22.0",
     "@react-native-community/cli": "20.2.0",
     "@react-native/eslint-config": "0.87.1",
     "@release-it/conventional-changelog": "8.0.2",

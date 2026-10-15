@@ -1,32 +1,16 @@
 #!/bin/sh
 set -e
 
-yarn prepare
+# Lint and format the staged files only. lint-staged re-stages its own fixes, leaves unstaged
+# changes alone, and fails the commit on ESLint errors.
+npx --no-install lint-staged
 
-# Run aniwatchtv test but don't fail if it errors
-echo "🧪 Running AniWatchTv test (errors allowed)..."
-if ! yarn test aniwatchtv.test.ts; then
-  echo "⚠️ AniWatchTv test failed, but continuing..."
-fi
-
-# All other checks are strict
-yarn lint && yarn prettier && git add .
-echo "🛠 Running TypeScript check..."
+echo "Type-checking..."
 yarn typecheck
-echo "✅ TypeScript check completed"
 
-# Check if src/ or scripts/ folders have changes
+# dist/ is committed: rebuild and stage it when the sources or build scripts change.
 if git diff --cached --name-only | grep -qE '^(src/|scripts/)'; then
-  echo "📦 Changes detected in src/ or scripts/, building dist folder..."
+  echo "src/ or scripts/ changed, rebuilding dist/..."
   yarn build:clean
-  if [ -d "dist" ]; then
-    echo "✅ Dist folder exists, adding to git..."
-    git add dist/
-    echo "✅ Dist folder added to commit"
-  else
-    echo "❌ Dist folder not found after build!"
-    exit 1
-  fi
-else
-  echo "⏭️ No changes in src/ or scripts/, skipping dist build"
+  git add -A dist
 fi
