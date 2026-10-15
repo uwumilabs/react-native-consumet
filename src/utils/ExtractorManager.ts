@@ -20,7 +20,8 @@ export class ExtractorManager {
   private extractorContext: ExtractorContext;
   private integrityOptions: IntegrityOptions;
 
-  // Map of server name aliases to their actual extractor names
+  // Server name alias -> extractor name, from registry `aliases`. The defaults cover registries
+  // published before entries carried aliases.
   private extractorAliases: Map<string, string> = new Map([
     ['upcloud', 'megacloud'],
     ['akcloud', 'megacloud'],
@@ -55,7 +56,11 @@ export class ExtractorManager {
     try {
       // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
       registry.extractors.forEach((extractor: any) => {
-        this.extractorRegistry.set(String(extractor.name).toLowerCase(), { ...extractor } as ExtractorInfo);
+        const name = String(extractor.name).toLowerCase();
+        this.extractorRegistry.set(name, { ...extractor } as ExtractorInfo);
+        for (const alias of extractor.aliases ?? []) {
+          this.extractorAliases.set(String(alias).toLowerCase(), name);
+        }
       });
 
       // const totalExtractors = this.extractorRegistry.size;
@@ -101,49 +106,34 @@ export class ExtractorManager {
   }
 
   /**
-   * Extract the base extractor name from server names with suffixes and resolve aliases
+   * Resolve a server name to its extractor name: the longest registry extractor name or alias
+   * the server name starts with (bundled extractor names are a fallback), lowercased.
    * Examples:
    * - 'megacloud-hd-1' -> 'megacloud'
    * - 'kwik-pahe' -> 'kwik'
-   * - 'upcloud' -> 'megacloud' (alias resolved)
-   * - 'akcloud' -> 'megacloud' (alias resolved)
-   * - 'MegaCloud' -> 'megacloud'
+   * - 'upcloud' -> 'megacloud' (alias)
+   * - 'newhost-hd-1' -> 'newhost' (any extractor present in the registry)
    */
   public extractBaseExtractorName(serverName: string): string | null {
     const lowerName = serverName.toLowerCase();
 
-    // Get all extractor values from StreamingServers enum
-    const knownExtractors = Object.values(StreamingServers as Record<string, string>);
+    // Ordered so that on equal length a registry name beats an alias, and an alias beats a bundled name.
+    const candidates: Array<[prefix: string, extractor: string]> = [
+      ...Array.from(this.extractorRegistry.keys(), (name): [string, string] => [name, name]),
+      ...Array.from(this.extractorAliases.entries()),
+      ...Object.values(StreamingServers as Record<string, string>).map((v): [string, string] => [
+        v.toLowerCase(),
+        v.toLowerCase(),
+      ]),
+    ];
 
-    // Check aliases first
-    for (const [alias] of this.extractorAliases) {
-      if (lowerName.startsWith(alias)) {
-        // Return the resolved alias target
-        return this.extractorAliases.get(alias)!;
+    let best: [string, string] | undefined;
+    for (const candidate of candidates) {
+      if (lowerName.startsWith(candidate[0]) && (!best || candidate[0].length > best[0].length)) {
+        best = candidate;
       }
     }
-
-    // Check if the server name starts with any known extractor
-    for (const extractor of knownExtractors) {
-      if (lowerName.startsWith(extractor.toLowerCase())) {
-        return extractor.toLowerCase();
-      }
-    }
-
-    // If no match found, try splitting by hyphen and taking first part
-    const firstPart = lowerName.split('-')[0];
-
-    // Check if first part is an alias
-    if (firstPart && this.extractorAliases.has(firstPart)) {
-      return this.extractorAliases.get(firstPart)!;
-    }
-
-    // Check if first part is a known extractor
-    if (firstPart && knownExtractors.some((e) => e.toLowerCase() === firstPart)) {
-      return firstPart;
-    }
-
-    return null;
+    return best ? best[1] : null;
   }
 
   /**
@@ -151,8 +141,8 @@ export class ExtractorManager {
    * Handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
    * Also resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
    */
-  async loadExtractor(extractorId: StreamingServers): Promise<IVideoExtractor> {
-    const metadata = this.getExtractorMetadata(extractorId as StreamingServers);
+  async loadExtractor(extractorId: string): Promise<IVideoExtractor> {
+    const metadata = this.getExtractorMetadata(extractorId);
     if (!metadata) {
       // Try to extract base name and look for static extractor
       const baseName = this.extractBaseExtractorName(extractorId) || extractorId;

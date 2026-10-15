@@ -1,5 +1,4 @@
 import type { IVideoExtractor, ExtractorContextConfig } from '../models';
-import { StreamingServers } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import extensionRegistry from '../extension-registry.json';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
@@ -27,13 +26,13 @@ export declare class ExtractorManager {
      */
     getExtractorMetadata(extractorId: string): ExtractorInfo | undefined;
     /**
-     * Extract the base extractor name from server names with suffixes and resolve aliases
+     * Resolve a server name to its extractor name: the longest registry extractor name or alias
+     * the server name starts with (bundled extractor names are a fallback), lowercased.
      * Examples:
      * - 'megacloud-hd-1' -> 'megacloud'
      * - 'kwik-pahe' -> 'kwik'
-     * - 'upcloud' -> 'megacloud' (alias resolved)
-     * - 'akcloud' -> 'megacloud' (alias resolved)
-     * - 'MegaCloud' -> 'megacloud'
+     * - 'upcloud' -> 'megacloud' (alias)
+     * - 'newhost-hd-1' -> 'newhost' (any extractor present in the registry)
      */
     extractBaseExtractorName(serverName: string): string | null;
     /**
@@ -41,7 +40,7 @@ export declare class ExtractorManager {
      * Handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
      * Also resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
      */
-    loadExtractor(extractorId: StreamingServers): Promise<IVideoExtractor>;
+    loadExtractor(extractorId: string): Promise<IVideoExtractor>;
     /**
      * Execute extractor code and create instance.
      * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.

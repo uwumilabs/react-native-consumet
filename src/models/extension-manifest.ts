@@ -1,10 +1,10 @@
-import type { StreamingServers } from './types';
-
 export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta';
 
 export interface ExtractorInfo {
-  /** name of the extractor like MegaCloud */
-  name: StreamingServers;
+  /** name of the extractor like MegaCloud; server names starting with it resolve to this extractor */
+  name: string;
+  /** Other server name prefixes served by this extractor, e.g. MegaCloud: ['upcloud', 'akcloud'] */
+  aliases?: string[];
   /** version of the extractor */
   version: string;
   /** Immutable URL of this exact version (`registry/extractors/<name>/<version>.js`), written by prepare-registry */

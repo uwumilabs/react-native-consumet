@@ -157,6 +157,12 @@ However, `ExtractorManager` is useful for:
 *   When you want to use custom extractor logic for complete control over the extraction process.
 *   Directly accessing and testing specific extractors.
 
+Server names map to extractors through the registry. `extractBaseExtractorName(serverName)` returns the longest registry extractor `name` or alias that the server name starts with, lowercased: `megacloud-hd-1` → `megacloud`, `upcloud` → `megacloud` (an alias), and a new extractor's `newhost-hd-1` → `newhost` as soon as its registry entry exists. Declare aliases in the extractor's registry entry:
+
+```json
+{ "name": "MegaCloud", "aliases": ["upcloud", "akcloud"], "version": "1.3.1", "main": "…", "sha256": "…" }
+```
+
 ```typescript
 import { ExtractorManager, extensionRegistry, PolyURL } from 'react-native-consumet';
 

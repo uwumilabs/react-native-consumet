@@ -2,6 +2,10 @@
     "extractors": [
         {
             "name": "MegaCloud",
+            "aliases": [
+                "upcloud",
+                "akcloud"
+            ],
             "version": "1.3.1",
             "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.3.1.js",
             "sha256": "0a05aa5a3aabeebbc3b254a91c00ce3265a55585cdac01dbcbb91de5da6701a8",
