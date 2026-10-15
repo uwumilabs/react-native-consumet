@@ -14,7 +14,8 @@
  *   - src/models            -> require('react-native-consumet/models')  (enums, base parsers)
  *   - src/utils/index and the create-*-context files -> require('react-native-consumet/utils')
  *
- * Runs after tsc and before hermes-safe-dist (see the `build` script).
+ * Runs after tsc and before hermes-safe-dist (see the `build` script). Also replaces tsc's re-printed
+ * dist/extension-registry.json with a byte copy of src/extension-registry.json.
  */
 const fs = require('fs');
 const path = require('path');
@@ -71,6 +72,9 @@ function bundlesFromRegistry() {
 async function buildBundle({ distFile, source, exportNames }) {
   const outfile = path.join(repoRoot, distFile);
   await esbuild.build({
+    // Bundles name their sources in comments relative to this; fixing it keeps the bytes (and
+    // so the registry hashes) the same whatever directory the build runs from.
+    absWorkingDir: repoRoot,
     entryPoints: [source],
     outfile,
     bundle: true,
@@ -102,6 +106,10 @@ async function buildBundle({ distFile, source, exportNames }) {
 (async () => {
   const bundles = bundlesFromRegistry();
   for (const bundle of bundles) await buildBundle(bundle);
+  // tsc re-prints the imported registry JSON with its own indentation. prepare-registry writes the
+  // same bytes to src/ and dist/, so copy src/'s file to keep `yarn build` and prepare-registry
+  // producing the same dist/ (CI compares dist/ with a rebuild).
+  fs.copyFileSync(path.join(srcDir, 'extension-registry.json'), path.join(repoRoot, 'dist', 'extension-registry.json'));
   console.log(`build-extensions: bundled ${bundles.length} registry entr${bundles.length === 1 ? 'y' : 'ies'}`);
 })().catch((error) => {
   console.error(`build-extensions: ${error.message}`);

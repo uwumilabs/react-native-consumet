@@ -1,376 +1,376 @@
 {
-    "schemaVersion": 1,
-    "extractors": [
-        {
-            "name": "MegaCloud",
-            "aliases": [
-                "upcloud",
-                "akcloud"
-            ],
-            "version": "1.3.2",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.3.2.js",
-            "sha256": "3037369e20889403068c780063edaf4169994bb6e582172625e2f2de37152b98",
-            "distFile": "dist/bundles/extractors/megacloud.js"
-        },
-        {
-            "name": "Kwik",
-            "version": "1.2.2",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.2.js",
-            "sha256": "0053bf848c161c669e02c8d37e992ee27651481a446473b2ea2ef0a13454ecbb",
-            "distFile": "dist/bundles/extractors/kwik.js"
-        },
-        {
-            "name": "MegaUp",
-            "version": "1.1.2",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaup/1.1.2.js",
-            "sha256": "3ee1dac97a02af1d69f85b8df6a6b3dd3d155c731db97f9380658e76c440c877",
-            "distFile": "dist/bundles/extractors/megaup.js"
-        },
-        {
-            "name": "MegaPlay",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.1.js",
-            "sha256": "0b847d3d6f751957595711e58b0751d864ee9e6a34c7bff3db9c23edb8faf9cd",
-            "distFile": "dist/bundles/extractors/megaplay.js"
-        },
-        {
-            "name": "GDFlix",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gdflix/1.0.1.js",
-            "sha256": "eb8f7e816122b3aa4b96364aaec033fa563215d695b60842254a02b869637d55",
-            "distFile": "dist/bundles/extractors/gdflix.js"
-        },
-        {
-            "name": "Gofile",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gofile/1.0.1.js",
-            "sha256": "fbf9b4d99e338700cd3b68899c501a2cfbc48bf3c177a0a460fa4001229cc650",
-            "distFile": "dist/bundles/extractors/gofile.js"
-        },
-        {
-            "name": "HubCloud",
-            "version": "1.0.2",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.0.2.js",
-            "sha256": "cbc061b4b49f0f06aa10bd5ac763a20bf6ef2fded51d12d2ad8be0843b11e9d0",
-            "distFile": "dist/bundles/extractors/hubcloud.js"
-        },
-        {
-            "name": "VidHide",
-            "version": "1.0.2",
-            "minContextVersion": 1,
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.0.2.js",
-            "sha256": "c4857c94d11d1aeb506f4e15fcc1ec2b53d9e572ad1c0f0e3dbf8a2bb92e8342",
-            "distFile": "dist/bundles/extractors/vidhide.js"
-        }
-    ],
-    "extensions": [
-        {
-            "id": "animepahe",
-            "name": "AnimePahe",
-            "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
-            "version": "1.2.4",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.4.js",
-            "factoryName": "createAnimePahe",
-            "baseUrl": "https://animepahe.pw",
-            "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
-            "languages": [
-                "en",
-                "ja"
-            ],
-            "nsfw": false,
-            "status": "stable",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "Kwik"
-            ],
-            "subbed": true,
-            "dubbed": true,
-            "isSourceEmbed": true,
-            "haveMultiServers": false,
-            "sha256": "00104203d3e33c7cdbccfa5ebb3d4c261aafbe3950d6ef6dc4874c99acbb5623",
-            "distFile": "dist/bundles/providers/anime/animepahe/create-animepahe.js"
-        },
-        {
-            "id": "animekai",
-            "name": "AnimeKai",
-            "description": "High-quality anime streaming from AnimeKai with multiple servers and subtitles",
-            "version": "1.1.3",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animekai/1.1.3.js",
-            "factoryName": "createAnimeKai",
-            "baseUrl": "https://anikai.to",
-            "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
-            "languages": [
-                "en",
-                "ja"
-            ],
-            "nsfw": false,
-            "status": "deprecated",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "MegaUp"
-            ],
-            "subbed": true,
-            "dubbed": true,
-            "isSourceEmbed": true,
-            "haveMultiServers": true,
-            "sha256": "85728431c2b4fa1c5ac24cac237c900d358a1026332456f0677eed1c23740bd5",
-            "distFile": "dist/bundles/providers/anime/animekai/create-animekai.js"
-        },
-        {
-            "id": "anikoto",
-            "name": "AniKoto",
-            "description": "High-quality anime streaming from AniKoto with multiple servers and subtitles",
-            "version": "1.1.3",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anikoto/1.1.3.js",
-            "factoryName": "createAniKoto",
-            "baseUrl": "https://anikototv.to",
-            "logo": "https://anikototv.to/favicon-32x32.png",
-            "languages": [
-                "en"
-            ],
-            "nsfw": false,
-            "status": "stable",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "MegaPlay"
-            ],
-            "subbed": true,
-            "dubbed": true,
-            "isSourceEmbed": true,
-            "haveMultiServers": true,
-            "sha256": "e7c58c4b22c9cc1acff5fa627f58f7880358a757fa0d7e07ebecb6c58741beb1",
-            "distFile": "dist/bundles/providers/anime/anikoto/create-anikoto.js"
-        },
-        {
-            "id": "anineko",
-            "name": "AniNeko",
-            "description": "Anime streaming from AniNeko with hard-sub, soft-sub and dub support",
-            "version": "1.1.1",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "anime",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anineko/1.1.1.js",
-            "factoryName": "createAniNeko",
-            "baseUrl": "https://anineko.to",
-            "logo": "https://anineko.to/favicon.ico",
-            "languages": [
-                "en",
-                "ja"
-            ],
-            "nsfw": false,
-            "status": "stable",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "VidHide"
-            ],
-            "subbed": true,
-            "dubbed": true,
-            "isSourceEmbed": true,
-            "haveMultiServers": true,
-            "sha256": "a07960ae5ce41505f1f4838aeaffa5f9df871391660ed291468aa09061615df7",
-            "distFile": "dist/bundles/providers/anime/anineko/create-anineko.js"
-        },
-        {
-            "id": "multimovies",
-            "name": "MultiMovies",
-            "description": "Movies and TV shows streaming from MultiMovies",
-            "version": "1.0.2",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/multimovies/1.0.2.js",
-            "factoryName": "createMultiMovies",
-            "baseUrl": "https://multimovies.center",
-            "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "deprecated",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "StreamWish",
-                "VidHide"
-            ],
-            "isSourceEmbed": true,
-            "haveMultiServers": true,
-            "sha256": "fe92f0d92311923deb8264b452e9f83e60dd3986200c15edd57e114c0922e390",
-            "distFile": "dist/bundles/providers/movies/multimovies/create-multimovies.js"
-        },
-        {
-            "id": "yflix",
-            "name": "YFlix",
-            "description": "Movies and TV shows streaming from YFlix",
-            "version": "1.0.2",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/yflix/1.0.2.js",
-            "factoryName": "createYFlix",
-            "baseUrl": "https://yflix.to",
-            "logo": "https://yflix.to/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "deprecated",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "MegaUp"
-            ],
-            "isSourceEmbed": true,
-            "haveMultiServers": true,
-            "sha256": "7ac313ad95fb9038c45920978c3cc593e1f87090b08379867e7d97cfeb3f04c7",
-            "distFile": "dist/bundles/providers/movies/yflix/create-yflix.js"
-        },
-        {
-            "id": "vegamovies",
-            "name": "VegaMovies",
-            "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
-            "version": "1.1.1",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/vegamovies/1.1.1.js",
-            "factoryName": "createVegaMovies",
-            "baseUrl": "https://new2.vegamovies.futbol",
-            "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "alpha",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [
-                "HubCloud",
-                "GDFlix"
-            ],
-            "isSourceEmbed": false,
-            "isSourceDirect": true,
-            "haveMultiServers": true,
-            "sha256": "a2ba6be906ce71381a05511674359310c53a8e0a605e4bfb5f3713751c7acc02",
-            "distFile": "dist/bundles/providers/movies/vegamovies/create-vegamovies.js"
-        },
-        {
-            "id": "netflixmirror",
-            "name": "NetflixMirror",
-            "description": "Movies and TV shows from the Netflix catalog via NetMirror",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/netflixmirror/1.0.1.js",
-            "factoryName": "createNetflixMirror",
-            "baseUrl": "https://net52.cc",
-            "logo": "https://net52.cc/img/nf2/icon_x192.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "beta",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [],
-            "isSourceEmbed": false,
-            "isSourceDirect": true,
-            "haveMultiServers": false,
-            "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
-            "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
-        },
-        {
-            "id": "primemirror",
-            "name": "PrimeMirror",
-            "description": "Movies and TV shows from the Prime Video catalog via NetMirror",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/primemirror/1.0.1.js",
-            "factoryName": "createPrimeMirror",
-            "baseUrl": "https://net52.cc",
-            "logo": "https://net52.cc/img/nf2/icon_x192.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "beta",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [],
-            "isSourceEmbed": false,
-            "isSourceDirect": true,
-            "haveMultiServers": false,
-            "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
-            "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
-        },
-        {
-            "id": "disneymirror",
-            "name": "DisneyMirror",
-            "description": "Movies and TV shows from the Disney+ catalog via NetMirror",
-            "version": "1.0.1",
-            "minContextVersion": 1,
-            "author": {
-                "name": "RNConsumet Team",
-                "url": "https://github.com/uwumilabs"
-            },
-            "category": "movies",
-            "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/disneymirror/1.0.1.js",
-            "factoryName": "createDisneyMirror",
-            "baseUrl": "https://net52.cc",
-            "logo": "https://net52.cc/img/nf2/icon_x192.png",
-            "languages": [
-                "all"
-            ],
-            "nsfw": false,
-            "status": "beta",
-            "lastUpdated": "2026-10-15T00:00:00Z",
-            "extractors": [],
-            "isSourceEmbed": false,
-            "isSourceDirect": true,
-            "haveMultiServers": false,
-            "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
-            "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
-        }
-    ]
+  "schemaVersion": 1,
+  "extractors": [
+    {
+      "name": "MegaCloud",
+      "aliases": [
+        "upcloud",
+        "akcloud"
+      ],
+      "version": "1.3.2",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.3.2.js",
+      "sha256": "3037369e20889403068c780063edaf4169994bb6e582172625e2f2de37152b98",
+      "distFile": "dist/bundles/extractors/megacloud.js"
+    },
+    {
+      "name": "Kwik",
+      "version": "1.2.2",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.2.js",
+      "sha256": "0053bf848c161c669e02c8d37e992ee27651481a446473b2ea2ef0a13454ecbb",
+      "distFile": "dist/bundles/extractors/kwik.js"
+    },
+    {
+      "name": "MegaUp",
+      "version": "1.1.2",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaup/1.1.2.js",
+      "sha256": "3ee1dac97a02af1d69f85b8df6a6b3dd3d155c731db97f9380658e76c440c877",
+      "distFile": "dist/bundles/extractors/megaup.js"
+    },
+    {
+      "name": "MegaPlay",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.1.js",
+      "sha256": "0b847d3d6f751957595711e58b0751d864ee9e6a34c7bff3db9c23edb8faf9cd",
+      "distFile": "dist/bundles/extractors/megaplay.js"
+    },
+    {
+      "name": "GDFlix",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gdflix/1.0.1.js",
+      "sha256": "eb8f7e816122b3aa4b96364aaec033fa563215d695b60842254a02b869637d55",
+      "distFile": "dist/bundles/extractors/gdflix.js"
+    },
+    {
+      "name": "Gofile",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gofile/1.0.1.js",
+      "sha256": "fbf9b4d99e338700cd3b68899c501a2cfbc48bf3c177a0a460fa4001229cc650",
+      "distFile": "dist/bundles/extractors/gofile.js"
+    },
+    {
+      "name": "HubCloud",
+      "version": "1.0.2",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.0.2.js",
+      "sha256": "cbc061b4b49f0f06aa10bd5ac763a20bf6ef2fded51d12d2ad8be0843b11e9d0",
+      "distFile": "dist/bundles/extractors/hubcloud.js"
+    },
+    {
+      "name": "VidHide",
+      "version": "1.0.2",
+      "minContextVersion": 1,
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.0.2.js",
+      "sha256": "c4857c94d11d1aeb506f4e15fcc1ec2b53d9e572ad1c0f0e3dbf8a2bb92e8342",
+      "distFile": "dist/bundles/extractors/vidhide.js"
+    }
+  ],
+  "extensions": [
+    {
+      "id": "animepahe",
+      "name": "AnimePahe",
+      "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
+      "version": "1.2.4",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.4.js",
+      "factoryName": "createAnimePahe",
+      "baseUrl": "https://animepahe.pw",
+      "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
+      "languages": [
+        "en",
+        "ja"
+      ],
+      "nsfw": false,
+      "status": "stable",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "Kwik"
+      ],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": false,
+      "sha256": "00104203d3e33c7cdbccfa5ebb3d4c261aafbe3950d6ef6dc4874c99acbb5623",
+      "distFile": "dist/bundles/providers/anime/animepahe/create-animepahe.js"
+    },
+    {
+      "id": "animekai",
+      "name": "AnimeKai",
+      "description": "High-quality anime streaming from AnimeKai with multiple servers and subtitles",
+      "version": "1.1.3",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animekai/1.1.3.js",
+      "factoryName": "createAnimeKai",
+      "baseUrl": "https://anikai.to",
+      "logo": "https://anikai.to/assets/uploads/37585a3ffa8ec292ee9e2255f3f63b48ceca17e5241280b3dc21.png",
+      "languages": [
+        "en",
+        "ja"
+      ],
+      "nsfw": false,
+      "status": "deprecated",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "MegaUp"
+      ],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": true,
+      "sha256": "85728431c2b4fa1c5ac24cac237c900d358a1026332456f0677eed1c23740bd5",
+      "distFile": "dist/bundles/providers/anime/animekai/create-animekai.js"
+    },
+    {
+      "id": "anikoto",
+      "name": "AniKoto",
+      "description": "High-quality anime streaming from AniKoto with multiple servers and subtitles",
+      "version": "1.1.3",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anikoto/1.1.3.js",
+      "factoryName": "createAniKoto",
+      "baseUrl": "https://anikototv.to",
+      "logo": "https://anikototv.to/favicon-32x32.png",
+      "languages": [
+        "en"
+      ],
+      "nsfw": false,
+      "status": "stable",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "MegaPlay"
+      ],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": true,
+      "sha256": "e7c58c4b22c9cc1acff5fa627f58f7880358a757fa0d7e07ebecb6c58741beb1",
+      "distFile": "dist/bundles/providers/anime/anikoto/create-anikoto.js"
+    },
+    {
+      "id": "anineko",
+      "name": "AniNeko",
+      "description": "Anime streaming from AniNeko with hard-sub, soft-sub and dub support",
+      "version": "1.1.1",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "anime",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/anineko/1.1.1.js",
+      "factoryName": "createAniNeko",
+      "baseUrl": "https://anineko.to",
+      "logo": "https://anineko.to/favicon.ico",
+      "languages": [
+        "en",
+        "ja"
+      ],
+      "nsfw": false,
+      "status": "stable",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "VidHide"
+      ],
+      "subbed": true,
+      "dubbed": true,
+      "isSourceEmbed": true,
+      "haveMultiServers": true,
+      "sha256": "a07960ae5ce41505f1f4838aeaffa5f9df871391660ed291468aa09061615df7",
+      "distFile": "dist/bundles/providers/anime/anineko/create-anineko.js"
+    },
+    {
+      "id": "multimovies",
+      "name": "MultiMovies",
+      "description": "Movies and TV shows streaming from MultiMovies",
+      "version": "1.0.2",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/multimovies/1.0.2.js",
+      "factoryName": "createMultiMovies",
+      "baseUrl": "https://multimovies.center",
+      "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "deprecated",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "StreamWish",
+        "VidHide"
+      ],
+      "isSourceEmbed": true,
+      "haveMultiServers": true,
+      "sha256": "fe92f0d92311923deb8264b452e9f83e60dd3986200c15edd57e114c0922e390",
+      "distFile": "dist/bundles/providers/movies/multimovies/create-multimovies.js"
+    },
+    {
+      "id": "yflix",
+      "name": "YFlix",
+      "description": "Movies and TV shows streaming from YFlix",
+      "version": "1.0.2",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/yflix/1.0.2.js",
+      "factoryName": "createYFlix",
+      "baseUrl": "https://yflix.to",
+      "logo": "https://yflix.to/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "deprecated",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "MegaUp"
+      ],
+      "isSourceEmbed": true,
+      "haveMultiServers": true,
+      "sha256": "7ac313ad95fb9038c45920978c3cc593e1f87090b08379867e7d97cfeb3f04c7",
+      "distFile": "dist/bundles/providers/movies/yflix/create-yflix.js"
+    },
+    {
+      "id": "vegamovies",
+      "name": "VegaMovies",
+      "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
+      "version": "1.1.1",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/vegamovies/1.1.1.js",
+      "factoryName": "createVegaMovies",
+      "baseUrl": "https://new2.vegamovies.futbol",
+      "logo": "https://new2.vegamovies.futbol/images/favicon-32x32.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "alpha",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [
+        "HubCloud",
+        "GDFlix"
+      ],
+      "isSourceEmbed": false,
+      "isSourceDirect": true,
+      "haveMultiServers": true,
+      "sha256": "a2ba6be906ce71381a05511674359310c53a8e0a605e4bfb5f3713751c7acc02",
+      "distFile": "dist/bundles/providers/movies/vegamovies/create-vegamovies.js"
+    },
+    {
+      "id": "netflixmirror",
+      "name": "NetflixMirror",
+      "description": "Movies and TV shows from the Netflix catalog via NetMirror",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/netflixmirror/1.0.1.js",
+      "factoryName": "createNetflixMirror",
+      "baseUrl": "https://net52.cc",
+      "logo": "https://net52.cc/img/nf2/icon_x192.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "beta",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [],
+      "isSourceEmbed": false,
+      "isSourceDirect": true,
+      "haveMultiServers": false,
+      "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
+      "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
+    },
+    {
+      "id": "primemirror",
+      "name": "PrimeMirror",
+      "description": "Movies and TV shows from the Prime Video catalog via NetMirror",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/primemirror/1.0.1.js",
+      "factoryName": "createPrimeMirror",
+      "baseUrl": "https://net52.cc",
+      "logo": "https://net52.cc/img/nf2/icon_x192.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "beta",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [],
+      "isSourceEmbed": false,
+      "isSourceDirect": true,
+      "haveMultiServers": false,
+      "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
+      "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
+    },
+    {
+      "id": "disneymirror",
+      "name": "DisneyMirror",
+      "description": "Movies and TV shows from the Disney+ catalog via NetMirror",
+      "version": "1.0.1",
+      "minContextVersion": 1,
+      "author": {
+        "name": "RNConsumet Team",
+        "url": "https://github.com/uwumilabs"
+      },
+      "category": "movies",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/disneymirror/1.0.1.js",
+      "factoryName": "createDisneyMirror",
+      "baseUrl": "https://net52.cc",
+      "logo": "https://net52.cc/img/nf2/icon_x192.png",
+      "languages": [
+        "all"
+      ],
+      "nsfw": false,
+      "status": "beta",
+      "lastUpdated": "2026-10-15T00:00:00Z",
+      "extractors": [],
+      "isSourceEmbed": false,
+      "isSourceDirect": true,
+      "haveMultiServers": false,
+      "sha256": "5107eebe016c0b5c3cdf09530a96771341fb26c708081bfc0265f8bc930c165c",
+      "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
+    }
+  ]
 }

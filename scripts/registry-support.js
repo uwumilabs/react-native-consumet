@@ -107,6 +107,77 @@ function checkReferences(currentRegistry) {
   return { tags, referenced, problems, notes };
 }
 
+const ZERO_COMMIT = /^0+$/;
+const short = (text) => String(text).slice(0, 12);
+
+/** Registry entries keyed by kind and lowercase id/name, the key prepare-registry publishes under. */
+function entriesByKey(registry) {
+  const keyed = new Map();
+  for (const entry of registry.extensions || []) keyed.set(`extensions/${String(entry.id).toLowerCase()}`, entry);
+  for (const entry of registry.extractors || []) keyed.set(`extractors/${String(entry.name).toLowerCase()}`, entry);
+  return keyed;
+}
+
+/**
+ * Compares the registry (and registry/ on disk) with those at `base`, the commit a change builds on:
+ *   - an entry whose sha256 changed must have a higher version than at `base`
+ *   - versions never go backwards
+ *   - files already published at `base` are unchanged (adding and deleting files is allowed;
+ *     checkReferences catches deleting one that is still needed)
+ * An empty or all-zero `base` (no previous commit, e.g. a new branch) skips the comparison.
+ */
+function checkBase(currentRegistry, base) {
+  const problems = [];
+  const notes = [];
+
+  if (!base || ZERO_COMMIT.test(base)) {
+    notes.push('no base commit given; skipped the version bump check');
+    return { problems, notes };
+  }
+  let commit;
+  try {
+    commit = git('rev-parse', '--verify', '--quiet', `${base}^{commit}`).trim();
+  } catch {
+    problems.push(`base ${base} is not a commit in this clone; fetch it (or full history) first`);
+    return { problems, notes };
+  }
+
+  let baseRegistry;
+  try {
+    baseRegistry = JSON.parse(git('show', `${commit}:src/extension-registry.json`));
+  } catch {
+    notes.push(`base ${short(commit)} has no src/extension-registry.json; skipped the version bump check`);
+    return { problems, notes };
+  }
+
+  const before = entriesByKey(baseRegistry);
+  for (const [key, entry] of entriesByKey(currentRegistry)) {
+    const previous = before.get(key);
+    if (!previous || !parseSemver(entry.version || '') || !parseSemver(previous.version || '')) continue;
+    const order = compareSemver(entry.version, previous.version);
+    if (order < 0) {
+      problems.push(`${key}: version went backwards from ${previous.version} to ${entry.version}`);
+    } else if (order === 0 && previous.sha256 && entry.sha256 !== previous.sha256) {
+      problems.push(
+        `${key}@${entry.version}: sha256 changed (${short(previous.sha256)} -> ${short(entry.sha256)}) ` +
+          'without a version bump'
+      );
+    }
+  }
+
+  const changed = git('diff', '--name-status', '--no-renames', commit, '--', 'registry/')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.split('\t'));
+  for (const [status, file] of changed) {
+    if (status !== 'A' && status !== 'D') {
+      problems.push(`${file}: published at ${short(commit)} and changed since; publish a new version instead`);
+    }
+  }
+
+  return { problems, notes };
+}
+
 /** All published files as { kind, key, version, file }. */
 function publishedFiles() {
   const files = [];
@@ -169,6 +240,7 @@ module.exports = {
   supportedTags,
   tagRegistry,
   checkReferences,
+  checkBase,
   publishedFiles,
   planPrune,
 };

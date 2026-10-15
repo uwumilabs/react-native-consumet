@@ -27,17 +27,39 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
+  # dist/ and registry/ are committed; check both against a clean rebuild of the sources.
   registry:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Release tags are needed to read each supported release's bundled registry.
+          # Release tags are needed to read each supported release's bundled registry, and the
+          # base commit to compare registry versions against.
           fetch-depth: 0
 
-      - name: Check registry entries and published versions
-        run: node scripts/prepare-registry.js --check
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Rebuild dist
+        id: rebuild
+        run: yarn build:clean
+
+      - name: Check the committed dist matches the rebuild
+        run: |
+          if [ -n "$(git status --porcelain -- dist)" ]; then
+            git status --short -- dist
+            echo "::error::dist/ differs from a clean rebuild of the sources. Commit through the pre-commit hook, or run yarn build:clean and node scripts/prepare-registry.js, and commit dist/ and registry/."
+            exit 1
+          fi
+
+      # Fails if a registry hash differs from its rebuilt bundle, a hash changed without a version
+      # bump, a published file changed, or a referenced published file is missing.
+      - name: Check registry entries against the rebuild and the base commit
+        if: ${{ !cancelled() && steps.rebuild.outcome == 'success' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: node scripts/prepare-registry.js --check --base "$BASE_SHA"
 
   build-library:
     runs-on: ubuntu-latest

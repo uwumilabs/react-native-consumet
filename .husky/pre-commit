@@ -8,9 +8,7 @@ npx --no-install lint-staged
 echo "Type-checking..."
 yarn typecheck
 
-# dist/ is committed: rebuild and stage it when the sources or build scripts change.
-if git diff --cached --name-only | grep -qE '^(src/|scripts/)'; then
-  echo "src/ or scripts/ changed, rebuilding dist/..."
-  yarn build:clean
-  git add -A dist
-fi
+# dist/ and registry/ are committed. When src/, scripts/ or the build config are staged, rebuild
+# dist/ from the staged files, publish new versions and refresh hashes, and stage the result.
+# Fails if a bundle changed under a version that is already published.
+node scripts/stage-dist.js

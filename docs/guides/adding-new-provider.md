@@ -212,11 +212,13 @@ Add a new entry to the `extensions` array:
 
 Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
 
-Don't write `main` or `sha256` yourself. Build, then publish:
+Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook rebuilds `dist/` from the staged files, runs `prepare-registry`, and stages `dist/`, the newly published file under `registry/` and the updated registry entry. If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
 
 ```bash
 yarn build && node scripts/prepare-registry.js
 ```
+
+`prepare-registry` exits with an error, and writes nothing, if an entry's `distFile` is missing or isn't a `.js` file under `dist/`, or if `main` is set to a URL it didn't write (anything other than this repo's `registry/<kind>/<id>/<version>.js` URL for the same entry).
 
 `yarn build` bundles every registry entry into one file. The `distFile` path names the bundle, and its source is the matching file under `src/`: `dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js` is built from `src/providers/anime/myanimewebsite/create-myanimewebsite.ts`. Relative imports, such as a helper or another extractor, are inlined into the bundle. The runtime supplies only these modules:
 
@@ -232,7 +234,18 @@ Export your factory by name (`export function createMyAnimeWebsite`), as well as
 
 `prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match.
 
-**Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it. Run `yarn registry:check` to verify the registry without writing anything.
+**Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it, and the pre-commit hook stops the commit. Bump `version` in the entry, stage it, and commit again. Run `yarn registry:check` to verify the registry without writing anything, and add `--base origin/main` to also run the version checks CI runs.
+
+### What CI checks
+
+The `registry` job in CI rebuilds `dist/` from a clean checkout with `yarn build:clean`, then fails if:
+
+- the committed `dist/` differs from the rebuild (a hand-edited or stale `dist/`)
+- an entry's `sha256` differs from its rebuilt bundle, or the bundle changed under a version that's already published
+- compared with the commit the change is based on, an entry's `sha256` changed without a higher `version`, a `version` went backwards, or a file already published under `registry/` changed
+- a URL in the current registry, or in a supported release's registry, points at a published file that no longer exists (see below)
+
+The build is deterministic, so a `dist/` committed through the pre-commit hook matches the rebuild.
 
 ### Removing old published versions
 
@@ -244,7 +257,7 @@ Deleting a published file breaks every app whose registry still points at it: in
 
 **Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v1.7.2`, all `v1.7.*` and `v1.6.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases up to `v1.6.0` predate published files (their URLs point into `dist/`), so they don't protect anything.
 
-Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI runs `yarn registry:check`, which fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
+Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
 
 ## Step 5: Write Tests
 
@@ -313,11 +326,14 @@ Also, update the relevant `docs/guides/<category>.md` file to include your new p
 
 ## Step 7: Build and Verify
 
-Before submitting, ensure your changes build correctly and pass linting checks.
+Before submitting, ensure your changes build correctly and pass the checks CI runs. `yarn lint` reports problems without changing files; `yarn lint:fix` fixes what it can.
 
 ```bash
 yarn build
 yarn lint
+yarn typecheck
+yarn test
+yarn registry:check --base origin/main
 ```
 
 Test your provider in the example applications (`apps/`) to ensure it works as expected in a real React Native environment.

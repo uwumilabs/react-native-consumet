@@ -62,10 +62,10 @@ yarn typecheck
 yarn lint
 ```
 
-To fix formatting errors, run the following:
+`yarn lint` only reports problems. To fix formatting and other fixable errors, run the following:
 
 ```sh
-yarn lint --fix
+yarn lint:fix
 ```
 
 Remember to add tests for your change if possible. Run the unit tests by:
@@ -101,7 +101,15 @@ Our pre-commit hooks verify that your commit message matches this format when co
 
 We use [TypeScript](https://www.typescriptlang.org/) for type checking, [ESLint](https://eslint.org/) with [Prettier](https://prettier.io/) for linting and formatting the code, and [Jest](https://jestjs.io/) for testing.
 
-Our pre-commit hooks verify that the linter and tests pass when committing.
+The pre-commit hook:
+
+1. Runs ESLint (with `--fix`) and Prettier on the staged files only, through [lint-staged](https://github.com/lint-staged/lint-staged). Their fixes are staged; ESLint errors stop the commit.
+2. Type-checks the project (`yarn typecheck`).
+3. When the commit stages changes under `src/` or `scripts/` (or the build config), rebuilds `dist/` from the staged files, publishes changed registry entries with `scripts/prepare-registry.js`, and stages `dist/`, the new files under `registry/` and `src/extension-registry.json`. Unstaged edits are left out of the build. If a registry bundle changed without a `version` bump, the commit stops; see [Adding a New Provider](./docs/guides/adding-new-provider.md#step-4-add-to-extension-registryjson).
+
+The hook doesn't run the tests; run `yarn test` yourself.
+
+CI runs `yarn lint` (plain `eslint .`) and `yarn typecheck`, rebuilds `dist/` and checks it and the registry against the rebuild, builds the package, and builds the example app for Android and iOS.
 
 ### Publishing to npm
 
@@ -119,7 +127,10 @@ The `package.json` file contains various scripts for common tasks:
 
 - `yarn`: setup project by installing dependencies.
 - `yarn typecheck`: type-check files with TypeScript.
-- `yarn lint`: lint files with ESLint.
+- `yarn lint`: lint files with ESLint (no fixes).
+- `yarn lint:fix`: lint files with ESLint and apply fixes.
+- `yarn build`: build `dist/`, including one bundle per registry entry.
+- `yarn registry:check`: check the registry against `dist/` and the published files under `registry/`.
 - `yarn test`: run unit tests with Jest.
 - `yarn example start`: start the Metro server for the example app.
 - `yarn example android`: run the example app on Android.
