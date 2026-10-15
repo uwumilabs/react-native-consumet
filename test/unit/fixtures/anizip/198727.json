@@ -1,0 +1,16 @@
+{
+  "request": "https://api.ani.zip/mappings?anilist_id=198727",
+  "recordedAt": "2026-10-15",
+  "note": "Chitose-kun wa Ramune Bin no Naka Part 2, airing: ani.zip knows the show but lists no episodes yet.",
+  "status": 200,
+  "body": {
+    "episodes": {},
+    "mappings": {
+      "anilist_id": 198727,
+      "anidb_id": null,
+      "mal_id": 62484,
+      "thetvdb_id": null,
+      "type": "TV"
+    }
+  }
+}

@@ -1,0 +1,745 @@
+{
+  "request": "https://api.ani.zip/mappings?anilist_id=21355",
+  "recordedAt": "2026-10-15",
+  "note": "Re:Zero. Numeric keys 1-25, then specials S1-S26 and O1-O13 with no TVDB numbers.",
+  "status": 200,
+  "body": {
+    "episodeCount": 25,
+    "specialCount": 26,
+    "episodes": {
+      "1": {
+        "episode": "1",
+        "seasonNumber": 1,
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "title": {
+          "ja": "始まりの終わりと終わりの始まり",
+          "en": "The End of the Beginning and the Beginning of the End",
+          "x-jat": "Hajimari no Owari to Owari no Hajimari"
+        },
+        "airDate": "2016-04-04",
+        "airdate": "2016-04-04",
+        "airDateUtc": "2016-04-04T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5519241.jpg"
+      },
+      "2": {
+        "episode": "2",
+        "seasonNumber": 1,
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "title": {
+          "ja": "再会の魔女",
+          "en": "Reunion with the Witch",
+          "x-jat": "Saikai no Majo"
+        },
+        "airDate": "2016-04-11",
+        "airdate": "2016-04-11",
+        "airDateUtc": "2016-04-11T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5570860.jpg"
+      },
+      "3": {
+        "episode": "3",
+        "seasonNumber": 1,
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "title": {
+          "ja": "ゼロから始まる異世界生活",
+          "en": "Starting Life from Zero in Another World",
+          "x-jat": "Zero kara Hajimaru Isekai Seikatsu"
+        },
+        "airDate": "2016-04-18",
+        "airdate": "2016-04-18",
+        "airDateUtc": "2016-04-18T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571834.jpg"
+      },
+      "4": {
+        "episode": "4",
+        "seasonNumber": 1,
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "title": {
+          "ja": "ロズワール邸の団欒",
+          "en": "The Happy Roswaal Mansion Family",
+          "x-jat": "Roswaal-tei no Danran"
+        },
+        "airDate": "2016-04-25",
+        "airdate": "2016-04-25",
+        "airDateUtc": "2016-04-25T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571835.jpg"
+      },
+      "5": {
+        "episode": "5",
+        "seasonNumber": 1,
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "title": {
+          "ja": "約束した朝は遠く",
+          "en": "The Morning of Our Promise Is Still Distant",
+          "x-jat": "Yakusoku Shita Asa wa Tooku"
+        },
+        "airDate": "2016-05-02",
+        "airdate": "2016-05-02",
+        "airDateUtc": "2016-05-02T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571836.jpg"
+      },
+      "6": {
+        "episode": "6",
+        "seasonNumber": 1,
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "title": {
+          "ja": "鎖の音",
+          "en": "The Sound of Chains",
+          "x-jat": "Kusari no Oto"
+        },
+        "airDate": "2016-05-09",
+        "airdate": "2016-05-09",
+        "airDateUtc": "2016-05-09T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571837.jpg"
+      },
+      "7": {
+        "episode": "7",
+        "seasonNumber": 1,
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "title": {
+          "ja": "ナツキ・スバルのリスタート",
+          "en": "Natsuki Subaru`s Restart",
+          "x-jat": "Natsuki Subaru no Restart"
+        },
+        "airDate": "2016-05-16",
+        "airdate": "2016-05-16",
+        "airDateUtc": "2016-05-16T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571838.jpg"
+      },
+      "8": {
+        "episode": "8",
+        "seasonNumber": 1,
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "title": {
+          "ja": "泣いて泣き喚いて泣き止んだから",
+          "en": "I Cried, Cried My Lungs Out, and Stopped Crying",
+          "x-jat": "Naite Nakiwameite Nakiyanda kara"
+        },
+        "airDate": "2016-05-23",
+        "airdate": "2016-05-23",
+        "airDateUtc": "2016-05-23T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571839.jpg"
+      },
+      "9": {
+        "episode": "9",
+        "seasonNumber": 1,
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "title": {
+          "ja": "勇気の意味",
+          "en": "The Meaning of Courage",
+          "x-jat": "Yuuki no Imi"
+        },
+        "airDate": "2016-05-30",
+        "airdate": "2016-05-30",
+        "airDateUtc": "2016-05-30T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571840.jpg"
+      },
+      "10": {
+        "episode": "10",
+        "seasonNumber": 1,
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "title": {
+          "ja": "鬼がかったやり方",
+          "en": "Fanatical Methods Like a Demon",
+          "x-jat": "Oni Gakatta Yarikata"
+        },
+        "airDate": "2016-06-06",
+        "airdate": "2016-06-06",
+        "airDateUtc": "2016-06-06T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5571841.jpg"
+      },
+      "11": {
+        "episode": "11",
+        "seasonNumber": 1,
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "title": {
+          "ja": "レム",
+          "en": "Rem",
+          "x-jat": "Rem"
+        },
+        "airDate": "2016-06-13",
+        "airdate": "2016-06-13",
+        "airDateUtc": "2016-06-13T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637307.jpg"
+      },
+      "12": {
+        "episode": "12",
+        "seasonNumber": 1,
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "title": {
+          "ja": "再来の王都",
+          "en": "Return to the Capital",
+          "x-jat": "Sairai no Outo"
+        },
+        "airDate": "2016-06-20",
+        "airdate": "2016-06-20",
+        "airDateUtc": "2016-06-20T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637322.jpg"
+      },
+      "13": {
+        "episode": "13",
+        "seasonNumber": 1,
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 13,
+        "title": {
+          "ja": "自称騎士ナツキ・スバル",
+          "en": "Self-Proclaimed Knight Natsuki Subaru",
+          "x-jat": "Jishou Kishi Natsuki Subaru"
+        },
+        "airDate": "2016-06-27",
+        "airdate": "2016-06-27",
+        "airDateUtc": "2016-06-27T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637323.jpg"
+      },
+      "14": {
+        "episode": "14",
+        "seasonNumber": 1,
+        "episodeNumber": 14,
+        "absoluteEpisodeNumber": 14,
+        "title": {
+          "ja": "絶望という病",
+          "en": "The Sickness Called Despair",
+          "x-jat": "Zetsubou to Iu Yamai"
+        },
+        "airDate": "2016-07-04",
+        "airdate": "2016-07-04",
+        "airDateUtc": "2016-07-04T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637324.jpg"
+      },
+      "15": {
+        "episode": "15",
+        "seasonNumber": 1,
+        "episodeNumber": 15,
+        "absoluteEpisodeNumber": 15,
+        "title": {
+          "ja": "狂気の外側",
+          "en": "The Outside of Madness",
+          "x-jat": "Kyouki no Sotogawa"
+        },
+        "airDate": "2016-07-11",
+        "airdate": "2016-07-11",
+        "airDateUtc": "2016-07-11T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637325.jpg"
+      },
+      "16": {
+        "episode": "16",
+        "seasonNumber": 1,
+        "episodeNumber": 16,
+        "absoluteEpisodeNumber": 16,
+        "title": {
+          "ja": "豚の欲望",
+          "en": "The Greed of a Pig",
+          "x-jat": "Buta no Yokubou"
+        },
+        "airDate": "2016-07-18",
+        "airdate": "2016-07-18",
+        "airDateUtc": "2016-07-18T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637326.jpg"
+      },
+      "17": {
+        "episode": "17",
+        "seasonNumber": 1,
+        "episodeNumber": 17,
+        "absoluteEpisodeNumber": 17,
+        "title": {
+          "ja": "醜態の果てに",
+          "en": "Disgrace in the Extreme",
+          "x-jat": "Shuutai no Hate ni"
+        },
+        "airDate": "2016-07-25",
+        "airdate": "2016-07-25",
+        "airDateUtc": "2016-07-25T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637327.jpg"
+      },
+      "18": {
+        "episode": "18",
+        "seasonNumber": 1,
+        "episodeNumber": 18,
+        "absoluteEpisodeNumber": 18,
+        "title": {
+          "ja": "ゼロから",
+          "en": "From Zero",
+          "x-jat": "Zero kara"
+        },
+        "airDate": "2016-08-01",
+        "airdate": "2016-08-01",
+        "airDateUtc": "2016-08-01T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637328.jpg"
+      },
+      "19": {
+        "episode": "19",
+        "seasonNumber": 1,
+        "episodeNumber": 19,
+        "absoluteEpisodeNumber": 19,
+        "title": {
+          "ja": "白鯨攻略戦",
+          "en": "Battle Against the White Whale",
+          "x-jat": "Hakugei Kouryakusen"
+        },
+        "airDate": "2016-08-08",
+        "airdate": "2016-08-08",
+        "airDateUtc": "2016-08-08T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637329.jpg"
+      },
+      "20": {
+        "episode": "20",
+        "seasonNumber": 1,
+        "episodeNumber": 20,
+        "absoluteEpisodeNumber": 20,
+        "title": {
+          "ja": "ヴィルヘルム・ヴァン・アストレア",
+          "en": "Wilhelm van Astrea",
+          "x-jat": "Wilhelm van Astrea"
+        },
+        "airDate": "2016-08-15",
+        "airdate": "2016-08-15",
+        "airDateUtc": "2016-08-15T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637330.jpg"
+      },
+      "21": {
+        "episode": "21",
+        "seasonNumber": 1,
+        "episodeNumber": 21,
+        "absoluteEpisodeNumber": 21,
+        "title": {
+          "ja": "絶望に抗う賭け",
+          "en": "A Wager That Defies Despair",
+          "x-jat": "Zetsubou ni Aragau Kake"
+        },
+        "airDate": "2016-08-22",
+        "airdate": "2016-08-22",
+        "airDateUtc": "2016-08-22T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637331.jpg"
+      },
+      "22": {
+        "episode": "22",
+        "seasonNumber": 1,
+        "episodeNumber": 22,
+        "absoluteEpisodeNumber": 22,
+        "title": {
+          "ja": "怠惰一閃",
+          "en": "A Flash of Sloth",
+          "x-jat": "Taida Issen"
+        },
+        "airDate": "2016-08-29",
+        "airdate": "2016-08-29",
+        "airDateUtc": "2016-08-29T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637332.jpg"
+      },
+      "23": {
+        "episode": "23",
+        "seasonNumber": 1,
+        "episodeNumber": 23,
+        "absoluteEpisodeNumber": 23,
+        "title": {
+          "ja": "悪辣なる怠惰",
+          "en": "Nefarious Sloth",
+          "x-jat": "Akuratsunaru Taida"
+        },
+        "airDate": "2016-09-05",
+        "airdate": "2016-09-05",
+        "airDateUtc": "2016-09-05T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637333.jpg"
+      },
+      "24": {
+        "episode": "24",
+        "seasonNumber": 1,
+        "episodeNumber": 24,
+        "absoluteEpisodeNumber": 24,
+        "title": {
+          "ja": "自称騎士と最優の騎士",
+          "en": "The Self-Proclaimed Knight and the Greatest Knight",
+          "x-jat": "Jishou Kishi to Saiyuu no Kishi"
+        },
+        "airDate": "2016-09-12",
+        "airdate": "2016-09-12",
+        "airDateUtc": "2016-09-12T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637334.jpg"
+      },
+      "25": {
+        "episode": "25",
+        "seasonNumber": 1,
+        "episodeNumber": 25,
+        "absoluteEpisodeNumber": 25,
+        "title": {
+          "ja": "ただそれだけの物語",
+          "en": "That`s All This Story Is About",
+          "x-jat": "Tada Sore dake no Monogatari"
+        },
+        "airDate": "2016-09-19",
+        "airdate": "2016-09-19",
+        "airDateUtc": "2016-09-19T13:30:00Z",
+        "image": "https://artworks.thetvdb.com/banners/episodes/305089/5637335.jpg"
+      },
+      "S1": {
+        "episode": "S1",
+        "title": {
+          "ja": "Re:ゼロから始める異世界体験",
+          "en": "Pre Air Special",
+          "x-jat": "Re:Zero kara Hajimeru Isekai Taiken"
+        },
+        "airdate": "2016-04-03"
+      },
+      "S3": {
+        "episode": "S3",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 2",
+          "en": "Re:Zero - Starting Break Time from Zero - 2",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 2"
+        },
+        "airdate": "2016-04-15"
+      },
+      "S2": {
+        "episode": "S2",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 1",
+          "en": "Re:Zero - Starting Break Time from Zero - 1",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 1"
+        },
+        "airdate": "2016-04-08"
+      },
+      "S4": {
+        "episode": "S4",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 3",
+          "en": "Re:Zero - Starting Break Time from Zero - 3",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 3"
+        },
+        "airdate": "2016-04-22"
+      },
+      "S5": {
+        "episode": "S5",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 4",
+          "en": "Re:Zero - Starting Break Time from Zero - 4",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 4"
+        },
+        "airdate": "2016-04-29"
+      },
+      "S6": {
+        "episode": "S6",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 5",
+          "en": "Re:Zero - Starting Break Time from Zero - 5",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 5"
+        },
+        "airdate": "2016-05-06"
+      },
+      "S7": {
+        "episode": "S7",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 6",
+          "en": "Re:Zero - Starting Break Time from Zero - 6",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 6"
+        },
+        "airdate": "2016-05-13"
+      },
+      "S8": {
+        "episode": "S8",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 7",
+          "en": "Re:Zero - Starting Break Time from Zero - 7",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 7"
+        },
+        "airdate": "2016-05-20"
+      },
+      "S10": {
+        "episode": "S10",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 9",
+          "en": "Re:Zero - Starting Break Time from Zero - 9",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 9"
+        },
+        "airdate": "2016-06-03"
+      },
+      "S9": {
+        "episode": "S9",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 8",
+          "en": "Re:Zero - Starting Break Time from Zero - 8",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 8"
+        },
+        "airdate": "2016-05-27"
+      },
+      "S11": {
+        "episode": "S11",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 10",
+          "en": "Re:Zero - Starting Break Time from Zero - 10",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 10"
+        },
+        "airdate": "2016-06-10"
+      },
+      "S12": {
+        "episode": "S12",
+        "title": {
+          "ja": "Re:ゼロから始める休憩時間[ブレイクタイム] - 11",
+          "en": "Re:Zero - Starting Break Time from Zero - 11",
+          "x-jat": "Re:Zero kara Hajimeru Break Time - 11"
+        },
+        "airdate": "2016-06-17"
+      },
+      "S13": {
+        "episode": "S13",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち1 再来の学校",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 1 - Return to School",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 1 - Sairai no Gakkou"
+        },
+        "airdate": "2016-06-24"
+      },
+      "S14": {
+        "episode": "S14",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち2 自称先生, ベアトリス",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 2 - Beatrice, Self-Proclaimed Teacher",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 2 - Jishou Sensei, Beatrice"
+        },
+        "airdate": "2016-07-01"
+      },
+      "S15": {
+        "episode": "S15",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち3 ご主人様と, そのメイドたち",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 3 - The Master and His Maids",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 3 - Goshujin-sama to, Sono Maid-tachi"
+        },
+        "airdate": "2016-07-08"
+      },
+      "S16": {
+        "episode": "S16",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち4 そのメニューは――",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 4 - That Menu Item Is...",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 4 - Sono Menu wa..."
+        },
+        "airdate": "2016-07-15"
+      },
+      "S17": {
+        "episode": "S17",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち5 天然",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 5 - Ditz",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 5 - Tennen"
+        },
+        "airdate": "2016-07-22"
+      },
+      "S18": {
+        "episode": "S18",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち6 豚でない欲望",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 6 - Greed That Isn`t a Pig`s",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 6 - Buta de Nai Yokubou"
+        },
+        "airdate": "2016-07-29"
+      },
+      "S19": {
+        "episode": "S19",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち7 ゼロから",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 7 - From Zero",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 7 - Zero kara"
+        },
+        "airdate": "2016-08-05"
+      },
+      "S20": {
+        "episode": "S20",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち8 決戦当日",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 8 - The Day of the Battle",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 8 - Kessen Toujitsu"
+        },
+        "airdate": "2016-08-12"
+      },
+      "S21": {
+        "episode": "S21",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち9 スイカ攻略戦",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 9 - Conquering the Watermelon",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 9 - Suika Kouryakusen"
+        },
+        "airdate": "2016-08-19"
+      },
+      "S22": {
+        "episode": "S22",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち10 煩悩に抗うだけ",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 10 - Just Resisting Desires of the Flesh",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 10 - Bonnou ni Aragau dake"
+        },
+        "airdate": "2016-08-26"
+      },
+      "S23": {
+        "episode": "S23",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち11 アレとアレと(以下略)の精算",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 11 - That and That and (Omitted) at Checkout",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 11 - Are to Are to (Ikaryaku) no Seisan"
+        },
+        "airdate": "2016-09-02"
+      },
+      "S24": {
+        "episode": "S24",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち12 ——買え",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 12 - Buy It",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 12 - --Kae"
+        },
+        "airdate": "2016-09-09"
+      },
+      "S25": {
+        "episode": "S25",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち13 獅子王のみた本",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 13 - The Book the Lion King Saw",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 13 - Shishi-ou no Mita Hon"
+        },
+        "airdate": "2016-09-16"
+      },
+      "S26": {
+        "episode": "S26",
+        "title": {
+          "ja": "Re:ぷち Re:プチから始める異世界生活 ぷち14 ただそれだけの宣伝",
+          "en": "Re:Petit - Re: Starting Life in Another World from Petit - Petit 14 - That`s All This Promotion Is About",
+          "x-jat": "Re: Petit - Re: Petit kara Hajimeru Isekai Seikatsu - Petit 14 - Tada Sore dake no Senden"
+        },
+        "airdate": "2016-09-23"
+      },
+      "O1": {
+        "episode": "O1",
+        "title": {
+          "ja": "始まりの終わりと終わりの始まり",
+          "en": "Director`s Cut: The End of the Beginning and the Beginning of the End",
+          "x-jat": "Hajimari no Owari to Owari no Hajimari"
+        },
+        "airdate": "2020-01-01"
+      },
+      "O2": {
+        "episode": "O2",
+        "title": {
+          "ja": "再会の魔女 / ゼロから始まる異世界生活",
+          "en": "Director`s Cut: Reunion with the Witch / Starting Life from Zero in Another World",
+          "x-jat": "Saikai no Majo / Zero kara Hajimaru Isekai Seikatsu"
+        },
+        "airdate": "2020-01-08"
+      },
+      "O3": {
+        "episode": "O3",
+        "title": {
+          "ja": "ロズワール邸の団欒 / 約束した朝は遠く",
+          "en": "Director`s Cut: The Happy Roswaal Mansion Family / The Morning of Our Promise Is Still Distant",
+          "x-jat": "Roswaal-tei no Danran / Yakusoku Shita Asa wa Tooku"
+        },
+        "airdate": "2020-01-15"
+      },
+      "O4": {
+        "episode": "O4",
+        "title": {
+          "ja": "鎖の音 / ナツキ・スバルのリスタート",
+          "en": "Director`s Cut: The Sound of Chains / Natsuki Subaru`s Restart",
+          "x-jat": "Kusari no Oto / Natsuki Subaru no Restart"
+        },
+        "airdate": "2020-01-22"
+      },
+      "O5": {
+        "episode": "O5",
+        "title": {
+          "ja": "泣いて泣き喚いて泣き止んだから / 勇気の意味",
+          "en": "Director`s Cut: I Cried, Cried My Lungs Out, and Stopped Crying / The Meaning of Courage",
+          "x-jat": "Naite Nakiwameite Nakiyanda kara / Yuuki no Imi"
+        },
+        "airdate": "2020-01-29"
+      },
+      "O6": {
+        "episode": "O6",
+        "title": {
+          "ja": "鬼がかったやり方 / レム",
+          "en": "Director`s Cut: Demonically Inspired Methods / Rem",
+          "x-jat": "Oni Gakatta Yarikata / Rem"
+        },
+        "airdate": "2020-02-05"
+      },
+      "O7": {
+        "episode": "O7",
+        "title": {
+          "ja": "再来の王都 / 自称騎士ナツキ・スバル",
+          "en": "Director`s Cut: Return to the Capital / Self-Proclaimed Knight Natsuki Subaru",
+          "x-jat": "Sairai no Outo / Jishou Kishi Natsuki Subaru"
+        },
+        "airdate": "2020-02-19"
+      },
+      "O8": {
+        "episode": "O8",
+        "title": {
+          "ja": "絶望という病 / 狂気の外側",
+          "en": "Director`s Cut: The Sickness Called Despair / The Outside of Madness",
+          "x-jat": "Zetsubou to Iu Yamai / Kyouki no Sotogawa"
+        },
+        "airdate": "2020-02-26"
+      },
+      "O9": {
+        "episode": "O9",
+        "title": {
+          "ja": "豚の欲望 / 醜態の果てに",
+          "en": "Director`s Cut: A Pig`s Greed / Disgrace in the Extreme",
+          "x-jat": "Buta no Yokubou / Shuutai no Hate ni"
+        },
+        "airdate": "2020-03-04"
+      },
+      "O10": {
+        "episode": "O10",
+        "title": {
+          "ja": "ゼロから / 白鯨攻略戦",
+          "en": "Director`s Cut: From Zero / Battle Against the White Whale",
+          "x-jat": "Zero kara / Hakugei Kouryakusen"
+        },
+        "airdate": "2020-03-11"
+      },
+      "O11": {
+        "episode": "O11",
+        "title": {
+          "ja": "ヴィルヘルム・ヴァン・アストレア / 絶望に抗う賭け",
+          "en": "Director`s Cut: Wilhelm van Astrea / A Wager That Defies Despair",
+          "x-jat": "Wilhelm van Astrea / Zetsubou ni Aragau Kake"
+        },
+        "airdate": "2020-03-18"
+      },
+      "O12": {
+        "episode": "O12",
+        "title": {
+          "ja": "怠惰一閃 / 悪辣なる怠惰",
+          "en": "Director`s Cut: A Flash of Sloth / Nefarious Sloth",
+          "x-jat": "Taida Issen / Akuratsunaru Taida"
+        },
+        "airdate": "2020-03-25"
+      },
+      "O13": {
+        "episode": "O13",
+        "title": {
+          "ja": "自称騎士と最優の騎士 / ただそれだけの物語 / 竜車でのひと時",
+          "en": "Director`s Cut: The Self-Proclaimed Knight and the Greatest of Knights / That`s All This Story Is About / A Moment in the Carriage",
+          "x-jat": "Jijou Kishi to Saiyuu no Kishi / Tada Sore dake no Monogatari / Ryuusha de no Hitotoki"
+        },
+        "airdate": "2020-04-01"
+      }
+    },
+    "mappings": {
+      "anilist_id": 21355,
+      "anidb_id": 11370,
+      "mal_id": 31240,
+      "thetvdb_id": 305089,
+      "type": "TV"
+    }
+  }
+}

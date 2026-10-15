@@ -1,0 +1,184 @@
+{
+  "request": "https://api.ani.zip/mappings?anilist_id=162670",
+  "recordedAt": "2026-10-15",
+  "note": "Dr. Stone: New World Part 2. AniDB keys 1-11 carry TVDB episodeNumber 12-22 (season 3).",
+  "status": 200,
+  "body": {
+    "episodeCount": 11,
+    "specialCount": 0,
+    "episodes": {
+      "1": {
+        "episode": "1",
+        "seasonNumber": 3,
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 48,
+        "title": {
+          "ja": "反撃の科学王国",
+          "en": "The Kingdom of Science`s Counterattack",
+          "x-jat": "Hangeki no Kagaku Oukoku"
+        },
+        "airDate": "2023-10-12",
+        "airdate": "2023-10-12",
+        "airDateUtc": "2023-10-12T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9687339/screencap/65255ed8115bc.jpg"
+      },
+      "2": {
+        "episode": "2",
+        "seasonNumber": 3,
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 49,
+        "title": {
+          "ja": "メデューサの素顔",
+          "en": "The Medusa`s True Face",
+          "x-jat": "Medusa no Sugao"
+        },
+        "airDate": "2023-10-19",
+        "airdate": "2023-10-19",
+        "airDateUtc": "2023-10-19T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971408/screencap/652ef9ec33932.jpg"
+      },
+      "3": {
+        "episode": "3",
+        "seasonNumber": 3,
+        "episodeNumber": 14,
+        "absoluteEpisodeNumber": 50,
+        "title": {
+          "ja": "頭脳戦のディールゲーム",
+          "en": "Deal Game, Test of Wit",
+          "x-jat": "Zunousen no Deal Game"
+        },
+        "airDate": "2023-10-26",
+        "airdate": "2023-10-26",
+        "airDateUtc": "2023-10-26T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971409/screencap/65330950eb095.jpg"
+      },
+      "4": {
+        "episode": "4",
+        "seasonNumber": 3,
+        "episodeNumber": 15,
+        "absoluteEpisodeNumber": 51,
+        "title": {
+          "ja": "三次元の決戦",
+          "en": "Battle in Three Dimensions",
+          "x-jat": "Sanjigen no Kessen"
+        },
+        "airDate": "2023-11-02",
+        "airdate": "2023-11-02",
+        "airDateUtc": "2023-11-02T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971410/screencap/65401bb663889.jpg"
+      },
+      "5": {
+        "episode": "5",
+        "seasonNumber": 3,
+        "episodeNumber": 16,
+        "absoluteEpisodeNumber": 52,
+        "title": {
+          "ja": "全土大乱戦",
+          "en": "Total War",
+          "x-jat": "Zendo Dairansen"
+        },
+        "airDate": "2023-11-09",
+        "airdate": "2023-11-09",
+        "airDateUtc": "2023-11-09T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971411/screencap/6548fc63c450f.jpg"
+      },
+      "6": {
+        "episode": "6",
+        "seasonNumber": 3,
+        "episodeNumber": 17,
+        "absoluteEpisodeNumber": 53,
+        "title": {
+          "ja": "JOKER",
+          "en": "Joker",
+          "x-jat": "Joker"
+        },
+        "airDate": "2023-11-16",
+        "airdate": "2023-11-16",
+        "airDateUtc": "2023-11-16T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971413/screencap/6550f17c8289b.jpg"
+      },
+      "7": {
+        "episode": "7",
+        "seasonNumber": 3,
+        "episodeNumber": 18,
+        "absoluteEpisodeNumber": 54,
+        "title": {
+          "ja": "滅びの煌めき",
+          "en": "Flicker of Doom",
+          "x-jat": "Horobi no Kirameki"
+        },
+        "airDate": "2023-11-23",
+        "airdate": "2023-11-23",
+        "airDateUtc": "2023-11-23T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971414/screencap/655aa85d02625.jpg"
+      },
+      "8": {
+        "episode": "8",
+        "seasonNumber": 3,
+        "episodeNumber": 19,
+        "absoluteEpisodeNumber": 55,
+        "title": {
+          "ja": "LAST MAN STANDING",
+          "en": "Last Man Standing",
+          "x-jat": "Last Man Standing"
+        },
+        "airDate": "2023-11-30",
+        "airdate": "2023-11-30",
+        "airDateUtc": "2023-11-30T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971415/screencap/6562a8970cd04.jpg"
+      },
+      "9": {
+        "episode": "9",
+        "seasonNumber": 3,
+        "episodeNumber": 20,
+        "absoluteEpisodeNumber": 56,
+        "title": {
+          "ja": "FIRST DREAM",
+          "en": "First Dream",
+          "x-jat": "First Dream"
+        },
+        "airDate": "2023-12-07",
+        "airdate": "2023-12-07",
+        "airDateUtc": "2023-12-07T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971416/screencap/656f446f14ad8.jpg"
+      },
+      "10": {
+        "episode": "10",
+        "seasonNumber": 3,
+        "episodeNumber": 21,
+        "absoluteEpisodeNumber": 57,
+        "title": {
+          "ja": "『宝島』",
+          "en": "\"Treasure Island\"",
+          "x-jat": "\"Takarajima\""
+        },
+        "airDate": "2023-12-14",
+        "airdate": "2023-12-14",
+        "airDateUtc": "2023-12-14T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971417/screencap/65731ca973891.jpg"
+      },
+      "11": {
+        "episode": "11",
+        "seasonNumber": 3,
+        "episodeNumber": 22,
+        "absoluteEpisodeNumber": 58,
+        "title": {
+          "ja": "BEYOND THE NEW WORLD",
+          "en": "Beyond the New World",
+          "x-jat": "Beyond the New World"
+        },
+        "airDate": "2023-12-21",
+        "airdate": "2023-12-21",
+        "airDateUtc": "2023-12-21T13:00:00Z",
+        "image": "https://artworks.thetvdb.com/banners/v4/episode/9971418/screencap/65806887db021.jpg"
+      }
+    },
+    "mappings": {
+      "anilist_id": 162670,
+      "anidb_id": 18064,
+      "mal_id": 55644,
+      "thetvdb_id": 355774,
+      "type": "TV"
+    }
+  }
+}

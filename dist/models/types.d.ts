@@ -164,8 +164,28 @@ export interface IAnimeEpisode {
     releaseDate?: string;
     [x: string]: unknown;
 }
+/**
+ * An episode returned by a meta provider (e.g. `META.Anilist.fetchEpisodesListById`). `number` is
+ * always the provider's own number.
+ */
+export interface IMetaAnimeEpisode extends IAnimeEpisode {
+    /**
+     * Stable key to store watch progress under: `${anilistId}$ep=${n}`, where `n` is the AniDB
+     * episode number from ani.zip when the episode was matched, otherwise the provider's `number`.
+     */
+    uniqueId: string;
+    /** TVDB season-relative episode number, when ani.zip matched the episode. */
+    tvdbNumber?: number;
+    /** TVDB absolute episode number, when ani.zip matched the episode. */
+    absoluteNumber?: number;
+}
+/** One entry of `episodes` in an ani.zip `/mappings` response. */
 export interface AniZipEpisode {
-    episodeNumber: number;
+    /** TVDB season-relative number; missing for specials. */
+    episodeNumber?: number;
+    /** TVDB absolute number; missing for specials. */
+    absoluteEpisodeNumber?: number;
+    seasonNumber?: number;
     title: {
         'ja': string;
         'en': string;
@@ -177,6 +197,7 @@ export interface AniZipEpisode {
     airDateUtc: string;
     overview: string;
     image: string;
+    /** AniDB episode, same as the object key: `"1"` for regular episodes, `"S1"`, `"O1"`… for specials and extras. */
     episode: string;
     airdate: string;
     rating: string;

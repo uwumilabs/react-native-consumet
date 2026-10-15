@@ -1,5 +1,6 @@
 import { type AxiosAdapter } from 'axios';
-import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IAnimeEpisode, type IEpisodeServer, Genres, MangaParser, type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ProxyConfig, type IStaff, type IAnimeProvider } from '../../models';
+import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, Genres, MangaParser, type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ProxyConfig, type IStaff, type IAnimeProvider } from '../../models';
+import type { IMetaAnimeEpisode } from '../../models/types';
 declare class Anilist extends AnimeParser {
     proxyConfig?: ProxyConfig | undefined;
     readonly name = "Anilist";
@@ -101,9 +102,9 @@ declare class Anilist extends AnimeParser {
     /**
      * @param id anilist id
      * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
-     * @returns episode list **(without anime info)**
+     * @returns episode list **(without anime info)**, every episode with a `uniqueId`
      */
-    fetchEpisodesListById: (id: string, fetchFiller?: boolean) => Promise<IAnimeEpisode[]>;
+    fetchEpisodesListById: (id: string, fetchFiller?: boolean) => Promise<IMetaAnimeEpisode[]>;
     /**
      * Whether to merge the provider's episodes with ani.zip metadata. Providers declare this in
      * `capabilities`, so registry-only providers (no class) can opt in. Code that predates
@@ -112,7 +113,11 @@ declare class Anilist extends AnimeParser {
     private usesAniZipEpisodes;
     /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
     private fetchFillerEpisodes;
-    /** Overlay ani.zip titles, descriptions, images and keys onto the provider's episodes. */
+    /**
+     * Overlay ani.zip titles, descriptions, images and TVDB numbers onto the provider's episodes. Only
+     * numeric ani.zip keys (AniDB regular episodes) take part, so specials (`S1`, `O1`…) never land
+     * on a regular episode. The provider's `number` is kept as is.
+     */
     private mergeAniZipEpisodes;
     /**
      * @param id anilist id

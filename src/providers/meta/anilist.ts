@@ -24,6 +24,7 @@ import {
   type IAnimeProvider,
   MetaError,
 } from '../../models';
+import type { IMetaAnimeEpisode } from '../../models/types';
 import {
   anilistSearchQuery,
   anilistMediaDetailQuery,
@@ -54,6 +55,42 @@ const anilistError = (err: unknown): MetaError => {
     return MetaError.from('anilist', err, 'You have been ratelimited by anilist. Please try again later');
   return MetaError.from('anilist', err);
 };
+
+const DAY_MS = 86_400_000;
+
+/** A regular (numbered) ani.zip episode, keyed by its AniDB episode number. */
+type AniZipEntry = {
+  key: number;
+  time?: number;
+  title?: string;
+  description?: string;
+  image?: string;
+  imageHash?: string;
+  releaseDate?: string;
+  tvdbNumber?: number;
+  absoluteNumber?: number;
+};
+
+/** A provider episode, with the AniDB episode number when ani.zip matched it. */
+type MergedEpisode = { episode: IAnimeEpisode; aniDbKey?: number };
+
+const toEpisodeNumber = (value: unknown): number | undefined => {
+  const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+  return typeof n === 'number' && Number.isFinite(n) ? n : undefined;
+};
+
+const timeOf = (date: unknown): number | undefined => {
+  if (typeof date !== 'string' || !date) return undefined;
+  const time = new Date(date).getTime();
+  return Number.isNaN(time) ? undefined : time;
+};
+
+/**
+ * The key apps store watch progress under: `${anilistId}$ep=${aniDbKey ?? number}`. Falls back to
+ * the list position only when the provider gave the episode no usable number.
+ */
+const episodeUniqueId = (anilistId: string, { episode, aniDbKey }: MergedEpisode, index: number) =>
+  `${anilistId}$ep=${aniDbKey ?? toEpisodeNumber(episode.number) ?? index + 1}`;
 
 class Anilist extends AnimeParser {
   override readonly name = 'Anilist';
@@ -503,7 +540,7 @@ class Anilist extends AnimeParser {
         fillerEpisodes = await this.fetchFillerEpisodes(animeInfo.malId as number);
       }
 
-      animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode) => {
+      animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode, index) => {
         if (!episode.image) {
           episode.image = animeInfo.image;
           episode.imageHash = animeInfo.imageHash;
@@ -514,6 +551,9 @@ class Anilist extends AnimeParser {
             episode.isFiller = new Boolean(fillerEpisodes?.[episode.number! - 1]!['filler-bool']).valueOf();
         }
 
+        // No ani.zip merge here, so the key comes from the provider's number, as it does in
+        // fetchEpisodesListById for episodes ani.zip doesn't match.
+        episode.uniqueId = episodeUniqueId(id, { episode }, index);
         return episode;
       });
 
@@ -984,9 +1024,9 @@ class Anilist extends AnimeParser {
   /**
    * @param id anilist id
    * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
-   * @returns episode list **(without anime info)**
+   * @returns episode list **(without anime info)**, every episode with a `uniqueId`
    */
-  fetchEpisodesListById = async (id: string, fetchFiller: boolean = false) => {
+  fetchEpisodesListById = async (id: string, fetchFiller: boolean = false): Promise<IMetaAnimeEpisode[]> => {
     // ani.zip only needs the AniList id, so request it alongside the AniList query. It is
     // optional enrichment: if it fails or times out, the provider's episodes are still returned.
     const aniZipRequest = this.usesAniZipEpisodes()
@@ -1012,31 +1052,29 @@ class Anilist extends AnimeParser {
 
     const fillerRequest = fetchFiller && Media.idMal ? this.fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
 
-    let possibleAnimeEpisodes: IAnimeEpisode[];
+    let episodes: MergedEpisode[];
     if (aniZipRequest) {
       const [aniZip, provider] = await Promise.allSettled([aniZipRequest, this.fetchDefaultEpisodeList(Media)]);
       if (provider.status === 'rejected') throw provider.reason;
 
-      const providerEpisodes = provider.value ?? [];
-      possibleAnimeEpisodes =
-        aniZip.status === 'fulfilled' ? this.mergeAniZipEpisodes(id, aniZip.value, providerEpisodes) : providerEpisodes;
+      const providerEpisodes = Array.isArray(provider.value) ? provider.value : [];
+      episodes =
+        aniZip.status === 'fulfilled'
+          ? this.mergeAniZipEpisodes(aniZip.value, providerEpisodes)
+          : providerEpisodes.map((episode) => ({ episode }));
     } else {
-      possibleAnimeEpisodes = (await this.fetchDefaultEpisodeList(Media)) ?? [];
+      const providerEpisodes = await this.fetchDefaultEpisodeList(Media);
+      episodes = (Array.isArray(providerEpisodes) ? providerEpisodes : []).map((episode) => ({ episode }));
     }
 
     const fillerEpisodes = await fillerRequest;
     const cover = Media.coverImage?.extraLarge ?? Media.coverImage?.large ?? Media.coverImage?.medium;
 
-    return possibleAnimeEpisodes.map((episode: IAnimeEpisode) => {
+    return episodes.map((merged, index): IMetaAnimeEpisode => {
+      const { episode } = merged;
       if (!episode.image && cover) {
         episode.image = cover;
         episode.imageHash = getHashFromImage(cover);
-      }
-
-      // Every episode needs a stable key for watch progress, including ones ani.zip didn't match
-      // and every episode when ani.zip is unavailable.
-      if (!episode.uniqueId && episode.number != null) {
-        episode.uniqueId = `${id}$ep=${episode.number}`;
       }
 
       if (fillerEpisodes.length > 0 && fillerEpisodes.length >= Media.episodes) {
@@ -1044,7 +1082,8 @@ class Anilist extends AnimeParser {
         if (filler) episode.isFiller = Boolean(filler['filler-bool']);
       }
 
-      return episode;
+      // The one place uniqueId is set, so matched, unmatched and un-enriched episodes follow one rule.
+      return { ...episode, uniqueId: episodeUniqueId(id, merged, index) };
     });
   };
 
@@ -1077,92 +1116,112 @@ class Anilist extends AnimeParser {
     }
   };
 
-  /** Overlay ani.zip titles, descriptions, images and keys onto the provider's episodes. */
-  private mergeAniZipEpisodes = (
-    id: string,
-    animeMetaData: any,
-    providerEpisodes: IAnimeEpisode[]
-  ): IAnimeEpisode[] => {
-    const normalizedEpisodes = (
-      Object.entries(animeMetaData?.episodes || {}) as [string, AniZipEpisode & IAnimeEpisode][]
-    ).map(([_key, item]) => ({
-      title: item.title.en ?? item.title['x-jat'],
-      uniqueId: `${id}$ep=${item.episodeNumber ?? item.episode}`,
-      description: item.overview ?? item.summary,
-      number: item.episodeNumber ?? parseInt(item.episode),
-      image: item.image,
-      imageHash: getHashFromImage(item.image),
-      releaseDate: item.airDate ?? item.airdate ?? item.airDateUtc,
-    }));
+  /**
+   * Overlay ani.zip titles, descriptions, images and TVDB numbers onto the provider's episodes. Only
+   * numeric ani.zip keys (AniDB regular episodes) take part, so specials (`S1`, `O1`…) never land
+   * on a regular episode. The provider's `number` is kept as is.
+   */
+  private mergeAniZipEpisodes = (animeMetaData: any, providerEpisodes: IAnimeEpisode[]): MergedEpisode[] => {
+    const entries: AniZipEntry[] = (
+      Object.entries(animeMetaData?.episodes ?? {}) as [string, AniZipEpisode & IAnimeEpisode][]
+    )
+      .filter(([key, item]) => /^\d+$/.test(key) && item)
+      .map(([key, item]) => {
+        const releaseDate = item.airDate ?? item.airdate ?? item.airDateUtc;
+        return {
+          key: Number(key),
+          time: timeOf(item.airDateUtc) ?? timeOf(releaseDate),
+          title: item.title?.en ?? item.title?.['x-jat'],
+          description: item.overview ?? item.summary,
+          image: item.image,
+          imageHash: getHashFromImage(item.image),
+          releaseDate,
+          tvdbNumber: toEpisodeNumber(item.episodeNumber),
+          absoluteNumber: toEpisodeNumber(item.absoluteEpisodeNumber),
+        };
+      });
 
-    const numberMap = new Map<number, any>();
-    const dateMap = new Map<number, any>();
-    const usedNormalized = new Set<string>();
+    const byKey = new Map(entries.map((entry) => [entry.key, entry]));
+    // Several episodes can air on one day (premieres, full-season drops), so each day holds a list.
+    const byDay = new Map<number, AniZipEntry[]>();
+    for (const entry of entries) {
+      if (entry.time === undefined) continue;
+      const day = Math.floor(entry.time / DAY_MS);
+      const bucket = byDay.get(day);
+      if (bucket) bucket.push(entry);
+      else byDay.set(day, [entry]);
+    }
 
-    normalizedEpisodes.forEach((ep) => {
-      if (ep.number) numberMap.set(ep.number, ep);
-      if (ep.releaseDate) {
-        const ts = new Date(ep.releaseDate).getTime();
-        dateMap.set(ts, ep);
-      }
+    const matches: (AniZipEntry | undefined)[] = providerEpisodes.map(() => undefined);
+    const used = new Set<number>();
+    const claim = (index: number, entry: AniZipEntry) => {
+      matches[index] = entry;
+      used.add(entry.key);
+    };
+    const distance = (index: number, entry: AniZipEntry) => {
+      const time = timeOf(providerEpisodes[index]?.releaseDate);
+      return time === undefined || entry.time === undefined ? Infinity : Math.abs(time - entry.time);
+    };
+
+    // 1. By number: ani.zip key N is AniDB episode N. When the provider lists a number twice, the
+    // copy released closest to the air date takes it.
+    const claimants = new Map<number, number[]>();
+    providerEpisodes.forEach((episode, index) => {
+      const number = toEpisodeNumber(episode.number);
+      if (number === undefined || !byKey.has(number)) return;
+      const indexes = claimants.get(number);
+      if (indexes) indexes.push(index);
+      else claimants.set(number, [index]);
+    });
+    for (const [number, indexes] of claimants) {
+      const entry = byKey.get(number)!;
+      const closest = indexes.reduce((best, index) => (distance(index, entry) < distance(best, entry) ? index : best));
+      claim(closest, entry);
+    }
+
+    // 2. By release date, within a day either way, for episodes the provider numbers differently
+    // (e.g. continuing the previous season's count). Episodes go in number order and each takes the
+    // earliest unused episode aired in that window, so episodes sharing a day keep their order.
+    const unmatchedByNumber = providerEpisodes
+      .map((episode, index) => ({
+        index,
+        number: toEpisodeNumber(episode.number) ?? Infinity,
+        time: timeOf(episode.releaseDate),
+      }))
+      .filter(({ index, time }) => !matches[index] && time !== undefined)
+      .sort((a, b) => a.number - b.number || a.index - b.index);
+    for (const { index, time } of unmatchedByNumber) {
+      const day = Math.floor(time! / DAY_MS);
+      const [entry] = [day - 1, day, day + 1]
+        .flatMap((d) => byDay.get(d) ?? [])
+        .filter((e) => !used.has(e.key) && Math.abs(time! - e.time!) <= DAY_MS)
+        .sort((a, b) => a.key - b.key);
+      if (entry) claim(index, entry);
+    }
+
+    // 3. By title.
+    providerEpisodes.forEach((episode, index) => {
+      const providerTitle = episode.title;
+      if (matches[index] || !providerTitle) return;
+      const entry = entries.find((e) => !used.has(e.key) && e.title?.includes(providerTitle));
+      if (entry) claim(index, entry);
     });
 
     return providerEpisodes.map((providerEp, index) => {
-      let normalizedEp: any = null;
-
-      const matchIfNotUsed = (ep: any) => ep && !usedNormalized.has(ep.uniqueId);
-
-      // Match by release date (within ±1 day)
-      if (providerEp.releaseDate) {
-        const ts = new Date(providerEp.releaseDate).getTime();
-        for (let [normTs, normEp] of dateMap) {
-          if (Math.abs(ts - normTs) <= 86400000 && matchIfNotUsed(normEp)) {
-            normalizedEp = normEp;
-            break;
-          }
-        }
-      }
-
-      // Match by episode number
-      if (!normalizedEp && providerEp.number != null) {
-        const ep = numberMap.get(providerEp.number);
-        if (matchIfNotUsed(ep)) normalizedEp = ep;
-      }
-
-      // Match by title similarity
-      const providerTitle = providerEp.title;
-      if (!normalizedEp && providerTitle) {
-        normalizedEp = normalizedEpisodes.find(
-          (normEp) => matchIfNotUsed(normEp) && normEp.title?.includes(providerTitle)
-        );
-      }
-
-      // Fallback to same index
-      if (!normalizedEp && matchIfNotUsed(normalizedEpisodes[index])) {
-        normalizedEp = normalizedEpisodes[index];
-      }
-
-      // Mark this normalized episode as used
-      if (normalizedEp) {
-        usedNormalized.add(normalizedEp.uniqueId);
-      }
-
-      if (!normalizedEp) return providerEp;
-
-      // console.log({
-      //   normalizedEpisodes,
-      //   providerEpisodes,
-      //   merged: mergeEpisodes(normalizedEpisodes, providerEpisodes),
-      // });
+      const entry = matches[index];
+      if (!entry) return { episode: providerEp };
       return {
-        ...providerEp,
-        number: normalizedEp.number || providerEp.number,
-        uniqueId: normalizedEp.uniqueId || providerEp.uniqueId,
-        title: normalizedEp.title || providerEp.title,
-        description: normalizedEp.description || providerEp.description,
-        image: normalizedEp.image || providerEp.image,
-        imageHash: normalizedEp.imageHash || providerEp.imageHash,
-        releaseDate: normalizedEp.releaseDate || providerEp.releaseDate,
+        aniDbKey: entry.key,
+        episode: {
+          ...providerEp,
+          title: entry.title || providerEp.title,
+          description: entry.description || providerEp.description,
+          image: entry.image || providerEp.image,
+          imageHash: entry.imageHash || providerEp.imageHash,
+          releaseDate: entry.releaseDate || providerEp.releaseDate,
+          tvdbNumber: entry.tvdbNumber,
+          absoluteNumber: entry.absoluteNumber,
+        },
       };
     });
   };
