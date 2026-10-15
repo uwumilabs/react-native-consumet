@@ -93,3 +93,6 @@ GEMINI.md
 
 # Local git worktrees
 .claude/worktrees/
+
+# Kotlin compiler caches
+.kotlin/
