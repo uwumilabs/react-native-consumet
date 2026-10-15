@@ -7,6 +7,94 @@ static NSString *const kDefaultUA =
     @"AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 "
     @"Safari/604.1";
 
+/**
+ * One in-memory website data store for every request this module makes.
+ * Cookies (such as a passed DDoS-Guard challenge) carry over between calls,
+ * as they do with Android's CookieManager, but nothing is written to disk and
+ * the host app's own WKWebView data (defaultDataStore) is never read or
+ * changed. Main thread only.
+ */
+static WKWebsiteDataStore *RCConsumetDataStore(void) {
+  static WKWebsiteDataStore *store;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    store = [WKWebsiteDataStore nonPersistentDataStore];
+  });
+  return store;
+}
+
+/**
+ * The cookies a browser would send to `url`: RFC 6265 domain, path, secure
+ * and expiry matching, the same filter Android's CookieManager.getCookie(url)
+ * applies.
+ */
+static NSArray<NSHTTPCookie *> *
+RCConsumetCookiesForURL(NSArray<NSHTTPCookie *> *cookies, NSURL *url) {
+  NSString *host = url.host.lowercaseString;
+  if (!host.length)
+    return @[];
+  NSString *path = url.path.length ? url.path : @"/";
+  BOOL isHTTPS = [url.scheme caseInsensitiveCompare:@"https"] == NSOrderedSame;
+  NSDate *now = [NSDate date];
+
+  NSMutableArray<NSHTTPCookie *> *matched = [NSMutableArray array];
+  for (NSHTTPCookie *c in cookies) {
+    if (c.expiresDate && [c.expiresDate compare:now] != NSOrderedDescending)
+      continue;
+    if (c.isSecure && !isHTTPS)
+      continue;
+
+    // A leading dot marks a domain cookie (host and subdomains); without it
+    // the cookie is host-only.
+    NSString *domain = c.domain.lowercaseString;
+    BOOL isDomainCookie = [domain hasPrefix:@"."];
+    NSString *bare = isDomainCookie ? [domain substringFromIndex:1] : domain;
+    BOOL domainMatches =
+        [host isEqualToString:bare] ||
+        (isDomainCookie &&
+         [host hasSuffix:[@"." stringByAppendingString:bare]]);
+    if (!domainMatches)
+      continue;
+
+    NSString *cookiePath = c.path.length ? c.path : @"/";
+    BOOL pathMatches =
+        [path isEqualToString:cookiePath] ||
+        ([path hasPrefix:cookiePath] &&
+         ([cookiePath hasSuffix:@"/"] ||
+          [path characterAtIndex:cookiePath.length] == '/'));
+    if (!pathMatches)
+      continue;
+
+    [matched addObject:c];
+  }
+  return matched;
+}
+
+static NSString *RCConsumetCookieHeader(NSArray<NSHTTPCookie *> *cookies) {
+  NSMutableArray<NSString *> *parts =
+      [NSMutableArray arrayWithCapacity:cookies.count];
+  for (NSHTTPCookie *c in cookies) {
+    [parts addObject:[NSString stringWithFormat:@"%@=%@", c.name, c.value]];
+  }
+  return [parts componentsJoinedByString:@"; "];
+}
+
+/**
+ * Reads the cookies in `webView`'s data store that apply to `urlStr` and
+ * passes them on with their Cookie header string, as Android does with
+ * CookieManager.getCookie(url).
+ */
+static void RCConsumetReadCookies(
+    WKWebView *webView, NSString *urlStr,
+    void (^completion)(NSArray<NSHTTPCookie *> *cookies, NSString *header)) {
+  NSURL *url = [NSURL URLWithString:urlStr];
+  [[webView.configuration.websiteDataStore httpCookieStore]
+      getAllCookies:^(NSArray<NSHTTPCookie *> *all) {
+        NSArray<NSHTTPCookie *> *matched = RCConsumetCookiesForURL(all, url);
+        completion(matched, RCConsumetCookieHeader(matched));
+      }];
+}
+
 #pragma mark - RCConsumetWebTask
 
 /**
@@ -36,7 +124,7 @@ static NSString *const kDefaultUA =
            @"loadRequest must be called on main thread");
 
   WKWebViewConfiguration *cfg = [WKWebViewConfiguration new];
-  cfg.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
+  cfg.websiteDataStore = RCConsumetDataStore();
 
   _webView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, 1, 1)
                                 configuration:cfg];
@@ -190,12 +278,7 @@ RCT_EXPORT_MODULE()
 #pragma mark - Private Helpers
 
 - (NSString *)_cookieHeader:(NSArray<NSHTTPCookie *> *)cookies {
-  NSMutableArray<NSString *> *parts =
-      [NSMutableArray arrayWithCapacity:cookies.count];
-  for (NSHTTPCookie *c in cookies) {
-    [parts addObject:[NSString stringWithFormat:@"%@=%@", c.name, c.value]];
-  }
-  return [parts componentsJoinedByString:@"; "];
+  return RCConsumetCookieHeader(cookies);
 }
 
 - (void)_removeTask:(RCConsumetWebTask *)task {
@@ -344,26 +427,20 @@ RCT_EXPORT_MODULE()
     __weak RCConsumetWebTask *wt = task;
 
     task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
-      NSURL *targetURL = [NSURL URLWithString:urlStr];
-      [[webView.configuration.websiteDataStore httpCookieStore]
-          getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
-            NSMutableString *str = [NSMutableString string];
+      RCConsumetReadCookies(
+          webView, loadedURL.length ? loadedURL : urlStr,
+          ^(NSArray<NSHTTPCookie *> *cookies, NSString *header) {
             BOOL hasDdg2 = NO;
             for (NSHTTPCookie *c in cookies) {
-              if (targetURL.host && ![c.domain hasSuffix:targetURL.host])
-                continue;
-              if (str.length)
-                [str appendString:@"; "];
-              [str appendFormat:@"%@=%@", c.name, c.value];
               if ([c.name isEqualToString:@"__ddg2_"])
                 hasDdg2 = YES;
             }
             hasDdg2
-                ? resolve(str)
+                ? resolve(header)
                 : reject(@"COOKIE_ERROR", @"No __ddg2_ cookie received", nil);
             [wt cleanup];
             [ws _removeTask:wt];
-          }];
+          });
     };
     task.onError = ^(NSString *desc) {
       reject(@"WEBVIEW_ERROR", desc, nil);
@@ -403,23 +480,20 @@ RCT_EXPORT_MODULE()
                  completionHandler:^(id html, NSError *e) {
                    NSString *htmlStr =
                        [html isKindOfClass:[NSString class]] ? html : @"";
-                   [[webView.configuration.websiteDataStore httpCookieStore]
-                       getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
-                         NSMutableString *cookieStr = [NSMutableString string];
-                         for (NSHTTPCookie *c in cookies) {
-                           if (cookieStr.length)
-                             [cookieStr appendString:@"; "];
-                           [cookieStr appendFormat:@"%@=%@", c.name, c.value];
-                         }
+                   NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
+                   RCConsumetReadCookies(
+                       webView, finalURL,
+                       ^(NSArray<NSHTTPCookie *> *cookies,
+                         NSString *cookieStr) {
                          resolve(@{
-                           @"url" : loadedURL ?: urlStr,
+                           @"url" : finalURL,
                            @"html" : htmlStr,
                            @"cookies" : cookieStr,
                            @"status" : @"success"
                          });
                          [wt cleanup];
                          [ws _removeTask:wt];
-                       }];
+                       });
                  }];
           });
     };
@@ -473,26 +547,24 @@ RCT_EXPORT_MODULE()
             [webView
                 evaluateJavaScript:jsExtract
                  completionHandler:^(id r, NSError *e) {
-                   [[webView.configuration.websiteDataStore httpCookieStore]
-                       getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
-                         NSMutableString *cookieStr = [NSMutableString string];
-                         for (NSHTTPCookie *c in cookies) {
-                           if (cookieStr.length)
-                             [cookieStr appendString:@"; "];
-                           [cookieStr appendFormat:@"%@=%@", c.name, c.value];
-                         }
+                   NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
+                   RCConsumetReadCookies(
+                       webView, finalURL,
+                       ^(NSArray<NSHTTPCookie *> *cookies,
+                         NSString *cookieStr) {
                          NSString *jsonStr =
                              [r isKindOfClass:[NSString class]] ? r : @"{}";
+                         id json = [NSJSONSerialization
+                             JSONObjectWithData:
+                                 [jsonStr
+                                     dataUsingEncoding:NSUTF8StringEncoding]
+                                        options:0
+                                          error:nil];
                          NSDictionary *parsed =
-                             [NSJSONSerialization
-                                 JSONObjectWithData:
-                                     [jsonStr
-                                         dataUsingEncoding:NSUTF8StringEncoding]
-                                            options:0
-                                              error:nil]
-                                 ?: @{};
+                             [json isKindOfClass:[NSDictionary class]] ? json
+                                                                       : @{};
                          resolve(@{
-                           @"url" : loadedURL ?: urlStr,
+                           @"url" : finalURL,
                            @"response" : parsed[@"content"] ?: @"",
                            @"cookies" : cookieStr,
                            @"status" : @"success",
@@ -501,7 +573,7 @@ RCT_EXPORT_MODULE()
                          });
                          [wt cleanup];
                          [ws _removeTask:wt];
-                       }];
+                       });
                  }];
           });
     };

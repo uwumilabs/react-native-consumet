@@ -142,7 +142,6 @@ class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
 
             client.newCall(checkRequest).execute().use { response ->
                 val setCookieHeader = response.header("set-cookie")
-                Log.d(TAG, "set-cookie header: $setCookieHeader")
                 setCookieHeader?.let { Cookie.parse(url, it) }
             }
         } catch (e: Exception) {
@@ -151,15 +150,14 @@ class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
         }
     }
 
-    private fun cookiesToHeaderString(cookies: List<Cookie>): String {
-        val cookieString = cookies.joinToString("; ") { "${it.name}=${it.value}" }
-        Log.d(TAG, "cookiesToHeaderString: $cookieString")
-        return cookieString
-    }
+    private fun cookiesToHeaderString(cookies: List<Cookie>): String =
+        cookies.joinToString("; ") { "${it.name}=${it.value}" }
 
     fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
         Log.d(TAG, "getDdosGuardCookiesWithWebView called with url: $url")
         Handler(Looper.getMainLooper()).post {
+            // Inspectable only in debuggable host apps (see WebViewDebugging)
+            WebViewDebugging.enableIfHostAppDebuggable(reactContext)
             val webView = WebView(reactContext)
             webView.settings.javaScriptEnabled = true
             webView.settings.domStorageEnabled = true
@@ -181,7 +179,6 @@ class DdosGuardHelper(private val reactContext: ReactApplicationContext) {
                     Thread {
                         val cookieManager = android.webkit.CookieManager.getInstance()
                         val cookie = cookieManager.getCookie(loadedUrl)
-                        Log.d(TAG, "Cookies from WebView: $cookie")
                         
                         Handler(Looper.getMainLooper()).post {
                             if (!cookie.isNullOrEmpty() && cookie.contains("__ddg2_")) {

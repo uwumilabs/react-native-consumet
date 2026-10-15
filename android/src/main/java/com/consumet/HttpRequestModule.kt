@@ -40,10 +40,9 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
     fun makeGetRequestWithWebView(url: String, headers: ReadableMap?, promise: Promise) {
         Log.d(TAG, "makeGetRequestWithWebView called with url: $url")
         Handler(Looper.getMainLooper()).post {
+            // Inspectable only in debuggable host apps (see WebViewDebugging)
+            WebViewDebugging.enableIfHostAppDebuggable(reactContext)
             val webView = WebView(reactContext)
-            
-            // Enable WebView debugging during development
-            WebView.setWebContentsDebuggingEnabled(true)
             
             // Configure WebView settings to mimic a browser
             webView.settings.apply {
@@ -55,7 +54,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                 userAgentString = headers?.getString("User-Agent") ?: 
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             }
-            Log.d(TAG, "User-Agent: ${webView.settings.userAgentString}")
             
             // Enable cookies
             val cookieManager = CookieManager.getInstance()
@@ -105,7 +103,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                             """.trimIndent()
                         ) { htmlResponse: String? ->
                             val cookies = cookieManager.getCookie(loadedUrl) ?: ""
-                            Log.d(TAG, "onPageFinished cookies: $cookies")
                             
                             // The response from evaluateJavascript comes as a JSON-encoded string
                             // We need to decode it to get the actual HTML
@@ -155,7 +152,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                     
                     if (key.equals("Cookie", ignoreCase = true)) {
                         // Set cookies in CookieManager
-                        Log.d(TAG, "Setting cookies from headers: $value")
                         val cookiePairs = value.split(";")
                         for (cookie in cookiePairs) {
                             cookieManager.setCookie(url, cookie.trim())
@@ -166,7 +162,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                 }
             }
             
-            Log.d(TAG, "Loading url with headers: $headerMap")
             if (headerMap.isNotEmpty()) {
                 webView.loadUrl(url, headerMap)
             } else {
@@ -187,10 +182,9 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
     fun makePostRequestWithWebView(url: String, headers: ReadableMap?, body: String, promise: Promise) {
         Log.d(TAG, "makePostRequestWithWebView called with url: $url")
         Handler(Looper.getMainLooper()).post {
+            // Inspectable only in debuggable host apps (see WebViewDebugging)
+            WebViewDebugging.enableIfHostAppDebuggable(reactContext)
             val webView = WebView(reactContext)
-            
-            // Enable WebView debugging
-            WebView.setWebContentsDebuggingEnabled(true)
             
             // Configure WebView settings
             webView.settings.apply {
@@ -275,7 +269,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                             """.trimIndent()
                         ) { responseJson: String? ->
                             val cookies = cookieManager.getCookie(loadedUrl) ?: ""
-                            Log.d(TAG, "onPageFinished cookies: $cookies")
                             
                             try {
                                 val jsonResponse = if (responseJson != null && responseJson != "null") {
@@ -327,7 +320,6 @@ class HttpRequestModule(private val reactContext: ReactApplicationContext) {
                     val value = headersMap.getString(key) ?: ""
                     
                     if (key.equals("Cookie", ignoreCase = true)) {
-                        Log.d(TAG, "Setting cookies from headers: $value")
                         val cookiePairs = value.split(";")
                         for (cookie in cookiePairs) {
                             cookieManager.setCookie(url, cookie.trim())
