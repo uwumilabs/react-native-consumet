@@ -190,8 +190,8 @@ class TMDB extends MovieParser {
         year: new Date(data?.release_year || data?.first_air_date || data?.release_date).getFullYear(),
       });
 
-      //fetch media info from provider
-      const InfoFromProvider = await this.provider.fetchMediaInfo(providerId as string);
+      // fetch media info from provider; with no match there is nothing playable to map
+      const InfoFromProvider = providerId ? await this.provider.fetchMediaInfo(providerId) : undefined;
 
       info.id = providerId as string;
 
@@ -418,24 +418,23 @@ class TMDB extends MovieParser {
       else if (extraData.type === TvType.TVSERIES) return (result.type as string) === TvType.TVSERIES;
       else return result;
     });
-    // if extraData contains a year, filter out the results that don't match the year
-    if (extraData && extraData.year && findMedia.results.some((result) => result.releaseDate)) {
-      findMedia.results = findMedia.results.filter((result) => {
-        return String(result.releaseDate).split('-')[0]?.trim() === String(extraData.year).trim();
-      });
-    }
+    // Drop results whose title isn't close, or whose year or season count (±2) contradicts TMDB.
+    // Results that don't report a year or season count stay as candidates (order is by title similarity).
+    const yearOf = (result: IAnimeResult) => /\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1];
+    const checkSeasons = extraData.type === TvType.TVSERIES && Boolean(extraData.totalSeasons);
+    findMedia.results = findMedia.results.filter((result) => {
+      const resultTitle = typeof result.title === 'string' ? result.title : '';
+      if (calculateStringSimilarity(title, resultTitle.toLowerCase()) < 0.5) return false;
 
-    // console.log({ test1: findMedia.results });
+      const year = yearOf(result);
+      if (extraData.year && year && year !== String(extraData.year)) return false;
 
-    // Check if the result contains the total number of seasons and compare it to the extraData.
-    // Allow for a range of ±2 seasons and ensure that the seasons value is a number.
-    if (extraData && extraData.totalSeasons && extraData.type === TvType.TVSERIES) {
-      findMedia.results = findMedia.results.filter((result) => {
-        const totalSeasons = (result.seasons as number) || 0;
-        const extraDataSeasons = (extraData.totalSeasons as number) || 0;
-        return totalSeasons >= extraDataSeasons - 2 && totalSeasons <= extraDataSeasons + 2;
-      });
-    }
+      const seasons = result.seasons;
+      if (checkSeasons && typeof seasons === 'number') {
+        return seasons >= extraData.totalSeasons! - 2 && seasons <= extraData.totalSeasons! + 2;
+      }
+      return true;
+    });
 
     // console.log(findMedia.results);
 

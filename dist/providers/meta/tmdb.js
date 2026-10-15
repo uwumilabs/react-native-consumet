@@ -160,8 +160,8 @@ class TMDB extends models_1.MovieParser {
         totalEpisodes: data?.number_of_episodes,
         year: new Date(data?.release_year || data?.first_air_date || data?.release_date).getFullYear()
       });
-      //fetch media info from provider
-      const InfoFromProvider = await this.provider.fetchMediaInfo(providerId);
+      // fetch media info from provider; with no match there is nothing playable to map
+      const InfoFromProvider = providerId ? await this.provider.fetchMediaInfo(providerId) : undefined;
       info.id = providerId;
       //check if the movie so episode id does not show on tv shows
       if (type === 'movie') info.episodeId = InfoFromProvider?.episodes[0]?.id;
@@ -324,22 +324,21 @@ class TMDB extends models_1.MovieParser {
     findMedia.results = findMedia.results.filter(result => {
       if (extraData.type === models_1.TvType.MOVIE) return result.type === models_1.TvType.MOVIE;else if (extraData.type === models_1.TvType.TVSERIES) return result.type === models_1.TvType.TVSERIES;else return result;
     });
-    // if extraData contains a year, filter out the results that don't match the year
-    if (extraData && extraData.year && findMedia.results.some(result => result.releaseDate)) {
-      findMedia.results = findMedia.results.filter(result => {
-        return String(result.releaseDate).split('-')[0]?.trim() === String(extraData.year).trim();
-      });
-    }
-    // console.log({ test1: findMedia.results });
-    // Check if the result contains the total number of seasons and compare it to the extraData.
-    // Allow for a range of ±2 seasons and ensure that the seasons value is a number.
-    if (extraData && extraData.totalSeasons && extraData.type === models_1.TvType.TVSERIES) {
-      findMedia.results = findMedia.results.filter(result => {
-        const totalSeasons = result.seasons || 0;
-        const extraDataSeasons = extraData.totalSeasons || 0;
-        return totalSeasons >= extraDataSeasons - 2 && totalSeasons <= extraDataSeasons + 2;
-      });
-    }
+    // Drop results whose title isn't close, or whose year or season count (±2) contradicts TMDB.
+    // Results that don't report a year or season count stay as candidates (order is by title similarity).
+    const yearOf = result => /\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1];
+    const checkSeasons = extraData.type === models_1.TvType.TVSERIES && Boolean(extraData.totalSeasons);
+    findMedia.results = findMedia.results.filter(result => {
+      const resultTitle = typeof result.title === 'string' ? result.title : '';
+      if ((0, utils_1.calculateStringSimilarity)(title, resultTitle.toLowerCase()) < 0.5) return false;
+      const year = yearOf(result);
+      if (extraData.year && year && year !== String(extraData.year)) return false;
+      const seasons = result.seasons;
+      if (checkSeasons && typeof seasons === 'number') {
+        return seasons >= extraData.totalSeasons - 2 && seasons <= extraData.totalSeasons + 2;
+      }
+      return true;
+    });
     // console.log(findMedia.results);
     return findMedia?.results[0]?.id || undefined;
   };

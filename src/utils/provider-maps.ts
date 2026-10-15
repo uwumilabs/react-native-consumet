@@ -41,6 +41,15 @@ export const movieProviders = {
   get VegaMovies() {
     return require('../providers/movies/vegamovies/vegamovies').default;
   },
+  get NetflixMirror() {
+    return require('../providers/movies/netflixmirror/netflixmirror').default;
+  },
+  get PrimeMirror() {
+    return require('../providers/movies/netflixmirror/primemirror').default;
+  },
+  get DisneyMirror() {
+    return require('../providers/movies/netflixmirror/disneymirror').default;
+  },
 };
 
 const metaProviders = {

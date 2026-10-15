@@ -29,6 +29,9 @@ const ENTRIES = [
   { id: 'multimovies', category: 'movies', file: 'movies/multimovies/create-multimovies.js' },
   { id: 'yflix', category: 'movies', file: 'movies/yflix/create-yflix.js' },
   { id: 'vegamovies', category: 'movies', file: 'movies/vegamovies/create-vegamovies.js' },
+  { id: 'netflixmirror', category: 'movies', file: 'movies/netflixmirror/create-netflixmirror.js' },
+  { id: 'primemirror', category: 'movies', file: 'movies/netflixmirror/create-netflixmirror.js' },
+  { id: 'disneymirror', category: 'movies', file: 'movies/netflixmirror/create-netflixmirror.js' },
 ];
 
 const lines = [];

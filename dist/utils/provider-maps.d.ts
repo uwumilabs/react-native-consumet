@@ -19,6 +19,9 @@ export declare const movieProviders: {
     readonly MultiStream: any;
     readonly YFlix: any;
     readonly VegaMovies: any;
+    readonly NetflixMirror: any;
+    readonly PrimeMirror: any;
+    readonly DisneyMirror: any;
 };
 declare const metaProviders: {
     readonly Anilist: any;

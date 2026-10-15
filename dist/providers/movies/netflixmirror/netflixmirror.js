@@ -1,42 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const models_1 = require("../../../models");
-const utils_1 = require("../../../utils");
+const netmirror_parser_1 = __importDefault(require("./netmirror-parser"));
 const create_netflixmirror_1 = require("./create-netflixmirror");
-// Backward compatibility wrapper class
-class NetflixMirror extends models_1.MovieParser {
-    instance;
-    logo;
-    name;
-    baseUrl;
-    classPath;
-    supportedTypes;
-    isNSFW;
-    isWorking;
+class NetflixMirror extends netmirror_parser_1.default {
     constructor(customBaseURL) {
-        super();
-        // Use the context factory to create a complete context with all defaults
-        const defaultContext = (0, utils_1.createProviderContext)();
-        this.instance = (0, create_netflixmirror_1.createNetflixMirror)(defaultContext, customBaseURL);
-        this.logo = this.instance.logo;
-        this.name = this.instance.name;
-        this.baseUrl = this.instance.baseUrl;
-        this.classPath = this.instance.classPath;
-        this.supportedTypes = this.instance.supportedTypes;
-        this.isNSFW = this.instance.isNSFW;
-        this.isWorking = this.instance.isWorking ?? true;
-        // Bind all methods to preserve proper typing
-        this.search = this.instance.search;
-        this.fetchMediaInfo = this.instance.fetchMediaInfo;
-        this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
-        this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
-        this.fetchHlsPlaylist = this.instance.fetchHlsPlaylist;
+        super(create_netflixmirror_1.createNetflixMirror, customBaseURL);
     }
-    search;
-    fetchMediaInfo;
-    fetchEpisodeSources;
-    fetchEpisodeServers;
-    fetchHlsPlaylist;
 }
 exports.default = NetflixMirror;
 //# sourceMappingURL=netflixmirror.js.map

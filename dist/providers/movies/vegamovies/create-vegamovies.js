@@ -74,6 +74,23 @@ function createVegaMovies(ctx, customBaseURL) {
     return 1;
   };
   /**
+   * Number of seasons a post covers, from text like "Season 1-5", "Season 1 – 2" or "Season 3".
+   */
+  const countSeasons = text => {
+    const range = /seasons?\s*(\d+)\s*(?:-|–|—|to|&)\s*(\d+)/i.exec(text);
+    if (range) return Math.abs(parseInt(range[2], 10) - parseInt(range[1], 10)) + 1;
+    return /season\s*\d+/i.test(text) ? 1 : undefined;
+  };
+  /**
+   * Search result metadata used by meta providers (TMDB) to match a title: a series post's
+   * year is usually that season's year, so only movies get a releaseDate.
+   */
+  const resultMeta = (rawTitle, slug, isSeries) => ({
+    type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
+    releaseDate: isSeries ? undefined : extractYear(rawTitle),
+    seasons: isSeries ? countSeasons(rawTitle) ?? countSeasons(slug.replace(/-(\d+)-(\d+)/, ' $1-$2')) : undefined
+  });
+  /**
    * Helper to parse HTML grid items into IMovieResult list
    */
   const parseHtmlGrid = html => {
@@ -91,7 +108,6 @@ function createVegaMovies(ctx, customBaseURL) {
       if (!cleanId || seen.has(cleanId)) return;
       seen.add(cleanId);
       const rawTitle = element.find('.poster-title, .entry-title, .post-title').text().trim() || element.find('img').attr('alt') || linkEl.attr('aria-label') || linkEl.attr('title') || '';
-      const releaseDate = extractYear(rawTitle);
       const isSeries = /\b(?:season|s\d+|web series|series)\b/i.test(rawTitle) || href.includes('season') || href.includes('series');
       const title = cleanTitle(rawTitle);
       if (!title) return;
@@ -104,8 +120,7 @@ function createVegaMovies(ctx, customBaseURL) {
         title,
         url: postUrl.href,
         image,
-        releaseDate,
-        type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE
+        ...resultMeta(rawTitle, cleanId, isSeries)
       });
     });
     return results;
@@ -152,8 +167,7 @@ function createVegaMovies(ctx, customBaseURL) {
             title,
             url: postUrl.href,
             image: doc.post_thumbnail || '',
-            releaseDate: extractYear(rawPostTitle) || doc.post_date,
-            type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE
+            ...resultMeta(rawPostTitle, cleanId, isSeries)
           });
         }
         return searchResult;
@@ -206,11 +220,14 @@ function createVegaMovies(ctx, customBaseURL) {
         }
       });
       const $ = load(data);
+      const content = $('.entry-content, .post-content').first();
+      // "Series Info" / "Movie Info" block, e.g. "Season: 1-5 ... Released Year: 2008-2013"
+      const infoText = $('h3, h4').filter((_, el) => /(series|movie)\s*info/i.test($(el).text())).first().nextAll().slice(0, 2).text().replace(/\s+/g, ' ');
       // Title extraction
       const rawTitle = $('h1.entry-title').text().trim() || $('meta[property="og:title"]').attr('content') || $('h1').first().text().trim() || '';
       movieInfo.title = cleanTitle((rawTitle.split('|')[0] || '').trim());
       // Poster image
-      let image = $('meta[property="og:image"]').attr('content') || $('.entry-content img[data-lazy-src]').attr('data-lazy-src') || $('.entry-content img[data-src]').attr('data-src') || $('.entry-content img').first().attr('src') || '';
+      let image = $('meta[property="og:image"]').attr('content') || content.find('img[data-lazy-src]').attr('data-lazy-src') || content.find('img[data-src]').attr('data-src') || content.find('img').first().attr('src') || '';
       if (image?.startsWith('//')) {
         image = `https:${image}`;
       }
@@ -231,57 +248,54 @@ function createVegaMovies(ctx, customBaseURL) {
         movieInfo.imdbId = imdbMatch[0];
       }
       // Rating
-      const ratingText = $('.imdb-score, .starstruck-rating').text();
+      const ratingText = $('.imdb-score, .starstruck-rating').text() || /IMDb Rating\W*([\d.]+)/i.exec(infoText)?.[1] || '';
       const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
       if (ratingMatch?.[1]) {
         movieInfo.rating = parseFloat(ratingMatch[1]);
       }
-      // Release year
-      movieInfo.releaseDate = extractYear(movieInfo.title);
+      // Release year: "Released Year: 2008-2013" gives the first-air year; titles often carry a season's year
+      movieInfo.releaseDate = extractYear(/Released?\s*Year\s*:?\s*([^\s]+)/i.exec(infoText)?.[1] ?? '') ?? extractYear(movieInfo.title);
       // Genres
       movieInfo.genres = $('a[rel="category tag"], .category a').map((_, el) => $(el).text().trim()).get().filter(g => g && !g.includes('1080p') && !g.includes('720p') && !g.includes('480p'));
       // Determine type
-      const pageText = `${movieInfo.title} ${$('.entry-content').text()}`;
+      const pageText = `${movieInfo.title} ${content.text()}`;
       const isSeries = /\b(?:web\s*series|season\s*\d+|s\d+\s*e\d+)\b/i.test(pageText) || $('a:contains("V-Cloud"), a:contains("vcloud")').length > 1;
       movieInfo.type = isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE;
       // Extract quality blocks and download buttons
       const episodesList = [];
       if (movieInfo.type === TvTypeEnum.TVSERIES) {
         const seasonPacks = [];
-        $('h3, h4, h5, p').each((_, element) => {
-          const el = $(element);
-          const blockText = el.text().trim();
-          if (/season\s*\d+|s\d+/i.test(blockText)) {
-            const seasonNum = extractSeasonNumber(blockText);
-            let nextP = el.next();
-            while (nextP.length && !nextP.is('p') && !nextP.find('a[href]').length) {
-              nextP = nextP.next();
-            }
-            // Prefer V-Cloud link, avoid Zip / Batch
-            let btn = nextP.find('a:contains("V-Cloud"), a:contains("vcloud"), a[href*="vcloud"]').first();
-            if (!btn.length) {
-              btn = nextP.find('a').filter((_, a) => {
-                const txt = $(a).text().toLowerCase();
-                const href = ($(a).attr('href') || '').toLowerCase();
-                return !txt.includes('zip') && !txt.includes('batch') && !href.includes('zip') && !href.includes('batch');
-              }).first();
-            }
-            const btnHref = btn.attr('href');
-            if (btnHref && btnHref?.startsWith('http')) {
-              seasonPacks.push({
-                title: blockText,
-                season: seasonNum,
-                url: btnHref
-              });
-            }
-          }
-        });
         const getPackPriority = t => {
           if (/1080p|2160p|4k/i.test(t)) return 3;
           if (/720p/i.test(t)) return 2;
           if (/480p/i.test(t)) return 1;
           return 0;
         };
+        // Only blocks followed by download-host links are season packs. This skips the post
+        // title heading ("Download X Season 3 ...") whose next paragraph holds the IMDb link.
+        const downloadHost = /nexdrive|vcloud|hubcloud|gdflix|fastdl|filepress/i;
+        $('h3, h4, h5, p').each((_, element) => {
+          const el = $(element);
+          const blockText = el.text().trim();
+          if (!/season\s*\d+|s\d+/i.test(blockText)) return;
+          let nextP = el.next();
+          while (nextP.length && !nextP.is('p') && !nextP.find('a[href]').length) {
+            nextP = nextP.next();
+          }
+          const links = nextP.find('a[href]').toArray().map(a => ({
+            href: $(a).attr('href') || '',
+            text: $(a).text().trim()
+          })).filter(l => l.href.startsWith('http') && downloadHost.test(l.href) && !/zip|batch|login/i.test(l.text));
+          if (!links.length) return;
+          // Some blocks list one link per quality ("480p [150MB/E]", "720p [350MB/E]"); prefer V-Cloud otherwise.
+          const preferred = links.find(l => /v-?cloud/i.test(l.text)) ?? links[0];
+          const best = links.reduce((acc, l) => getPackPriority(l.text) > getPackPriority(acc.text) ? l : acc, preferred);
+          seasonPacks.push({
+            title: `${blockText} ${best.text}`,
+            season: extractSeasonNumber(blockText),
+            url: best.href
+          });
+        });
         // Deduplicate season packs: pick highest quality pack per season
         const selectedPacksBySeason = new Map();
         for (const pack of seasonPacks) {

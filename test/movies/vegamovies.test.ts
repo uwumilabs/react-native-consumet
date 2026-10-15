@@ -26,7 +26,7 @@ describe('VegaMovies Provider', () => {
     expect(data.results).toBeDefined();
     expect(data.results.length).toBeGreaterThan(0);
 
-    const first = data.results[0];
+    const first = data.results[0]!;
     expect(first.id).toBeDefined();
     expect(first.title).toBeDefined();
     expect(first.url).toBeDefined();
@@ -40,7 +40,7 @@ describe('VegaMovies Provider', () => {
 
     expect(data).toBeDefined();
     expect(data.title).toBeDefined();
-    expect(data.title.length).toBeGreaterThan(0);
+    expect((data.title as string).length).toBeGreaterThan(0);
     expect(data.type).toBe(TvType.MOVIE);
     expect(data.episodes).toBeDefined();
     expect(data.episodes!.length).toBeGreaterThan(0);
@@ -56,31 +56,34 @@ describe('VegaMovies Provider', () => {
     expect(data.episodes).toBeDefined();
     expect(data.episodes!.length).toBeGreaterThan(0);
 
-    const firstEp = data.episodes![0];
+    const firstEp = data.episodes![0]!;
     expect(firstEp.id).toBeDefined();
     expect(firstEp.title).toBeDefined();
     expect(firstEp.season).toBeDefined();
   });
 
+  // File links expire, so take a current episode link from a post instead of hard-coding one.
+  let liveEpisodeLink: Promise<string> | undefined;
+  const getLiveEpisodeLink = () =>
+    (liveEpisodeLink ??= vegaMovies
+      .fetchMediaInfo('download-loki-2023-season-2-hindi-org-web-dl-web-series-480p-720p-1080p-2160p-4k')
+      .then((info) => info.episodes!.find((e) => e.id.includes('cloud'))!.id));
+
   it('fetchEpisodeServers: returns available servers for an episode link', async () => {
-    const servers = await vegaMovies.fetchEpisodeServers(
-      'https://vcloud.fit/4jrxrrm2jfrjc4d'
-    );
+    const servers = await vegaMovies.fetchEpisodeServers(await getLiveEpisodeLink());
     expect(Array.isArray(servers)).toBe(true);
     expect(servers.length).toBeGreaterThan(0);
     expect(servers.some((s) => s.name === 'CF Storage' || s.name === 'HubCloud')).toBe(true);
   });
 
   it('fetchEpisodeSources: returns stream sources using HubCloud', async () => {
-    const sources = await vegaMovies.fetchEpisodeSources(
-      'https://vcloud.fit/4jrxrrm2jfrjc4d'
-    );
+    const sources = await vegaMovies.fetchEpisodeSources(await getLiveEpisodeLink());
     expect(sources).toBeDefined();
     expect(Array.isArray(sources.sources)).toBe(true);
     expect(sources.sources.length).toBeGreaterThan(0);
-    expect(sources.sources[0].url).toContain('http');
-    expect(sources.sources[0].url).not.toContain('vcloud.fit');
-    expect(sources.sources[0].server).toBeDefined();
+    expect(sources.sources[0]!.url).toContain('http');
+    expect(sources.sources[0]!.url).not.toContain('vcloud.');
+    expect(sources.sources[0]!.server).toBeDefined();
   });
 
   it('fetchMediaInfo & fetchEpisodeSources for Mercy for None', async () => {
@@ -88,14 +91,14 @@ describe('VegaMovies Provider', () => {
     expect(info.episodes).toBeDefined();
     expect(info.episodes!.length).toBeGreaterThan(0);
 
-    const firstEpId = info.episodes![0].id;
+    const firstEpId = info.episodes![0]!.id;
     console.log('FIRST EPISODE ID:', firstEpId);
     const sources = await vegaMovies.fetchEpisodeSources(firstEpId, info.id);
     console.log('MERCY FOR NONE FIRST EP SOURCES:', JSON.stringify(sources, null, 2));
     expect(sources.sources.length).toBeGreaterThan(0);
-    expect(sources.sources[0].url).not.toContain('vcloud.fit');
-    expect(sources.sources[0].server).toBe('CF Storage');
-    expect(sources.sources[0].quality).toBe('1080p');
+    expect(sources.sources[0]!.url).not.toContain('vcloud.');
+    expect(sources.sources[0]!.server).toBe('CF Storage');
+    expect(sources.sources[0]!.quality).toBe('1080p');
   });
 
   it('fetchLatest: returns latest movies/shows from homepage', async () => {
@@ -108,11 +111,11 @@ describe('VegaMovies Provider', () => {
   it('search: returns cleanly formatted titles for movies and series', async () => {
     const mercySearch = await vegaMovies.search('mercy for none');
     expect(mercySearch.results.length).toBeGreaterThan(0);
-    expect(mercySearch.results[0].title).toBe('Mercy for None');
+    expect(mercySearch.results[0]!.title).toBe('Mercy for None');
 
     const jjkSearch = await vegaMovies.search('jujutsu kaisen');
     expect(jjkSearch.results.length).toBeGreaterThan(0);
-    expect(jjkSearch.results[0].title).toBe('Jujutsu Kaisen');
+    expect(jjkSearch.results[0]!.title).toBe('Jujutsu Kaisen');
   });
 });
 

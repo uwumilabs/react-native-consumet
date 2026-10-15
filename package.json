@@ -95,7 +95,7 @@
     "@react-native/eslint-config": "0.87.1",
     "@release-it/conventional-changelog": "8.0.2",
     "@types/crypto-js": "^4.2.2",
-    "@types/jest": "^29.5.5",
+    "@types/jest": "^30.0.0",
     "@types/react": "^19.2.0",
     "@types/string-similarity": "^4.0.2",
     "babel-jest": "^29.7.0",

@@ -1,7 +1,9 @@
 import MultiMovies from './multimovies/multimovies';
 import { createMultiMovies } from './multimovies/create-multimovies';
 import NetflixMirror from './netflixmirror/netflixmirror';
-import { createNetflixMirror } from './netflixmirror/create-netflixmirror';
+import PrimeMirror from './netflixmirror/primemirror';
+import DisneyMirror from './netflixmirror/disneymirror';
+import { createNetflixMirror, createPrimeMirror, createDisneyMirror } from './netflixmirror/create-netflixmirror';
 import MultiStream from './multistream';
 import HiMovies from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
@@ -12,6 +14,8 @@ import { createVegaMovies } from './vegamovies/create-vegamovies';
 declare const _default: {
     MultiMovies: typeof MultiMovies;
     NetflixMirror: typeof NetflixMirror;
+    PrimeMirror: typeof PrimeMirror;
+    DisneyMirror: typeof DisneyMirror;
     HiMovies: typeof HiMovies;
     YFlix: typeof YFlix;
     VegaMovies: typeof VegaMovies;
@@ -19,6 +23,8 @@ declare const _default: {
     createHiMovies: typeof createHiMovies;
     createMultiMovies: typeof createMultiMovies;
     createNetflixMirror: typeof createNetflixMirror;
+    createPrimeMirror: typeof createPrimeMirror;
+    createDisneyMirror: typeof createDisneyMirror;
     createYFlix: typeof createYFlix;
     createVegaMovies: typeof createVegaMovies;
 };

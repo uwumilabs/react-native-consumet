@@ -105,4 +105,16 @@ export const MOVIE_PROVIDERS: MovieProviderDef[] = [
     emoji: '🎭',
     makeInner: () => new MOVIES.NetflixMirror() as any,
   },
+  {
+    key: 'primemirror',
+    label: 'PrimeMirror',
+    emoji: '📦',
+    makeInner: () => new MOVIES.PrimeMirror() as any,
+  },
+  {
+    key: 'disneymirror',
+    label: 'DisneyMirror',
+    emoji: '🏰',
+    makeInner: () => new MOVIES.DisneyMirror() as any,
+  },
 ];

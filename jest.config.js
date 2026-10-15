@@ -6,7 +6,12 @@ module.exports = {
   setupFiles: ['<rootDir>/jest.setup.js'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.(ts|tsx)?$': 'ts-jest',
+    // ts-jest emits CommonJS, which forces node10 resolution (deprecated in TS 6)
+    // and conflicts with verbatimModuleSyntax from the root tsconfig.
+    '^.+\\.(ts|tsx)?$': [
+      'ts-jest',
+      { tsconfig: { ignoreDeprecations: '6.0', verbatimModuleSyntax: false } },
+    ],
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
   transformIgnorePatterns: [
