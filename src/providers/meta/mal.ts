@@ -13,6 +13,7 @@ import {
   type IEpisodeServer,
   MediaFormat,
   type ProviderCapabilities,
+  type IAnimeProvider,
 } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery, range } from '../../utils';
 import Zoro from '../anime/zoro/zoro';
@@ -29,14 +30,14 @@ class Myanimelist extends AnimeParser {
   private readonly kitsuGraphqlUrl = 'https://kitsu.app/api/graphql';
   private readonly malSyncUrl = 'https://api.malsync.moe';
   private readonly anifyUrl = ANIFY_URL;
-  provider: AnimeParser;
+  provider: AnimeParser | IAnimeProvider;
 
   /**
    * This class maps myanimelist to kitsu with any other anime provider.
    * kitsu is used for episode images, titles and description.
    * @param provider anime provider (optional) default: Gogoanime
    */
-  constructor(provider?: AnimeParser) {
+  constructor(provider?: AnimeParser | IAnimeProvider) {
     super();
     this.provider = provider || new Zoro();
   }

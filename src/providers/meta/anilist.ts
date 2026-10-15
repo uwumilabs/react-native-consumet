@@ -21,6 +21,7 @@ import {
   type IStaff,
   type AniZipEpisode,
   type ProviderCapabilities,
+  type IAnimeProvider,
 } from '../../models';
 import {
   anilistSearchQuery,
@@ -54,7 +55,7 @@ class Anilist extends AnimeParser {
   private readonly kitsuGraphqlUrl = 'https://kitsu.io/api/graphql';
   private readonly malSyncUrl = 'https://api.malsync.moe';
   private readonly anifyUrl = ANIFY_URL;
-  provider: AnimeParser;
+  provider: AnimeParser | IAnimeProvider;
 
   /**
    * This class maps anilist to kitsu with any other anime provider.
@@ -64,7 +65,7 @@ class Anilist extends AnimeParser {
    * @param adapter axios adapter (optional)
    */
   constructor(
-    provider?: AnimeParser,
+    provider?: AnimeParser | IAnimeProvider,
     public proxyConfig?: ProxyConfig,
     adapter?: AxiosAdapter,
     customBaseURL?: string

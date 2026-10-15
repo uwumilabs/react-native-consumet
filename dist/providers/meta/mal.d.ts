@@ -1,4 +1,4 @@
-import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer } from '../../models';
+import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type IAnimeProvider } from '../../models';
 declare class Myanimelist extends AnimeParser {
     readonly name = "Myanimelist";
     protected baseUrl: string;
@@ -8,13 +8,13 @@ declare class Myanimelist extends AnimeParser {
     private readonly kitsuGraphqlUrl;
     private readonly malSyncUrl;
     private readonly anifyUrl;
-    provider: AnimeParser;
+    provider: AnimeParser | IAnimeProvider;
     /**
      * This class maps myanimelist to kitsu with any other anime provider.
      * kitsu is used for episode images, titles and description.
      * @param provider anime provider (optional) default: Gogoanime
      */
-    constructor(provider?: AnimeParser);
+    constructor(provider?: AnimeParser | IAnimeProvider);
     private malStatusToMediaStatus;
     private populateEpisodeList;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;

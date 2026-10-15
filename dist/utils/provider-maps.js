@@ -1,13 +1,4 @@
 "use strict";
-/**
- * This file maps provider keys to their classes for ProviderManager.
- *
- * We use lazy getters to break circular dependencies:
- * - Meta providers (like Anilist) import anime providers (like AnimeKai)
- * - AnimeKai imports extractors directly from extractors/
- * - Utils no longer re-exports extractors (breaking one part of the circle)
- * - Lazy loading breaks the other part at runtime
- */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.movieProviders = exports.animeProviders = void 0;
 // Use lazy getters to avoid circular dependency issues

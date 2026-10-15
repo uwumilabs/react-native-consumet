@@ -1,5 +1,5 @@
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, MovieParser, TvType, type IMovieResult, type IMovieInfo, type ProxyConfig } from '../../models';
-import type { IPeopleResult } from '../../models/types';
+import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import type { AxiosAdapter } from 'axios';
 declare class TMDB extends MovieParser {
     private apiKey;
@@ -10,7 +10,7 @@ declare class TMDB extends MovieParser {
     protected classPath: string;
     supportedTypes: Set<TvType>;
     private provider;
-    constructor(apiKey?: string, provider?: MovieParser, proxyConfig?: ProxyConfig, adapter?: AxiosAdapter);
+    constructor(apiKey?: string, provider?: MovieParser | IMovieProvider, proxyConfig?: ProxyConfig, adapter?: AxiosAdapter);
     /**
      * @param type trending type: tv series, movie, people or all
      * @param timePeriod trending time period day or week

@@ -1,5 +1,5 @@
 import { type AxiosAdapter } from 'axios';
-import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IAnimeEpisode, type IEpisodeServer, Genres, MangaParser, type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ProxyConfig, type IStaff } from '../../models';
+import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IAnimeEpisode, type IEpisodeServer, Genres, MangaParser, type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ProxyConfig, type IStaff, type IAnimeProvider } from '../../models';
 declare class Anilist extends AnimeParser {
     proxyConfig?: ProxyConfig | undefined;
     readonly name = "Anilist";
@@ -10,7 +10,7 @@ declare class Anilist extends AnimeParser {
     private readonly kitsuGraphqlUrl;
     private readonly malSyncUrl;
     private readonly anifyUrl;
-    provider: AnimeParser;
+    provider: AnimeParser | IAnimeProvider;
     /**
      * This class maps anilist to kitsu with any other anime provider.
      * kitsu is used for episode images, titles and description.
@@ -18,7 +18,7 @@ declare class Anilist extends AnimeParser {
      * @param proxyConfig proxy config (optional)
      * @param adapter axios adapter (optional)
      */
-    constructor(provider?: AnimeParser, proxyConfig?: ProxyConfig | undefined, adapter?: AxiosAdapter, customBaseURL?: string);
+    constructor(provider?: AnimeParser | IAnimeProvider, proxyConfig?: ProxyConfig | undefined, adapter?: AxiosAdapter, customBaseURL?: string);
     /**
      * @param query Search query
      * @param page Page number (optional)

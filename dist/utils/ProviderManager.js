@@ -10,6 +10,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ProviderManager = void 0;
 const create_provider_context_1 = __importDefault(require("./create-provider-context"));
+const models_1 = require("../models");
 const provider_maps_1 = require("./provider-maps");
 const extension_integrity_1 = require("./extension-integrity");
 const fetch_with_timeout_1 = require("./fetch-with-timeout");
@@ -108,17 +109,8 @@ class ProviderManager {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
       const providerCode = response.text;
-      // Verifies the code against the registry hash and the factory name before running it
-      let providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
-      // Attempt to attach the prototype from local provider classes so instanceof works in app code
-      try {
-        // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
-        const lookupKey = metadata.name || extensionId;
-        providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
-      } catch (protoErr) {
-        // Non-fatal – if we can't attach prototype, just proceed with the plain instance
-        console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
-      }
+      // Verifies the code against the registry hash and the factory name, then attaches the prototype
+      const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata);
       // Cache the loaded extension
       this.loadedExtensions.set(cacheKey, providerInstance);
       //console.log(`✅ Extension '${extensionId}' loaded successfully`);
@@ -143,13 +135,15 @@ class ProviderManager {
     const key = providerKey;
     // Pick the correct constructor map by category
     const ctor = category === 'anime' ? provider_maps_1.animeProviders[key] : category === 'movies' ? provider_maps_1.movieProviders[key] : undefined;
-    if (!ctor || typeof ctor !== 'function' || !ctor.prototype) {
-      return instance; // Nothing to do
-    }
+    // Providers without a bundled class (registry-only) still get the category's base parser,
+    // so `instanceof AnimeParser` / `instanceof MovieParser` hold for every loaded provider.
+    const base = category === 'anime' ? models_1.AnimeParser : category === 'movies' ? models_1.MovieParser : undefined;
+    const target = typeof ctor === 'function' && ctor.prototype ? ctor : base;
+    if (!target) return instance;
     // If already an instance of desired ctor, skip
-    if (instance instanceof ctor) return instance;
+    if (instance instanceof target) return instance;
     // Attach the prototype so `instanceof` works at runtime
-    Object.setPrototypeOf(instance, ctor.prototype);
+    Object.setPrototypeOf(instance, target.prototype);
     return instance;
   }
   /**
@@ -357,8 +351,8 @@ class ProviderManager {
     if (metadata.category !== 'anime') {
       throw new Error(`Extension '${extensionId}' is not an anime provider`);
     }
-    const instance = await this.loadExtension(extensionId);
-    return instance;
+    // The category was checked above, so the loaded provider is an anime provider.
+    return await this.loadExtension(extensionId);
   }
   /**
    * Get movie provider
@@ -371,8 +365,8 @@ class ProviderManager {
     if (metadata.category !== 'movies') {
       throw new Error(`Extension '${extensionId}' is not a movie provider`);
     }
-    const instance = await this.loadExtension(extensionId);
-    return instance;
+    // The category was checked above, so the loaded provider is a movie provider.
+    return await this.loadExtension(extensionId);
   }
   /**
    * Get the provider context

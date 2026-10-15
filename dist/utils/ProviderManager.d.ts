@@ -1,8 +1,8 @@
 import type { ProviderContext } from '../models/provider-context';
-import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
+import { type IAnimeProvider, type IAnimeResult, type IMovieProvider, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
+import { type AnimeProviderId, type MovieProviderId, type ProviderInstanceOf } from './provider-maps';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export declare class ProviderManager {
     private providerContext;
@@ -29,7 +29,7 @@ export declare class ProviderManager {
     /**
      * Load an extension by ID from the extensionManifest
      */
-    loadExtension<T extends AnimeProvider | MovieProvider>(extensionId: T): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
+    loadExtension<T extends string>(extensionId: T): Promise<ProviderInstanceOf<T>>;
     /**
      * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
      * and developer tooling understands the shape better.
@@ -41,9 +41,9 @@ export declare class ProviderManager {
      *
      * @throws IntegrityError before running anything if the hash or factory name is invalid
      */
-    executeProviderCode<T extends AnimeProvider | MovieProvider>(code: string, factoryName: string, metadata: ExtensionManifest & {
+    executeProviderCode<T extends string>(code: string, factoryName: string, metadata: ExtensionManifest & {
         id: T;
-    }, options?: ExecuteCodeOptions): Promise<T extends AnimeProvider ? InstanceType<(typeof animeProviders)[T]> : T extends MovieProvider ? InstanceType<(typeof movieProviders)[T]> : never>;
+    }, options?: ExecuteCodeOptions): Promise<ProviderInstanceOf<T>>;
     /**
      * Create execution context for provider code
      */
@@ -59,11 +59,11 @@ export declare class ProviderManager {
     /**
      * Get anime provider
      */
-    getAnimeProvider<T extends AnimeProvider>(extensionId: T): Promise<InstanceType<(typeof animeProviders)[T]>>;
+    getAnimeProvider(extensionId: AnimeProviderId): Promise<IAnimeProvider>;
     /**
      * Get movie provider
      */
-    getMovieProvider<T extends MovieProvider>(extensionId: T): Promise<InstanceType<(typeof movieProviders)[T]>>;
+    getMovieProvider(extensionId: MovieProviderId): Promise<IMovieProvider>;
     /**
      * Get the provider context
      */

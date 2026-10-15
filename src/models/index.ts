@@ -47,6 +47,8 @@ import {
   type AniZipEpisode,
   type IMovieSeason,
   type ProviderCapabilities,
+  type IAnimeProvider,
+  type IMovieProvider,
 } from './types';
 
 export {
@@ -98,6 +100,8 @@ export type {
   AniZipEpisode,
   IMovieSeason,
   ProviderCapabilities,
+  IAnimeProvider,
+  IMovieProvider,
   ExtractorContext,
   ExtractorContextConfig,
   ProviderContextConfig,

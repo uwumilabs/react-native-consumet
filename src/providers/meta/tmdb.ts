@@ -12,7 +12,7 @@ import {
   type ProxyConfig,
   type IMovieEpisode,
 } from '../../models';
-import type { IPeopleResult } from '../../models/types';
+import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
 import HiMovies from '../movies/himovies/himovies';
@@ -25,11 +25,11 @@ class TMDB extends MovieParser {
   protected override classPath = 'META.TMDB';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES, TvType.ANIME]);
 
-  private provider: MovieParser;
+  private provider: MovieParser | IMovieProvider;
 
   constructor(
     private apiKey: string = '5201b54eb0968700e693a30576d7d4dc',
-    provider?: MovieParser,
+    provider?: MovieParser | IMovieProvider,
     proxyConfig?: ProxyConfig,
     adapter?: AxiosAdapter
   ) {

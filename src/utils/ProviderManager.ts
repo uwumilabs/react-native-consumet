@@ -1,9 +1,24 @@
 import createProviderContext from './create-provider-context';
 import type { ProviderContext } from '../models/provider-context';
-import { type IAnimeResult, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
+import {
+  AnimeParser,
+  MovieParser,
+  type IAnimeProvider,
+  type IAnimeResult,
+  type IMovieProvider,
+  type IMovieResult,
+  type ISearch,
+  type ProviderContextConfig,
+} from '../models';
 import extensionRegistry from '../extension-registry.json';
 import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
-import { animeProviders, movieProviders, type AnimeProvider, type MovieProvider } from './provider-maps';
+import {
+  animeProviders,
+  movieProviders,
+  type AnimeProviderId,
+  type MovieProviderId,
+  type ProviderInstanceOf,
+} from './provider-maps';
 import {
   assertValidIdentifier,
   verifyExtensionCode,
@@ -91,15 +106,7 @@ export class ProviderManager {
   /**
    * Load an extension by ID from the extensionManifest
    */
-  async loadExtension<T extends AnimeProvider | MovieProvider>(
-    extensionId: T
-  ): Promise<
-    T extends AnimeProvider
-      ? InstanceType<(typeof animeProviders)[T]>
-      : T extends MovieProvider
-        ? InstanceType<(typeof movieProviders)[T]>
-        : never
-  > {
+  async loadExtension<T extends string>(extensionId: T): Promise<ProviderInstanceOf<T>> {
     const metadata = this.getExtensionMetadata(extensionId as unknown as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
@@ -131,22 +138,12 @@ export class ProviderManager {
       }
       const providerCode = response.text;
 
-      // Verifies the code against the registry hash and the factory name before running it
-      let providerInstance = await this.executeProviderCode(
+      // Verifies the code against the registry hash and the factory name, then attaches the prototype
+      const providerInstance = await this.executeProviderCode(
         providerCode,
         metadata.factoryName,
         metadata as ExtensionManifest & { id: T }
       );
-
-      // Attempt to attach the prototype from local provider classes so instanceof works in app code
-      try {
-        // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
-        const lookupKey = (metadata as any).name || (extensionId as string);
-        providerInstance = this.attachProviderPrototype(providerInstance, lookupKey, metadata.category);
-      } catch (protoErr) {
-        // Non-fatal – if we can't attach prototype, just proceed with the plain instance
-        console.warn(`⚠️  Could not attach prototype for '${extensionId}':`, protoErr);
-      }
 
       // Cache the loaded extension
       this.loadedExtensions.set(cacheKey, providerInstance);
@@ -181,15 +178,17 @@ export class ProviderManager {
           ? (movieProviders as any)[key]
           : undefined;
 
-    if (!ctor || typeof ctor !== 'function' || !ctor.prototype) {
-      return instance; // Nothing to do
-    }
+    // Providers without a bundled class (registry-only) still get the category's base parser,
+    // so `instanceof AnimeParser` / `instanceof MovieParser` hold for every loaded provider.
+    const base = category === 'anime' ? AnimeParser : category === 'movies' ? MovieParser : undefined;
+    const target = typeof ctor === 'function' && ctor.prototype ? ctor : base;
+    if (!target) return instance;
 
     // If already an instance of desired ctor, skip
-    if (instance instanceof ctor) return instance;
+    if (instance instanceof target) return instance;
 
     // Attach the prototype so `instanceof` works at runtime
-    Object.setPrototypeOf(instance as object, ctor.prototype);
+    Object.setPrototypeOf(instance as object, target.prototype);
     return instance;
   }
 
@@ -199,18 +198,12 @@ export class ProviderManager {
    *
    * @throws IntegrityError before running anything if the hash or factory name is invalid
    */
-  public async executeProviderCode<T extends AnimeProvider | MovieProvider>(
+  public async executeProviderCode<T extends string>(
     code: string,
     factoryName: string,
     metadata: ExtensionManifest & { id: T },
     options: ExecuteCodeOptions = {}
-  ): Promise<
-    T extends AnimeProvider
-      ? InstanceType<(typeof animeProviders)[T]>
-      : T extends MovieProvider
-        ? InstanceType<(typeof movieProviders)[T]>
-        : never
-  > {
+  ): Promise<ProviderInstanceOf<T>> {
     const id = String(metadata?.id ?? factoryName);
     assertValidIdentifier(factoryName, 'factoryName', id);
     if (!options.skipIntegrity) {
@@ -411,7 +404,7 @@ export class ProviderManager {
   /**
    * Get anime provider
    */
-  async getAnimeProvider<T extends AnimeProvider>(extensionId: T): Promise<InstanceType<(typeof animeProviders)[T]>> {
+  async getAnimeProvider(extensionId: AnimeProviderId): Promise<IAnimeProvider> {
     const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -421,14 +414,14 @@ export class ProviderManager {
       throw new Error(`Extension '${extensionId}' is not an anime provider`);
     }
 
-    const instance = await this.loadExtension(extensionId);
-    return instance;
+    // The category was checked above, so the loaded provider is an anime provider.
+    return (await this.loadExtension(extensionId)) as IAnimeProvider;
   }
 
   /**
    * Get movie provider
    */
-  async getMovieProvider<T extends MovieProvider>(extensionId: T): Promise<InstanceType<(typeof movieProviders)[T]>> {
+  async getMovieProvider(extensionId: MovieProviderId): Promise<IMovieProvider> {
     const metadata = this.getExtensionMetadata(extensionId as string);
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found`);
@@ -438,8 +431,8 @@ export class ProviderManager {
       throw new Error(`Extension '${extensionId}' is not a movie provider`);
     }
 
-    const instance = await this.loadExtension(extensionId);
-    return instance;
+    // The category was checked above, so the loaded provider is a movie provider.
+    return (await this.loadExtension(extensionId)) as IMovieProvider;
   }
 
   /**
@@ -460,7 +453,7 @@ export class ProviderManager {
     const extensions = this.getExtensionsByCategory(category);
     const searchPromises = extensions.map(async (ext) => {
       try {
-        const provider = await this.loadExtension(ext.id as AnimeProvider | MovieProvider);
+        const provider = await this.loadExtension(ext.id);
         const results = (await provider.search(query, page)) as ISearch<IAnimeResult | IMovieResult>;
         return { extensionId: ext.id, results };
       } catch (error) {

@@ -16,7 +16,17 @@ if (typeof globalThis !== 'undefined') {
 import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
 
 // Provider metadata (catalog of built-in providers)
-import type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './utils';
+import type {
+  AnimeProvider,
+  MovieProvider,
+  animeProviders,
+  movieProviders,
+  AnimeProviderId,
+  MovieProviderId,
+  KnownAnimeProviderId,
+  KnownMovieProviderId,
+  ProviderInstanceOf,
+} from './utils';
 
 import extensionRegistry from './extension-registry.json';
 // Utils (contexts, and provider management)
@@ -97,6 +107,8 @@ import {
   type ProxyConfig,
   type AniZipEpisode,
   type ProviderCapabilities,
+  type IAnimeProvider,
+  type IMovieProvider,
   type IMovieSeason,
   type ExtensionManifest,
   type ExtractorInfo,
@@ -109,7 +121,17 @@ import {
 // Providers (namespaced)
 export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
 
-export type { AnimeProvider, MovieProvider, animeProviders, movieProviders };
+export type {
+  AnimeProvider,
+  MovieProvider,
+  animeProviders,
+  movieProviders,
+  AnimeProviderId,
+  MovieProviderId,
+  KnownAnimeProviderId,
+  KnownMovieProviderId,
+  ProviderInstanceOf,
+};
 
 // Models: runtime enums/constants
 export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat };
@@ -172,6 +194,8 @@ export type {
   AniZipEpisode,
   IMovieSeason,
   ProviderCapabilities,
+  IAnimeProvider,
+  IMovieProvider,
   ExtensionManifest,
   ExtractorInfo,
 };

@@ -9,5 +9,5 @@ export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from '.
 export { createExtractorContext } from './create-extractor-context';
 export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';
-export type { AnimeProvider, MovieProvider, animeProviders, movieProviders } from './provider-maps';
+export type { AnimeProvider, MovieProvider, animeProviders, movieProviders, AnimeProviderId, MovieProviderId, KnownAnimeProviderId, KnownMovieProviderId, ProviderInstanceOf, } from './provider-maps';
 //# sourceMappingURL=index.d.ts.map

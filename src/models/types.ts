@@ -23,6 +23,29 @@ export interface ProviderCapabilities {
   subDub?: 'separate' | 'combined';
 }
 
+/**
+ * An anime provider instance, whether built from a bundled class or loaded from registry code
+ * (registry-loaded providers are plain objects, not class instances).
+ */
+export interface IAnimeProvider {
+  readonly name: string;
+  capabilities?: ProviderCapabilities;
+  search(query: string, ...args: any[]): Promise<ISearch<IAnimeResult>>;
+  fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>;
+  fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>;
+  fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>;
+}
+
+/** A movie/TV provider instance, whether built from a bundled class or loaded from registry code. */
+export interface IMovieProvider {
+  readonly name: string;
+  capabilities?: ProviderCapabilities;
+  search(query: string, ...args: any[]): Promise<ISearch<IMovieResult>>;
+  fetchMediaInfo(mediaId: string, ...args: any[]): Promise<IMovieInfo>;
+  fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>;
+  fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>;
+}
+
 export interface ITitle {
   romaji?: string;
   english?: string;
