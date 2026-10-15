@@ -41,9 +41,11 @@ React Native library providing access to entertainment media information (anime,
 ## Installation
 
 ```sh
-npm install react-native-consumet
-# or yarn add react-native-consumet
+npm install react-native-consumet react-native-get-random-values
+# or yarn add react-native-consumet react-native-get-random-values
 ```
+
+`react-native-get-random-values` is a peer dependency: it ships native code, and React Native autolinking only links packages your app depends on directly. Install it in your app (in Expo apps, `npx expo install react-native-get-random-values` picks a compatible version), then rebuild the native app, e.g. `cd ios && pod install` for bare iOS projects. Versions 1.8.0 and later 1.x, and 2.x, are supported. The library imports it from its entry point to polyfill `crypto.getRandomValues`, so you don't import it yourself.
 
 > [!IMPORTANT]  
 > This library has been primarily tested on Android devices. iOS testing is currently limited due to lack of MacBook access. Some providers (like Zoro, FlixHQ) may not work correctly on iOS. Contributions from developers with iOS testing capabilities are greatly appreciated!

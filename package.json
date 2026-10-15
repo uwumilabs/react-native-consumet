@@ -6,7 +6,11 @@
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/commonjs/src/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/index.tsx",
+    "./lib/module/index.js",
+    "./lib/commonjs/index.js"
+  ],
   "exports": {
     ".": {
       "import": {
@@ -25,7 +29,6 @@
     "lib",
     "android",
     "ios",
-    "cpp",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",
@@ -93,7 +96,7 @@
     "@eslint/compat": "^1.2.7",
     "@react-native-community/cli": "20.2.0",
     "@react-native/eslint-config": "0.87.1",
-    "@release-it/conventional-changelog": "8.0.2",
+    "@release-it/conventional-changelog": "^10.0.6",
     "@types/crypto-js": "^4.2.2",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.0",
@@ -113,7 +116,8 @@
     "react": "19.2.3",
     "react-native": "0.87.1",
     "react-native-builder-bob": "^0.38.3",
-    "release-it": "latest",
+    "react-native-get-random-values": "1.8.0",
+    "release-it": "^19.2.4",
     "ts-jest": "^29.3.1",
     "ts-node": "^10.9.2",
     "turbo": "^1.10.7",
@@ -121,7 +125,8 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-get-random-values": "^1.8.0 || ^2.0.0"
   },
   "workspaces": [
     "apps"
@@ -214,7 +219,6 @@
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
     "crypto-js": "^4.2.0",
-    "react-native-get-random-values": "1.8.0",
     "string-similarity": "^4.0.4"
   }
 }

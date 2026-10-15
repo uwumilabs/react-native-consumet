@@ -1,39 +1,32 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  // Task inputs are relative to the app workspace (apps/), so the library files the native builds
+  // depend on are listed as global dependencies.
+  "globalDependencies": [
+    "package.json",
+    "*.podspec",
+    "react-native.config.js",
+    "src/*.ts",
+    "src/*.tsx",
+    "android/**",
+    "ios/**"
+  ],
   "pipeline": {
     "build:android": {
       "env": ["ORG_GRADLE_PROJECT_newArchEnabled"],
       "inputs": [
         "package.json",
-        "android",
-        "!android/build",
-        "src/*.ts",
-        "src/*.tsx",
-        "apps/package.json",
-        "apps/android",
-        "!apps/android/.gradle",
-        "!apps/android/build",
-        "!apps/android/app/build"
+        "src/**",
+        "android/**",
+        "!android/.gradle/**",
+        "!android/build/**",
+        "!android/app/build/**"
       ],
       "outputs": []
     },
     "build:ios": {
       "env": ["RCT_NEW_ARCH_ENABLED"],
-      "inputs": [
-        "package.json",
-        "*.podspec",
-        "ios",
-        "src/*.ts",
-        "src/*.tsx",
-        "apps/package.json",
-        "apps/ios",
-        "!apps/ios/build",
-        "!apps/ios/Pods",
-        "apps/expo-example/package.json",
-        "apps/expo-example/ios",
-        "!apps/expo-example/ios/build",
-        "!apps/expo-example/ios/Pods"
-      ],
+      "inputs": ["package.json", "src/**", "ios/**", "!ios/build/**", "!ios/Pods/**"],
       "outputs": []
     }
   }
