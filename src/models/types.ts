@@ -479,6 +479,11 @@ export interface IMovieSeason {
 }
 
 export interface IMovieInfo extends IMovieResult {
+  /**
+   * TMDB meta only: the provider's media id when the title was found on the provider (pass it to the
+   * provider as the media id). Unset when nothing matched; `id` stays the TMDB id either way.
+   */
+  providerId?: string;
   cover?: string;
   recommendations?: IMovieResult[];
   genres?: string[];

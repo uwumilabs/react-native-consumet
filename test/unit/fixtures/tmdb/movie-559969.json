@@ -1,0 +1,81 @@
+{
+  "id": 559969,
+  "title": "El Camino: A Breaking Bad Movie",
+  "original_title": "El Camino: A Breaking Bad Movie",
+  "release_date": "2019-10-11",
+  "poster_path": "/ePXuKdXZuJx8hHMNr2yM4jY2L7Z.jpg",
+  "backdrop_path": "/uLXK1LQM28XovWHPao3ViTeggXA.jpg",
+  "vote_average": 7.058,
+  "genres": [
+    {
+      "id": 80,
+      "name": "Crime"
+    },
+    {
+      "id": 18,
+      "name": "Drama"
+    },
+    {
+      "id": 53,
+      "name": "Thriller"
+    }
+  ],
+  "runtime": 123,
+  "overview": "In the wake of his dramatic escape from captivity, Jesse Pinkman must come to...",
+  "credits": {
+    "cast": [
+      {
+        "id": 84497,
+        "name": "Aaron Paul",
+        "character": "Jesse",
+        "profile_path": "/8Ac9uuoYwZoYVAIJfRLzzLsGGJn.jpg"
+      },
+      {
+        "id": 88124,
+        "name": "Jesse Plemons",
+        "character": "Todd",
+        "profile_path": "/og4I51GsuwohdPgoELOHVMMqMre.jpg"
+      }
+    ],
+    "crew": [
+      {
+        "id": 66633,
+        "name": "Vince Gilligan",
+        "job": "Director"
+      }
+    ]
+  },
+  "videos": {
+    "results": [
+      {
+        "key": "cTCp6IIu6DM",
+        "site": "YouTube"
+      }
+    ]
+  },
+  "external_ids": {
+    "imdb_id": "tt9243946"
+  },
+  "similar": {
+    "results": [
+      {
+        "id": 1411953,
+        "title": "Night Shift",
+        "poster_path": "/2rBcWwdykN1bFSpZGmWBgvJQKL7.jpg",
+        "vote_average": 0,
+        "release_date": ""
+      }
+    ]
+  },
+  "recommendations": {
+    "results": [
+      {
+        "id": 1242501,
+        "title": "Icefall",
+        "poster_path": "/5Byv6nznAb2Izd0gHpODOXnuSbo.jpg",
+        "vote_average": 6.538,
+        "release_date": "2025-10-16"
+      }
+    ]
+  }
+}

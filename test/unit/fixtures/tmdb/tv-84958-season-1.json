@@ -1,0 +1,54 @@
+{
+  "season_number": 1,
+  "poster_path": "/8uVqe9ThcuYVNdh4O0kuijIWMLL.jpg",
+  "episodes": [
+    {
+      "episode_number": 1,
+      "season_number": 1,
+      "name": "Glorious Purpose",
+      "air_date": "2021-06-09",
+      "still_path": "/gxh0k3aADsYkt9tgkfm2kGn2qQj.jpg",
+      "overview": "After stealing the Tesseract in \"Avengers: Endgame,\" Loki lands before the Ti..."
+    },
+    {
+      "episode_number": 2,
+      "season_number": 1,
+      "name": "The Variant",
+      "air_date": "2021-06-16",
+      "still_path": "/gqpcfkdmSsm6xiX2EsLkwUvA8g8.jpg",
+      "overview": "Mobius puts Loki to work, but not everyone at TVA is thrilled about the God o..."
+    },
+    {
+      "episode_number": 3,
+      "season_number": 1,
+      "name": "Lamentis",
+      "air_date": "2021-06-23",
+      "still_path": "/aTjfWml9Prd8cUB9cfk8yOAEh7v.jpg",
+      "overview": "Loki finds out The Variant's plans, but he has his own that will forever alte..."
+    },
+    {
+      "episode_number": 4,
+      "season_number": 1,
+      "name": "The Nexus Event",
+      "air_date": "2021-06-30",
+      "still_path": "/niIXLqEr98mnQuYuMuEvq9Y6OQa.jpg",
+      "overview": "Frayed nerves and paranoia infiltrate the TVA as Mobius and Hunter B-15 searc..."
+    },
+    {
+      "episode_number": 5,
+      "season_number": 1,
+      "name": "Journey into Mystery",
+      "air_date": "2021-07-07",
+      "still_path": "/5fRAAO13URmteku8mb39V9YPJBb.jpg",
+      "overview": "Loki tries to escape The Void, a desolate purgatory where he meets variant ve..."
+    },
+    {
+      "episode_number": 6,
+      "season_number": 1,
+      "name": "For All Time. Always.",
+      "air_date": "2021-07-14",
+      "still_path": "/98hGgYbNFP8GnZhJzAar22bWIAT.jpg",
+      "overview": "The clock is ticking in the season finale which finds Loki and Sylvie on a da..."
+    }
+  ]
+}

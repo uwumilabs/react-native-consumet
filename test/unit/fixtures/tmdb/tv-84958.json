@@ -1,0 +1,73 @@
+{
+  "id": 84958,
+  "name": "Loki",
+  "first_air_date": "2021-06-09",
+  "number_of_seasons": 2,
+  "number_of_episodes": 12,
+  "poster_path": "/kEl2t3OhXc3Zb9FBh1AuYzRTgZp.jpg",
+  "backdrop_path": "/q3jHCb4dMfYF6ojikKuHd6LscxC.jpg",
+  "vote_average": 8.2,
+  "genres": [
+    {
+      "id": 18,
+      "name": "Drama"
+    },
+    {
+      "id": 10765,
+      "name": "Sci-Fi & Fantasy"
+    }
+  ],
+  "episode_run_time": [],
+  "next_episode_to_air": null,
+  "overview": "After stealing the Tesseract during the events of “Avengers: Endgame,” an alt...",
+  "credits": {
+    "cast": [
+      {
+        "id": 91606,
+        "name": "Tom Hiddleston",
+        "character": "Loki Laufeyson",
+        "profile_path": "/mclHxMm8aPlCPKptP67257F5GPo.jpg"
+      },
+      {
+        "id": 1252533,
+        "name": "Sophia Di Martino",
+        "character": "Sylvie / The Variant",
+        "profile_path": "/qZdFp18btpQJfDoknxr7DgfRpcB.jpg"
+      }
+    ],
+    "crew": []
+  },
+  "videos": {
+    "results": [
+      {
+        "key": "R6o1UWEBVQA",
+        "site": "YouTube"
+      }
+    ]
+  },
+  "external_ids": {
+    "imdb_id": "tt9140554"
+  },
+  "similar": {
+    "results": [
+      {
+        "id": 410,
+        "name": "Seijuu Sentai Gingaman",
+        "poster_path": "/oIF3MuLFEwWptVV6ghWx7UzEPgA.jpg",
+        "vote_average": 6.8,
+        "first_air_date": "1998-02-22"
+      }
+    ]
+  },
+  "recommendations": {
+    "results": [
+      {
+        "id": 6343,
+        "name": "Painkiller Jane",
+        "poster_path": "/4fm2MBCpIqL3Be4TsFXNelIkbiw.jpg",
+        "vote_average": 6.036,
+        "first_air_date": "2007-04-13"
+      }
+    ]
+  }
+}

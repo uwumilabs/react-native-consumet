@@ -1,0 +1,54 @@
+{
+  "season_number": 2,
+  "poster_path": "/oJdVHUYrjdS2IqiNztVIP4GPB1p.jpg",
+  "episodes": [
+    {
+      "episode_number": 1,
+      "season_number": 2,
+      "name": "Ouroboros",
+      "air_date": "2023-10-05",
+      "still_path": "/aIJvoQAal0TDDIl5plfKfSnAish.jpg",
+      "overview": "Loki finds himself lost to time and torn, quite literally, between past, pres..."
+    },
+    {
+      "episode_number": 2,
+      "season_number": 2,
+      "name": "Breaking Brad",
+      "air_date": "2023-10-12",
+      "still_path": "/cNyNfCWMdLpTXquuGzUvZwhBaVJ.jpg",
+      "overview": "With the TVA on the verge of a temporal meltdown, Loki & Mobius will stop at..."
+    },
+    {
+      "episode_number": 3,
+      "season_number": 2,
+      "name": "1893",
+      "air_date": "2023-10-19",
+      "still_path": "/1LWyxNX7B5TWfJUB6gw3UFPZOF2.jpg",
+      "overview": "Loki & Mobius go on the hunt to find everyone’s favorite cartoon clock as the..."
+    },
+    {
+      "episode_number": 4,
+      "season_number": 2,
+      "name": "Heart of the TVA",
+      "air_date": "2023-10-26",
+      "still_path": "/3NUiKf3CEoZtXB4EaBPOHVEPUxR.jpg",
+      "overview": "The TVA's Loom nears catastrophic failure but Loki, Mobius and Sylvie have a..."
+    },
+    {
+      "episode_number": 5,
+      "season_number": 2,
+      "name": "Science/Fiction",
+      "air_date": "2023-11-02",
+      "still_path": "/ueXDPrWLFbXHAtrxMas35ja8sFb.jpg",
+      "overview": "Loki traverses dying timelines in an attempt to find his friends, but Reality..."
+    },
+    {
+      "episode_number": 6,
+      "season_number": 2,
+      "name": "Glorious Purpose",
+      "air_date": "2023-11-09",
+      "still_path": "/8Iyk5gy1Dbh5uwZ3B3eDVl3XPd9.jpg",
+      "overview": "Loki learns the true nature of 'glorious purpose' as he rectifies the past."
+    }
+  ]
+}

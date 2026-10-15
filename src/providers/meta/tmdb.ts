@@ -17,6 +17,15 @@ import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
 import HiMovies from '../movies/himovies/himovies';
 
+/** What TMDB knows about a title, used to pick the matching provider result. */
+type TitleHints = {
+  type: TvType;
+  year?: number;
+  totalSeasons?: number;
+  totalEpisodes?: number;
+  [key: string]: any;
+};
+
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
   protected override baseUrl = 'https://www.themoviedb.org';
@@ -166,6 +175,9 @@ class TMDB extends MovieParser {
   };
 
   /**
+   * TMDB info with every season and episode. `id` is always the TMDB id. When the title is found on
+   * the provider, `providerId` is the provider's media id and episodes carry provider episode ids;
+   * with no match (or a failing provider) both are unset and the TMDB metadata is still returned.
    * @param id media id (anime or movie/tv)
    * @param type movie or tv
    */
@@ -182,18 +194,17 @@ class TMDB extends MovieParser {
       //request api to get media info from tmdb
       const { data } = await metaHttp.get(infoUrl);
 
-      //get provider id from title and year (if available) to get the correct provider id for the movie/tv series (e.g. flixhq)
-      const providerId = await this.findIdFromTitle(data?.title || data?.name, {
+      //find the movie/tv series on the provider (e.g. flixhq) by title, year and season count
+      const match = await this.matchProvider(data?.title || data?.name, {
         type: type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
         totalSeasons: data?.number_of_seasons,
         totalEpisodes: data?.number_of_episodes,
         year: new Date(data?.release_year || data?.first_air_date || data?.release_date).getFullYear(),
       });
 
-      // fetch media info from provider; with no match there is nothing playable to map
-      const InfoFromProvider = providerId ? await this.provider.fetchMediaInfo(providerId) : undefined;
-
-      info.id = providerId as string;
+      // with no match there is nothing playable to map; the TMDB info and seasons are still returned
+      const InfoFromProvider = match?.info;
+      if (match) info.providerId = match.id;
 
       //check if the movie so episode id does not show on tv shows
       if (type === 'movie') info.episodeId = InfoFromProvider?.episodes![0]?.id;
@@ -273,8 +284,6 @@ class TMDB extends MovieParser {
         const seasons = info.seasons as any[];
 
         const providerEpisodes = InfoFromProvider?.episodes as any[];
-
-        if (providerEpisodes?.length < 1) return info;
 
         info.nextAiringEpisode = data?.next_episode_to_air
           ? {
@@ -368,77 +377,64 @@ class TMDB extends MovieParser {
   };
 
   /**
+   * Find the title on the provider and fetch the provider's info for it. Returns nothing when no
+   * search result matches or the provider fails, so the TMDB metadata never depends on the provider.
+   */
+  private matchProvider = async (
+    title: string,
+    extraData: TitleHints
+  ): Promise<{ id: string; info: IMovieInfo | IAnimeInfo } | undefined> => {
+    try {
+      const id = await this.findIdFromTitle(title, extraData);
+      if (!id) return undefined;
+      return { id, info: await this.provider.fetchMediaInfo(id) };
+    } catch {
+      return undefined;
+    }
+  };
+
+  /**
    * Find the id of a media from its title. and extra data. (year, totalSeasons, totalEpisodes)
    * @param title
    * @param extraData
    * @returns id of the media
    */
-  private findIdFromTitle = async (
-    title: string,
-    extraData: {
-      type: TvType;
-      year?: number;
-      totalSeasons?: number;
-      totalEpisodes?: number;
-      [key: string]: any;
-    }
-  ): Promise<string | undefined> => {
+  private findIdFromTitle = async (title: string, extraData: TitleHints): Promise<string | undefined> => {
     //clean title
     title = title.replace(/[^a-zA-Z0-9 ]/g, '').toLowerCase();
 
     const findMedia = (await this.provider.search(title)) as ISearch<IAnimeResult>;
-    if (findMedia.results.length === 0) return '';
 
-    // console.log(findMedia.results);
-    // console.log(extraData);
-
-    // Sort the retrieved info for more accurate results.
-    findMedia.results.sort((a, b) => {
-      const targetTitle = title;
-
-      let firstTitle: string;
-      let secondTitle: string;
-
-      if (typeof a.title === 'string') firstTitle = a?.title as string;
-      else firstTitle = (a?.title as string) ?? '';
-
-      if (typeof b.title === 'string') secondTitle = b.title as string;
-      else secondTitle = (b?.title as string) ?? '';
-
-      const firstRating = calculateStringSimilarity(targetTitle, firstTitle.toLowerCase());
-      const secondRating = calculateStringSimilarity(targetTitle, secondTitle.toLowerCase());
-
-      // Sort in descending order
-      return secondRating - firstRating;
-    });
-
-    //remove results that dont match the type
-    findMedia.results = findMedia.results.filter((result) => {
-      if (extraData.type === TvType.MOVIE) return (result.type as string) === TvType.MOVIE;
-      else if (extraData.type === TvType.TVSERIES) return (result.type as string) === TvType.TVSERIES;
-      else return result;
-    });
-    // Drop results whose title isn't close, or whose year or season count (±2) contradicts TMDB.
-    // Results that don't report a year or season count stay as candidates (order is by title similarity).
-    const yearOf = (result: IAnimeResult) => /\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1];
+    // Drop results whose title isn't close, or whose type, year (±1) or season count (±2) contradicts
+    // TMDB. Results that don't report a type, year or season count stay as candidates.
+    const yearOf = (result: IAnimeResult) => Number(/\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1]);
+    const checkType = extraData.type === TvType.MOVIE || extraData.type === TvType.TVSERIES;
     const checkSeasons = extraData.type === TvType.TVSERIES && Boolean(extraData.totalSeasons);
-    findMedia.results = findMedia.results.filter((result) => {
-      const resultTitle = typeof result.title === 'string' ? result.title : '';
-      if (calculateStringSimilarity(title, resultTitle.toLowerCase()) < 0.5) return false;
+    const candidates = findMedia.results
+      .map((result) => {
+        const resultTitle = typeof result.title === 'string' ? result.title : '';
+        const year = yearOf(result);
+        return {
+          result,
+          similarity: calculateStringSimilarity(title, resultTitle.toLowerCase()),
+          yearGap: year && extraData.year ? Math.abs(year - extraData.year) : undefined,
+        };
+      })
+      .filter(({ result, similarity, yearGap }) => {
+        if (similarity < 0.5) return false;
+        if (checkType && result.type && (result.type as string) !== extraData.type) return false;
+        if (yearGap !== undefined && yearGap > 1) return false;
 
-      const year = yearOf(result);
-      if (extraData.year && year && year !== String(extraData.year)) return false;
+        const seasons = result.seasons;
+        if (checkSeasons && typeof seasons === 'number') {
+          return seasons >= extraData.totalSeasons! - 2 && seasons <= extraData.totalSeasons! + 2;
+        }
+        return true;
+      })
+      // Closest title first; between equally close titles, the exact year, then ±1, then unknown.
+      .sort((a, b) => b.similarity - a.similarity || (a.yearGap ?? 2) - (b.yearGap ?? 2));
 
-      const seasons = result.seasons;
-      if (checkSeasons && typeof seasons === 'number') {
-        return seasons >= extraData.totalSeasons! - 2 && seasons <= extraData.totalSeasons! + 2;
-      }
-      return true;
-    });
-
-    // console.log(findMedia.results);
-
-    return findMedia?.results[0]?.id || undefined;
+    return candidates[0]?.result.id || undefined;
   };
 
   /**

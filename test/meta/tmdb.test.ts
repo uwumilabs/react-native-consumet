@@ -77,8 +77,8 @@ describe.each([
     const info = await tmdb.fetchMediaInfo(tmdbId, 'tv');
 
     expect(info.title).toBe(title);
-    expect(info.id).toBeTruthy();
-    expect(info.id).not.toBe(tmdbId);
+    expect(info.id).toBe(tmdbId);
+    expect(info.providerId).toBeTruthy();
     expect(info.totalSeasons).toBeGreaterThan(1);
     expect(info.seasons).toHaveLength(info.totalSeasons as number);
     (info.seasons as any[]).forEach((season, index) =>
@@ -120,7 +120,8 @@ test('TMDB with VegaMovies: maps every Breaking Bad season from a multi-season p
   const tmdb = new META.TMDB(undefined, new MOVIES.VegaMovies());
   const info = await tmdb.fetchMediaInfo('1396', 'tv');
 
-  expect(info.id).toBe('download-breaking-bad-season-1-5');
+  expect(info.id).toBe('1396');
+  expect(info.providerId).toBe('download-breaking-bad-season-1-5');
   expect(info.seasons).toHaveLength(5);
   for (const season of info.seasons as any[]) {
     expect(season.episodes.length).toBeGreaterThan(0);

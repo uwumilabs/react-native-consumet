@@ -23,10 +23,18 @@ declare class TMDB extends MovieParser {
      */
     search: (query: string, page?: number) => Promise<ISearch<IMovieResult | IAnimeResult>>;
     /**
+     * TMDB info with every season and episode. `id` is always the TMDB id. When the title is found on
+     * the provider, `providerId` is the provider's media id and episodes carry provider episode ids;
+     * with no match (or a failing provider) both are unset and the TMDB metadata is still returned.
      * @param id media id (anime or movie/tv)
      * @param type movie or tv
      */
     fetchMediaInfo: (mediaId: string, type: string) => Promise<IMovieInfo | IAnimeInfo>;
+    /**
+     * Find the title on the provider and fetch the provider's info for it. Returns nothing when no
+     * search result matches or the provider fails, so the TMDB metadata never depends on the provider.
+     */
+    private matchProvider;
     /**
      * Find the id of a media from its title. and extra data. (year, totalSeasons, totalEpisodes)
      * @param title
