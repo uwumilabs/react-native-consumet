@@ -26,6 +26,18 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Release tags are needed to read each supported release's bundled registry.
+          fetch-depth: 0
+
+      - name: Check registry entries and published versions
+        run: node scripts/prepare-registry.js --check
+
   build-library:
     runs-on: ubuntu-latest
     steps:

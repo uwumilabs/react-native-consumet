@@ -48,6 +48,7 @@
     "test": "jest",
     "test:live": "LIVE_TESTS=1 jest",
     "registry:check": "node scripts/prepare-registry.js --check",
+    "registry:prune": "node scripts/prune-registry.js",
     "typecheck": "tsc",
     "lint": "eslint --fix .",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",

@@ -222,6 +222,18 @@ This copies the build output to an immutable path, `registry/extensions/<id>/<ve
 
 **Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it. Run `yarn registry:check` to verify the registry without writing anything.
 
+### Removing old published versions
+
+Deleting a published file breaks every app whose registry still points at it: installing that extension then gets a 404. Apps that already downloaded the file keep working. So a version may be deleted only when **all** of these hold:
+
+1. It isn't the current version of its entry in `src/extension-registry.json`.
+2. It isn't the newest version before the current one, which is kept so a bad release can be rolled back by changing one line.
+3. No supported release's bundled registry references it.
+
+**Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v1.7.2`, all `v1.7.*` and `v1.6.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases up to `v1.6.0` predate published files (their URLs point into `dist/`), so they don't protect anything.
+
+Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI runs `yarn registry:check`, which fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
+
 ## Step 5: Write Tests
 
 Create a new test file in the `test` directory corresponding to your provider's category (e.g., `test/anime/myanimewebsite.test.ts`).

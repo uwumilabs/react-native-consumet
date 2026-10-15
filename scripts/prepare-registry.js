@@ -10,11 +10,14 @@
  *
  * Usage:
  *   node scripts/prepare-registry.js          publish new versions, update src + dist registry
- *   node scripts/prepare-registry.js --check  verify only (no writes); exits 1 on any problem
+ *   node scripts/prepare-registry.js --check  verify only (no writes); exits 1 on any problem.
+ *       Also checks that every published file referenced by the current registry or by a
+ *       supported release's bundled registry still exists (see scripts/registry-support.js).
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { checkReferences } = require('./registry-support');
 
 const repoRoot = path.join(__dirname, '..');
 const registryPath = path.join(repoRoot, 'src', 'extension-registry.json');
@@ -80,6 +83,12 @@ function publish(entry, kind, key) {
 const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 registry.extensions = registry.extensions.map((e) => publish(e, 'extensions', String(e.id).toLowerCase()));
 registry.extractors = registry.extractors.map((e) => publish(e, 'extractors', String(e.name).toLowerCase()));
+
+if (checkOnly) {
+  const references = checkReferences(registry);
+  problems.push(...references.problems);
+  references.notes.forEach((note) => console.log(`  · ${note}`));
+}
 
 if (problems.length) {
   console.error(`Registry has ${problems.length} problem(s):\n${problems.map((p) => `  ✖ ${p}`).join('\n')}`);
