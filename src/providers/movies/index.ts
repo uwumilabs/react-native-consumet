@@ -31,5 +31,3 @@ export default {
   createYFlix,
   createVegaMovies,
 };
-
-export { VegaMovies, createVegaMovies } from './vegamovies/vegamovies';

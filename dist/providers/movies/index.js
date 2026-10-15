@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createVegaMovies = exports.VegaMovies = void 0;
 // import DramaCool from './dramacool';
 const multimovies_1 = __importDefault(require("./multimovies/multimovies"));
 const create_multimovies_1 = require("./multimovies/create-multimovies");
@@ -36,7 +35,4 @@ exports.default = {
     createYFlix: create_yflix_1.createYFlix,
     createVegaMovies: create_vegamovies_1.createVegaMovies,
 };
-var vegamovies_2 = require("./vegamovies/vegamovies");
-Object.defineProperty(exports, "VegaMovies", { enumerable: true, get: function () { return vegamovies_2.VegaMovies; } });
-Object.defineProperty(exports, "createVegaMovies", { enumerable: true, get: function () { return vegamovies_2.createVegaMovies; } });
 //# sourceMappingURL=index.js.map

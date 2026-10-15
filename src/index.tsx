@@ -80,6 +80,7 @@ import {
   GDFlix,
   Gofile,
   HubCloud,
+  FlixCloud,
 } from './extractors';
 
 // Models (domain types, enums, and constants)
@@ -126,6 +127,16 @@ import {
   type ExtensionManifest,
   type ExtractorInfo,
   type ExtensionRegistryData,
+  type ProviderType,
+  type ProviderConfig,
+  type ProviderContext,
+  type ProviderContextConfig,
+  type ExtractorContext,
+  type ExtractorContextConfig,
+  type IVideoExtractor,
+  AnimeParser,
+  MovieParser,
+  WatchListType,
   MetaError,
   type MetaErrorSource,
 } from './models';
@@ -150,7 +161,10 @@ export type {
 };
 
 // Models: runtime enums/constants
-export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat };
+export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat, WatchListType };
+
+// Models: base classes that providers (including registry extensions) extend
+export { AnimeParser, MovieParser };
 
 // Extractors
 export {
@@ -177,6 +191,7 @@ export {
   GDFlix,
   Gofile,
   HubCloud,
+  FlixCloud,
 };
 
 // Models: TypeScript types
@@ -215,6 +230,17 @@ export type {
   IMovieProvider,
   ExtensionManifest,
   ExtractorInfo,
+  ProviderType,
+};
+
+// Contexts handed to provider and extractor factories, provider metadata and the extractor interface
+export type {
+  ProviderConfig,
+  ProviderContext,
+  ProviderContextConfig,
+  ExtractorContext,
+  ExtractorContextConfig,
+  IVideoExtractor,
 };
 export { extensionRegistry as ExtensionRegistry };
 // Utils: context creation and provider management

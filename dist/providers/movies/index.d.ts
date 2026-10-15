@@ -29,5 +29,4 @@ declare const _default: {
     createVegaMovies: typeof createVegaMovies;
 };
 export default _default;
-export { VegaMovies, createVegaMovies } from './vegamovies/vegamovies';
 //# sourceMappingURL=index.d.ts.map

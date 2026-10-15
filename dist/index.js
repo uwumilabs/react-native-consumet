@@ -3,8 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = exports.IntegrityError = exports.verifyExtensionCode = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
-exports.MetaError = exports.assertCompatibleEntry = exports.isCompatibleEntry = exports.validateRegistry = void 0;
+exports.verifyExtensionCode = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.FlixCloud = exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MovieParser = exports.AnimeParser = exports.WatchListType = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
+exports.MetaError = exports.assertCompatibleEntry = exports.isCompatibleEntry = exports.validateRegistry = exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = exports.IntegrityError = void 0;
 require("react-native-get-random-values");
 const url_polyfill_1 = require("./utils/url-polyfill");
 Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
@@ -71,6 +71,7 @@ Object.defineProperty(exports, "MegaPlay", { enumerable: true, get: function () 
 Object.defineProperty(exports, "GDFlix", { enumerable: true, get: function () { return extractors_1.GDFlix; } });
 Object.defineProperty(exports, "Gofile", { enumerable: true, get: function () { return extractors_1.Gofile; } });
 Object.defineProperty(exports, "HubCloud", { enumerable: true, get: function () { return extractors_1.HubCloud; } });
+Object.defineProperty(exports, "FlixCloud", { enumerable: true, get: function () { return extractors_1.FlixCloud; } });
 // Models (domain types, enums, and constants)
 const models_1 = require("./models");
 Object.defineProperty(exports, "StreamingServers", { enumerable: true, get: function () { return models_1.StreamingServers; } });
@@ -80,5 +81,8 @@ Object.defineProperty(exports, "TvType", { enumerable: true, get: function () { 
 Object.defineProperty(exports, "Genres", { enumerable: true, get: function () { return models_1.Genres; } });
 Object.defineProperty(exports, "Topics", { enumerable: true, get: function () { return models_1.Topics; } });
 Object.defineProperty(exports, "MediaFormat", { enumerable: true, get: function () { return models_1.MediaFormat; } });
+Object.defineProperty(exports, "AnimeParser", { enumerable: true, get: function () { return models_1.AnimeParser; } });
+Object.defineProperty(exports, "MovieParser", { enumerable: true, get: function () { return models_1.MovieParser; } });
+Object.defineProperty(exports, "WatchListType", { enumerable: true, get: function () { return models_1.WatchListType; } });
 Object.defineProperty(exports, "MetaError", { enumerable: true, get: function () { return models_1.MetaError; } });
 //# sourceMappingURL=index.js.map
