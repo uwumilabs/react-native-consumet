@@ -6,6 +6,8 @@ export interface ExtractorInfo {
     aliases?: string[];
     /** version of the extractor */
     version: string;
+    /** Lowest CONTEXT_VERSION this extractor runs on (missing means 1); older libraries refuse it */
+    minContextVersion?: number;
     /** Immutable URL of this exact version (`registry/extractors/<name>/<version>.js`), written by prepare-registry */
     main: string;
     /** SHA-256 hex digest of the compiled JS file for integrity verification */
@@ -25,6 +27,11 @@ export interface ExtensionManifest {
     description: string;
     /** Extension version (semver format) */
     version: string;
+    /**
+     * Lowest CONTEXT_VERSION this extension runs on; missing means 1. Libraries with an older context
+     * list the entry but refuse to run it with a RegistryError (`INCOMPATIBLE_ENTRY`).
+     */
+    minContextVersion?: number;
     /** Author information */
     author: {
         name: string;
@@ -65,5 +72,15 @@ export interface ExtensionManifest {
     isSourceDirect?: boolean;
     /** does the provider have multiple servers/extractors to choose from */
     haveMultiServers?: boolean;
+}
+/**
+ * A registry as passed to ProviderManager / ExtractorManager: the bundled `ExtensionRegistry`, or one
+ * downloaded as JSON. Checked at runtime, so an invalid registry throws a RegistryError.
+ */
+export interface ExtensionRegistryData {
+    /** Registry format version (REGISTRY_SCHEMA_VERSION); registries without one read as 1 */
+    schemaVersion?: number;
+    extensions: ExtensionManifest[];
+    extractors: ExtractorInfo[];
 }
 //# sourceMappingURL=extension-manifest.d.ts.map

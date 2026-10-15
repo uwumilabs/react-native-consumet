@@ -40,8 +40,20 @@ import {
   defaultExtractors,
   verifyExtensionCode,
   IntegrityError,
+  CONTEXT_VERSION,
+  REGISTRY_SCHEMA_VERSION,
+  RegistryError,
+  validateRegistry,
+  isCompatibleEntry,
+  assertCompatibleEntry,
 } from './utils';
-import type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions } from './utils';
+import type {
+  IntegrityErrorCode,
+  IntegrityOptions,
+  ExecuteCodeOptions,
+  ProviderLoadOptions,
+  RegistryErrorCode,
+} from './utils';
 
 // Extractors (video/file hosters and scrapers)
 import {
@@ -112,6 +124,7 @@ import {
   type IMovieSeason,
   type ExtensionManifest,
   type ExtractorInfo,
+  type ExtensionRegistryData,
   MetaError,
   type MetaErrorSource,
 } from './models';
@@ -215,7 +228,14 @@ export {
   defaultExtractors,
   verifyExtensionCode,
   IntegrityError,
+  CONTEXT_VERSION,
+  REGISTRY_SCHEMA_VERSION,
+  RegistryError,
+  validateRegistry,
+  isCompatibleEntry,
+  assertCompatibleEntry,
   MetaError,
 };
 export type { MetaErrorSource };
-export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions };
+export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions, RegistryErrorCode };
+export type { ExtensionRegistryData };

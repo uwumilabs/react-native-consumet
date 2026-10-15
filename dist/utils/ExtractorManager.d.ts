@@ -1,5 +1,5 @@
 import type { IVideoExtractor, ExtractorContextConfig } from '../models';
-import type { ExtractorInfo } from '../models/extension-manifest';
+import type { ExtensionRegistryData, ExtractorInfo } from '../models/extension-manifest';
 import extensionRegistry from '../extension-registry.json';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export declare class ExtractorManager {
@@ -9,13 +9,16 @@ export declare class ExtractorManager {
     private extractorContext;
     private integrityOptions;
     private extractorAliases;
-    constructor(registry: typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions);
+    /**
+     * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
+     */
+    constructor(registry: ExtensionRegistryData | typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions);
     /**
      * Initialize static extractors as fallbacks
      */
     private initializeStaticExtractors;
     /**
-     * Load extractors from the unified extension registry
+     * Index the validated registry extractors (and their aliases) by lowercased name
      */
     private loadRegistry;
     /**
@@ -45,6 +48,7 @@ export declare class ExtractorManager {
      * Execute extractor code and create instance.
      * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
      *
+     * @throws RegistryError before running anything if the entry needs a newer extension context
      * @throws IntegrityError before running anything if the hash or extractor name is invalid
      */
     executeExtractorCode(code: string, metadata: ExtractorInfo, options?: ExecuteCodeOptions): Promise<IVideoExtractor>;

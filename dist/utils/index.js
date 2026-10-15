@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PolyURLSearchParams = exports.PolyURL = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.createExtractorContext = exports.IntegrityError = exports.verifyExtensionCode = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.anilistCharacterQuery = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.range = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.USER_AGENT = void 0;
+exports.PolyURLSearchParams = exports.PolyURL = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.createExtractorContext = exports.assertCompatibleEntry = exports.isCompatibleEntry = exports.validateRegistry = exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = exports.IntegrityError = exports.verifyExtensionCode = exports.ExtractorManager = exports.ProviderManager = exports.createProviderContext = exports.anilistCharacterQuery = exports.anilistStaffInfoQuery = exports.anilistSiteStatisticsQuery = exports.anilistAdvancedQuery = exports.anilistGenresQuery = exports.anilistAiringScheduleQuery = exports.anilistPopularQuery = exports.anilistTrendingQuery = exports.kitsuSearchQuery = exports.anilistMediaDetailQuery = exports.anilistSearchQuery = exports.calculateStringSimilarity = exports.substringBefore = exports.substringAfter = exports.convertDuration = exports.isJson = exports.days = exports.getDays = exports.range = exports.capitalizeFirstLetter = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.USER_AGENT = void 0;
 // Re-export helper utilities (no extractors to avoid circular deps)
 const utils_1 = require("./utils");
 Object.defineProperty(exports, "USER_AGENT", { enumerable: true, get: function () { return utils_1.USER_AGENT; } });
@@ -39,6 +39,13 @@ Object.defineProperty(exports, "ExtractorManager", { enumerable: true, get: func
 var extension_integrity_1 = require("./extension-integrity");
 Object.defineProperty(exports, "verifyExtensionCode", { enumerable: true, get: function () { return extension_integrity_1.verifyExtensionCode; } });
 Object.defineProperty(exports, "IntegrityError", { enumerable: true, get: function () { return extension_integrity_1.IntegrityError; } });
+var registry_schema_1 = require("./registry-schema");
+Object.defineProperty(exports, "CONTEXT_VERSION", { enumerable: true, get: function () { return registry_schema_1.CONTEXT_VERSION; } });
+Object.defineProperty(exports, "REGISTRY_SCHEMA_VERSION", { enumerable: true, get: function () { return registry_schema_1.REGISTRY_SCHEMA_VERSION; } });
+Object.defineProperty(exports, "RegistryError", { enumerable: true, get: function () { return registry_schema_1.RegistryError; } });
+Object.defineProperty(exports, "validateRegistry", { enumerable: true, get: function () { return registry_schema_1.validateRegistry; } });
+Object.defineProperty(exports, "isCompatibleEntry", { enumerable: true, get: function () { return registry_schema_1.isCompatibleEntry; } });
+Object.defineProperty(exports, "assertCompatibleEntry", { enumerable: true, get: function () { return registry_schema_1.assertCompatibleEntry; } });
 var create_extractor_context_1 = require("./create-extractor-context");
 Object.defineProperty(exports, "createExtractorContext", { enumerable: true, get: function () { return create_extractor_context_1.createExtractorContext; } });
 var extension_utils_1 = require("./extension-utils");

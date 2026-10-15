@@ -8,7 +8,7 @@ import MovieParser from './movie-parser';
 import { MetaError, type MetaErrorSource } from './meta-error';
 import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
 import type { ProviderContext, ProviderConfig, ProviderContextConfig } from './provider-context';
-import type { ExtensionManifest, ProviderType, ExtractorInfo } from './extension-manifest';
+import type { ExtensionManifest, ProviderType, ExtractorInfo, ExtensionRegistryData } from './extension-manifest';
 import {
   type IProviderStats,
   type ISearch,
@@ -113,4 +113,5 @@ export type {
   ExtensionManifest,
   ProviderType,
   ExtractorInfo,
+  ExtensionRegistryData,
 };

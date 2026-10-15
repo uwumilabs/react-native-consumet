@@ -90,10 +90,16 @@ describe('base URL from the registry (EXT-6)', () => {
   const manifest = {
     id: 'probe',
     name: 'Probe',
+    description: 'Base URL test provider',
     version: '1.0.0',
+    author: { name: 'Tests' },
     category: 'anime',
     factoryName: 'createBaseUrlProbe',
     baseUrl: 'https://registry.example',
+    logo: '',
+    status: 'beta',
+    lastUpdated: '2026-10-15T00:00:00Z',
+    extractors: [],
     main: 'https://raw.githubusercontent.com/o/r/refs/heads/main/registry/extensions/probe/1.0.0.js',
     sha256: sha256Hex(code),
   } as any;

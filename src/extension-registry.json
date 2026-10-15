@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "extractors": [
     {
       "name": "MegaCloud",
@@ -7,6 +8,7 @@
         "akcloud"
       ],
       "version": "1.3.2",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.3.2.js",
       "sha256": "3037369e20889403068c780063edaf4169994bb6e582172625e2f2de37152b98",
       "distFile": "dist/bundles/extractors/megacloud.js"
@@ -14,6 +16,7 @@
     {
       "name": "Kwik",
       "version": "1.2.2",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.2.js",
       "sha256": "0053bf848c161c669e02c8d37e992ee27651481a446473b2ea2ef0a13454ecbb",
       "distFile": "dist/bundles/extractors/kwik.js"
@@ -21,6 +24,7 @@
     {
       "name": "MegaUp",
       "version": "1.1.2",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaup/1.1.2.js",
       "sha256": "3ee1dac97a02af1d69f85b8df6a6b3dd3d155c731db97f9380658e76c440c877",
       "distFile": "dist/bundles/extractors/megaup.js"
@@ -28,6 +32,7 @@
     {
       "name": "MegaPlay",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.1.js",
       "sha256": "0b847d3d6f751957595711e58b0751d864ee9e6a34c7bff3db9c23edb8faf9cd",
       "distFile": "dist/bundles/extractors/megaplay.js"
@@ -35,6 +40,7 @@
     {
       "name": "GDFlix",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gdflix/1.0.1.js",
       "sha256": "eb8f7e816122b3aa4b96364aaec033fa563215d695b60842254a02b869637d55",
       "distFile": "dist/bundles/extractors/gdflix.js"
@@ -42,6 +48,7 @@
     {
       "name": "Gofile",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/gofile/1.0.1.js",
       "sha256": "fbf9b4d99e338700cd3b68899c501a2cfbc48bf3c177a0a460fa4001229cc650",
       "distFile": "dist/bundles/extractors/gofile.js"
@@ -49,6 +56,7 @@
     {
       "name": "HubCloud",
       "version": "1.0.2",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.0.2.js",
       "sha256": "cbc061b4b49f0f06aa10bd5ac763a20bf6ef2fded51d12d2ad8be0843b11e9d0",
       "distFile": "dist/bundles/extractors/hubcloud.js"
@@ -56,6 +64,7 @@
     {
       "name": "VidHide",
       "version": "1.0.2",
+      "minContextVersion": 1,
       "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.0.2.js",
       "sha256": "c4857c94d11d1aeb506f4e15fcc1ec2b53d9e572ad1c0f0e3dbf8a2bb92e8342",
       "distFile": "dist/bundles/extractors/vidhide.js"
@@ -67,6 +76,7 @@
       "name": "AnimePahe",
       "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
       "version": "1.2.4",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -98,6 +108,7 @@
       "name": "AnimeKai",
       "description": "High-quality anime streaming from AnimeKai with multiple servers and subtitles",
       "version": "1.1.3",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -129,6 +140,7 @@
       "name": "AniKoto",
       "description": "High-quality anime streaming from AniKoto with multiple servers and subtitles",
       "version": "1.1.3",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -159,6 +171,7 @@
       "name": "AniNeko",
       "description": "Anime streaming from AniNeko with hard-sub, soft-sub and dub support",
       "version": "1.1.1",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -190,6 +203,7 @@
       "name": "MultiMovies",
       "description": "Movies and TV shows streaming from MultiMovies",
       "version": "1.0.2",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -219,6 +233,7 @@
       "name": "YFlix",
       "description": "Movies and TV shows streaming from YFlix",
       "version": "1.0.2",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -247,6 +262,7 @@
       "name": "VegaMovies",
       "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
       "version": "1.1.1",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -277,6 +293,7 @@
       "name": "NetflixMirror",
       "description": "Movies and TV shows from the Netflix catalog via NetMirror",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -304,6 +321,7 @@
       "name": "PrimeMirror",
       "description": "Movies and TV shows from the Prime Video catalog via NetMirror",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
@@ -331,6 +349,7 @@
       "name": "DisneyMirror",
       "description": "Movies and TV shows from the Disney+ catalog via NetMirror",
       "version": "1.0.1",
+      "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"

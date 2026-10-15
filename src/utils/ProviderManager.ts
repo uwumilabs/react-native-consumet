@@ -12,7 +12,7 @@ import {
   type ProviderContextConfig,
 } from '../models';
 import extensionRegistry from '../extension-registry.json';
-import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
+import type { ExtensionManifest, ExtensionRegistryData, ProviderType } from '../models/extension-manifest';
 import {
   animeProviders,
   movieProviders,
@@ -28,6 +28,7 @@ import {
 } from './extension-integrity';
 import { fetchTextWithTimeout } from './fetch-with-timeout';
 import { createExtensionRequire, MODELS_MODULE, UTILS_MODULE } from './extension-modules';
+import { assertCompatibleEntry, validateRegistry } from './registry-schema';
 
 export interface ProviderLoadOptions {
   /** Base URL for the provider; defaults to the registry entry's `baseUrl` (so domain moves are registry-only). */
@@ -41,52 +42,41 @@ export class ProviderManager {
   private extensionManifest = new Map<string, ExtensionManifest>();
   private integrityOptions: IntegrityOptions;
 
+  /**
+   * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
+   */
   constructor(
-    registry: typeof extensionRegistry,
+    registry: ExtensionRegistryData | typeof extensionRegistry,
     providerConfig: ProviderContextConfig = {},
     integrityOptions: IntegrityOptions = {}
   ) {
+    const validRegistry = validateRegistry(registry);
     this.integrityOptions = integrityOptions;
     // One extractor manager for every provider this manager loads, built from the same registry,
     // so providers run the registry (hash-verified) versions of their extractors.
     this.extractorManager =
       providerConfig.extractorManager ??
       new ExtractorManager(
-        registry,
+        validRegistry,
         { axios: providerConfig.axios, load: providerConfig.load, userAgent: providerConfig.userAgent },
         integrityOptions
       );
     this.providerContext = createProviderContext({ ...providerConfig, extractorManager: this.extractorManager });
-    this.loadRegistry(registry);
+    this.loadRegistry(validRegistry.extensions);
   }
 
   /**
-   * Load and parse the extensionManifest
+   * Index the validated registry entries by lowercased id, for case-insensitive lookup
    */
-  private loadRegistry(registry: typeof extensionRegistry): void {
-    try {
-      registry.extensions.forEach((extension: any) => {
-        // Convert old format to new format if needed
-        const manifest: ExtensionManifest = {
-          ...extension,
-          category: extension.category as any, // Cast to avoid type error
-          factoryName: extension.factoryName,
-        };
-        // Store with a normalized key to enable case-insensitive lookup by id
-        if (typeof extension.id === 'string') {
-          this.extensionManifest.set(extension.id.toLowerCase(), manifest);
-        } else {
-          this.extensionManifest.set(String(extension.id), manifest);
-        }
-      });
-      //console.log(`📚 Loaded ${extensions.length} extensions from extensionManifest`);
-    } catch (error) {
-      console.error('❌ Failed to load extensionManifest:', error);
+  private loadRegistry(extensions: ExtensionManifest[]): void {
+    for (const extension of extensions) {
+      this.extensionManifest.set(extension.id.toLowerCase(), { ...extension });
     }
   }
 
   /**
-   * Get all available extensions
+   * Get all available extensions, including any that need a newer extension context
+   * (see `isCompatibleEntry`); loading those throws a RegistryError.
    */
   getAvailableExtensions(): ExtensionManifest[] {
     return Array.from(this.extensionManifest.values());
@@ -131,6 +121,8 @@ export class ProviderManager {
     if (!metadata) {
       throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     }
+    // Refuse entries that need a newer extension context before downloading their code.
+    assertCompatibleEntry(metadata);
 
     // A base URL override builds a different instance, so it is part of the cache key.
     const cacheKey = `${(metadata.id || String(extensionId)).toLowerCase()}|${options.baseUrl ?? ''}`;
@@ -218,6 +210,7 @@ export class ProviderManager {
    * Execute provider code and create instance (extensionManifest-based).
    * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
    *
+   * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or factory name is invalid
    */
   public async executeProviderCode<T extends string>(
@@ -227,6 +220,7 @@ export class ProviderManager {
     options: ExecuteCodeOptions & ProviderLoadOptions = {}
   ): Promise<ProviderInstanceOf<T>> {
     const id = String(metadata?.id ?? factoryName);
+    assertCompatibleEntry(metadata);
     assertValidIdentifier(factoryName, 'factoryName', id);
     if (!options.skipIntegrity) {
       verifyExtensionCode(code, metadata, this.integrityOptions);

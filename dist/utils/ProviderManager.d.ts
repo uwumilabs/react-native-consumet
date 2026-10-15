@@ -2,7 +2,7 @@ import { ExtractorManager } from './ExtractorManager';
 import type { ProviderContext } from '../models/provider-context';
 import { type IAnimeProvider, type IAnimeResult, type IMovieProvider, type IMovieResult, type ISearch, type ProviderContextConfig } from '../models';
 import extensionRegistry from '../extension-registry.json';
-import type { ExtensionManifest, ProviderType } from '../models/extension-manifest';
+import type { ExtensionManifest, ExtensionRegistryData, ProviderType } from '../models/extension-manifest';
 import { type AnimeProviderId, type MovieProviderId, type ProviderInstanceOf } from './provider-maps';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export interface ProviderLoadOptions {
@@ -15,13 +15,17 @@ export declare class ProviderManager {
     private loadedExtensions;
     private extensionManifest;
     private integrityOptions;
-    constructor(registry: typeof extensionRegistry, providerConfig?: ProviderContextConfig, integrityOptions?: IntegrityOptions);
     /**
-     * Load and parse the extensionManifest
+     * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
+     */
+    constructor(registry: ExtensionRegistryData | typeof extensionRegistry, providerConfig?: ProviderContextConfig, integrityOptions?: IntegrityOptions);
+    /**
+     * Index the validated registry entries by lowercased id, for case-insensitive lookup
      */
     private loadRegistry;
     /**
-     * Get all available extensions
+     * Get all available extensions, including any that need a newer extension context
+     * (see `isCompatibleEntry`); loading those throws a RegistryError.
      */
     getAvailableExtensions(): ExtensionManifest[];
     /**
@@ -45,6 +49,7 @@ export declare class ProviderManager {
      * Execute provider code and create instance (extensionManifest-based).
      * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
      *
+     * @throws RegistryError before running anything if the entry needs a newer extension context
      * @throws IntegrityError before running anything if the hash or factory name is invalid
      */
     executeProviderCode<T extends string>(code: string, factoryName: string, metadata: ExtensionManifest & {

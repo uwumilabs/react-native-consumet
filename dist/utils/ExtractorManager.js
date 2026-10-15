@@ -16,6 +16,7 @@ const extension_utils_1 = require("./extension-utils");
 const extension_integrity_1 = require("./extension-integrity");
 const fetch_with_timeout_1 = require("./fetch-with-timeout");
 const extension_modules_1 = require("./extension-modules");
+const registry_schema_1 = require("./registry-schema");
 class ExtractorManager {
   loadedExtractors = new Map();
   extractorRegistry = new Map();
@@ -25,13 +26,19 @@ class ExtractorManager {
   // Server name alias -> extractor name, from registry `aliases`. The defaults cover registries
   // published before entries carried aliases.
   extractorAliases = new Map([['upcloud', 'megacloud'], ['akcloud', 'megacloud']]);
+  /**
+   * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
+   */
   constructor(registry) {
     let extractorConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     let integrityOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    const {
+      extractors
+    } = (0, registry_schema_1.validateRegistry)(registry);
     this.extractorContext = (0, create_extractor_context_1.default)(extractorConfig);
     this.integrityOptions = integrityOptions;
     this.initializeStaticExtractors();
-    this.loadRegistry(registry);
+    this.loadRegistry(extractors);
     //console.log('🔧 Dynamic Extractor Manager initialized');
   }
   /**
@@ -46,24 +53,18 @@ class ExtractorManager {
     }
   }
   /**
-   * Load extractors from the unified extension registry
+   * Index the validated registry extractors (and their aliases) by lowercased name
    */
-  loadRegistry(registry) {
-    try {
-      // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
-      registry.extractors.forEach(extractor => {
-        const name = String(extractor.name).toLowerCase();
-        this.extractorRegistry.set(name, {
-          ...extractor
-        });
-        for (const alias of extractor.aliases ?? []) {
-          this.extractorAliases.set(String(alias).toLowerCase(), name);
-        }
+  loadRegistry(extractors) {
+    // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
+    for (const extractor of extractors) {
+      const name = extractor.name.toLowerCase();
+      this.extractorRegistry.set(name, {
+        ...extractor
       });
-      // const totalExtractors = this.extractorRegistry.size;
-      //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
-    } catch (error) {
-      console.error('❌ Failed to load extractors from extension registry:', error);
+      for (const alias of extractor.aliases ?? []) {
+        this.extractorAliases.set(alias.toLowerCase(), name);
+      }
     }
   }
   /**
@@ -135,6 +136,9 @@ class ExtractorManager {
       }
       throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
     }
+    // Refuse a registry version that needs a newer extension context before downloading it.
+    // Providers still fall back to the bundled extractor (see createProviderContext).
+    (0, registry_schema_1.assertCompatibleEntry)(metadata);
     // Check if already loaded
     if (this.loadedExtractors.has(extractorId)) {
       //console.log(`🔧 Extractor '${extractorId}' already loaded`);
@@ -186,10 +190,12 @@ class ExtractorManager {
    * Execute extractor code and create instance.
    * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
    *
+   * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or extractor name is invalid
    */
   async executeExtractorCode(code, metadata) {
     let options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    (0, registry_schema_1.assertCompatibleEntry)(metadata);
     // The name is interpolated into the generated code below.
     (0, extension_integrity_1.assertValidIdentifier)(metadata?.name, 'extractor name', String(metadata?.name));
     if (!options.skipIntegrity) {

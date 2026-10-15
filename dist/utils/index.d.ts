@@ -7,6 +7,8 @@ export type { ProviderLoadOptions } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
 export { verifyExtensionCode, IntegrityError } from './extension-integrity';
 export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './extension-integrity';
+export { CONTEXT_VERSION, REGISTRY_SCHEMA_VERSION, RegistryError, validateRegistry, isCompatibleEntry, assertCompatibleEntry, } from './registry-schema';
+export type { RegistryErrorCode } from './registry-schema';
 export { createExtractorContext } from './create-extractor-context';
 export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';

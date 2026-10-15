@@ -1,7 +1,7 @@
 import CryptoJS from 'crypto-js';
 import type { ExtractorContext, IVideoExtractor, ExtractorContextConfig } from '../models';
 import { StreamingServers, VideoExtractor } from '../models';
-import type { ExtractorInfo } from '../models/extension-manifest';
+import type { ExtensionRegistryData, ExtractorInfo } from '../models/extension-manifest';
 import createExtractorContext from './create-extractor-context';
 import { defaultExtractors } from './extension-utils';
 import extensionRegistry from '../extension-registry.json';
@@ -13,6 +13,7 @@ import {
 } from './extension-integrity';
 import { fetchTextWithTimeout } from './fetch-with-timeout';
 import { createExtensionRequire, extensionEnums, MODELS_MODULE, UTILS_MODULE } from './extension-modules';
+import { assertCompatibleEntry, validateRegistry } from './registry-schema';
 
 export class ExtractorManager {
   private loadedExtractors = new Map<string, any>();
@@ -28,15 +29,19 @@ export class ExtractorManager {
     ['akcloud', 'megacloud'],
   ]);
 
+  /**
+   * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
+   */
   constructor(
-    registry: typeof extensionRegistry,
+    registry: ExtensionRegistryData | typeof extensionRegistry,
     extractorConfig: ExtractorContextConfig = {},
     integrityOptions: IntegrityOptions = {}
   ) {
+    const { extractors } = validateRegistry(registry);
     this.extractorContext = createExtractorContext(extractorConfig);
     this.integrityOptions = integrityOptions;
     this.initializeStaticExtractors();
-    this.loadRegistry(registry);
+    this.loadRegistry(extractors);
     //console.log('🔧 Dynamic Extractor Manager initialized');
   }
 
@@ -51,23 +56,16 @@ export class ExtractorManager {
   }
 
   /**
-   * Load extractors from the unified extension registry
+   * Index the validated registry extractors (and their aliases) by lowercased name
    */
-  private loadRegistry(registry: typeof extensionRegistry): void {
-    try {
-      // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
-      registry.extractors.forEach((extractor: any) => {
-        const name = String(extractor.name).toLowerCase();
-        this.extractorRegistry.set(name, { ...extractor } as ExtractorInfo);
-        for (const alias of extractor.aliases ?? []) {
-          this.extractorAliases.set(String(alias).toLowerCase(), name);
-        }
-      });
-
-      // const totalExtractors = this.extractorRegistry.size;
-      //console.log(`🔧 Loaded ${totalExtractors} dynamic extractors from extension registry`);
-    } catch (error) {
-      console.error('❌ Failed to load extractors from extension registry:', error);
+  private loadRegistry(extractors: ExtractorInfo[]): void {
+    // Keep the whole entry: dropping `sha256` here used to disable integrity checks for extractors.
+    for (const extractor of extractors) {
+      const name = extractor.name.toLowerCase();
+      this.extractorRegistry.set(name, { ...extractor });
+      for (const alias of extractor.aliases ?? []) {
+        this.extractorAliases.set(alias.toLowerCase(), name);
+      }
     }
   }
 
@@ -155,6 +153,9 @@ export class ExtractorManager {
       }
       throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
     }
+    // Refuse a registry version that needs a newer extension context before downloading it.
+    // Providers still fall back to the bundled extractor (see createProviderContext).
+    assertCompatibleEntry(metadata);
 
     // Check if already loaded
     if (this.loadedExtractors.has(extractorId)) {
@@ -216,6 +217,7 @@ export class ExtractorManager {
    * Execute extractor code and create instance.
    * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
    *
+   * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or extractor name is invalid
    */
   public async executeExtractorCode(
@@ -223,6 +225,7 @@ export class ExtractorManager {
     metadata: ExtractorInfo,
     options: ExecuteCodeOptions = {}
   ): Promise<IVideoExtractor> {
+    assertCompatibleEntry(metadata);
     // The name is interpolated into the generated code below.
     assertValidIdentifier(metadata?.name, 'extractor name', String(metadata?.name));
     if (!options.skipIntegrity) {
