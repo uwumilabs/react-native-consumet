@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createZoro = createZoro;
 function createZoro(ctx, customBaseURL) {
   const {
     axios,

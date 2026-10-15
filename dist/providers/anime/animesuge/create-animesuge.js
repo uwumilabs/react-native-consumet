@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createAnimeSuge = createAnimeSuge;
 function createAnimeSuge(ctx, customBaseURL) {
   const {
     axios,

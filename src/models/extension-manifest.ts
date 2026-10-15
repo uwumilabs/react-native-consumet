@@ -11,7 +11,7 @@ export interface ExtractorInfo {
   main: string;
   /** SHA-256 hex digest of the compiled JS file for integrity verification */
   sha256?: string;
-  /** Repo-relative build output this version is published from, e.g. `dist/extractors/kwik.js` */
+  /** Repo-relative build output this version is published from, e.g. `dist/bundles/extractors/kwik.js` (built from `src/extractors/kwik.ts`) */
   distFile?: string;
 }
 /**
@@ -49,7 +49,7 @@ export interface ExtensionManifest {
   /** SHA-256 hex digest of the compiled JS file for integrity verification */
   sha256?: string;
 
-  /** Repo-relative build output this version is published from, e.g. `dist/providers/anime/anikoto/create-anikoto.js` */
+  /** Repo-relative build output this version is published from, e.g. `dist/bundles/providers/anime/anikoto/create-anikoto.js` */
   distFile?: string;
 
   /** Homepage URL */

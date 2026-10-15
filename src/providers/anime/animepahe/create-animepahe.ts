@@ -14,7 +14,7 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 
-function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
+export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet, CryptoJS, axios } = ctx;
   const { Kwik } = extractors;
   const { makeGetRequestWithWebView } = NativeConsumet;

@@ -49,10 +49,6 @@ export declare class ExtractorManager {
      */
     executeExtractorCode(code: string, metadata: ExtractorInfo, options?: ExecuteCodeOptions): Promise<IVideoExtractor>;
     /**
-     * Create models context
-     */
-    private createModelsContext;
-    /**
      * Create execution context for extractor code
      */
     private createExecutionContext;

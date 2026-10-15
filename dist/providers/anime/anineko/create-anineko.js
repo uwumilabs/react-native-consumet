@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createAniNeko = createAniNeko;
 function createAniNeko(ctx, customBaseURL) {
   const {
     axios,

@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createAnimePahe = createAnimePahe;
 function createAnimePahe(ctx, customBaseURL) {
   const {
     load,

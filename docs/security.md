@@ -71,7 +71,7 @@ These are tracked in the roadmap and not solved yet:
 
 ## Publishing and checking the registry
 
-`scripts/prepare-registry.js` publishes each entry's build output (`distFile`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. It runs in the release flow (`after:bump` in release-it). Run it yourself after rebuilding `dist/`:
+`scripts/prepare-registry.js` publishes each entry's single-file bundle (`distFile`, built by `yarn build`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. It runs in the release flow (`after:bump` in release-it). Run it yourself after rebuilding `dist/`:
 
 ```bash
 yarn build && node scripts/prepare-registry.js

@@ -12,7 +12,7 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 
-function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
+export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, enums, createCustomBaseUrl, USER_AGENT, PolyURL, extractors } = ctx;
   const { VidHide } = extractors;
   const { MediaStatus: MediaStatusEnum, SubOrDub: SubOrDubEnum } = enums;

@@ -1,5 +1,5 @@
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext, type ProviderCapabilities } from '../../../models';
-declare function createAniNeko(ctx: ProviderContext, customBaseURL?: string): {
+export declare function createAniNeko(ctx: ProviderContext, customBaseURL?: string): {
     capabilities: ProviderCapabilities;
     GENRES: readonly ["Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Drama", "Ecchi", "Fantasy", "Game", "Harem", "Historical", "Horror", "Isekai", "Josei", "Kids", "Magic", "Mahou Shoujo", "Martial Arts", "Mecha", "Military", "Music", "Mystery", "Parody", "Police", "Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports", "Super Power", "Supernatural", "Thriller", "Vampire"];
     TYPES: {

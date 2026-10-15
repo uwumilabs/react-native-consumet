@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createAnimeKai = createAnimeKai;
 function createAnimeKai(ctx, customBaseURL) {
   const {
     axios,

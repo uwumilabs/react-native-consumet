@@ -193,7 +193,7 @@ Add a new entry to the `extensions` array:
     "url": "https://github.com/your-github"
   },
   "category": "anime", // or movies, manga, light-novels, meta
-  "distFile": "dist/providers/anime/myanimewebsite/create-myanimewebsite.js", // Build output to publish
+  "distFile": "dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js", // Bundle to publish
   "factoryName": "createMyAnimeWebsite", // The name of the function you export
   "baseUrl": "https://www.myanimewebsite.com",
   "logo": "https://www.myanimewebsite.com/favicon.ico", // Link to provider's logo/favicon
@@ -218,7 +218,19 @@ Don't write `main` or `sha256` yourself. Build, then publish:
 yarn build && node scripts/prepare-registry.js
 ```
 
-This copies the build output to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match.
+`yarn build` bundles every registry entry into one file. The `distFile` path names the bundle, and its source is the matching file under `src/`: `dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js` is built from `src/providers/anime/myanimewebsite/create-myanimewebsite.ts`. Relative imports, such as a helper or another extractor, are inlined into the bundle. The runtime supplies only these modules:
+
+| Import | What extension code gets |
+|---|---|
+| `axios`, `cheerio`, `crypto-js` | The context's axios instance, `{ load }`, and CryptoJS |
+| anything under `src/models` | The base parsers and the library's enums |
+| `src/utils` (index) and the `create-*-context` files | `createProviderContext` / `createExtractorContext` returning the context |
+
+Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports.
+
+Export your factory by name (`export function createMyAnimeWebsite`), as well as any default export.
+
+`prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match.
 
 **Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it. Run `yarn registry:check` to verify the registry without writing anything.
 

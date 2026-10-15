@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 import type { ExtractorContext, IVideoExtractor, ExtractorContextConfig } from '../models';
-import { StreamingServers } from '../models';
+import { StreamingServers, VideoExtractor } from '../models';
 import type { ExtractorInfo } from '../models/extension-manifest';
 import createExtractorContext from './create-extractor-context';
 import { defaultExtractors } from './extension-utils';
@@ -12,6 +12,7 @@ import {
   type IntegrityOptions,
 } from './extension-integrity';
 import { fetchTextWithTimeout } from './fetch-with-timeout';
+import { createExtensionRequire, extensionEnums, MODELS_MODULE, UTILS_MODULE } from './extension-modules';
 
 export class ExtractorManager {
   private loadedExtractors = new Map<string, any>();
@@ -228,7 +229,7 @@ export class ExtractorManager {
       verifyExtensionCode(code, metadata, this.integrityOptions);
     }
 
-    const context = this.createExecutionContext();
+    const context = this.createExecutionContext(String(metadata.name));
 
     try {
       let executeFunction;
@@ -257,7 +258,7 @@ export class ExtractorManager {
             throw new Error('Extractor code execution failed: ' + execError.message);
           }
           
-          return { exports, ${metadata.name}: typeof ${metadata.name} !== 'undefined' ? ${metadata.name} : exports.${metadata.name} };
+          return { exports, ${metadata.name}: typeof ${metadata.name} !== 'undefined' ? ${metadata.name} : (exports.${metadata.name} ?? module.exports.${metadata.name}) };
           `
         );
       } catch (syntaxError: any) {
@@ -279,72 +280,22 @@ export class ExtractorManager {
   }
 
   /**
-   * Create models context
-   */
-  private createModelsContext() {
-    return {
-      SubOrSub: { SUB: 'sub', DUB: 'dub', BOTH: 'both' },
-      StreamingServers: {
-        StreamSB: 'streamsb',
-        StreamTape: 'streamtape',
-        VidStreaming: 'vidstreaming',
-        MegaCloud: 'megacloud',
-        MegaUp: 'megaup',
-        MegaPlay: 'megaplay',
-        Kwik: 'kwik',
-        VidHide: 'vidhide',
-        HubCloud: 'hubcloud',
-        GDFlix: 'gdflix',
-        Gofile: 'gofile',
-      },
-      MediaStatus: {
-        COMPLETED: 'completed',
-        ONGOING: 'ongoing',
-        NOT_YET_AIRED: 'not_yet_aired',
-        UNKNOWN: 'unknown',
-      },
-      TvType: {
-        MOVIE: 'movie',
-        TVSERIES: 'tvseries',
-        ANIME: 'anime',
-      },
-      WatchListType: {
-        WATCHING: 'watching',
-        COMPLETED: 'completed',
-        ONHOLD: 'onhold',
-        DROPPED: 'dropped',
-        PLAN_TO_WATCH: 'plan_to_watch',
-        NONE: 'none',
-      },
-    };
-  }
-
-  /**
    * Create execution context for extractor code
    */
-  private createExecutionContext() {
+  private createExecutionContext(extractorName: string) {
     const extractorContext = this.extractorContext;
-    const models = this.createModelsContext();
-    const mocks: Record<string, any> = {
-      'cheerio': { load: this.extractorContext.load },
-      'axios': this.extractorContext.axios,
-      '../../models': models,
-      '../../models/index.js': models,
-      '../../models/index': models,
-      '../../utils/create-extractor-context': {
-        createExtractorContext: () => this.extractorContext,
-      },
-      '../../utils/create-extractor-context.js': {
-        createExtractorContext: () => this.extractorContext,
-      },
-      '../../utils': {
-        createExtractorContext: () => this.extractorContext,
-      },
+    // The only modules extractor code can require; anything else throws (EXT-5).
+    const modules: Record<string, unknown> = {
+      'cheerio': { load: extractorContext.load },
+      'axios': extractorContext.axios,
+      'crypto-js': CryptoJS,
+      [MODELS_MODULE]: { VideoExtractor, ...extensionEnums },
+      [UTILS_MODULE]: { createExtractorContext: () => extractorContext },
     };
     return {
       exports: {},
       module: { exports: {} },
-      require: (module: string) => mocks[module] || {},
+      require: createExtensionRequire(extractorName, modules),
       Promise,
       Object,
       fetch: async (url: string, options: any = {}) => {

@@ -15,6 +15,7 @@ const create_extractor_context_1 = __importDefault(require("./create-extractor-c
 const extension_utils_1 = require("./extension-utils");
 const extension_integrity_1 = require("./extension-integrity");
 const fetch_with_timeout_1 = require("./fetch-with-timeout");
+const extension_modules_1 = require("./extension-modules");
 class ExtractorManager {
   loadedExtractors = new Map();
   extractorRegistry = new Map();
@@ -194,7 +195,7 @@ class ExtractorManager {
     if (!options.skipIntegrity) {
       (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
     }
-    const context = this.createExecutionContext();
+    const context = this.createExecutionContext(String(metadata.name));
     try {
       let executeFunction;
       try {
@@ -220,7 +221,7 @@ class ExtractorManager {
             throw new Error('Extractor code execution failed: ' + execError.message);
           }
           
-          return { exports, ${metadata.name}: typeof ${metadata.name} !== 'undefined' ? ${metadata.name} : exports.${metadata.name} };
+          return { exports, ${metadata.name}: typeof ${metadata.name} !== 'undefined' ? ${metadata.name} : (exports.${metadata.name} ?? module.exports.${metadata.name}) };
           `);
       } catch (syntaxError) {
         console.error('Syntax error in extractor code:', syntaxError);
@@ -238,72 +239,24 @@ class ExtractorManager {
     }
   }
   /**
-   * Create models context
-   */
-  createModelsContext() {
-    return {
-      SubOrSub: {
-        SUB: 'sub',
-        DUB: 'dub',
-        BOTH: 'both'
-      },
-      StreamingServers: {
-        StreamSB: 'streamsb',
-        StreamTape: 'streamtape',
-        VidStreaming: 'vidstreaming',
-        MegaCloud: 'megacloud',
-        MegaUp: 'megaup',
-        MegaPlay: 'megaplay',
-        Kwik: 'kwik',
-        VidHide: 'vidhide',
-        HubCloud: 'hubcloud',
-        GDFlix: 'gdflix',
-        Gofile: 'gofile'
-      },
-      MediaStatus: {
-        COMPLETED: 'completed',
-        ONGOING: 'ongoing',
-        NOT_YET_AIRED: 'not_yet_aired',
-        UNKNOWN: 'unknown'
-      },
-      TvType: {
-        MOVIE: 'movie',
-        TVSERIES: 'tvseries',
-        ANIME: 'anime'
-      },
-      WatchListType: {
-        WATCHING: 'watching',
-        COMPLETED: 'completed',
-        ONHOLD: 'onhold',
-        DROPPED: 'dropped',
-        PLAN_TO_WATCH: 'plan_to_watch',
-        NONE: 'none'
-      }
-    };
-  }
-  /**
    * Create execution context for extractor code
    */
-  createExecutionContext() {
+  createExecutionContext(extractorName) {
     var _this = this;
     const extractorContext = this.extractorContext;
-    const models = this.createModelsContext();
-    const mocks = {
+    // The only modules extractor code can require; anything else throws (EXT-5).
+    const modules = {
       'cheerio': {
-        load: this.extractorContext.load
+        load: extractorContext.load
       },
-      'axios': this.extractorContext.axios,
-      '../../models': models,
-      '../../models/index.js': models,
-      '../../models/index': models,
-      '../../utils/create-extractor-context': {
-        createExtractorContext: () => this.extractorContext
+      'axios': extractorContext.axios,
+      'crypto-js': crypto_js_1.default,
+      [extension_modules_1.MODELS_MODULE]: {
+        VideoExtractor: models_1.VideoExtractor,
+        ...extension_modules_1.extensionEnums
       },
-      '../../utils/create-extractor-context.js': {
-        createExtractorContext: () => this.extractorContext
-      },
-      '../../utils': {
-        createExtractorContext: () => this.extractorContext
+      [extension_modules_1.UTILS_MODULE]: {
+        createExtractorContext: () => extractorContext
       }
     };
     return {
@@ -311,7 +264,7 @@ class ExtractorManager {
       module: {
         exports: {}
       },
-      require: module => mocks[module] || {},
+      require: (0, extension_modules_1.createExtensionRequire)(extractorName, modules),
       Promise,
       Object,
       fetch: async function (url) {

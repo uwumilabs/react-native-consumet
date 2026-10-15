@@ -15,6 +15,7 @@ const models_1 = require("../models");
 const provider_maps_1 = require("./provider-maps");
 const extension_integrity_1 = require("./extension-integrity");
 const fetch_with_timeout_1 = require("./fetch-with-timeout");
+const extension_modules_1 = require("./extension-modules");
 class ProviderManager {
   providerContext;
   extractorManager;
@@ -175,7 +176,7 @@ class ProviderManager {
     if (!options.skipIntegrity) {
       (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
     }
-    const context = this.createExecutionContext();
+    const context = this.createExecutionContext(id);
     try {
       // Create and execute the provider code
       //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
@@ -198,7 +199,7 @@ class ProviderManager {
             throw new Error('Provider code execution failed: ' + execError.message);
           }
           
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : exports.${factoryName} };
+          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : (exports.${factoryName} ?? module.exports.${factoryName}) };
           `);
       } catch (syntaxError) {
         console.error('Syntax error in provider code:', syntaxError);
@@ -230,24 +231,17 @@ class ProviderManager {
   /**
    * Create execution context for provider code
    */
-  createExecutionContext() {
+  createExecutionContext(extensionId) {
     var _this = this;
-    const models = this.createModelsContext();
-    const mocks = {
+    // The only modules extension code can require; anything else throws (EXT-5).
+    const modules = {
       'cheerio': {
         load: this.providerContext.load
       },
       'axios': this.providerContext.axios,
-      '../../models': models,
-      '../../models/index.js': models,
-      '../../models/index': models,
-      '../../utils/create-provider-context': {
-        createProviderContext: () => this.providerContext
-      },
-      '../../utils/create-provider-context.js': {
-        createProviderContext: () => this.providerContext
-      },
-      '../../utils': {
+      'crypto-js': this.providerContext.CryptoJS,
+      [extension_modules_1.MODELS_MODULE]: this.createModelsContext(),
+      [extension_modules_1.UTILS_MODULE]: {
         createProviderContext: () => this.providerContext
       },
       'URL': this.providerContext.PolyURL,
@@ -279,7 +273,7 @@ class ProviderManager {
     };
     return {
       exports: {},
-      require: module => mocks[module] || {},
+      require: (0, extension_modules_1.createExtensionRequire)(extensionId, modules),
       module: {
         exports: {}
       },
@@ -292,50 +286,14 @@ class ProviderManager {
     };
   }
   /**
-   * Create models context
+   * Create models context: the base parsers and the library's real enums
    */
   createModelsContext() {
     return {
       AnimeParser: this.providerContext.AnimeParser,
       MovieParser: this.providerContext.MovieParser,
       MangaParser: this.providerContext.MangaParser,
-      SubOrDub: {
-        SUB: 'sub',
-        DUB: 'dub',
-        BOTH: 'both'
-      },
-      StreamingServers: {
-        StreamSB: 'streamsb',
-        StreamTape: 'streamtape',
-        VidStreaming: 'vidstreaming',
-        MegaCloud: 'megacloud',
-        MegaUp: 'megaup',
-        MegaPlay: 'megaplay',
-        Kwik: 'kwik',
-        VidHide: 'vidhide',
-        HubCloud: 'hubcloud',
-        GDFlix: 'gdflix',
-        Gofile: 'gofile'
-      },
-      MediaStatus: {
-        COMPLETED: 'completed',
-        ONGOING: 'ongoing',
-        NOT_YET_AIRED: 'not_yet_aired',
-        UNKNOWN: 'unknown'
-      },
-      TvType: {
-        MOVIE: 'movie',
-        TVSERIES: 'tvseries',
-        ANIME: 'anime'
-      },
-      WatchListType: {
-        WATCHING: 'watching',
-        COMPLETED: 'completed',
-        ONHOLD: 'onhold',
-        DROPPED: 'dropped',
-        PLAN_TO_WATCH: 'plan_to_watch',
-        NONE: 'none'
-      }
+      ...this.providerContext.enums
     };
   }
   /**

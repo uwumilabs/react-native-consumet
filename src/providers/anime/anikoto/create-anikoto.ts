@@ -13,7 +13,7 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 
-function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
+export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaPlay } = extractors;
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;

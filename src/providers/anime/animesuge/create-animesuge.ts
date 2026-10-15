@@ -12,7 +12,7 @@ import {
   type ProviderConfig,
 } from '../../../models';
 
-function createAnimeSuge(ctx: ProviderContext, customBaseURL?: string) {
+export function createAnimeSuge(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaCloud } = extractors;
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;

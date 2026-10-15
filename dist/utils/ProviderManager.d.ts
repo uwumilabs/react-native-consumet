@@ -55,7 +55,7 @@ export declare class ProviderManager {
      */
     private createExecutionContext;
     /**
-     * Create models context
+     * Create models context: the base parsers and the library's real enums
      */
     private createModelsContext;
     /**

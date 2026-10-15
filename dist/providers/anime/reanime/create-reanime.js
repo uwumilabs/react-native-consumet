@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createReanime = createReanime;
 const models_1 = require("../../../models");
 const url_polyfill_1 = require("../../../utils/url-polyfill");
 function createReanime(ctx, customBaseURL) {

@@ -1,5 +1,5 @@
 import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext } from '../../../models';
-declare function createAnimeSuge(ctx: ProviderContext, customBaseURL?: string): {
+export declare function createAnimeSuge(ctx: ProviderContext, customBaseURL?: string): {
     name: string;
     baseUrl: string;
     logo: string;

@@ -14,7 +14,7 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 
-function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
+export function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, enums, createCustomBaseUrl, USER_AGENT, PolyURL, extractors } = ctx;
   const { StreamingServers: StreamingServersEnum, MediaStatus: MediaStatusEnum, SubOrDub: SubOrDubEnum } = enums;
   const { MegaUp } = extractors;

@@ -13,7 +13,7 @@ import {
 } from '../../../models';
 import { PolyURL } from '../../../utils/url-polyfill';
 
-function createReanime(ctx: ProviderContext, customBaseURL?: string) {
+export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, enums, createCustomBaseUrl, extractors, NativeConsumet } = ctx;
   const { makeGetRequestWithWebView } = NativeConsumet;
   const { MediaStatus: MediaStatusEnum, SubOrDub: SubOrDubEnum } = enums;

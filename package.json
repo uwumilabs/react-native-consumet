@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "example": "yarn workspace react-native-consumet-example",
-    "build": "tsc -p tsconfig.dist.json && node scripts/hermes-safe-dist.js",
+    "build": "tsc -p tsconfig.dist.json && node scripts/build-extensions.js && node scripts/hermes-safe-dist.js",
     "build:clean": "del-cli dist && yarn build",
     "test": "jest",
     "test:live": "LIVE_TESTS=1 jest",
@@ -104,6 +104,7 @@
     "babel-jest": "^29.7.0",
     "commitlint": "^19.6.1",
     "del-cli": "^5.1.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
