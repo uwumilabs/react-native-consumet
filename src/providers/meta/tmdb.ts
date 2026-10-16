@@ -137,7 +137,7 @@ class TMDB extends MovieParser {
    * @param page page number
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult | IAnimeResult>> => {
-    const searchUrl = `${this.apiUrl}/search/multi?api_key=${this.apiKey}&language=en-US&page=${page}&include_adult=false&query=${query}`;
+    const searchUrl = `${this.apiUrl}/search/multi?api_key=${this.apiKey}&language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`;
 
     const search: ISearch<IMovieResult | IAnimeResult> = {
       currentPage: page,

@@ -1,0 +1,34 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 975700,
+      "media_type": "movie",
+      "title": "Tom & Jerry: Tales - Vol. 1",
+      "release_date": "2009-09-15",
+      "poster_path": "/f5kmshz9kdjYlIb35jkOzEAPNGS.jpg",
+      "backdrop_path": "/dD7BtUcaKvFEfFyHlAkWgvGHWEq.jpg",
+      "vote_average": 0
+    },
+    {
+      "id": 892582,
+      "media_type": "movie",
+      "title": "Tom Und Jerry Die Classic Collection 1",
+      "release_date": "",
+      "poster_path": "/1YZKeIvSmqUNreLiep7z7wUhr3g.jpg",
+      "backdrop_path": null,
+      "vote_average": 0
+    },
+    {
+      "id": 1509162,
+      "media_type": "movie",
+      "title": "Tom & Jerry's 50th Birthday Classics Vol.1",
+      "release_date": "1990-12-31",
+      "poster_path": "/duB3d48wTe9PrdUNg717wq9CFFT.jpg",
+      "backdrop_path": null,
+      "vote_average": 0
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 11
+}

@@ -104,7 +104,7 @@ class TMDB extends models_1.MovieParser {
     var _this2 = this;
     return async function (query) {
       let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-      const searchUrl = `${_this2.apiUrl}/search/multi?api_key=${_this2.apiKey}&language=en-US&page=${page}&include_adult=false&query=${query}`;
+      const searchUrl = `${_this2.apiUrl}/search/multi?api_key=${_this2.apiKey}&language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`;
       const search = {
         currentPage: page,
         hasNextPage: false,
