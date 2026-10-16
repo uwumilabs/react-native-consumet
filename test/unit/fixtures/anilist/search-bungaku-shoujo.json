@@ -1,0 +1,122 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "Media 6408 and 7669 have no bannerImage.",
+  "variables": {
+    "search": "\"Bungaku Shoujo\"",
+    "page": 1,
+    "perPage": 3,
+    "type": "ANIME"
+  },
+  "status": 200,
+  "body": {
+    "data": {
+      "Page": {
+        "pageInfo": {
+          "total": 5000,
+          "perPage": 3,
+          "currentPage": 1,
+          "lastPage": 1666,
+          "hasNextPage": true
+        },
+        "media": [
+          {
+            "id": 6408,
+            "idMal": 6408,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Bungaku Shoujo",
+              "romaji": "Bungaku Shoujo",
+              "english": null,
+              "native": "文学少女"
+            },
+            "bannerImage": null,
+            "popularity": 15487,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx6408-UsXM2RcYTCZd.jpg",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx6408-UsXM2RcYTCZd.jpg",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx6408-UsXM2RcYTCZd.jpg",
+              "color": "#78e45d"
+            },
+            "episodes": 1,
+            "format": "MOVIE",
+            "season": "SPRING",
+            "description": "The protagonist of the story, Konoha Inoue, is a seemingly normal senior high 2nd year student. His high school life, ot…",
+            "seasonYear": 2010,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 69,
+            "genres": [
+              "Drama",
+              "Mystery",
+              "Psychological",
+              "Romance"
+            ],
+            "nextAiringEpisode": null
+          },
+          {
+            "id": 111993,
+            "idMal": 39323,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Bungaku Shoujo",
+              "romaji": "Bungaku Shoujo",
+              "english": null,
+              "native": "文學少女"
+            },
+            "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/111993-gzzDcCYe9i5M.jpg",
+            "popularity": 374,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b111993-Cvb8pBOGvzWC.jpg",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b111993-Cvb8pBOGvzWC.jpg",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/b111993-Cvb8pBOGvzWC.jpg",
+              "color": null
+            },
+            "episodes": 1,
+            "format": "MUSIC",
+            "season": null,
+            "description": "Music video directed by Takashi Ohashi for the title track Bungaku Shoujo by Burnout Syndromes.",
+            "seasonYear": null,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 53,
+            "genres": [],
+            "nextAiringEpisode": null
+          },
+          {
+            "id": 7669,
+            "idMal": 7669,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+              "romaji": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+              "english": null,
+              "native": "文学少女 今日のおやつ 〜はつ恋〜"
+            },
+            "bannerImage": null,
+            "popularity": 4472,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/7669.jpg",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/7669.jpg",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/7669.jpg",
+              "color": "#f1bb43"
+            },
+            "episodes": 1,
+            "format": "OVA",
+            "season": "WINTER",
+            "description": "Amano Tooko and Inoue Konoha are the only members of their high school literature club. After school, they meet so that …",
+            "seasonYear": 2009,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 64,
+            "genres": [
+              "Comedy",
+              "Fantasy"
+            ],
+            "nextAiringEpisode": null
+          }
+        ]
+      }
+    }
+  }
+}

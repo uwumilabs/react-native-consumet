@@ -1,7 +1,5 @@
 import { compareTwoStrings } from 'string-similarity';
-// import sharp from 'sharp';
 import { load } from 'cheerio';
-// import * as blurhash from 'blurhash';
 
 // Polyfill declaration for String.replaceAll (ES2021) when targeting < ES2021
 declare global {
@@ -161,30 +159,6 @@ export const substringAfterLast = (str: string, toFind: string) => {
 export const substringBeforeLast = (str: string, toFind: string) => {
   const index = str.lastIndexOf(toFind);
   return index === -1 ? '' : str.substring(0, index);
-};
-
-// const generateHash = async (url: string) => {
-//   let returnedBuffer;
-
-//   const response = await fetch(url);
-//   const arrayBuffer = await response.arrayBuffer();
-//   returnedBuffer = Buffer.from(arrayBuffer);
-
-//   // const { info, data } = await sharp(returnedBuffer).ensureAlpha().raw().toBuffer({
-//   //   resolveWithObject: true,
-//   // });
-
-//   return blurhash.encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
-// };
-
-export const getHashFromImage = (url: string) => {
-  if (url?.length === 0) {
-    return '';
-  } else {
-    // let hash!: string;
-    // generateHash(url).then(hashKey => (hash = hashKey));
-    return 'hash';
-  }
 };
 
 // Function to find similar titles

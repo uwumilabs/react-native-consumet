@@ -23,7 +23,6 @@ export declare const substringAfter: (str: string, toFind: string) => string;
 export declare const substringBefore: (str: string, toFind: string) => string;
 export declare const substringAfterLast: (str: string, toFind: string) => string;
 export declare const substringBeforeLast: (str: string, toFind: string) => string;
-export declare const getHashFromImage: (url: string) => "" | "hash";
 export declare function findSimilarTitles(inputTitle: string, titles: any[]): any[];
 export declare function cleanTitle(title: string | undefined | null): string;
 export declare function removeSpecialChars(title: string | undefined | null): string;

@@ -1,0 +1,392 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "Attack on Titan Season 3 Part 2. One recommendation has a null mediaRecommendation.",
+  "variables": {
+    "id": 99147
+  },
+  "status": 200,
+  "body": {
+    "data": {
+      "Media": {
+        "id": 99147,
+        "idMal": 35760,
+        "title": {
+          "userPreferred": "Shingeki no Kyojin Season 3",
+          "english": "Attack on Titan Season 3",
+          "native": "進撃の巨人 Season３",
+          "romaji": "Shingeki no Kyojin Season 3"
+        },
+        "synonyms": [
+          "SnK 3",
+          "AoT 3",
+          "מתקפת הטיטאנים עונה 3",
+          "L'Attacco dei Giganti 3",
+          "L'Attacco dei Giganti - Terza Stagione",
+          "ผ่าพิภพไททัน ภาค 3",
+          "حمله به تایتان فصل 3",
+          "ผ่าพิภพไททัน ภาค 3 Part 1",
+          "Атака титанов 3"
+        ],
+        "countryOfOrigin": "JP",
+        "isLicensed": true,
+        "isAdult": false,
+        "externalLinks": [
+          {
+            "url": "http://shingeki.tv/season3/",
+            "site": "Official Site",
+            "type": "INFO",
+            "language": "Japanese"
+          },
+          {
+            "url": "https://twitter.com/anime_shingeki",
+            "site": "Twitter",
+            "type": "SOCIAL",
+            "language": "Japanese"
+          }
+        ],
+        "coverImage": {
+          "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx99147-AiPDD8cwlCfi.jpg",
+          "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx99147-AiPDD8cwlCfi.jpg",
+          "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx99147-AiPDD8cwlCfi.jpg",
+          "color": "#4386e4"
+        },
+        "startDate": {
+          "year": 2018,
+          "month": 7,
+          "day": 23
+        },
+        "endDate": {
+          "year": 2018,
+          "month": 10,
+          "day": 15
+        },
+        "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/99147-HACsFVrynFf5.jpg",
+        "season": "SUMMER",
+        "seasonYear": 2018,
+        "description": "Eren and his companions in the 104th are assigned to the newly-formed Levi Squad, whose assignment is to keep Eren and H…",
+        "type": "ANIME",
+        "format": "TV",
+        "status": "FINISHED",
+        "episodes": 12,
+        "duration": 24,
+        "chapters": null,
+        "volumes": null,
+        "trailer": {
+          "id": "EHzBhrncmac",
+          "site": "youtube",
+          "thumbnail": "https://i.ytimg.com/vi/EHzBhrncmac/hqdefault.jpg"
+        },
+        "genres": [
+          "Action",
+          "Drama",
+          "Fantasy",
+          "Mystery"
+        ],
+        "source": "MANGA",
+        "averageScore": 86,
+        "popularity": 693620,
+        "meanScore": 86,
+        "nextAiringEpisode": null,
+        "characters": {
+          "edges": [
+            {
+              "role": "MAIN",
+              "node": {
+                "id": 40881,
+                "name": {
+                  "first": "Mikasa",
+                  "middle": null,
+                  "last": "Ackerman",
+                  "full": "Mikasa Ackerman",
+                  "native": "ミカサ・アッカーマン",
+                  "userPreferred": "Mikasa Ackerman"
+                },
+                "image": {
+                  "large": "https://s4.anilist.co/file/anilistcdn/character/large/b40881-F3gr1PkreDvj.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b40881-F3gr1PkreDvj.png"
+                }
+              },
+              "voiceActors": [
+                {
+                  "id": 100142,
+                  "languageV2": "Japanese",
+                  "name": {
+                    "first": "Yui",
+                    "middle": null,
+                    "last": "Ishikawa",
+                    "full": "Yui Ishikawa",
+                    "native": "石川由依",
+                    "userPreferred": "Yui Ishikawa"
+                  },
+                  "image": {
+                    "large": "https://s4.anilist.co/file/anilistcdn/staff/large/n100142-k6RP0HzXffUG.png",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/staff/medium/n100142-k6RP0HzXffUG.png"
+                  }
+                },
+                {
+                  "id": 96804,
+                  "languageV2": "English",
+                  "name": {
+                    "first": "Trina",
+                    "middle": null,
+                    "last": "Nishimura",
+                    "full": "Trina Nishimura",
+                    "native": null,
+                    "userPreferred": "Trina Nishimura"
+                  },
+                  "image": {
+                    "large": "https://s4.anilist.co/file/anilistcdn/staff/large/n96804-0OKQgacznkZ4.png",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/staff/medium/n96804-0OKQgacznkZ4.png"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "MAIN",
+              "node": {
+                "id": 40882,
+                "name": {
+                  "first": "Eren",
+                  "middle": null,
+                  "last": "Yeager",
+                  "full": "Eren Yeager",
+                  "native": "エレン・イェーガー",
+                  "userPreferred": "Eren Yeager"
+                },
+                "image": {
+                  "large": "https://s4.anilist.co/file/anilistcdn/character/large/b40882-dsj7IP943WFF.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b40882-dsj7IP943WFF.jpg"
+                }
+              },
+              "voiceActors": [
+                {
+                  "id": 95672,
+                  "languageV2": "Japanese",
+                  "name": {
+                    "first": "Yuuki",
+                    "middle": null,
+                    "last": "Kaji",
+                    "full": "Yuuki Kaji",
+                    "native": "梶裕貴",
+                    "userPreferred": "Yuuki Kaji"
+                  },
+                  "image": {
+                    "large": "https://s4.anilist.co/file/anilistcdn/staff/large/n95672-T33YV7yCDKnL.png",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/staff/medium/n95672-T33YV7yCDKnL.png"
+                  }
+                },
+                {
+                  "id": 95732,
+                  "languageV2": "English",
+                  "name": {
+                    "first": "Bryce",
+                    "middle": null,
+                    "last": "Papenbrook",
+                    "full": "Bryce Papenbrook",
+                    "native": null,
+                    "userPreferred": "Bryce Papenbrook"
+                  },
+                  "image": {
+                    "large": "https://s4.anilist.co/file/anilistcdn/staff/large/732.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/staff/medium/732.jpg"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "recommendations": {
+          "edges": [
+            {
+              "node": {
+                "id": 35,
+                "mediaRecommendation": {
+                  "id": 5114,
+                  "idMal": 5114,
+                  "title": {
+                    "romaji": "Hagane no Renkinjutsushi: FULLMETAL ALCHEMIST",
+                    "english": "Fullmetal Alchemist: Brotherhood",
+                    "native": "鋼の錬金術師 FULLMETAL ALCHEMIST",
+                    "userPreferred": "Hagane no Renkinjutsushi: FULLMETAL ALCHEMIST"
+                  },
+                  "status": "FINISHED",
+                  "episodes": 64,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx5114-nSWCgQlmOMtj.jpg",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5114-nSWCgQlmOMtj.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx5114-nSWCgQlmOMtj.jpg",
+                    "color": "#e4c993"
+                  },
+                  "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/5114-q0V5URebphSG.jpg",
+                  "format": "TV",
+                  "chapters": null,
+                  "meanScore": 90,
+                  "nextAiringEpisode": null
+                }
+              }
+            },
+            {
+              "node": {
+                "id": 15538,
+                "mediaRecommendation": {
+                  "id": 1818,
+                  "idMal": 1818,
+                  "title": {
+                    "romaji": "CLAYMORE",
+                    "english": "Claymore",
+                    "native": "CLAYMORE",
+                    "userPreferred": "CLAYMORE"
+                  },
+                  "status": "FINISHED",
+                  "episodes": 26,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1818-KieLJv0qo3mO.jpg",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1818-KieLJv0qo3mO.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx1818-KieLJv0qo3mO.jpg",
+                    "color": "#bbe4ae"
+                  },
+                  "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/1818-7Nt2HYxVIxtA.jpg",
+                  "format": "TV",
+                  "chapters": null,
+                  "meanScore": 74,
+                  "nextAiringEpisode": null
+                }
+              }
+            },
+            {
+              "node": {
+                "id": 33032,
+                "mediaRecommendation": {
+                  "id": 101348,
+                  "idMal": 37521,
+                  "title": {
+                    "romaji": "VINLAND SAGA",
+                    "english": "Vinland Saga",
+                    "native": "ヴィンランド・サガ",
+                    "userPreferred": "VINLAND SAGA"
+                  },
+                  "status": "FINISHED",
+                  "episodes": 24,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101348-2fhDFPCuMNiz.jpg",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101348-2fhDFPCuMNiz.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx101348-2fhDFPCuMNiz.jpg",
+                    "color": "#f16b5d"
+                  },
+                  "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/101348-pivKKffCAwAY.jpg",
+                  "format": "TV",
+                  "chapters": null,
+                  "meanScore": 87,
+                  "nextAiringEpisode": null
+                }
+              }
+            },
+            {
+              "node": {
+                "id": 261833,
+                "mediaRecommendation": null
+              }
+            }
+          ]
+        },
+        "relations": {
+          "edges": [
+            {
+              "id": 19947,
+              "relationType": "PREQUEL",
+              "node": {
+                "id": 20958,
+                "idMal": 25777,
+                "status": "FINISHED",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20958-HuFJyr54Mmir.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20958-HuFJyr54Mmir.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx20958-HuFJyr54Mmir.jpg",
+                  "color": "#e47850"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/20958-Y7eQdz9VENBD.jpg",
+                "title": {
+                  "romaji": "Shingeki no Kyojin Season 2",
+                  "english": "Attack on Titan Season 2",
+                  "native": "進撃の巨人 Season２",
+                  "userPreferred": "Shingeki no Kyojin Season 2"
+                },
+                "episodes": 12,
+                "chapters": null,
+                "format": "TV",
+                "nextAiringEpisode": null,
+                "meanScore": 85
+              }
+            },
+            {
+              "id": 22061,
+              "relationType": "ADAPTATION",
+              "node": {
+                "id": 53390,
+                "idMal": 23390,
+                "status": "FINISHED",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx53390-1RsuABC34P9D.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx53390-1RsuABC34P9D.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx53390-1RsuABC34P9D.jpg",
+                  "color": "#d6431a"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/53390-6Uru5rrjh8zv.jpg",
+                "title": {
+                  "romaji": "Shingeki no Kyojin",
+                  "english": "Attack on Titan",
+                  "native": "進撃の巨人",
+                  "userPreferred": "Shingeki no Kyojin"
+                },
+                "episodes": null,
+                "chapters": 141,
+                "format": "MANGA",
+                "nextAiringEpisode": null,
+                "meanScore": 84
+              }
+            },
+            {
+              "id": 31873,
+              "relationType": "OTHER",
+              "node": {
+                "id": 108942,
+                "idMal": 39477,
+                "status": "FINISHED",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx108942-UdPtw4CZUQmC.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx108942-UdPtw4CZUQmC.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx108942-UdPtw4CZUQmC.jpg",
+                  "color": "#e4c993"
+                },
+                "bannerImage": null,
+                "title": {
+                  "romaji": "Shingeki no Kyojin: Chimi Kyara Gekijou - Rivai-han",
+                  "english": null,
+                  "native": "｢進撃の巨人｣ちみキャラ劇場”新生リヴァイ班”",
+                  "userPreferred": "Shingeki no Kyojin: Chimi Kyara Gekijou - Rivai-han"
+                },
+                "episodes": 4,
+                "chapters": null,
+                "format": "SPECIAL",
+                "nextAiringEpisode": null,
+                "meanScore": 76
+              }
+            }
+          ]
+        },
+        "studios": {
+          "edges": [
+            {
+              "isMain": true,
+              "node": {
+                "id": 858,
+                "name": "WIT STUDIO"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

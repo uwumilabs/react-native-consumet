@@ -1,0 +1,310 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "Solo Leveling (manga): romaji and English titles differ.",
+  "variables": {
+    "id": 105398
+  },
+  "status": 200,
+  "body": {
+    "data": {
+      "Media": {
+        "id": 105398,
+        "idMal": 121496,
+        "title": {
+          "userPreferred": "Na Honjaman Level Up",
+          "english": "Solo Leveling",
+          "native": "나 혼자만 레벨업",
+          "romaji": "Na Honjaman Level Up"
+        },
+        "synonyms": [
+          "I Level Up Alone",
+          "Only I Level Up",
+          "俺だけレベルアップな件",
+          "我獨自升級",
+          "Ore dake Level Up na Ken",
+          "Поднятие уровня в одиночку",
+          "Тільки я візьму новий рівень",
+          "Вебтун. Поднятие уровня в одиночку. Solo Leveling"
+        ],
+        "countryOfOrigin": "KR",
+        "isLicensed": true,
+        "isAdult": false,
+        "externalLinks": [
+          {
+            "url": "https://page.kakao.com/content/50866481",
+            "site": "KakaoPage",
+            "type": "STREAMING",
+            "language": "Korean"
+          },
+          {
+            "url": "https://www.webnovel.com/comic/15227640605485101",
+            "site": "Webnovel",
+            "type": "STREAMING",
+            "language": "English"
+          }
+        ],
+        "coverImage": {
+          "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105398-b673Vt5ZSuz3.jpg",
+          "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx105398-b673Vt5ZSuz3.jpg",
+          "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx105398-b673Vt5ZSuz3.jpg",
+          "color": null
+        },
+        "startDate": {
+          "year": 2018,
+          "month": 3,
+          "day": 4
+        },
+        "endDate": {
+          "year": 2023,
+          "month": 5,
+          "day": 31
+        },
+        "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/105398-4UrEhdqZukrg.jpg",
+        "season": null,
+        "seasonYear": null,
+        "description": "In a world where awakened beings called “Hunters” must battle deadly monsters to protect humanity, Seong Jin-U, nickname…",
+        "type": "MANGA",
+        "format": "MANGA",
+        "status": "FINISHED",
+        "episodes": null,
+        "duration": null,
+        "chapters": 201,
+        "volumes": 15,
+        "trailer": {
+          "id": "JRXcbcEnqEs",
+          "site": "youtube",
+          "thumbnail": "https://i.ytimg.com/vi/JRXcbcEnqEs/hqdefault.jpg"
+        },
+        "genres": [
+          "Action",
+          "Adventure",
+          "Fantasy"
+        ],
+        "source": "OTHER",
+        "averageScore": 84,
+        "popularity": 287142,
+        "meanScore": 84,
+        "nextAiringEpisode": null,
+        "characters": {
+          "edges": [
+            {
+              "role": "MAIN",
+              "node": {
+                "id": 129928,
+                "name": {
+                  "first": "Jin-U",
+                  "middle": null,
+                  "last": "Seong",
+                  "full": "Jin-U Seong",
+                  "native": "성진우",
+                  "userPreferred": "Jin-U Seong"
+                },
+                "image": {
+                  "large": "https://s4.anilist.co/file/anilistcdn/character/large/b129928-BCEjVaP0AQSw.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b129928-BCEjVaP0AQSw.png"
+                }
+              },
+              "voiceActors": []
+            },
+            {
+              "role": "SUPPORTING",
+              "node": {
+                "id": 136073,
+                "name": {
+                  "first": "Chi-Yul",
+                  "middle": null,
+                  "last": "Song",
+                  "full": "Chi-Yul Song",
+                  "native": "송치율",
+                  "userPreferred": "Chi-Yul Song"
+                },
+                "image": {
+                  "large": "https://s4.anilist.co/file/anilistcdn/character/large/b136073-0hZNgsWB9ZLH.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b136073-0hZNgsWB9ZLH.png"
+                }
+              },
+              "voiceActors": []
+            }
+          ]
+        },
+        "recommendations": {
+          "edges": [
+            {
+              "node": {
+                "id": 1882,
+                "mediaRecommendation": {
+                  "id": 108984,
+                  "idMal": 134230,
+                  "title": {
+                    "romaji": "Quanzhi Fashi",
+                    "english": "Versatile Mage",
+                    "native": "全职法师",
+                    "userPreferred": "Quanzhi Fashi"
+                  },
+                  "status": "CANCELLED",
+                  "episodes": null,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx108984-rVC5mS3vIp2u.png",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx108984-rVC5mS3vIp2u.png",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx108984-rVC5mS3vIp2u.png",
+                    "color": "#5078e4"
+                  },
+                  "bannerImage": null,
+                  "format": "MANGA",
+                  "chapters": 1181,
+                  "meanScore": 66,
+                  "nextAiringEpisode": null
+                }
+              }
+            },
+            {
+              "node": {
+                "id": 3582,
+                "mediaRecommendation": {
+                  "id": 74347,
+                  "idMal": 44347,
+                  "title": {
+                    "romaji": "One Punch-Man",
+                    "english": "One-Punch Man",
+                    "native": "ワンパンマン",
+                    "userPreferred": "One Punch-Man"
+                  },
+                  "status": "RELEASING",
+                  "episodes": null,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx74347-sZpmNJ5xLwRK.jpg",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx74347-sZpmNJ5xLwRK.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx74347-sZpmNJ5xLwRK.jpg",
+                    "color": null
+                  },
+                  "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/74347-xAQI9BxcpWM3.jpg",
+                  "format": "MANGA",
+                  "chapters": null,
+                  "meanScore": 85,
+                  "nextAiringEpisode": null
+                }
+              }
+            },
+            {
+              "node": {
+                "id": 3603,
+                "mediaRecommendation": {
+                  "id": 107720,
+                  "idMal": null,
+                  "title": {
+                    "romaji": "Geunyeoui Sohwansu",
+                    "english": "Her Summon",
+                    "native": "그녀의 소환수",
+                    "userPreferred": "Geunyeoui Sohwansu"
+                  },
+                  "status": "FINISHED",
+                  "episodes": null,
+                  "coverImage": {
+                    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx107720-nIiuP9q4R1Uh.jpg",
+                    "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107720-nIiuP9q4R1Uh.jpg",
+                    "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx107720-nIiuP9q4R1Uh.jpg",
+                    "color": "#43c9f1"
+                  },
+                  "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/107720-Ngc03SdYGiMG.jpg",
+                  "format": "MANGA",
+                  "chapters": 62,
+                  "meanScore": 77,
+                  "nextAiringEpisode": null
+                }
+              }
+            }
+          ]
+        },
+        "relations": {
+          "edges": [
+            {
+              "id": 75370,
+              "relationType": "ADAPTATION",
+              "node": {
+                "id": 151807,
+                "idMal": 52299,
+                "status": "FINISHED",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151807-it355ZgzquUd.png",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx151807-it355ZgzquUd.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx151807-it355ZgzquUd.png",
+                  "color": "#35bbf1"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/151807-37yfQA3ym8PA.jpg",
+                "title": {
+                  "romaji": "Ore dake Level Up na Ken",
+                  "english": "Solo Leveling",
+                  "native": "俺だけレベルアップな件",
+                  "userPreferred": "Ore dake Level Up na Ken"
+                },
+                "episodes": 12,
+                "chapters": null,
+                "format": "TV",
+                "nextAiringEpisode": null,
+                "meanScore": 80
+              }
+            },
+            {
+              "id": 96768,
+              "relationType": "ADAPTATION",
+              "node": {
+                "id": 176496,
+                "idMal": 58567,
+                "status": "FINISHED",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx176496-9BDMjAZGEbq4.png",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx176496-9BDMjAZGEbq4.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx176496-9BDMjAZGEbq4.png",
+                  "color": "#e45093"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/176496-5oY4k2NRqlYs.jpg",
+                "title": {
+                  "romaji": "Ore dake Level Up na Ken: Season 2 - Arise from the Shadow",
+                  "english": "Solo Leveling Season 2 -Arise from the Shadow-",
+                  "native": "俺だけレベルアップな件 Season 2 -Arise from the Shadow-",
+                  "userPreferred": "Ore dake Level Up na Ken: Season 2 - Arise from the Shadow"
+                },
+                "episodes": 13,
+                "chapters": null,
+                "format": "TV",
+                "nextAiringEpisode": null,
+                "meanScore": 84
+              }
+            },
+            {
+              "id": 99352,
+              "relationType": "SEQUEL",
+              "node": {
+                "id": 179445,
+                "idMal": 172429,
+                "status": "HIATUS",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx179445-ho0nb7baJ1a5.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx179445-ho0nb7baJ1a5.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx179445-ho0nb7baJ1a5.jpg",
+                  "color": "#5d86f1"
+                },
+                "bannerImage": null,
+                "title": {
+                  "romaji": "Na Honjaman Level Up: Ragnarok",
+                  "english": "Solo Leveling: Ragnarok",
+                  "native": "나 혼자만 레벨업 : 라그나로크",
+                  "userPreferred": "Na Honjaman Level Up: Ragnarok"
+                },
+                "episodes": null,
+                "chapters": null,
+                "format": "MANGA",
+                "nextAiringEpisode": null,
+                "meanScore": 75
+              }
+            }
+          ]
+        },
+        "studios": {
+          "edges": []
+        }
+      }
+    }
+  }
+}

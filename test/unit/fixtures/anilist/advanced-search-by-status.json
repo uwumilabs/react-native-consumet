@@ -1,0 +1,311 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "advancedSearch, the most popular media of each status (a manga for HIATUS).",
+  "recordings": [
+    {
+      "variables": {
+        "type": "ANIME",
+        "page": 1,
+        "size": 1,
+        "status": "RELEASING",
+        "sort": [
+          "POPULARITY_DESC"
+        ]
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "Page": {
+            "pageInfo": {
+              "total": 5000,
+              "perPage": 1,
+              "currentPage": 1,
+              "lastPage": 5000,
+              "hasNextPage": true
+            },
+            "media": [
+              {
+                "id": 21,
+                "idMal": 21,
+                "status": "RELEASING",
+                "title": {
+                  "userPreferred": "ONE PIECE",
+                  "romaji": "ONE PIECE",
+                  "english": "ONE PIECE",
+                  "native": "ONE PIECE"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/21-wf37VakJmZqs.jpg",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21-ELSYx3yMPcKM.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21-ELSYx3yMPcKM.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx21-ELSYx3yMPcKM.jpg",
+                  "color": "#e49335"
+                },
+                "episodes": null,
+                "season": "FALL",
+                "popularity": 760264,
+                "description": "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The captur…",
+                "format": "TV",
+                "seasonYear": 1999,
+                "genres": [
+                  "Action",
+                  "Adventure",
+                  "Comedy",
+                  "Drama",
+                  "Fantasy"
+                ],
+                "averageScore": 87,
+                "countryOfOrigin": "JP",
+                "nextAiringEpisode": {
+                  "airingAt": 1798985760,
+                  "timeUntilAiring": 6853072,
+                  "episode": 1181
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variables": {
+        "type": "ANIME",
+        "page": 1,
+        "size": 1,
+        "status": "FINISHED",
+        "sort": [
+          "POPULARITY_DESC"
+        ]
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "Page": {
+            "pageInfo": {
+              "total": 5000,
+              "perPage": 1,
+              "currentPage": 1,
+              "lastPage": 5000,
+              "hasNextPage": true
+            },
+            "media": [
+              {
+                "id": 16498,
+                "idMal": 16498,
+                "status": "FINISHED",
+                "title": {
+                  "userPreferred": "Shingeki no Kyojin",
+                  "romaji": "Shingeki no Kyojin",
+                  "english": "Attack on Titan",
+                  "native": "進撃の巨人"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-buvcRTBx4NSm.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx16498-buvcRTBx4NSm.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx16498-buvcRTBx4NSm.jpg",
+                  "color": "#f1a143"
+                },
+                "episodes": 25,
+                "season": "SPRING",
+                "popularity": 1066806,
+                "description": "Several hundred years ago, humans were nearly exterminated by titans. Titans are typically several stories tall, seem to…",
+                "format": "TV",
+                "seasonYear": 2013,
+                "genres": [
+                  "Action",
+                  "Drama",
+                  "Fantasy",
+                  "Mystery"
+                ],
+                "averageScore": 85,
+                "countryOfOrigin": "JP",
+                "nextAiringEpisode": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variables": {
+        "type": "ANIME",
+        "page": 1,
+        "size": 1,
+        "status": "NOT_YET_RELEASED",
+        "sort": [
+          "POPULARITY_DESC"
+        ]
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "Page": {
+            "pageInfo": {
+              "total": 5000,
+              "perPage": 1,
+              "currentPage": 1,
+              "lastPage": 5000,
+              "hasNextPage": true
+            },
+            "media": [
+              {
+                "id": 195539,
+                "idMal": 61990,
+                "status": "NOT_YET_RELEASED",
+                "title": {
+                  "userPreferred": "Cyberpunk: Edgerunners 2",
+                  "romaji": "Cyberpunk: Edgerunners 2",
+                  "english": "Cyberpunk: Edgerunners 2",
+                  "native": "サイバーパンク: エッジランナーズ2"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/195539-lO5SUdp4SOrq.jpg",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195539-t0GQQ9J9qtBW.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx195539-t0GQQ9J9qtBW.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx195539-t0GQQ9J9qtBW.jpg",
+                  "color": "#e41a5d"
+                },
+                "episodes": 10,
+                "season": "FALL",
+                "popularity": 78381,
+                "description": "<i>Cyberpunk: Edgerunners 2</i> pulls you back into Night City, where lives become entangled to the extreme. Weak, a was…",
+                "format": "ONA",
+                "seasonYear": 2026,
+                "genres": [
+                  "Action",
+                  "Drama",
+                  "Sci-Fi"
+                ],
+                "averageScore": null,
+                "countryOfOrigin": "JP",
+                "nextAiringEpisode": {
+                  "airingAt": 1792479900,
+                  "timeUntilAiring": 347209,
+                  "episode": 1
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variables": {
+        "type": "ANIME",
+        "page": 1,
+        "size": 1,
+        "status": "CANCELLED",
+        "sort": [
+          "POPULARITY_DESC"
+        ]
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "Page": {
+            "pageInfo": {
+              "total": 5000,
+              "perPage": 1,
+              "currentPage": 1,
+              "lastPage": 5000,
+              "hasNextPage": true
+            },
+            "media": [
+              {
+                "id": 98656,
+                "idMal": null,
+                "status": "CANCELLED",
+                "title": {
+                  "userPreferred": "Yuuri!!! on ICE The Movie: ICE ADOLESCENCE",
+                  "romaji": "Yuuri!!! on ICE The Movie: ICE ADOLESCENCE",
+                  "english": null,
+                  "native": "ユーリ!!! on ICE 劇場版 : ICE ADOLESCENCE"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/98656-pP3gO4UhBT9z.jpg",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx98656-HRsD7skIzzGq.jpg",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx98656-HRsD7skIzzGq.jpg",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/nx98656-HRsD7skIzzGq.jpg",
+                  "color": "#1a356b"
+                },
+                "episodes": 1,
+                "season": null,
+                "popularity": 30696,
+                "description": "Sequel movie to <i>Yuri!!! on Ice</i>.",
+                "format": "MOVIE",
+                "seasonYear": null,
+                "genres": [
+                  "Sports"
+                ],
+                "averageScore": 78,
+                "countryOfOrigin": "JP",
+                "nextAiringEpisode": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variables": {
+        "type": "MANGA",
+        "page": 1,
+        "size": 1,
+        "status": "HIATUS",
+        "sort": [
+          "POPULARITY_DESC"
+        ]
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "Page": {
+            "pageInfo": {
+              "total": 5000,
+              "perPage": 1,
+              "currentPage": 1,
+              "lastPage": 5000,
+              "hasNextPage": true
+            },
+            "media": [
+              {
+                "id": 30656,
+                "idMal": 656,
+                "status": "HIATUS",
+                "title": {
+                  "userPreferred": "Vagabond",
+                  "romaji": "Vagabond",
+                  "english": "Vagabond",
+                  "native": "バガボンド"
+                },
+                "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/30656-XYzvRlsc3iK4.jpg",
+                "coverImage": {
+                  "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30656-9mW113O7rDnA.png",
+                  "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30656-9mW113O7rDnA.png",
+                  "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx30656-9mW113O7rDnA.png",
+                  "color": null
+                },
+                "episodes": null,
+                "season": null,
+                "popularity": 164359,
+                "description": "At seventeen years of age, Miyamoto Musashi--still known by his childhood name, Shinmen Takezo--was a wild young brute j…",
+                "format": "MANGA",
+                "seasonYear": null,
+                "genres": [
+                  "Action",
+                  "Adventure",
+                  "Drama"
+                ],
+                "averageScore": 91,
+                "countryOfOrigin": "JP",
+                "nextAiringEpisode": null
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

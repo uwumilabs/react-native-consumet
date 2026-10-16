@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.filterValidM3U8 = exports.getHashFromImage = exports.substringBeforeLast = exports.substringAfterLast = exports.substringBefore = exports.substringAfter = exports.calculateStringSimilarity = exports.isJson = exports.getDays = exports.capitalizeFirstLetter = exports.range = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.ANIFY_URL = exports.days = exports.USER_AGENT = void 0;
+exports.filterValidM3U8 = exports.substringBeforeLast = exports.substringAfterLast = exports.substringBefore = exports.substringAfter = exports.calculateStringSimilarity = exports.isJson = exports.getDays = exports.capitalizeFirstLetter = exports.range = exports.genElement = exports.formatTitle = exports.floorID = exports.splitAuthor = exports.ANIFY_URL = exports.days = exports.USER_AGENT = void 0;
 exports.convertDuration = convertDuration;
 exports.findSimilarTitles = findSimilarTitles;
 exports.cleanTitle = cleanTitle;
@@ -12,7 +12,6 @@ exports.transformSpecificVariations = transformSpecificVariations;
 exports.sanitizeTitle = sanitizeTitle;
 exports.stringSearch = stringSearch;
 const string_similarity_1 = require("string-similarity");
-// import sharp from 'sharp';
 const cheerio_1 = require("cheerio");
 // Re-export constants from constants.ts to maintain backward compatibility
 var constants_1 = require("./constants");
@@ -181,26 +180,6 @@ const substringBeforeLast = (str, toFind) => {
   return index === -1 ? '' : str.substring(0, index);
 };
 exports.substringBeforeLast = substringBeforeLast;
-// const generateHash = async (url: string) => {
-//   let returnedBuffer;
-//   const response = await fetch(url);
-//   const arrayBuffer = await response.arrayBuffer();
-//   returnedBuffer = Buffer.from(arrayBuffer);
-//   // const { info, data } = await sharp(returnedBuffer).ensureAlpha().raw().toBuffer({
-//   //   resolveWithObject: true,
-//   // });
-//   return blurhash.encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
-// };
-const getHashFromImage = url => {
-  if (url?.length === 0) {
-    return '';
-  } else {
-    // let hash!: string;
-    // generateHash(url).then(hashKey => (hash = hashKey));
-    return 'hash';
-  }
-};
-exports.getHashFromImage = getHashFromImage;
 // Function to find similar titles
 function findSimilarTitles(inputTitle, titles) {
   const results = [];

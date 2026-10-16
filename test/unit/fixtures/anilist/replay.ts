@@ -26,5 +26,5 @@ export const replay = <T extends PostSpy>(post: T, ...fixtures: { status: number
 /** The body of each request sent to AniList. */
 export const sentBodies = (post: PostSpy) => post.mock.calls.map(([, body]) => body as RequestBody);
 
-/** A deep copy, so a test can edit a fixture without affecting the others. */
-export const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+/** A deep, loosely typed copy, so a test can edit a fixture without affecting the others. */
+export const copy = (value: unknown): any => JSON.parse(JSON.stringify(value));
