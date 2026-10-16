@@ -11,12 +11,13 @@ There is **no sandbox**. Extension code runs in the app's own JavaScript runtime
 
 So the only security boundary is **which code gets to run**. Everything below is about making sure the code that runs is exactly the code that was published.
 
-| Threat | Vector | What stops it |
-|---|---|---|
-| Tampered or corrupted download | CDN compromise, MITM, truncated response | SHA-256 check before execution (below) |
-| Code injection through the registry | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below) |
-| A push to `main` changing what a published version runs | Rebuilding `dist/` | Immutable versioned files (below) |
-| A malicious registry | Apps that download the registry get URLs and hashes from the same place | **Not yet solved**, see Known gaps |
+| Threat                                                  | Vector                                                                                     | What stops it                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Tampered or corrupted download                          | CDN compromise, MITM, truncated response                                                   | SHA-256 check before execution (below) |
+| Code injection through the registry                     | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below)          |
+| A push to `main` changing what a published version runs | Rebuilding `dist/`                                                                         | Immutable versioned files (below)      |
+| A malformed registry                                    | A bad download, a hand-edited file, or a registry format newer than the app                | Validation that fails closed (below)   |
+| A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | **Not yet solved**, see Known gaps     |
 
 ## What the library enforces
 
@@ -59,15 +60,30 @@ Each registry entry's `main` points at a published copy of one exact version, `r
 
 Registry URLs use `https://raw.githubusercontent.com`; the platform networking stack enforces TLS. Code downloads are aborted after 30 seconds instead of hanging.
 
+### 5. Registries fail closed
+
+`new ProviderManager(registry)`, `new ExtractorManager(registry)` and `validateRegistry(registry)` check the registry before anything uses it. Before this check, an invalid registry was logged and the managers ran with no entries. Now a registry that is malformed, or uses a newer `schemaVersion` than the library reads, throws a `RegistryError`:
+
+- `code`: `INVALID_REGISTRY`, `UNSUPPORTED_SCHEMA`, or `INCOMPATIBLE_ENTRY` for an entry whose `minContextVersion` is newer than the library's `CONTEXT_VERSION`
+- `issues`: every problem found
+- `updateRequired`: `true` when a newer app version would accept it
+
+Entries that need a newer context are listed but never run: every load and execute path refuses them before downloading or running code. See [Registry Versions and Compatibility](./extension-integration.md#registry-versions-and-compatibility).
+
+### 6. Native module
+
+- **Android:** WebView remote debugging is enabled only when the host app is debuggable (`ApplicationInfo.FLAG_DEBUGGABLE`), so release builds don't expose the app's WebViews to inspection. Cookie and header values are not logged. The module's WebViews use the app-wide `CookieManager`, so they share cookies with the app's own WebViews.
+- **iOS:** the module's WebViews use their own in-memory cookie store, separate from the app's WebViews and cleared when the app restarts, and return only the cookies that apply to the loaded URL.
+
 ## Known gaps
 
 These are tracked in the roadmap and not solved yet:
 
 - **Library versions up to 1.6.0** still carry registries whose URLs point straight at `dist/` on `main`. Rebuilding `dist/` changes what those versions download, so 1.6.0 fails integrity checks and older versions run the new code unchecked. Updating the library fixes this.
-- **Immutability is enforced by the publish script, not by GitHub.** Published files under `registry/` live on the `main` branch; nothing but review and `yarn registry:check` stops someone from editing one by hand.
+- **Immutability is enforced by the publish script and CI, not by GitHub.** Published files under `registry/` live on the `main` branch. CI's `registry` job fails a change that edits one, but a push to `main` that skips CI isn't stopped.
 - **Unsigned remote registry (REG-6).** When an app downloads `extension-registry.json`, the URLs and hashes come from the same mutable place, so the hash only detects corruption, not a malicious push. A registry bundled in the app binary is trustworthy; a downloaded one is only as trustworthy as the repository.
 - **Versions up to 1.5.0** do not verify hashes at all.
-- **Native module (SEC-2).** On Android, WebView remote debugging is currently enabled in release builds, and cookies and headers are written to logcat. On iOS, cookies from the shared WebView data store are returned without filtering by domain.
+- **Native builds up to 1.6.0** enable Android WebView debugging in release builds, log cookies and headers to logcat, and on iOS return every cookie in the app's shared WebView data store. Updating the library fixes this.
 
 ## Publishing and checking the registry
 
@@ -77,11 +93,16 @@ These are tracked in the roadmap and not solved yet:
 yarn build && node scripts/prepare-registry.js
 ```
 
-It exits with an error, and writes nothing, if a build file is missing or if an entry's build output changed without a version bump. `yarn registry:check` runs the same checks without writing. The pre-commit hook rebuilds `dist/` but doesn't run these checks yet (REG-5).
+It exits with an error, and writes nothing, if a build file is missing, if an entry's build output changed without a version bump, or if the result fails `validateRegistry`. `yarn registry:check` runs the same checks without writing.
+
+These checks also run automatically:
+
+- **Pre-commit hook** (`scripts/stage-dist.js`): when a commit stages changes under `src/` or `scripts/`, it rebuilds `dist/` from the staged files, runs `prepare-registry`, and stages `dist/`, the newly published files and the refreshed hashes. A bundle that changed under an already published version stops the commit.
+- **CI `registry` job:** rebuilds `dist/` from a clean checkout and fails if the committed `dist/` differs from the rebuild, if a hash doesn't match its rebuilt bundle, if a hash changed without a higher `version` (compared with the base commit), if a version went backwards, if a published file changed, or if a registry URL points at a missing file.
 
 ## Guidance for consumers
 
-1. **Prefer a bundled registry**, or verify a downloaded one out of band; see the unsigned-registry gap above.
+1. **Prefer a bundled registry**, or verify a downloaded one out of band; see the unsigned-registry gap above. Run `validateRegistry` on a downloaded registry before storing it, and keep the previous one if it throws.
 2. **Verify cached code** with `verifyExtensionCode` when you store it, and handle `IntegrityError` by re-downloading.
 3. **Always ship `sha256`** in custom registries; don't rely on `allowUnhashed`.
 4. **Use HTTPS URLs** for all code.
