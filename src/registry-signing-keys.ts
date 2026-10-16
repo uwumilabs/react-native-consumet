@@ -14,4 +14,7 @@
  * scripts/sign-registry.js and scripts/registry-keygen.js read and edit this list: keep each key a
  * quoted string literal inside the array.
  */
-export const REGISTRY_SIGNING_KEYS: readonly string[] = [];
+export const REGISTRY_SIGNING_KEYS: readonly string[] = [
+  // Added 2026-10-16
+  'b9ad0544013146b7ddeeb31730de28e6012a23ad53dad0f8d82a56848b9ba7f6',
+];

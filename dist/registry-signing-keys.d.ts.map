@@ -1,1 +1,1 @@
-{"version":3,"file":"registry-signing-keys.d.ts","sourceRoot":"","sources":["../src/registry-signing-keys.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;;GAeG;AACH,eAAO,MAAM,qBAAqB,EAAE,SAAS,MAAM,EAAO,CAAC"}
+{"version":3,"file":"registry-signing-keys.d.ts","sourceRoot":"","sources":["../src/registry-signing-keys.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;;GAeG;AACH,eAAO,MAAM,qBAAqB,EAAE,SAAS,MAAM,EAGlD,CAAC"}
