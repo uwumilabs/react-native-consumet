@@ -1,4 +1,5 @@
 #import "Consumet.h"
+#import "RCConsumetSynchronyCache.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 #import <WebKit/WebKit.h>
 
@@ -668,116 +669,49 @@ RCT_EXPORT_MODULE()
 - (void)deobfuscateScript:(NSString *)source
                   resolve:(RCTPromiseResolveBlock)resolve
                    reject:(RCTPromiseRejectBlock)reject {
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
-    // Fetch Synchrony deobfuscator script.
-    NSURL *synchronyURL = [NSURL
-        URLWithString:
-            @"https://raw.githubusercontent.com/Kohi-den/extensions-source/"
-            @"9328d12fcfca686becfb3068e9d0be95552c536f/lib/synchrony/src/main/"
-            @"assets/synchrony-v2.4.5.1.js"];
-
-    NSMutableURLRequest *req =
-        [NSMutableURLRequest requestWithURL:synchronyURL
-                                cachePolicy:NSURLRequestReloadIgnoringCacheData
-                            timeoutInterval:15];
-    [req setValue:@"Mozilla/5.0 (iPhone)" forHTTPHeaderField:@"User-Agent"];
-
-    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
-    __block NSData *fetchedData = nil;
-    __block NSError *fetchErr = nil;
-
-    [[[NSURLSession sharedSession]
-        dataTaskWithRequest:req
-          completionHandler:^(NSData *d, NSURLResponse *r, NSError *e) {
-            fetchedData = d;
-            fetchErr = e;
-            dispatch_semaphore_signal(sem);
-          }] resume];
-
-    if (dispatch_semaphore_wait(
-            sem, dispatch_time(DISPATCH_TIME_NOW, 20 * NSEC_PER_SEC)) != 0 ||
-        !fetchedData) {
-      reject(@"NetworkError",
-             fetchErr.localizedDescription ?: @"Timeout fetching Synchrony",
-             fetchErr);
+  // Downloaded at most once per process and saved for later launches, after
+  // its SHA-256 is checked (see RCConsumetSynchronyCache.h).
+  [[RCConsumetSynchronyCache sharedCache] loadScript:^(NSString *script,
+                                                       NSString *code,
+                                                       NSString *message) {
+    if (!script) {
+      reject(code, message, nil);
       return;
     }
+    // Off the cache's queue: running Synchrony takes a while.
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+      JSContext *ctx = [[JSContext alloc] init];
+      __block NSString *jsErr = nil;
+      ctx.exceptionHandler = ^(JSContext *c, JSValue *ex) {
+        jsErr = ex.toString;
+      };
 
-    NSString *original = [[NSString alloc] initWithData:fetchedData
-                                               encoding:NSUTF8StringEncoding];
-    if (!original) {
-      reject(@"ParseError", @"Invalid Synchrony encoding", nil);
-      return;
-    }
+      [ctx evaluateScript:@"var "
+                          @"console={log:function(){},warn:function(){},error:"
+                          @"function(){},trace:function(){}};"];
+      [ctx evaluateScript:script];
+      if (jsErr) {
+        reject(@"EvaluationError", jsErr, nil);
+        return;
+      }
 
-    // Transform ES module export to plain const declarations so JSContext can
-    // run it.
-    NSError *reErr;
-    NSRegularExpression *re = [NSRegularExpression
-        regularExpressionWithPattern:
-            @"export\\{(.*?) as Deobfuscator,(.*?) as Transformer\\};"
-                             options:0
-                               error:&reErr];
-    if (!re) {
-      reject(@"ParseError", reErr.localizedDescription, reErr);
-      return;
-    }
-
-    __block NSString *transformed = nil;
-    [re enumerateMatchesInString:original
-                         options:0
-                           range:NSMakeRange(0, original.length)
-                      usingBlock:^(NSTextCheckingResult *m, NSMatchingFlags f,
-                                   BOOL *stop) {
-                        NSString *deob =
-                            [original substringWithRange:[m rangeAtIndex:1]];
-                        NSString *trans =
-                            [original substringWithRange:[m rangeAtIndex:2]];
-                        NSString *rep = [NSString
-                            stringWithFormat:
-                                @"const Deobfuscator=%@,Transformer=%@;", deob,
-                                trans];
-                        transformed =
-                            [original stringByReplacingCharactersInRange:m.range
-                                                              withString:rep];
-                        *stop = YES;
-                      }];
-
-    if (!transformed) {
-      reject(@"ParseError", @"Could not parse Synchrony export format", nil);
-      return;
-    }
-
-    JSContext *ctx = [[JSContext alloc] init];
-    __block NSString *jsErr = nil;
-    ctx.exceptionHandler = ^(JSContext *c, JSValue *ex) {
-      jsErr = ex.toString;
-    };
-
-    [ctx evaluateScript:@"var "
-                        @"console={log:function(){},warn:function(){},error:"
-                        @"function(){},trace:function(){}};"];
-    [ctx evaluateScript:transformed];
-    if (jsErr) {
-      reject(@"EvaluationError", jsErr, nil);
-      return;
-    }
-
-    // A Synchrony exception reaches exceptionHandler and rejects, as on
-    // Android; the promise resolves only with a string.
-    ctx[@"__src"] = source;
-    JSValue *result =
-        [ctx evaluateScript:@"new Deobfuscator().deobfuscateSource(__src)"];
-    if (jsErr) {
-      reject(@"EvaluationError", jsErr, nil);
-      return;
-    }
-    if (!result.isString) {
-      reject(@"EvaluationError", @"Deobfuscator did not return a string", nil);
-      return;
-    }
-    resolve(result.toString);
-  });
+      // A Synchrony exception reaches exceptionHandler and rejects, as on
+      // Android; the promise resolves only with a string.
+      ctx[@"__src"] = source;
+      JSValue *result =
+          [ctx evaluateScript:@"new Deobfuscator().deobfuscateSource(__src)"];
+      if (jsErr) {
+        reject(@"EvaluationError", jsErr, nil);
+        return;
+      }
+      if (!result.isString) {
+        reject(@"EvaluationError", @"Deobfuscator did not return a string",
+               nil);
+        return;
+      }
+      resolve(result.toString);
+    });
+  }];
 }
 
 @end

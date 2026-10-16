@@ -11,8 +11,12 @@ import java.io.IOException
  * shipped a 4 KB-aligned libquickjs.so).
  */
 internal object Synchrony {
+    // Synchrony v2.4.5.1, at a fixed commit. The URL never serves other content, so the script must
+    // have this SHA-256; anything else was tampered with or cut short (SynchronyScriptCache checks).
+    // Change both together, and the ios/RCConsumetSynchronyCache.m pair with them.
     const val SCRIPT_URL =
         "https://raw.githubusercontent.com/Kohi-den/extensions-source/9328d12fcfca686becfb3068e9d0be95552c536f/lib/synchrony/src/main/assets/synchrony-v2.4.5.1.js"
+    const val SCRIPT_SHA256 = "8f816ca971ca5e6a34952775f3ca1a3a7379ffe5645efd7b693574ec77358d82"
 
     // Synchrony walks the syntax tree recursively. It runs on its own thread with this much stack,
     // and QuickJS stops with a RangeError well before the thread's stack runs out.
@@ -53,3 +57,9 @@ internal object Synchrony {
 internal class SynchronyFormatException(message: String) : IOException(message) {
     val code = "ParseError"
 }
+
+/**
+ * The downloaded Synchrony script does not have the pinned SHA-256: it was tampered with, cut
+ * short, or is another page (a captive portal's, say). deobfuscateScript rejects with NetworkError.
+ */
+internal class SynchronyIntegrityException(message: String) : IOException(message)

@@ -51,6 +51,11 @@ const kotlin = Object.fromEntries(
 );
 const allKotlin = Object.values(kotlin).join('\n');
 const objc = read('ios/Consumet.mm');
+const allObjc = fs
+  .readdirSync(path.join(repoRoot, 'ios'))
+  .filter((f) => /\.mm?$/.test(f))
+  .map((f) => read(`ios/${f}`))
+  .join('\n');
 
 /** Signatures of the Spec interface members, whitespace-normalised. */
 function specSignatures(): Record<string, string> {
@@ -93,8 +98,8 @@ describe('NativeConsumet spec (NAT-1)', () => {
       ...[...allKotlin.matchAll(/\?\.code \?: "(\w+)"/g)].map((m) => m[1]),
     ]);
     const objcCodes = new Set([
-      ...[...objc.matchAll(/reject\(\s*@"(\w+)"/g)].map((m) => m[1]),
-      ...[...objc.matchAll(/static NSString \*const k\w+Code = @"(\w+)"/g)].map((m) => m[1]),
+      ...[...allObjc.matchAll(/reject\(\s*@"(\w+)"/g)].map((m) => m[1]),
+      ...[...allObjc.matchAll(/NSString \*const \w+Code = @"(\w+)"/g)].map((m) => m[1]),
     ]);
     expect([...kotlinCodes].sort()).toEqual([...ERROR_CODES].sort());
     expect([...objcCodes].sort()).toEqual([...ERROR_CODES].sort());
@@ -175,7 +180,7 @@ describe('native implementations follow the contract (NAT-1)', () => {
   it('deobfuscateScript rejects instead of resolving null on both platforms', () => {
     expect(objc).not.toMatch(/resolve\(\[NSNull null\]\)/);
     expect(objc).not.toMatch(/catch\(e\)\{return null;\}/);
-    expect(objc).toMatch(/reject\(@"EvaluationError", @"Deobfuscator did not return a string", nil\)/);
+    expect(objc).toMatch(/reject\(@"EvaluationError",\s*@"Deobfuscator did not return a string",\s*nil\)/);
     expect(kotlin['DeobfuscatorModule.kt']).toMatch(/reject\("EvaluationError", "Deobfuscator did not return a string"\)/);
   });
 });

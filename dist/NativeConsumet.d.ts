@@ -13,7 +13,7 @@ import type { TurboModule } from 'react-native';
  * | `COOKIE_ERROR`    | getDdosGuardCookiesWithWebView | The page loaded but set no `__ddg2_` cookie.                    |
  * | `ERROR`           | bypassDdosGuard                | Invalid URL, or no DDoS-Guard cookie could be obtained.         |
  * | `HTTP_ERROR`      | makePostRequest                | Invalid URL or transport failure. HTTP error statuses resolve.  |
- * | `NetworkError`    | deobfuscateScript              | The Synchrony script could not be downloaded.                   |
+ * | `NetworkError`    | deobfuscateScript              | Synchrony could not be downloaded or failed its SHA-256 check.  |
  * | `ParseError`      | deobfuscateScript              | The Synchrony script did not have the expected format.          |
  * | `EvaluationError` | deobfuscateScript              | Synchrony threw (e.g. on invalid JavaScript) or gave no string. |
  *
@@ -92,6 +92,11 @@ export interface Spec extends TurboModule {
      * resolves with the deobfuscated code. Rejects with `NetworkError`, `ParseError` or
      * `EvaluationError`; current builds never resolve `null`, but older iOS builds did (see above),
      * so keep a null check in extension code.
+     *
+     * The Synchrony script (a pinned version) is downloaded at most once per app process and kept in
+     * memory, and a copy goes to the app's cache directory, so later launches need no download. A
+     * download or cached copy without the pinned SHA-256 is never run: the download rejects with
+     * `NetworkError`, and a bad cached copy is deleted and downloaded again.
      */
     deobfuscateScript: (source: string) => Promise<string | null>;
     multiply: (a: number, b: number) => number;

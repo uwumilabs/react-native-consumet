@@ -4,8 +4,6 @@ import android.system.Os
 import android.system.OsConstants
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -19,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Loads the QuickJS engine behind deobfuscateScript on a device and runs the pinned Synchrony
  * script in it (NAT-2). On a 16 KB page-size device this also proves the native library loads.
- * Needs network access for the Synchrony script.
+ * Needs network access for the Synchrony script, which must have the pinned SHA-256.
  */
 @RunWith(AndroidJUnit4::class)
 class SynchronyEngineTest {
@@ -30,8 +28,8 @@ class SynchronyEngineTest {
         @JvmStatic
         fun downloadSynchrony() {
             Log.i("SynchronyEngineTest", "page size: ${Os.sysconf(OsConstants._SC_PAGESIZE)}")
-            val request = Request.Builder().url(Synchrony.SCRIPT_URL).build()
-            script = OkHttpClient().newCall(request).execute().use { Synchrony.prepare(it.body!!.string()) }
+            // Through the cache, which fails unless the download has the pinned SHA-256 (NAT-3).
+            script = SynchronyScriptCache(null) { DeobfuscatorModule.downloadScript() }.get()
         }
 
         /** Runs [block] on a thread with the stack size the module uses. */
