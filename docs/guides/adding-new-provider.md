@@ -151,10 +151,9 @@ export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: strin
 }
 
 export type MyAnimeWebsiteProviderInstance = ReturnType<typeof createMyAnimeWebsite>;
-export default createMyAnimeWebsite;
 ```
 
-Export the factory by name (`export function createMyAnimeWebsite`); the registry's `factoryName` must match it. A default export can be added too.
+Export the factory by name (`export function createMyAnimeWebsite`); the registry's `factoryName` must match it. Provider and extractor modules use named exports only.
 
 ## Step 3: Implement the Provider Logic
 
@@ -204,7 +203,9 @@ The loader looks for your factory as `exports[factoryName]`, then `module.export
 
 ### Integrating Extractors
 
-Call extractors through `ctx.extractors`, passing the context to function extractors: `extractors.MegaCloud(ctx).extract(new PolyURL(embedUrl), referer)`, as in the example above. When the provider is loaded by a `ProviderManager` whose registry lists the extractor, this runs the registry version, hash-checked and cached, and falls back to the bundled one if the registry copy can't be used. The `ExtractorRegistry` type in [`src/models/provider-context.ts`](../../src/models/provider-context.ts) lists each extractor's `extract` signature; older ones are classes (`new extractors.MixDrop()`).
+Call extractors through `ctx.extractors`, passing the context to function extractors: `extractors.MegaCloud(ctx).extract(new PolyURL(embedUrl), referer)`, as in the example above. When the provider is loaded by a `ProviderManager` whose registry lists the extractor, this runs the registry version, hash-checked and cached, and falls back to the bundled one if the registry copy can't be used. The `ExtractorRegistry` type in [`src/models/provider-context.ts`](../../src/models/provider-context.ts) lists each extractor's `extract` signature; older ones are classes that take the context too (`new extractors.MixDrop(ctx)`).
+
+Always pass your factory's `ctx` to the extractors you call. A bundled extractor then makes its requests through the app's axios, proxy and user agent; without a context it falls back to the library's default context and ignores the app's settings.
 
 List the extractors your provider uses in the entry's `extractors` field. Server names resolve to extractors by the longest registry `name` or alias they start with (`megacloud-hd-1` → MegaCloud), so name your servers after their extractor.
 
@@ -372,9 +373,9 @@ Don't delete files by hand. `yarn registry:prune` lists what the rule allows del
 
 A registry provider needs no class and no library release. Add a class only if the provider should also ship inside the library, as `ANIME.MyAnimeWebsite`:
 
-1. Write `src/providers/anime/myanimewebsite/myanimewebsite.ts`: a class extending `AnimeParser` (or `MovieParser`) that builds its instance with `createMyAnimeWebsite(createProviderContext(), customBaseURL)` and copies the fields and methods across, including `capabilities`. `src/providers/anime/anineko/anineko.ts` is a short example.
-2. Export the class and the factory from `src/providers/anime/index.ts`.
-3. Add a lazy getter for the class to `animeProviders` (or `movieProviders`) in [`src/utils/provider-maps.ts`](../../src/utils/provider-maps.ts), keyed by the registry entry's `name`. `ProviderManager` then gives loaded instances that class's prototype, so `instanceof MyAnimeWebsite` holds. Without it they get the `AnimeParser` / `MovieParser` prototype. The getters use `require` to avoid import cycles; copy an existing one.
+1. Write `src/providers/anime/myanimewebsite/myanimewebsite.ts`: a class extending `AnimeParser` (or `MovieParser`) that takes `(ctx?, customBaseURL?)`, the factory's order, and keeps the older `(customBaseURL?)` form as an overload. `providerArgs(ctxOrBaseURL, customBaseURL)` from `src/providers/provider-args.ts` reads both forms and supplies `createProviderContext()` when there's no context. Build the instance with `createMyAnimeWebsite(ctx, baseURL)` and copy the fields and methods across, including `capabilities`. `src/providers/anime/anineko/anineko.ts` is a short example.
+2. Export the class and the factory by name, and add them to the `ANIME` (or `MOVIES`) object in `src/providers/anime/index.ts`.
+3. Add a lazy getter for the class to `animeProviders` (or `movieProviders`) in [`src/utils/provider-maps.ts`](../../src/utils/provider-maps.ts), keyed by the registry entry's `name`. `ProviderManager` then gives loaded instances that class's prototype, so `instanceof MyAnimeWebsite` holds. Without it they get the `AnimeParser` / `MovieParser` prototype. The getters `require` the module and read the class by name, to avoid import cycles; copy an existing one.
 4. Add the registry id to `KnownAnimeProviderId` (or `KnownMovieProviderId`) in the same file, so it autocompletes in `getAnimeProvider`. Other ids type-check anyway.
 
 ## Step 5: Write Tests
