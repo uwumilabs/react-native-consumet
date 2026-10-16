@@ -504,13 +504,13 @@ export function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.MegaUp:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/'),
           };
       }
@@ -587,5 +587,3 @@ export function createAnimeKai(ctx: ProviderContext, customBaseURL?: string) {
 }
 
 export type AnimeKaiProviderInstance = ReturnType<typeof createAnimeKai>;
-
-export default createAnimeKai;

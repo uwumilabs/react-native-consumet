@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
-const anime_1 = __importDefault(require("./anime"));
-exports.ANIME = anime_1.default;
+const anime_1 = require("./anime");
+Object.defineProperty(exports, "ANIME", { enumerable: true, get: function () { return anime_1.ANIME; } });
 const manga_1 = __importDefault(require("./manga"));
 exports.MANGA = manga_1.default;
 const light_novels_1 = __importDefault(require("./light-novels"));

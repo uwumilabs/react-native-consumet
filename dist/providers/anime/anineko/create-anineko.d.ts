@@ -49,5 +49,4 @@ export declare function createAniNeko(ctx: ProviderContext, customBaseURL?: stri
     isDubAvailableSeparately?: boolean;
 };
 export type AniNekoProviderInstance = ReturnType<typeof createAniNeko>;
-export default createAniNeko;
 //# sourceMappingURL=create-anineko.d.ts.map

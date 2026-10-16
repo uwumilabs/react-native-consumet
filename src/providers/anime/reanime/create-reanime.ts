@@ -11,10 +11,9 @@ import {
   type MediaFormat,
   StreamingServers,
 } from '../../../models';
-import { PolyURL } from '../../../utils/url-polyfill';
 
 export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, enums, createCustomBaseUrl, extractors, NativeConsumet } = ctx;
+  const { axios, load, enums, createCustomBaseUrl, extractors, NativeConsumet, PolyURL } = ctx;
   const { makeGetRequestWithWebView } = NativeConsumet;
   const { MediaStatus: MediaStatusEnum, SubOrDub: SubOrDubEnum } = enums;
 
@@ -280,4 +279,3 @@ export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
 }
 
 export type ReAnimeProviderInstance = ReturnType<typeof createReanime>;
-export default createReanime;

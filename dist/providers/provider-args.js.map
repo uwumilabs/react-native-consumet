@@ -1,0 +1,1 @@
+{"version":3,"file":"provider-args.js","sourceRoot":"","sources":["../../src/providers/provider-args.ts"],"names":[],"mappings":";;AAQA,oCAMC;AAbD,8EAAyE;AAEzE;;;;GAIG;AACH,SAAgB,YAAY,CAC1B,YAAuC,EACvC,aAAsB;IAEtB,IAAI,OAAO,YAAY,KAAK,QAAQ;QAAE,OAAO,CAAC,IAAA,+CAAqB,GAAE,EAAE,YAAY,CAAC,CAAC;IACrF,OAAO,CAAC,YAAY,IAAI,IAAA,+CAAqB,GAAE,EAAE,aAAa,CAAC,CAAC;AAClE,CAAC"}

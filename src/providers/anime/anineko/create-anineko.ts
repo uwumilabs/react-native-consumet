@@ -488,4 +488,3 @@ export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
 }
 
 export type AniNekoProviderInstance = ReturnType<typeof createAniNeko>;
-export default createAniNeko;

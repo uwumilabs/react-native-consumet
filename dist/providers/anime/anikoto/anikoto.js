@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AniWatchTv = exports.AniKoto = void 0;
 const models_1 = require("../../../models");
-const create_provider_context_1 = require("../../../utils/create-provider-context");
-const create_anikoto_1 = __importDefault(require("./create-anikoto"));
+const provider_args_1 = require("../../provider-args");
+const create_anikoto_1 = require("./create-anikoto");
 class AniKoto extends models_1.AnimeParser {
     instance;
     logo;
@@ -16,11 +13,10 @@ class AniKoto extends models_1.AnimeParser {
     isNSFW;
     isWorking;
     isDubAvailableSeparately;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        // Use the context factory to create a complete context with all defaults
-        const defaultContext = (0, create_provider_context_1.createProviderContext)();
-        this.instance = (0, create_anikoto_1.default)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_anikoto_1.createAniKoto)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.capabilities = this.instance.capabilities;
         this.name = this.instance.name;
@@ -187,5 +183,6 @@ class AniKoto extends models_1.AnimeParser {
 }
 exports.AniKoto = AniKoto;
 exports.AniWatchTv = AniKoto;
+// Kept only while src/providers/meta and two unit tests import the default; import { AniKoto } instead.
 exports.default = AniKoto;
 //# sourceMappingURL=anikoto.js.map

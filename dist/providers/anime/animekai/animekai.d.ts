@@ -1,4 +1,4 @@
-import { AnimeParser } from '../../../models';
+import { AnimeParser, type ProviderContext } from '../../../models';
 import { type AnimeKaiProviderInstance } from './create-animekai';
 export declare class AnimeKai extends AnimeParser {
     private instance;
@@ -9,6 +9,12 @@ export declare class AnimeKai extends AnimeParser {
     isNSFW: boolean;
     isWorking: boolean;
     isDubAvailableSeparately: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     /**
      * @param query Search query

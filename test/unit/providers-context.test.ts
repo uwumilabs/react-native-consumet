@@ -2,6 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import * as Extractors from '../../src/extractors';
+import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
+import { createAniKoto } from '../../src/providers/anime/anikoto/create-anikoto';
+import { AnimeKai } from '../../src/providers/anime/animekai/animekai';
+import { createAnimeKai } from '../../src/providers/anime/animekai/create-animekai';
+import { AnimePahe } from '../../src/providers/anime/animepahe/animepahe';
+import { createAnimePahe } from '../../src/providers/anime/animepahe/create-animepahe';
+import { AnimeUnity } from '../../src/providers/anime/animeunity';
+import { AniNeko } from '../../src/providers/anime/anineko/anineko';
+import { ReAnime } from '../../src/providers/anime/reanime/reanime';
+import { Zoro } from '../../src/providers/anime/zoro/zoro';
+import { createZoro } from '../../src/providers/anime/zoro/create-zoro';
+import { createProviderContext } from '../../src/utils/create-provider-context';
 import { defaultAxios, defaultExtractorContext } from '../../src/utils/extension-utils';
 import { PolyURL } from '../../src/utils/url-polyfill';
 
@@ -111,16 +123,136 @@ describe('class-based extractors use the context axios (PROV-2)', () => {
   );
 });
 
+/** Extractor factories that record the context they were given and resolve a fixed source. */
+function recordingExtractors(...names: string[]) {
+  return Object.fromEntries(
+    names.map((name) => [
+      name,
+      jest.fn((_ctx?: unknown) => ({
+        serverName: name,
+        sources: [],
+        extract: jest.fn(async () => ({ sources: [{ url: `https://cdn.test/${name}.m3u8`, isM3U8: true }] })),
+      })),
+    ])
+  );
+}
+
+/** A real provider context whose axios and extractors are stubs. */
+function stubProviderContext(...extractorNames: string[]) {
+  const extractors = recordingExtractors(...extractorNames);
+  const ctx = createProviderContext({ axios: stubAxios(), extractors });
+  return { ctx, extractors };
+}
+
+describe('factories hand their context to their extractors (PROV-2)', () => {
+  it.each([
+    ['createZoro', createZoro, 'MegaCloud', 'https://megacloud.test/embed-2/e-1/abc?k=1'],
+    ['createAnimeKai', createAnimeKai, 'MegaUp', 'https://megaup.test/e/abc'],
+    ['createAniKoto', createAniKoto, 'MegaPlay', 'https://megaplay.test/stream/s-2/abc/sub'],
+  ] as const)('%s calls %s with its context', async (_name, factory, extractor, embed) => {
+    const { ctx, extractors } = stubProviderContext(extractor);
+
+    const source = await factory(ctx).fetchEpisodeSources(embed);
+
+    expect(extractors[extractor]).toHaveBeenCalledWith(ctx);
+    expect(source.sources[0]!.url).toBe(`https://cdn.test/${extractor}.m3u8`);
+  });
+
+  it('createAnimePahe calls Kwik with its context', async () => {
+    const { ctx: base, extractors } = stubProviderContext('Kwik');
+    const page = '<div id="resolutionMenu"><button data-src="https://kwik.test/e/abc">SubsPlease · 720p</button></div>';
+    const makeGetRequestWithWebView = jest.fn(async () => ({ html: page }));
+    const ctx = { ...base, NativeConsumet: { ...base.NativeConsumet, makeGetRequestWithWebView } } as any;
+
+    const source = await createAnimePahe(ctx).fetchEpisodeSources('anime-session/episode-session');
+
+    expect(extractors.Kwik).toHaveBeenCalledWith(ctx);
+    expect(source.sources).toEqual([{ url: 'https://cdn.test/Kwik.m3u8', isM3U8: true, quality: '720p' }]);
+  });
+
+  it.each(['providers/anime'])('no provider in %s calls an extractor without a context', (dir) => {
+    const offenders = sourceFiles(dir).filter((file) => /\b[A-Z]\w*\(\)\.extract\(/.test(read(file)));
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('class wrappers accept a context (PROV-2)', () => {
+  const WRAPPERS = [
+    { name: 'Zoro', Wrapper: Zoro, factory: 'anime/zoro/create-zoro#createZoro' },
+    { name: 'AnimePahe', Wrapper: AnimePahe, factory: 'anime/animepahe/create-animepahe#createAnimePahe' },
+    { name: 'AnimeKai', Wrapper: AnimeKai, factory: 'anime/animekai/create-animekai#createAnimeKai' },
+    { name: 'AniKoto', Wrapper: AniKoto, factory: 'anime/anikoto/create-anikoto#createAniKoto' },
+    { name: 'ReAnime', Wrapper: ReAnime, factory: 'anime/reanime/create-reanime#createReanime' },
+    { name: 'AniNeko', Wrapper: AniNeko, factory: 'anime/anineko/create-anineko#createAniNeko' },
+  ] as { name: string; Wrapper: new (...args: any[]) => any; factory: string }[];
+
+  /** Spies on (and still calls) the factory a wrapper builds its instance with. */
+  const spyOnFactory = (factory: string) => {
+    const [file, name] = factory.split('#') as [string, string];
+    return jest.spyOn(require(`../../src/providers/${file}`), name);
+  };
+
+  it.each(WRAPPERS)('$name passes (ctx, customBaseURL) to its factory', ({ Wrapper, factory }) => {
+    const spy = spyOnFactory(factory);
+    const { ctx } = stubProviderContext();
+
+    const provider = new Wrapper(ctx, 'https://mirror.test');
+
+    expect(spy).toHaveBeenCalledWith(ctx, 'https://mirror.test');
+    expect(provider.toString.baseUrl).toBe('https://mirror.test');
+  });
+
+  it.each(WRAPPERS)('$name still takes (customBaseURL) alone', ({ Wrapper }) => {
+    expect(new Wrapper('https://mirror.test').toString.baseUrl).toBe('https://mirror.test');
+    expect(new Wrapper().toString.baseUrl).toMatch(/^https:\/\/(?!mirror\.test)/);
+  });
+
+  it('Zoro sends its extractor calls through the given context', async () => {
+    const { ctx, extractors } = stubProviderContext('MegaCloud');
+
+    await new Zoro(ctx).fetchEpisodeSources('https://megacloud.test/embed-2/e-1/abc');
+
+    expect(extractors.MegaCloud).toHaveBeenCalledWith(ctx);
+  });
+
+  it('AniNeko exposes every method of its factory', () => {
+    const aniNeko: any = new AniNeko();
+    for (const method of ['fetchRecentlyUpdated', 'fetchNewReleases', 'fetchRecentlyAdded', 'genreSearch']) {
+      expect([method, typeof aniNeko[method]]).toEqual([method, 'function']);
+    }
+  });
+});
+
+describe('class-based providers use the context axios (PROV-2)', () => {
+  it('AnimeUnity searches through ctx.axios', async () => {
+    const { ctx } = stubProviderContext();
+
+    await new AnimeUnity(ctx).search('naruto').catch(() => undefined);
+
+    expect(requestedUrls(ctx.axios)).toEqual(['https://www.animeunity.to/archivio?title=naruto']);
+    for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
+  });
+});
+
 describe('one export style (PROV-2)', () => {
   const VALUE_AXIOS_IMPORT = /^import\s+(?!type\b)[^;]*?from\s+'axios'/m;
+  // Default exports that src/providers/meta and two unit tests still import (other lanes own them).
+  const DEFAULT_EXPORTS_STILL_IMPORTED = [
+    'src/providers/anime/anikoto/anikoto.ts',
+    'src/providers/anime/animekai/animekai.ts',
+    'src/providers/anime/animepahe/animepahe.ts',
+    'src/providers/anime/zoro/zoro.ts',
+  ].map((file) => path.normalize(file));
 
-  it('extractors import axios only for its types', () => {
-    const offenders = sourceFiles('extractors').filter((file) => VALUE_AXIOS_IMPORT.test(read(file)));
+  it.each(['extractors', 'providers/anime'])('%s import axios only for its types', (dir) => {
+    const offenders = sourceFiles(dir).filter((file) => VALUE_AXIOS_IMPORT.test(read(file)));
     expect(offenders).toEqual([]);
   });
 
-  it('extractors export by name only', () => {
-    const offenders = sourceFiles('extractors').filter((file) => /^export default\b/m.test(read(file)));
+  it.each(['extractors', 'providers/anime'])('%s export by name', (dir) => {
+    const offenders = sourceFiles(dir)
+      .filter((file) => /^export default\b/m.test(read(file)))
+      .filter((file) => !DEFAULT_EXPORTS_STILL_IMPORTED.includes(file));
     expect(offenders).toEqual([]);
   });
 });

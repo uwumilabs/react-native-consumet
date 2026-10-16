@@ -16,7 +16,7 @@ import {
 
 export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
-  const { StreamSB, MegaCloud, StreamTape } = extractors;
+  const { MegaCloud } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
     SubOrDub: SubOrDubEnum,
@@ -446,12 +446,12 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.MegaCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
           };
       }
     }
@@ -643,6 +643,3 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
 
 // Type definition for the provider instance returned by createZoro
 export type ZoroProviderInstance = ReturnType<typeof createZoro>;
-
-// Default export for backward compatibility
-export default createZoro;

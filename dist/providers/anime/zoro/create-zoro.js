@@ -14,9 +14,7 @@ function createZoro(ctx, customBaseURL) {
     PolyURL
   } = ctx;
   const {
-    StreamSB,
-    MegaCloud,
-    StreamTape
+    MegaCloud
   } = extractors;
   const {
     StreamingServers: StreamingServersEnum,
@@ -424,14 +422,14 @@ function createZoro(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl))
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl))
           };
         default:
           return {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl))
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl))
           };
       }
     }
@@ -606,6 +604,4 @@ function createZoro(ctx, customBaseURL) {
     fetchEpisodeServers
   };
 }
-// Default export for backward compatibility
-exports.default = createZoro;
 //# sourceMappingURL=create-zoro.js.map

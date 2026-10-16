@@ -1,6 +1,6 @@
-import { AnimeParser } from '../../../models';
-import { createProviderContext } from '../../../utils/create-provider-context';
-import createReanime, { type ReAnimeProviderInstance } from './create-reanime';
+import { AnimeParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
+import { createReanime, type ReAnimeProviderInstance } from './create-reanime';
 
 export class ReAnime extends AnimeParser {
   private instance: ReAnimeProviderInstance;
@@ -12,11 +12,17 @@ export class ReAnime extends AnimeParser {
   override isWorking: boolean;
   override isDubAvailableSeparately: boolean;
 
-  constructor(customBaseURL?: string, cookie?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. `cookie` is ignored. */
+  constructor(customBaseURL?: string, cookie?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    const defaultContext = createProviderContext();
-    this.instance = createReanime(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createReanime(ctx, baseURL);
 
     this.logo = this.instance.logo;
     this.name = this.instance.name;
@@ -37,5 +43,3 @@ export class ReAnime extends AnimeParser {
   fetchEpisodeServers!: ReAnimeProviderInstance['fetchEpisodeServers'];
   fetchEpisodeSources!: ReAnimeProviderInstance['fetchEpisodeSources'];
 }
-
-export default ReAnime;

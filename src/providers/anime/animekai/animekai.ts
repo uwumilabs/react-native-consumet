@@ -1,6 +1,6 @@
-import { AnimeParser } from '../../../models';
-import { createProviderContext } from '../../../utils/create-provider-context';
-import createAnimeKai, { type AnimeKaiProviderInstance } from './create-animekai';
+import { AnimeParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
+import { createAnimeKai, type AnimeKaiProviderInstance } from './create-animekai';
 
 export class AnimeKai extends AnimeParser {
   private instance: AnimeKaiProviderInstance;
@@ -12,11 +12,17 @@ export class AnimeKai extends AnimeParser {
   override isWorking: boolean;
   override isDubAvailableSeparately: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    const defaultContext = createProviderContext();
-    this.instance = createAnimeKai(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createAnimeKai(ctx, baseURL);
 
     this.logo = this.instance.logo;
     this.capabilities = this.instance.capabilities;
@@ -119,4 +125,5 @@ export class AnimeKai extends AnimeParser {
   fetchEpisodeServers!: AnimeKaiProviderInstance['fetchEpisodeServers'];
 }
 
+// Kept only while src/providers/meta imports the default; import { AnimeKai } instead.
 export default AnimeKai;

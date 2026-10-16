@@ -29,5 +29,4 @@ export declare function createAnimeKai(ctx: ProviderContext, customBaseURL?: str
     isDubAvailableSeparately?: boolean;
 };
 export type AnimeKaiProviderInstance = ReturnType<typeof createAnimeKai>;
-export default createAnimeKai;
 //# sourceMappingURL=create-animekai.d.ts.map

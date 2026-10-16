@@ -14,5 +14,4 @@ export declare function createReanime(ctx: ProviderContext, customBaseURL?: stri
     isDubAvailableSeparately?: boolean;
 };
 export type ReAnimeProviderInstance = ReturnType<typeof createReanime>;
-export default createReanime;
 //# sourceMappingURL=create-reanime.d.ts.map

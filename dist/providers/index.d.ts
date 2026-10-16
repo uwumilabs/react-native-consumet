@@ -1,4 +1,4 @@
-import ANIME from './anime';
+import { ANIME } from './anime';
 import MANGA from './manga';
 import LIGHT_NOVELS from './light-novels';
 import MOVIES from './movies';

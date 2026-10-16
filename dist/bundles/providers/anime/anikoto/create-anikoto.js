@@ -26,8 +26,7 @@ var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
 // src/providers/anime/anikoto/create-anikoto.ts
 var create_anikoto_exports = {};
 __export(create_anikoto_exports, {
-  createAniKoto: () => createAniKoto,
-  default: () => create_anikoto_default
+  createAniKoto: () => createAniKoto
 });
 module.exports = __toCommonJS(create_anikoto_exports);
 function createAniKoto(ctx, customBaseURL) {
@@ -525,7 +524,7 @@ function createAniKoto(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaPlay().extract(serverUrl, config.baseUrl))
+            ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
           };
       }
     }
@@ -540,7 +539,7 @@ function createAniKoto(ctx, customBaseURL) {
         headers: {
           Referer: serverUrl.href
         },
-        ...(await MegaPlay().extract(serverUrl, config.baseUrl))
+        ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
       };
     } catch (err) {
       throw new Error(`[AniKoto] Failed to fetch episode sources: ${err.message}`);
@@ -578,5 +577,4 @@ function createAniKoto(ctx, customBaseURL) {
     fetchEpisodeSources
   };
 }
-var create_anikoto_default = createAniKoto;
 if (module.exports !== exports) Object.assign(exports, module.exports);

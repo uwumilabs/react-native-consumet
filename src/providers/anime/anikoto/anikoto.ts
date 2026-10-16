@@ -1,6 +1,6 @@
-import { AnimeParser } from '../../../models';
-import { createProviderContext } from '../../../utils/create-provider-context';
-import createAniKoto, { type AniKotoProviderInstance } from './create-anikoto';
+import { AnimeParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
+import { createAniKoto, type AniKotoProviderInstance } from './create-anikoto';
 
 export class AniKoto extends AnimeParser {
   private instance: AniKotoProviderInstance;
@@ -12,13 +12,17 @@ export class AniKoto extends AnimeParser {
   override isWorking: boolean;
   override readonly isDubAvailableSeparately: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createAniKoto(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createAniKoto(ctx, baseURL);
 
     this.logo = this.instance.logo;
     this.capabilities = this.instance.capabilities;
@@ -213,4 +217,5 @@ export class AniKoto extends AnimeParser {
 
 // Export AniKoto as AniWatchTv as well for backwards compatibility
 export { AniKoto as AniWatchTv };
+// Kept only while src/providers/meta and two unit tests import the default; import { AniKoto } instead.
 export default AniKoto;

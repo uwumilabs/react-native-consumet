@@ -1,6 +1,6 @@
-import { AnimeParser } from '../../../models';
-import { createProviderContext } from '../../../utils/create-provider-context';
-import createAniNeko, { type AniNekoProviderInstance } from './create-anineko';
+import { AnimeParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
+import { createAniNeko, type AniNekoProviderInstance } from './create-anineko';
 
 export class AniNeko extends AnimeParser {
   private instance: AniNekoProviderInstance;
@@ -12,10 +12,17 @@ export class AniNeko extends AnimeParser {
   override isWorking: boolean;
   override isDubAvailableSeparately: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-    const defaultContext = createProviderContext();
-    this.instance = createAniNeko(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createAniNeko(ctx, baseURL);
 
     this.logo = this.instance.logo;
     this.capabilities = this.instance.capabilities;
@@ -30,6 +37,10 @@ export class AniNeko extends AnimeParser {
     this.fetchAnimeInfo = this.instance.fetchAnimeInfo;
     this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
     this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
+    this.fetchRecentlyUpdated = this.instance.fetchRecentlyUpdated;
+    this.fetchNewReleases = this.instance.fetchNewReleases;
+    this.fetchRecentlyAdded = this.instance.fetchRecentlyAdded;
+    this.genreSearch = this.instance.genreSearch;
   }
 
   search!: AniNekoProviderInstance['search'];
@@ -41,5 +52,3 @@ export class AniNeko extends AnimeParser {
   fetchRecentlyAdded!: AniNekoProviderInstance['fetchRecentlyAdded'];
   genreSearch!: AniNekoProviderInstance['genreSearch'];
 }
-
-export default AniNeko;

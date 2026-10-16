@@ -1,4 +1,4 @@
-import { AnimeParser } from '../../../models';
+import { AnimeParser, type ProviderContext } from '../../../models';
 import { type ZoroProviderInstance } from './create-zoro';
 export declare class Zoro extends AnimeParser {
     private instance;
@@ -9,6 +9,12 @@ export declare class Zoro extends AnimeParser {
     isNSFW: boolean;
     isWorking: boolean;
     readonly isDubAvailableSeparately: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     /**
      * @param query Search query

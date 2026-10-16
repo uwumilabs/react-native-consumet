@@ -1,4 +1,4 @@
-import { AnimeParser } from '../../../models';
+import { AnimeParser, type ProviderContext } from '../../../models';
 import { type AniNekoProviderInstance } from './create-anineko';
 export declare class AniNeko extends AnimeParser {
     private instance;
@@ -9,6 +9,12 @@ export declare class AniNeko extends AnimeParser {
     isNSFW: boolean;
     isWorking: boolean;
     isDubAvailableSeparately: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     search: AniNekoProviderInstance['search'];
     fetchAnimeInfo: AniNekoProviderInstance['fetchAnimeInfo'];
@@ -19,5 +25,4 @@ export declare class AniNeko extends AnimeParser {
     fetchRecentlyAdded: AniNekoProviderInstance['fetchRecentlyAdded'];
     genreSearch: AniNekoProviderInstance['genreSearch'];
 }
-export default AniNeko;
 //# sourceMappingURL=anineko.d.ts.map

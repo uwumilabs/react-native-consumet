@@ -5,7 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createReanime = createReanime;
 const models_1 = require("../../../models");
-const url_polyfill_1 = require("../../../utils/url-polyfill");
 function createReanime(ctx, customBaseURL) {
   const {
     axios,
@@ -13,7 +12,8 @@ function createReanime(ctx, customBaseURL) {
     enums,
     createCustomBaseUrl,
     extractors,
-    NativeConsumet
+    NativeConsumet,
+    PolyURL
   } = ctx;
   const {
     makeGetRequestWithWebView
@@ -245,7 +245,7 @@ function createReanime(ctx, customBaseURL) {
     }
     const picked = servers[idx];
     if (!picked.url) throw new Error(`[ReAnime] No embed URL for server "${picked.name}" — user may not be logged in`);
-    return extractors.FlixCloud(extractorCtx).extract(new url_polyfill_1.PolyURL(picked.url), watchUrl);
+    return extractors.FlixCloud(extractorCtx).extract(new PolyURL(picked.url), watchUrl);
   };
   return {
     ...config,
@@ -255,5 +255,4 @@ function createReanime(ctx, customBaseURL) {
     fetchEpisodeSources
   };
 }
-exports.default = createReanime;
 //# sourceMappingURL=create-reanime.js.map

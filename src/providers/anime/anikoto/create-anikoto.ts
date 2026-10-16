@@ -587,7 +587,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaPlay().extract(serverUrl, config.baseUrl)),
+            ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
           };
       }
     }
@@ -604,7 +604,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
       const serverUrl = new PolyURL(matchedServer.url);
       return {
         headers: { Referer: serverUrl.href },
-        ...(await MegaPlay().extract(serverUrl, config.baseUrl)),
+        ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
       };
     } catch (err) {
       throw new Error(`[AniKoto] Failed to fetch episode sources: ${(err as Error).message}`);
@@ -643,4 +643,3 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
 }
 
 export type AniKotoProviderInstance = ReturnType<typeof createAniKoto>;
-export default createAniKoto;

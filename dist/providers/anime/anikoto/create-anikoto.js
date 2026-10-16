@@ -511,7 +511,7 @@ function createAniKoto(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaPlay().extract(serverUrl, config.baseUrl))
+            ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
           };
       }
     }
@@ -526,7 +526,7 @@ function createAniKoto(ctx, customBaseURL) {
         headers: {
           Referer: serverUrl.href
         },
-        ...(await MegaPlay().extract(serverUrl, config.baseUrl))
+        ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
       };
     } catch (err) {
       throw new Error(`[AniKoto] Failed to fetch episode sources: ${err.message}`);
@@ -564,5 +564,4 @@ function createAniKoto(ctx, customBaseURL) {
     fetchEpisodeSources
   };
 }
-exports.default = createAniKoto;
 //# sourceMappingURL=create-anikoto.js.map

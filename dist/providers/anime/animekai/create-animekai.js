@@ -453,7 +453,7 @@ function createAnimeKai(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/')
           };
         default:
@@ -461,7 +461,7 @@ function createAnimeKai(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, '/download/')
           };
       }
@@ -532,5 +532,4 @@ function createAnimeKai(ctx, customBaseURL) {
     fetchEpisodeServers
   };
 }
-exports.default = createAnimeKai;
 //# sourceMappingURL=create-animekai.js.map

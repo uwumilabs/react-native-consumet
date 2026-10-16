@@ -26,8 +26,7 @@ var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
 // src/providers/anime/animekai/create-animekai.ts
 var create_animekai_exports = {};
 __export(create_animekai_exports, {
-  createAnimeKai: () => createAnimeKai,
-  default: () => create_animekai_default
+  createAnimeKai: () => createAnimeKai
 });
 module.exports = __toCommonJS(create_animekai_exports);
 function createAnimeKai(ctx, customBaseURL) {
@@ -478,7 +477,7 @@ function createAnimeKai(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, "/download/")
           };
         default:
@@ -486,7 +485,7 @@ function createAnimeKai(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl)),
+            ...(await MegaUp(ctx).extract(serverUrl)),
             download: serverUrl.href.replace(/\/e\//, "/download/")
           };
       }
@@ -557,5 +556,4 @@ function createAnimeKai(ctx, customBaseURL) {
     fetchEpisodeServers
   };
 }
-var create_animekai_default = createAnimeKai;
 if (module.exports !== exports) Object.assign(exports, module.exports);

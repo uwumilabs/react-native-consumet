@@ -425,5 +425,4 @@ function createAniNeko(ctx, customBaseURL) {
     fetchEpisodeSources
   };
 }
-exports.default = createAniNeko;
 //# sourceMappingURL=create-anineko.js.map

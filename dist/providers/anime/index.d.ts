@@ -1,16 +1,16 @@
-import AnimePahe from './animepahe/animepahe';
-import createAnimePahe from './animepahe/create-animepahe';
-import Zoro from './zoro/zoro';
-import createZoro from './zoro/create-zoro';
-import AnimeKai from './animekai/animekai';
-import createAnimeKai from './animekai/create-animekai';
-import AniKoto from './anikoto/anikoto';
-import createAniKoto from './anikoto/create-anikoto';
-import ReAnime from './reanime/reanime';
-import createReanime from './reanime/create-reanime';
-import AniNeko from './anineko/anineko';
-import createAniNeko from './anineko/create-anineko';
-declare const _default: {
+import { AnimePahe } from './animepahe/animepahe';
+import { createAnimePahe } from './animepahe/create-animepahe';
+import { Zoro } from './zoro/zoro';
+import { createZoro } from './zoro/create-zoro';
+import { AnimeKai } from './animekai/animekai';
+import { createAnimeKai } from './animekai/create-animekai';
+import { AniKoto } from './anikoto/anikoto';
+import { createAniKoto } from './anikoto/create-anikoto';
+import { ReAnime } from './reanime/reanime';
+import { createReanime } from './reanime/create-reanime';
+import { AniNeko } from './anineko/anineko';
+import { createAniNeko } from './anineko/create-anineko';
+export declare const ANIME: {
     AnimePahe: typeof AnimePahe;
     createAnimePahe: typeof createAnimePahe;
     Zoro: typeof Zoro;
@@ -24,5 +24,4 @@ declare const _default: {
     AniNeko: typeof AniNeko;
     createAniNeko: typeof createAniNeko;
 };
-export default _default;
 //# sourceMappingURL=index.d.ts.map

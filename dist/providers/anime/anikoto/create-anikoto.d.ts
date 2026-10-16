@@ -44,5 +44,4 @@ export declare function createAniKoto(ctx: ProviderContext, customBaseURL?: stri
     isDubAvailableSeparately?: boolean;
 };
 export type AniKotoProviderInstance = ReturnType<typeof createAniKoto>;
-export default createAniKoto;
 //# sourceMappingURL=create-anikoto.d.ts.map

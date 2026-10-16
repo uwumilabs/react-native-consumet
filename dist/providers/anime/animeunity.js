@@ -1,33 +1,36 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.AnimeUnity = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 /**
  * Not working, and not exported from `ANIME`: www.animeunity.to now redirects to www.animeunity.so,
  * and the scraper hasn't been checked against the new site. Kept so it can be ported to a registry
  * factory; delete it if nobody does.
  */
 class AnimeUnity extends models_1.AnimeParser {
+  ctx;
   name = 'AnimeUnity';
   baseUrl = 'https://www.animeunity.to';
   logo = 'https://www.animeunity.to/favicon-32x32.png';
   classPath = 'ANIME.AnimeUnity';
   isWorking = false;
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   /**
    * @param query Search query
    */
   search = async query => {
     try {
-      const res = await axios_1.default.get(`${this.baseUrl}/archivio?title=${query}`);
+      const res = await this.ctx.axios.get(`${this.baseUrl}/archivio?title=${query}`);
       const $ = (0, cheerio_1.load)(res.data);
       if (!$) return {
         results: []
@@ -68,7 +71,7 @@ class AnimeUnity extends models_1.AnimeParser {
       const firstPageEpisode = lastPageEpisode - 119;
       const url2 = `${_this.baseUrl}/info_api/${id}/1?start_range=${firstPageEpisode}&end_range=${lastPageEpisode}`;
       try {
-        const res = await axios_1.default.get(url);
+        const res = await _this.ctx.axios.get(url);
         const $ = (0, cheerio_1.load)(res.data);
         const totalEpisodes = parseInt($('video-player')?.attr('episodes_count') ?? '0');
         const totalPages = Math.round(totalEpisodes / 120) + 1;
@@ -94,7 +97,7 @@ class AnimeUnity extends models_1.AnimeParser {
         // fetch episodes method 1 (only first page can be fetchedd)
         // const items = JSON.parse("" + $('video-player').attr('episodes') + "")
         // fetch episodes method 2 (all pages can be fetched)
-        const res2 = await axios_1.default.get(url2);
+        const res2 = await _this.ctx.axios.get(url2);
         const items = res2.data.episodes;
         for (const i in items) {
           animeInfo.episodes?.push({
@@ -115,20 +118,20 @@ class AnimeUnity extends models_1.AnimeParser {
    */
   fetchEpisodeSources = async episodeId => {
     try {
-      const res = await axios_1.default.get(`${this.baseUrl}/anime/${episodeId}`);
+      const res = await this.ctx.axios.get(`${this.baseUrl}/anime/${episodeId}`);
       const $ = (0, cheerio_1.load)(res.data);
       const episodeSources = {
         sources: []
       };
       const streamUrl = $('video-player').attr('embed_url');
       if (streamUrl) {
-        const res = await axios_1.default.get(streamUrl);
+        const res = await this.ctx.axios.get(streamUrl);
         const $ = (0, cheerio_1.load)(res.data);
         const domain = $('script:contains("window.video")').text()?.match(/url: '(.*)'/)[1];
         const token = $('script:contains("window.video")').text()?.match(/token': '(.*)'/)[1];
         const expires = $('script:contains("window.video")').text()?.match(/expires': '(.*)'/)[1];
         const defaultUrl = `${domain}${domain?.includes('?') ? '&' : '?'}token=${token}&referer=&expires=${expires}&h=1`;
-        const m3u8Content = await axios_1.default.get(defaultUrl);
+        const m3u8Content = await this.ctx.axios.get(defaultUrl);
         if (m3u8Content.data.includes('EXTM3U')) {
           const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
           for (const video of videoList ?? []) {
@@ -163,7 +166,7 @@ class AnimeUnity extends models_1.AnimeParser {
     throw new Error('Method not implemented.');
   };
 }
-exports.default = AnimeUnity;
+exports.AnimeUnity = AnimeUnity;
 /**
  * old episode sources fetching method, keep it here.
  */

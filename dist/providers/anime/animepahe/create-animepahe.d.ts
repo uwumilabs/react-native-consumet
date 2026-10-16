@@ -15,5 +15,4 @@ export declare function createAnimePahe(ctx: ProviderContext, customBaseURL?: st
     isDubAvailableSeparately?: boolean;
 };
 export type AnimePaheProviderInstance = ReturnType<typeof createAnimePahe>;
-export default createAnimePahe;
 //# sourceMappingURL=create-animepahe.d.ts.map

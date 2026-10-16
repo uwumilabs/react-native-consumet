@@ -46,5 +46,4 @@ export declare function createZoro(ctx: ProviderContext, customBaseURL?: string)
     isDubAvailableSeparately?: boolean;
 };
 export type ZoroProviderInstance = ReturnType<typeof createZoro>;
-export default createZoro;
 //# sourceMappingURL=create-zoro.d.ts.map

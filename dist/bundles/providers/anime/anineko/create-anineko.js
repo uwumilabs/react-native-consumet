@@ -26,8 +26,7 @@ var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
 // src/providers/anime/anineko/create-anineko.ts
 var create_anineko_exports = {};
 __export(create_anineko_exports, {
-  createAniNeko: () => createAniNeko,
-  default: () => create_anineko_default
+  createAniNeko: () => createAniNeko
 });
 module.exports = __toCommonJS(create_anineko_exports);
 function createAniNeko(ctx, customBaseURL) {
@@ -396,5 +395,4 @@ function createAniNeko(ctx, customBaseURL) {
     fetchEpisodeSources
   };
 }
-var create_anineko_default = createAniNeko;
 if (module.exports !== exports) Object.assign(exports, module.exports);

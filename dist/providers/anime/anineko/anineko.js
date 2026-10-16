@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AniNeko = void 0;
 const models_1 = require("../../../models");
-const create_provider_context_1 = require("../../../utils/create-provider-context");
-const create_anineko_1 = __importDefault(require("./create-anineko"));
+const provider_args_1 = require("../../provider-args");
+const create_anineko_1 = require("./create-anineko");
 class AniNeko extends models_1.AnimeParser {
     instance;
     logo;
@@ -16,10 +13,10 @@ class AniNeko extends models_1.AnimeParser {
     isNSFW;
     isWorking;
     isDubAvailableSeparately;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        const defaultContext = (0, create_provider_context_1.createProviderContext)();
-        this.instance = (0, create_anineko_1.default)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_anineko_1.createAniNeko)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.capabilities = this.instance.capabilities;
         this.name = this.instance.name;
@@ -32,6 +29,10 @@ class AniNeko extends models_1.AnimeParser {
         this.fetchAnimeInfo = this.instance.fetchAnimeInfo;
         this.fetchEpisodeServers = this.instance.fetchEpisodeServers;
         this.fetchEpisodeSources = this.instance.fetchEpisodeSources;
+        this.fetchRecentlyUpdated = this.instance.fetchRecentlyUpdated;
+        this.fetchNewReleases = this.instance.fetchNewReleases;
+        this.fetchRecentlyAdded = this.instance.fetchRecentlyAdded;
+        this.genreSearch = this.instance.genreSearch;
     }
     search;
     fetchAnimeInfo;
@@ -43,5 +44,4 @@ class AniNeko extends models_1.AnimeParser {
     genreSearch;
 }
 exports.AniNeko = AniNeko;
-exports.default = AniNeko;
 //# sourceMappingURL=anineko.js.map

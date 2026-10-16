@@ -15,19 +15,9 @@ import {
 } from '../../../models';
 
 export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
-  const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet, CryptoJS, axios } = ctx;
+  const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
   const { Kwik } = extractors;
   const { makeGetRequestWithWebView } = NativeConsumet;
-
-  const extractorCtx = {
-    axios,
-    load,
-    CryptoJS,
-    USER_AGENT: ctx.USER_AGENT,
-    PolyURL: ctx.PolyURL,
-    PolyURLSearchParams: ctx.PolyURLSearchParams,
-    NativeConsumet,
-  };
 
   const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
 
@@ -258,7 +248,7 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
       });
 
       for (const link of filteredLinks) {
-        const res = await Kwik(extractorCtx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
+        const res = await Kwik(ctx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
         if (res?.sources?.length) {
           res.sources.forEach((source: any) => {
             iSource.sources.push({
@@ -310,4 +300,3 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
 }
 
 export type AnimePaheProviderInstance = ReturnType<typeof createAnimePahe>;
-export default createAnimePahe;

@@ -11,9 +11,7 @@ function createAnimePahe(ctx, customBaseURL) {
     enums,
     createCustomBaseUrl,
     PolyURL,
-    NativeConsumet,
-    CryptoJS,
-    axios
+    NativeConsumet
   } = ctx;
   const {
     Kwik
@@ -21,15 +19,6 @@ function createAnimePahe(ctx, customBaseURL) {
   const {
     makeGetRequestWithWebView
   } = NativeConsumet;
-  const extractorCtx = {
-    axios,
-    load,
-    CryptoJS,
-    USER_AGENT: ctx.USER_AGENT,
-    PolyURL: ctx.PolyURL,
-    PolyURLSearchParams: ctx.PolyURLSearchParams,
-    NativeConsumet
-  };
   const {
     StreamingServers: StreamingServersEnum,
     SubOrDub: SubOrDubEnum,
@@ -228,7 +217,7 @@ function createAnimePahe(ctx, customBaseURL) {
         return true;
       });
       for (const link of filteredLinks) {
-        const res = await Kwik(extractorCtx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
+        const res = await Kwik(ctx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
         if (res?.sources?.length) {
           res.sources.forEach(source => {
             iSource.sources.push({
@@ -278,5 +267,4 @@ function createAnimePahe(ctx, customBaseURL) {
     fetchEpisodeServers
   };
 }
-exports.default = createAnimePahe;
 //# sourceMappingURL=create-animepahe.js.map

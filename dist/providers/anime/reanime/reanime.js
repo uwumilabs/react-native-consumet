@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReAnime = void 0;
 const models_1 = require("../../../models");
-const create_provider_context_1 = require("../../../utils/create-provider-context");
-const create_reanime_1 = __importDefault(require("./create-reanime"));
+const provider_args_1 = require("../../provider-args");
+const create_reanime_1 = require("./create-reanime");
 class ReAnime extends models_1.AnimeParser {
     instance;
     logo;
@@ -16,10 +13,10 @@ class ReAnime extends models_1.AnimeParser {
     isNSFW;
     isWorking;
     isDubAvailableSeparately;
-    constructor(customBaseURL, cookie) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        const defaultContext = (0, create_provider_context_1.createProviderContext)();
-        this.instance = (0, create_reanime_1.default)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_reanime_1.createReanime)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -38,5 +35,4 @@ class ReAnime extends models_1.AnimeParser {
     fetchEpisodeSources;
 }
 exports.ReAnime = ReAnime;
-exports.default = ReAnime;
 //# sourceMappingURL=reanime.js.map

@@ -1,5 +1,5 @@
 import * as Consumet from '../../src';
-import AnimeUnity from '../../src/providers/anime/animeunity';
+import { AnimeUnity } from '../../src/providers/anime/animeunity';
 import ReadManga from '../../src/providers/manga/readmanga';
 
 // PROV-3: dead providers are deleted, or flagged with `isWorking = false` and no longer exported.
