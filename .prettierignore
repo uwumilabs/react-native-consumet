@@ -12,6 +12,8 @@ ios/**/*
 # Build and Output
 lib/
 dist/
+# Published copies of dist bundles: their bytes are hashed (scripts/prepare-registry.js)
+registry/
 build/
 web-build/
 *.jsbundle
