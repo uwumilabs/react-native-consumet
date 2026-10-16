@@ -14,7 +14,6 @@ import type {
   makeGetRequestWithWebView,
   makePostRequestWithWebView,
   makePostRequest,
-  multiply,
   deobfuscateScript,
 } from '../NativeConsumet';
 /**
@@ -181,7 +180,6 @@ export interface ProviderContext {
     makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
     makePostRequestWithWebView: typeof makePostRequestWithWebView;
     makePostRequest: typeof makePostRequest;
-    multiply: typeof multiply;
     bypassDdosGuard: typeof bypassDdosGuard;
     deobfuscateScript: typeof deobfuscateScript;
   };

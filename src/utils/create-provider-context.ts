@@ -23,7 +23,6 @@ import {
   makeGetRequestWithWebView,
   makePostRequestWithWebView,
   makePostRequest,
-  multiply,
   bypassDdosGuard,
   deobfuscateScript,
 } from '../NativeConsumet';
@@ -132,7 +131,6 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
       makeGetRequestWithWebView,
       makePostRequestWithWebView,
       makePostRequest,
-      multiply,
       bypassDdosGuard,
       deobfuscateScript,
     },

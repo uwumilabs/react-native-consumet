@@ -282,10 +282,6 @@ RCT_EXPORT_MODULE()
   return std::make_shared<facebook::react::NativeConsumetSpecJSI>(params);
 }
 
-- (NSNumber *)multiply:(double)a b:(double)b {
-  return @(a * b);
-}
-
 #pragma mark - Private Helpers
 
 - (NSString *)_cookieHeader:(NSArray<NSHTTPCookie *> *)cookies {

@@ -102,7 +102,6 @@ export interface Spec extends TurboModule {
    * `NetworkError`, and a bad cached copy is deleted and downloaded again.
    */
   deobfuscateScript: (source: string) => Promise<string | null>;
-  multiply: (a: number, b: number) => number;
 }
 
 const NativeConsumet = TurboModuleRegistry.getEnforcing<Spec>('Consumet');
@@ -113,6 +112,5 @@ export const makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebVie
 export const makePostRequestWithWebView = NativeConsumet.makePostRequestWithWebView;
 export const makePostRequest = NativeConsumet.makePostRequest;
 export const deobfuscateScript = NativeConsumet.deobfuscateScript;
-export const multiply = NativeConsumet.multiply;
 
 export default NativeConsumet;

@@ -37,7 +37,6 @@ import {
   makeGetRequestWithWebView,
   makePostRequestWithWebView,
   makePostRequest,
-  multiply,
   bypassDdosGuard,
   deobfuscateScript,
 } from '../NativeConsumet';
@@ -67,7 +66,6 @@ export const defaultExtractorContext: ExtractorContext = {
     makeGetRequestWithWebView,
     makePostRequestWithWebView,
     makePostRequest,
-    multiply,
     bypassDdosGuard,
     deobfuscateScript,
   },

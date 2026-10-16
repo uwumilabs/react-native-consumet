@@ -8,7 +8,7 @@ import type MangaParser from './manga-parser';
 import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
 import type { ExtractorManager } from '../utils';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
-import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, multiply, deobfuscateScript } from '../NativeConsumet';
+import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, deobfuscateScript } from '../NativeConsumet';
 /**
  * Extractor registry type based on your registered extractors
  */
@@ -129,7 +129,6 @@ export interface ProviderContext {
         makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
         makePostRequestWithWebView: typeof makePostRequestWithWebView;
         makePostRequest: typeof makePostRequest;
-        multiply: typeof multiply;
         bypassDdosGuard: typeof bypassDdosGuard;
         deobfuscateScript: typeof deobfuscateScript;
     };

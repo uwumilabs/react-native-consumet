@@ -99,7 +99,6 @@ export interface Spec extends TurboModule {
      * `NetworkError`, and a bad cached copy is deleted and downloaded again.
      */
     deobfuscateScript: (source: string) => Promise<string | null>;
-    multiply: (a: number, b: number) => number;
 }
 declare const NativeConsumet: Spec;
 export declare const bypassDdosGuard: (url: string) => Promise<{
@@ -133,6 +132,5 @@ export declare const makePostRequest: (url: string, headers: {
     };
 }>;
 export declare const deobfuscateScript: (source: string) => Promise<string | null>;
-export declare const multiply: (a: number, b: number) => number;
 export default NativeConsumet;
 //# sourceMappingURL=NativeConsumet.d.ts.map

@@ -25,7 +25,6 @@ jest.mock('react-native', () => {
             makePostRequest: unavailable('makePostRequest'),
             bypassDdosGuard: unavailable('bypassDdosGuard'),
             deobfuscateScript: unavailable('deobfuscateScript'),
-            multiply: jest.fn((a, b) => a * b),
           };
         }
         throw new Error(`Module ${name} not found`);

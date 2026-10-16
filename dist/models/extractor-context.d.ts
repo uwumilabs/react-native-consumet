@@ -2,7 +2,7 @@ import type { AxiosInstance } from 'axios';
 import type { CheerioAPI } from 'cheerio';
 import type CryptoJS from 'crypto-js';
 import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
-import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, multiply, deobfuscateScript } from '../NativeConsumet';
+import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, deobfuscateScript } from '../NativeConsumet';
 /**
  * ExtractorContext:
  * This context is injected into each extractor to provide core utilities.
@@ -20,7 +20,6 @@ export interface ExtractorContext {
         makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
         makePostRequestWithWebView: typeof makePostRequestWithWebView;
         makePostRequest: typeof makePostRequest;
-        multiply: typeof multiply;
         bypassDdosGuard: typeof bypassDdosGuard;
         deobfuscateScript: typeof deobfuscateScript;
     };

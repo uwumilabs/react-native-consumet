@@ -10,7 +10,6 @@ import {
   makeGetRequestWithWebView,
   makePostRequestWithWebView,
   makePostRequest,
-  multiply,
   deobfuscateScript,
 } from '../NativeConsumet';
 
@@ -32,7 +31,6 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
       makeGetRequestWithWebView,
       makePostRequestWithWebView,
       makePostRequest,
-      multiply,
       bypassDdosGuard,
       deobfuscateScript,
     },

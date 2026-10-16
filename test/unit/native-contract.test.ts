@@ -25,7 +25,6 @@ const SPEC: Record<string, string> = {
   makePostRequest:
     '(url: string, headers: { [key: string]: string }, body: string) => Promise<{ statusCode: number; body: string; headers: { [key: string]: string }; }>',
   deobfuscateScript: '(source: string) => Promise<string | null>',
-  multiply: '(a: number, b: number) => number',
 };
 const methods = Object.keys(SPEC).sort();
 const asyncMethods = methods.filter((name) => SPEC[name]!.includes('=> Promise<'));
@@ -119,8 +118,8 @@ describe('jest mock of the native module (NAT-1)', () => {
     await expect(result).rejects.toThrow(`NativeConsumet.${name} is not available in tests`);
   });
 
-  it('multiply is synchronous', () => {
-    expect(mock.multiply(2, 3)).toBe(6);
+  it('has only asynchronous methods', () => {
+    expect(asyncMethods).toEqual(methods);
   });
 });
 
@@ -149,7 +148,7 @@ describe('what JS and extensions see (NAT-1)', () => {
 describe('native implementations follow the contract (NAT-1)', () => {
   it.each(methods)('%s is implemented on Android and iOS', (name) => {
     expect(kotlin['ConsumetModule.kt']).toMatch(new RegExp(`override fun ${name}\\(`));
-    expect(objc).toMatch(new RegExp(`^- \\((?:void|NSNumber \\*)\\)${name}:`, 'm'));
+    expect(objc).toMatch(new RegExp(`^- \\(void\\)${name}:`, 'm'));
   });
 
   it('getDdosGuardCookiesWithWebView resolves a plain string on Android, as on iOS', () => {
@@ -182,5 +181,29 @@ describe('native implementations follow the contract (NAT-1)', () => {
     expect(objc).not.toMatch(/catch\(e\)\{return null;\}/);
     expect(objc).toMatch(/reject\(@"EvaluationError",\s*@"Deobfuscator did not return a string",\s*nil\)/);
     expect(kotlin['DeobfuscatorModule.kt']).toMatch(/reject\("EvaluationError", "Deobfuscator did not return a string"\)/);
+  });
+});
+
+describe('template leftovers are gone (NAT-3)', () => {
+  const gradle = read('android/build.gradle');
+
+  it('has no multiply method on either platform', () => {
+    expect(SPEC).not.toHaveProperty('multiply');
+    expect(allKotlin).not.toMatch(/multiply/);
+    expect(allObjc).not.toMatch(/multiply/);
+  });
+
+  it('declares only the Android dependencies the Kotlin sources import', () => {
+    // Dependency -> package its classes are imported from. kotlin-stdlib comes from the Kotlin plugin.
+    const imported: Record<string, string> = {
+      'com.facebook.react:react-android': 'com.facebook.react',
+      'com.squareup.okhttp3:okhttp': 'okhttp3',
+      'wang.harlon.quickjs:wrapper-android': 'com.whl.quickjs',
+    };
+    const declared = [...gradle.matchAll(/^\s*implementation\s+["']([^:"']+:[^:"']+)/gm)].map((m) => m[1]);
+    expect(declared.sort()).toEqual(Object.keys(imported).sort());
+    for (const pkg of Object.values(imported)) {
+      expect(allKotlin).toMatch(new RegExp(`^import ${pkg.replace(/\./g, '\\.')}\\.`, 'm'));
+    }
   });
 });

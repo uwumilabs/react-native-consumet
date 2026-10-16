@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
     "ios/generated/ReactCodegen/RCTThirdPartyComponentsProvider.{h,mm}",
     "ios/generated/ReactAppDependencyProvider/RCTAppDependencyProvider.{h,mm}",
   ]
-  s.private_header_files = "ios/generated/**/*.h"
+  s.private_header_files = ["ios/generated/**/*.h", "ios/RCConsumetSynchronyCache.h"]
 
   s.frameworks = "WebKit", "JavaScriptCore"
 

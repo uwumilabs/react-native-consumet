@@ -45,8 +45,6 @@ describe('Android logging (SEC-2)', () => {
     'url',
     'loadedUrl',
     'wellKnown',
-    'a',
-    'b',
     'e.message',
     'error.message',
     'error.description',
