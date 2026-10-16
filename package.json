@@ -105,6 +105,7 @@
     "@types/string-similarity": "^4.0.2",
     "babel-jest": "^29.7.0",
     "commitlint": "^19.6.1",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "del-cli": "^5.1.0",
     "esbuild": "^0.28.2",
     "eslint": "^9.22.0",
