@@ -4,6 +4,7 @@ import extensionRegistry from '../extension-registry.json';
 import { type ExecuteCodeOptions, type IntegrityOptions } from './extension-integrity';
 export declare class ExtractorManager {
     private loadedExtractors;
+    private compiledExtractors;
     private extractorRegistry;
     private staticExtractors;
     private extractorContext;
@@ -39,14 +40,28 @@ export declare class ExtractorManager {
      */
     extractBaseExtractorName(serverName: string): string | null;
     /**
-     * Load an extractor by ID from the registry
+     * Load an extractor by server name or extractor ID from the registry, or the bundled version
+     * when the registry has none or its code can't be used. Always an instance built with this
+     * manager's extractor context.
      * Handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
      * Also resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
      */
     loadExtractor(extractorId: string): Promise<IVideoExtractor>;
     /**
+     * Forget a loaded extractor and its compiled code, so the next load fetches and runs it again.
+     * Takes the same names as loadExtractor ('megacloud-hd-1', 'MegaCloud', 'upcloud').
+     */
+    invalidate(extractorId: string): void;
+    /** The bundled version of an extractor, built with this manager's context */
+    private createStaticExtractor;
+    /**
+     * Fetch and run the registry version of an extractor, falling back to the bundled version
+     */
+    private fetchExtractor;
+    /**
      * Execute extractor code and create instance.
-     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
+     * compiled once per extractor name and sha256; each call returns a new instance.
      *
      * @throws RegistryError before running anything if the entry needs a newer extension context
      * @throws IntegrityError before running anything if the hash or extractor name is invalid

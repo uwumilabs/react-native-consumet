@@ -44,3 +44,78 @@ export function createExtensionRequire(extensionId: string, modules: Record<stri
     );
   };
 }
+
+export type ExtensionFactory = (...args: any[]) => any;
+
+/** The globals extension code runs with; each key becomes a local constant of that name. */
+export type ExtensionGlobals = { exports: Record<string, any>; module: { exports: any } } & Record<string, unknown>;
+
+/**
+ * Run single-file extension code and return the function it provides as `name`: `exports[name]`,
+ * `module.exports[name]`, a top-level `function name` (code without exports), or its default
+ * export. Undefined when it provides none. `name` must be a valid identifier (assertValidIdentifier).
+ */
+export function evaluateExtensionCode(
+  code: string,
+  name: string,
+  globals: ExtensionGlobals,
+  kind: 'provider' | 'extractor'
+): ExtensionFactory | undefined {
+  const label = kind === 'provider' ? 'Provider' : 'Extractor';
+  let run: (context: ExtensionGlobals) => unknown;
+  try {
+    run = new Function(
+      'context',
+      `
+      ${Object.keys(globals)
+        .map((key) => `const ${key} = context.${key};`)
+        .join('\n      ')}
+
+      try {
+        ${code}
+      } catch (execError) {
+        console.error('Error during ${kind} code execution:', execError);
+        throw new Error('${label} code execution failed: ' + execError.message);
+      }
+
+      return typeof ${name} !== 'undefined' ? ${name} : undefined;
+      `
+    ) as typeof run;
+  } catch (syntaxError: any) {
+    console.error(`Syntax error in ${kind} code:`, syntaxError);
+    throw new Error(`Failed to parse ${kind} code: ${syntaxError.message}`);
+  }
+
+  // A top-level function declaration is only visible here through sloppy-mode block hoisting,
+  // so the exports come first and the default export (`export default`) is the last resort.
+  const declared = run(globals);
+  const { exports, module } = globals;
+  return [exports[name], module.exports?.[name], declared, exports.default, module.exports?.default].find(
+    (candidate): candidate is ExtensionFactory => typeof candidate === 'function'
+  );
+}
+
+/** Compiled extension code, reused only for the same code and sha256 (one entry per key). */
+export type CompiledCode = { sha256: string; code: string; factory: ExtensionFactory };
+
+/**
+ * Share one load per key: concurrent callers get the same promise, later callers the result.
+ * A failed load is forgotten, so the next call tries again.
+ */
+export function memoiseLoad<T>(cache: Map<string, Promise<T>>, key: string, load: () => Promise<T>): Promise<T> {
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const pending = load();
+  cache.set(key, pending);
+  pending.catch(() => {
+    if (cache.get(key) === pending) cache.delete(key);
+  });
+  return pending;
+}
+
+/** Delete the entries of one extension or extractor: keys `${id}` and `${id}|…`. */
+export function deleteEntriesOf(cache: Map<string, unknown>, id: string): void {
+  for (const key of Array.from(cache.keys())) {
+    if (key === id || key.startsWith(`${id}|`)) cache.delete(key);
+  }
+}

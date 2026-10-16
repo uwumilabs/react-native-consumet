@@ -26,8 +26,16 @@ import {
   type ExecuteCodeOptions,
   type IntegrityOptions,
 } from './extension-integrity';
-import { fetchTextWithTimeout } from './fetch-with-timeout';
-import { createExtensionRequire, MODELS_MODULE, UTILS_MODULE } from './extension-modules';
+import { createExtensionFetch, fetchTextWithTimeout } from './fetch-with-timeout';
+import {
+  createExtensionRequire,
+  deleteEntriesOf,
+  evaluateExtensionCode,
+  memoiseLoad,
+  MODELS_MODULE,
+  UTILS_MODULE,
+  type CompiledCode,
+} from './extension-modules';
 import { assertCompatibleEntry, validateRegistry } from './registry-schema';
 
 export interface ProviderLoadOptions {
@@ -38,7 +46,10 @@ export interface ProviderLoadOptions {
 export class ProviderManager {
   private providerContext: ProviderContext;
   private extractorManager: ExtractorManager;
-  private loadedExtensions = new Map<string, any>();
+  // Loads by `${id}|${sha256}|${baseUrl}`, see loadExtension
+  private loadedExtensions = new Map<string, Promise<any>>();
+  // Compiled extension code by `${id}|${factoryName}`
+  private compiledExtensions = new Map<string, CompiledCode>();
   private extensionManifest = new Map<string, ExtensionManifest>();
   private integrityOptions: IntegrityOptions;
 
@@ -95,6 +106,12 @@ export class ProviderManager {
   getExtensionMetadata(extensionId: string): ExtensionManifest {
     if (!extensionId) throw new Error('Extension id/name is required');
 
+    const manifest = this.findExtensionMetadata(extensionId);
+    if (!manifest) throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+    return manifest;
+  }
+
+  private findExtensionMetadata(extensionId: string): ExtensionManifest | undefined {
     // Try direct hit (as-is and lowercase id)
     const direct = this.extensionManifest.get(extensionId) || this.extensionManifest.get(extensionId.toLowerCase());
     if (direct) return direct;
@@ -106,38 +123,48 @@ export class ProviderManager {
       if (manifest.id && String(manifest.id).toLowerCase() === needle) return manifest;
       if (manifest.name && String(manifest.name).toLowerCase() === needle) return manifest;
     }
-
-    throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+    return undefined;
   }
 
   /**
-   * Load an extension by ID from the extensionManifest
+   * Load an extension by ID from the extensionManifest. Concurrent and later calls for the same
+   * extension and base URL share one load; a failed load is retried on the next call.
    */
   async loadExtension<T extends string>(
     extensionId: T,
     options: ProviderLoadOptions = {}
   ): Promise<ProviderInstanceOf<T>> {
     const metadata = this.getExtensionMetadata(extensionId as unknown as string);
-    if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
-    }
     // Refuse entries that need a newer extension context before downloading their code.
     assertCompatibleEntry(metadata);
 
-    // A base URL override builds a different instance, so it is part of the cache key.
-    const cacheKey = `${(metadata.id || String(extensionId)).toLowerCase()}|${options.baseUrl ?? ''}`;
+    // Keyed on the hash, so a new version is loaded again, and on the base URL override, which
+    // builds a different instance.
+    const cacheKey = `${metadata.id.toLowerCase()}|${metadata.sha256 ?? ''}|${options.baseUrl ?? ''}`;
+    return memoiseLoad(this.loadedExtensions, cacheKey, () =>
+      this.fetchExtension(metadata as ExtensionManifest & { id: T }, options)
+    );
+  }
 
-    // Check if already loaded
-    if (this.loadedExtensions.has(cacheKey)) {
-      //console.log(`📦 Extension '${extensionId}' already loaded`);
-      return this.loadedExtensions.get(cacheKey);
-    }
+  /**
+   * Forget a loaded extension (for every base URL) and its compiled code, so the next load
+   * fetches and runs it again. Extractors have their own: `getExtractorManager().invalidate(name)`.
+   */
+  invalidate(extensionId: string): void {
+    const id = (this.findExtensionMetadata(extensionId)?.id ?? extensionId).toLowerCase();
+    deleteEntriesOf(this.loadedExtensions, id);
+    deleteEntriesOf(this.compiledExtensions, id);
+  }
 
+  /**
+   * Fetch an extension's code from the registry and run it
+   */
+  private async fetchExtension<T extends string>(
+    metadata: ExtensionManifest & { id: T },
+    options: ProviderLoadOptions
+  ): Promise<ProviderInstanceOf<T>> {
     try {
-      //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
-
-      // Load the provider code
-      //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+      //console.log(`📥 Loading extension '${metadata.id}' from ${metadata.main}`);
 
       const response = await fetchTextWithTimeout(metadata.main, {
         method: 'GET',
@@ -149,23 +176,13 @@ export class ProviderManager {
       if (!response.ok) {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
-      const providerCode = response.text;
 
       // Verifies the code against the registry hash and the factory name, then attaches the prototype
-      const providerInstance = await this.executeProviderCode(
-        providerCode,
-        metadata.factoryName,
-        metadata as ExtensionManifest & { id: T },
-        { baseUrl: options.baseUrl }
-      );
-
-      // Cache the loaded extension
-      this.loadedExtensions.set(cacheKey, providerInstance);
-
-      //console.log(`✅ Extension '${extensionId}' loaded successfully`);
-      return providerInstance;
+      return await this.executeProviderCode(response.text, metadata.factoryName, metadata, {
+        baseUrl: options.baseUrl,
+      });
     } catch (error) {
-      console.error(`❌ Failed to load extension '${extensionId}':`, error);
+      console.error(`❌ Failed to load extension '${metadata.id}':`, error);
       console.error(`❌ Error details:`, {
         message: error instanceof Error ? error.message : String(error),
         name: error instanceof Error ? error.name : 'Unknown',
@@ -208,7 +225,8 @@ export class ProviderManager {
 
   /**
    * Execute provider code and create instance (extensionManifest-based).
-   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
+   * compiled once per id and sha256; each call returns a new instance.
    *
    * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or factory name is invalid
@@ -222,50 +240,24 @@ export class ProviderManager {
     const id = String(metadata?.id ?? factoryName);
     assertCompatibleEntry(metadata);
     assertValidIdentifier(factoryName, 'factoryName', id);
-    if (!options.skipIntegrity) {
+
+    // The same code verified against the same hash before runs from its compiled copy.
+    const key = `${id.toLowerCase()}|${factoryName}`;
+    const sha256 = metadata.sha256 ?? '';
+    const compiled = this.compiledExtensions.get(key);
+    let factory = compiled?.sha256 === sha256 && compiled.code === code ? compiled.factory : undefined;
+    if (!factory && !options.skipIntegrity) {
       verifyExtensionCode(code, metadata, this.integrityOptions);
     }
 
-    const context = this.createExecutionContext(id);
-
     try {
-      // Create and execute the provider code
-      //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
-
-      // Add more robust error handling for React Native environment
-      let executeFunction;
-      try {
-        executeFunction = new Function(
-          'context',
-          `
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during provider code execution:', execError);
-            throw new Error('Provider code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : (exports.${factoryName} ?? module.exports.${factoryName}) };
-          `
-        );
-      } catch (syntaxError: any) {
-        console.error('Syntax error in provider code:', syntaxError);
-        throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
-      }
-
-      const result = executeFunction(context);
-      const factory = result[factoryName];
-
-      if (!factory || typeof factory !== 'function') {
-        throw new Error(`Factory function '${factoryName}' not found in extension`);
+      if (!factory) {
+        factory = evaluateExtensionCode(code, factoryName, this.createExecutionContext(id), 'provider');
+        if (!factory) {
+          throw new Error(`Factory function '${factoryName}' not found in extension`);
+        }
+        // Unverified code is never reused: the next call checks its hash again.
+        if (!options.skipIntegrity) this.compiledExtensions.set(key, { sha256, code, factory });
       }
 
       const instance = factory(this.providerContext, options.baseUrl ?? metadata.baseUrl);
@@ -289,7 +281,7 @@ export class ProviderManager {
   }
 
   /**
-   * Create execution context for provider code
+   * Create execution context for provider code: the globals it runs with
    */
   private createExecutionContext(extensionId: string) {
     // The only modules extension code can require; anything else throws (EXT-5).
@@ -304,30 +296,6 @@ export class ProviderManager {
       'NativeConsumet': this.providerContext.NativeConsumet,
     };
 
-    // Create fetch function using axios
-    const customFetch = async (url: string, options: any = {}) => {
-      try {
-        const response = await this.providerContext.axios({
-          url,
-          method: options.method || 'GET',
-          headers: options.headers || {},
-          data: options.body,
-          timeout: 30000,
-        });
-
-        return {
-          ok: response.status >= 200 && response.status < 300,
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-          text: async () => response.data,
-          json: async () => (typeof response.data === 'string' ? JSON.parse(response.data) : response.data),
-        };
-      } catch (error: any) {
-        throw new Error(`fetch failed: ${error.message || error}`);
-      }
-    };
-
     return {
       exports: {},
       require: createExtensionRequire(extensionId, modules),
@@ -335,9 +303,7 @@ export class ProviderManager {
       console,
       Promise,
       Object,
-      fetch: customFetch,
-      URL: this.providerContext.PolyURL,
-      URLSearchParams: this.providerContext.PolyURLSearchParams,
+      fetch: createExtensionFetch(this.providerContext.axios),
     };
   }
 

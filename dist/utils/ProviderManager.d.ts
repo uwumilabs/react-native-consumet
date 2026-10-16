@@ -13,6 +13,7 @@ export declare class ProviderManager {
     private providerContext;
     private extractorManager;
     private loadedExtensions;
+    private compiledExtensions;
     private extensionManifest;
     private integrityOptions;
     /**
@@ -36,10 +37,21 @@ export declare class ProviderManager {
      * Get extension metadata by ID/ name (case-insensitive) like 'zoro' or 'Zoro'
      */
     getExtensionMetadata(extensionId: string): ExtensionManifest;
+    private findExtensionMetadata;
     /**
-     * Load an extension by ID from the extensionManifest
+     * Load an extension by ID from the extensionManifest. Concurrent and later calls for the same
+     * extension and base URL share one load; a failed load is retried on the next call.
      */
     loadExtension<T extends string>(extensionId: T, options?: ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
+    /**
+     * Forget a loaded extension (for every base URL) and its compiled code, so the next load
+     * fetches and runs it again. Extractors have their own: `getExtractorManager().invalidate(name)`.
+     */
+    invalidate(extensionId: string): void;
+    /**
+     * Fetch an extension's code from the registry and run it
+     */
+    private fetchExtension;
     /**
      * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
      * and developer tooling understands the shape better.
@@ -47,7 +59,8 @@ export declare class ProviderManager {
     private attachProviderPrototype;
     /**
      * Execute provider code and create instance (extensionManifest-based).
-     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+     * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
+     * compiled once per id and sha256; each call returns a new instance.
      *
      * @throws RegistryError before running anything if the entry needs a newer extension context
      * @throws IntegrityError before running anything if the hash or factory name is invalid
@@ -56,7 +69,7 @@ export declare class ProviderManager {
         id: T;
     }, options?: ExecuteCodeOptions & ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
     /**
-     * Create execution context for provider code
+     * Create execution context for provider code: the globals it runs with
      */
     private createExecutionContext;
     /**

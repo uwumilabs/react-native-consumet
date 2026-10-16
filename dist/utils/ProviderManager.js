@@ -20,7 +20,10 @@ const registry_schema_1 = require("./registry-schema");
 class ProviderManager {
   providerContext;
   extractorManager;
+  // Loads by `${id}|${sha256}|${baseUrl}`, see loadExtension
   loadedExtensions = new Map();
+  // Compiled extension code by `${id}|${factoryName}`
+  compiledExtensions = new Map();
   extensionManifest = new Map();
   integrityOptions;
   /**
@@ -72,6 +75,11 @@ class ProviderManager {
    */
   getExtensionMetadata(extensionId) {
     if (!extensionId) throw new Error('Extension id/name is required');
+    const manifest = this.findExtensionMetadata(extensionId);
+    if (!manifest) throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+    return manifest;
+  }
+  findExtensionMetadata(extensionId) {
     // Try direct hit (as-is and lowercase id)
     const direct = this.extensionManifest.get(extensionId) || this.extensionManifest.get(extensionId.toLowerCase());
     if (direct) return direct;
@@ -82,30 +90,37 @@ class ProviderManager {
       if (manifest.id && String(manifest.id).toLowerCase() === needle) return manifest;
       if (manifest.name && String(manifest.name).toLowerCase() === needle) return manifest;
     }
-    throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
+    return undefined;
   }
   /**
-   * Load an extension by ID from the extensionManifest
+   * Load an extension by ID from the extensionManifest. Concurrent and later calls for the same
+   * extension and base URL share one load; a failed load is retried on the next call.
    */
   async loadExtension(extensionId) {
     let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     const metadata = this.getExtensionMetadata(extensionId);
-    if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
-    }
     // Refuse entries that need a newer extension context before downloading their code.
     (0, registry_schema_1.assertCompatibleEntry)(metadata);
-    // A base URL override builds a different instance, so it is part of the cache key.
-    const cacheKey = `${(metadata.id || String(extensionId)).toLowerCase()}|${options.baseUrl ?? ''}`;
-    // Check if already loaded
-    if (this.loadedExtensions.has(cacheKey)) {
-      //console.log(`📦 Extension '${extensionId}' already loaded`);
-      return this.loadedExtensions.get(cacheKey);
-    }
+    // Keyed on the hash, so a new version is loaded again, and on the base URL override, which
+    // builds a different instance.
+    const cacheKey = `${metadata.id.toLowerCase()}|${metadata.sha256 ?? ''}|${options.baseUrl ?? ''}`;
+    return (0, extension_modules_1.memoiseLoad)(this.loadedExtensions, cacheKey, () => this.fetchExtension(metadata, options));
+  }
+  /**
+   * Forget a loaded extension (for every base URL) and its compiled code, so the next load
+   * fetches and runs it again. Extractors have their own: `getExtractorManager().invalidate(name)`.
+   */
+  invalidate(extensionId) {
+    const id = (this.findExtensionMetadata(extensionId)?.id ?? extensionId).toLowerCase();
+    (0, extension_modules_1.deleteEntriesOf)(this.loadedExtensions, id);
+    (0, extension_modules_1.deleteEntriesOf)(this.compiledExtensions, id);
+  }
+  /**
+   * Fetch an extension's code from the registry and run it
+   */
+  async fetchExtension(metadata, options) {
     try {
-      //console.log(`📥 Loading extension '${extensionId}' from ${metadata.main}`);
-      // Load the provider code
-      //console.log(`🌐 Attempting to fetch from: ${metadata.main}`);
+      //console.log(`📥 Loading extension '${metadata.id}' from ${metadata.main}`);
       const response = await (0, fetch_with_timeout_1.fetchTextWithTimeout)(metadata.main, {
         method: 'GET',
         headers: {
@@ -116,17 +131,12 @@ class ProviderManager {
       if (!response.ok) {
         throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
       }
-      const providerCode = response.text;
       // Verifies the code against the registry hash and the factory name, then attaches the prototype
-      const providerInstance = await this.executeProviderCode(providerCode, metadata.factoryName, metadata, {
+      return await this.executeProviderCode(response.text, metadata.factoryName, metadata, {
         baseUrl: options.baseUrl
       });
-      // Cache the loaded extension
-      this.loadedExtensions.set(cacheKey, providerInstance);
-      //console.log(`✅ Extension '${extensionId}' loaded successfully`);
-      return providerInstance;
     } catch (error) {
-      console.error(`❌ Failed to load extension '${extensionId}':`, error);
+      console.error(`❌ Failed to load extension '${metadata.id}':`, error);
       console.error(`❌ Error details:`, {
         message: error instanceof Error ? error.message : String(error),
         name: error instanceof Error ? error.name : 'Unknown',
@@ -158,7 +168,8 @@ class ProviderManager {
   }
   /**
    * Execute provider code and create instance (extensionManifest-based).
-   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
+   * compiled once per id and sha256; each call returns a new instance.
    *
    * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or factory name is invalid
@@ -168,42 +179,26 @@ class ProviderManager {
     const id = String(metadata?.id ?? factoryName);
     (0, registry_schema_1.assertCompatibleEntry)(metadata);
     (0, extension_integrity_1.assertValidIdentifier)(factoryName, 'factoryName', id);
-    if (!options.skipIntegrity) {
+    // The same code verified against the same hash before runs from its compiled copy.
+    const key = `${id.toLowerCase()}|${factoryName}`;
+    const sha256 = metadata.sha256 ?? '';
+    const compiled = this.compiledExtensions.get(key);
+    let factory = compiled?.sha256 === sha256 && compiled.code === code ? compiled.factory : undefined;
+    if (!factory && !options.skipIntegrity) {
       (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
     }
-    const context = this.createExecutionContext(id);
     try {
-      // Create and execute the provider code
-      //console.log(`📝 About to execute provider code for factory: ${factoryName}`);
-      // Add more robust error handling for React Native environment
-      let executeFunction;
-      try {
-        executeFunction = new Function('context', `
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during provider code execution:', execError);
-            throw new Error('Provider code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${factoryName}: typeof ${factoryName} !== 'undefined' ? ${factoryName} : (exports.${factoryName} ?? module.exports.${factoryName}) };
-          `);
-      } catch (syntaxError) {
-        console.error('Syntax error in provider code:', syntaxError);
-        throw new Error(`Failed to parse provider code: ${syntaxError.message}`);
-      }
-      const result = executeFunction(context);
-      const factory = result[factoryName];
-      if (!factory || typeof factory !== 'function') {
-        throw new Error(`Factory function '${factoryName}' not found in extension`);
+      if (!factory) {
+        factory = (0, extension_modules_1.evaluateExtensionCode)(code, factoryName, this.createExecutionContext(id), 'provider');
+        if (!factory) {
+          throw new Error(`Factory function '${factoryName}' not found in extension`);
+        }
+        // Unverified code is never reused: the next call checks its hash again.
+        if (!options.skipIntegrity) this.compiledExtensions.set(key, {
+          sha256,
+          code,
+          factory
+        });
       }
       const instance = factory(this.providerContext, options.baseUrl ?? metadata.baseUrl);
       let providerInstance = instance;
@@ -224,10 +219,9 @@ class ProviderManager {
     }
   }
   /**
-   * Create execution context for provider code
+   * Create execution context for provider code: the globals it runs with
    */
   createExecutionContext(extensionId) {
-    var _this = this;
     // The only modules extension code can require; anything else throws (EXT-5).
     const modules = {
       'cheerio': {
@@ -243,29 +237,6 @@ class ProviderManager {
       'URLSearchParams': this.providerContext.PolyURLSearchParams,
       'NativeConsumet': this.providerContext.NativeConsumet
     };
-    // Create fetch function using axios
-    const customFetch = async function (url) {
-      let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      try {
-        const response = await _this.providerContext.axios({
-          url,
-          method: options.method || 'GET',
-          headers: options.headers || {},
-          data: options.body,
-          timeout: 30000
-        });
-        return {
-          ok: response.status >= 200 && response.status < 300,
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-          text: async () => response.data,
-          json: async () => typeof response.data === 'string' ? JSON.parse(response.data) : response.data
-        };
-      } catch (error) {
-        throw new Error(`fetch failed: ${error.message || error}`);
-      }
-    };
     return {
       exports: {},
       require: (0, extension_modules_1.createExtensionRequire)(extensionId, modules),
@@ -275,9 +246,7 @@ class ProviderManager {
       console,
       Promise,
       Object,
-      fetch: customFetch,
-      URL: this.providerContext.PolyURL,
-      URLSearchParams: this.providerContext.PolyURLSearchParams
+      fetch: (0, fetch_with_timeout_1.createExtensionFetch)(this.providerContext.axios)
     };
   }
   /**

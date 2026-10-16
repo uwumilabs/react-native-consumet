@@ -11,12 +11,32 @@ import {
   type ExecuteCodeOptions,
   type IntegrityOptions,
 } from './extension-integrity';
-import { fetchTextWithTimeout } from './fetch-with-timeout';
-import { createExtensionRequire, extensionEnums, MODELS_MODULE, UTILS_MODULE } from './extension-modules';
+import { createExtensionFetch, fetchTextWithTimeout } from './fetch-with-timeout';
+import {
+  createExtensionRequire,
+  deleteEntriesOf,
+  evaluateExtensionCode,
+  extensionEnums,
+  memoiseLoad,
+  MODELS_MODULE,
+  UTILS_MODULE,
+  type CompiledCode,
+} from './extension-modules';
 import { assertCompatibleEntry, validateRegistry } from './registry-schema';
 
+/** Build an extractor from a bundled or registry export: classes with `new`, factories by calling them. */
+function instantiate(extractor: any, ctx: ExtractorContext): IVideoExtractor {
+  if (typeof extractor !== 'function') return extractor;
+  const isClass =
+    extractor.prototype instanceof VideoExtractor || /^class\b/.test(Function.prototype.toString.call(extractor));
+  return isClass ? new extractor(ctx) : extractor(ctx);
+}
+
 export class ExtractorManager {
-  private loadedExtractors = new Map<string, any>();
+  // Loads by `${extractor name}|${sha256}` (`|static` for bundled-only extractors), see loadExtractor
+  private loadedExtractors = new Map<string, Promise<IVideoExtractor>>();
+  // Compiled registry code by lowercased extractor name
+  private compiledExtractors = new Map<string, CompiledCode>();
   private extractorRegistry = new Map<string, ExtractorInfo>();
   private staticExtractors!: Record<string, any>;
   private extractorContext: ExtractorContext;
@@ -136,47 +156,64 @@ export class ExtractorManager {
   }
 
   /**
-   * Load an extractor by ID from the registry
+   * Load an extractor by server name or extractor ID from the registry, or the bundled version
+   * when the registry has none or its code can't be used. Always an instance built with this
+   * manager's extractor context.
    * Handles server names with suffixes like 'megacloud-hd-1', 'kwik-pahe', etc.
    * Also resolves aliases like 'upcloud' -> 'megacloud', 'akcloud' -> 'megacloud'
    */
   async loadExtractor(extractorId: string): Promise<IVideoExtractor> {
     const metadata = this.getExtractorMetadata(extractorId);
     if (!metadata) {
-      // Try to extract base name and look for static extractor
-      const baseName = this.extractBaseExtractorName(extractorId) || extractorId;
-      const resolvedName = this.extractorAliases.get(baseName.toLowerCase()) || baseName;
-      const staticExtractor = this.staticExtractors[resolvedName.toLowerCase()];
-      if (staticExtractor) {
-        //console.log(`🔧 Using static fallback for extractor '${extractorId}' (resolved: '${resolvedName}')`);
-        return staticExtractor;
+      // Not in the registry: use the bundled extractor, if there is one
+      const name = (this.extractBaseExtractorName(extractorId) ?? extractorId).toLowerCase();
+      if (!this.staticExtractors[name]) {
+        throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
       }
-      throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
+      return memoiseLoad(this.loadedExtractors, `${name}|static`, async () => this.createStaticExtractor(name));
     }
     // Refuse a registry version that needs a newer extension context before downloading it.
     // Providers still fall back to the bundled extractor (see createProviderContext).
     assertCompatibleEntry(metadata);
 
-    // Check if already loaded
-    if (this.loadedExtractors.has(extractorId)) {
-      //console.log(`🔧 Extractor '${extractorId}' already loaded`);
-      return this.loadedExtractors.get(extractorId);
-    }
+    // Keyed on the extractor name, so every server name it serves ('megacloud-hd-1', 'MegaCloud',
+    // 'upcloud') shares one load, and on its hash, so a new version is loaded again.
+    const key = `${metadata.name.toLowerCase()}|${metadata.sha256 ?? ''}`;
+    return memoiseLoad(this.loadedExtractors, key, () => this.fetchExtractor(metadata));
+  }
 
+  /**
+   * Forget a loaded extractor and its compiled code, so the next load fetches and runs it again.
+   * Takes the same names as loadExtractor ('megacloud-hd-1', 'MegaCloud', 'upcloud').
+   */
+  invalidate(extractorId: string): void {
+    const name = (
+      this.getExtractorMetadata(extractorId)?.name ??
+      this.extractBaseExtractorName(extractorId) ??
+      extractorId
+    ).toLowerCase();
+    deleteEntriesOf(this.loadedExtractors, name);
+    this.compiledExtractors.delete(name);
+  }
+
+  /** The bundled version of an extractor, built with this manager's context */
+  private createStaticExtractor(name: string): IVideoExtractor {
+    return instantiate(this.staticExtractors[name.toLowerCase()], this.extractorContext);
+  }
+
+  /**
+   * Fetch and run the registry version of an extractor, falling back to the bundled version
+   */
+  private async fetchExtractor(metadata: ExtractorInfo): Promise<IVideoExtractor> {
     try {
       // Handle static extractors (legacy)
       if (metadata.main.startsWith('static://')) {
         const staticId = metadata.main.replace('static://', '');
-        const staticExtractor = this.staticExtractors[staticId.toLowerCase()];
-        if (staticExtractor) {
-          this.loadedExtractors.set(extractorId, staticExtractor);
-          //console.log(`🔧 Static extractor '${extractorId}' loaded`);
-          return staticExtractor;
-        }
+        if (this.staticExtractors[staticId.toLowerCase()]) return this.createStaticExtractor(staticId);
         throw new Error(`Static extractor '${staticId}' not found`);
       }
 
-      //console.log(`🔧 Loading dynamic extractor '${extractorId}' from ${metadata.main}`);
+      //console.log(`🔧 Loading dynamic extractor '${metadata.name}' from ${metadata.main}`);
 
       const response = await fetchTextWithTimeout(metadata.main, {
         method: 'GET',
@@ -188,26 +225,14 @@ export class ExtractorManager {
       if (!response.ok) {
         throw new Error(`Failed to fetch extractor: ${response.status} ${response.statusText}`);
       }
-      const extractorCode = response.text;
 
       // Verifies the code against the registry hash and the extractor name before running it
-      const extractorInstance = await this.executeExtractorCode(extractorCode, metadata);
-
-      // Cache the loaded extractor
-      this.loadedExtractors.set(extractorId, extractorInstance);
-
-      //console.log(`✅ Dynamic extractor '${extractorId}' loaded successfully (encryption: ${metadata.version})`);
-      return extractorInstance;
+      return await this.executeExtractorCode(response.text, metadata);
     } catch (error) {
-      console.error(`❌ Failed to load extractor '${extractorId}':`, error);
+      console.error(`❌ Failed to load extractor '${metadata.name}':`, error);
 
-      // Fallback to static extractor if available
-      const staticExtractor = this.staticExtractors[extractorId.toLowerCase()];
-      if (staticExtractor) {
-        //console.log(`🔧 Falling back to static extractor for '${extractorId}'`);
-        this.loadedExtractors.set(extractorId, staticExtractor);
-        return staticExtractor;
-      }
+      // Fallback to the bundled version of the extractor, if there is one
+      if (this.staticExtractors[metadata.name.toLowerCase()]) return this.createStaticExtractor(metadata.name);
 
       throw error;
     }
@@ -215,7 +240,8 @@ export class ExtractorManager {
 
   /**
    * Execute extractor code and create instance.
-   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set.
+   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
+   * compiled once per extractor name and sha256; each call returns a new instance.
    *
    * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or extractor name is invalid
@@ -226,56 +252,29 @@ export class ExtractorManager {
     options: ExecuteCodeOptions = {}
   ): Promise<IVideoExtractor> {
     assertCompatibleEntry(metadata);
-    // The name is interpolated into the generated code below.
+    // The name is interpolated into the generated code.
     assertValidIdentifier(metadata?.name, 'extractor name', String(metadata?.name));
-    if (!options.skipIntegrity) {
+
+    // The same code verified against the same hash before runs from its compiled copy.
+    const key = metadata.name.toLowerCase();
+    const sha256 = metadata.sha256 ?? '';
+    const compiled = this.compiledExtractors.get(key);
+    let factory = compiled?.sha256 === sha256 && compiled.code === code ? compiled.factory : undefined;
+    if (!factory && !options.skipIntegrity) {
       verifyExtensionCode(code, metadata, this.integrityOptions);
     }
 
-    const context = this.createExecutionContext(String(metadata.name));
-
     try {
-      let executeFunction;
-      try {
-        executeFunction = new Function(
-          'context',
-          `
-          const exports = context.exports;
-          const require = context.require;
-          const module = context.module;
-          const console = context.console;
-          const Promise = context.Promise;
-          const Object = context.Object;
-          const fetch = context.fetch;
-          const URL = context.URL;
-          const URLSearchParams = context.URLSearchParams;
-          const axios = context.axios;
-          const load = context.load;
-          const CryptoJS = context.CryptoJS;
-          const sharedUtils = context.sharedUtils;
-          
-          try {
-            ${code}
-          } catch (execError) {
-            console.error('Error during extractor code execution:', execError);
-            throw new Error('Extractor code execution failed: ' + execError.message);
-          }
-          
-          return { exports, ${metadata.name}: typeof ${metadata.name} !== 'undefined' ? ${metadata.name} : (exports.${metadata.name} ?? module.exports.${metadata.name}) };
-          `
-        );
-      } catch (syntaxError: any) {
-        console.error('Syntax error in extractor code:', syntaxError);
-        throw new Error(`Failed to parse extractor code: ${syntaxError.message}`);
-      }
-
-      const result = executeFunction(context);
-      const factory = result[metadata.name || `create${metadata.name}`];
-
       if (!factory) {
-        throw new Error(`Factory function '${metadata.name || `create${metadata.name}`}' not found in extractor code`);
+        const context = this.createExecutionContext(metadata.name);
+        factory = evaluateExtensionCode(code, metadata.name, context, 'extractor');
+        if (!factory) {
+          throw new Error(`Factory function '${metadata.name}' not found in extractor code`);
+        }
+        // Unverified code is never reused: the next call checks its hash again.
+        if (!options.skipIntegrity) this.compiledExtractors.set(key, { sha256, code, factory });
       }
-      return factory(this.extractorContext);
+      return instantiate(factory, this.extractorContext);
     } catch (error) {
       console.error(`❌ Failed to execute extractor code for '${metadata.name}':`, error);
       throw error;
@@ -301,28 +300,7 @@ export class ExtractorManager {
       require: createExtensionRequire(extractorName, modules),
       Promise,
       Object,
-      fetch: async (url: string, options: any = {}) => {
-        try {
-          const response = await this.extractorContext.axios({
-            url,
-            method: options.method || 'GET',
-            headers: options.headers || {},
-            data: options.body,
-            timeout: 30000,
-          });
-
-          return {
-            ok: response.status >= 200 && response.status < 300,
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-            text: async () => response.data,
-            json: async () => (typeof response.data === 'string' ? JSON.parse(response.data) : response.data),
-          };
-        } catch (error: any) {
-          throw new Error(`fetch failed: ${error.message || error}`);
-        }
-      },
+      fetch: createExtensionFetch(extractorContext.axios),
       axios: extractorContext.axios,
       load: extractorContext.load,
       CryptoJS,
