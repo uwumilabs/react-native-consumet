@@ -51,7 +51,8 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
         } catch (error) {
           if (!bundled) throw error;
         }
-        // When the registry copy can't be used, loadExtractor returns the bundled factory instead.
+        // loadExtractor returns the bundled extractor itself when the registry code fails; it throws
+        // when the entry can't be used at all (e.g. it needs a newer context), so build it here.
         if (typeof extractor?.extract !== 'function') {
           if (!bundled) throw new Error(`Extractor '${name}' is not available`);
           extractor = bundled(callerCtx);

@@ -60,8 +60,8 @@ export {
 
 // Export provider context utilities
 export { createProviderContext } from './create-provider-context';
-export { ProviderManager } from './ProviderManager';
-export type { ProviderLoadOptions } from './ProviderManager';
+export { ProviderManager, REQUIRED_PROVIDER_METHODS } from './ProviderManager';
+export type { ProviderLoadOptions, ProviderOfCategory } from './ProviderManager';
 export { ExtractorManager } from './ExtractorManager';
 export { verifyExtensionCode, IntegrityError } from './extension-integrity';
 export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions } from './extension-integrity';

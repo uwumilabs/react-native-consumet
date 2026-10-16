@@ -9,6 +9,24 @@ export interface ProviderLoadOptions {
     /** Base URL for the provider; defaults to the registry entry's `baseUrl` (so domain moves are registry-only). */
     baseUrl?: string;
 }
+/**
+ * Methods a provider must have, by category; loading a provider without one of them throws.
+ * They match the base parsers (AnimeParser, MovieParser, MangaParser, LightNovelParser); meta
+ * lists what anime and movie meta providers share.
+ */
+export declare const REQUIRED_PROVIDER_METHODS: {
+    readonly anime: readonly ["search", "fetchAnimeInfo", "fetchEpisodeSources", "fetchEpisodeServers"];
+    readonly movies: readonly ["search", "fetchMediaInfo", "fetchEpisodeSources", "fetchEpisodeServers"];
+    readonly manga: readonly ["search", "fetchMangaInfo", "fetchChapterPages"];
+    readonly 'light-novels': readonly ["search", "fetchLightNovelInfo", "fetchChapterContent"];
+    readonly meta: readonly ["search", "fetchEpisodeSources", "fetchEpisodeServers"];
+};
+/** What `getProvider(category, id)` returns: the anime or movie provider type, or the category's required methods. */
+export type ProviderOfCategory<C extends ProviderType> = C extends 'anime' ? IAnimeProvider : C extends 'movies' ? IMovieProvider : {
+    readonly name: string;
+} & {
+    [M in (typeof REQUIRED_PROVIDER_METHODS)[C][number]]: (...args: any[]) => Promise<any>;
+};
 export declare class ProviderManager {
     private providerContext;
     private extractorManager;
@@ -77,9 +95,15 @@ export declare class ProviderManager {
      */
     private createModelsContext;
     /**
-     * Validate provider instance based on category
+     * Validate that the instance has the methods its category requires (REQUIRED_PROVIDER_METHODS)
      */
     private validateProviderInstance;
+    /**
+     * Get a provider of a category, e.g. `getProvider('manga', 'mangadex')`
+     *
+     * @throws if the extension's registry entry is of another category
+     */
+    getProvider<C extends ProviderType>(category: C, extensionId: string, options?: ProviderLoadOptions): Promise<ProviderOfCategory<C>>;
     /**
      * Get anime provider
      */

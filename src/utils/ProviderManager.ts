@@ -43,6 +43,37 @@ export interface ProviderLoadOptions {
   baseUrl?: string;
 }
 
+/**
+ * Methods a provider must have, by category; loading a provider without one of them throws.
+ * They match the base parsers (AnimeParser, MovieParser, MangaParser, LightNovelParser); meta
+ * lists what anime and movie meta providers share.
+ */
+export const REQUIRED_PROVIDER_METHODS = {
+  'anime': ['search', 'fetchAnimeInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+  'movies': ['search', 'fetchMediaInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+  'manga': ['search', 'fetchMangaInfo', 'fetchChapterPages'],
+  'light-novels': ['search', 'fetchLightNovelInfo', 'fetchChapterContent'],
+  'meta': ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+} as const satisfies Record<ProviderType, readonly string[]>;
+
+/** What `getProvider(category, id)` returns: the anime or movie provider type, or the category's required methods. */
+export type ProviderOfCategory<C extends ProviderType> = C extends 'anime'
+  ? IAnimeProvider
+  : C extends 'movies'
+    ? IMovieProvider
+    : { readonly name: string } & {
+        [M in (typeof REQUIRED_PROVIDER_METHODS)[C][number]]: (...args: any[]) => Promise<any>;
+      };
+
+// How errors name a category: "Extension 'x' is not an anime provider"
+const CATEGORY_NAMES: Record<ProviderType, string> = {
+  'anime': 'an anime',
+  'movies': 'a movie',
+  'manga': 'a manga',
+  'light-novels': 'a light novel',
+  'meta': 'a meta',
+};
+
 export class ProviderManager {
   private providerContext: ProviderContext;
   private extractorManager: ExtractorManager;
@@ -320,59 +351,52 @@ export class ProviderManager {
   }
 
   /**
-   * Validate provider instance based on category
+   * Validate that the instance has the methods its category requires (REQUIRED_PROVIDER_METHODS)
    */
   private validateProviderInstance(instance: any, category: ProviderType): void {
-    const requiredMethods = ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'];
-
-    for (const method of requiredMethods) {
-      if (typeof instance[method] !== 'function') {
-        throw new Error(`Provider missing required method: ${method}`);
-      }
+    const requiredMethods = (REQUIRED_PROVIDER_METHODS as Record<string, readonly string[] | undefined>)[category];
+    if (!requiredMethods) {
+      throw new Error(`Unknown provider category '${category}'`);
     }
 
-    // Category-specific validation
-    if (category === 'anime' && typeof instance.fetchAnimeInfo !== 'function') {
-      throw new Error('Anime provider missing fetchAnimeInfo method');
+    const missing = requiredMethods.filter((method) => typeof instance?.[method] !== 'function');
+    if (missing.length) {
+      const methods = missing.length === 1 ? 'method' : 'methods';
+      throw new Error(`Provider is missing required ${category} ${methods}: ${missing.join(', ')}`);
+    }
+  }
+
+  /**
+   * Get a provider of a category, e.g. `getProvider('manga', 'mangadex')`
+   *
+   * @throws if the extension's registry entry is of another category
+   */
+  async getProvider<C extends ProviderType>(
+    category: C,
+    extensionId: string,
+    options: ProviderLoadOptions = {}
+  ): Promise<ProviderOfCategory<C>> {
+    const metadata = this.getExtensionMetadata(extensionId);
+    if (metadata.category !== category) {
+      throw new Error(`Extension '${extensionId}' is not ${CATEGORY_NAMES[category] ?? `a ${category}`} provider`);
     }
 
-    if (category === 'movies' && typeof instance.fetchMediaInfo !== 'function') {
-      throw new Error('Movie provider missing fetchMediaInfo method');
-    }
+    // The category was checked above, and loading checked the category's methods.
+    return (await this.loadExtension(extensionId, options)) as unknown as ProviderOfCategory<C>;
   }
 
   /**
    * Get anime provider
    */
   async getAnimeProvider(extensionId: AnimeProviderId, options: ProviderLoadOptions = {}): Promise<IAnimeProvider> {
-    const metadata = this.getExtensionMetadata(extensionId as string);
-    if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found`);
-    }
-
-    if (metadata.category !== 'anime') {
-      throw new Error(`Extension '${extensionId}' is not an anime provider`);
-    }
-
-    // The category was checked above, so the loaded provider is an anime provider.
-    return (await this.loadExtension(extensionId, options)) as IAnimeProvider;
+    return this.getProvider('anime', extensionId, options);
   }
 
   /**
    * Get movie provider
    */
   async getMovieProvider(extensionId: MovieProviderId, options: ProviderLoadOptions = {}): Promise<IMovieProvider> {
-    const metadata = this.getExtensionMetadata(extensionId as string);
-    if (!metadata) {
-      throw new Error(`Extension '${extensionId}' not found`);
-    }
-
-    if (metadata.category !== 'movies') {
-      throw new Error(`Extension '${extensionId}' is not a movie provider`);
-    }
-
-    // The category was checked above, so the loaded provider is a movie provider.
-    return (await this.loadExtension(extensionId, options)) as IMovieProvider;
+    return this.getProvider('movies', extensionId, options);
   }
 
   /**

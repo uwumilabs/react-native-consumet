@@ -33,6 +33,7 @@ import extensionRegistry from './extension-registry.json';
 import {
   createProviderContext,
   ProviderManager,
+  REQUIRED_PROVIDER_METHODS,
   ExtractorManager,
   createExtractorContext,
   defaultAxios,
@@ -52,6 +53,7 @@ import type {
   IntegrityOptions,
   ExecuteCodeOptions,
   ProviderLoadOptions,
+  ProviderOfCategory,
   RegistryErrorCode,
 } from './utils';
 
@@ -247,6 +249,7 @@ export { extensionRegistry as ExtensionRegistry };
 export {
   createProviderContext,
   ProviderManager,
+  REQUIRED_PROVIDER_METHODS,
   ExtractorManager,
   createExtractorContext,
   PolyURL,
@@ -265,5 +268,12 @@ export {
   MetaError,
 };
 export type { MetaErrorSource };
-export type { IntegrityErrorCode, IntegrityOptions, ExecuteCodeOptions, ProviderLoadOptions, RegistryErrorCode };
+export type {
+  IntegrityErrorCode,
+  IntegrityOptions,
+  ExecuteCodeOptions,
+  ProviderLoadOptions,
+  ProviderOfCategory,
+  RegistryErrorCode,
+};
 export type { ExtensionRegistryData };
