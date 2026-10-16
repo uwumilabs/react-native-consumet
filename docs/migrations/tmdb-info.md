@@ -1,6 +1,7 @@
 # Migrating to the new TMDB info shape
 
-These notes cover `META.TMDB#fetchMediaInfo(tmdbId, type)`. Search and trending results are unchanged.
+These notes cover `META.TMDB#fetchMediaInfo(tmdbId, type)`, then the smaller changes to search,
+trending and the API key at the end.
 
 ## `id` is the TMDB id, and the provider id has its own field (breaking)
 
@@ -74,12 +75,16 @@ These fields were already returned and are now declared:
 
 - `IMovieInfo`: `episodeId`, `similar`, `directors`, `writers`, `actors`, `characters`,
   `totalSeasons`, `nextAiringEpisode`, `mappings` (`{ imdb?: string; tmdb?: number }`).
-- `IMovieSeason`: `isReleased`.
+- `IMovieSeason`: `isReleased`, and the new `failed` (see below).
 - `IMovieEpisode`: `episode`.
 
-Images are unchanged. TMDB episodes and seasons keep `image: { mobile, hd }` (300 px and 780 px
-wide), which `IMovieEpisode.image` (`string | { mobile?, hd? }`) and `IMovieSeason.image` already
-allow. Provider and anime episodes use a URL string.
+TMDB episodes and seasons keep `image: { mobile, hd }` (300 px and 780 px wide), which
+`IMovieEpisode.image` (`string | { mobile?, hd? }`) and `IMovieSeason.image` already allow. Provider
+and anime episodes use a URL string. A movie's single season now uses the movie's poster as its image;
+it used the backdrop (while checking that a poster existed). Its single episode keeps the backdrop.
+
+`duration` is unset when TMDB sends no runtime, as for an unreleased movie. Before, that case threw and
+failed the whole call.
 
 `IMovieEpisode.id` is optional for every movie episode, not just TMDB's. Code that passes an episode
 `id` where a `string` is required needs a guard or a non-null assertion.
@@ -96,6 +101,17 @@ In uwumi:
 - uwumi's other reads of an episode `id` already handle `undefined`: `buildEpisodeRouteParams`,
   `EpisodeActionsSheet` and the `EpisodeList` key extractor.
 
+## Seasons that fail to load (behaviour)
+
+The seasons of a TV show are now requested together. When some season requests fail, `fetchMediaInfo`
+resolves with every season in its place: a failed one has `failed: true` and `episodes: []`, so the
+season indexes apps store still line up, and fetching the info again may fill it. Before, one failed
+season request made the whole call throw. `fetchMediaInfo` still throws a `MetaError` when every
+season fails.
+
+In an app: show a failed season as "couldn't load" with a retry, instead of as a season with no
+episodes.
+
 ## Errors are `MetaError`
 
 When a TMDB request fails, `search`, `fetchTrending` and `fetchMediaInfo` throw a `MetaError` (exported
@@ -103,3 +119,32 @@ from the package) instead of a plain `Error`. It has `source: 'tmdb'`, the HTTP 
 was one, and the original error as `cause`. The message is unchanged, and `MetaError` extends `Error`,
 so existing `catch` blocks keep working. Check `status === 429` to tell a rate limit from an outage.
 Provider failures don't throw from `fetchMediaInfo` (see above).
+
+## Search and trending
+
+- `releaseDate` in `search` and `fetchTrending` results is the year from TMDB's date (`'2014'`), or
+  unset when TMDB has no date. Before, a result without a date had `'NaN'`, and devices west of UTC
+  could show the year before for a January 1 release.
+- `search` sends the whole query, URL-encoded: a query with `&` or `#` used to be cut short.
+- `fetchTrending('people')` works again. TMDB no longer says what trending people are known for, so
+  their `movies` is `[]`; before, the call threw.
+
+## Pass your own API key
+
+`new META.TMDB(apiKey, provider)` takes your TMDB API key (get one at
+[themoviedb.org](https://www.themoviedb.org/settings/api)). Without one, or with a blank one, it falls
+back to a key shared by every app that passes none, which TMDB can rate-limit or revoke for all of
+them at once, and logs a `console.warn` the first time (a LogBox notice in React Native development
+builds). Requests still work with the shared key. `MOVIES.MultiStream`, which also calls TMDB, takes
+the key as its third argument: `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`. The older
+`new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key.
+
+In uwumi:
+
+- `src/hooks/queries/infoQueries.ts` passes `process.env.EXPO_TMDB_API_KEY`. Expo only inlines
+  environment variables whose names start with `EXPO_PUBLIC_` into the app, so this one is undefined at
+  runtime and the shared key is used. Rename it to `EXPO_PUBLIC_TMDB_API_KEY` in `.env` and
+  `.env.example` and read `process.env.EXPO_PUBLIC_TMDB_API_KEY`. Like any key the app sends from the
+  device, it is then visible in the app bundle.
+- `src/hooks/queries/mediaQueries.ts` builds `new META.TMDB()` without a key for trending and search.
+  Pass the same key there.
