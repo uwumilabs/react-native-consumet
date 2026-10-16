@@ -12,7 +12,7 @@ const readlightnovels = new LIGHT_NOVELS.ReadLightNovels();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -26,7 +26,7 @@ readlightnovels.search('Classrrom of the Elite').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of light novels. (_<a href= "https://github.com/consumet/extensions/blob/master/src/models/types.ts#L128-L134"> <code>Promise<ISearch\<ILightNovelResult>></code></a>_)\
+returns a promise which resolves into an array of light novels. (_<a href= "../../../src/models/types.ts"> <code>Promise<ISearch\<ILightNovelResult>></code></a>_)\
 output:
 
 ```js
@@ -61,7 +61,7 @@ readlightnovels
   });
 ```
 
-returns a promise which resolves into an light novel info object (including the chapters or volumes). (_<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L148-L156"><code>Promise\<ILightNovelInfo></code></a>_)\
+returns a promise which resolves into an light novel info object (including the chapters or volumes). (_<a href="../../../src/models/types.ts"><code>Promise\<ILightNovelInfo></code></a>_)\
 output:
 
 ```js
@@ -109,7 +109,7 @@ readlightnovels
   });
 ```
 
-returns a content object. (_<a href="https://github.com/consumet/extensions/blob/master/src/models/types.ts#L143-L146"><code>Promise\<ILightNovelChapterContent></code></a>_)\
+returns a content object. (_<a href="../../../src/models/types.ts"><code>Promise\<ILightNovelChapterContent></code></a>_)\
 output:
 
 ```js
@@ -120,4 +120,4 @@ output:
 }
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/light-novels.md#">back to light novels providers list</a>)</p>
+<p align="end">(<a href="../../guides/light-novels.md">back to light novels providers list</a>)</p>

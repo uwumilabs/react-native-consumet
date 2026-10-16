@@ -16,10 +16,9 @@ const himovies = new MOVIES.HiMovies();
 - [fetchTrendingTvShows](#fetchtrendingtvshows)
 - [fetchByCountry](#fetchbycountry)
 - [fetchByGenre](#fetchbygenre)
-- [fetchSpotlight](#fetchspotlight)
 
 ### search
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 
 <h4>Parameters</h4>
@@ -35,7 +34,7 @@ himovies.search("Vincenzo").then(data => {
 })
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)*)\
 output:
 ```js
 {
@@ -69,7 +68,7 @@ himovies.fetchMediaInfo("tv/watch-vincenzo-67955").then(data => {
 })
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)*)\
+returns a promise which resolves into an anime info object (including the episodes). (*[`Promise<IMovieInfo>`](../../../src/models/types.ts)*)\
 output:
 ```js
 {
@@ -118,7 +117,7 @@ output:
 | ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
 | mediaId           | `string`                                                                                             | takes media id as a parameter. (*media id can be found in the media info object*)                                                                          |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. *default: [`StreamingServers.VidCloud`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)* |
+| server (optional) | [`StreamingServers`](../../../src/models/types.ts) | takes server enum as a parameter. *default: [`StreamingServers.VidCloud`](../../../src/models/types.ts)* |
 
 
 ```ts
@@ -126,7 +125,7 @@ himovies.fetchEpisodeSources("1167571", "tv/watch-vincenzo-67955").then(data => 
   console.log(data);
 })
 ```
-returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)*)\
+returns a promise which resolves into an array of episode sources and subtitles. (*[`Promise<ISource>`](../../../src/models/types.ts)*)\
 output:
 ```js
 {
@@ -166,7 +165,7 @@ himovies.fetchEpisodeServers('1167571', 'tv/watch-vincenzo-67955').then(data => 
   console.log(data);
 })
 ```
-returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)*)\
+returns a promise which resolves into an array of episode servers. (*[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)*)\
 output:
 ```js
 [
@@ -191,7 +190,7 @@ output:
 ]
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>
+<p align="end">(<a href="../../guides/movies.md">back to movie providers list</a>)</p>
 
 ### fetchRecentMovies
 
@@ -201,7 +200,7 @@ himovies.fetchRecentMovies().then(data => {
 })
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](../../../src/models/types.ts)*)\
 output:
 ```js
 [
@@ -245,7 +244,7 @@ himovies.fetchRecentTvShows().then(data => {
 })
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](../../../src/models/types.ts)*)\
 output:
 ```js
 [
@@ -289,7 +288,7 @@ himovies.fetchTrendingMovies().then(data => {
 })
 ```
 
-returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of movies. (*[`Promise<IMovieResult[]>`](../../../src/models/types.ts)*)\
 output:
 ```js
 [
@@ -333,7 +332,7 @@ himovies.fetchTrendingTvShows().then(data => {
 })
 ```
 
-returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)*)\
+returns a promise which resolves into an array of tv shows. (*[`Promise<IMovieResult[]>`](../../../src/models/types.ts)*)\
 output:
 ```js
 [
@@ -383,7 +382,7 @@ himovies.fetchByCountry('KR').then(data => {
 })
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)*)\
 output:
 ```js
 {
@@ -428,7 +427,7 @@ himovies.fetchByGenre('drama').then(data => {
 })
 ```
 
-returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)*)\
+returns a promise which resolves into an array of movies/tv series. (*[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)*)\
 output:
 ```js
 {

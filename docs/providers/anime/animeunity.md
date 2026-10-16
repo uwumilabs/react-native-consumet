@@ -12,7 +12,7 @@ const animeunity = new ANIME.AnimeUnity();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -28,7 +28,7 @@ animeunity
   });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -68,14 +68,14 @@ Why page number? AnimeUnity provides only 120 episodes at a time, how to use:
 If no page number is passed, the first page will be fetched.
 
 ```ts
-animesaturn
+animeunity
   .fetchAnimeInfo('5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc', 1)
   .then((data) => {
     console.log(data);
   });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -123,7 +123,7 @@ output:
 In this example, we're getting the sources for the first episode of Demon Slayer: Kimetsu no Yaiba Hashira Training Arc.
 
 ```ts
-animesaturn
+animeunity
   .fetchEpisodeSources(
     '5167-demon-slayer-kimetsu-no-yaiba-hashira-training-arc/80480'
   )
@@ -132,7 +132,7 @@ animesaturn
   });
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -163,4 +163,4 @@ output:
 }
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/anime.md#">back to anime providers list</a>)</p>
+<p align="end">(<a href="../../guides/anime.md">back to anime providers list</a>)</p>

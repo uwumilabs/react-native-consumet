@@ -1,10 +1,13 @@
 <h1>TMDB</h1>
-This is a custom provider that maps an movie provider (like flixhq) to TMDB.
+This is a custom provider that maps a movie provider to TMDB. Titles, images, seasons and episodes come from TMDB; episode servers and sources come from the movie provider.
 
-`TMDB` class takes a [`MovieParser`](https://github.com/consumet/extensions/blob/master/src/models/movie-parser.ts) object as a parameter **(optional)**. This object is used to parse the anime episodes from the provider, then mapped to TMDB.
+`TMDB` takes a TMDB API key (**optional**, a default key is built in) and a movie provider (**optional**): a registry provider from `ProviderManager.getMovieProvider` (an `IMovieProvider`) or a `MovieParser` instance. Without a provider, it uses the bundled `HiMovies` class, which isn't in the extension registry, so pass one.
 
 ```ts
-const tmdb = new META.TMDB();
+import { META, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
+
+const manager = new ProviderManager(ExtensionRegistry);
+const tmdb = new META.TMDB(undefined, await manager.getMovieProvider('netflixmirror'));
 ```
 
 <h2>Methods</h2>
@@ -12,30 +15,35 @@ const tmdb = new META.TMDB();
 - [fetchTrending](#fetchtrending)
 - [search](#search)
 - [fetchMediaInfo](#fetchmediainfo)
+- [fetchEpisodeServers](#fetchepisodeservers)
 - [fetchEpisodeSources](#fetchepisodesources)
+- [Errors](#errors)
+
+`fetchMediaInfo` changed after 1.6.0: `id` is the TMDB id and the provider's id is in `providerId`. See [Migrating to the new TMDB info shape](../../migrations/tmdb-info.md).
 
 ### fetchTrending
 
 <h4>Parameters</h4>
 
-| Parameter             | Type     | Description                                                              |
-| --------------------- | -------- | ------------------------------------------------------------------------ |
-| type                  | `string` | type of trending option we want('movie', 'tv series', 'people' or 'all') |
-| timePeriod (optional) | `string` | the duration of trending we want ('day' or 'week')                       |
-| page (optional)       | `number` | page number to search for.                                               |
+| Parameter             | Type     | Description                                                               |
+| --------------------- | -------- | ------------------------------------------------------------------------- |
+| type                  | `string` | type of trending option we want ('movie', 'tv series', 'people' or 'all') |
+| timePeriod (optional) | `string` | the duration of trending we want ('day' or 'week'). **Default: 'day'**    |
+| page (optional)       | `number` | page number to search for.                                                |
 
 ```ts
-tmdb.fetchTrending('the flash').then((data) => {
+tmdb.fetchTrending('all', 'week').then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<(IMovieResult | IAnimeResult | IPeopleResult)[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies, TV shows and people. (_[`Promise<ISearch<IMovieResult | IAnimeResult | IPeopleResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
 {
   currentPage: 1,
+  hasNextPage: true,
   results: [
         {
           id: 848326,
@@ -53,14 +61,6 @@ output:
           rating: 6.551,
           releaseDate: '2023'
         },
-        {
-          id: 930564,
-          title: 'Saltburn',
-          image: 'https://image.tmdb.org/t/p/original/qjhahNLSZ705B5JP92YMEYPocPz.jpg',
-          type: 'Movie',
-          rating: 7.2,
-          releaseDate: '2023'
-        },
         {...}
         ...
   ]
@@ -71,10 +71,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter       | Type     | Description                                                                         |
-| --------------- | -------- | ----------------------------------------------------------------------------------- |
-| query           | `string` | query to search for. (_In this case, We're searching for `Classroom of the elite`_) |
-| page (optional) | `number` | page number to search for.                                                          |
+| Parameter       | Type     | Description                                                            |
+| --------------- | -------- | ---------------------------------------------------------------------- |
+| query           | `string` | query to search for. (_In this case, We're searching for `the flash`_) |
+| page (optional) | `number` | page number to search for.                                             |
 
 ```ts
 tmdb.search('the flash').then((data) => {
@@ -82,7 +82,7 @@ tmdb.search('the flash').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/consumet.ts/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies and TV shows. (_[`Promise<ISearch<IMovieResult | IAnimeResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -96,14 +96,6 @@ output:
       "type": "TV Series",
       "rating": 7.807,
       "releaseDate": "2014"
-    },
-    {
-      "id": 236,
-      "title": "The Flash",
-      "image": "https://image.tmdb.org/t/p/original/fi1GEdCbyWRDHpyJcB25YYK7fh4.jpg",
-      "type": "TV Series",
-      "rating": 7.464,
-      "releaseDate": "1990"
     },
     {
       "id": 298618,
@@ -123,10 +115,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                                               |
-| --------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| id        | `string` | takes anime id as a parameter. (_anime id can be found in the anime search results or Movie info object_) |
-| type      | `string` | takes movie or tv as a parameter (_type can be found in the anime search results or Movie info object_)   |
+| Parameter | Type     | Description                                                                       |
+| --------- | -------- | --------------------------------------------------------------------------------- |
+| id        | `string` | the TMDB id (_the `id` of a search or trending result_)                           |
+| type      | `string` | `'movie'` or `'tv'` (_a result's `type`, `'Movie'` or `'TV Series'`, also works_) |
 
 ```ts
 tmdb.fetchMediaInfo('60735', 'tv').then((data) => {
@@ -134,19 +126,26 @@ tmdb.fetchMediaInfo('60735', 'tv').then((data) => {
 });
 ```
 
-returns a promise which resolves into an movie info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into a movie info object, including every season and episode. (_[`Promise<IMovieInfo>`](../../../src/models/types.ts)_)
+
+- `id` is always the TMDB id you passed in.
+- `providerId` is the title's media id on the movie provider. Pass it to `fetchEpisodeServers` / `fetchEpisodeSources`.
+- Each episode has `number` (the TMDB episode number; `episode` is the same value and deprecated), and `uniqueId` `${tmdbId}-${type}-s${season}-e${episode}`, which doesn't depend on the provider. `id` and `url` are the provider's episode id and URL.
+- When the provider has no matching title, or fails, the TMDB info and every season are still returned, but `providerId` and the episodes' `id` and `url` are unset: there's nothing to play on that provider. For movies, `episodeId` is unset too.
+
 output:
 
 ```js
 {
-  "id": "tv/watch-the-flash-39535",
+  "id": "60735",
+  "providerId": "...", // the title on the movie provider; unset when it has no match
   "title": "The Flash",
   "image": "https://image.tmdb.org/t/p/original/lJA2RCMfsWoskqlQhXPSLFQGXEJ.jpg",
   "cover": "https://image.tmdb.org/t/p/original/41yaWnIT8AjIHiULHtTbKNzZTjc.jpg",
   "type": "TV Series",
   "rating": 7.807,
   "releaseDate": "2014-10-07",
-  "description": "After a particle accelerator causes a freak storm, CSI Investigator Barry Allen is struck by lightning and falls into a coma. Months later he awakens with the power of super speed, granting him the ability to move through Central City like an unseen guardian angel. Though initially excited by his newfound powers, Barry is shocked to discover he is not the only \"meta-human\" who was created in the wake of the accelerator explosion -- and not everyone is using their new powers for good. Barry partners with S.T.A.R. Labs and dedicates his life to protect the innocent. For now, only a few close friends and associates know that Barry is literally the fastest man alive, but it won't be long before the world learns what Barry Allen has become...The Flash.",
+  "description": "After a particle accelerator causes a freak storm, CSI Investigator Barry Allen is struck by lightning and falls into a coma. ...",
   "genres": [
     "Drama",
     "Sci-Fi & Fantasy"
@@ -159,16 +158,16 @@ output:
   "actors": [
     "Grant Gustin",
     "Candice Patton",
-    "Danielle Panabaker",
-    "Danielle Nicolet",
-    "Kayla Compton",
-    "Brandon McKnight",
-    "Jon Cor"
+    ...
   ],
   "trailer": {
     "id": "Mx7xTF8fKz4",
     "site": "YouTube",
     "url": "https://www.youtube.com/watch?v=Mx7xTF8fKz4"
+  },
+  "mappings": {
+    "imdb": "tt3107288",
+    "tmdb": 60735
   },
   "similar": [
     {
@@ -179,105 +178,103 @@ output:
       "rating": 8.311,
       "releaseDate": "1989-04-26"
     },
-    {
-      "id": 13023,
-      "title": "El ChapulÃ­n Colorado",
-      "image": "https://image.tmdb.org/t/p/original/qF8NDpVBSTDhdLlEjVAhNhfqB8K.jpg",
-      "type": "TV Series",
-      "rating": 7.932,
-      "releaseDate": "1973-04-11"
-    },
     {...}
   ],
   "seasons": [
     {
       "season": 1,
-      "image": "https://image.tmdb.org/t/p/original/kHyXbcb2JGWIe1fyZa6PqBwlNJN.jpg",
+      "image": {
+        "mobile": "https://image.tmdb.org/t/p/w300/kHyXbcb2JGWIe1fyZa6PqBwlNJN.jpg",
+        "hd": "https://image.tmdb.org/t/p/w780/kHyXbcb2JGWIe1fyZa6PqBwlNJN.jpg"
+      },
+      "isReleased": true,
       "episodes": [
         {
-          "id": "2899",
+          "id": "...", // the provider's episode id; unset when the provider doesn't have it
+          "uniqueId": "60735-tv-s1-e1",
           "title": "Pilot",
+          "number": 1,
           "episode": 1,
           "season": 1,
           "releaseDate": "2014-10-07",
-          "overview": "Barry discovers his powers and puts them to the test, only when he finds its no longer a test but the real thing when he encounters a certain someone.",
-          "url": "https://flixhq.to/ajax/v2/episode/servers/2899",
-          "img": "https://image.tmdb.org/t/p/original/piyGyhwbqqyIxcyuZXYmDUWSylb.jpg"
-        },
-        {
-          "id": "2900",
-          "title": "Fastest Man Alive",
-          "episode": 2,
-          "season": 1,
-          "releaseDate": "2014-10-14",
-          "overview": "Barry changes into the Flash when six gunmen storm a university event honoring a scientist, but his heroics don't match up to his expectations. Meanwhile, Iris becomes even more intrigued by the \"red streak.\"",
-          "url": "https://flixhq.to/ajax/v2/episode/servers/2900",
-          "img": "https://image.tmdb.org/t/p/original/mUgakZLNaMIjG63pz7VeJXJPMu4.jpg"
+          "description": "Barry discovers his powers and puts them to the test, ...",
+          "url": "...",
+          "image": {
+            "mobile": "https://image.tmdb.org/t/p/w300/piyGyhwbqqyIxcyuZXYmDUWSylb.jpg",
+            "hd": "https://image.tmdb.org/t/p/w780/piyGyhwbqqyIxcyuZXYmDUWSylb.jpg"
+          }
         },
         {...}
       ]
-    }
+    },
+    {...}
   ]
 }
 ```
+
+### fetchEpisodeServers
+
+<h4>Parameters</h4>
+
+| Parameter | Type     | Description                                                             |
+| --------- | -------- | ----------------------------------------------------------------------- |
+| episodeId | `string` | the provider's episode id (_an episode's `id` in the info's `seasons`_) |
+| mediaId   | `string` | the provider's media id (_the info's `providerId`_)                     |
+
+```ts
+const info = await tmdb.fetchMediaInfo('60735', 'tv');
+const episode = info.seasons?.[0]?.episodes?.[0];
+if (info.providerId && episode?.id) {
+  const servers = await tmdb.fetchEpisodeServers(episode.id, info.providerId);
+  console.log(servers);
+}
+```
+
+returns a promise which resolves into the provider's servers for the episode (_[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)_). TMDB passes the call, and any error, to its movie provider.
 
 ### fetchEpisodeSources
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                                        |
-| --------- | -------- | -------------------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the Movie info object_)              |
-| MediaId   | `string` | takes media id as a parameter. (_media id can be found in the Movie info seasons episodes object_) |
+| Parameter | Type     | Description                                                                                         |
+| --------- | -------- | --------------------------------------------------------------------------------------------------- |
+| episodeId | `string` | the provider's episode id (_an episode's `id` in the info's `seasons`, or `episodeId` for a movie_) |
+| mediaId   | `string` | the provider's media id (_the info's `providerId`_)                                                 |
+| ...args   | `any`    | passed to the provider's `fetchEpisodeSources`, e.g. a server name                                  |
 
 ```ts
-tmdb.fetchEpisodeSources('2899', 'tv/watch-the-flash-39535').then((data) => {
-  console.log(data);
-});
+const info = await tmdb.fetchMediaInfo('60735', 'tv');
+const episode = info.seasons?.[0]?.episodes?.[0];
+if (info.providerId && episode?.id) {
+  const sources = await tmdb.fetchEpisodeSources(episode.id, info.providerId);
+  console.log(sources);
+}
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into the episode's sources from the movie provider. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
 {
   "headers": {
-    "Referer": "https://dokicloud.one/embed-4/hkEpFgTBEN9G?z="
+    "Referer": "..."
   },
   "sources": [
     {
-      "url": "https://t-eu-2.magnewscontent.org/_v9/f1f4fc0acbf8baef134d6ba2f0e42815c4f3e58a6648e8f2b046410b81510d90e399b927c3135c88b026299880c0ca317d1bb065d7ec76af49cb38620a075678f1e005f1336207700b67e48f4f466b546bce3cdd11ddd1775f99b45a46311887eb1a74d2403405bd85443785566b85ab8394f8191c72a97b3dd951a30bc02479/1080/index.m3u8",
-      "quality": "1080",
+      "url": "https://.../1080/index.m3u8",
+      "quality": "1080p",
       "isM3U8": true
     },
     {
-      "url": "https://t-eu-2.magnewscontent.org/_v9/f1f4fc0acbf8baef134d6ba2f0e42815c4f3e58a6648e8f2b046410b81510d90e399b927c3135c88b026299880c0ca317d1bb065d7ec76af49cb38620a075678f1e005f1336207700b67e48f4f466b546bce3cdd11ddd1775f99b45a46311887eb1a74d2403405bd85443785566b85ab8394f8191c72a97b3dd951a30bc02479/720/index.m3u8",
-      "quality": "720",
-      "isM3U8": true
-    },
-    {
-      "url": "https://t-eu-2.magnewscontent.org/_v9/f1f4fc0acbf8baef134d6ba2f0e42815c4f3e58a6648e8f2b046410b81510d90e399b927c3135c88b026299880c0ca317d1bb065d7ec76af49cb38620a075678f1e005f1336207700b67e48f4f466b546bce3cdd11ddd1775f99b45a46311887eb1a74d2403405bd85443785566b85ab8394f8191c72a97b3dd951a30bc02479/360/index.m3u8",
-      "quality": "360",
-      "isM3U8": true
-    },
-    {
-      "url": "https://t-eu-2.magnewscontent.org/_v9/f1f4fc0acbf8baef134d6ba2f0e42815c4f3e58a6648e8f2b046410b81510d90e399b927c3135c88b026299880c0ca317d1bb065d7ec76af49cb38620a075678f1e005f1336207700b67e48f4f466b546bce3cdd11ddd1775f99b45a46311887eb1a74d2403405bd85443785566b85ab8394f8191c72a97b3dd951a30bc02479/playlist.m3u8",
+      "url": "https://.../playlist.m3u8",
       "isM3U8": true,
       "quality": "auto"
     }
   ],
   "subtitles": [
     {
-      "url": "https://cc.2cdns.com/4a/02/4a027259c5bd865a75e756cc09f54cbb/4a027259c5bd865a75e756cc09f54cbb.vtt",
+      "url": "https://.../english.vtt",
       "lang": "English"
-    },
-    {
-      "url": "https://cc.2cdns.com/48/66/4866edc69de4b4fd17c89b59efa726a5/4866edc69de4b4fd17c89b59efa726a5.vtt",
-      "lang": "Portuguese"
-    },
-    {
-      "url": "https://prev.2cdns.com/_m_preview/15/1568bec9a3267e03fcca2a1fb86b3b59/thumbnails/sprite.vtt",
-      "lang": "Default (maybe)"
     }
   ]
 }
@@ -285,4 +282,8 @@ output:
 
 Make sure to check the `headers` property of the returned object. It contains the referer header, which is needed to bypass the 403 error and allow you to stream the video without any issues.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/meta.md#">back to meta providers list</a>)</p>
+### Errors
+
+When a TMDB request fails, `search`, `fetchTrending` and `fetchMediaInfo` throw a [`MetaError`](../../guides/meta.md#errors) with `source: 'tmdb'`, the HTTP `status` when there was one, and the original error as `cause`. A 429 or 5xx answer is retried once first. A failing movie provider doesn't make `fetchMediaInfo` throw (see above). `fetchEpisodeServers` and `fetchEpisodeSources` pass the provider's errors through unchanged.
+
+<p align="end">(<a href="../../guides/meta.md">back to meta providers list</a>)</p>

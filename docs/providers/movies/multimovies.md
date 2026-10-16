@@ -15,7 +15,7 @@ const multimovies = new MOVIES.MultiMovies();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -30,7 +30,7 @@ multimovies.search('jujutsu kaisen').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -66,7 +66,7 @@ multimovies.fetchMediaInfo('tvshows/jujutsu-kaisen/').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -134,7 +134,7 @@ output:
 | Parameter         | Type                                                                                                   | Description                                                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                     |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. _default: [`StreamingServers.StreamWish`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)_ |
+| server (optional) | [`StreamingServers`](../../../src/models/types.ts) | takes server enum as a parameter. _default: [`StreamingServers.StreamWish`](../../../src/models/types.ts)_ |
 
 ```ts
 multimovies.fetchEpisodeSources('episodes/jujutsu-kaisen-1x1/').then((data) => {
@@ -142,7 +142,7 @@ multimovies.fetchEpisodeSources('episodes/jujutsu-kaisen-1x1/').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -180,14 +180,15 @@ output:
 | Parameter | Type     | Description                                                                                                   |
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------- |
 | episodeId | `string` | take an episode id or url as a parameter. (_episode id or episode url can be found in the media info object_) |
+| mediaId   | `string` | the media id. (_the `id` of the media info object_)                                                           |
 
 ```ts
-multimovies.fetchEpisodeServers('vincenzo-2021-episode-1').then((data) => {
+multimovies.fetchEpisodeServers('vincenzo-2021-episode-1', 'vincenzo-2021').then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)_)\
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -202,17 +203,17 @@ output:
 ];
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>
+<p align="end">(<a href="../../guides/movies.md">back to movie providers list</a>)</p>
 
 ### fetchPopular
 
 ```ts
-multimovies.fetchPopular.then((data) => {
+multimovies.fetchPopular().then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -251,7 +252,7 @@ multimovies.fetchByGenre('action').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js

@@ -12,7 +12,7 @@ const mangaPill = new MANGA.MangaPill();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class, meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class, meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -26,7 +26,7 @@ mangaPill.search('one piece').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L97-L106)_)\
+returns a promise which resolves into an array of manga. (_[`Promise<ISearch<IMangaResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -61,7 +61,7 @@ mangaPill.fetchMangaInfo('2/one-piece').then((data) => {
 });
 ```
 
-returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L120)_)\
+returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -110,7 +110,7 @@ mangaPill
   });
 ```
 
-returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L122-L126)_)\
+returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -135,4 +135,4 @@ output:
 ]
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/manga.md#">Back to Providers List</a>)</p>
+<p align="end">(<a href="../../guides/manga.md">Back to Providers List</a>)</p>

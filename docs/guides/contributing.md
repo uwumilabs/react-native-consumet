@@ -22,7 +22,7 @@ contribution is too small. We gladly accept contributions such as:
 
 - Documentation improvements: from small typo corrections to major document reworks
 - Helping others by answering questions in pull requests
-- Fixing [known bugs](https://github.com/consumet/extensions/issues?q=is%3Aissue+is%3Aopen+label%3ABug)
+- Fixing [known bugs](https://github.com/uwumilabs/react-native-consumet/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
 ## Ground Rules & Expectations
 
@@ -32,7 +32,7 @@ Before we begin, here are a few things we anticipate from you (and that you shou
 
 ## How To Contribute
 
-If you'd like to contribute, start by searching through the [issues](https://github.com/consumet/extensions/issues) and [pull requests](https://github.com/consumet/extensions/pulls) to see whether someone else has raised a similar idea or question.
+If you'd like to contribute, start by searching through the [issues](https://github.com/uwumilabs/react-native-consumet/issues) and [pull requests](https://github.com/uwumilabs/react-native-consumet/pulls) to see whether someone else has raised a similar idea or question.
 
 If you don't see your idea listed, and you think it fits into the goals of this guide, do one of the following:
 

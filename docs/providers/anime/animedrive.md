@@ -24,7 +24,7 @@ animedrive.search('Yofukashi no Uta').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -59,7 +59,7 @@ animedrive.fetchAnimeInfo('1031').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -102,7 +102,7 @@ animedrive.fetchEpisodeSources('?id=1031&ep=1').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -137,4 +137,4 @@ output:
 }
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/anime.md#">back to anime providers list</a>)</p>
+<p align="end">(<a href="../../guides/anime.md">back to anime providers list</a>)</p>

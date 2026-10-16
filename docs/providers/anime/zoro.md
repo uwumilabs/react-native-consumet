@@ -24,7 +24,7 @@ const zoro = new ANIME.Zoro();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -38,7 +38,7 @@ zoro.search('spy x family').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -106,7 +106,7 @@ zoro.fetchAdvancedSearch(1, 'tv', 'finished_airing').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -163,7 +163,7 @@ zoro.fetchAnimeInfo('overlord-iv-18075').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes and optionally MAL and Anilist ID ). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into an anime info object (including the episodes and optionally MAL and Anilist ID ). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -214,7 +214,7 @@ zoro.fetchEpisodeSources('overlord-iv-18075$episode$92599').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -280,7 +280,7 @@ zoro.fetchTopAiring().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -334,7 +334,7 @@ zoro.fetchMostPopular().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -388,7 +388,7 @@ zoro.fetchMostFavorite().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -443,7 +443,7 @@ zoro.fetchLatestCompleted().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -498,7 +498,7 @@ zoro.fetchRecentlyUpdated().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -553,7 +553,7 @@ zoro.fetchRecentlyAdded().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -608,7 +608,7 @@ zoro.fetchTopUpcoming().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -663,7 +663,7 @@ zoro.fetchSchedule('2024-03-11').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -736,7 +736,7 @@ zoro.fetchStudio('toei-animation').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -785,7 +785,7 @@ zoro.fetchSpotlight().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -822,7 +822,7 @@ zoro.fetchSearchSuggestions('One Piece').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -894,19 +894,15 @@ output:
 
 ### fetchContinueWatching
 
-<h4>Parameters</h4>
-
-| Parameter  | Type     | Description                                      |
-| ---------- | -------- | ------------------------------------------------ |
-| connectSid | `string` | The session ID obtained from the website cookies |
+Takes no parameters. The request carries the site's session cookie from the app's cookie store, so the user must be signed in to the site.
 
 ```ts
-zoro.fetchContinueWatching('{user_connect_sid}').then((data) => {
+zoro.fetchContinueWatching().then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of episodes. (_[`Promise<IAnimeEpisode[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<IAnimeResult[]>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -934,17 +930,17 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter  | Type     | Description                                      |
-| ---------- | -------- | ------------------------------------------------ |
-| connectSid | `string` | The session ID obtained from the website cookies |
+| Parameter     | Type                                            | Description                                                                         |
+| ------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| watchListType | [`WatchListType`](../../../src/models/types.ts) | the list to fetch, e.g. `WatchListType.WATCHING`. Needs a session cookie, as above. |
 
 ```ts
-zoro.fetchWatchList('{user_connect_sid}').then((data) => {
+zoro.fetchWatchList(WatchListType.WATCHING).then((data) => {
   console.log(data);
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -970,4 +966,4 @@ output:
 
 Make sure to check the `headers` property of the returned object. It contains the referer header, which might be needed to bypass the 403 error and allow you to stream the video without any issues.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/anime.md#">back to anime providers list</a>)</p>
+<p align="end">(<a href="../../guides/anime.md">back to anime providers list</a>)</p>

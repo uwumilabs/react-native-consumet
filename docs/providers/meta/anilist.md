@@ -1,10 +1,13 @@
 <h1>Anilist</h1>
-This is a custom provider that maps an anime provider (like gogoanime) to anilist and kitsu.
+This is a custom provider that maps an anime provider to AniList. Titles, images and the episode list come from AniList and ani.zip; episode servers and sources come from the anime provider.
 
-`Anilist` class takes a [`AnimeParser`](https://github.com/consumet/extensions/blob/master/src/models/anime-parser.ts) object as a parameter **(optional)**. This object is used to parse the anime episodes from the provider, then mapped to anilist and kitsu.
+`Anilist` takes an anime provider as its first parameter **(optional)**: a registry provider from `ProviderManager.getAnimeProvider` (an `IAnimeProvider`) or an `AnimeParser` instance. The provider's episodes are matched to AniList. Without one, it uses the bundled `Zoro` class, which isn't in the extension registry, so pass one.
 
 ```ts
-const anilist = new META.Anilist();
+import { META, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
+
+const manager = new ProviderManager(ExtensionRegistry);
+const anilist = new META.Anilist(await manager.getAnimeProvider('animepahe'));
 ```
 
 <h2>Methods</h2>
@@ -13,9 +16,14 @@ const anilist = new META.Anilist();
 - [fetchTrendingAnime](#fetchtrendinganime)
 - [fetchPopularAnime](#fetchpopularanime)
 - [fetchAnimeInfo](#fetchanimeinfo)
+- [fetchEpisodesListById](#fetchepisodeslistbyid)
 - [fetchAnimeGenres](#fetchanimegenres)
 - [fetchAiringSchedule](#fetchairingschedule)
+- [fetchEpisodeServers](#fetchepisodeservers)
 - [fetchEpisodeSources](#fetchepisodesources)
+- [Errors](#errors)
+
+`fetchRecentEpisodes` is deprecated: it reads from Anify, which is offline, so it always fails.
 
 ### search
 
@@ -33,7 +41,7 @@ anilist.search('Classroom of the elite').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -86,10 +94,10 @@ anilist.fetchTrendingAnime().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
-```ts
+```js
 {
   currentPage: 1,
   hasNextPage: true,
@@ -149,10 +157,10 @@ anilist.fetchPopularAnime().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
-```ts
+```js
 {
   currentPage: 1,
   hasNextPage: true,
@@ -201,10 +209,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter      | Type      | Description                                                                                               |
-| -------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| id             | `string`  | takes anime id as a parameter. (_anime id can be found in the anime search results or anime info object_) |
-| dub (optional) | `boolean` | if true, will fetch dubbed anime. **Default: false**                                                      |
+| Parameter              | Type      | Description                                                                                                   |
+| ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------- |
+| id                     | `string`  | takes the AniList id as a parameter. (_the id can be found in the anime search results or anime info object_) |
+| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false**                                                  |
 
 ```ts
 anilist.fetchAnimeInfo('98659').then((data) => {
@@ -212,7 +220,8 @@ anilist.fetchAnimeInfo('98659').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
+The episodes come from the provider without the ani.zip merge, and each gets `uniqueId` `${anilistId}$ep=${number}`. Use [fetchEpisodesListById](#fetchepisodeslistbyid) for the merged list.\
 output:
 
 ```js
@@ -266,17 +275,68 @@ output:
   ],
   episodes: [
     {
-      id: 'youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-tv-episode-12',
+      id: '...', // the provider's episode id
+      uniqueId: '98659$ep=1',
+      number: 1,
       title: 'What is evil? Whatever springs from weakness.',
-      image: 'https://media.kitsu.app/episodes/thumbnails/228542/original.jpg',
-      number: 12,
-      description: "Melancholy, unmotivated Ayanokoji Kiyotaka attends his first day at Tokyo Metropoiltan Advanced Nuturing High School, ...",
+      image: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/b98659-sH5z5RfMuyMr.png',
       url: '...'
     },
     {...}
     ...
   ]
 }
+```
+
+### fetchEpisodesListById
+
+<h4>Parameters</h4>
+
+| Parameter              | Type      | Description                                                  |
+| ---------------------- | --------- | ------------------------------------------------------------ |
+| id                     | `string`  | the AniList id.                                              |
+| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false** |
+
+```ts
+anilist.fetchEpisodesListById('162670').then((episodes) => {
+  console.log(episodes);
+});
+```
+
+returns a promise which resolves into the provider's episode list, merged with ani.zip metadata, without the anime info. (_[`Promise<IMetaAnimeEpisode[]>`](../../../src/models/types.ts)_)
+
+- **`uniqueId`** is set on every episode, and is the key to store watch progress under:
+
+  ```
+  uniqueId = `${anilistId}$ep=${aniDbKey ?? number}`
+  ```
+
+  `aniDbKey` is the AniDB episode number of the ani.zip episode the provider's episode was matched to (matched by number first, then air date, then title). Specials never take part. Episodes ani.zip doesn't match, and every episode when ani.zip is unavailable or the provider doesn't use the ani.zip merge (the `aniZipEpisodes` capability), use the provider's `number`.
+
+- **`number`** is always the provider's own episode number.
+- **`tvdbNumber`** and **`absoluteNumber`** are the TVDB season-relative and absolute numbers, set only on episodes ani.zip matched.
+- Titles, images and air dates come from the matched ani.zip episode when there is one.
+- If AniList has the anime but the provider has no match, the promise resolves to `[]`.
+
+The rule changed after 1.6.0; see [Migrating stored episode `uniqueId`s](../../migrations/uniqueid.md) for how to move stored progress.
+
+output (Dr. Stone: New World Part 2, from a provider that numbers the cour 1–11):
+
+```js
+[
+  {
+    id: '...', // the provider's episode id
+    uniqueId: '162670$ep=1',
+    number: 1,
+    tvdbNumber: 12,
+    absoluteNumber: 48,
+    title: 'The Kingdom of Science`s Counterattack',
+    image: '...',
+    releaseDate: '...',
+  },
+  {...}
+  ...
+]
 ```
 
 ### fetchAnimeGenres
@@ -295,10 +355,10 @@ anilist.fetchAnimeGenres(['Action', 'Adventure']).then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
-```ts
+```js
 {
   currentPage: 1,
   hasNextPage: true,
@@ -336,17 +396,15 @@ output:
 | notYetAired (optional) | `boolean` | Filter to episodes that haven't yet aired. (default: false)                                                                                                                        |
 
 ```ts
-anilist
-  .fetchAiringSchedule(1, 20, 1660047922, 1661832000, true)
-  .then((data) => {
-    console.log(data);
-  });
+anilist.fetchAiringSchedule(1, 20, 1660047922, 1661832000, true).then((data) => {
+  console.log(data);
+});
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
-```ts
+```js
 
     {
       currentPage: 1,
@@ -395,47 +453,66 @@ output:
 
 ```
 
+### fetchEpisodeServers
+
+<h4>Parameters</h4>
+
+| Parameter | Type     | Description                                                                                           |
+| --------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| episodeId | `string` | the provider's episode id (_the `id` of an episode from `fetchEpisodesListById` or `fetchAnimeInfo`_) |
+
+```ts
+const episodes = await anilist.fetchEpisodesListById('98659');
+const servers = await anilist.fetchEpisodeServers(episodes[0]!.id);
+```
+
+returns a promise which resolves into the provider's servers for the episode (_[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)_). Anilist passes the call to its anime provider.
+
 ### fetchEpisodeSources
 
 <h4>Parameters</h4>
 
-| Parameter | Type     | Description                                                                           |
-| --------- | -------- | ------------------------------------------------------------------------------------- |
-| episodeId | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_) |
+| Parameter | Type     | Description                                                                                           |
+| --------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| episodeId | `string` | the provider's episode id (_the `id` of an episode from `fetchEpisodesListById` or `fetchAnimeInfo`_) |
+| ...args   | `any`    | passed to the provider's `fetchEpisodeSources`, e.g. a server name or `SubOrDub`                      |
 
 In this example, we're getting the sources for the first episode of classroom of the elite.
 
 ```ts
-anilist
-  .fetchEpisodeSources(
-    'youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-tv-episode-12'
-  )
-  .then((data) => {
-    console.log(data);
-  });
+const episodes = await anilist.fetchEpisodesListById('98659');
+const sources = await anilist.fetchEpisodeSources(episodes[0]!.id);
+console.log(sources);
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into the episode's sources from the anime provider. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
 {
   headers: {
-    Referer: 'https://goload.pro/streaming.php?id=MTAxMTU3&title=Youkoso+Jitsuryoku+Shijou+Shugi+no+Kyoushitsu+e+%28TV%29+Episode+12&typesub=SUB'
+    Referer: '...'
   },
   sources: [
     {
-      url: 'https://manifest.prod.boltdns.net/manifest/v1/hls/v4/clear/6310475588001/d34ba94f-c1db-4b05-a0b2-34d5a40134b2/6s/master.m3u8?fastly_token=NjJjZjkxZGFfODlmNWQyMWU1ZDM1NzhlNWM1MGMyMTBkNjczMjY4YjQ5ZGMyMzEzMWI2YjgyZjVhNWRhMDU4YmI0NjFjMTY4Zg%3D%3D',
-      isM3U8: true
-    },
-    {
-      url: 'https://www13.gogocdn.stream/hls/ba0b5d73fb1737d2e8007c65f347dae8/ep.12.1649784300.m3u8',
-      isM3U8: true
+      url: 'https://.../master.m3u8',
+      isM3U8: true,
+      quality: 'auto'
     }
-  ]
+  ],
+  subtitles: [...]
 }
 ```
 
 Make sure to check the `headers` property of the returned object. It contains the referer header, which is needed to bypass the 403 error and allow you to stream the video without any issues.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/meta.md#">back to meta providers list</a>)</p>
+### Errors
+
+Every method throws a [`MetaError`](../../guides/meta.md#errors) on failure:
+
+- `source: 'anilist'` when the AniList request failed, with its HTTP `status`. A 429 or 5xx answer is retried once first. 404 and 429 keep readable messages (`Media not found…`, `You have been ratelimited by anilist…`).
+- `source: 'provider'` when the anime provider failed, while finding the anime, listing episodes or fetching servers or sources. The provider's error is the `cause`.
+
+ani.zip and filler lists are optional: when they fail or time out (5 s), the episodes are returned without them.
+
+<p align="end">(<a href="../../guides/meta.md">back to meta providers list</a>)</p>

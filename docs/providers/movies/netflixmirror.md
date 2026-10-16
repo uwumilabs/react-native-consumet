@@ -12,7 +12,7 @@ const nfmirror = new MOVIES.NetflixMirror();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -27,7 +27,7 @@ nfmirror.search('jujutsu kaisen').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -61,7 +61,7 @@ nfmirror.fetchMediaInfo('tvshows/jujutsu-kaisen/').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -110,7 +110,7 @@ nfmirror.fetchEpisodeSources('episodes/jujutsu-kaisen-1x1/').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js

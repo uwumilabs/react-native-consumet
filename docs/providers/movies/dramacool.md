@@ -1,5 +1,8 @@
 <h1>DramaCool</h1>
 
+> [!WARNING]
+> DramaCool is not exported in this version: `MOVIES.DramaCool` is undefined, and DramaCool isn't in the extension registry. This page is kept for reference.
+
 ```ts
 const dramacool = new MOVIES.DramaCool();
 ```
@@ -17,7 +20,7 @@ const dramacool = new MOVIES.DramaCool();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -32,7 +35,7 @@ dramacool.search('Vincenzo').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L233-L241)_)\
+returns a promise which resolves into an array of movies/tv series. (_[`Promise<ISearch<IMovieResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -65,7 +68,7 @@ dramacool.fetchMediaInfo('drama-detail/vincenzo').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L243-L254)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IMovieInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -117,7 +120,7 @@ output:
 | Parameter         | Type                                                                                                   | Description                                                                                                                                              |
 | ----------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                    |
-| server (optional) | [`StreamingServers`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L144-L157) | takes server enum as a parameter. _default: [`StreamingServers.AsianLoad`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L150)_ |
+| server (optional) | [`StreamingServers`](../../../src/models/types.ts) | takes server enum as a parameter. _default: [`StreamingServers.AsianLoad`](../../../src/models/types.ts)_ |
 
 ```ts
 dramacool.fetchEpisodeSources('vincenzo-2021-episode-1').then((data) => {
@@ -125,7 +128,7 @@ dramacool.fetchEpisodeSources('vincenzo-2021-episode-1').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L300-L306)_)\
+returns a promise which resolves into an array of episode sources and subtitles. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -164,7 +167,7 @@ dramacool.fetchEpisodeServers('vincenzo-2021-episode-1').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L115-L118)_)\
+returns a promise which resolves into an array of episode servers. (_[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -188,7 +191,7 @@ output:
 ];
 ```
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/movies.md#">back to movie providers list</a>)</p>
+<p align="end">(<a href="../../guides/movies.md">back to movie providers list</a>)</p>
 
 ### fetchPopular
 
@@ -198,7 +201,7 @@ dramacool.fetchPopular.then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -232,7 +235,7 @@ dramacool.fetchRecentMovies.then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -266,7 +269,7 @@ dramacool.fetchRecentTvShows.then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -302,7 +305,7 @@ dramacool.fetchSpotlight().then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L328-L336)_)\
+returns a promise which resolves into an array of movies. (_[`Promise<ISearch<IMovieResult>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js

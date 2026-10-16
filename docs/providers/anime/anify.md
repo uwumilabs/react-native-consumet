@@ -1,5 +1,8 @@
 <h1>Anify</h1>
 
+> [!WARNING]
+> Anify is offline: its API no longer answers, so every method on this page fails. `ANIME.Anify` is still exported, and `META.Anilist` and `META.Myanimelist` no longer fall back to it. Use a registry provider instead (see the [anime guide](../../guides/anime.md)).
+
 ```ts
 const anify = new ANIME.Anify();
 ```
@@ -12,7 +15,7 @@ const anify = new ANIME.Anify();
 
 ### search
 
-> Note: This method is a subclass of the [`BaseParser`](https://github.com/consumet/extensions/blob/master/src/models/base-parser.ts) class. meaning it is available across most categories.
+> Note: This method is a subclass of the [`BaseParser`](../../../src/models/base-parser.ts) class. meaning it is available across most categories.
 
 <h4>Parameters</h4>
 
@@ -28,7 +31,7 @@ anify.search('Overlord IV').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L13-L26)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -83,7 +86,7 @@ anify.fetchAnimeInfo('133844').then((data) => {
 });
 ```
 
-returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L28-L42)_)\
+returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -146,19 +149,19 @@ output:
 | ------------- | -------- | --------------------------------------------------------------------------------------------------------- |
 | episodeId     | `string` | takes episode id as a parameter. (_episode id can be found in the anime info object_)                     |
 | episodeNumber | `number` | takes episode number as a parameter. (_episode number can be found in the anime info object_)             |
-| id            | `string` | takes anime ID as a parameter. (_anime id can be found in the anime search results or anime info object_) |
+| id            | `number` | takes anime ID as a parameter. (_anime id can be found in the anime search results or anime info object_) |
 
 In this example, we're getting the sources for the first episode of Overlord IV.
 
 ```ts
 anify
-  .fetchEpisodeSources('/overlord-iv-episode-5', 11, '133844')
+  .fetchEpisodeSources('/overlord-iv-episode-5', 11, 133844)
   .then((data) => {
     console.log(data);
   });
 ```
 
-returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](https://github.com/consumet/extensions/blob/master/src/models/types.ts#L210-L214)_)\
+returns a promise which resolves into an array of episode sources. (_[`Promise<ISource>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
@@ -181,4 +184,4 @@ output:
 
 Make sure to check the `headers` property of the returned object. It contains the referer header, which is needed to bypass the 403 error and allow you to stream the video without any issues.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs/guides/anime.md#">back to anime providers list</a>)</p>
+<p align="end">(<a href="../../guides/anime.md">back to anime providers list</a>)</p>
