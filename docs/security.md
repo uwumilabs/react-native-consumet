@@ -11,13 +11,13 @@ There is **no sandbox**. Extension code runs in the app's own JavaScript runtime
 
 So the only security boundary is **which code gets to run**. Everything below is about making sure the code that runs is exactly the code that was published.
 
-| Threat                                                  | Vector                                                                                     | What stops it                          |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
-| Tampered or corrupted download                          | CDN compromise, MITM, truncated response                                                   | SHA-256 check before execution (below) |
-| Code injection through the registry                     | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below)          |
-| A push to `main` changing what a published version runs | Rebuilding `dist/`                                                                         | Immutable versioned files (below)      |
-| A malformed registry                                    | A bad download, a hand-edited file, or a registry format newer than the app                | Validation that fails closed (below)   |
-| A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | **Not yet solved**, see Known gaps     |
+| Threat                                                  | Vector                                                                                     | What stops it                                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Tampered or corrupted download                          | CDN compromise, MITM, truncated response                                                   | SHA-256 check before execution (below)                                  |
+| Code injection through the registry                     | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below)                                           |
+| A push to `main` changing what a published version runs | Rebuilding `dist/`                                                                         | Immutable versioned files (below)                                       |
+| A malformed registry                                    | A bad download, a hand-edited file, or a registry format newer than the app                | Validation that fails closed (below)                                    |
+| A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | Signed registry downloads (below), once a release bundles a signing key |
 
 ## What the library enforces
 
@@ -47,6 +47,7 @@ try {
 - **Missing hash:** an entry without `sha256` is rejected. Construct the manager with `{ allowUnhashed: true }` (third constructor argument) only for registries you control.
 - **Opting out:** `executeProviderCode(code, factoryName, metadata, { skipIntegrity: true })` (and the same for `executeExtractorCode`) runs code without the check. Use it only for code you already trust, such as files bundled with your app.
 - **Checking at install time:** apps that download and cache code should verify it when they store it, with `verifyExtensionCode(code, entry)`.
+- **Compiled once:** a manager compiles verified code once per id and `sha256`. Running the same code again compares it with the verified copy instead of hashing it again, so different code that claims the same hash is still rejected. Code run with `skipIntegrity` is never reused.
 
 ### 2. Identifier validation
 
@@ -70,7 +71,23 @@ Registry URLs use `https://raw.githubusercontent.com`; the platform networking s
 
 Entries that need a newer context are listed but never run: every load and execute path refuses them before downloading or running code. See [Registry Versions and Compatibility](./extension-integration.md#registry-versions-and-compatibility).
 
-### 6. Native module
+### 6. Signed registry downloads
+
+The registry bundled in the app needs no signature: it ships in the app binary. A registry the app downloads can be checked against a signature, so that a change the signer didn't approve can't redirect the app to other code:
+
+- **What is signed:** the exact bytes of `src/extension-registry.json` on `main`, the file apps download. Nothing is re-serialized, and `.gitattributes` keeps the file and its signature byte for byte.
+- **The signature file:** `src/extension-registry.json.sig`, served at the registry URL plus `.sig`. It holds 1 to 4 lines, each a hex ed25519 signature of the registry. The registry verifies when any line verifies under any trusted key.
+- **Trusted keys:** the public keys in `src/registry-signing-keys.ts`, bundled into each release as `REGISTRY_SIGNING_KEYS`. An app trusts only the keys of the library version it ships.
+- **Verifying:** `parseSignedRegistry(text, signature)` checks the signature before it parses the JSON, then runs `validateRegistry`. It fails closed with a `RegistrySignatureError` (`NO_SIGNING_KEYS`, `INVALID_SIGNING_KEY`, `MALFORMED_SIGNATURE`, `SIGNATURE_MISMATCH`). Verification is pure JavaScript (noble-curves, strict RFC 8032 checks), so it runs on Hermes. See [Downloaded Registries and Signatures](./extension-integration.md#downloaded-registries-and-signatures).
+- **Who signs:** the Sign registry workflow (`.github/workflows/sign-registry.yml`) runs when the registry or the key list changes on `main`. It runs in the `registry-signing` environment, which holds the private key as the `REGISTRY_SIGNING_KEY` secret, and commits the signature. The environment's required reviewer is the trust boundary: with the environment set up as described in [CONTRIBUTING](../CONTRIBUTING.md#registry-signing-maintainers) (a required reviewer, `main` only), nothing is signed, and the key can't be read, until that reviewer approves the run.
+- **Key rotation:** `yarn registry:keygen` adds a new public key next to the old one. Store its private key as `REGISTRY_SIGNING_KEY_2`; CI then signs with both keys, so apps that only trust the old key keep verifying. Remove the old key once no supported release needs it, and a leaked key at once.
+
+Limits:
+
+- **Stale until re-signed.** After a registry change merges, the old signature no longer matches until the reviewer approves the run and CI re-signs. In between, apps get `SIGNATURE_MISMATCH` and should keep their previous registry.
+- **No rollback protection.** An old registry with its old signature still verifies, so whoever serves the files can serve an older signed registry. Its entries still point at immutable, hash-checked versions.
+
+### 7. Native module
 
 - **Android:** WebView remote debugging is enabled only when the host app is debuggable (`ApplicationInfo.FLAG_DEBUGGABLE`), so release builds don't expose the app's WebViews to inspection. Cookie and header values are not logged. The module's WebViews use the app-wide `CookieManager`, so they share cookies with the app's own WebViews.
 - **iOS:** the module's WebViews use their own in-memory cookie store, separate from the app's WebViews and cleared when the app restarts, and return only the cookies that apply to the loaded URL.
@@ -81,7 +98,8 @@ These are tracked in the roadmap and not solved yet:
 
 - **Library versions up to 1.6.0** still carry registries whose URLs point straight at `dist/` on `main`. Rebuilding `dist/` changes what those versions download, so 1.6.0 fails integrity checks and older versions run the new code unchecked. Updating the library fixes this.
 - **Immutability is enforced by the publish script and CI, not by GitHub.** Published files under `registry/` live on the `main` branch. CI's `registry` job fails a change that edits one, but a push to `main` that skips CI isn't stopped.
-- **Unsigned remote registry (REG-6).** When an app downloads `extension-registry.json`, the URLs and hashes come from the same mutable place, so the hash only detects corruption, not a malicious push. A registry bundled in the app binary is trustworthy; a downloaded one is only as trustworthy as the repository.
+- **No registry signing key is bundled yet.** `REGISTRY_SIGNING_KEYS` stays empty until a maintainer runs `yarn registry:keygen` and a release ships the key. Until then a downloaded registry can't be verified: `parseSignedRegistry` rejects every one with `NO_SIGNING_KEYS`, so use the bundled registry.
+- **Signed registries can be rolled back** to an older signed version (see [Signed registry downloads](#6-signed-registry-downloads)).
 - **Versions up to 1.5.0** do not verify hashes at all.
 - **Native builds up to 1.6.0** enable Android WebView debugging in release builds, log cookies and headers to logcat, and on iOS return every cookie in the app's shared WebView data store. Updating the library fixes this.
 
@@ -102,7 +120,7 @@ These checks also run automatically:
 
 ## Guidance for consumers
 
-1. **Prefer a bundled registry**, or verify a downloaded one out of band; see the unsigned-registry gap above. Run `validateRegistry` on a downloaded registry before storing it, and keep the previous one if it throws.
+1. **Prefer a bundled registry.** Accept a downloaded one only through `parseSignedRegistry`, and keep the previous registry when it throws. Until a release bundles a signing key, that means the bundled registry.
 2. **Verify cached code** with `verifyExtensionCode` when you store it, and handle `IntegrityError` by re-downloading.
 3. **Always ship `sha256`** in custom registries; don't rely on `allowUnhashed`.
 4. **Use HTTPS URLs** for all code.

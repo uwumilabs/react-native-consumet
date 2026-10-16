@@ -101,6 +101,8 @@ const MyAnimeComponent = () => {
 
 Provider and extractor code is fetched at runtime and executed via `new Function()`. The library protects against CDN compromise and MITM attacks using **SHA-256 subresource integrity** — every entry in `extension-registry.json` carries a hash of its compiled JS file, verified before execution. `factoryName` values are also validated as bare identifiers before being interpolated into the function template, and an invalid registry is rejected with a `RegistryError` instead of being used.
 
+Apps that download the registry instead of using the bundled one should check its **ed25519 signature** with `parseSignedRegistry`: CI signs the registry on `main` and publishes the signature next to it. Verification fails closed, and until a release bundles a signing key it rejects every downloaded registry, so keep the bundled one until then (see [Downloaded Registries and Signatures](./docs/extension-integration.md#downloaded-registries-and-signatures)).
+
 See [docs/security.md](./docs/security.md) for the full threat model and guidance for custom registry consumers.
 
 ## 🤝 Contributing
