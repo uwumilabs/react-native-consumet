@@ -1,42 +1,53 @@
-<h1 align="center">consumet.ts</h1>
+<h1 align="center">react-native-consumet</h1>
 
 <h2>MANGA</h2>
 
 By using `MANGA` category you can interact with the manga providers. And have access to the manga providers methods. Which allows you to search for manga, get the manga information, get the manga chapters with images to read.
 
-```ts
-// ESM
-import { MANGA } from '@consumet/extensions';
+Manga providers are bundled classes; they are not in the extension registry.
 
-// <providerName> is the name of the provider you want to use. list of the proivders is below.
-const mangaProvider = MANGA.<providerName>();
+```ts
+import { MANGA } from 'react-native-consumet';
+
+// Any class from the list below
+const mangadex = new MANGA.MangaDex();
 ```
 
 ## Common Methods
 
 `languages` - string, the language of the current provider, return language code, example: `languages: 'en'`
 
-`isNSFW` - bool, `true` if the provider providers NSFW content.
+`isNSFW` - bool, `true` if the provider provides NSFW content.
 
-`isWorking` - bool, a bool to identify the state of the current provider, `true` if the provider is working, `false` otherwise.
+`isWorking` - bool, `false` when the provider is marked as down. Most providers leave it `true`.
 
-`name` - string, the name of the current provider, example: `name: 'Crunchyroll'`
+`name` - string, the name of the current provider, example: `name: 'MangaDex'`
 
 `baseUrl` - string, url to the base URL of the current provider
 
 `logo` - string, url to the logo image of the current provider
 
-`classPath` - string,
+`classPath` - string, the provider's place in the library, example: `classPath: 'MANGA.MangaDex'`
+
+`languages`, `baseUrl`, `logo` and `classPath` are protected; read them through `provider.toString`.
 
 ## Manga Providers List
 
-This list is in alphabetical order. (except the sub bullet points)
+This list is in alphabetical order.
 
-- [MangaDex](../providers/mangadex.md)
-- [MangaHere](../providers/mangahere.md)
-- [MangaKakalot](../providers/mangakakalot.md)
-- [Mangasee123](../providers/mangasee123.md)
-- [MangaHost](../providers/mangahost.md)
-- [BRManga](../providers/brmanga.md)
+- [AsuraScans](../providers/manga/asurascans.md) (`MANGA.AsuraScans`)
+- [BRMangas](../providers/manga/brmangas.md) (`MANGA.BRMangas`)
+- ComicK (`MANGA.ComicK`)
+- FlameScans (`MANGA.FlameScans`)
+- [MangaDex](../providers/manga/mangadex.md) (`MANGA.MangaDex`)
+- [MangaHere](../providers/manga/mangahere.md) (`MANGA.MangaHere`)
+- [MangaHost](../providers/manga/mangahost.md) (`MANGA.MangaHost`)
+- [MangaKakalot](../providers/manga/mangakakalot.md) (`MANGA.MangaKakalot`)
+- [Mangapark](../providers/manga/mangapark.md) (`MANGA.Mangapark`)
+- [MangaPill](../providers/manga/mangapill.md) (`MANGA.MangaPill`)
+- [MangaReader](../providers/manga/mangareader.md) (`MANGA.MangaReader`)
+- [Mangasee123](../providers/manga/mangasee123.md) (`MANGA.Mangasee123`)
+- [ReadManga](../providers/manga/readmanga.md) (`MANGA.ReadManga`)
+- [VyvyManga](../providers/manga/vyvymanga.md) (`MANGA.VyvyManga`)
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs">back to table of contents</a>)</p>
+<p align="end">(<a href="../README.md">back to table of contents</a>)</p>

@@ -1,15 +1,18 @@
-<h1 align="center">consumet.ts</h1>
+<h1 align="center">react-native-consumet</h1>
 
 <h2>ANIME</h2>
 
-By using `ANIME` category you can interact with the anime providers. And get access to the anime providers methods. Which allows you to search for anime, get the anime information, get the anime episodes with streaming links.
+Anime providers let you search for anime, get the anime information, and get the anime episodes with streaming links. Load them from the extension registry (recommended, see [Extension Integration](../extension-integration.md)), or construct a bundled class from the `ANIME` namespace.
 
 ```ts
-// ESM
-import { ANIME } from '@consumet/extensions';
+import { ANIME, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 
-// <providerName> is the name of the provider you want to use. list of the proivders is below.
-const animeProvider = ANIME.<providerName>();
+// From the registry, by registry id
+const manager = new ProviderManager(ExtensionRegistry);
+const animepahe = await manager.getAnimeProvider('animepahe');
+
+// Or a bundled class from the list below
+const animekai = new ANIME.AnimeKai();
 ```
 
 ## Common Methods
@@ -18,30 +21,38 @@ const animeProvider = ANIME.<providerName>();
 
 `isNSFW` - bool, `true` if the provider provides NSFW content.
 
-`isWorking` - bool, a bool to identify the state of the current provider, `true` if the provider is working, `false` otherwise.
+`isWorking` - bool, `false` when the provider is marked as down. Most providers leave it `true`; the registry `status` is a better signal.
 
-`isDubAvailableSeparately` - bool, `true` if the provider provides dubbed content.
+`isDubAvailableSeparately` - bool, `true` if dubbed episodes are listed separately from the subbed ones.
 
-`name` - string, the name of the current provider, example: `name: 'Crunchyroll'`
+`name` - string, the name of the current provider, example: `name: 'AnimePahe'`
 
 `baseUrl` - string, url to the base URL of the current provider
 
 `logo` - string, url to the logo image of the current provider
 
-`classPath` - string,
+`classPath` - string, the provider's place in the library, example: `classPath: 'ANIME.AnimePahe'`
+
+`capabilities` - object (optional), what `META.Anilist` and `META.Myanimelist` may assume about the provider's episodes (`aniZipEpisodes`, `subDub`)
+
+On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` are protected; read them through `provider.toString`.
 
 ## Anime Providers List
 
-This list is in alphabetical order. (except the sub bullet points)
+| Provider   | Bundled class      | Registry id (status)             | Docs                                           |
+| ---------- | ------------------ | -------------------------------- | ---------------------------------------------- |
+| AniKoto    | `ANIME.AniKoto`    | `anikoto` (stable)               |                                                |
+| AniNeko    | `ANIME.AniNeko`    | `anineko` (stable)               |                                                |
+| AnimePahe  | `ANIME.AnimePahe`  | `animepahe` (stable)             | [AnimePahe](../providers/anime/animepahe.md)   |
+| AnimeKai   | `ANIME.AnimeKai`   | `animekai` (deprecated)          | [AnimeKai](../providers/anime/animekai.md)     |
+| Zoro       | `ANIME.Zoro`       | not in the registry              | [Zoro](../providers/anime/zoro.md)             |
+| AnimeDrive | `ANIME.AnimeDrive` | not in the registry              | [AnimeDrive](../providers/anime/animedrive.md) |
+| AnimeUnity | `ANIME.AnimeUnity` | not in the registry              | [AnimeUnity](../providers/anime/animeunity.md) |
+| ReAnime    | `ANIME.ReAnime`    | not in the registry              |                                                |
+| Marin      | `ANIME.Marin`      | not in the registry              |                                                |
+| Anify      | `ANIME.Anify`      | not in the registry, **offline** | [Anify](../providers/anime/anify.md)           |
 
-- [9anime](../providers/9anime.md)
-- [Anify](../providers/anify.md)
-- [AnimeFox](../providers/animefox.md)
-- [AnimePahe](../providers/animepahe.md)
-- [AnimeSaturn](../providers/animesaturn.md)
-- [AnimeUnity](../providers/animeunity.md)
-- [Gogoanime](../providers/gogoanime.md)
-- [MonosChinos](../providers/monoschinos.md)
-- [Zoro.to](../providers/zoro.md)
+> [!WARNING]
+> Anify is offline: its API no longer answers, so every `ANIME.Anify` call fails. The meta providers no longer fall back to it.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs">back to table of contents</a>)</p>
+<p align="end">(<a href="../README.md">back to table of contents</a>)</p>

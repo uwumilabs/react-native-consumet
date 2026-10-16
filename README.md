@@ -32,11 +32,12 @@ React Native library providing access to entertainment media information (anime,
 ### Provider-Specific Guides
 
 - **[🎬 Anime Providers](./docs/guides/anime.md)** - Anime streaming providers
-- **[🎥 Movie Providers](./docs/guides/movies.md)** - Movie and TV show providers  
+- **[🎥 Movie Providers](./docs/guides/movies.md)** - Movie and TV show providers
 - **[📚 Manga Providers](./docs/guides/manga.md)** - Manga reading providers
 - **[📖 Light Novel Providers](./docs/guides/light-novels.md)** - Light novel providers
 - **[🔍 Meta Providers](./docs/guides/meta.md)** - Metadata and search providers
 - **[🔒 Security Model](./docs/security.md)** - How dynamic code execution is protected
+- **[⬆️ Upgrading](./docs/migrations/README.md)** - Breaking and behaviour changes since 1.6.0, with migration notes
 
 ## Installation
 
@@ -48,35 +49,38 @@ npm install react-native-consumet react-native-get-random-values
 `react-native-get-random-values` is a peer dependency: it ships native code, and React Native autolinking only links packages your app depends on directly. Install it in your app (in Expo apps, `npx expo install react-native-get-random-values` picks a compatible version), then rebuild the native app, e.g. `cd ios && pod install` for bare iOS projects. Versions 1.8.0 and later 1.x, and 2.x, are supported. The library imports it from its entry point to polyfill `crypto.getRandomValues`, so you don't import it yourself.
 
 > [!IMPORTANT]  
-> This library has been primarily tested on Android devices. iOS testing is currently limited due to lack of MacBook access. Some providers (like Zoro, FlixHQ) may not work correctly on iOS. Contributions from developers with iOS testing capabilities are greatly appreciated!
+> This library has been primarily tested on Android devices. iOS testing is currently limited due to lack of MacBook access, so some providers may not work correctly on iOS. Contributions from developers with iOS testing capabilities are greatly appreciated!
 
 > [!NOTE]
 > This library is actively maintained but may occasionally lag behind the latest Consumet API changes. The project is in early development and some features may be incomplete or require refinement. If you encounter any issues or have suggestions, please open an issue on GitHub.
 
 ## Quick Start
 
-```js
-import { ANIME } from 'react-native-consumet';
+```tsx
+import React, { useState } from 'react';
+import { Button } from 'react-native';
+import { ProviderManager, ExtensionRegistry, type IAnimeResult } from 'react-native-consumet';
 
-// Initialize the provider (e.g., Zoro)
-const zoro = new ANIME.Zoro();
+// One manager for the app, built from the bundled registry (or one your app downloads)
+const manager = new ProviderManager(ExtensionRegistry);
 
 // Example usage in a component
 const MyAnimeComponent = () => {
-  const [animeList, setAnimeList] = useState([]);
+  const [animeList, setAnimeList] = useState<IAnimeResult[]>([]);
 
   const fetchAnime = async () => {
     try {
-      const results = await zoro.search('one piece');
+      // Load a provider by its registry id; its code is downloaded once and hash-checked
+      const animepahe = await manager.getAnimeProvider('animepahe');
+      const results = await animepahe.search('one piece');
       setAnimeList(results.results);
     } catch (error) {
       console.error('Error fetching anime:', error);
     }
   };
 
-  return (
-    // Your component JSX
-  );
+  // Your component JSX: render animeList
+  return <Button title={`Search (${animeList.length} results)`} onPress={fetchAnime} />;
 };
 ```
 
@@ -95,7 +99,7 @@ const MyAnimeComponent = () => {
 
 ## 🔒 Security
 
-Provider and extractor code is fetched at runtime and executed via `new Function()`. The library protects against CDN compromise and MITM attacks using **SHA-256 subresource integrity** — every entry in `extension-registry.json` carries a hash of its compiled JS file, verified before execution. `factoryName` values are also validated as bare identifiers before being interpolated into the function template.
+Provider and extractor code is fetched at runtime and executed via `new Function()`. The library protects against CDN compromise and MITM attacks using **SHA-256 subresource integrity** — every entry in `extension-registry.json` carries a hash of its compiled JS file, verified before execution. `factoryName` values are also validated as bare identifiers before being interpolated into the function template, and an invalid registry is rejected with a `RegistryError` instead of being used.
 
 See [docs/security.md](./docs/security.md) for the full threat model and guidance for custom registry consumers.
 
@@ -104,7 +108,8 @@ See [docs/security.md](./docs/security.md) for the full threat model and guidanc
 We welcome contributions! Please check out:
 
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - Detailed contribution guidelines
-- **[📁 Provider Documentation](./docs/providers/)** - How to add new providers
+- **[➕ Adding a New Provider](./docs/guides/adding-new-provider.md)** - How to add new providers
+- **[📁 Provider Documentation](./docs/providers/)** - Per-provider API pages
 
 ## 📄 License
 

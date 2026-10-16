@@ -3,6 +3,7 @@
 A powerful React Native library for accessing anime, movie, and media content through a unified extension system.
 
 ## Table of Contents
+
 - [Basic Usage](#basic-usage)
 - [Why Use Extensions?](#why-use-extensions)
 - [Core Components](#core-components)
@@ -13,22 +14,23 @@ A powerful React Native library for accessing anime, movie, and media content th
 - [API Reference](#api-reference)
 - [Some Helpful imports](#some-helpful-imports)
 
-
 ## Basic Usage
 
 ```typescript
-import { ProviderManager, extensionRegistry } from 'react-native-consumet';
+import { ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 
-// Initialize the provider manager
-const providerManager = new ProviderManager(extensionRegistry);
+// Initialize the provider manager with a registry: the bundled one, or one your app downloaded
+const providerManager = new ProviderManager(ExtensionRegistry);
 
-// Load an anime provider
-const provider = await providerManager.getAnimeProvider('zoro');
+// Load an anime provider by its registry id
+const provider = await providerManager.getAnimeProvider('animepahe');
 
 // Search for content
 const results = await provider.search('Attack on Titan');
 console.log(results);
 ```
+
+`ProviderManager` requires a registry. Calling it without one, or with something that isn't a registry, throws a `RegistryError` (see [Validation](#validation)).
 
 ## Why Use Extensions?
 
@@ -37,25 +39,27 @@ React Native Consumet uses an extension-based architecture instead of static pro
 ### Extensions Architecture
 
 ```typescript
-// Load providers dynamically
-const provider = await providerManager.getAnimeProvider('zoro');
+// Load providers dynamically by registry id
+const provider = await providerManager.getAnimeProvider('animepahe');
 ```
 
 **Benefits:**
+
 - **Dynamic Loading** - Only load what you need
 - **Unified API** - Consistent interface across all providers
 - **Cross-Provider Search** - Search multiple sources simultaneously
-- **Auto-Updates** - Providers update without app updates
+- **Updates without app releases** - When your app downloads the registry, new provider versions arrive without an app update (see the [Security Model](./security.md) for what that trusts)
 
-###  Direct Import 
+### Direct Import
 
 ```typescript
 import { ANIME } from 'react-native-consumet';
-const zoro = new ANIME.Zoro();
+const animepahe = new ANIME.AnimePahe();
 ```
 
 **Limitations:**
-- All providers loaded at startup
+
+- Runs the code shipped with the installed library version, so fixes need a library update
 - Inconsistent APIs between providers
 - Manual provider management required
 
@@ -69,29 +73,34 @@ const zoro = new ANIME.Zoro();
 The main class for managing and accessing providers.
 
 ```typescript
-const providerManager = new ProviderManager(extensionRegistry);
+const providerManager = new ProviderManager(ExtensionRegistry);
 
 // Get available providers
 const extensions = providerManager.getAvailableExtensions();
 
 // Load specific provider types
-const animeProvider = await providerManager.getAnimeProvider('zoro'); 
-const movieProvider = await providerManager.getMovieProvider('himovies'); 
+const animeProvider = await providerManager.getAnimeProvider('animepahe');
+const movieProvider = await providerManager.getMovieProvider('netflixmirror');
 
 // You can also use loadExtension directly
-const zoroProvider = await providerManager.loadExtension('zoro');
+const anikoto = await providerManager.loadExtension('anikoto');
+
+// Override the registry's baseUrl, e.g. when a site moves before the registry is updated
+const mirror = await providerManager.getAnimeProvider('animepahe', { baseUrl: 'https://animepahe.example' });
 ```
+
+Ids are the registry `id`s (case-insensitive; the provider `name` also works). `AnimeProviderId` and `MovieProviderId` autocomplete the ids in the bundled registry and accept any other string, so providers added to a downloaded registry later still type-check. Loaded providers are typed as `IAnimeProvider` / `IMovieProvider`. Each provider is loaded once per id and `baseUrl`, then cached.
 
 ### ExtractorManager
 
 Handles video source extraction from streaming sites.
 
 ```typescript
-import { ExtractorManager, extensionRegistry } from 'react-native-consumet';
+import { ExtractorManager, ExtensionRegistry, PolyURL } from 'react-native-consumet';
 
-const extractorManager = new ExtractorManager(extensionRegistry);
+const extractorManager = new ExtractorManager(ExtensionRegistry);
 const extractor = await extractorManager.loadExtractor('megacloud');
-const sources = await extractor.extract(embedUrl, referer);
+const sources = await extractor.extract(new PolyURL(embedUrl), referer);
 ```
 
 Providers loaded through a `ProviderManager` share one `ExtractorManager`, built from the same registry. When a provider calls `ctx.extractors.MegaPlay()`, the call runs the registry version of MegaPlay, hash-checked and fetched once, then cached. If the registry code can't be fetched or fails its hash, the bundled MegaPlay runs instead. An extractor that is in neither throws `Extractor '<name>' not found in the registry or the bundled extractors`.
@@ -99,8 +108,8 @@ Providers loaded through a `ProviderManager` share one `ExtractorManager`, built
 To share an extractor cache between your own code and the providers, pass your manager in:
 
 ```typescript
-const extractorManager = new ExtractorManager(extensionRegistry);
-const providerManager = new ProviderManager(extensionRegistry, { extractorManager });
+const extractorManager = new ExtractorManager(ExtensionRegistry);
+const providerManager = new ProviderManager(ExtensionRegistry, { extractorManager });
 // providerManager.getExtractorManager() === extractorManager
 ```
 
@@ -114,7 +123,9 @@ A registry says which format it uses, and each entry says which extension contex
 {
   "schemaVersion": 1,
   "extractors": [{ "name": "Kwik", "version": "1.2.2", "minContextVersion": 1, "main": "…", "sha256": "…" }],
-  "extensions": [{ "id": "animepahe", "version": "1.2.4", "minContextVersion": 1, "factoryName": "createAnimePahe", "…": "…" }]
+  "extensions": [
+    { "id": "animepahe", "version": "1.2.4", "minContextVersion": 1, "factoryName": "createAnimePahe", "…": "…" }
+  ]
 }
 ```
 
@@ -163,43 +174,42 @@ try {
 
 `RegistryError` has these fields:
 
-| Field | Meaning |
-|---|---|
-| `code` | `INVALID_REGISTRY`, `UNSUPPORTED_SCHEMA` or `INCOMPATIBLE_ENTRY` |
-| `updateRequired` | `true` for `UNSUPPORTED_SCHEMA` and `INCOMPATIBLE_ENTRY`: a newer app version accepts it |
-| `issues` | Every problem found, e.g. `extensions[2] (anineko): factoryName must be a JavaScript identifier (got "create-anineko")` |
-| `id` | The extension id or extractor name, for `INCOMPATIBLE_ENTRY` |
-| `required` / `supported` | The `schemaVersion` or `minContextVersion` asked for, and what this library supports |
+| Field                    | Meaning                                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `code`                   | `INVALID_REGISTRY`, `UNSUPPORTED_SCHEMA` or `INCOMPATIBLE_ENTRY`                                                        |
+| `updateRequired`         | `true` for `UNSUPPORTED_SCHEMA` and `INCOMPATIBLE_ENTRY`: a newer app version accepts it                                |
+| `issues`                 | Every problem found, e.g. `extensions[2] (anineko): factoryName must be a JavaScript identifier (got "create-anineko")` |
+| `id`                     | The extension id or extractor name, for `INCOMPATIBLE_ENTRY`                                                            |
+| `required` / `supported` | The `schemaVersion` or `minContextVersion` asked for, and what this library supports                                    |
 
 `assertCompatibleEntry(entry)` throws the same `INCOMPATIBLE_ENTRY` error, for apps that check entries themselves.
-
 
 ## Usage Examples
 
 ### Basic Provider Usage
 
 ```typescript
-import { ProviderManager } from 'react-native-consumet';
+import { ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 
-const manager = new ProviderManager();
+const manager = new ProviderManager(ExtensionRegistry);
 
 // Search for anime
 const searchAnime = async (query: string) => {
-  const provider = await manager.getAnimeProvider('zoro');
+  const provider = await manager.getAnimeProvider('animepahe');
   const results = await provider.search(query);
   return results;
 };
 
 // Get detailed information
 const getAnimeInfo = async (animeId: string) => {
-  const provider = await manager.getAnimeProvider('zoro');
+  const provider = await manager.getAnimeProvider('animepahe');
   const info = await provider.fetchAnimeInfo(animeId);
   return info;
 };
 
 // Get streaming sources
 const getEpisodeSources = async (episodeId: string) => {
-  const provider = await manager.getAnimeProvider('zoro');
+  const provider = await manager.getAnimeProvider('animepahe');
   const sources = await provider.fetchEpisodeSources(episodeId);
   return sources;
 };
@@ -212,30 +222,27 @@ Search across multiple providers simultaneously:
 ```typescript
 const searchAllProviders = async (query: string) => {
   const results = await manager.searchAcrossProviders('anime', query);
-  
+
   // Results grouped by provider
   results.forEach(({ extensionId, results }) => {
     console.log(`${extensionId}: ${results.results.length} results`);
   });
-  
+
   return results;
 };
 ```
 
-Yes — there are a few grammar and clarity improvements we can make so it reads more smoothly and professionally.
-
-Here’s a corrected and slightly polished version of your text:
-
----
+`searchAcrossProviders` loads every registry entry of the category. A provider that fails to load or to search contributes an empty result instead of rejecting the whole call.
 
 ### Basic Extractor Usage
 
-It is not compulsory to use `ExtractorManager` directly in all cases. The `fetchEpisodeSources` method (provided by `ProviderManager`) will handle source extraction for most providers implicitly. This is because `ProviderManager`'s context is designed to dynamically load extractors as needed.
+It is not compulsory to use `ExtractorManager` directly in all cases. The `fetchEpisodeSources` method of a provider loaded by `ProviderManager` handles source extraction for most providers itself, because the provider context loads extractors as needed.
 
 However, `ExtractorManager` is useful for:
-*   Providers that frequently change their source extraction code.
-*   When you want to use custom extractor logic for complete control over the extraction process.
-*   Directly accessing and testing specific extractors.
+
+- Providers that frequently change their source extraction code.
+- When you want to use custom extractor logic for complete control over the extraction process.
+- Directly accessing and testing specific extractors.
 
 Server names map to extractors through the registry. `extractBaseExtractorName(serverName)` returns the longest registry extractor `name` or alias that the server name starts with, lowercased: `megacloud-hd-1` → `megacloud`, `upcloud` → `megacloud` (an alias), and a new extractor's `newhost-hd-1` → `newhost` as soon as its registry entry exists. Declare aliases in the extractor's registry entry:
 
@@ -243,26 +250,25 @@ Server names map to extractors through the registry. `extractBaseExtractorName(s
 { "name": "MegaCloud", "aliases": ["upcloud", "akcloud"], "version": "1.3.1", "main": "…", "sha256": "…" }
 ```
 
-```typescript
-import { ExtractorManager, extensionRegistry, PolyURL } from 'react-native-consumet';
+Apps hand a server's URL to an extractor only when the provider's registry entry has `haveMultiServers` set and `isSourceDirect` unset. Otherwise, call the provider's `fetchEpisodeSources` with the server name.
 
-const extractVideoSources = async (embedUrl: string, referer?: string) => {
+```typescript
+import { ExtractorManager, ExtensionRegistry, PolyURL, type IAnimeProvider } from 'react-native-consumet';
+
+const extractorManager = new ExtractorManager(ExtensionRegistry);
+
+const extractVideoSources = async (provider: IAnimeProvider, episodeId: string, referer?: string) => {
   try {
-    const extractorManager = new ExtractorManager(extensionRegistry);
-    // Load a specific extractor by its ID.
-   // This method handles dynamic loading from the registry and falls back to static extractors.
+    const servers = await provider.fetchEpisodeServers(episodeId);
+    const server = servers.find((s) => extractorManager.extractBaseExtractorName(s.name) === 'megacloud');
+    if (!server) return null;
+
+    // Loads the registry version of the extractor (hash-checked, then cached),
+    // falling back to the bundled one if the registry copy can't be used
     const extractor = await extractorManager.loadExtractor('megacloud');
-    
-    // Assuming 'provider' and 'episodeId' are available from your context
-    const servers = await provider.fetchEpisodeServers(episodeId); 
-    
-    // Example usage with a direct URL and referer
-    const sources = await extractor.extract(
-      new PolyURL(servers[0].url), // Use PolyURL for consistent URL handling
-      referer
-    ); 
-    // 'referer' is available for only some extractors — check the TypeScript definition of `extract` for each extractor
-    return sources;
+
+    // Extractors take a PolyURL. Some also take a referer: check each extractor's `extract` signature
+    return await extractor.extract(new PolyURL(server.url), referer);
   } catch (error) {
     console.error('Extraction failed:', error);
     return null;
@@ -270,31 +276,20 @@ const extractVideoSources = async (embedUrl: string, referer?: string) => {
 };
 ```
 
-You can also use the cached extractor code to reduce the need to load it on every request:
+Apps that cache extractor code can run it without downloading it again. The code is checked against the entry's `sha256` before it runs:
 
 ```typescript
-import { ExtractorManager, extensionRegistry, PolyURL, defaultExtractorContext } from 'react-native-consumet';
+import { ExtractorManager, ExtensionRegistry, PolyURL, type ExtractorInfo } from 'react-native-consumet';
 
-const extractVideoSourcesDynamic = async (codeString: string, metadata: any, embedUrl: string, referer?: string) => {
+const extractorManager = new ExtractorManager(ExtensionRegistry);
+
+// `cachedCode` is the file at `entry.main`, stored by your app
+const runCachedExtractor = async (cachedCode: string, entry: ExtractorInfo, embedUrl: string, referer?: string) => {
   try {
-    const extractorManager = new ExtractorManager(extensionRegistry);
-    // Execute arbitrary extractor code.
-    const extractor = await extractorManager.executeExtractorCode(
-      codeString,
-      metadata
-    );
-    
-    
-    // Assuming 'provider' and 'episodeId' are available from your context
-    const servers = await provider.fetchEpisodeServers(episodeId); 
-
-    const sources = await extractor.extract(
-      new PolyURL(servers[0].url), // Use PolyURL for consistent URL handling
-      referer
-    ); 
-    // 'referer' is available for only some extractors — check the TypeScript definition of `extract` for each extractor
-    return sources;
+    const extractor = await extractorManager.executeExtractorCode(cachedCode, entry);
+    return await extractor.extract(new PolyURL(embedUrl), referer);
   } catch (error) {
+    // IntegrityError: the cached code doesn't match `entry.sha256`; download it again
     console.error('extraction failed:', error);
     return null;
   }
@@ -305,96 +300,100 @@ const extractVideoSourcesDynamic = async (codeString: string, metadata: any, emb
 
 ```typescript
 import axios from 'axios';
+import { ProviderManager, ExtractorManager, ExtensionRegistry } from 'react-native-consumet';
 
 const customAxios = axios.create({
   timeout: 30000,
   headers: { 'User-Agent': 'MyApp/1.0.0' },
-  // Add proxy if needed
-  proxy: { host: 'proxy.example.com', port: 8080 }
 });
 
-// ProviderManager takes ProviderContextConfig as an constructor argument
-const manager = new ProviderManager({
+// The second argument is a ProviderContextConfig. The manager's own ExtractorManager uses the
+// same axios, load and userAgent.
+const manager = new ProviderManager(ExtensionRegistry, {
   axios: customAxios,
 });
 
-// Extractormanager takes ExtractorContextConfig as an constructor argument
-const extractorManager = new ExtractorManager({
+// The second argument is an ExtractorContextConfig
+const extractorManager = new ExtractorManager(ExtensionRegistry, {
   axios: customAxios,
 });
 ```
-[for more details go through `extension-utils` to see which default axios properties are passed](../src/utils/extension-utils.ts)\
-[`ProviderContextConfig`](../src/utils/create-provider-context.ts)\
-[`ExtractorContextConfig`](../src/utils/create-extractor-context.ts)
 
+[for more details go through `extension-utils` to see which default axios properties are passed](../src/utils/extension-utils.ts)\
+[`ProviderContextConfig`](../src/models/provider-context.ts)\
+[`ExtractorContextConfig`](../src/models/extractor-context.ts)
 
 ## React Integration
 
 ### Custom Hook for Anime Provider
 
 ```typescript
-import { useState, useEffect, useCallback } from 'react';
-import { ProviderManager } from 'react-native-consumet';
+// hooks/useAnimeProvider.ts
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ProviderManager,
+  ExtensionRegistry,
+  type AnimeProviderId,
+  type IAnimeInfo,
+  type IAnimeResult,
+  type ISearch,
+} from 'react-native-consumet';
+
+// One manager for the app: it caches the providers it loads
+const manager = new ProviderManager(ExtensionRegistry);
 
 export const useAnimeProvider = () => {
-  const [manager] = useState(() => new ProviderManager());
   const [loading, setLoading] = useState(false);
-  const [providers, setProviders] = useState([]);
+  const providers = useMemo(() => manager.getExtensionsByCategory('anime'), []);
 
-  useEffect(() => {
-    const loadProviders = () => {
-      const extensions = manager.getAvailableExtensions();
-      const animeProviders = extensions.filter(ext => ext.category === 'anime');
-      setProviders(animeProviders);
-    };
-    loadProviders();
-  }, [manager]);
+  const searchAnime = useCallback(
+    async (query: string, providerId: AnimeProviderId = 'animepahe'): Promise<ISearch<IAnimeResult>> => {
+      setLoading(true);
+      try {
+        const provider = await manager.getAnimeProvider(providerId);
+        return await provider.search(query);
+      } catch (error) {
+        console.error('Search failed:', error);
+        return { results: [] };
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const searchAnime = useCallback(async (query: string, providerId = 'zoro') => {
-    setLoading(true);
-    try {
-      const provider = await manager.getAnimeProvider(providerId);
-      return await provider.search(query);
-    } catch (error) {
-      console.error('Search failed:', error);
-      return { results: [] };
-    } finally {
-      setLoading(false);
-    }
-  }, [manager]);
-
-  const getAnimeInfo = useCallback(async (animeId: string, providerId = 'zoro') => {
-    setLoading(true);
-    try {
-      const provider = await manager.getAnimeProvider(providerId);
-      return await provider.fetchAnimeInfo(animeId);
-    } catch (error) {
-      console.error('Failed to fetch anime info:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [manager]);
+  const getAnimeInfo = useCallback(
+    async (animeId: string, providerId: AnimeProviderId = 'animepahe'): Promise<IAnimeInfo | null> => {
+      setLoading(true);
+      try {
+        const provider = await manager.getAnimeProvider(providerId);
+        return await provider.fetchAnimeInfo(animeId);
+      } catch (error) {
+        console.error('Failed to fetch anime info:', error);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const searchAcrossProviders = useCallback(async (query: string) => {
     setLoading(true);
     try {
       return await manager.searchAcrossProviders('anime', query);
-    } catch (error) {
-      console.error('Cross-provider search failed:', error);
-      return [];
     } finally {
       setLoading(false);
     }
-  }, [manager]);
+  }, []);
 
-  return { 
-    searchAnime, 
+  return {
+    searchAnime,
     getAnimeInfo,
     searchAcrossProviders,
-    loading, 
+    loading,
     providers,
-    manager 
+    manager,
   };
 };
 ```
@@ -403,62 +402,75 @@ export const useAnimeProvider = () => {
 
 ```tsx
 import React, { useState } from 'react';
+import { Button, FlatList, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import type { IAnimeResult, IMovieResult } from 'react-native-consumet';
 import { useAnimeProvider } from './hooks/useAnimeProvider';
+
+// searchAcrossProviders types its results for both anime and movie providers
+type Result = IAnimeResult | IMovieResult;
+type Row = Result & { extensionId: string };
+
+const titleOf = (item: Result) =>
+  typeof item.title === 'string' ? item.title : (item.title.english ?? item.title.romaji ?? '');
 
 const AnimeSearch: React.FC = () => {
   const { searchAnime, searchAcrossProviders, loading, providers } = useAnimeProvider();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [selectedProvider, setSelectedProvider] = useState('zoro');
+  const [results, setResults] = useState<Row[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState('animepahe');
   const [searchMode, setSearchMode] = useState<'single' | 'all'>('single');
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-    
+
     if (searchMode === 'single') {
-      const searchResults = await searchAnime(query, selectedProvider);
-      setResults([{ extensionId: selectedProvider, results: searchResults }]);
+      const search = await searchAnime(query, selectedProvider);
+      setResults(search.results.map((r) => ({ ...r, extensionId: selectedProvider })));
     } else {
-      const searchResults = await searchAcrossProviders(query);
-      setResults(searchResults);
+      const perProvider = await searchAcrossProviders(query);
+      setResults(
+        perProvider.flatMap(({ extensionId, results: search }) => search.results.map((r) => ({ ...r, extensionId })))
+      );
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Anime Search</Text>
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Anime Search</Text>
 
-      <TextInput
-        style={styles.input}
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search anime..."
-      />
+      <TextInput value={query} onChangeText={setQuery} placeholder="Search anime..." />
 
-      <View style={styles.providers}>
-        {mockProviders.map((p) => (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {providers.map((p) => (
           <TouchableOpacity
             key={p.id}
-            style={[styles.provider, p.id === selectedProvider && styles.activeProvider]}
-            onPress={() => setSelectedProvider(p.id)}
-          >
-            <Text style={styles.providerText}>{p.name}</Text>
+            style={{ padding: 8, opacity: searchMode === 'single' && p.id === selectedProvider ? 1 : 0.5 }}
+            onPress={() => {
+              setSearchMode('single');
+              setSelectedProvider(p.id);
+            }}>
+            <Text>{p.name}</Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          style={{ padding: 8, opacity: searchMode === 'all' ? 1 : 0.5 }}
+          onPress={() => setSearchMode('all')}>
+          <Text>All providers</Text>
+        </TouchableOpacity>
       </View>
 
-      <Button title="Search" onPress={handleSearch} />
+      <Button title={loading ? 'Searching…' : 'Search'} onPress={handleSearch} disabled={loading} />
 
       <FlatList
         data={results}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.extensionId}:${item.id}`}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} />
+          <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 8 }}>
+            {item.image ? <Image source={{ uri: item.image }} style={{ width: 60, height: 90 }} /> : null}
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text>{item.description}</Text>
-              {item.releaseDate && <Text>Released: {item.releaseDate}</Text>}
+              <Text style={{ fontWeight: 'bold' }}>{titleOf(item)}</Text>
+              <Text>{item.extensionId}</Text>
+              {item.releaseDate ? <Text>Released: {item.releaseDate}</Text> : null}
             </View>
           </View>
         )}
@@ -473,7 +485,9 @@ export default AnimeSearch;
 ### Anime Details Component
 
 ```tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, Text, View } from 'react-native';
+import type { IAnimeInfo } from 'react-native-consumet';
 import { useAnimeProvider } from './hooks/useAnimeProvider';
 
 interface AnimeDetailsProps {
@@ -483,64 +497,44 @@ interface AnimeDetailsProps {
 
 const AnimeDetails: React.FC<AnimeDetailsProps> = ({ animeId, providerId }) => {
   const { getAnimeInfo, loading } = useAnimeProvider();
-  const [animeInfo, setAnimeInfo] = useState(null);
+  const [animeInfo, setAnimeInfo] = useState<IAnimeInfo | null>(null);
 
   useEffect(() => {
-    const loadAnimeInfo = async () => {
-      const info = await getAnimeInfo(animeId, providerId);
-      setAnimeInfo(info);
-    };
-    
     if (animeId && providerId) {
-      loadAnimeInfo();
+      getAnimeInfo(animeId, providerId).then(setAnimeInfo);
     }
   }, [animeId, providerId, getAnimeInfo]);
 
-  if (loading) return <div>Loading anime details...</div>;
-  if (!animeInfo) return <div>Anime not found</div>;
+  if (loading) return <Text>Loading anime details...</Text>;
+  if (!animeInfo) return <Text>Anime not found</Text>;
 
+  const title =
+    typeof animeInfo.title === 'string' ? animeInfo.title : (animeInfo.title.english ?? animeInfo.title.romaji);
+
+  // The episode list is the scrolling element; the details sit in its header
   return (
-    <ScrollView style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <Image source={{ uri: animeInfo.image }} style={styles.image} />
-        <View style={styles.info}>
-          <Text style={styles.title}>{animeInfo.title}</Text>
-          <Text style={styles.description}>{animeInfo.description}</Text>
-
-          <View style={styles.meta}>
-            <Text>Status: {animeInfo.status}</Text>
-            <Text>Release Date: {animeInfo.releaseDate}</Text>
-            <Text>Episodes: {animeInfo.totalEpisodes}</Text>
-          </View>
-
-          <View style={styles.genres}>
-            {animeInfo.genres.map((genre) => (
-              <Text key={genre} style={styles.genreTag}>
-                {genre}
-              </Text>
-            ))}
-          </View>
+    <FlatList
+      data={animeInfo.episodes ?? []}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={
+        <View style={{ padding: 16 }}>
+          {animeInfo.image ? <Image source={{ uri: animeInfo.image }} style={{ width: 120, height: 180 }} /> : null}
+          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{title}</Text>
+          <Text>{animeInfo.description}</Text>
+          <Text>Status: {animeInfo.status}</Text>
+          <Text>Release Date: {animeInfo.releaseDate}</Text>
+          <Text>Episodes: {animeInfo.totalEpisodes}</Text>
+          <Text>Genres: {animeInfo.genres?.join(', ')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 16 }}>Episodes</Text>
         </View>
-      </View>
-
-      {/* Episodes List */}
-      <View style={styles.episodesSection}>
-        <Text style={styles.episodesTitle}>Episodes</Text>
-        <FlatList
-          data={animeInfo.episodes}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
-          renderItem={({ item }) => (
-            <View style={styles.episodeCard}>
-              <Text style={styles.episodeNumber}>Episode {item.number}</Text>
-              <Text style={styles.episodeTitle}>{item.title}</Text>
-            </View>
-          )}
-        />
-      </View>
-    </ScrollView>
+      }
+      renderItem={({ item }) => (
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <Text style={{ fontWeight: 'bold' }}>Episode {item.number}</Text>
+          {item.title ? <Text>{item.title}</Text> : null}
+        </View>
+      )}
+    />
   );
 };
 
@@ -551,16 +545,15 @@ export default AnimeDetails;
 
 ```typescript
 import { useState, useCallback } from 'react';
-import { ProviderManager } from 'react-native-consumet';
+import { ProviderManager, ExtensionRegistry, type ProviderType } from 'react-native-consumet';
+
+const manager = new ProviderManager(ExtensionRegistry);
 
 export const useMultiProvider = () => {
-  const [manager] = useState(() => new ProviderManager());
   const [loading, setLoading] = useState(false);
 
-  const searchContent = useCallback(async (
-    query: string, 
-    category: 'anime' | 'movies' | 'manga' | 'light-novels'
-  ) => {
+  // Only anime and movie providers can be loaded from a registry
+  const searchContent = useCallback(async (query: string, category: 'anime' | 'movies') => {
     setLoading(true);
     try {
       return await manager.searchAcrossProviders(category, query);
@@ -570,17 +563,17 @@ export const useMultiProvider = () => {
     } finally {
       setLoading(false);
     }
-  }, [manager]);
+  }, []);
 
-  const getProvidersByCategory = useCallback((category: string) => {
-    return manager.getExtensionsByCategory(category as any);
-  }, [manager]);
+  const getProvidersByCategory = useCallback((category: ProviderType) => {
+    return manager.getExtensionsByCategory(category);
+  }, []);
 
   return {
     searchContent,
     getProvidersByCategory,
     loading,
-    manager
+    manager,
   };
 };
 ```
@@ -592,49 +585,41 @@ export const useMultiProvider = () => {
 ```typescript
 class ProviderManager {
   // Throws RegistryError if the registry is invalid or uses a newer schemaVersion
-  constructor(registry: ExtensionRegistryData | typeof extensionRegistry, config?: ProviderContextConfig, integrityOptions?: IntegrityOptions)
-  
+  constructor(
+    registry: ExtensionRegistryData | typeof ExtensionRegistry,
+    config?: ProviderContextConfig,
+    integrityOptions?: IntegrityOptions
+  );
+
   // Extension management
-  getAvailableExtensions(): ExtensionManifest[]
-  getExtensionsByCategory(category: ProviderType): ExtensionManifest[]
-  getExtensionMetadata(extensionId: string): ExtensionManifest
-  
-  // Provider loading
-  loadExtension<T extends AnimeProvider | MovieProvider>(
-    extensionId: T
-  ): Promise<
-    T extends AnimeProvider
-      ? InstanceType<(typeof animeProviders)[T]>
-      : T extends MovieProvider
-        ? InstanceType<(typeof movieProviders)[T]>
-        : never
-  >
-  getAnimeProvider<T extends AnimeProvider>(extensionId: T, ...args: any[]): Promise<InstanceType<(typeof animeProviders)[T]>>
-  getMovieProvider<T extends MovieProvider>(extensionId: T, ...args: any[]): Promise<InstanceType<(typeof movieProviders)[T]>>
-  
+  getAvailableExtensions(): ExtensionManifest[];
+  getExtensionsByCategory(category: ProviderType): ExtensionManifest[];
+  getExtensionMetadata(extensionId: string): ExtensionManifest; // throws if the id isn't in the registry
+
+  // Provider loading. options.baseUrl overrides the registry entry's baseUrl.
+  loadExtension<T extends string>(extensionId: T, options?: ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
+  getAnimeProvider(extensionId: AnimeProviderId, options?: ProviderLoadOptions): Promise<IAnimeProvider>;
+  getMovieProvider(extensionId: MovieProviderId, options?: ProviderLoadOptions): Promise<IMovieProvider>;
+
   // Cross-provider operations
   searchAcrossProviders(
-    category: ProviderType, 
-    query: string, 
+    category: ProviderType,
+    query: string,
     page?: number
-  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult> }>>
-  
+  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult> }>>;
+
   // Context and metadata
-  getProviderContext(): ProviderContext
-  getExtractorManager(): ExtractorManager // shared by every provider this manager loads
-  
-  // Provider code execution
-  executeProviderCode<T extends AnimeProvider | MovieProvider>(
+  getProviderContext(): ProviderContext;
+  getExtractorManager(): ExtractorManager; // shared by every provider this manager loads
+
+  // Run provider code your app already has. Throws IntegrityError unless the code matches
+  // metadata.sha256 (options.skipIntegrity opts out), and RegistryError for incompatible entries.
+  executeProviderCode<T extends string>(
     code: string,
     factoryName: string,
-    metadata: ExtensionManifest & { id: T }
-  ): Promise<
-    T extends AnimeProvider
-      ? InstanceType<typeof animeProviders[T]>
-      : T extends MovieProvider
-        ? InstanceType<typeof movieProviders[T]>
-        : never
-  >
+    metadata: ExtensionManifest & { id: T },
+    options?: ExecuteCodeOptions & ProviderLoadOptions
+  ): Promise<ProviderInstanceOf<T>>;
 }
 ```
 
@@ -643,18 +628,25 @@ class ProviderManager {
 ```typescript
 class ExtractorManager {
   // Throws RegistryError if the registry is invalid or uses a newer schemaVersion
-  constructor(registry: ExtensionRegistryData | typeof extensionRegistry, extractorConfig?: ExtractorContextConfig, integrityOptions?: IntegrityOptions)
-  
-  // Extractor loading
-  loadExtractor<T extends Extractor>(extractorId: T): Promise<(typeof defaultExtractors)[T]>
-  
-  // Extractor Metadata
-  getExtractorMetadata(extractorId: StreamingServers): ExtractorInfo
-  
-  // Execute extractor code
-  executeExtractorCode(code: string, metadata: ExtractorInfo): Promise<IVideoExtractor>  
+  constructor(
+    registry: ExtensionRegistryData | typeof ExtensionRegistry,
+    extractorConfig?: ExtractorContextConfig,
+    integrityOptions?: IntegrityOptions
+  );
+
+  // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1', 'upcloud')
+  loadExtractor(extractorId: string): Promise<IVideoExtractor>;
+
+  // Extractor metadata, resolving aliases and server-name suffixes; undefined if not in the registry
+  getExtractorMetadata(extractorId: string): ExtractorInfo | undefined;
+  extractBaseExtractorName(serverName: string): string | null;
+
+  // Run extractor code your app already has (same checks as executeProviderCode)
+  executeExtractorCode(code: string, metadata: ExtractorInfo, options?: ExecuteCodeOptions): Promise<IVideoExtractor>;
 }
 ```
+
+`IntegrityOptions` is `{ allowUnhashed?: boolean }` and `ExecuteCodeOptions` is `{ skipIntegrity?: boolean }`; see the [Security Model](./security.md) before using either.
 
 ### Provider Context Functions
 
@@ -662,7 +654,7 @@ class ExtractorManager {
 // Create provider execution context
 createProviderContext(config?: ProviderContextConfig): ProviderContext
 
-// Create extractor execution context  
+// Create extractor execution context
 createExtractorContext(config?: ExtractorContextConfig): ExtractorContext
 ```
 
@@ -674,19 +666,25 @@ import {
   ProviderManager,
   ExtractorManager,
   createExtractorContext,
+  ExtensionRegistry, // the registry bundled with the library
   PolyURL, // Polyfill for URL handling
   PolyURLSearchParams, // Polyfill for URLSearchParams
   defaultAxios, // default axios instance
-  extractorContext,
+  defaultExtractorContext,
   defaultExtractors,
-  extensionRegistry,
-  type AnimeProvider, 
-  type animeProviders, 
-  type MovieProvider, 
-  type movieProviders
+  RegistryError, // invalid or incompatible registry / entry
+  IntegrityError, // code that doesn't match its registry hash
+  MetaError, // failures from META.Anilist, META.TMDB and META.Myanimelist
+  type AnimeProviderId, // registry ids of anime providers
+  type MovieProviderId, // registry ids of movie providers
+  type IAnimeProvider, // what getAnimeProvider resolves
+  type IMovieProvider, // what getMovieProvider resolves
+  type ExtensionManifest, // a registry entry
+  type ExtensionRegistryData, // a registry
 } from 'react-native-consumet';
 ```
 
+Extension authors: the helpers `ctx` gives provider code, including the native module, are described in [Adding a New Provider](./guides/adding-new-provider.md#using-providercontext).
 
 ## Additional Resources
 
@@ -696,3 +694,4 @@ import {
   - [Manga Providers](./guides/manga.md)
   - [Light Novel Providers](./guides/light-novels.md)
   - [Meta Providers](./guides/meta.md)
+- **[Upgrading](./migrations/README.md)**: breaking and behaviour changes since 1.6.0

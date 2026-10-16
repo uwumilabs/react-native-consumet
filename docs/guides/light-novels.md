@@ -1,22 +1,23 @@
-<h1 align="center">consumet.ts</h1>
+<h1 align="center">react-native-consumet</h1>
 
 <h2>LIGHT_NOVELS</h2>
 
 By using `LIGHT_NOVELS` category you can interact with the light novel providers. And have access to the light novel providers methods. Which allows you to search for light novels, get the light novel information, get the light novel chapters with text content to read.
 
-```ts
-// ESM
-import { LIGHT_NOVELS } from '@consumet/extensions';
+Light novel providers are bundled classes; they are not in the extension registry.
 
-// <providerName> is the name of the provider you want to use. list of the proivders is below.
-const lightnovelProvider = LIGHT_NOVELS.<providerName>();
+```ts
+import { LIGHT_NOVELS } from 'react-native-consumet';
+
+// Any class from the list below
+const readlightnovels = new LIGHT_NOVELS.ReadLightNovels();
 ```
 
 ## Light Novels Providers List
 
-This list is in alphabetical order. (except the sub bullet points)
+This list is in alphabetical order.
 
-- [NovelUpdates](../providers/novelupdates.md)
-- [ReadLightNovels](../providers/readlightnovels.md)
+- [NovelUpdates](../providers/light-novels/novelupdates.md) (`LIGHT_NOVELS.NovelUpdates`)
+- [ReadLightNovels](../providers/light-novels/readlightnovels.md) (`LIGHT_NOVELS.ReadLightNovels`)
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs">back to table of contents</a>)</p>
+<p align="end">(<a href="../README.md">back to table of contents</a>)</p>

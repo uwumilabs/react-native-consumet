@@ -1,43 +1,55 @@
-<h1 align="center">consumet.ts</h1>
+<h1 align="center">react-native-consumet</h1>
 
 <h2>MOVIES</h2>
 
-By using `MOVIES` category you can interact with the movie providers. And have access to the movie providers methods. Which allows you to search for movies and shows, get the movie/tv series information, get the movie/tv series episodes with streaming links.
+Movie providers let you search for movies and shows, get the movie/tv series information, and get the movie/tv series episodes with streaming links. Load them from the extension registry (recommended, see [Extension Integration](../extension-integration.md)), or construct a bundled class from the `MOVIES` namespace.
 
 ```ts
-// ESM
-import { MOVIES } from '@consumet/extensions';
+import { MOVIES, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 
-// <providerName> is the name of the provider you want to use. list of the proivders is below.
-const movieProvider = new MOVIES.<providerName>();
+// From the registry, by registry id
+const manager = new ProviderManager(ExtensionRegistry);
+const netflixMirror = await manager.getMovieProvider('netflixmirror');
+
+// Or a bundled class from the list below
+const multimovies = new MOVIES.MultiMovies();
 ```
 
 ## Common Methods
 
 `languages` - string, the language of the current provider, return language code, example: `languages: 'en'`
 
-`isNSFW` - bool, `true` if the provider providers NSFW content.
+`isNSFW` - bool, `true` if the provider provides NSFW content.
 
-`isWorking` - bool, a bool to identify the state of the current provider, `true` if the provider is working, `false` otherwise.
+`isWorking` - bool, `false` when the provider is marked as down. Most providers leave it `true`; the registry `status` is a better signal.
 
-`name` - string, the name of the current provider, example: `name: 'FlixHQ'`
+`name` - string, the name of the current provider, example: `name: 'NetflixMirror'`
 
 `baseUrl` - string, url to the base URL of the current provider
 
 `logo` - string, url to the logo image of the current provider
 
-`classPath` - string,
+`classPath` - string, the provider's place in the library, example: `classPath: 'MOVIES.NetflixMirror'`
 
 `supportedTypes` - object, A `Set` of supported types by the provider, to check if a type is supported use `supportedTypes.has(<the type to be checked>)`.
 
+On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` may be protected; read them through `provider.toString`.
+
 ## Movies Providers List
 
-This list is in alphabetical order. (except the sub bullet points)
+| Provider      | Bundled class          | Registry id (status)       | Docs                                                  |
+| ------------- | ---------------------- | -------------------------- | ----------------------------------------------------- |
+| NetflixMirror | `MOVIES.NetflixMirror` | `netflixmirror` (beta)     | [NetflixMirror](../providers/movies/netflixmirror.md) |
+| PrimeMirror   | `MOVIES.PrimeMirror`   | `primemirror` (beta)       | same API as NetflixMirror                             |
+| DisneyMirror  | `MOVIES.DisneyMirror`  | `disneymirror` (beta)      | same API as NetflixMirror                             |
+| VegaMovies    | `MOVIES.VegaMovies`    | `vegamovies` (alpha)       |                                                       |
+| MultiMovies   | `MOVIES.MultiMovies`   | `multimovies` (deprecated) | [MultiMovies](../providers/movies/multimovies.md)     |
+| YFlix         | `MOVIES.YFlix`         | `yflix` (deprecated)       |                                                       |
+| HiMovies      | `MOVIES.HiMovies`      | not in the registry        | [HiMovies](../providers/movies/himovies.md)           |
+| MultiStream   | `MOVIES.MultiStream`   | not in the registry        |                                                       |
 
-- [Goku](../providers/goku.md)
-- [MovieHdWatch](../providers/moviehdwatch.md)
-- [FlixHQ](../providers/flixhq.md)
-- [ViewAsian](../providers/viewAsian.md)
-- [DramaCool](../providers/dramacool.md)
+VegaMovies and the three mirrors return playable files from `fetchEpisodeSources` (`isSourceDirect` in the registry): pass the server name to `fetchEpisodeSources` instead of handing server URLs to an extractor.
 
-<p align="end">(<a href="https://github.com/consumet/extensions/blob/master/docs">back to table of contents</a>)</p>
+[DramaCool](../providers/movies/dramacool.md) is not exported in this version (`MOVIES.DramaCool` is undefined); its page is kept for reference.
+
+<p align="end">(<a href="../README.md">back to table of contents</a>)</p>
