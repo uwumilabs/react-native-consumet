@@ -74,6 +74,13 @@ export {
   assertCompatibleEntry,
 } from './registry-schema';
 export type { RegistryErrorCode } from './registry-schema';
+export {
+  REGISTRY_SIGNING_KEYS,
+  RegistrySignatureError,
+  verifyRegistrySignature,
+  parseSignedRegistry,
+} from './registry-signature';
+export type { RegistrySignatureErrorCode, RegistrySignatureOptions } from './registry-signature';
 export { createExtractorContext } from './create-extractor-context';
 export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';

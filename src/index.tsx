@@ -47,6 +47,10 @@ import {
   validateRegistry,
   isCompatibleEntry,
   assertCompatibleEntry,
+  REGISTRY_SIGNING_KEYS,
+  RegistrySignatureError,
+  verifyRegistrySignature,
+  parseSignedRegistry,
 } from './utils';
 import type {
   IntegrityErrorCode,
@@ -55,6 +59,8 @@ import type {
   ProviderLoadOptions,
   ProviderOfCategory,
   RegistryErrorCode,
+  RegistrySignatureErrorCode,
+  RegistrySignatureOptions,
 } from './utils';
 
 // Extractors (video/file hosters and scrapers)
@@ -265,6 +271,10 @@ export {
   validateRegistry,
   isCompatibleEntry,
   assertCompatibleEntry,
+  REGISTRY_SIGNING_KEYS,
+  RegistrySignatureError,
+  verifyRegistrySignature,
+  parseSignedRegistry,
   MetaError,
 };
 export type { MetaErrorSource };
@@ -275,5 +285,7 @@ export type {
   ProviderLoadOptions,
   ProviderOfCategory,
   RegistryErrorCode,
+  RegistrySignatureErrorCode,
+  RegistrySignatureOptions,
 };
 export type { ExtensionRegistryData };

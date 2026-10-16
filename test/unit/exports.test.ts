@@ -17,6 +17,10 @@ const VALUES = [
   'defaultExtractorContext',
   'verifyExtensionCode',
   'IntegrityError',
+  'RegistrySignatureError',
+  'verifyRegistrySignature',
+  'parseSignedRegistry',
+  'REGISTRY_SIGNING_KEYS',
   'MetaError',
   'ExtensionRegistry',
   'PolyURL',
@@ -39,6 +43,8 @@ const TYPES = [
   'IAnimeProvider',
   'IMovieProvider',
   'ProviderCapabilities',
+  'RegistrySignatureErrorCode',
+  'RegistrySignatureOptions',
 ];
 
 /** Names exported by the entry point that resolve to a type (interface, alias, class or enum). */

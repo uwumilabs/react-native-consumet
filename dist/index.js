@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = exports.PolyURLSearchParams = exports.PolyURL = exports.createExtractorContext = exports.ExtractorManager = exports.REQUIRED_PROVIDER_METHODS = exports.ProviderManager = exports.createProviderContext = exports.ExtensionRegistry = exports.FlixCloud = exports.HubCloud = exports.Gofile = exports.GDFlix = exports.MegaPlay = exports.Voe = exports.VidHide = exports.MegaCloud = exports.Mp4Player = exports.MegaUp = exports.VidMoly = exports.StreamWish = exports.Mp4Upload = exports.Filemoon = exports.AsianLoad = exports.VizCloud = exports.StreamHub = exports.StreamLare = exports.StreamTape = exports.RapidCloud = exports.Kwik = exports.MixDrop = exports.StreamSB = exports.GogoCDN = exports.MovieParser = exports.AnimeParser = exports.WatchListType = exports.MediaFormat = exports.TvType = exports.MediaStatus = exports.StreamingServers = exports.SubOrDub = exports.Genres = exports.Topics = exports.META = exports.MOVIES = exports.LIGHT_NOVELS = exports.MANGA = exports.ANIME = void 0;
-exports.MetaError = exports.assertCompatibleEntry = exports.isCompatibleEntry = exports.validateRegistry = exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = exports.IntegrityError = exports.verifyExtensionCode = void 0;
+exports.MetaError = exports.parseSignedRegistry = exports.verifyRegistrySignature = exports.RegistrySignatureError = exports.REGISTRY_SIGNING_KEYS = exports.assertCompatibleEntry = exports.isCompatibleEntry = exports.validateRegistry = exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = exports.IntegrityError = exports.verifyExtensionCode = void 0;
 require("react-native-get-random-values");
 const url_polyfill_1 = require("./utils/url-polyfill");
 Object.defineProperty(exports, "PolyURL", { enumerable: true, get: function () { return url_polyfill_1.URL; } });
@@ -47,6 +47,10 @@ Object.defineProperty(exports, "RegistryError", { enumerable: true, get: functio
 Object.defineProperty(exports, "validateRegistry", { enumerable: true, get: function () { return utils_1.validateRegistry; } });
 Object.defineProperty(exports, "isCompatibleEntry", { enumerable: true, get: function () { return utils_1.isCompatibleEntry; } });
 Object.defineProperty(exports, "assertCompatibleEntry", { enumerable: true, get: function () { return utils_1.assertCompatibleEntry; } });
+Object.defineProperty(exports, "REGISTRY_SIGNING_KEYS", { enumerable: true, get: function () { return utils_1.REGISTRY_SIGNING_KEYS; } });
+Object.defineProperty(exports, "RegistrySignatureError", { enumerable: true, get: function () { return utils_1.RegistrySignatureError; } });
+Object.defineProperty(exports, "verifyRegistrySignature", { enumerable: true, get: function () { return utils_1.verifyRegistrySignature; } });
+Object.defineProperty(exports, "parseSignedRegistry", { enumerable: true, get: function () { return utils_1.parseSignedRegistry; } });
 // Extractors (video/file hosters and scrapers)
 const extractors_1 = require("./extractors");
 Object.defineProperty(exports, "AsianLoad", { enumerable: true, get: function () { return extractors_1.AsianLoad; } });
