@@ -52,6 +52,8 @@
     "test:live": "LIVE_TESTS=1 jest",
     "registry:check": "node scripts/prepare-registry.js --check",
     "registry:prune": "node scripts/prune-registry.js",
+    "registry:keygen": "node scripts/registry-keygen.js",
+    "registry:sign": "node scripts/sign-registry.js",
     "typecheck": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

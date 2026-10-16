@@ -1,3 +1,7 @@
 *.pbxproj -text
 # specific for windows script files
 *.bat text eol=crlf
+
+# Signed byte for byte by scripts/sign-registry.js, so keep line endings as committed
+src/extension-registry.json -text
+src/extension-registry.json.sig -text

@@ -22,11 +22,14 @@
  *       Also compares with the registry at <commit>: an entry whose sha256 changed needs a higher
  *       version, versions never go backwards, and files published at <commit> are unchanged.
  *       CI passes the commit the change is based on.
+ *   --check also reports whether src/extension-registry.json.sig is valid for the registry under the
+ *   keys in src/registry-signing-keys.ts (REG-6). A stale signature is only a note: CI re-signs the
+ *   registry after it reaches main (.github/workflows/sign-registry.yml).
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { checkBase, checkReferences } = require('./registry-support');
+const { checkBase, checkReferences, checkSignature } = require('./registry-support');
 
 const repoRoot = path.join(__dirname, '..');
 const registryPath = path.join(repoRoot, 'src', 'extension-registry.json');
@@ -171,6 +174,10 @@ if (checkOnly) {
     problems.push(...base.problems);
     base.notes.forEach((note) => console.log(`  · ${note}`));
   }
+
+  const signature = checkSignature();
+  problems.push(...signature.problems);
+  signature.notes.forEach((note) => console.log(`  · ${note}`));
 }
 
 if (problems.length) {

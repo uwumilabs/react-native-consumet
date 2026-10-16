@@ -1,0 +1,94 @@
+name: Sign registry
+
+# Signs src/extension-registry.json, the registry apps download, and commits its signature
+# (src/extension-registry.json.sig) to main (REG-6). Apps verify it with the public keys in
+# src/registry-signing-keys.ts. The private key never leaves the REGISTRY_SIGNING_KEY secret
+# (yarn registry:keygen prints it once).
+#
+# Store the secret in the "registry-signing" environment and give that environment a required
+# reviewer and a main-only branch rule: then a push to main, a merged PR or an edited workflow
+# can't get a registry signed, or read the key, without the maintainer approving the run.
+#
+# Doesn't loop: the commit only changes the .sig file, which isn't in `paths`, and pushes made
+# with GITHUB_TOKEN don't start workflows. Signatures are deterministic, so re-signing an
+# unchanged registry changes nothing and commits nothing.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/extension-registry.json
+      - src/registry-signing-keys.ts
+  # Re-sign by hand, e.g. after storing the secret for the first time.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One signer at a time; a run queued behind another signs the newer tip.
+concurrency:
+  group: sign-registry
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: registry-signing
+    permissions:
+      # Pushes the signature commit to main
+      contents: write
+    steps:
+      - name: Check for a signing key
+        id: key
+        env:
+          SIGNING_KEYS: ${{ secrets.REGISTRY_SIGNING_KEY }}${{ secrets.REGISTRY_SIGNING_KEY_2 }}
+        run: |
+          if [ -z "$SIGNING_KEYS" ]; then
+            echo "::notice title=Registry not signed::No REGISTRY_SIGNING_KEY secret yet. Run yarn registry:keygen, store the private key it prints as REGISTRY_SIGNING_KEY in the registry-signing environment, and commit src/registry-signing-keys.ts."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The tip of main, not the pushed commit: it's what apps download.
+      - name: Checkout
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # Nothing is installed: the signing scripts only use Node's built-in modules, so no
+      # dependency code runs next to the key.
+      - name: Setup Node.js
+        if: steps.key.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # Each secret holds one private key. During a key rotation both are set and the registry is
+      # signed with both, so apps that only trust the old key keep verifying it.
+      - name: Sign the registry and push the signature
+        if: steps.key.outputs.present == 'true'
+        env:
+          REGISTRY_SIGNING_KEY: ${{ secrets.REGISTRY_SIGNING_KEY }} ${{ secrets.REGISTRY_SIGNING_KEY_2 }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            node scripts/sign-registry.js
+            git add src/extension-registry.json.sig
+            if git diff --cached --quiet; then
+              echo "The registry signature is already up to date."
+              exit 0
+            fi
+            git commit --no-verify -q -m 'chore(registry): sign the extension registry'
+            if git push -q origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved while signing; signing its new tip (attempt $attempt)."
+            git fetch -q origin main
+            git reset -q --hard origin/main
+          done
+          echo "::error::Could not push the registry signature to main. If main is protected, let this workflow push to it, or re-run it."
+          exit 1
