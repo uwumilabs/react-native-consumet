@@ -15,10 +15,30 @@ import {
   type ProviderCapabilities,
   type IAnimeProvider,
   MetaError,
+  type FuzzyDate,
 } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery } from '../../utils';
 import Zoro from '../anime/zoro/zoro';
 
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/**
+ * Parse a MAL date: "Apr 5, 2009", "Apr 2009" or "2009", in any case. Months are 1-based, as on
+ * AniList, and parts MAL doesn't give stay unset. Gives undefined for "?" and "Not available".
+ */
+const parseMalDate = (text: string | undefined): FuzzyDate | undefined => {
+  const [, month, day, year] = /^(?:([a-z]{3})[a-z]*\.?\s+(?:(\d{1,2}),\s*)?)?(\d{4})$/i.exec(text?.trim() ?? '') ?? [];
+  const monthIndex = month ? MONTHS.indexOf(month.toLowerCase()) : -1;
+  if (!year || (month && monthIndex < 0)) return undefined;
+  return { year: Number(year), month: month ? monthIndex + 1 : undefined, day: day ? Number(day) : undefined };
+};
+
+/**
+ * @deprecated Use `META.Anilist` instead. Myanimelist scrapes myanimelist.net pages, which change
+ * without notice, and its episodes have no `uniqueId`. AniList has the same anime, gives the MAL id
+ * as `malId`, and keys every episode with a stable `uniqueId`. Myanimelist will be removed in a
+ * future major release.
+ */
 class Myanimelist extends AnimeParser {
   override readonly name = 'Myanimelist';
   protected override baseUrl = 'https://myanimelist.net/';
@@ -228,7 +248,7 @@ class Myanimelist extends AnimeParser {
 
   private findAnimeRaw = async (slug: string, externalLinks?: any) => {
     const findAnime = (await this.provider.search(slug)) as ISearch<IAnimeResult>;
-    if (findAnime.results.length === 0) return [];
+    if (findAnime.results.length === 0) return undefined;
 
     // Sort the retrieved info for more accurate results.
 
@@ -269,27 +289,29 @@ class Myanimelist extends AnimeParser {
     let possibleAnime: any | undefined;
 
     possibleAnime = await this.findAnimeRaw(slug, externalLinks);
+    if (!possibleAnime) return [];
 
-    // To avoid a new request, lets match and see if the anime show found is in sub/dub
-
+    // To avoid a new request, check that the anime found has the requested audio. A provider that
+    // doesn't say (subOrDub, or hasSub/hasDub, unset) is taken to have it.
     const expectedType = dub ? SubOrDub.DUB : SubOrDub.SUB;
-
-    if (possibleAnime.subOrDub !== SubOrDub.BOTH && possibleAnime.subOrDub !== expectedType) {
-      return [];
-    }
+    const { subOrDub, hasSub, hasDub } = possibleAnime as IAnimeInfo;
+    const hasAudio = subOrDub
+      ? subOrDub === SubOrDub.BOTH || subOrDub === expectedType
+      : (dub ? hasDub : hasSub) !== false;
+    if (!hasAudio) return [];
 
     const capabilities = (this.provider as { capabilities?: ProviderCapabilities }).capabilities;
     const combinedSubDub = capabilities ? capabilities.subDub === 'combined' : this.provider instanceof Zoro;
     if (combinedSubDub) {
       // Set the correct episode sub/dub request type
-      possibleAnime.episodes.forEach((_: any, index: number) => {
+      possibleAnime.episodes?.forEach((_: any, index: number) => {
         if (possibleAnime.subOrDub === SubOrDub.BOTH) {
           possibleAnime.episodes[index].id = possibleAnime.episodes[index].id.replace(`$both`, dub ? '$dub' : '$sub');
         }
       });
     }
 
-    const possibleProviderEpisodes = possibleAnime.episodes as IAnimeEpisode[];
+    const possibleProviderEpisodes = (possibleAnime.episodes ?? []) as IAnimeEpisode[];
 
     if (
       typeof possibleProviderEpisodes[0]?.image !== 'undefined' &&
@@ -407,21 +429,28 @@ class Myanimelist extends AnimeParser {
     animeInfo.genres = genres;
     animeInfo.image = image;
     animeInfo.description = desc;
+
+    // Alternative titles are "Label: title" rows, and which rows exist differs per anime, so find
+    // them by label rather than by position.
+    const alternativeTitle = (label: string) => {
+      const row = $('.spaceit_pad')
+        .filter((_, elem) => $(elem).children('.dark_text').first().text().trim() === `${label}:`)
+        .first();
+      return substringAfter(row.text(), `${label}:`).trim() || undefined;
+    };
+    const english = alternativeTitle('English');
     animeInfo.title = {
-      english: $('.js-alternative-titles.hide').children().eq(0).text().replace('English: ', '').trim(),
+      english,
       romaji: $('.title-name').text(),
-      native: $('.js-alternative-titles.hide').parent().children().eq(9).text().trim(),
-      userPreferred: $('.js-alternative-titles.hide').children().eq(0).text().replace('English: ', '').trim(),
+      native: alternativeTitle('Japanese'),
+      userPreferred: english,
     };
 
-    animeInfo.synonyms = $('.js-alternative-titles.hide')
-      .parent()
-      .children()
-      .eq(8)
-      .text()
-      .replace('Synonyms:', '')
-      .trim()
-      .split(',');
+    animeInfo.synonyms =
+      alternativeTitle('Synonyms')
+        ?.split(',')
+        .map((synonym) => synonym.trim())
+        .filter(Boolean) ?? [];
     animeInfo.studios = [];
     animeInfo.popularity = parseInt($('.numbers.popularity').text().trim().replace('Popularity #', '').trim());
 
@@ -527,32 +556,15 @@ class Myanimelist extends AnimeParser {
         case 'premiered':
           animeInfo.season = value.split(' ')[0]?.toUpperCase();
           break;
-        case 'aired':
-          const dates = value.split('to');
-          if (dates.length >= 2) {
-            const start = dates[0]?.trim();
-            const end = dates[1]?.trim();
-            const startDate = new Date(start!);
-            const endDate = new Date(end!);
-
-            if (startDate.toString() !== 'Invalid Date') {
-              animeInfo.startDate = {
-                day: startDate.getDate(),
-                month: startDate.getMonth(),
-                year: startDate.getFullYear(),
-              };
-            }
-
-            if (endDate.toString() !== 'Invalid Date') {
-              animeInfo.endDate = {
-                day: endDate.getDate(),
-                month: endDate.getMonth(),
-                year: endDate.getFullYear(),
-              };
-            }
-          }
-
+        case 'aired': {
+          // "apr 5, 2009 to jul 4, 2010", "oct 20, 1999 to ?", or a single date for movies
+          const [start, end] = value.split(/\s+to\s+/);
+          const startDate = parseMalDate(start);
+          const endDate = parseMalDate(end);
+          if (startDate) animeInfo.startDate = startDate;
+          if (endDate) animeInfo.endDate = endDate;
           break;
+        }
 
         case 'score':
           animeInfo.rating = parseFloat(value);

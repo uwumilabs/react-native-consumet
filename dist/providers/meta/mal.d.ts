@@ -1,4 +1,10 @@
 import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type IAnimeProvider } from '../../models';
+/**
+ * @deprecated Use `META.Anilist` instead. Myanimelist scrapes myanimelist.net pages, which change
+ * without notice, and its episodes have no `uniqueId`. AniList has the same anime, gives the MAL id
+ * as `malId`, and keys every episode with a stable `uniqueId`. Myanimelist will be removed in a
+ * future major release.
+ */
 declare class Myanimelist extends AnimeParser {
     readonly name = "Myanimelist";
     protected baseUrl: string;
