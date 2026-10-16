@@ -64,9 +64,6 @@ export class AnimePahe extends AnimeParser {
   fetchEpisodeServers!: AnimePaheProviderInstance['fetchEpisodeServers'];
 }
 
-// Kept only while src/providers/meta imports the default; import { AnimePahe } instead.
-export default AnimePahe;
-
 // (async () => {
 //   const pahe = new AnimePahe();
 //   const anime = await pahe.search('Dandadan');

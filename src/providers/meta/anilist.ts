@@ -38,11 +38,11 @@ import {
   anilistStaffInfoQuery,
   days,
 } from '../../utils';
-import Zoro from '../anime/zoro/zoro';
-import AnimeKai from '../anime/animekai/animekai';
-import AnimePahe from '../anime/animepahe/animepahe';
-import AniKoto from '../anime/anikoto/anikoto';
-import Mangasee123 from '../manga/mangasee123';
+import { Zoro } from '../anime/zoro/zoro';
+import { AnimeKai } from '../anime/animekai/animekai';
+import { AnimePahe } from '../anime/animepahe/animepahe';
+import { AniKoto } from '../anime/anikoto/anikoto';
+import { Mangasee123 } from '../manga/mangasee123';
 import { ANIFY_URL, findSimilarTitles } from '../../utils/utils';
 
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */

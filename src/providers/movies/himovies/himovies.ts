@@ -87,6 +87,3 @@ export class HiMovies extends MovieParser {
 //   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0]!.id, movieInfo.id);
 //   // console.log(genre);
 // })();
-
-// Kept only while src/providers/meta imports the default; import { HiMovies } instead.
-export default HiMovies;

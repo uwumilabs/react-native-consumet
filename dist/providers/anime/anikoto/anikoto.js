@@ -183,6 +183,4 @@ class AniKoto extends models_1.AnimeParser {
 }
 exports.AniKoto = AniKoto;
 exports.AniWatchTv = AniKoto;
-// Kept only while src/providers/meta and two unit tests import the default; import { AniKoto } instead.
-exports.default = AniKoto;
 //# sourceMappingURL=anikoto.js.map

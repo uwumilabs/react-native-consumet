@@ -14,5 +14,4 @@ export declare class Mangasee123 extends MangaParser {
     private processChapterNumber;
     private processChapterForImageUrl;
 }
-export default Mangasee123;
 //# sourceMappingURL=mangasee123.d.ts.map

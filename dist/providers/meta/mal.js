@@ -1,10 +1,5 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -13,7 +8,7 @@ const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const queries_1 = require("../../utils/queries");
-const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
+const zoro_1 = require("../anime/zoro/zoro");
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 /**
  * Parse a MAL date: "Apr 5, 2009", "Apr 2009" or "2009", in any case. Months are 1-based, as on
@@ -51,7 +46,7 @@ class Myanimelist extends models_1.AnimeParser {
    */
   constructor(provider) {
     super();
-    this.provider = provider || new zoro_1.default();
+    this.provider = provider || new zoro_1.Zoro();
   }
   malStatusToMediaStatus(status) {
     if (status === 'currently airing') return models_1.MediaStatus.ONGOING;else if (status === 'finished airing') return models_1.MediaStatus.COMPLETED;else if (status === 'not yet aired') return models_1.MediaStatus.NOT_YET_AIRED;
@@ -232,7 +227,7 @@ class Myanimelist extends models_1.AnimeParser {
     const hasAudio = subOrDub ? subOrDub === models_1.SubOrDub.BOTH || subOrDub === expectedType : (dub ? hasDub : hasSub) !== false;
     if (!hasAudio) return [];
     const capabilities = this.provider.capabilities;
-    const combinedSubDub = capabilities ? capabilities.subDub === 'combined' : this.provider instanceof zoro_1.default;
+    const combinedSubDub = capabilities ? capabilities.subDub === 'combined' : this.provider instanceof zoro_1.Zoro;
     if (combinedSubDub) {
       // Set the correct episode sub/dub request type
       possibleAnime.episodes?.forEach((_, index) => {

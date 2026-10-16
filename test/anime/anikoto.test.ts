@@ -1,4 +1,4 @@
-import AniKoto from '../../src/providers/anime/anikoto/anikoto';
+import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import { SubOrDub } from '../../src/models';
 
 jest.setTimeout(120000);

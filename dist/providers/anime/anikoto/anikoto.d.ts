@@ -146,5 +146,4 @@ export declare class AniKoto extends AnimeParser {
     fetchEpisodeServers: AniKotoProviderInstance['fetchEpisodeServers'];
 }
 export { AniKoto as AniWatchTv };
-export default AniKoto;
 //# sourceMappingURL=anikoto.d.ts.map

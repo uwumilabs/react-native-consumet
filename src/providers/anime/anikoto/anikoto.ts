@@ -217,5 +217,3 @@ export class AniKoto extends AnimeParser {
 
 // Export AniKoto as AniWatchTv as well for backwards compatibility
 export { AniKoto as AniWatchTv };
-// Kept only while src/providers/meta and two unit tests import the default; import { AniKoto } instead.
-export default AniKoto;

@@ -124,6 +124,3 @@ export class AnimeKai extends AnimeParser {
    */
   fetchEpisodeServers!: AnimeKaiProviderInstance['fetchEpisodeServers'];
 }
-
-// Kept only while src/providers/meta imports the default; import { AnimeKai } instead.
-export default AnimeKai;

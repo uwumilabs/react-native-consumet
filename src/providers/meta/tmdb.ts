@@ -17,7 +17,7 @@ import {
 import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
-import HiMovies from '../movies/himovies/himovies';
+import { HiMovies } from '../movies/himovies/himovies';
 import { resolveTmdbApiKey } from './tmdb-api-key';
 
 /** What TMDB knows about a title, used to pick the matching provider result. */

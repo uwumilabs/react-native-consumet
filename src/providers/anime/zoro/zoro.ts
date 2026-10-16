@@ -185,9 +185,6 @@ export class Zoro extends AnimeParser {
   fetchEpisodeServers!: ZoroProviderInstance['fetchEpisodeServers'];
 }
 
-// Kept only while src/providers/meta imports the default; import { Zoro } instead.
-export default Zoro;
-
 // (async () => {
 //   // tsx ./src/providers/anime/zoro/zoro.ts
 //   const zoro = new Zoro();

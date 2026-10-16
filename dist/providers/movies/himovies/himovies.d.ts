@@ -47,5 +47,4 @@ export declare class HiMovies extends MovieParser {
      */
     fetchEpisodeServers: HiMoviesProviderInstance['fetchEpisodeServers'];
 }
-export default HiMovies;
 //# sourceMappingURL=himovies.d.ts.map

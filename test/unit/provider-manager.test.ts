@@ -4,7 +4,7 @@ import registry from '../../src/extension-registry.json';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { AnimeParser, MovieParser, SubOrDub } from '../../src/models';
 import type { AnimeProvider, MovieProvider } from '../../src/utils/provider-maps';
-import AniKoto from '../../src/providers/anime/anikoto/anikoto';
+import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import Anilist from '../../src/providers/meta/anilist';
 import TMDB from '../../src/providers/meta/tmdb';
 import { sha256Hex } from '../../src/utils/extension-integrity';

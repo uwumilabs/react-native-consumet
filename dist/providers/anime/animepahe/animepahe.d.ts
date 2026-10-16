@@ -38,5 +38,4 @@ export declare class AnimePahe extends AnimeParser {
      */
     fetchEpisodeServers: AnimePaheProviderInstance['fetchEpisodeServers'];
 }
-export default AnimePahe;
 //# sourceMappingURL=animepahe.d.ts.map

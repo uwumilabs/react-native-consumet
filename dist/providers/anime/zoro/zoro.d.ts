@@ -136,5 +136,4 @@ export declare class Zoro extends AnimeParser {
      */
     fetchEpisodeServers: ZoroProviderInstance['fetchEpisodeServers'];
 }
-export default Zoro;
 //# sourceMappingURL=zoro.d.ts.map

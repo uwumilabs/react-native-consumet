@@ -87,5 +87,4 @@ export declare class AnimeKai extends AnimeParser {
      */
     fetchEpisodeServers: AnimeKaiProviderInstance['fetchEpisodeServers'];
 }
-export default AnimeKai;
 //# sourceMappingURL=animekai.d.ts.map

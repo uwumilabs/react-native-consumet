@@ -176,8 +176,6 @@ class Zoro extends models_1.AnimeParser {
     fetchEpisodeServers;
 }
 exports.Zoro = Zoro;
-// Kept only while src/providers/meta imports the default; import { Zoro } instead.
-exports.default = Zoro;
 // (async () => {
 //   // tsx ./src/providers/anime/zoro/zoro.ts
 //   const zoro = new Zoro();

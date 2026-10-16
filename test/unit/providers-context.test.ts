@@ -316,14 +316,7 @@ describe('class-based providers use the context axios (PROV-2)', () => {
 describe('one export style (PROV-2)', () => {
   const VALUE_AXIOS_IMPORT = /^import\s+(?!type\b)[^;]*?from\s+'axios'/m;
   // Default exports that src/providers/meta and two unit tests still import (other lanes own them).
-  const DEFAULT_EXPORTS_STILL_IMPORTED = [
-    'src/providers/anime/anikoto/anikoto.ts',
-    'src/providers/anime/animekai/animekai.ts',
-    'src/providers/anime/animepahe/animepahe.ts',
-    'src/providers/anime/zoro/zoro.ts',
-    'src/providers/movies/himovies/himovies.ts',
-    'src/providers/manga/mangasee123.ts',
-  ].map((file) => path.normalize(file));
+  const DEFAULT_EXPORTS_STILL_IMPORTED: string[] = [];
 
   it.each(['extractors', ...PROVIDER_DIRS])('%s import axios only for its types', (dir) => {
     const offenders = sourceFiles(dir).filter((file) => VALUE_AXIOS_IMPORT.test(read(file)));

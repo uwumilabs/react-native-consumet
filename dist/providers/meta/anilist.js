@@ -1,21 +1,16 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
-const animekai_1 = __importDefault(require("../anime/animekai/animekai"));
-const animepahe_1 = __importDefault(require("../anime/animepahe/animepahe"));
-const anikoto_1 = __importDefault(require("../anime/anikoto/anikoto"));
-const mangasee123_1 = __importDefault(require("../manga/mangasee123"));
+const zoro_1 = require("../anime/zoro/zoro");
+const animekai_1 = require("../anime/animekai/animekai");
+const animepahe_1 = require("../anime/animepahe/animepahe");
+const anikoto_1 = require("../anime/anikoto/anikoto");
+const mangasee123_1 = require("../manga/mangasee123");
 const utils_2 = require("../../utils/utils");
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
 const anilistError = err => {
@@ -248,7 +243,7 @@ class Anilist extends models_1.AnimeParser {
   constructor(provider, proxyConfig, adapter, customBaseURL) {
     super();
     this.proxyConfig = proxyConfig;
-    this.provider = provider || new zoro_1.default(customBaseURL);
+    this.provider = provider || new zoro_1.Zoro(customBaseURL);
   }
   /**
    * @param query Search query
@@ -722,7 +717,7 @@ class Anilist extends models_1.AnimeParser {
   usesAniZipEpisodes = () => {
     const capabilities = this.provider.capabilities;
     if (capabilities) return Boolean(capabilities.aniZipEpisodes);
-    return this.provider instanceof zoro_1.default || this.provider instanceof animekai_1.default || this.provider instanceof animepahe_1.default || this.provider instanceof anikoto_1.default;
+    return this.provider instanceof zoro_1.Zoro || this.provider instanceof animekai_1.AnimeKai || this.provider instanceof animepahe_1.AnimePahe || this.provider instanceof anikoto_1.AniKoto;
   };
   /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
   fetchFillerEpisodes = async malId => {
@@ -1013,7 +1008,7 @@ class Anilist extends models_1.AnimeParser {
      * @param provider MangaParser
      */
     constructor(provider) {
-      this.provider = provider || new mangasee123_1.default();
+      this.provider = provider || new mangasee123_1.Mangasee123();
     }
     /**
      *

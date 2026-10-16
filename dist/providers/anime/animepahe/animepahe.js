@@ -55,8 +55,6 @@ class AnimePahe extends models_1.AnimeParser {
     fetchEpisodeServers;
 }
 exports.AnimePahe = AnimePahe;
-// Kept only while src/providers/meta imports the default; import { AnimePahe } instead.
-exports.default = AnimePahe;
 // (async () => {
 //   const pahe = new AnimePahe();
 //   const anime = await pahe.search('Dandadan');

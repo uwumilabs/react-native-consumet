@@ -185,6 +185,3 @@ export class Mangasee123 extends MangaParser {
 //   console.log(chapterPages);
 //   console.log(mediaInfo, mangaInfo);
 // })();
-
-// Kept only while src/providers/meta imports the default; import { Mangasee123 } instead.
-export default Mangasee123;

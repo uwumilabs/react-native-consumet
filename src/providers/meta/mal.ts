@@ -19,7 +19,7 @@ import {
 } from '../../models';
 import { substringAfter, substringBefore, calculateStringSimilarity } from '../../utils';
 import { kitsuTitleSearchQuery } from '../../utils/queries';
-import Zoro from '../anime/zoro/zoro';
+import { Zoro } from '../anime/zoro/zoro';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 

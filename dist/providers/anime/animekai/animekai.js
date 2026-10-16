@@ -116,6 +116,4 @@ class AnimeKai extends models_1.AnimeParser {
     fetchEpisodeServers;
 }
 exports.AnimeKai = AnimeKai;
-// Kept only while src/providers/meta imports the default; import { AnimeKai } instead.
-exports.default = AnimeKai;
 //# sourceMappingURL=animekai.js.map

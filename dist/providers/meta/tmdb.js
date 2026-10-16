@@ -1,17 +1,12 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-const himovies_1 = __importDefault(require("../movies/himovies/himovies"));
+const himovies_1 = require("../movies/himovies/himovies");
 const tmdb_api_key_1 = require("./tmdb-api-key");
 /** The year of a TMDB result's release or first air date, or undefined when TMDB has no date. */
 const releaseYear = result => /^\d{4}/.exec(result?.release_date || result?.first_air_date || '')?.[0];
@@ -32,7 +27,7 @@ class TMDB extends models_1.MovieParser {
   constructor(apiKey, provider, proxyConfig, adapter) {
     super();
     this.apiKey = (0, tmdb_api_key_1.resolveTmdbApiKey)(apiKey, 'META.TMDB');
-    this.provider = provider || new himovies_1.default();
+    this.provider = provider || new himovies_1.HiMovies();
   }
   /**
    * @param type trending type: tv series, movie, people or all

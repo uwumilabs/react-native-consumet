@@ -78,6 +78,4 @@ exports.HiMovies = HiMovies;
 //   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0]!.id, movieInfo.id);
 //   // console.log(genre);
 // })();
-// Kept only while src/providers/meta imports the default; import { HiMovies } instead.
-exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map

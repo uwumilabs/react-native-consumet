@@ -20,100 +20,58 @@ import type {
  * Extractor registry type based on your registered extractors
  */
 export interface ExtractorRegistry {
-  AsianLoad: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  AsianLoad: new (ctx?: ExtractorContext) => {
     extract: (url: URL, isAlt?: boolean) => Promise<any>;
   };
-  Filemoon: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  Filemoon: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  GogoCDN: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  GogoCDN: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
   Kwik: (ctx?: ExtractorContext) => {
     extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
-  MixDrop: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  MixDrop: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  Mp4Player: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  Mp4Player: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  Mp4Upload: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  Mp4Upload: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  RapidCloud: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  RapidCloud: new (ctx?: ExtractorContext) => {
     extract: (url: URL, referer?: string) => Promise<any>;
   };
   MegaCloud: (ctx?: ExtractorContext) => {
     extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
-  StreamHub: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  StreamHub: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  StreamLare: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  StreamLare: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  StreamSB: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  StreamSB: new (ctx?: ExtractorContext) => {
     extract: (url: URL, isAlt?: boolean) => Promise<any>;
   };
-  StreamTape?: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  StreamTape?: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
   StreamWish: (ctx?: ExtractorContext) => {
     extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
-  VidMoly: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  VidMoly: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
-  VizCloud: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  VizCloud: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
   VidHide: (ctx?: ExtractorContext) => {
     extract: (url: PolyURL, referer?: string) => Promise<any>;
   };
-  Voe: new (
-    proxyConfig?: any,
-    adapter?: any
-  ) => {
+  Voe: new (ctx?: ExtractorContext) => {
     extract: (url: URL) => Promise<any>;
   };
   MegaUp: (ctx?: ExtractorContext) => {

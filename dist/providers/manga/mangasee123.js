@@ -164,6 +164,4 @@ exports.Mangasee123 = Mangasee123;
 //   console.log(chapterPages);
 //   console.log(mediaInfo, mangaInfo);
 // })();
-// Kept only while src/providers/meta imports the default; import { Mangasee123 } instead.
-exports.default = Mangasee123;
 //# sourceMappingURL=mangasee123.js.map
