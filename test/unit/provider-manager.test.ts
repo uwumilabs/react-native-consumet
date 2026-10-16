@@ -70,7 +70,7 @@ describe('registry ids and prototypes (EXT-2)', () => {
       entry('vegamovies').factoryName,
       entry('vegamovies') as any
     );
-    expect(new TMDB(undefined, movie)).toBeInstanceOf(TMDB);
+    expect(new TMDB('test-key', movie)).toBeInstanceOf(TMDB);
   });
 });
 

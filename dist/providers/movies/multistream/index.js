@@ -11,16 +11,22 @@ Object.defineProperty(exports, "__esModule", {
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../../../models");
 const utils_1 = require("./utils");
+const tmdb_api_key_1 = require("../../meta/tmdb-api-key");
 class MultiStream extends models_1.MovieParser {
   name = 'MultiStream';
   baseUrl = 'https://rivestream.org';
   apiUrl = 'https://api.themoviedb.org/3';
-  apiKey = '5201b54eb0968700e693a30576d7d4dc';
+  apiKey;
   logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
   classPath = 'MOVIES.MultiStream';
   supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
-  constructor(customBaseURL) {
+  /**
+   * @param customBaseURL base URL to use instead of the default
+   * @param apiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
+   */
+  constructor(customBaseURL, apiKey) {
     super();
+    this.apiKey = (0, tmdb_api_key_1.resolveTmdbApiKey)(apiKey, 'MOVIES.MultiStream');
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;

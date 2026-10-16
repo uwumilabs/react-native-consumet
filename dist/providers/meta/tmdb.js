@@ -12,24 +12,26 @@ const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const himovies_1 = __importDefault(require("../movies/himovies/himovies"));
+const tmdb_api_key_1 = require("./tmdb-api-key");
 /** The year of a TMDB result's release or first air date, or undefined when TMDB has no date. */
 const releaseYear = result => /^\d{4}/.exec(result?.release_date || result?.first_air_date || '')?.[0];
 class TMDB extends models_1.MovieParser {
-  apiKey;
   name = 'TMDB';
   baseUrl = 'https://www.themoviedb.org';
   apiUrl = 'https://api.themoviedb.org/3';
   logo = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
   classPath = 'META.TMDB';
   supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES, models_1.TvType.ANIME]);
+  apiKey;
   provider;
-  constructor() {
-    let apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '5201b54eb0968700e693a30576d7d4dc';
-    let provider = arguments.length > 1 ? arguments[1] : undefined;
-    let proxyConfig = arguments.length > 2 ? arguments[2] : undefined;
-    let adapter = arguments.length > 3 ? arguments[3] : undefined;
+  /**
+   * @param apiKey your TMDB API key. Without one, a key shared by every app that passes none is
+   * used, and a warning is logged once; TMDB can rate-limit or revoke that key at any time.
+   * @param provider movie provider to find the title on (default HiMovies)
+   */
+  constructor(apiKey, provider, proxyConfig, adapter) {
     super();
-    this.apiKey = apiKey;
+    this.apiKey = (0, tmdb_api_key_1.resolveTmdbApiKey)(apiKey, 'META.TMDB');
     this.provider = provider || new himovies_1.default();
   }
   /**

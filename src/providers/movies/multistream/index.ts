@@ -11,17 +11,23 @@ import {
   type ISearch,
 } from '../../../models';
 import { getMultiServers, getMultiSources } from './utils';
+import { resolveTmdbApiKey } from '../../meta/tmdb-api-key';
 
 class MultiStream extends MovieParser {
   override readonly name = 'MultiStream';
   protected override baseUrl = 'https://rivestream.org';
   protected apiUrl = 'https://api.themoviedb.org/3';
-  private apiKey: string = '5201b54eb0968700e693a30576d7d4dc';
+  private apiKey: string;
   protected override logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
   protected override classPath = 'MOVIES.MultiStream';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
-  constructor(customBaseURL?: string) {
+  /**
+   * @param customBaseURL base URL to use instead of the default
+   * @param apiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
+   */
+  constructor(customBaseURL?: string, apiKey?: string) {
     super();
+    this.apiKey = resolveTmdbApiKey(apiKey, 'MOVIES.MultiStream');
     if (customBaseURL) {
       if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
         this.baseUrl = customBaseURL;

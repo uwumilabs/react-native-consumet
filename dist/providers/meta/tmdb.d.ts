@@ -2,14 +2,19 @@ import { type ISearch, type IAnimeResult, type ISource, type IEpisodeServer, Mov
 import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import type { AxiosAdapter } from 'axios';
 declare class TMDB extends MovieParser {
-    private apiKey;
     readonly name = "TMDB";
     protected baseUrl: string;
     protected apiUrl: string;
     protected logo: string;
     protected classPath: string;
     supportedTypes: Set<TvType>;
+    private apiKey;
     private provider;
+    /**
+     * @param apiKey your TMDB API key. Without one, a key shared by every app that passes none is
+     * used, and a warning is logged once; TMDB can rate-limit or revoke that key at any time.
+     * @param provider movie provider to find the title on (default HiMovies)
+     */
     constructor(apiKey?: string, provider?: MovieParser | IMovieProvider, proxyConfig?: ProxyConfig, adapter?: AxiosAdapter);
     /**
      * @param type trending type: tv series, movie, people or all

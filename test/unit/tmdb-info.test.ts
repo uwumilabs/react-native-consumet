@@ -11,6 +11,7 @@ import movie from './fixtures/tmdb/movie-559969.json';
 // El Camino: A Breaking Bad Movie (movie 559969, 2019).
 const SHOW_ID = '84958';
 const MOVIE_ID = '559969';
+const API_KEY = 'test-key';
 
 const stubTmdb = (overrides: Record<string, unknown> = {}) =>
   jest.spyOn(metaHttp, 'get').mockImplementation(async (url: string) => {
@@ -45,7 +46,7 @@ const lokiEpisodes = [
 
 // Typed as IMovieInfo without a cast, as apps use it (checked by `tsc -p test/tsconfig.json`).
 const fetchInfo = (provider: IMovieProvider, id: string, type: string): Promise<IMovieInfo> =>
-  new TMDB(undefined, provider).fetchMediaInfo(id, type);
+  new TMDB(API_KEY, provider).fetchMediaInfo(id, type);
 
 const allEpisodes = (info: IMovieInfo) => (info.seasons ?? []).flatMap((s) => s.episodes);
 
@@ -324,7 +325,7 @@ describe('TMDB errors (META-7)', () => {
     jest.spyOn(metaHttp, 'get').mockRejectedValue(cause);
     const provider = fakeProvider([]);
 
-    await expectMetaError(new TMDB(undefined, provider).fetchMediaInfo('0', 'tv'), cause, 404);
+    await expectMetaError(new TMDB(API_KEY, provider).fetchMediaInfo('0', 'tv'), cause, 404);
     expect(provider.search).not.toHaveBeenCalled();
   });
 
@@ -338,13 +339,13 @@ describe('TMDB errors (META-7)', () => {
       return respond(url);
     });
 
-    await expectMetaError(new TMDB(undefined, fakeProvider([])).fetchMediaInfo(SHOW_ID, 'tv'), cause, 503);
+    await expectMetaError(new TMDB(API_KEY, fakeProvider([])).fetchMediaInfo(SHOW_ID, 'tv'), cause, 503);
   });
 
   it('throws a MetaError when search or trending fails', async () => {
     const cause = httpError(429);
     jest.spyOn(metaHttp, 'get').mockRejectedValue(cause);
-    const tmdb = new TMDB(undefined, fakeProvider([]));
+    const tmdb = new TMDB(API_KEY, fakeProvider([]));
 
     await expectMetaError(tmdb.search('loki'), cause, 429);
     await expectMetaError(tmdb.fetchTrending('all'), cause, 429);

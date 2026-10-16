@@ -43,7 +43,7 @@ describe('TMDB search query encoding (META-8)', () => {
   it('MultiStream encodes its TMDB search query the same way', async () => {
     const get = jest.spyOn(axios, 'get').mockResolvedValue({ data: search });
 
-    const result = await new MultiStream().search(QUERY);
+    const result = await new MultiStream(undefined, 'test-key').search(QUERY);
 
     const url = new URL(get.mock.calls[0]![0] as string);
     expect(url.hash).toBe('');

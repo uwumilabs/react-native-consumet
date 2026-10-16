@@ -7,7 +7,11 @@ declare class MultiStream extends MovieParser {
     protected logo: string;
     protected classPath: string;
     supportedTypes: Set<TvType>;
-    constructor(customBaseURL?: string);
+    /**
+     * @param customBaseURL base URL to use instead of the default
+     * @param apiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
+     */
+    constructor(customBaseURL?: string, apiKey?: string);
     /**
      *
      * @param query search query string

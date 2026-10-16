@@ -18,6 +18,7 @@ import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import { calculateStringSimilarity } from '../../utils';
 import type { AxiosAdapter } from 'axios';
 import HiMovies from '../movies/himovies/himovies';
+import { resolveTmdbApiKey } from './tmdb-api-key';
 
 /** What TMDB knows about a title, used to pick the matching provider result. */
 type TitleHints = {
@@ -40,15 +41,22 @@ class TMDB extends MovieParser {
   protected override classPath = 'META.TMDB';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES, TvType.ANIME]);
 
+  private apiKey: string;
   private provider: MovieParser | IMovieProvider;
 
+  /**
+   * @param apiKey your TMDB API key. Without one, a key shared by every app that passes none is
+   * used, and a warning is logged once; TMDB can rate-limit or revoke that key at any time.
+   * @param provider movie provider to find the title on (default HiMovies)
+   */
   constructor(
-    private apiKey: string = '5201b54eb0968700e693a30576d7d4dc',
+    apiKey?: string,
     provider?: MovieParser | IMovieProvider,
     proxyConfig?: ProxyConfig,
     adapter?: AxiosAdapter
   ) {
     super();
+    this.apiKey = resolveTmdbApiKey(apiKey, 'META.TMDB');
     this.provider = provider || new HiMovies();
   }
 
