@@ -2,7 +2,10 @@
 
 This guide outlines the process of adding a new content provider (e.g., for anime, movies, manga, or light novels) to the `react-native-consumet` library.
 
+Anime and movie providers ship through the extension registry: you write a factory, add a registry entry, and commit. The build, the published file, its URL and its hash are generated, and apps load the provider without a library release.
+
 ## Table of Contents
+
 - [Understanding Providers and Extractors](#understanding-providers-and-extractors)
 - [Step 1: Choose the Right Category](#step-1-choose-the-right-category)
 - [Step 2: Create the Provider File](#step-2-create-the-provider-file)
@@ -10,7 +13,13 @@ This guide outlines the process of adding a new content provider (e.g., for anim
   - [Core Methods to Implement](#core-methods-to-implement)
   - [Using `ProviderContext`](#using-providercontext)
   - [Integrating Extractors](#integrating-extractors)
+  - [Declaring Capabilities](#declaring-capabilities)
+  - [Native Module](#native-module)
 - [Step 4: Add to `extension-registry.json`](#step-4-add-to-extension-registryjson)
+  - [Compatibility: `minContextVersion` and `schemaVersion`](#compatibility-mincontextversion-and-schemaversion)
+  - [What CI checks](#what-ci-checks)
+  - [Removing old published versions](#removing-old-published-versions)
+- [Optional: Bundle a Provider Class](#optional-bundle-a-provider-class)
 - [Step 5: Write Tests](#step-5-write-tests)
 - [Step 6: Update Documentation](#step-6-update-documentation)
 - [Step 7: Build and Verify](#step-7-build-and-verify)
@@ -22,144 +31,172 @@ This guide outlines the process of adding a new content provider (e.g., for anim
 
 Before you start, it's crucial to understand the distinction between **Providers** and **Extractors** in this project:
 
-*   **Providers (`src/providers`)**: These are responsible for fetching metadata and high-level media information from external APIs or websites. They handle:
-    *   Searching for content (e.g., anime by title).
-    *   Fetching detailed information about a specific media item (e.g., episode list for an anime).
-    *   Fetching episode servers (links to where the actual video content is hosted).
-    *   They act as the "brains" for a specific media type.
+- **Providers (`src/providers`)**: These are responsible for fetching metadata and high-level media information from external APIs or websites. They handle:
+  - Searching for content (e.g., anime by title).
+  - Fetching detailed information about a specific media item (e.g., episode list for an anime).
+  - Fetching episode servers (links to where the actual video content is hosted).
+  - They act as the "brains" for a specific media type.
 
-*   **Extractors (`src/extractors`)**: These are responsible for the low-level task of scraping and extracting actual video sources (and subtitles) from specific hosting websites (e.g., MegaCloud, StreamSB). They deal with:
-    *   Making web requests to video hosting sites.
-    *   Parsing HTML (using `cheerio`).
-    *   Handling any encryption/decryption required by the hosting site (using `crypto-js`).
-    *   They are the "hands" that interact directly with the content sources.
+- **Extractors (`src/extractors`)**: These are responsible for the low-level task of scraping and extracting actual video sources (and subtitles) from specific hosting websites (e.g., MegaCloud, VidHide). They deal with:
+  - Making web requests to video hosting sites.
+  - Parsing HTML (using `cheerio`).
+  - Handling any encryption/decryption required by the hosting site (using `crypto-js`).
+  - They are the "hands" that interact directly with the content sources.
 
 **Key Relationship**: Providers often delegate the task of obtaining direct media links to extractors. If a provider uses a common video hosting site, you'll likely use an existing extractor. If it uses a unique or custom hosting solution, you might need to create a new extractor first.
 
 ## Step 1: Choose the Right Category
 
 Providers are categorized by media type. Determine if your new provider is for:
-*   Anime (`src/providers/anime`)
-*   Movies (`src/providers/movies`)
-*   Manga (`src/providers/manga`)
-*   Light Novels (`src/providers/light-novels`)
-*   Meta (for metadata services like Anilist, TMDB) (`src/providers/meta`)
+
+- Anime (`src/providers/anime`)
+- Movies (`src/providers/movies`)
+- Manga (`src/providers/manga`)
+- Light Novels (`src/providers/light-novels`)
+- Meta (for metadata services like Anilist, TMDB) (`src/providers/meta`)
+
+Only anime and movie providers can be loaded from the registry: `ProviderManager` requires `search`, `fetchEpisodeServers`, `fetchEpisodeSources` and `fetchAnimeInfo` (anime) or `fetchMediaInfo` (movies). Manga, light novel and meta providers are bundled classes (extending `MangaParser`, `LightNovelParser`, or `AnimeParser` / `MovieParser` for meta providers) exported from the category's `index.ts`, so they need a library release. The rest of this guide covers registry providers.
 
 ## Step 2: Create the Provider File
 
-Navigate to the appropriate category directory (e.g., `src/providers/anime/`) and create a new TypeScript file for your provider (e.g., `myanimewebsite.ts`).
+Create a folder for your provider in the category directory and a factory file in it named `create-<id>.ts`, e.g. `src/providers/anime/myanimewebsite/create-myanimewebsite.ts`. The build bundles exactly this file (see [Step 4](#step-4-add-to-extension-registryjson)).
 
-Inside this file, you'll typically export a function that creates your provider instance. This function will receive a `ProviderContext` object.
+The factory receives a `ProviderContext` and the base URL from the registry entry, and returns a plain object with the provider's fields and methods:
 
 ```typescript
-// src/providers/anime/myanimewebsite.ts
-import { ProviderContext, AnimeParser, type ISearch, type IAnimeInfo, type ISource, type IEpisodeServer } from '../../models';
+// src/providers/anime/myanimewebsite/create-myanimewebsite.ts
+import {
+  type IAnimeInfo,
+  type IAnimeResult,
+  type IEpisodeServer,
+  type ISearch,
+  type ISource,
+  type ProviderCapabilities,
+  type ProviderConfig,
+  type ProviderContext,
+} from '../../../models';
 
-export function createMyAnimeWebsite(ctx: ProviderContext) {
-  const { axios, load, URL, URLSearchParams, extractors, enums } = ctx;
-  const { StreamingServers } = enums; // Access enums like StreamingServers
+export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: string) {
+  const { axios, load, PolyURL, extractors, createCustomBaseUrl } = ctx;
 
-  // Define your base URL
-  const baseUrl = 'https://www.myanimewebsite.com';
+  // The registry entry's `baseUrl` arrives as customBaseURL, so a domain move is a registry-only change
+  const baseUrl = createCustomBaseUrl('https://www.myanimewebsite.com', customBaseURL);
 
-  // Implement your provider logic here
-  class MyAnimeWebsite extends AnimeParser {
-    readonly name = 'MyAnimeWebsite';
-    protected baseUrl = baseUrl;
+  const config: ProviderConfig = {
+    name: 'MyAnimeWebsite',
+    languages: 'en',
+    classPath: 'ANIME.MyAnimeWebsite',
+    baseUrl,
+    logo: `${baseUrl}/favicon.ico`,
+    isNSFW: false,
+    isWorking: true,
+    isDubAvailableSeparately: false,
+  };
 
-    // Implement core methods (search, fetchAnimeInfo, fetchEpisodeSources, fetchEpisodeServers)
-    // ...
-  }
+  const search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
+    const { data } = await axios.get(`${baseUrl}/search?q=${encodeURIComponent(query)}&page=${page}`);
+    const $ = load(data);
 
-  return new MyAnimeWebsite();
+    const results: IAnimeResult[] = [];
+    $('div.anime-item').each((_, el) => {
+      const href = $(el).find('a').attr('href') ?? '';
+      results.push({
+        id: href.split('/').pop() ?? '',
+        title: $(el).find('h3').text().trim(),
+        image: $(el).find('img').attr('src'),
+      });
+    });
+
+    return { currentPage: page, hasNextPage: false, results };
+  };
+
+  const fetchAnimeInfo = async (id: string): Promise<IAnimeInfo> => {
+    const { data } = await axios.get(`${baseUrl}/anime/${id}`);
+    const $ = load(data);
+    return {
+      id,
+      title: $('h1').text().trim(),
+      episodes: $('ul.episodes li a')
+        .map((i, el) => ({ id: $(el).attr('data-id') ?? '', number: i + 1 }))
+        .get(),
+    };
+  };
+
+  const fetchEpisodeServers = async (episodeId: string): Promise<IEpisodeServer[]> => {
+    const { data } = await axios.get(`${baseUrl}/ajax/servers/${episodeId}`);
+    const $ = load(data);
+    return $('.server')
+      .map((_, el) => ({ name: $(el).text().trim().toLowerCase(), url: $(el).attr('data-link') ?? '' }))
+      .get();
+  };
+
+  const fetchEpisodeSources = async (episodeId: string, server: string = 'megacloud'): Promise<ISource> => {
+    const servers = await fetchEpisodeServers(episodeId);
+    const picked = servers.find((s) => s.name.startsWith(server)) ?? servers[0];
+    if (!picked) throw new Error(`No servers found for episode ${episodeId}`);
+
+    // Runs the registry version of MegaCloud when the app's registry has one, else the bundled one
+    return await extractors.MegaCloud(ctx).extract(new PolyURL(picked.url), `${baseUrl}/`);
+  };
+
+  return {
+    ...config,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
+    search,
+    fetchAnimeInfo,
+    fetchEpisodeServers,
+    fetchEpisodeSources,
+  };
 }
+
+export type MyAnimeWebsiteProviderInstance = ReturnType<typeof createMyAnimeWebsite>;
+export default createMyAnimeWebsite;
 ```
+
+Export the factory by name (`export function createMyAnimeWebsite`); the registry's `factoryName` must match it. A default export can be added too.
 
 ## Step 3: Implement the Provider Logic
 
-Your provider class should extend the appropriate base parser (`AnimeParser`, `MovieParser`, `MangaParser`, `LightNovelParser`) and implement its abstract methods.
-
 ### Core Methods to Implement
 
-*   `search(query: string, ...args: any[]): Promise<ISearch<T>>`: Searches for content based on a query.
-*   `fetchMediaInfo(mediaId: string, ...args: any[]): Promise<TInfo>`: Fetches detailed information about a media item.
-*   `fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>`: Fetches video sources for a specific episode. This is where you'll typically interact with extractors.
-*   `fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>`: Fetches available servers for an episode.
+`ProviderManager` checks that these methods exist before it hands a loaded provider to an app:
+
+- `search(query: string, ...args: any[]): Promise<ISearch<T>>`: Searches for content based on a query.
+- `fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>` (anime) or `fetchMediaInfo(mediaId: string, ...args: any[]): Promise<IMovieInfo>` (movies): Fetches detailed information about a media item, including its episodes.
+- `fetchEpisodeServers(episodeId: string, ...args: any[]): Promise<IEpisodeServer[]>`: Fetches available servers for an episode.
+- `fetchEpisodeSources(episodeId: string, ...args: any[]): Promise<ISource>`: Fetches video sources for a specific episode. This is where you'll typically interact with extractors.
+
+Movie providers also set `supportedTypes` (a `Set` of `TvType` values). Give movie results `type`, `releaseDate` and, for TV shows, `seasons`, so `META.TMDB` can match them.
 
 ### Using `ProviderContext`
 
-The `ProviderContext` (`ctx`) object provides essential utilities:
-*   `axios`: An Axios instance for making HTTP requests.
-*   `load`: A Cheerio `load` function for parsing HTML.
-*   `URL`, `URLSearchParams`: Polyfills for URL manipulation.
-*   `extractors`: An object containing dynamically loadable extractors (e.g., `extractors.MegaCloud`).
-*   `enums`: Access to shared enums like `StreamingServers`, `MediaStatus`, `SubOrDub`.
+The `ProviderContext` (`ctx`) object provides essential utilities. Prefer it over imports: the bundle can only `require` a few modules (see [Step 4](#step-4-add-to-extension-registryjson)).
 
-**Example using `axios` and `load`:**
+- `axios`: The app's Axios instance for making HTTP requests (15 s timeout by default).
+- `load`: A Cheerio `load` function for parsing HTML.
+- `CryptoJS`, `USER_AGENT`: crypto-js and the default User-Agent string.
+- `PolyURL`, `PolyURLSearchParams`: URL and URLSearchParams implementations. Use them instead of the global `URL`, which is incomplete in React Native.
+- `createCustomBaseUrl(defaultUrl, customUrl?)`: Picks the registry's base URL when one is passed.
+- `extractors`: The extractors, e.g. `extractors.MegaCloud(ctx)` (see below).
+- `enums`: The library's enums: `StreamingServers`, `MediaFormat`, `MediaStatus`, `SubOrDub`, `WatchListType`, `TvType`, `Genres`, `Topics`.
+- `AnimeParser`, `MovieParser`, `MangaParser`: The base classes.
+- `NativeConsumet`: The native module (WebView requests, DDoS-Guard cookies, script deobfuscation); see [Native Module](#native-module).
 
-```typescript
-// Inside your provider class
-async search(query: string): Promise<ISearch<IAnimeResult>> {
-  const searchUrl = `${this.baseUrl}/search?q=${encodeURIComponent(query)}`;
-  const { data } = await ctx.axios.get(searchUrl);
-  const $ = ctx.load(data);
-
-  const results: IAnimeResult[] = [];
-  $('div.anime-item').each((i, el) => {
-    results.push({
-      id: $(el).find('a').attr('href')?.split('/').pop() || '',
-      title: $(el).find('h3').text().trim(),
-      image: $(el).find('img').attr('src'),
-      // ... other fields
-    });
-  });
-
-  return { results, currentPage: 1, hasNextPage: false };
-}
-```
+The full type is `ProviderContext` in [`src/models/provider-context.ts`](../../src/models/provider-context.ts).
 
 ### Integrating Extractors
 
-When implementing `fetchEpisodeSources`, you'll use extractors provided by the `ProviderContext`.
+Call extractors through `ctx.extractors`, passing the context to function extractors: `extractors.MegaCloud(ctx).extract(new PolyURL(embedUrl), referer)`, as in the example above. When the provider is loaded by a `ProviderManager` whose registry lists the extractor, this runs the registry version, hash-checked and cached, and falls back to the bundled one if the registry copy can't be used. The `ExtractorRegistry` type in [`src/models/provider-context.ts`](../../src/models/provider-context.ts) lists each extractor's `extract` signature; older ones are classes (`new extractors.MixDrop()`).
 
-```typescript
-// Inside your provider class's fetchEpisodeSources method
-async fetchEpisodeSources(episodeId: string, server: StreamingServers): Promise<ISource> {
-  // First, get the embed URL for the chosen server
-  const embedUrl = await this.getEmbedUrlForServer(episodeId, server); // Your custom method
+List the extractors your provider uses in the entry's `extractors` field. Server names resolve to extractors by the longest registry `name` or alias they start with (`megacloud-hd-1` → MegaCloud), so name your servers after their extractor.
 
-  if (!embedUrl) {
-    throw new Error(`No embed URL found for server: ${server}`);
-  }
-
-  let sources: ISource;
-  switch (server) {
-    case StreamingServers.MegaCloud:
-      // Use the MegaCloud extractor from the context
-      const megacloudExtractor = ctx.extractors.MegaCloud;
-      sources = await megacloudExtractor(ctx).extract(new ctx.URL(embedUrl), this.baseUrl);
-      break;
-    case StreamingServers.StreamSB:
-      // Use the StreamSB extractor
-      const streamsbExtractor = ctx.extractors.StreamSB;
-      sources = await streamsbExtractor(ctx).extract(new ctx.URL(embedUrl));
-      break;
-    // Add cases for other extractors your provider uses
-    default:
-      throw new Error(`Unsupported server: ${server}`);
-  }
-
-  return sources;
-}
-```
+A new extractor is a registry entry too. Write `src/extractors/<name>.ts` exporting a function named exactly like the entry's `name` (`export function NewHost(ctx: ExtractorContext): IVideoExtractor`), and add an entry to the registry's `extractors` array with `name`, `version`, `minContextVersion`, `distFile` (`dist/bundles/extractors/<name>.js`) and optional `aliases`. To call it as `ctx.extractors.NewHost` with types, also add it to `defaultExtractors` in [`src/utils/extension-utils.ts`](../../src/utils/extension-utils.ts) and to `ExtractorRegistry`.
 
 ### Declaring Capabilities
 
-Meta providers decide how to treat your provider from what it declares, not from its class, so a provider shipped only through the registry gets the same treatment as a built-in one. Return a `capabilities` object from your factory:
+Meta providers decide how to treat your provider from what it declares, not from its class, so a provider shipped only through the registry gets the same treatment as a built-in one. Return a `capabilities` object from your factory, as in the example above:
 
 ```typescript
-import { type ProviderCapabilities } from '../../../models';
-
 return {
   ...config,
   capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
@@ -169,12 +206,53 @@ return {
 };
 ```
 
-| Capability | Meaning |
-|---|---|
+| Capability       | Meaning                                                                                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `aniZipEpisodes` | `META.Anilist` merges your episode list with ani.zip titles, images and episode keys. Set it when your episode `number`s follow the anime's own numbering. |
-| `subDub` | `'combined'`: one entry whose episode ids end in `$both`, and the caller picks `$sub` or `$dub`. `'separate'`: sub and dub are separate entries. |
+| `subDub`         | `'combined'`: one entry whose episode ids end in `$both`, and the caller picks `$sub` or `$dub`. `'separate'`: sub and dub are separate entries.           |
+
+With `aniZipEpisodes`, `META.Anilist` keys your episodes by AniDB number (`uniqueId`), matching them to ani.zip by `number` first; see [Migrating stored episode `uniqueId`s](../migrations/uniqueid.md). Without it, your episodes are keyed by their own `number`.
 
 If your provider has a class wrapper, copy the field across: `this.capabilities = this.instance.capabilities;`.
+
+### Native Module
+
+`ctx.NativeConsumet` gives extension code the library's native module: `makeGetRequestWithWebView` and `makePostRequestWithWebView` (load a page in a hidden WebView, with its cookies), `getDdosGuardCookiesWithWebView` and `bypassDdosGuard`, a plain `makePostRequest`, and `deobfuscateScript` (runs the Synchrony deobfuscator). What each method resolves, the `code` of each rejection, and how WebView requests treat sub-resources, HTTP errors and cookies are documented in [`src/NativeConsumet.ts`](../../src/NativeConsumet.ts). Android and iOS follow that contract. In short:
+
+- Rejections are Errors with a `code`: `WEBVIEW_ERROR` (the page failed to load), `TIMEOUT` (it didn't finish within 30 s), `COOKIE_ERROR`, `ERROR`, `HTTP_ERROR`, and `NetworkError` / `ParseError` / `EvaluationError` from `deobfuscateScript`.
+- In WebView requests only the main document decides the outcome. Failed images, scripts and iframes are ignored, and HTTP error statuses (403, 503…) resolve with the page.
+
+Two platform differences remain:
+
+- **Android WebView POSTs** can't carry custom headers. `makePostRequestWithWebView` sends only `User-Agent` and `Cookie` there, and the body as `application/x-www-form-urlencoded`.
+- **iOS WebView cookies** live in an in-memory store shared by this module's WebViews only. They carry over between calls but are separate from the app's own WebViews and are cleared when the app restarts. Android uses the app-wide `CookieManager`.
+
+Registry code also runs in apps built with older native code (1.6.0 and earlier), which behaved differently. Code that must work there should:
+
+- keep a null check on `deobfuscateScript`'s result (older iOS resolved `null` on failure);
+- accept `{ cookie }` as well as a string from `getDdosGuardCookiesWithWebView` (older Android resolved an object);
+- check `status === 'success'` on WebView request results (older Android resolved timeouts with `status: 'timeout'` and no `html` or `response`).
+
+```typescript
+// src/providers/anime/myanimewebsite/load-protected-page.ts
+import type { ProviderContext } from '../../../models';
+
+export async function loadProtectedPage(ctx: ProviderContext, url: string, packedScript: string) {
+  const { NativeConsumet } = ctx;
+
+  // Current builds resolve the Cookie header string; older Android builds resolved { cookie }
+  const raw: unknown = await NativeConsumet.getDdosGuardCookiesWithWebView(url);
+  const cookie = typeof raw === 'string' ? raw : ((raw as { cookie?: string } | null)?.cookie ?? '');
+
+  const page = await NativeConsumet.makeGetRequestWithWebView(url, { Cookie: cookie });
+  if (page.status !== 'success') throw new Error(`WebView request for ${url} failed: ${page.status}`);
+
+  const script = await NativeConsumet.deobfuscateScript(packedScript);
+  if (!script) throw new Error('Could not deobfuscate the player script');
+
+  return { html: page.html, script };
+}
+```
 
 ## Step 4: Add to `extension-registry.json`
 
@@ -182,33 +260,36 @@ Once your provider is implemented, you need to register it in `src/extension-reg
 
 Add a new entry to the `extensions` array:
 
-```json
+```jsonc
 {
   "id": "myanimewebsite",
   "name": "MyAnimeWebsite",
   "description": "A new provider for anime content from MyAnimeWebsite.com",
   "version": "1.0.0",
+  "minContextVersion": 1, // Lowest CONTEXT_VERSION the code runs on (see below)
   "author": {
     "name": "Your Name",
-    "url": "https://github.com/your-github"
+    "url": "https://github.com/your-github",
   },
-  "category": "anime", // or movies, manga, light-novels, meta
+  "category": "anime", // or movies
   "distFile": "dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js", // Bundle to publish
   "factoryName": "createMyAnimeWebsite", // The name of the function you export
-  "baseUrl": "https://www.myanimewebsite.com",
+  "baseUrl": "https://www.myanimewebsite.com", // Passed to the factory as customBaseURL
   "logo": "https://www.myanimewebsite.com/favicon.ico", // Link to provider's logo/favicon
   "languages": ["en"],
   "nsfw": false,
-  "status": "beta", // or stable, deprecated
+  "status": "beta", // or stable, alpha, deprecated
   "lastUpdated": "YYYY-MM-DDTHH:MM:SSZ", // Current UTC timestamp
-  "extractors": ["MegaCloud", "StreamSB"], // List of extractors your provider uses
+  "extractors": ["MegaCloud"], // List of extractors your provider uses
   "subbed": true, // For anime providers
   "dubbed": true, // For anime providers
   "isSourceEmbed": true, // true if the provider uses embed links that require extractors
   "isSourceDirect": false, // true if fetchEpisodeSources returns playable files itself (server names are not extractors)
-  "haveMultiServers": true // true if fetchEpisodeServers lists several servers the user can pick from
+  "haveMultiServers": true, // true if fetchEpisodeServers lists several servers the user can pick from
 }
 ```
+
+The comments are for this guide only; the registry is plain JSON.
 
 Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
 
@@ -218,23 +299,30 @@ Don't write `main` or `sha256` yourself; leave them out of a new entry. Committi
 yarn build && node scripts/prepare-registry.js
 ```
 
-`prepare-registry` exits with an error, and writes nothing, if an entry's `distFile` is missing or isn't a `.js` file under `dist/`, or if `main` is set to a URL it didn't write (anything other than this repo's `registry/<kind>/<id>/<version>.js` URL for the same entry).
+`prepare-registry` exits with an error, and writes nothing, if an entry's `distFile` is missing or isn't a `.js` file under `dist/`, if `main` is set to a URL it didn't write (anything other than this repo's `registry/<kind>/<id>/<version>.js` URL for the same entry), or if the resulting registry fails the library's own schema check (`validateRegistry`, e.g. a `factoryName` that isn't a JavaScript identifier).
 
 `yarn build` bundles every registry entry into one file. The `distFile` path names the bundle, and its source is the matching file under `src/`: `dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js` is built from `src/providers/anime/myanimewebsite/create-myanimewebsite.ts`. Relative imports, such as a helper or another extractor, are inlined into the bundle. The runtime supplies only these modules:
 
-| Import | What extension code gets |
-|---|---|
-| `axios`, `cheerio`, `crypto-js` | The context's axios instance, `{ load }`, and CryptoJS |
-| anything under `src/models` | The base parsers and the library's enums |
+| Import                                               | What extension code gets                                                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `axios`, `cheerio`, `crypto-js`                      | The context's axios instance, `{ load }`, and CryptoJS                   |
+| anything under `src/models`                          | The base parsers and the library's enums                                 |
 | `src/utils` (index) and the `create-*-context` files | `createProviderContext` / `createExtractorContext` returning the context |
 
 Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports.
 
-Export your factory by name (`export function createMyAnimeWebsite`), as well as any default export.
-
-`prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match.
+`prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match, and refuse entries without a `sha256`.
 
 **Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it, and the pre-commit hook stops the commit. Bump `version` in the entry, stage it, and commit again. Run `yarn registry:check` to verify the registry without writing anything, and add `--base origin/main` to also run the version checks CI runs.
+
+### Compatibility: `minContextVersion` and `schemaVersion`
+
+`CONTEXT_VERSION` (exported by the library, currently 1) versions what the library gives extension code: the `ctx` helpers, the modules it can `require`, and its globals. Each entry's `minContextVersion` is the lowest `CONTEXT_VERSION` its code runs on.
+
+- Set `"minContextVersion": 1` for code that only uses what this guide describes.
+- If your provider needs a context helper that older libraries lack (a new `ctx` field, module or native method), the library change that adds it bumps `CONTEXT_VERSION` in [`src/utils/registry-schema.ts`](../../src/utils/registry-schema.ts), and your entry sets `minContextVersion` to the new value. Apps on older libraries then still list the entry, but refuse to load it with a `RegistryError` (`INCOMPATIBLE_ENTRY`, `updateRequired: true`) instead of failing mid-call with `undefined is not a function`. Extractor entries work the same way.
+
+The registry's top-level `schemaVersion` (`REGISTRY_SCHEMA_VERSION`, currently 1) is the format of the file itself. Adding a provider or an optional field never changes it; it goes up only when a field is removed, renamed or changes meaning, which older libraries would misread. See [Registry Versions and Compatibility](../extension-integration.md#registry-versions-and-compatibility).
 
 ### What CI checks
 
@@ -259,64 +347,67 @@ Deleting a published file breaks every app whose registry still points at it: in
 
 Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
 
+## Optional: Bundle a Provider Class
+
+A registry provider needs no class and no library release. Add a class only if the provider should also ship inside the library, as `ANIME.MyAnimeWebsite`:
+
+1. Write `src/providers/anime/myanimewebsite/myanimewebsite.ts`: a class extending `AnimeParser` (or `MovieParser`) that builds its instance with `createMyAnimeWebsite(createProviderContext(), customBaseURL)` and copies the fields and methods across, including `capabilities`. `src/providers/anime/anineko/anineko.ts` is a short example.
+2. Export the class and the factory from `src/providers/anime/index.ts`.
+3. Add a lazy getter for the class to `animeProviders` (or `movieProviders`) in [`src/utils/provider-maps.ts`](../../src/utils/provider-maps.ts), keyed by the registry entry's `name`. `ProviderManager` then gives loaded instances that class's prototype, so `instanceof MyAnimeWebsite` holds. Without it they get the `AnimeParser` / `MovieParser` prototype. The getters use `require` to avoid import cycles; copy an existing one.
+4. Add the registry id to `KnownAnimeProviderId` (or `KnownMovieProviderId`) in the same file, so it autocompletes in `getAnimeProvider`. Other ids type-check anyway.
+
 ## Step 5: Write Tests
 
-Create a new test file in the `test` directory corresponding to your provider's category (e.g., `test/anime/myanimewebsite.test.ts`).
+Tests live in `test/`. `yarn test` runs the offline unit tests under `test/unit/`, which use recorded responses and mocks and must not touch the network. `yarn test:live` also runs the suites in the category folders (`test/anime/`, `test/movies/`…), which call the real sites.
 
-Use `jest` to write unit and integration tests for your provider's `search`, `fetchMediaInfo`, `fetchEpisodeSources`, and `fetchEpisodeServers` methods.
+An offline test builds the factory with a context whose `axios` returns a recorded page:
 
 ```typescript
-// test/anime/myanimewebsite.test.ts
-import { ProviderManager } from '../../src/utils/ProviderManager';
-import { AnimeParser } from '../../src/models';
+// test/unit/myanimewebsite.test.ts
+import { createProviderContext } from '../../src/utils/create-provider-context';
+import { createMyAnimeWebsite } from '../../src/providers/anime/myanimewebsite/create-myanimewebsite';
 
-describe('MyAnimeWebsite Provider', () => {
-  let provider: AnimeParser;
+const searchPage = `<div class="anime-item"><a href="/anime/one-piece"><h3>One Piece</h3><img src="/op.jpg"></a></div>`;
 
-  beforeAll(async () => {
-    const manager = new ProviderManager();
-    provider = await manager.getAnimeProvider('myanimewebsite'); // Use your provider's ID
+describe('MyAnimeWebsite', () => {
+  it('parses search results', async () => {
+    const get = jest.fn().mockResolvedValue({ data: searchPage });
+    const provider = createMyAnimeWebsite(createProviderContext({ axios: { get } as any }));
+
+    const results = await provider.search('one piece');
+
+    expect(get).toHaveBeenCalledWith('https://www.myanimewebsite.com/search?q=one%20piece&page=1');
+    expect(results.results).toEqual([{ id: 'one-piece', title: 'One Piece', image: '/op.jpg' }]);
   });
-
-  test('should search for anime', async () => {
-    const results = await provider.search('Attack on Titan');
-    expect(results.results).toBeInstanceOf(Array);
-    expect(results.results.length).toBeGreaterThan(0);
-    expect(results.results[0]).toHaveProperty('id');
-    expect(results.results[0]).toHaveProperty('title');
-  });
-
-  test('should fetch anime info', async () => {
-    const searchResults = await provider.search('Jujutsu Kaisen');
-    const animeId = searchResults.results[0]?.id;
-    expect(animeId).toBeDefined();
-
-    const info = await provider.fetchAnimeInfo(animeId!);
-    expect(info).toHaveProperty('title');
-    expect(info).toHaveProperty('episodes');
-    expect(info.episodes?.length).toBeGreaterThan(0);
-  });
-
-  test('should fetch episode sources', async () => {
-    const searchResults = await provider.search('One Piece');
-    const animeId = searchResults.results[0]?.id;
-    expect(animeId).toBeDefined();
-
-    const info = await provider.fetchAnimeInfo(animeId!);
-    const episodeId = info.episodes?.[0]?.id;
-    expect(episodeId).toBeDefined();
-
-    const sources = await provider.fetchEpisodeSources(episodeId!);
-    expect(sources).toHaveProperty('sources');
-    expect(sources.sources.length).toBeGreaterThan(0);
-    expect(sources.sources[0]).toHaveProperty('url');
-  });
-
-  // Add more tests for edge cases, error handling, etc.
 });
 ```
 
-Run your tests using `yarn test`.
+A live test runs the same factory against the site. It can't load the provider through `ProviderManager` yet: the registry's `main` URL only exists once the change is merged.
+
+```typescript
+// test/anime/myanimewebsite.test.ts
+import { createProviderContext } from '../../src/utils/create-provider-context';
+import { createMyAnimeWebsite } from '../../src/providers/anime/myanimewebsite/create-myanimewebsite';
+
+jest.setTimeout(120000);
+
+const provider = createMyAnimeWebsite(createProviderContext());
+
+test('searches, fetches info and fetches sources', async () => {
+  const search = await provider.search('One Piece');
+  const first = search.results[0];
+  expect(first).toBeDefined();
+
+  const info = await provider.fetchAnimeInfo(first!.id);
+  const episode = info.episodes?.[0];
+  expect(episode).toBeDefined();
+
+  const sources = await provider.fetchEpisodeSources(episode!.id);
+  expect(sources.sources.length).toBeGreaterThan(0);
+});
+```
+
+Run your tests using `yarn test` and `yarn test:live`.
 
 ## Step 6: Update Documentation
 
