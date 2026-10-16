@@ -1,5 +1,46 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# Registry tab: load modes
+
+The **Registry** tab loads its anime and movie providers through one `ProviderManager`, built from the
+bundled `ExtensionRegistry`. Its **Load from** toggle picks where the provider code comes from:
+
+- **Registry** (default) is the path apps use. `getAnimeProvider` / `getMovieProvider` fetch the
+  entry's `main` URL (`registry/extensions/<id>/<version>.js` on GitHub `main`). They check the code
+  against the entry's `sha256` before running it, and refuse entries that need a newer library. This
+  check can't be skipped.
+- **Local dist** is for working on a provider before it's published. It runs the code in
+  `src/registry/local-dist-map.ts` with `executeProviderCode` and checks it against the same
+  `sha256`, so a stale map shows up as an integrity mismatch. You can then choose
+  **Run unverified**, and the screen shows **integrity check SKIPPED** for that load.
+
+In both modes, providers load their extractors through the manager's shared `ExtractorManager`, which
+fetches and verifies the registry version and falls back to the bundled extractor.
+
+Under the header, the screen shows what it loaded: the version, the mode, and the verified hash and
+source URL. When a load fails, it shows the error and what to do about it:
+
+| Error | Meaning |
+| --- | --- |
+| Integrity error (`IntegrityError`) | The code doesn't match the registry `sha256`, so it didn't run. In Registry mode, a published file changed, and that must never happen: publish a new version instead. In Local dist mode, the map is stale: regenerate it (below). |
+| Registry error, update required (`RegistryError` with `updateRequired`) | The entry (or registry) needs a newer `react-native-consumet` than the app has. |
+| Registry error (`RegistryError`) | The registry entry is invalid. |
+| Not found (404) | `main` URLs point at `refs/heads/main`. A version that is committed but not yet pushed to `main` (or was pruned from it) isn't there. Push it, or use **Local dist**. |
+| Network error | GitHub couldn't be reached, or returned another HTTP error. |
+
+## Regenerating the local dist map
+
+The map holds each registry entry's `distFile` (the build output its `sha256` is computed from):
+
+```sh
+yarn build                         # from the repo root: rebuild dist/bundles
+node scripts/prepare-registry.js   # publish changed entries (bump their version) and refresh sha256
+yarn example gen:local-dist        # rewrite apps/src/registry/local-dist-map.ts
+```
+
+If you skip `prepare-registry`, Local dist mode reports the new code as an integrity mismatch, because
+the registry still has the old hash. Use **Run unverified** while you iterate.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

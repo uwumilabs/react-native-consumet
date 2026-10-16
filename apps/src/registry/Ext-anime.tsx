@@ -1,9 +1,10 @@
 /**
  * Ext-anime — registry-powered anime browser.
  *
- * Providers are fetched dynamically from the extension registry (GitHub CDN)
- * via ProviderManager. Everything else — search, detail sheet, player — is
- * identical to the non-registry AnimeScreen.
+ * Providers come from the extension registry through ProviderManager, in the
+ * mode picked by the Registry tab's toggle (see load-provider.ts): fetched from
+ * GitHub main and hash-verified, or run from the local dist map. Everything
+ * else — search, detail sheet, player — is identical to the non-registry AnimeScreen.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -24,18 +25,26 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ProviderManager,
-  ExtensionRegistry,
   META,
   SubOrDub,
   type IAnimeResult,
   type IAnimeInfo,
   type IAnimeEpisode,
+  type ProviderManager,
 } from 'react-native-consumet';
 import Video from 'react-native-video';
 import { colors, PAD, GAP, R } from '../theme';
 import { ProviderSheet } from '../components/ProviderSheet';
-import LOCAL_DIST_MAP from './local-dist-map';
+import { LoadErrorView, LoadReportBar, ModeBadge } from './LoadStatus';
+import {
+  describeLoadError,
+  loadingMessage,
+  loadProvider,
+  type LoadFailure,
+  type LoadMode,
+  type LoadOptions,
+  type LoadReport,
+} from './load-provider';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -78,16 +87,24 @@ type VideoState = { url: string; headers?: Record<string, string>; isM3U8: boole
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExtAnimeScreen() {
+type Props = {
+  /** Shared by both Registry sub-tabs */
+  manager: ProviderManager;
+  mode: LoadMode;
+  onModeChange: (mode: LoadMode) => void;
+};
+
+export default function ExtAnimeScreen({ manager, mode, onModeChange }: Props) {
   // Registry / provider
-  const [manager] = useState(() => new ProviderManager(ExtensionRegistry));
   const [extensions, setExtensions] = useState<any[]>([]);
   const [activeExt, setActiveExt] = useState<any | null>(null);
   const [activeMeta, setActiveMeta] = useState<MetaAnime>(null);
   const providerRef = useRef<any>(null);
   const innerProviderRef = useRef<any>(null);
   const [providerLoading, setProvLoading] = useState(false);
-  const [providerErr, setProviderErr] = useState<string | null>(null);
+  const [providerErr, setProviderErr] = useState<LoadFailure | null>(null);
+  const [loadReport, setLoadReport] = useState<LoadReport | null>(null);
+  const loadSeq = useRef(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [metaSheetOpen, setMetaSheetOpen] = useState(false);
 
@@ -112,16 +129,16 @@ export default function ExtAnimeScreen() {
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoErr, setVideoErr] = useState<string | null>(null);
 
-  // ── Init: discover extensions ───────────────────────────────────────────────
+  // ── Init: discover extensions; reload the active one when the mode changes ──
 
   useEffect(() => {
     const exts: any[] = manager.getExtensionsByCategory('anime');
     setExtensions(exts);
-    const first = exts.find((e) => e.status !== 'deprecated') ?? exts[0];
-    if (first) loadExtension(first);
-  }, []);
+    const ext = activeExt ?? exts.find((e) => e.status !== 'deprecated') ?? exts[0];
+    if (ext) loadExtension(ext);
+  }, [mode]);
 
-  // ── Load provider from registry ─────────────────────────────────────────────
+  // ── Load provider (registry or local dist) ──────────────────────────────────
 
   const wrapWithMeta = useCallback((inner: any, meta: MetaAnime) => {
     if (!inner) return inner;
@@ -131,12 +148,15 @@ export default function ExtAnimeScreen() {
   }, []);
 
   const loadExtension = useCallback(
-    async (ext: any) => {
+    async (ext: any, options: LoadOptions = {}) => {
+      // A newer load (another provider or mode) wins over one still in flight.
+      const seq = ++loadSeq.current;
       setActiveExt(ext);
       providerRef.current = null;
       innerProviderRef.current = null;
       setProvLoading(true);
       setProviderErr(null);
+      setLoadReport(null);
       setQuery('');
       setResults([]);
       setSearchErr(null);
@@ -144,19 +164,20 @@ export default function ExtAnimeScreen() {
       setPlayerOpen(false);
       setVideoState(null);
       try {
-        const localCode = LOCAL_DIST_MAP[ext.id];
-        if (!localCode) throw new Error(`No local dist found for extension: ${ext.id}`);
-        const metadata = manager.getExtensionMetadata(ext.id);
-        const inner = await (manager as any).executeProviderCode(localCode, ext.factoryName, metadata);
+        const { provider: inner, report } = await loadProvider(manager, ext, mode, options);
+        if (seq !== loadSeq.current) return;
         innerProviderRef.current = inner;
         providerRef.current = wrapWithMeta(inner, activeMeta);
-      } catch (e: any) {
-        setProviderErr(e?.message ?? `Failed to load ${ext.name}`);
+        setLoadReport(report);
+        console.log('[ExtAnime] loaded', report);
+      } catch (e: unknown) {
+        if (seq !== loadSeq.current) return;
+        setProviderErr(describeLoadError(e, ext, mode));
       } finally {
-        setProvLoading(false);
+        if (seq === loadSeq.current) setProvLoading(false);
       }
     },
-    [manager, activeMeta, wrapWithMeta]
+    [manager, mode, activeMeta, wrapWithMeta]
   );
 
   const switchExtension = useCallback(
@@ -487,9 +508,7 @@ export default function ExtAnimeScreen() {
         <View style={S.headerLeft}>
           <Text style={S.headerLogo}>◈</Text>
           <Text style={S.headerTitle}>Anime</Text>
-          <View style={S.registryBadge}>
-            <Text style={S.registryBadgeText}>REGISTRY</Text>
-          </View>
+          <ModeBadge mode={mode} />
         </View>
         <View style={S.headerRight}>
           {/* META chip */}
@@ -527,18 +546,19 @@ export default function ExtAnimeScreen() {
         <View style={S.center}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={S.loadingTitle}>Loading {activeExt?.name}…</Text>
-          <Text style={S.mutedText}>Loading from local dist…</Text>
+          <Text style={S.mutedText}>{loadingMessage(mode, activeExt)}</Text>
         </View>
       ) : providerErr ? (
-        <View style={S.center}>
-          <Text style={S.errEmoji}>⚠️</Text>
-          <Text style={S.errText}>{providerErr}</Text>
-          <TouchableOpacity style={S.retryBtn} onPress={() => activeExt && loadExtension(activeExt)}>
-            <Text style={S.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <LoadErrorView
+          failure={providerErr}
+          onRetry={() => activeExt && loadExtension(activeExt)}
+          onSkipIntegrity={() => activeExt && loadExtension(activeExt, { skipIntegrity: true })}
+          onSwitchMode={onModeChange}
+        />
       ) : (
         <>
+          {loadReport ? <LoadReportBar report={loadReport} /> : null}
+
           {/* Search */}
           <View style={S.searchWrap}>
             <View style={S.searchBar}>
@@ -643,15 +663,6 @@ const S = StyleSheet.create({
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerLogo: { fontSize: 22, color: colors.accent },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
-  registryBadge: {
-    backgroundColor: colors.accentFaded,
-    borderRadius: R.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  registryBadgeText: { fontSize: 9, fontWeight: '800', color: colors.accentLight, letterSpacing: 0.8 },
   providerChip: {
     flexDirection: 'row',
     alignItems: 'center',
