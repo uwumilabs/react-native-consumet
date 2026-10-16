@@ -48,6 +48,8 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` may be protec
 | HiMovies      | `MOVIES.HiMovies`      | not in the registry        | [HiMovies](../providers/movies/himovies.md)           |
 | MultiStream   | `MOVIES.MultiStream`   | not in the registry        |                                                       |
 
+`MOVIES.MultiStream` gets its titles from TMDB: pass your own TMDB API key as its third argument, `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`. Without one it uses a shared key and logs a warning (see [Meta](./meta.md)). The older `new MOVIES.MultiStream(customBaseURL?)` still works.
+
 VegaMovies and the three mirrors return playable files from `fetchEpisodeSources` (`isSourceDirect` in the registry): pass the server name to `fetchEpisodeSources` instead of handing server URLs to an extractor.
 
 [DramaCool](../providers/movies/dramacool.md) is not exported in this version (`MOVIES.DramaCool` is undefined); its page is kept for reference.

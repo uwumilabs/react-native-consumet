@@ -41,7 +41,7 @@ anilist.search('Classroom of the elite').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
+returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_) The query is sent as a GraphQL variable, so it may contain quotes or backslashes. `cover` is the banner, or the cover image when the anime has no banner.\
 output:
 
 ```js
@@ -59,7 +59,7 @@ output:
       },
       image: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b98659-sH5z5RfMuyMr.png',
       rating: 77,
-      releasedDate: 2017
+      releaseDate: 2017
     },
     {
       id: '145545',
@@ -71,7 +71,7 @@ output:
       },
       image: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx145545-DGl3LVvFlnHi.png',
       rating: 79,
-      releasedDate: 2022
+      releaseDate: 2022
     }
     {...}
     ...
@@ -209,10 +209,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter              | Type      | Description                                                                                                   |
-| ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------- |
-| id                     | `string`  | takes the AniList id as a parameter. (_the id can be found in the anime search results or anime info object_) |
-| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false**                                                  |
+| Parameter              | Type      | Description                                                                                                                         |
+| ---------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| id                     | `string`  | takes the AniList id as a parameter. (_the id can be found in the anime search results or anime info object_)                       |
+| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false**. The filler list it reads is currently offline (see [Errors](#errors)) |
 
 ```ts
 anilist.fetchAnimeInfo('98659').then((data) => {
@@ -221,7 +221,7 @@ anilist.fetchAnimeInfo('98659').then((data) => {
 ```
 
 returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
-The episodes come from the provider without the ani.zip merge, and each gets `uniqueId` `${anilistId}$ep=${number}`. Use [fetchEpisodesListById](#fetchepisodeslistbyid) for the merged list.\
+The episodes come from the provider without the ani.zip merge, and each gets `uniqueId` `${anilistId}$ep=${number}`. Use [fetchEpisodesListById](#fetchepisodeslistbyid) for the merged list. Recommendations and relations share one shape (recommendations AniList hides are left out), and `title.userPreferred` is set.\
 output:
 
 ```js
@@ -257,18 +257,21 @@ output:
   recommendations: [
       {
         id: 101921,
-        idMal: 37999,
+        malId: 37999,
         title: {
           romaji: 'Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen',
           english: 'Kaguya-sama: Love is War',
-          native: undefined,
-          userPreferred: undefined
+          native: '...',
+          userPreferred: '...'
         },
         status: 'Completed',
         episodes: 12,
+        chapters: null,
         image: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101921-VvdGQy1ZySYf.jpg',
         cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/banner/101921-GgvvFhlNhzlF.jpg',
-        score: 83
+        color: '...',
+        rating: 83,
+        type: 'TV'
       },
       {...}
       ...
@@ -292,10 +295,10 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter              | Type      | Description                                                  |
-| ---------------------- | --------- | ------------------------------------------------------------ |
-| id                     | `string`  | the AniList id.                                              |
-| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false** |
+| Parameter              | Type      | Description                                                                                                                         |
+| ---------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| id                     | `string`  | the AniList id.                                                                                                                     |
+| fetchFiller (optional) | `boolean` | if true, sets `isFiller` on the episodes. **Default: false**. The filler list it reads is currently offline (see [Errors](#errors)) |
 
 ```ts
 anilist.fetchEpisodesListById('162670').then((episodes) => {
@@ -387,18 +390,26 @@ output:
 
 <h4>Parameters</h4>
 
-| Parameter              | Type      | Description                                                                                                                                                                        |
-| ---------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| page (optional)        | `number`  | page number to search for.                                                                                                                                                         |
-| perPage (optional)     | `number`  | number of results per page.                                                                                                                                                        |
-| weekStart              | `number`  | Filter by the time of airing. eg. if you set weekStart to this week's monday, and set weekEnd to next week's sunday, you will get all the airing anime in between these two dates. |
-| weekEnd                | `number`  | Filter by the time of airing.                                                                                                                                                      |
-| notYetAired (optional) | `boolean` | Filter to episodes that haven't yet aired. (default: false)                                                                                                                        |
+| Parameter              | Type               | Description                                                                                                                                                                                         |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| page (optional)        | `number`           | page number. **Default: 1**                                                                                                                                                                         |
+| perPage (optional)     | `number`           | number of results per page. **Default: 20**                                                                                                                                                         |
+| weekStart (optional)   | `number \| string` | the first day of the schedule: a day number (`0` = Saturday, `1` = Sunday, `2` = Monday … `6` = Friday) or a day name (`'Monday'`). Its next occurrence is used, today included. **Default: today** |
+| weekEnd (optional)     | `number \| string` | the last day of the schedule, included: the first such day on or after `weekStart`. **Default: the day before today**, so the default schedule is the seven days from today                         |
+| notYetAired (optional) | `boolean`          | `true`: only episodes that haven't aired yet. `false`: only episodes that have already aired (AniList's filter). **Default: false**                                                                 |
+
+The schedule runs in the device's local time, from the start of `weekStart` to the end of `weekEnd`. Numbers and names can be mixed; an unknown day throws before any request is made. For the episodes still to come this week, pass `notYetAired: true`:
 
 ```ts
-anilist.fetchAiringSchedule(1, 20, 1660047922, 1661832000, true).then((data) => {
+anilist.fetchAiringSchedule(1, 20, undefined, undefined, true).then((data) => {
   console.log(data);
 });
+
+// Episodes airing from the coming Monday to the Sunday after it, aired or not yet
+const [aired, upcoming] = await Promise.all([
+  anilist.fetchAiringSchedule(1, 50, 'Monday', 'Sunday', false),
+  anilist.fetchAiringSchedule(1, 50, 'Monday', 'Sunday', true),
+]);
 ```
 
 returns a promise which resolves into an array of anime. (_[`Promise<ISearch<IAnimeResult[]>>`](../../../src/models/types.ts)_)\
@@ -513,6 +524,6 @@ Every method throws a [`MetaError`](../../guides/meta.md#errors) on failure:
 - `source: 'anilist'` when the AniList request failed, with its HTTP `status`. A 429 or 5xx answer is retried once first. 404 and 429 keep readable messages (`Media not found…`, `You have been ratelimited by anilist…`).
 - `source: 'provider'` when the anime provider failed, while finding the anime, listing episodes or fetching servers or sources. The provider's error is the `cause`.
 
-ani.zip and filler lists are optional: when they fail or time out (5 s), the episodes are returned without them.
+ani.zip and filler lists are optional: when they fail or time out (5 s), the episodes are returned without them. The filler list `fetchFiller` reads (saikou-app's `mal-id-filler-list` on GitHub) is currently offline, so `isFiller` is never set.
 
 <p align="end">(<a href="../../guides/meta.md">back to meta providers list</a>)</p>

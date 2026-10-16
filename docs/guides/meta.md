@@ -14,9 +14,14 @@ const manager = new ProviderManager(ExtensionRegistry);
 // AniList metadata with episodes from a registry anime provider
 const anilist = new META.Anilist(await manager.getAnimeProvider('animepahe'));
 
-// TMDB metadata with episodes from a registry movie provider; the first argument is the TMDB API key
-const tmdb = new META.TMDB(undefined, await manager.getMovieProvider('netflixmirror'));
+// TMDB metadata with episodes from a registry movie provider, using your own TMDB API key
+const TMDB_API_KEY = '<your TMDB API key>';
+const tmdb = new META.TMDB(TMDB_API_KEY, await manager.getMovieProvider('netflixmirror'));
 ```
+
+Get a TMDB API key at [themoviedb.org](https://www.themoviedb.org/settings/api) and pass it as the first argument. Without one (or with a blank one), `META.TMDB` uses a key shared by every app that passes none, which TMDB can rate-limit or revoke at any time, and logs a `console.warn` once. `MOVIES.MultiStream`, which also calls TMDB, takes the key as its third argument: `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`, for example `new MOVIES.MultiStream(undefined, undefined, TMDB_API_KEY)`. The older `new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key.
+
+`META.Myanimelist` is deprecated: use `META.Anilist`, which has the same anime, gives the MAL id as `malId`, and keys episodes with stable `uniqueId`s. Myanimelist episodes have no `uniqueId`, and the class will be removed in a future major release.
 
 ## Errors
 
@@ -57,7 +62,7 @@ try {
 This list is in alphabetical order.
 
 - [Anilist](../providers/meta/anilist.md) (`META.Anilist`)
-- Myanimelist (`META.Myanimelist`)
+- Myanimelist (`META.Myanimelist`), deprecated in favour of `META.Anilist`
 - [TMDB](../providers/meta/tmdb.md) (`META.TMDB`)
 
 See also [Migrating stored episode `uniqueId`s](../migrations/uniqueid.md) and [Migrating to the new TMDB info shape](../migrations/tmdb-info.md).
