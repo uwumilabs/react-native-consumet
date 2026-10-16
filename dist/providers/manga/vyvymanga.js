@@ -1,22 +1,25 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.VyvyManga = void 0;
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 const cheerio_1 = require("cheerio");
 class VyvyManga extends models_1.MangaParser {
+  ctx;
   name = 'Vyvymanga';
   baseUrl = 'https://vyvymanga.net/api';
   logo = 'https://vyvymanga.net/web/img/icon.png';
   classPath = 'MANGA.VyvyManga';
   baseWebsiteUrl = 'https://vyvymanga.net';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   search = (() => {
     var _this = this;
     return async function (query) {
@@ -26,7 +29,7 @@ class VyvyManga extends models_1.MangaParser {
         const formattedQuery = query.trim().toLowerCase().split(' ').join('+');
         const {
           data
-        } = await axios_1.default.get(`${_this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
+        } = await _this.ctx.axios.get(`${_this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`);
         const $ = (0, cheerio_1.load)(data);
         const dom = $('html');
         const result = dom.find('.row.book-list > div > div > a').map((index, ele) => {
@@ -63,7 +66,7 @@ class VyvyManga extends models_1.MangaParser {
       const formattedQuery = query.toLowerCase().split(' ').join('%20');
       const {
         data
-      } = await axios_1.default.request({
+      } = await this.ctx.axios.request({
         method: 'get',
         url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
         headers: {
@@ -87,7 +90,7 @@ class VyvyManga extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.request({
+      } = await this.ctx.axios.request({
         method: 'get',
         url: `${this.baseUrl}/manga-detail/${mangaId}?userid=`,
         headers: {
@@ -132,7 +135,7 @@ class VyvyManga extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.get(chapterId);
+      } = await this.ctx.axios.get(chapterId);
       const $ = (0, cheerio_1.load)(data);
       const dom = $('html');
       const images = dom.find('.vview.carousel-inner > div > img').map((index, ele) => {
@@ -164,5 +167,5 @@ class VyvyManga extends models_1.MangaParser {
     });
   };
 }
-exports.default = VyvyManga;
+exports.VyvyManga = VyvyManga;
 //# sourceMappingURL=vyvymanga.js.map

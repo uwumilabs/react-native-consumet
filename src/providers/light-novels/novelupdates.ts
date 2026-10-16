@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -8,9 +9,11 @@ import {
   type ILightNovelChapterContent,
   type ILightNovelResult,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class NovelUpdates extends LightNovelParser {
+export class NovelUpdates extends LightNovelParser {
   override readonly name = 'NovelUpdates';
   protected override baseUrl = 'https://www.novelupdates.com';
 
@@ -18,6 +21,22 @@ class NovelUpdates extends LightNovelParser {
 
   protected override logo = 'https://www.novelupdates.com/appicon.png';
   protected override classPath = 'LIGHT_NOVELS.NovelUpdates';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
+
+  /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+  private requestText = async (url: string, config: AxiosRequestConfig = {}): Promise<string> => {
+    const { data } = await this.ctx.axios.request({
+      url,
+      ...config,
+      responseType: 'text',
+      validateStatus: () => true,
+    });
+    return data;
+  };
 
   /**
    *
@@ -35,13 +54,13 @@ class NovelUpdates extends LightNovelParser {
     };
 
     try {
-      const page = await fetch(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
+      const page = await this.requestText(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
         headers: {
           Referer: lightNovelUrl,
         },
       });
 
-      const $ = load(await page.text());
+      const $ = load(page);
 
       if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
         throw new Error('Client is blocked from accessing the site.');
@@ -88,16 +107,14 @@ class NovelUpdates extends LightNovelParser {
     const chapters: ILightNovelChapter[] = [];
 
     const chapterData = (
-      await (
-        await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Cookie': '_ga=;',
-          },
-          body: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`,
-        })
-      ).text()
+      await this.requestText(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Cookie': '_ga=;',
+        },
+        data: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`,
+      })
     ).substring(1);
 
     const $ = load(chapterData);
@@ -130,8 +147,7 @@ class NovelUpdates extends LightNovelParser {
     };
 
     try {
-      const page = await fetch(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
-      const data = await page.text();
+      const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
 
       const $ = load(data);
 
@@ -154,7 +170,7 @@ class NovelUpdates extends LightNovelParser {
     const result: ISearch<ILightNovelResult> = { results: [] };
 
     try {
-      const res = await fetch(
+      const res = await this.requestText(
         `${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`,
         {
           headers: {
@@ -163,7 +179,7 @@ class NovelUpdates extends LightNovelParser {
         }
       );
 
-      const $ = load(await res.text());
+      const $ = load(res);
 
       $('div.search_main_box_nu').each((i, el) => {
         result.results.push({
@@ -180,8 +196,6 @@ class NovelUpdates extends LightNovelParser {
     }
   };
 }
-
-export default NovelUpdates;
 
 // (async () => {
 //   const ln = new ReadLightNovels();

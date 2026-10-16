@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -9,13 +8,20 @@ import {
   MediaStatus,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class MangaKakalot extends MangaParser {
+export class MangaKakalot extends MangaParser {
   override readonly name = 'MangaKakalot';
   protected override baseUrl = 'https://mangakakalot.com';
   protected override logo = 'https://techbigs.com/uploads/2022/1/mangakakalot-apkoptimized.jpg';
   protected override classPath = 'MANGA.MangaKakalot';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = {
@@ -24,7 +30,7 @@ class MangaKakalot extends MangaParser {
     };
     const url = mangaId.includes('read') ? this.baseUrl : 'https://chapmanganato.to';
     try {
-      const { data } = await axios.get(`${url}/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${url}/${mangaId}`);
       const $ = load(data);
 
       if (url.includes('mangakakalot')) {
@@ -127,7 +133,7 @@ class MangaKakalot extends MangaParser {
       const url = chapterId.includes('$$READMANGANATO')
         ? `${this.baseUrl}/chapter/${chapterId}`
         : `https://chapmanganato.to/${mangaId}/${chapterId}`;
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
       const $ = load(data);
 
       const pages = $('div.container-chapter-reader > img')
@@ -156,7 +162,7 @@ class MangaKakalot extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/search/story/${query.replace(/ /g, '_')}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/search/story/${query.replace(/ /g, '_')}`);
       const $ = load(data);
 
       const results = $('div.daily-update > div > div')
@@ -177,5 +183,3 @@ class MangaKakalot extends MangaParser {
     }
   };
 }
-
-export default MangaKakalot;

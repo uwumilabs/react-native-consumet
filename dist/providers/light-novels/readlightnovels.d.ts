@@ -1,9 +1,12 @@
-import { LightNovelParser, type ISearch, type ILightNovelInfo, type ILightNovelChapterContent, type ILightNovelResult } from '../../models';
-declare class ReadLightNovels extends LightNovelParser {
+import { LightNovelParser, type ISearch, type ILightNovelInfo, type ILightNovelChapterContent, type ILightNovelResult, type ProviderContext } from '../../models';
+export declare class ReadLightNovels extends LightNovelParser {
+    private readonly ctx;
     readonly name = "Read Light Novels";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
     /**
      *
      * @param lightNovelUrl light novel link or id
@@ -23,5 +26,4 @@ declare class ReadLightNovels extends LightNovelParser {
      */
     search: (query: string) => Promise<ISearch<ILightNovelResult>>;
 }
-export default ReadLightNovels;
 //# sourceMappingURL=readlightnovels.d.ts.map

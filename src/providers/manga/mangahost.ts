@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -9,13 +8,20 @@ import {
   MediaStatus,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class MangaHost extends MangaParser {
+export class MangaHost extends MangaParser {
   override readonly name = 'MangaHost';
   protected override baseUrl = 'https://mangahosted.com';
   protected override logo = 'https://i.imgur.com/OVlhhsR.png';
   protected override classPath = 'MANGA.MangaHost';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = {
@@ -23,7 +29,7 @@ class MangaHost extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await axios.get(`${this.baseUrl}/manga/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
       mangaInfo.title = $('article.ejeCg > h1.title').text();
@@ -79,7 +85,7 @@ class MangaHost extends MangaParser {
   override fetchChapterPages = async (mangaId: string, chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
       const $ = load(data);
 
       const pages = $('section#imageWrapper > div > div.read-slideshow > a > img')
@@ -105,7 +111,7 @@ class MangaHost extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
       const $ = load(data);
 
       const results = $('body > div.w-container > main > table > tbody > tr')
@@ -126,5 +132,3 @@ class MangaHost extends MangaParser {
     }
   };
 }
-
-export default MangaHost;

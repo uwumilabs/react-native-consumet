@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import {
   type IMangaChapterPage,
   type IMangaInfo,
@@ -6,9 +6,11 @@ import {
   type ISearch,
   MangaParser,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class ComicK extends MangaParser {
+export class ComicK extends MangaParser {
   override readonly name = 'ComicK';
   protected override baseUrl = 'https://comick.app';
   protected override logo = 'https://th.bing.com/th/id/OIP.fw4WrmAoA2PmKitiyMzUIgAAAA?pid=ImgDet&rs=1';
@@ -16,14 +18,19 @@ class ComicK extends MangaParser {
 
   private readonly apiUrl = 'https://api.comick.io';
 
-  private _axios() {
-    return axios.create({
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
+
+  /** GETs a path of the ComicK API through the context axios */
+  private apiGet = (path: string) =>
+    this.ctx.axios.get(path, {
       baseURL: this.apiUrl,
       headers: {
         'User-Agent': 'Mozilla/5.0',
       },
     });
-  }
 
   /**
    * @description Fetches info about the manga
@@ -32,7 +39,7 @@ class ComicK extends MangaParser {
    */
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const req = await this._axios().get(`/comic/${mangaId}`);
+      const req = await this.apiGet(`/comic/${mangaId}`);
       const data: Comic = req.data.comic;
 
       const links = Object.values(data.links ?? []).filter((link) => link !== null);
@@ -77,7 +84,7 @@ class ComicK extends MangaParser {
    */
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await this._axios().get(`/chapter/${chapterId}`);
+      const { data } = await this.apiGet(`/chapter/${chapterId}`);
 
       const pages: { img: string; page: number }[] = [];
 
@@ -105,7 +112,7 @@ class ComicK extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const req = await this._axios().get(`/v1.0/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`);
+      const req = await this.apiGet(`/v1.0/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`);
 
       const results: ISearch<IMangaResult> = {
         currentPage: page,
@@ -139,7 +146,7 @@ class ComicK extends MangaParser {
       page = 1;
     }
     const comicId = await this.getComicId(mangaId);
-    const req = await this._axios().get(`/comic/${comicId}/chapters?page=${page}`);
+    const req = await this.apiGet(`/comic/${comicId}/chapters?page=${page}`);
     return req.data.chapters;
   };
 
@@ -149,7 +156,7 @@ class ComicK extends MangaParser {
    * @returns Promise<string> empty if not found
    */
   private async getComicId(id: string): Promise<string> {
-    const req = await this._axios().get(`/comic/${id}`);
+    const req = await this.apiGet(`/comic/${id}`);
     const data: Comic = req.data.comic;
     return data ? data.hid : '';
   }
@@ -162,8 +169,6 @@ class ComicK extends MangaParser {
 //   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
 //   console.log(chapterPages);
 // })();
-
-export default ComicK;
 
 interface SearchResult {
   title: string;

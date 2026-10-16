@@ -1,4 +1,4 @@
-import ReadLightNovels from './readlightnovels';
-import NovelUpdates from './novelupdates';
+import { ReadLightNovels } from './readlightnovels';
+import { NovelUpdates } from './novelupdates';
 
-export default { ReadLightNovels, NovelUpdates };
+export const LIGHT_NOVELS = { ReadLightNovels, NovelUpdates };

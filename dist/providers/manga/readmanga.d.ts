@@ -1,16 +1,19 @@
-import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser } from '../../models';
+import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser, type ProviderContext } from '../../models';
 /**
  * Not working, and not exported from `MANGA`: readmanga.app doesn't respond, which hasn't been
  * confirmed as a permanent shutdown. Kept so it can be restored if the site comes back; delete it
  * if it doesn't.
  */
-declare class ReadManga extends MangaParser {
+export declare class ReadManga extends MangaParser {
+    private readonly ctx;
     readonly name = "ReadManga";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
     readonly isWorking = false;
     protected darkLogo: string;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
     /**
      *
      * @param query Search query
@@ -25,5 +28,4 @@ declare class ReadManga extends MangaParser {
     private formatSearchResultData;
     private getStatus;
 }
-export default ReadManga;
 //# sourceMappingURL=readmanga.d.ts.map

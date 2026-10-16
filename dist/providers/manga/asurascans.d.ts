@@ -1,9 +1,12 @@
-import { MangaParser, type ISearch, type IMangaInfo, type IMangaResult, type IMangaChapterPage } from '../../models';
-declare class AsuraScans extends MangaParser {
+import { MangaParser, type ISearch, type IMangaInfo, type IMangaResult, type IMangaChapterPage, type ProviderContext } from '../../models';
+export declare class AsuraScans extends MangaParser {
+    private readonly ctx;
     readonly name = "AsuraScans";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
     fetchMangaInfo: (mangaId: string) => Promise<IMangaInfo>;
     fetchChapterPages: (chapterId: string) => Promise<IMangaChapterPage[]>;
     /**
@@ -13,5 +16,4 @@ declare class AsuraScans extends MangaParser {
     search: (query: string, page?: number) => Promise<ISearch<IMangaResult>>;
     private determineMediaState;
 }
-export default AsuraScans;
 //# sourceMappingURL=asurascans.d.ts.map

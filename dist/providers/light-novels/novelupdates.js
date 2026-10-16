@@ -3,25 +3,50 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.NovelUpdates = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class NovelUpdates extends models_1.LightNovelParser {
+  ctx;
   name = 'NovelUpdates';
   baseUrl = 'https://www.novelupdates.com';
   proxyURL = 'http://translate.google.com/translate?sl=ja&tl=en&u=';
   logo = 'https://www.novelupdates.com/appicon.png';
   classPath = 'LIGHT_NOVELS.NovelUpdates';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
+  /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+  requestText = (() => {
+    var _this = this;
+    return async function (url) {
+      let config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      const {
+        data
+      } = await _this.ctx.axios.request({
+        url,
+        ...config,
+        responseType: 'text',
+        validateStatus: () => true
+      });
+      return data;
+    };
+  })();
   /**
    *
    * @param lightNovelUrl light novel link or id
    * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
    */
   fetchLightNovelInfo = (() => {
-    var _this = this;
+    var _this2 = this;
     return async function (lightNovelUrl) {
       let chapterPage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -1;
-      if (!lightNovelUrl.startsWith(_this.baseUrl)) {
-        lightNovelUrl = `${_this.baseUrl}/series/${lightNovelUrl}`;
+      if (!lightNovelUrl.startsWith(_this2.baseUrl)) {
+        lightNovelUrl = `${_this2.baseUrl}/series/${lightNovelUrl}`;
       }
       const lightNovelInfo = {
         id: lightNovelUrl.split('/')?.pop(),
@@ -29,12 +54,12 @@ class NovelUpdates extends models_1.LightNovelParser {
         url: lightNovelUrl
       };
       try {
-        const page = await fetch(`${_this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
+        const page = await _this2.requestText(`${_this2.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
           headers: {
             Referer: lightNovelUrl
           }
         });
-        const $ = (0, cheerio_1.load)(await page.text());
+        const $ = (0, cheerio_1.load)(page);
         if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
           throw new Error('Client is blocked from accessing the site.');
         }
@@ -54,7 +79,7 @@ class NovelUpdates extends models_1.LightNovelParser {
           lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
         }
         const postId = $('input#mypostid').attr('value');
-        lightNovelInfo.chapters = await _this.fetchChapters(postId);
+        lightNovelInfo.chapters = await _this2.fetchChapters(postId);
         lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
         return lightNovelInfo;
       } catch (err) {
@@ -65,14 +90,14 @@ class NovelUpdates extends models_1.LightNovelParser {
   })();
   fetchChapters = async postId => {
     const chapters = [];
-    const chapterData = (await (await fetch(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+    const chapterData = (await this.requestText(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Cookie': '_ga=;'
       },
-      body: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`
-    })).text()).substring(1);
+      data: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`
+    })).substring(1);
     const $ = (0, cheerio_1.load)(chapterData);
     $('li.sp_li_chp a[data-id]').each((index, el) => {
       const id = $(el).attr('data-id');
@@ -99,8 +124,7 @@ class NovelUpdates extends models_1.LightNovelParser {
       text: ''
     };
     try {
-      const page = await fetch(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
-      const data = await page.text();
+      const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
       const $ = (0, cheerio_1.load)(data);
       contents.novelTitle = $('title').text();
       contents.chapterTitle = $('title').text();
@@ -119,12 +143,12 @@ class NovelUpdates extends models_1.LightNovelParser {
       results: []
     };
     try {
-      const res = await fetch(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
+      const res = await this.requestText(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
         headers: {
           Referer: this.baseUrl
         }
       });
-      const $ = (0, cheerio_1.load)(await res.text());
+      const $ = (0, cheerio_1.load)(res);
       $('div.search_main_box_nu').each((i, el) => {
         result.results.push({
           id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1].split('/')[0],
@@ -139,7 +163,7 @@ class NovelUpdates extends models_1.LightNovelParser {
     }
   };
 }
-exports.default = NovelUpdates;
+exports.NovelUpdates = NovelUpdates;
 // (async () => {
 //   const ln = new ReadLightNovels();
 //   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');

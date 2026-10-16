@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { type CheerioAPI, load } from 'cheerio';
 import {
   type IMangaChapter,
@@ -8,7 +7,9 @@ import {
   type ISearch,
   MangaParser,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 import type { AxiosResponse } from 'axios';
 
 interface ReadMangaSearchResultData {
@@ -53,13 +54,18 @@ interface RatingResult {
  * confirmed as a permanent shutdown. Kept so it can be restored if the site comes back; delete it
  * if it doesn't.
  */
-class ReadManga extends MangaParser {
+export class ReadManga extends MangaParser {
   override readonly name = 'ReadManga';
   protected override baseUrl: string = 'https://readmanga.app';
   protected override logo = 'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
   protected override classPath = 'MANGA.ReadManga';
   override readonly isWorking = false;
   protected darkLogo = 'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   /**
    *
@@ -68,7 +74,7 @@ class ReadManga extends MangaParser {
 
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data }: AxiosResponse = await axios.get(
+      const { data }: AxiosResponse = await this.ctx.axios.get(
         `${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`,
         {
           headers: {
@@ -97,7 +103,7 @@ class ReadManga extends MangaParser {
     }
 
     try {
-      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+      const { data }: AxiosResponse = await this.ctx.axios.get(`${this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -127,21 +133,24 @@ class ReadManga extends MangaParser {
     }
 
     try {
-      const { data }: AxiosResponse = await axios.get(`${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
-        headers: {
-          'accept': 'application/json, text/javascript, */*; q=0.01',
-          'accept-language': 'en-US,en;q=0.9',
-          'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-requested-with': 'XMLHttpRequest',
-          'Referer': this.baseUrl,
-          'Referrer-Policy': 'strict-origin-when-cross-origin',
-        },
-      });
+      const { data }: AxiosResponse = await this.ctx.axios.get(
+        `${this.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`,
+        {
+          headers: {
+            'accept': 'application/json, text/javascript, */*; q=0.01',
+            'accept-language': 'en-US,en;q=0.9',
+            'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+            'Referer': this.baseUrl,
+            'Referrer-Policy': 'strict-origin-when-cross-origin',
+          },
+        }
+      );
 
       const result = this.getRankingTitleCardData(data, page);
 
@@ -153,7 +162,7 @@ class ReadManga extends MangaParser {
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/${mangaId}`, {
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/${mangaId}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -244,7 +253,7 @@ class ReadManga extends MangaParser {
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await axios.get(chapterId, {
+      const { data } = await this.ctx.axios.get(chapterId, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -369,5 +378,3 @@ class ReadManga extends MangaParser {
     }
   };
 }
-
-export default ReadManga;

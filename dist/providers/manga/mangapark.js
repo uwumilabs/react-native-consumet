@@ -1,21 +1,24 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.Mangapark = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class Mangapark extends models_1.MangaParser {
+  ctx;
   name = 'Mangapark';
   baseUrl = 'https://v2.mangapark.net';
   logo = 'https://raw.githubusercontent.com/tachiyomiorg/tachiyomi-extensions/repo/icon/tachiyomi-en.mangapark-v1.3.23.png';
   classPath = 'MANGA.Mangapark';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   fetchMangaInfo = (() => {
     var _this = this;
     return async function (mangaId) {
@@ -27,7 +30,7 @@ class Mangapark extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(url);
+        } = await _this.ctx.axios.get(url);
         const $ = (0, cheerio_1.load)(data);
         mangaInfo.title = $('div.pb-1.mb-2.line-b-f.hd h2 a').text();
         mangaInfo.image = $('img.w-100').attr('src');
@@ -58,7 +61,7 @@ class Mangapark extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(url);
+        } = await _this2.ctx.axios.get(url);
         const varLoadPages = data.match(regex)[0];
         const loadPagesJson = JSON.parse(varLoadPages.replace('var _load_pages = ', ''));
         const pages = loadPagesJson.map(page => {
@@ -81,7 +84,7 @@ class Mangapark extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(url);
+        } = await _this3.ctx.axios.get(url);
         const $ = (0, cheerio_1.load)(data);
         const results = $('.item').get().map(item => {
           const cover = $(item).find('.cover');
@@ -100,5 +103,5 @@ class Mangapark extends models_1.MangaParser {
     };
   })();
 }
-exports.default = Mangapark;
+exports.Mangapark = Mangapark;
 //# sourceMappingURL=mangapark.js.map

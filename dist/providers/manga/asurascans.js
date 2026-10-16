@@ -1,26 +1,29 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.AsuraScans = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class AsuraScans extends models_1.MangaParser {
+  ctx;
   name = 'AsuraScans';
   baseUrl = 'https://asuracomic.net';
   logo = 'https://asuracomic.net/images/logo.png';
   classPath = 'MANGA.AsuraScans';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   fetchMangaInfo = async mangaId => {
     try {
       const {
         data
-      } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`);
+      } = await this.ctx.axios.get(`${this.baseUrl}/${mangaId}`);
       const $ = (0, cheerio_1.load)(data);
       const dom = $('html');
       const topInfoWrapper = dom.find('.relative.col-span-12.space-y-3.px-6');
@@ -66,7 +69,7 @@ class AsuraScans extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.get(`${this.baseUrl}/series/${chapterId}`);
+      } = await this.ctx.axios.get(`${this.baseUrl}/series/${chapterId}`);
       const chapMatch = data.replace(/\\/g, '').match(/pages.*:(\[{['"]order["'].*?}\])/);
       if (!chapMatch) throw new Error('Parsing error');
       const chap = JSON.parse(chapMatch[1]);
@@ -90,7 +93,7 @@ class AsuraScans extends models_1.MangaParser {
         const formattedQuery = encodeURI(query.toLowerCase());
         const {
           data
-        } = await axios_1.default.get(`${_this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
+        } = await _this.ctx.axios.get(`${_this.baseUrl}/series?page=${page}&name=${formattedQuery}`);
         const $ = (0, cheerio_1.load)(data);
         const dom = $('html');
         const results = dom.find('.grid.grid-cols-2.gap-3.p-4 > a').map((index, ele) => {
@@ -127,5 +130,5 @@ class AsuraScans extends models_1.MangaParser {
     }
   }
 }
-exports.default = AsuraScans;
+exports.AsuraScans = AsuraScans;
 //# sourceMappingURL=asurascans.js.map

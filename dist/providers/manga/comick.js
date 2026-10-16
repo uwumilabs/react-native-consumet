@@ -1,29 +1,31 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.ComicK = void 0;
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class ComicK extends models_1.MangaParser {
+  ctx;
   name = 'ComicK';
   baseUrl = 'https://comick.app';
   logo = 'https://th.bing.com/th/id/OIP.fw4WrmAoA2PmKitiyMzUIgAAAA?pid=ImgDet&rs=1';
   classPath = 'MANGA.ComicK';
   apiUrl = 'https://api.comick.io';
-  _axios() {
-    return axios_1.default.create({
-      baseURL: this.apiUrl,
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
   }
+  /** GETs a path of the ComicK API through the context axios */
+  apiGet = path => this.ctx.axios.get(path, {
+    baseURL: this.apiUrl,
+    headers: {
+      'User-Agent': 'Mozilla/5.0'
+    }
+  });
   /**
    * @description Fetches info about the manga
    * @param mangaId Comic slug
@@ -31,7 +33,7 @@ class ComicK extends models_1.MangaParser {
    */
   fetchMangaInfo = async mangaId => {
     try {
-      const req = await this._axios().get(`/comic/${mangaId}`);
+      const req = await this.apiGet(`/comic/${mangaId}`);
       const data = req.data.comic;
       const links = Object.values(data.links ?? []).filter(link => link !== null);
       const mangaInfo = {
@@ -71,7 +73,7 @@ class ComicK extends models_1.MangaParser {
     try {
       const {
         data
-      } = await this._axios().get(`/chapter/${chapterId}`);
+      } = await this.apiGet(`/chapter/${chapterId}`);
       const pages = [];
       data.chapter.md_images.map((image, index) => {
         pages.push({
@@ -98,7 +100,7 @@ class ComicK extends models_1.MangaParser {
       if (limit > 300) throw new Error('Limit must be less than or equal to 300');
       if (limit * (page - 1) >= 10000) throw new Error('not enough results');
       try {
-        const req = await _this._axios().get(`/v1.0/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`);
+        const req = await _this.apiGet(`/v1.0/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`);
         const results = {
           currentPage: page,
           results: []
@@ -127,7 +129,7 @@ class ComicK extends models_1.MangaParser {
       page = 1;
     }
     const comicId = await this.getComicId(mangaId);
-    const req = await this._axios().get(`/comic/${comicId}/chapters?page=${page}`);
+    const req = await this.apiGet(`/comic/${comicId}/chapters?page=${page}`);
     return req.data.chapters;
   };
   /**
@@ -136,17 +138,10 @@ class ComicK extends models_1.MangaParser {
    * @returns Promise<string> empty if not found
    */
   async getComicId(id) {
-    const req = await this._axios().get(`/comic/${id}`);
+    const req = await this.apiGet(`/comic/${id}`);
     const data = req.data.comic;
     return data ? data.hid : '';
   }
 }
-// (async () => {
-//   const md = new MangaDex();
-//   const search = await md.search('solo leveling');
-//   const manga = await md.fetchMangaInfo(search.results[0].id);
-//   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
-//   console.log(chapterPages);
-// })();
-exports.default = ComicK;
+exports.ComicK = ComicK;
 //# sourceMappingURL=comick.js.map

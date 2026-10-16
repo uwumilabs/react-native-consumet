@@ -1,109 +1,113 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.MangaHost = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class MangaHost extends models_1.MangaParser {
-    name = 'MangaHost';
-    baseUrl = 'https://mangahosted.com';
-    logo = 'https://i.imgur.com/OVlhhsR.png';
-    classPath = 'MANGA.MangaHost';
-    fetchMangaInfo = async (mangaId) => {
-        const mangaInfo = {
-            id: mangaId,
-            title: '',
+  ctx;
+  name = 'MangaHost';
+  baseUrl = 'https://mangahosted.com';
+  logo = 'https://i.imgur.com/OVlhhsR.png';
+  classPath = 'MANGA.MangaHost';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
+  fetchMangaInfo = async mangaId => {
+    const mangaInfo = {
+      id: mangaId,
+      title: ''
+    };
+    try {
+      const {
+        data
+      } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`);
+      const $ = (0, cheerio_1.load)(data);
+      mangaInfo.title = $('article.ejeCg > h1.title').text();
+      mangaInfo.altTitles = $('article.ejeCg > h3.subtitle').text();
+      mangaInfo.description = $('div.text > div.paragraph > p').text().replace(/\n/g, '').trim();
+      mangaInfo.headerForImage = {
+        Referer: this.baseUrl
+      };
+      mangaInfo.image = $('div.widget:nth-child(1) > picture > img').attr('src');
+      mangaInfo.genres = $('article.ejeCg:nth-child(1) > div.tags > a.tag ').map((i, el) => $(el).text()).get();
+      switch ($('h3.subtitle > strong').text()) {
+        case 'Completo':
+          mangaInfo.status = models_1.MediaStatus.COMPLETED;
+          break;
+        case 'Ativo':
+          mangaInfo.status = models_1.MediaStatus.ONGOING;
+          break;
+        default:
+          mangaInfo.status = models_1.MediaStatus.UNKNOWN;
+      }
+      mangaInfo.views = parseInt($('div.classificacao-box-1 > div.text-block-3').text().replace(' views', '').replace(/,/g, '').trim());
+      mangaInfo.authors = $('div.w-col.w-col-6:nth-child(1) > ul.w-list-unstyled:nth-child(1) > li:nth-child(3) > div:nth-child(1)').map((i, el) => $(el).text().replace('Autor: ', '').trim()).get();
+      mangaInfo.chapters = $('div.chapters > div.cap').map((i, el) => {
+        const releasedDate = $(el).find('div.card > div.pop-content > small').text().match(/Adicionado em (.+?)"/);
+        return {
+          id: `${$(el).find('a.btn-caps').text()}`,
+          title: $(el).find('a.btn-caps').attr('title'),
+          views: null,
+          releasedDate: releasedDate ? releasedDate[1] : ''
         };
-        try {
-            const { data } = await axios_1.default.get(`${this.baseUrl}/manga/${mangaId}`);
-            const $ = (0, cheerio_1.load)(data);
-            mangaInfo.title = $('article.ejeCg > h1.title').text();
-            mangaInfo.altTitles = $('article.ejeCg > h3.subtitle').text();
-            mangaInfo.description = $('div.text > div.paragraph > p').text().replace(/\n/g, '').trim();
-            mangaInfo.headerForImage = { Referer: this.baseUrl };
-            mangaInfo.image = $('div.widget:nth-child(1) > picture > img').attr('src');
-            mangaInfo.genres = $('article.ejeCg:nth-child(1) > div.tags > a.tag ')
-                .map((i, el) => $(el).text())
-                .get();
-            switch ($('h3.subtitle > strong').text()) {
-                case 'Completo':
-                    mangaInfo.status = models_1.MediaStatus.COMPLETED;
-                    break;
-                case 'Ativo':
-                    mangaInfo.status = models_1.MediaStatus.ONGOING;
-                    break;
-                default:
-                    mangaInfo.status = models_1.MediaStatus.UNKNOWN;
-            }
-            mangaInfo.views = parseInt($('div.classificacao-box-1 > div.text-block-3').text().replace(' views', '').replace(/,/g, '').trim());
-            mangaInfo.authors = $('div.w-col.w-col-6:nth-child(1) > ul.w-list-unstyled:nth-child(1) > li:nth-child(3) > div:nth-child(1)')
-                .map((i, el) => $(el).text().replace('Autor: ', '').trim())
-                .get();
-            mangaInfo.chapters = $('div.chapters > div.cap')
-                .map((i, el) => {
-                const releasedDate = $(el)
-                    .find('div.card > div.pop-content > small')
-                    .text()
-                    .match(/Adicionado em (.+?)"/);
-                return {
-                    id: `${$(el).find('a.btn-caps').text()}`,
-                    title: $(el).find('a.btn-caps').attr('title'),
-                    views: null,
-                    releasedDate: releasedDate ? releasedDate[1] : '',
-                };
-            })
-                .get();
-            return mangaInfo;
+      }).get();
+      return mangaInfo;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
+  fetchChapterPages = async (mangaId, chapterId) => {
+    try {
+      const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
+      const {
+        data
+      } = await this.ctx.axios.get(url);
+      const $ = (0, cheerio_1.load)(data);
+      const pages = $('section#imageWrapper > div > div.read-slideshow > a > img').map((i, el) => ({
+        img: $(el).attr('src'),
+        page: i,
+        title: `Page ${i + 1}`,
+        headerForImage: {
+          Referer: this.baseUrl
         }
-        catch (err) {
-            throw new Error(err.message);
+      })).get();
+      return pages;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
+  /**
+   *
+   * @param query Search query
+   */
+  search = async query => {
+    try {
+      const {
+        data
+      } = await this.ctx.axios.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
+      const $ = (0, cheerio_1.load)(data);
+      const results = $('body > div.w-container > main > table > tbody > tr').map((i, row) => ({
+        id: $(row).find('td > a.pull-left').attr('href')?.split('/')[4],
+        title: $(row).find('td > h4.entry-title > a').text(),
+        image: $(row).find('td > a.pull-left > picture > img.manga').attr('src'),
+        headerForImage: {
+          Referer: this.baseUrl
         }
-    };
-    fetchChapterPages = async (mangaId, chapterId) => {
-        try {
-            const url = `${this.baseUrl}/manga/${mangaId}/${chapterId}`;
-            const { data } = await axios_1.default.get(url);
-            const $ = (0, cheerio_1.load)(data);
-            const pages = $('section#imageWrapper > div > div.read-slideshow > a > img')
-                .map((i, el) => ({
-                img: $(el).attr('src'),
-                page: i,
-                title: `Page ${i + 1}`,
-                headerForImage: { Referer: this.baseUrl },
-            }))
-                .get();
-            return pages;
-        }
-        catch (err) {
-            throw new Error(err.message);
-        }
-    };
-    /**
-     *
-     * @param query Search query
-     */
-    search = async (query) => {
-        try {
-            const { data } = await axios_1.default.get(`${this.baseUrl}/find/${query.replace(/ /g, '+')}`);
-            const $ = (0, cheerio_1.load)(data);
-            const results = $('body > div.w-container > main > table > tbody > tr')
-                .map((i, row) => ({
-                id: $(row).find('td > a.pull-left').attr('href')?.split('/')[4],
-                title: $(row).find('td > h4.entry-title > a').text(),
-                image: $(row).find('td > a.pull-left > picture > img.manga').attr('src'),
-                headerForImage: { Referer: this.baseUrl },
-            }))
-                .get();
-            return {
-                results: results,
-            };
-        }
-        catch (err) {
-            throw new Error(err.message);
-        }
-    };
+      })).get();
+      return {
+        results: results
+      };
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
 }
-exports.default = MangaHost;
+exports.MangaHost = MangaHost;
 //# sourceMappingURL=mangahost.js.map

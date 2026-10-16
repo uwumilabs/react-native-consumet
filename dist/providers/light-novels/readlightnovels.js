@@ -8,16 +8,24 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.ReadLightNovels = void 0;
 const cheerio_1 = require("cheerio");
 const form_data_1 = __importDefault(require("form-data"));
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 const utils_1 = require("../../utils");
 class ReadLightNovels extends models_1.LightNovelParser {
+  ctx;
   name = 'Read Light Novels';
   baseUrl = 'https://readlightnovels.net';
   logo = 'https://i.imgur.com/RDPjbc6.png';
   classPath = 'LIGHT_NOVELS.ReadLightNovels';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   /**
    *
    * @param lightNovelUrl light novel link or id
@@ -36,7 +44,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
         url: lightNovelUrl
       };
       try {
-        const page = await axios_1.default.get(lightNovelUrl, {
+        const page = await _this.ctx.axios.get(lightNovelUrl, {
           headers: {
             Referer: lightNovelUrl
           }
@@ -82,7 +90,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
     bodyFormData.append('type', 'pagination');
     bodyFormData.append('page', chapterPage);
     bodyFormData.append('id', novelId);
-    const page = await (0, axios_1.default)({
+    const page = await this.ctx.axios({
       method: 'post',
       url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
       data: bodyFormData,
@@ -129,7 +137,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
       text: ''
     };
     try {
-      const page = await axios_1.default.get(chapterId);
+      const page = await this.ctx.axios.get(chapterId);
       const $ = (0, cheerio_1.load)(page.data);
       contents.novelTitle = $('.truyen-title').text();
       contents.chapterTitle = $('.chapter-title').text();
@@ -152,7 +160,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
       results: []
     };
     try {
-      const res = await axios_1.default.post(`${this.baseUrl}/?s=${query}`);
+      const res = await this.ctx.axios.post(`${this.baseUrl}/?s=${query}`);
       const $ = (0, cheerio_1.load)(res.data);
       $('div.col-xs-12.col-sm-12.col-md-9.col-truyen-main > div:nth-child(1) > div > div:nth-child(2) > div.col-md-3.col-sm-6.col-xs-6.home-truyendecu').each((i, el) => {
         result.results.push({
@@ -168,7 +176,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
     }
   };
 }
-exports.default = ReadLightNovels;
+exports.ReadLightNovels = ReadLightNovels;
 // (async () => {
 //   const ln = new ReadLightNovels();
 //   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');

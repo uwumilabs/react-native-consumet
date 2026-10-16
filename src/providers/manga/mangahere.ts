@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -8,13 +7,20 @@ import {
   type IMangaResult,
   MediaStatus,
   type IMangaChapterPage,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class MangaHere extends MangaParser {
+export class MangaHere extends MangaParser {
   override readonly name = 'MangaHere';
   protected override baseUrl = 'http://www.mangahere.cc';
   protected override logo = 'https://i.pinimg.com/564x/51/08/62/51086247ed16ff8abae2df0bb06448e4.jpg';
   protected override classPath = 'MANGA.MangaHere';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = {
@@ -22,7 +28,7 @@ class MangaHere extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await axios.get(`${this.baseUrl}/manga/${mangaId}`, {
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`, {
         headers: {
           cookie: 'isAdult=1',
         },
@@ -71,7 +77,7 @@ class MangaHere extends MangaParser {
     const url = `${this.baseUrl}/manga/${chapterId}/1.html`;
 
     try {
-      const { data } = await axios.get(url, {
+      const { data } = await this.ctx.axios.get(url, {
         headers: {
           cookie: 'isAdult=1',
         },
@@ -118,7 +124,7 @@ class MangaHere extends MangaParser {
           const pageLink = `${pageBase}/chapterfun.ashx?cid=${chapterId}&page=${i}&key=${sKey}`;
 
           for (let j = 1; j <= 3; j++) {
-            const { data } = await axios.get(pageLink, {
+            const { data } = await this.ctx.axios.get(pageLink, {
               headers: {
                 'Referer': url,
                 'X-Requested-With': 'XMLHttpRequest',
@@ -161,7 +167,7 @@ class MangaHere extends MangaParser {
       results: [],
     };
     try {
-      const { data } = await axios.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
       const $ = load(data);
 
       searchRes.hasNextPage = $('div.pager-list-left > a.active').next().text() !== '>';
@@ -207,5 +213,3 @@ class MangaHere extends MangaParser {
     return eval(skrs) as string;
   };
 }
-
-export default MangaHere;

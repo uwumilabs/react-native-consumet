@@ -1,11 +1,15 @@
-import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser } from '../../models';
-declare class ComicK extends MangaParser {
+import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser, type ProviderContext } from '../../models';
+export declare class ComicK extends MangaParser {
+    private readonly ctx;
     readonly name = "ComicK";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
     private readonly apiUrl;
-    private _axios;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
+    /** GETs a path of the ComicK API through the context axios */
+    private apiGet;
     /**
      * @description Fetches info about the manga
      * @param mangaId Comic slug
@@ -32,5 +36,4 @@ declare class ComicK extends MangaParser {
      */
     private getComicId;
 }
-export default ComicK;
 //# sourceMappingURL=comick.d.ts.map

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 import FormData from 'form-data';
 
@@ -10,15 +9,22 @@ import {
   type ILightNovelChapterContent,
   type ILightNovelResult,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 import { USER_AGENT } from '../../utils';
 
-class ReadLightNovels extends LightNovelParser {
+export class ReadLightNovels extends LightNovelParser {
   override readonly name = 'Read Light Novels';
   protected override baseUrl = 'https://readlightnovels.net';
 
   protected override logo = 'https://i.imgur.com/RDPjbc6.png';
   protected override classPath = 'LIGHT_NOVELS.ReadLightNovels';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   /**
    *
@@ -36,7 +42,7 @@ class ReadLightNovels extends LightNovelParser {
     };
 
     try {
-      const page = await axios.get(lightNovelUrl, {
+      const page = await this.ctx.axios.get(lightNovelUrl, {
         headers: {
           Referer: lightNovelUrl,
         },
@@ -106,7 +112,7 @@ class ReadLightNovels extends LightNovelParser {
     bodyFormData.append('page', chapterPage);
     bodyFormData.append('id', novelId);
 
-    const page = await axios({
+    const page = await this.ctx.axios({
       method: 'post',
       url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
       data: bodyFormData,
@@ -156,7 +162,7 @@ class ReadLightNovels extends LightNovelParser {
     };
 
     try {
-      const page = await axios.get(chapterId);
+      const page = await this.ctx.axios.get(chapterId);
       const $ = load(page.data);
 
       contents.novelTitle = $('.truyen-title').text();
@@ -180,7 +186,7 @@ class ReadLightNovels extends LightNovelParser {
   override search = async (query: string): Promise<ISearch<ILightNovelResult>> => {
     const result: ISearch<ILightNovelResult> = { results: [] };
     try {
-      const res = await axios.post(`${this.baseUrl}/?s=${query}`);
+      const res = await this.ctx.axios.post(`${this.baseUrl}/?s=${query}`);
       const $ = load(res.data);
 
       $(
@@ -200,8 +206,6 @@ class ReadLightNovels extends LightNovelParser {
     }
   };
 }
-
-export default ReadLightNovels;
 
 // (async () => {
 //   const ln = new ReadLightNovels();

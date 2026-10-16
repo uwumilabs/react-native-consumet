@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   type IMangaChapter,
   type IMangaChapterPage,
@@ -7,7 +6,9 @@ import {
   type ISearch,
   MangaParser,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 import { type CheerioAPI, load } from 'cheerio';
 
 interface VyvyMangaSearchResult {
@@ -38,19 +39,24 @@ interface VyvyMangaSearchResultData {
   voted: number;
 }
 
-class VyvyManga extends MangaParser {
+export class VyvyManga extends MangaParser {
   override readonly name: string = 'Vyvymanga';
   protected override baseUrl: string = 'https://vyvymanga.net/api';
   protected override logo: string = 'https://vyvymanga.net/web/img/icon.png';
   protected override classPath = 'MANGA.VyvyManga';
   protected baseWebsiteUrl = 'https://vyvymanga.net';
 
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
+
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     if (page < 1) throw new Error('page must be equal to 1 or greater');
 
     try {
       const formattedQuery = query.trim().toLowerCase().split(' ').join('+');
-      const { data }: { data: string } = await axios.get(
+      const { data }: { data: string } = await this.ctx.axios.get(
         `${this.baseWebsiteUrl}/search?search_po=0&q=${formattedQuery}&page=${page}`
       );
 
@@ -103,7 +109,7 @@ class VyvyManga extends MangaParser {
   searchApi = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
       const formattedQuery = query.toLowerCase().split(' ').join('%20');
-      const { data }: { data: VyvyMangaSearchResult } = await axios.request({
+      const { data }: { data: VyvyMangaSearchResult } = await this.ctx.axios.request({
         method: 'get',
         url: `${this.baseUrl}/manga/search?search=${formattedQuery}&uid=`,
         headers: {
@@ -128,7 +134,7 @@ class VyvyManga extends MangaParser {
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data }: { data: string } = await axios.request({
+      const { data }: { data: string } = await this.ctx.axios.request({
         method: 'get',
         url: `${this.baseUrl}/manga-detail/${mangaId}?userid=`,
         headers: {
@@ -187,7 +193,7 @@ class VyvyManga extends MangaParser {
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await axios.get(chapterId);
+      const { data } = await this.ctx.axios.get(chapterId);
 
       const $: CheerioAPI = load(data);
       const dom = $('html');
@@ -229,5 +235,3 @@ class VyvyManga extends MangaParser {
     });
   };
 }
-
-export default VyvyManga;

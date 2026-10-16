@@ -24,6 +24,9 @@ import { PrimeMirror } from '../../src/providers/movies/netflixmirror/primemirro
 import { VegaMovies } from '../../src/providers/movies/vegamovies/vegamovies';
 import { YFlix } from '../../src/providers/movies/yflix/yflix';
 import { createYFlix } from '../../src/providers/movies/yflix/create-yflix';
+import { LIGHT_NOVELS } from '../../src/providers/light-novels';
+import { MANGA } from '../../src/providers/manga';
+import { ReadManga } from '../../src/providers/manga/readmanga';
 import { createProviderContext } from '../../src/utils/create-provider-context';
 import { animeProviders, movieProviders } from '../../src/utils/provider-maps';
 import { defaultAxios, defaultExtractorContext } from '../../src/utils/extension-utils';
@@ -45,7 +48,7 @@ function stubAxios(): any {
 
 /** URLs of every request made through a stub axios. */
 const requestedUrls = (stub: any): string[] =>
-  [...stub.mock.calls, ...stub.get.mock.calls, ...stub.post.mock.calls].map(([arg]) =>
+  [...stub.mock.calls, ...stub.get.mock.calls, ...stub.post.mock.calls, ...stub.request.mock.calls].map(([arg]) =>
     typeof arg === 'string' ? arg : arg.url
   );
 
@@ -63,7 +66,7 @@ function sourceFiles(...dirs: string[]): string[] {
 const read = (file: string) => fs.readFileSync(path.join(repoRoot, file), 'utf8');
 
 /** Provider directories this pattern applies to; src/providers/meta follows its own. */
-const PROVIDER_DIRS = ['providers/anime', 'providers/movies'];
+const PROVIDER_DIRS = ['providers/anime', 'providers/movies', 'providers/manga', 'providers/light-novels'];
 
 // Every request in a test must go through a stub; these catch (and block) the shared instances.
 let realAxios: jest.SpyInstance[];
@@ -259,6 +262,27 @@ describe('class wrappers accept a context (PROV-2)', () => {
 });
 
 describe('class-based providers use the context axios (PROV-2)', () => {
+  const LEGACY_PROVIDERS = [
+    ...Object.entries(MANGA).map(([name, Provider]) => [`MANGA.${name}`, Provider]),
+    ['ReadManga', ReadManga],
+    ...Object.entries(LIGHT_NOVELS).map(([name, Provider]) => [`LIGHT_NOVELS.${name}`, Provider]),
+  ] as [string, new (ctx?: any) => any][];
+
+  it.each(LEGACY_PROVIDERS)('%s searches through ctx.axios', async (_name, Provider) => {
+    const { ctx } = stubProviderContext();
+
+    await new Provider(ctx).search('one piece').catch(() => undefined);
+
+    expect(requestedUrls(ctx.axios).length).toBeGreaterThan(0);
+    for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('class-based providers default to the library context', async () => {
+    await new MANGA.MangaPill().search('one piece').catch(() => undefined);
+
+    expect(defaultAxios.get).toHaveBeenCalledWith('https://mangapill.com/search?q=one%20piece');
+  });
+
   it('MultiStream searches and lists servers through ctx.axios', async () => {
     const { ctx } = stubProviderContext();
     const multiStream = new MultiStream(ctx);
@@ -298,6 +322,7 @@ describe('one export style (PROV-2)', () => {
     'src/providers/anime/animepahe/animepahe.ts',
     'src/providers/anime/zoro/zoro.ts',
     'src/providers/movies/himovies/himovies.ts',
+    'src/providers/manga/mangasee123.ts',
   ].map((file) => path.normalize(file));
 
   it.each(['extractors', ...PROVIDER_DIRS])('%s import axios only for its types', (dir) => {

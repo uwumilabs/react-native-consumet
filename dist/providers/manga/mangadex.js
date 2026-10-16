@@ -1,28 +1,31 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.MangaDex = void 0;
 const ascii_url_encoder_1 = require("ascii-url-encoder");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 const utils_1 = require("../../utils");
 class MangaDex extends models_1.MangaParser {
+  ctx;
   name = 'MangaDex';
   baseUrl = 'https://mangadex.org';
   logo = 'https://pbs.twimg.com/profile_images/1391016345714757632/xbt_jW78_400x400.jpg';
   classPath = 'MANGA.MangaDex';
   apiUrl = 'https://api.mangadex.org';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   fetchMangaInfo = async mangaId => {
     try {
       const {
         data
-      } = await axios_1.default.get(`${this.apiUrl}/manga/${mangaId}`);
+      } = await this.ctx.axios.get(`${this.apiUrl}/manga/${mangaId}`);
       const mangaInfo = {
         id: data.data.id,
         title: data.data.attributes.title.en,
@@ -58,7 +61,7 @@ class MangaDex extends models_1.MangaParser {
    */
   fetchChapterPages = async chapterId => {
     try {
-      const res = await axios_1.default.get(`${this.apiUrl}/at-home/server/${chapterId}`);
+      const res = await this.ctx.axios.get(`${this.apiUrl}/at-home/server/${chapterId}`);
       const pages = [];
       for (const id of res.data.chapter.data) {
         pages.push({
@@ -85,7 +88,7 @@ class MangaDex extends models_1.MangaParser {
       if (limit > 100) throw new Error('Limit must be less than or equal to 100');
       if (limit * (page - 1) >= 10000) throw new Error('not enough results');
       try {
-        const res = await axios_1.default.get(`${_this.apiUrl}/manga?limit=${limit}&title=${(0, ascii_url_encoder_1.encode)(query)}&limit=${limit}&offset=${limit * (page - 1)}&order[relevance]=desc`);
+        const res = await _this.ctx.axios.get(`${_this.apiUrl}/manga?limit=${limit}&title=${(0, ascii_url_encoder_1.encode)(query)}&limit=${limit}&offset=${limit * (page - 1)}&order[relevance]=desc`);
         if (res.data.result === 'ok') {
           const results = {
             currentPage: page,
@@ -122,7 +125,7 @@ class MangaDex extends models_1.MangaParser {
   })();
   fetchRandom = async () => {
     try {
-      const res = await axios_1.default.get(`${this.apiUrl}/manga/random`);
+      const res = await this.ctx.axios.get(`${this.apiUrl}/manga/random`);
       if (res.data.result === 'ok') {
         const results = {
           currentPage: 1,
@@ -160,7 +163,7 @@ class MangaDex extends models_1.MangaParser {
       if (limit > 100) throw new Error('Limit must be less than or equal to 100');
       if (limit * (page - 1) >= 10000) throw new Error('not enough results');
       try {
-        const res = await axios_1.default.get(`${_this2.apiUrl}/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
+        const res = await _this2.ctx.axios.get(`${_this2.apiUrl}/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
         if (res.data.result === 'ok') {
           const results = {
             currentPage: page,
@@ -201,7 +204,7 @@ class MangaDex extends models_1.MangaParser {
       if (limit > 100) throw new Error('Limit must be less than or equal to 100');
       if (limit * (page - 1) >= 10000) throw new Error('not enough results');
       try {
-        const res = await axios_1.default.get(`${_this3.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`);
+        const res = await _this3.ctx.axios.get(`${_this3.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`);
         if (res.data.result === 'ok') {
           const results = {
             currentPage: page,
@@ -242,7 +245,7 @@ class MangaDex extends models_1.MangaParser {
       if (limit > 100) throw new Error('Limit must be less than or equal to 100');
       if (limit * (page - 1) >= 10000) throw new Error('not enough results');
       try {
-        const res = await axios_1.default.get(`${_this4.apiUrl}/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
+        const res = await _this4.ctx.axios.get(`${_this4.apiUrl}/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${limit * (page - 1)}`);
         if (res.data.result === 'ok') {
           const results = {
             currentPage: page,
@@ -278,17 +281,18 @@ class MangaDex extends models_1.MangaParser {
     if (res?.data?.offset + 96 >= res?.data?.total) {
       return [];
     }
-    const response = await axios_1.default.get(`${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`);
+    const response = await this.ctx.axios.get(`${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`);
     return [...response.data.data, ...(await this.fetchAllChapters(mangaId, offset + 96, response))];
   };
   fetchCoverImage = async coverId => {
     const {
       data
-    } = await axios_1.default.get(`${this.apiUrl}/cover/${coverId}`);
+    } = await this.ctx.axios.get(`${this.apiUrl}/cover/${coverId}`);
     const fileName = data.data.attributes.fileName;
     return fileName;
   };
 }
+exports.MangaDex = MangaDex;
 // (async () => {
 //   const md = new MangaDex();
 //   const search = await md.search('solo leveling');
@@ -296,5 +300,4 @@ class MangaDex extends models_1.MangaParser {
 //   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
 //   console.log(chapterPages);
 // })();
-exports.default = MangaDex;
 //# sourceMappingURL=mangadex.js.map

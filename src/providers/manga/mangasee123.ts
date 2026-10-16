@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 import { isText } from 'domhandler';
 
@@ -9,14 +8,21 @@ import {
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class Mangasee123 extends MangaParser {
+export class Mangasee123 extends MangaParser {
   override readonly name = 'MangaSee';
   protected override baseUrl = 'https://mangasee123.com';
   protected override logo =
     'https://scontent.fman4-1.fna.fbcdn.net/v/t1.6435-1/80033336_1830005343810810_419412485691408384_n.png?stp=dst-png_p148x148&_nc_cat=104&ccb=1-7&_nc_sid=1eb0c7&_nc_ohc=XpeoABDI-sEAX-5hLFV&_nc_ht=scontent.fman4-1.fna&oh=00_AT9nIRz5vPiNqqzNpSg2bJymX22rZ1JumYTKBqg_cD0Alg&oe=6317290E';
   protected override classPath = 'MANGA.Mangasee123';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   // private readonly sgProxy = 'https://cors.consumet.stream';
 
@@ -28,7 +34,7 @@ class Mangasee123 extends MangaParser {
     const url = `${this.baseUrl}/manga`;
 
     try {
-      const { data } = await axios.get(`${url}/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${url}/${mangaId}`);
       const $ = load(data);
 
       const schemaScript = $('body > script:nth-child(15)').get()[0]!.children[0];
@@ -68,7 +74,7 @@ class Mangasee123 extends MangaParser {
     const url = `${this.baseUrl}/read-online/${chapterId}-page-1.html`;
 
     try {
-      const { data } = await axios.get(`${url}`);
+      const { data } = await this.ctx.axios.get(`${url}`);
       const $ = load(data);
 
       const chapterScript = $('body > script:nth-child(19)').get()[0]!.children[0];
@@ -106,7 +112,7 @@ class Mangasee123 extends MangaParser {
     const sanitizedQuery = query.replace(/\s/g, '').toLowerCase();
 
     try {
-      const { data } = await axios.get(`https://mangasee123.com/_search.php`);
+      const { data } = await this.ctx.axios.get(`https://mangasee123.com/_search.php`);
 
       for (const i in data) {
         const sanitizedAlts: string[] = [];
@@ -180,4 +186,5 @@ class Mangasee123 extends MangaParser {
 //   console.log(mediaInfo, mangaInfo);
 // })();
 
+// Kept only while src/providers/meta imports the default; import { Mangasee123 } instead.
 export default Mangasee123;

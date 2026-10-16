@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -9,13 +8,20 @@ import {
   MediaStatus,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class BRMangas extends MangaParser {
+export class BRMangas extends MangaParser {
   override readonly name = 'BRMangas';
   protected override baseUrl = 'https://www.brmangas.net';
   protected override logo = 'https://www.brmangas.net/wp-content/themes/brmangasnew/images/svg/logo.svg';
   protected override classPath = 'MANGA.BRMangas';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = {
@@ -23,7 +29,7 @@ class BRMangas extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await axios.get(`${this.baseUrl}/manga/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
       const title = $('body > div.scroller-inner > div.wrapper > main > section > div > h1.titulo').text();
@@ -82,7 +88,7 @@ class BRMangas extends MangaParser {
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
       const url = `${this.baseUrl}/ler/${chapterId}`;
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
       const $ = load(data);
 
       const script = $('script');
@@ -119,7 +125,7 @@ class BRMangas extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/?s=${query.replace(/ /g, '+')}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/?s=${query.replace(/ /g, '+')}`);
       const $ = load(data);
 
       const results = $('body > div.scroller-inner > div.wrapper > main > div.container > div.listagem > div.col')
@@ -140,5 +146,3 @@ class BRMangas extends MangaParser {
     }
   };
 }
-
-export default BRMangas;

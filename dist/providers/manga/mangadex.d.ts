@@ -1,10 +1,13 @@
-import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser } from '../../models';
-declare class MangaDex extends MangaParser {
+import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser, type ProviderContext } from '../../models';
+export declare class MangaDex extends MangaParser {
+    private readonly ctx;
     readonly name = "MangaDex";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
     private readonly apiUrl;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
     fetchMangaInfo: (mangaId: string) => Promise<IMangaInfo>;
     /**
      * @currently only supports english
@@ -23,5 +26,4 @@ declare class MangaDex extends MangaParser {
     private fetchAllChapters;
     private fetchCoverImage;
 }
-export default MangaDex;
 //# sourceMappingURL=mangadex.d.ts.map

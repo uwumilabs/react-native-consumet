@@ -1,16 +1,12 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.ReadManga = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 var RankingType;
 (function (RankingType) {
   RankingType["TOPRATED"] = "top-rated";
@@ -22,12 +18,19 @@ var RankingType;
  * if it doesn't.
  */
 class ReadManga extends models_1.MangaParser {
+  ctx;
   name = 'ReadManga';
   baseUrl = 'https://readmanga.app';
   logo = 'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
   classPath = 'MANGA.ReadManga';
   isWorking = false;
   darkLogo = 'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   /**
    *
    * @param query Search query
@@ -36,7 +39,7 @@ class ReadManga extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
+      } = await this.ctx.axios.get(`${this.baseUrl}/search/autocomplete?dataType=json&query=${query}`, {
         headers: {
           Referer: this.baseUrl
         }
@@ -63,7 +66,7 @@ class ReadManga extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`${_this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
+        } = await _this.ctx.axios.get(`${_this.baseUrl}/ranking/${RankingType.NEW}/${page}`, {
           headers: {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'en-US,en;q=0.9',
@@ -95,7 +98,7 @@ class ReadManga extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`${_this2.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
+        } = await _this2.ctx.axios.get(`${_this2.baseUrl}/ranking/${RankingType.TOPRATED}/${page}`, {
           headers: {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'en-US,en;q=0.9',
@@ -121,7 +124,7 @@ class ReadManga extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.get(`${this.baseUrl}/${mangaId}`, {
+      } = await this.ctx.axios.get(`${this.baseUrl}/${mangaId}`, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -181,7 +184,7 @@ class ReadManga extends models_1.MangaParser {
     try {
       const {
         data
-      } = await axios_1.default.get(chapterId, {
+      } = await this.ctx.axios.get(chapterId, {
         headers: {
           'accept': 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'en-US,en;q=0.9',
@@ -269,5 +272,5 @@ class ReadManga extends models_1.MangaParser {
     }
   };
 }
-exports.default = ReadManga;
+exports.ReadManga = ReadManga;
 //# sourceMappingURL=readmanga.js.map

@@ -1,17 +1,17 @@
-import MangaDex from './mangadex';
-import ComicK from './comick';
-import MangaHere from './mangahere';
-import MangaKakalot from './mangakakalot';
-import Mangasee123 from './mangasee123';
-import Mangapark from './mangapark';
-import MangaPill from './mangapill';
-import MangaReader from './mangareader';
-import AsuraScans from './asurascans';
-import FlameScans from './flamescans';
-import MangaHost from './mangahost';
-import BRMangas from './brmangas';
-import VyvyManga from './vyvymanga';
-declare const _default: {
+import { MangaDex } from './mangadex';
+import { ComicK } from './comick';
+import { MangaHere } from './mangahere';
+import { MangaKakalot } from './mangakakalot';
+import { Mangasee123 } from './mangasee123';
+import { Mangapark } from './mangapark';
+import { MangaPill } from './mangapill';
+import { MangaReader } from './mangareader';
+import { AsuraScans } from './asurascans';
+import { FlameScans } from './flamescans';
+import { MangaHost } from './mangahost';
+import { BRMangas } from './brmangas';
+import { VyvyManga } from './vyvymanga';
+export declare const MANGA: {
     MangaDex: typeof MangaDex;
     ComicK: typeof ComicK;
     MangaHere: typeof MangaHere;
@@ -26,5 +26,4 @@ declare const _default: {
     BRMangas: typeof BRMangas;
     VyvyManga: typeof VyvyManga;
 };
-export default _default;
 //# sourceMappingURL=index.d.ts.map

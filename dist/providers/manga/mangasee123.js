@@ -1,22 +1,25 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.Mangasee123 = void 0;
 const cheerio_1 = require("cheerio");
 const domhandler_1 = require("domhandler");
 const models_1 = require("../../models");
+const create_provider_context_1 = require("../../utils/create-provider-context");
 class Mangasee123 extends models_1.MangaParser {
+  ctx;
   name = 'MangaSee';
   baseUrl = 'https://mangasee123.com';
   logo = 'https://scontent.fman4-1.fna.fbcdn.net/v/t1.6435-1/80033336_1830005343810810_419412485691408384_n.png?stp=dst-png_p148x148&_nc_cat=104&ccb=1-7&_nc_sid=1eb0c7&_nc_ohc=XpeoABDI-sEAX-5hLFV&_nc_ht=scontent.fman4-1.fna&oh=00_AT9nIRz5vPiNqqzNpSg2bJymX22rZ1JumYTKBqg_cD0Alg&oe=6317290E';
   classPath = 'MANGA.Mangasee123';
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (0, create_provider_context_1.createProviderContext)();
+    super();
+    this.ctx = ctx;
+  }
   // private readonly sgProxy = 'https://cors.consumet.stream';
   fetchMangaInfo = (() => {
     var _this = this;
@@ -29,7 +32,7 @@ class Mangasee123 extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`${url}/${mangaId}`);
+        } = await _this.ctx.axios.get(`${url}/${mangaId}`);
         const $ = (0, cheerio_1.load)(data);
         const schemaScript = $('body > script:nth-child(15)').get()[0].children[0];
         if ((0, domhandler_1.isText)(schemaScript)) {
@@ -66,7 +69,7 @@ class Mangasee123 extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`${url}`);
+        } = await _this2.ctx.axios.get(`${url}`);
         const $ = (0, cheerio_1.load)(data);
         const chapterScript = $('body > script:nth-child(19)').get()[0].children[0];
         if ((0, domhandler_1.isText)(chapterScript)) {
@@ -102,7 +105,7 @@ class Mangasee123 extends models_1.MangaParser {
       try {
         const {
           data
-        } = await axios_1.default.get(`https://mangasee123.com/_search.php`);
+        } = await _this3.ctx.axios.get(`https://mangasee123.com/_search.php`);
         for (const i in data) {
           const sanitizedAlts = [];
           const item = data[i];
@@ -152,6 +155,7 @@ class Mangasee123 extends models_1.MangaParser {
     return `${pad}.${values[1]}`;
   };
 }
+exports.Mangasee123 = Mangasee123;
 // (async () => {
 //   const manga = new Mangasee123();
 //   const mediaInfo = await manga.search('oyasumi');
@@ -160,5 +164,6 @@ class Mangasee123 extends models_1.MangaParser {
 //   console.log(chapterPages);
 //   console.log(mediaInfo, mangaInfo);
 // })();
+// Kept only while src/providers/meta imports the default; import { Mangasee123 } instead.
 exports.default = Mangasee123;
 //# sourceMappingURL=mangasee123.js.map

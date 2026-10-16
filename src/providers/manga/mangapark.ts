@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -8,21 +7,28 @@ import {
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class Mangapark extends MangaParser {
+export class Mangapark extends MangaParser {
   override readonly name = 'Mangapark';
   protected override baseUrl = 'https://v2.mangapark.net';
   protected override logo =
     'https://raw.githubusercontent.com/tachiyomiorg/tachiyomi-extensions/repo/icon/tachiyomi-en.mangapark-v1.3.23.png';
   protected override classPath = 'MANGA.Mangapark';
 
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
+
   override fetchMangaInfo = async (mangaId: string, ...args: any): Promise<IMangaInfo> => {
     const mangaInfo: IMangaInfo = { id: mangaId, title: '' };
     const url = `${this.baseUrl}/manga/${mangaId}`;
 
     try {
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
       const $ = load(data);
 
       mangaInfo.title = $('div.pb-1.mb-2.line-b-f.hd h2 a').text();
@@ -68,7 +74,7 @@ class Mangapark extends MangaParser {
     const url = `${this.baseUrl}/manga/${chapterId}`;
 
     try {
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
 
       const varLoadPages: string = data.match(regex)[0];
       const loadPagesJson = JSON.parse(varLoadPages.replace('var _load_pages = ', ''));
@@ -87,7 +93,7 @@ class Mangapark extends MangaParser {
     const url = `${this.baseUrl}/search?q=${query}&page=${page}`;
 
     try {
-      const { data } = await axios.get(url);
+      const { data } = await this.ctx.axios.get(url);
       const $ = load(data);
 
       const results: IMangaResult[] = $('.item')
@@ -107,5 +113,3 @@ class Mangapark extends MangaParser {
     }
   };
 }
-
-export default Mangapark;

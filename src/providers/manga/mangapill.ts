@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
 import {
@@ -8,14 +7,21 @@ import {
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 
-class MangaPill extends MangaParser {
+export class MangaPill extends MangaParser {
   override readonly name = 'MangaPill';
   protected override baseUrl = 'https://mangapill.com';
   protected override logo =
     'https://scontent-man2-1.xx.fbcdn.net/v/t39.30808-6/300819578_399903675586699_2357525969702348451_n.png?_nc_cat=100&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=Md2cQ4wRNWwAX-_U0fz&_nc_ht=scontent-man2-1.xx&oh=00_AfCJjAYDk9bsndz8uyNG-GdFIYcPvdIzbHnetHGzf1pVSw&oe=63BDD131';
   protected override classPath = 'MANGA.MangaPill';
+
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
 
   /**
    *
@@ -23,7 +29,7 @@ class MangaPill extends MangaParser {
    */
   override search = async (query: string): Promise<ISearch<IMangaResult>> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/search?q=${encodeURIComponent(query)}`);
       const $ = load(data);
 
       const results = $('div.container div.my-3.justify-end > div')
@@ -51,7 +57,7 @@ class MangaPill extends MangaParser {
       title: '',
     };
     try {
-      const { data } = await axios.get(`${this.baseUrl}/manga/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`);
       const $ = load(data);
 
       mangaInfo.title = $('div.container div.my-3 div.flex-col div.mb-3 h1').text().trim();
@@ -84,7 +90,7 @@ class MangaPill extends MangaParser {
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/chapters/${chapterId}`);
+      const { data } = await this.ctx.axios.get(`${this.baseUrl}/chapters/${chapterId}`);
       const $ = load(data);
 
       const chapterSelector = $('chapter-page');
@@ -112,5 +118,3 @@ class MangaPill extends MangaParser {
 //   const pages = await manga.fetchChapterPages(info.chapters![0].id);
 //   console.log(pages);
 // })();
-
-export default MangaPill;

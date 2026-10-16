@@ -1,6 +1,5 @@
-import axios from 'axios';
 import { encode } from 'ascii-url-encoder';
-import { AxiosError, type AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   type IMangaChapterPage,
@@ -9,10 +8,12 @@ import {
   type ISearch,
   MangaParser,
   MediaStatus,
+  type ProviderContext,
 } from '../../models';
+import { createProviderContext } from '../../utils/create-provider-context';
 import { capitalizeFirstLetter, substringBefore } from '../../utils';
 
-class MangaDex extends MangaParser {
+export class MangaDex extends MangaParser {
   override readonly name = 'MangaDex';
   protected override baseUrl = 'https://mangadex.org';
   protected override logo = 'https://pbs.twimg.com/profile_images/1391016345714757632/xbt_jW78_400x400.jpg';
@@ -20,9 +21,14 @@ class MangaDex extends MangaParser {
 
   private readonly apiUrl = 'https://api.mangadex.org';
 
+  /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+  constructor(private readonly ctx: ProviderContext = createProviderContext()) {
+    super();
+  }
+
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     try {
-      const { data } = await axios.get(`${this.apiUrl}/manga/${mangaId}`);
+      const { data } = await this.ctx.axios.get(`${this.apiUrl}/manga/${mangaId}`);
       const mangaInfo: IMangaInfo = {
         id: data.data.id,
         title: data.data.attributes.title.en,
@@ -68,7 +74,7 @@ class MangaDex extends MangaParser {
    */
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
     try {
-      const res = await axios.get(`${this.apiUrl}/at-home/server/${chapterId}`);
+      const res = await this.ctx.axios.get(`${this.apiUrl}/at-home/server/${chapterId}`);
       const pages: { img: string; page: number }[] = [];
 
       for (const id of res.data.chapter.data) {
@@ -94,7 +100,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await axios.get(
+      const res = await this.ctx.axios.get(
         `${this.apiUrl}/manga?limit=${limit}&title=${encode(query)}&limit=${limit}&offset=${
           limit * (page - 1)
         }&order[relevance]=desc`
@@ -141,7 +147,7 @@ class MangaDex extends MangaParser {
   };
   fetchRandom = async (): Promise<ISearch<IMangaResult>> => {
     try {
-      const res = await axios.get(`${this.apiUrl}/manga/random`);
+      const res = await this.ctx.axios.get(`${this.apiUrl}/manga/random`);
 
       if (res.data.result === 'ok') {
         const results: ISearch<IMangaResult> = {
@@ -179,7 +185,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await axios.get(
+      const res = await this.ctx.axios.get(
         `${
           this.apiUrl
         }/manga?includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&order[createdAt]=desc&hasAvailableChapters=true&limit=${limit}&offset=${
@@ -227,7 +233,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await axios.get(
+      const res = await this.ctx.axios.get(
         `${this.apiUrl}/manga?order[latestUploadedChapter]=desc&limit=${limit}&offset=${limit * (page - 1)}`
       );
 
@@ -272,7 +278,7 @@ class MangaDex extends MangaParser {
     if (limit * (page - 1) >= 10000) throw new Error('not enough results');
 
     try {
-      const res = await axios.get(
+      const res = await this.ctx.axios.get(
         `${
           this.apiUrl
         }/manga?includes[]=cover_art&includes[]=artist&includes[]=author&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true&limit=${limit}&offset=${
@@ -320,7 +326,7 @@ class MangaDex extends MangaParser {
       return [];
     }
 
-    const response = await axios.get(
+    const response = await this.ctx.axios.get(
       `${this.apiUrl}/manga/${mangaId}/feed?offset=${offset}&limit=96&order[volume]=desc&order[chapter]=desc&translatedLanguage[]=en`
     );
 
@@ -328,7 +334,7 @@ class MangaDex extends MangaParser {
   };
 
   private fetchCoverImage = async (coverId: string): Promise<string> => {
-    const { data } = await axios.get(`${this.apiUrl}/cover/${coverId}`);
+    const { data } = await this.ctx.axios.get(`${this.apiUrl}/cover/${coverId}`);
 
     const fileName = data.data.attributes.fileName;
 
@@ -343,5 +349,3 @@ class MangaDex extends MangaParser {
 //   const chapterPages = await md.fetchChapterPages(manga.chapters![0].id);
 //   console.log(chapterPages);
 // })();
-
-export default MangaDex;

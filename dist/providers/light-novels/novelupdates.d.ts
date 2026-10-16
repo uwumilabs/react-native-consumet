@@ -1,10 +1,15 @@
-import { LightNovelParser, type ISearch, type ILightNovelInfo, type ILightNovelChapterContent, type ILightNovelResult } from '../../models';
-declare class NovelUpdates extends LightNovelParser {
+import { LightNovelParser, type ISearch, type ILightNovelInfo, type ILightNovelChapterContent, type ILightNovelResult, type ProviderContext } from '../../models';
+export declare class NovelUpdates extends LightNovelParser {
+    private readonly ctx;
     readonly name = "NovelUpdates";
     protected baseUrl: string;
     private proxyURL;
     protected logo: string;
     protected classPath: string;
+    /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
+    constructor(ctx?: ProviderContext);
+    /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+    private requestText;
     /**
      *
      * @param lightNovelUrl light novel link or id
@@ -23,5 +28,4 @@ declare class NovelUpdates extends LightNovelParser {
      */
     search: (query: string) => Promise<ISearch<ILightNovelResult>>;
 }
-export default NovelUpdates;
 //# sourceMappingURL=novelupdates.d.ts.map
