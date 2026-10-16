@@ -174,6 +174,12 @@ To publish new versions, run the following:
 yarn release
 ```
 
+CI doesn't run the live suites, so run the ones for providers whose request path changed since the last release before you publish. For the next release that includes MangaDex and MangaKakalot, whose requests now go through the library's `defaultAxios`:
+
+```sh
+LIVE_TESTS=1 npx jest test/manga/mangadex test/manga/mangakakalot
+```
+
 ### Scripts
 
 The `package.json` file contains various scripts for common tasks:
