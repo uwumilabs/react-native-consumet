@@ -2,7 +2,7 @@
 
 This guide outlines the process of adding a new content provider (e.g., for anime, movies, manga, or light novels) to the `react-native-consumet` library.
 
-Anime and movie providers ship through the extension registry: you write a factory, add a registry entry, and commit. The build, the published file, its URL and its hash are generated, and apps load the provider without a library release.
+Providers ship through the extension registry: you write a factory, add a registry entry, and commit. The build, the published file, its URL and its hash are generated, and apps load the provider without a library release.
 
 ## Table of Contents
 
@@ -55,7 +55,7 @@ Providers are categorized by media type. Determine if your new provider is for:
 - Light Novels (`src/providers/light-novels`)
 - Meta (for metadata services like Anilist, TMDB) (`src/providers/meta`)
 
-Only anime and movie providers can be loaded from the registry: `ProviderManager` requires `search`, `fetchEpisodeServers`, `fetchEpisodeSources` and `fetchAnimeInfo` (anime) or `fetchMediaInfo` (movies). Manga, light novel and meta providers are bundled classes (extending `MangaParser`, `LightNovelParser`, or `AnimeParser` / `MovieParser` for meta providers) exported from the category's `index.ts`, so they need a library release. The rest of this guide covers registry providers.
+Every category can ship through the registry. Apps load a provider with `ProviderManager.getProvider(category, id)` (`getAnimeProvider` and `getMovieProvider` are shortcuts for anime and movies), which checks that it has the methods its category requires; see [Core Methods to Implement](#core-methods-to-implement). The examples in this guide are an anime provider. The meta providers the library ships (`META.Anilist`, `META.TMDB`) are bundled classes that wrap another provider, so changing them needs a library release.
 
 ## Step 2: Create the Provider File
 
@@ -135,8 +135,9 @@ export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: strin
     const picked = servers.find((s) => s.name.startsWith(server)) ?? servers[0];
     if (!picked) throw new Error(`No servers found for episode ${episodeId}`);
 
-    // Runs the registry version of MegaCloud when the app's registry has one, else the bundled one
-    return await extractors.MegaCloud(ctx).extract(new PolyURL(picked.url), `${baseUrl}/`);
+    // Runs the registry version of MegaCloud when the app's registry has one, else the bundled one.
+    // The base resolves a relative link; PolyURL throws a TypeError on one it can't parse.
+    return await extractors.MegaCloud(ctx).extract(new PolyURL(picked.url, baseUrl), `${baseUrl}/`);
   };
 
   return {
@@ -159,7 +160,17 @@ Export the factory by name (`export function createMyAnimeWebsite`); the registr
 
 ### Core Methods to Implement
 
-`ProviderManager` checks that these methods exist before it hands a loaded provider to an app:
+`ProviderManager` checks that the methods of the entry's `category` exist before it hands a loaded provider to an app, and rejects it with every missing method in the error. They are exported as `REQUIRED_PROVIDER_METHODS`:
+
+| Category       | Required methods                                                         |
+| -------------- | ------------------------------------------------------------------------ |
+| `anime`        | `search`, `fetchAnimeInfo`, `fetchEpisodeSources`, `fetchEpisodeServers` |
+| `movies`       | `search`, `fetchMediaInfo`, `fetchEpisodeSources`, `fetchEpisodeServers` |
+| `manga`        | `search`, `fetchMangaInfo`, `fetchChapterPages`                          |
+| `light-novels` | `search`, `fetchLightNovelInfo`, `fetchChapterContent`                   |
+| `meta`         | `search`, `fetchEpisodeSources`, `fetchEpisodeServers`                   |
+
+No base class is needed: return a plain object, as in the example. For anime and movie providers:
 
 - `search(query: string, ...args: any[]): Promise<ISearch<T>>`: Searches for content based on a query.
 - `fetchAnimeInfo(animeId: string, ...args: any[]): Promise<IAnimeInfo>` (anime) or `fetchMediaInfo(mediaId: string, ...args: any[]): Promise<IMovieInfo>` (movies): Fetches detailed information about a media item, including its episodes.
@@ -175,7 +186,7 @@ The `ProviderContext` (`ctx`) object provides essential utilities. Prefer it ove
 - `axios`: The app's Axios instance for making HTTP requests (15 s timeout by default).
 - `load`: A Cheerio `load` function for parsing HTML.
 - `CryptoJS`, `USER_AGENT`: crypto-js and the default User-Agent string.
-- `PolyURL`, `PolyURLSearchParams`: URL and URLSearchParams implementations. Use them instead of the global `URL`, which is incomplete in React Native.
+- `PolyURL`, `PolyURLSearchParams`: implementations of the WHATWG URL Standard. Use them instead of the global `URL`, which is incomplete in React Native. As the standard requires, `new PolyURL(input)` throws a `TypeError` for invalid input or an invalid base, so pass a base for scraped links that may be relative (`new PolyURL(href, baseUrl)`), or catch the error. `pathname` keeps its percent-encoding, and query strings encode a space as `+`.
 - `createCustomBaseUrl(defaultUrl, customUrl?)`: Picks the registry's base URL when one is passed.
 - `extractors`: The extractors, e.g. `extractors.MegaCloud(ctx)` (see below).
 - `enums`: The library's enums: `StreamingServers`, `MediaFormat`, `MediaStatus`, `SubOrDub`, `WatchListType`, `TvType`, `Genres`, `Topics`.
@@ -183,6 +194,13 @@ The `ProviderContext` (`ctx`) object provides essential utilities. Prefer it ove
 - `NativeConsumet`: The native module (WebView requests, DDoS-Guard cookies, script deobfuscation); see [Native Module](#native-module).
 
 The full type is `ProviderContext` in [`src/models/provider-context.ts`](../../src/models/provider-context.ts).
+
+Extension code also runs with a few globals:
+
+- `fetch(url, { method, headers, body })`: sent through the app's axios. Like the platform `fetch`, it resolves for every HTTP status (`ok` is `false` for 4xx and 5xx) and rejects only when no response arrives. `text()` always returns the body as a string, also for JSON responses, and `json()` parses it.
+- `exports`, `module`, `require` (only the modules listed in [Step 4](#step-4-add-to-extension-registryjson)) and `console`.
+
+The loader looks for your factory as `exports[factoryName]`, then `module.exports[factoryName]`, then a top-level `function factoryName`, then the default export (`exports.default`, then `module.exports.default`). Code outside the factory runs once per manager and code hash; the factory runs once per load.
 
 ### Integrating Extractors
 
@@ -221,6 +239,7 @@ If your provider has a class wrapper, copy the field across: `this.capabilities 
 
 - Rejections are Errors with a `code`: `WEBVIEW_ERROR` (the page failed to load), `TIMEOUT` (it didn't finish within 30 s), `COOKIE_ERROR`, `ERROR`, `HTTP_ERROR`, and `NetworkError` / `ParseError` / `EvaluationError` from `deobfuscateScript`.
 - In WebView requests only the main document decides the outcome. Failed images, scripts and iframes are ignored, and HTTP error statuses (403, 503…) resolve with the page.
+- `deobfuscateScript` downloads Synchrony (about 400 KB) on its first call, checks it against a pinned SHA-256, and keeps it in memory and in the app's cache directory, so later calls and launches work offline. A download that doesn't match the pin rejects with `NetworkError`.
 
 Two platform differences remain:
 
@@ -314,6 +333,8 @@ Requiring anything else throws when the extension loads. Prefer what `ctx` gives
 `prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match, and refuse entries without a `sha256`.
 
 **Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it, and the pre-commit hook stops the commit. Bump `version` in the entry, stage it, and commit again. Run `yarn registry:check` to verify the registry without writing anything, and add `--base origin/main` to also run the version checks CI runs.
+
+**After the change merges,** a maintainer approves the "Sign registry" run, which signs the new registry for apps that download it. Until then `yarn registry:check` notes the signature as stale (or missing while no signing key exists); that is expected and doesn't fail the check. See [Registry signing](../../CONTRIBUTING.md#registry-signing-maintainers).
 
 ### Compatibility: `minContextVersion` and `schemaVersion`
 
@@ -427,7 +448,12 @@ yarn test
 yarn registry:check --base origin/main
 ```
 
-Test your provider in the example applications (`apps/`) to ensure it works as expected in a real React Native environment.
+Then test the provider in the example app (`apps/`), on a device or emulator. Its **Registry** tab loads anime and movie providers, and its **Load from** toggle picks where the code comes from:
+
+1. **Local dist**, before the version is published. After `yarn build`, run `node scripts/prepare-registry.js` (so the entry's `sha256` matches the new bundle) and `yarn example gen:local-dist` (which rewrites the app's map of bundles), then start the app with `yarn example android` or `yarn example ios`. The app still checks the code against the entry's `sha256`: a stale map shows an integrity mismatch.
+2. **Registry**, once the version is on `main`. This is the path real apps take: it fetches the entry's `main` URL and verifies the hash. Before the merge it reports a 404.
+
+See [`apps/README.md`](../../apps/README.md) for what each error means.
 
 ## Submitting Your Contribution
 
