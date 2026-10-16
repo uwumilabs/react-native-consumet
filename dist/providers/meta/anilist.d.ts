@@ -72,8 +72,8 @@ declare class Anilist extends AnimeParser {
      *
      * @param page page number (optional)
      * @param perPage number of results per page (optional)
-     * @param weekStart Filter by the start of the week (optional) (default: todays date) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the string
-     * @param weekEnd Filter by the end of the week (optional) similar to weekStart
+     * @param weekStart First day of the schedule, its next occurrence counting today (optional) (default: today) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the day's name
+     * @param weekEnd Last day of the schedule, included, on or after weekStart (optional) (default: the day before today, so a full week) similar to weekStart
      * @param notYetAired if true will return anime that have not yet aired (optional)
      * @returns the next airing episodes
      */
@@ -198,8 +198,11 @@ declare class Anilist extends AnimeParser {
             fetchMangaInfo: (id: string, ...args: any) => Promise<IMangaInfo>;
         };
     };
+    /** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
     private findMangaSlug;
+    /** The provider's manga for a search, preferring an exact title match; `undefined` when it finds none. */
     private findMangaRaw;
+    /** The provider's chapters, looked up by the romaji title, then by the English one if that finds none. */
     private findManga;
 }
 export default Anilist;

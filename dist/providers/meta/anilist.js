@@ -175,6 +175,29 @@ const mapAnimeDetail = media => ({
   currentEpisode: media.nextAiringEpisode?.episode ? media.nextAiringEpisode.episode - 1 : media.episodes ?? undefined,
   duration: media.duration
 });
+/** A weekday as an index into `days` (0 = Saturday … 6 = Friday), from that index or the day's name. */
+const weekdayIndex = day => {
+  const index = typeof day === 'string' ? utils_1.days.findIndex(name => name.toLowerCase() === day.trim().toLowerCase()) : day;
+  if (!Number.isInteger(index) || index < 0 || index >= utils_1.days.length) throw new Error('Invalid weekStart or weekEnd');
+  return index;
+};
+/**
+ * Unix seconds (AniList's `airingAt`) from the start of `weekStart`'s next occurrence, today
+ * included, to the end of the first `weekEnd` on or after it, in local time.
+ */
+const airingWindow = function (weekStart, weekEnd) {
+  let now = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Date();
+  const start = weekdayIndex(weekStart);
+  const end = weekdayIndex(weekEnd);
+  const today = (now.getDay() + 1) % 7; // as a `days` index, which starts on Saturday
+  const firstDay = (start - today + 7) % 7;
+  const dayCount = (end - start + 7) % 7 + 1;
+  const midnight = offset => new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset).getTime() / 1000;
+  return {
+    from: midnight(firstDay),
+    to: midnight(firstDay + dayCount)
+  };
+};
 const DAY_MS = 86_400_000;
 const toEpisodeNumber = value => {
   const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
@@ -458,8 +481,8 @@ class Anilist extends models_1.AnimeParser {
    *
    * @param page page number (optional)
    * @param perPage number of results per page (optional)
-   * @param weekStart Filter by the start of the week (optional) (default: todays date) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the string
-   * @param weekEnd Filter by the end of the week (optional) similar to weekStart
+   * @param weekStart First day of the schedule, its next occurrence counting today (optional) (default: today) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the day's name
+   * @param weekEnd Last day of the schedule, included, on or after weekStart (optional) (default: the day before today, so a full week) similar to weekStart
    * @param notYetAired if true will return anime that have not yet aired (optional)
    * @returns the next airing episodes
    */
@@ -469,17 +492,20 @@ class Anilist extends models_1.AnimeParser {
     let weekStart = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : (new Date().getDay() + 1) % 7;
     let weekEnd = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : (new Date().getDay() + 7) % 7;
     let notYetAired = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
-    let day1, day2;
-    if (typeof weekStart === 'string' && typeof weekEnd === 'string') [day1, day2] = (0, utils_1.getDays)((0, utils_1.capitalizeFirstLetter)(weekStart.toLowerCase()), (0, utils_1.capitalizeFirstLetter)(weekEnd.toLowerCase()));else if (typeof weekStart === 'number' && typeof weekEnd === 'number') [day1, day2] = [weekStart, weekEnd];else throw new Error('Invalid weekStart or weekEnd');
+    const {
+      from,
+      to
+    } = airingWindow(weekStart, weekEnd);
     try {
+      // AniList's bounds are exclusive, so one second earlier keeps an episode airing at midnight.
       const {
         data
       } = await anilistQuery((0, utils_1.anilistAiringScheduleQuery)(), {
         page,
         perPage,
         notYetAired,
-        airingAtGreater: day1,
-        airingAtLesser: day2
+        airingAtGreater: from - 1,
+        airingAtLesser: to
       });
       const res = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -1050,14 +1076,10 @@ class Anilist extends models_1.AnimeParser {
             id,
             ...mapMediaDetail(data.data.Media)
           };
-          const title = mapTitle(data.data.Media.title);
-          mangaInfo.chapters = await new Anilist().findManga(_this6.provider, {
-            english: title.english,
-            romaji: title.romaji
-          }, mangaInfo.malId).catch(err => {
+          const chapters = await new Anilist().findManga(_this6.provider, mapTitle(data.data.Media.title), mangaInfo.malId).catch(err => {
             throw models_1.MetaError.from('provider', err);
           });
-          mangaInfo.chapters = mangaInfo.chapters.reverse();
+          mangaInfo.chapters = [...chapters].reverse();
           return mangaInfo;
         } catch (error) {
           throw anilistError(error);
@@ -1065,6 +1087,7 @@ class Anilist extends models_1.AnimeParser {
       };
     })();
   };
+  /** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
   findMangaSlug = async (provider, title, malId) => {
     const slug = title.replace(/[^0-9a-zA-Z]+/g, ' ');
     let possibleManga;
@@ -1088,29 +1111,25 @@ class Anilist extends models_1.AnimeParser {
         if (possibleSource) possibleManga = await provider.fetchMangaInfo(possibleSource.url.split('/').pop());else possibleManga = await this.findMangaRaw(provider, slug, title);
       } else possibleManga = await this.findMangaRaw(provider, slug, title);
     } else possibleManga = await this.findMangaRaw(provider, slug, title);
-    const possibleProviderChapters = possibleManga.chapters;
-    return possibleProviderChapters;
+    return possibleManga?.chapters ?? [];
   };
+  /** The provider's manga for a search, preferring an exact title match; `undefined` when it finds none. */
   findMangaRaw = async (provider, slug, title) => {
-    const findAnime = await provider.search(slug);
-    if (findAnime.results.length === 0) return [];
+    const {
+      results = []
+    } = (await provider.search(slug)) ?? {};
+    if (results.length === 0) return undefined;
     // TODO: use much better way than this
-    const possibleManga = findAnime.results.find(manga => title.toLowerCase() === (typeof manga.title === 'string' ? manga.title.toLowerCase() : ''));
-    if (!possibleManga) return await provider.fetchMangaInfo(findAnime.results[0].id);
-    return await provider.fetchMangaInfo(possibleManga.id);
+    const possibleManga = results.find(manga => title.toLowerCase() === (typeof manga.title === 'string' ? manga.title.toLowerCase() : ''));
+    return await provider.fetchMangaInfo((possibleManga ?? results[0]).id);
   };
+  /** The provider's chapters, looked up by the romaji title, then by the English one if that finds none. */
   findManga = async (provider, title, malId) => {
-    title.english = title.english ?? title.romaji;
-    title.romaji = title.romaji ?? title.english;
-    title.english = title.english.toLowerCase();
-    title.romaji = title.romaji.toLowerCase();
-    if (title.english === title.romaji) return await this.findMangaSlug(provider, title.english, malId);
-    const romajiPossibleEpisodes = this.findMangaSlug(provider, title.romaji, malId);
-    if (romajiPossibleEpisodes) {
-      return romajiPossibleEpisodes;
-    }
-    const englishPossibleEpisodes = this.findMangaSlug(provider, title.english, malId);
-    return englishPossibleEpisodes;
+    const romaji = (title.romaji ?? title.english ?? '').toLowerCase();
+    const english = (title.english ?? title.romaji ?? '').toLowerCase();
+    const romajiChapters = await this.findMangaSlug(provider, romaji, malId);
+    if (romajiChapters.length > 0 || english === romaji) return romajiChapters;
+    return this.findMangaSlug(provider, english, malId);
   };
 }
 // (async () => {

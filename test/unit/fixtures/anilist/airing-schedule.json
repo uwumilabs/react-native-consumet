@@ -1,0 +1,128 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "Episodes that aired between airingAtGreater and airingAtLesser.",
+  "variables": {
+    "page": 1,
+    "perPage": 3,
+    "notYetAired": false,
+    "airingAtGreater": 1791959886,
+    "airingAtLesser": 1792132686
+  },
+  "status": 200,
+  "body": {
+    "data": {
+      "Page": {
+        "pageInfo": {
+          "total": 5000,
+          "perPage": 3,
+          "currentPage": 1,
+          "lastPage": 1666,
+          "hasNextPage": true
+        },
+        "airingSchedules": [
+          {
+            "airingAt": 1792076400,
+            "episode": 1,
+            "media": {
+              "id": 199340,
+              "idMal": 62582,
+              "status": "FINISHED",
+              "title": {
+                "romaji": "Seishun Buta Yarou wa Dear Friend no Yume wo Minai",
+                "english": "Rascal Does Not Dream of a Dear Friend",
+                "userPreferred": "Seishun Buta Yarou wa Dear Friend no Yume wo Minai",
+                "native": "青春ブタ野郎はディアフレンドの夢を見ない"
+              },
+              "countryOfOrigin": "JP",
+              "description": "<i>\"Actually, I’m Touko Kirishima.\"</i>\n<br><br>\nThe audience erupted in excitement upon learning that the true identity…",
+              "popularity": 32685,
+              "bannerImage": null,
+              "coverImage": {
+                "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199340-YQlmzvmcJzyt.jpg",
+                "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx199340-YQlmzvmcJzyt.jpg",
+                "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx199340-YQlmzvmcJzyt.jpg",
+                "color": "#5da1f1"
+              },
+              "genres": [
+                "Drama",
+                "Psychological",
+                "Romance",
+                "Supernatural"
+              ],
+              "averageScore": null,
+              "seasonYear": 2026,
+              "format": "MOVIE"
+            }
+          },
+          {
+            "airingAt": 1792077960,
+            "episode": 16,
+            "media": {
+              "id": 180136,
+              "idMal": 59741,
+              "status": "RELEASING",
+              "title": {
+                "romaji": "Tsuihou Sareta Tensei Juukishi wa Game Chishiki de Musou Suru",
+                "english": "The Exiled Heavy Knight Knows How to Game the System",
+                "userPreferred": "Tsuihou Sareta Tensei Juukishi wa Game Chishiki de Musou Suru",
+                "native": "追放された転生重騎士はゲーム知識で無双する"
+              },
+              "countryOfOrigin": "JP",
+              "description": "Born into a prestigious family of master swordsmen, Elymas Edvaughn’s future shatters when he awakens the so-called “def…",
+              "popularity": 69689,
+              "bannerImage": null,
+              "coverImage": {
+                "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx180136-gtMTCRlOD4OE.jpg",
+                "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx180136-gtMTCRlOD4OE.jpg",
+                "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx180136-gtMTCRlOD4OE.jpg",
+                "color": "#50c9fe"
+              },
+              "genres": [
+                "Action",
+                "Fantasy"
+              ],
+              "averageScore": 68,
+              "seasonYear": 2026,
+              "format": "TV"
+            }
+          },
+          {
+            "airingAt": 1791989160,
+            "episode": 2,
+            "media": {
+              "id": 178868,
+              "idMal": 59204,
+              "status": "RELEASING",
+              "title": {
+                "romaji": "Magic Knight Rayearth (2026)",
+                "english": "Magic Knight Rayearth (2026)",
+                "userPreferred": "Magic Knight Rayearth (2026)",
+                "native": "魔法騎士レイアース (2026)"
+              },
+              "countryOfOrigin": "JP",
+              "description": "Hikaru Shidou, Umi Ryuuzaki, and Fuu Hououji aren't from Cephiro. While on a school field trip to the Tokyo Tower, the t…",
+              "popularity": 10619,
+              "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/178868-l7VyM7j7LRtH.jpg",
+              "coverImage": {
+                "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178868-mfp0HIHNJNAm.jpg",
+                "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx178868-mfp0HIHNJNAm.jpg",
+                "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx178868-mfp0HIHNJNAm.jpg",
+                "color": "#e4a150"
+              },
+              "genres": [
+                "Adventure",
+                "Fantasy",
+                "Mahou Shoujo",
+                "Mecha"
+              ],
+              "averageScore": 67,
+              "seasonYear": 2026,
+              "format": "TV"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
