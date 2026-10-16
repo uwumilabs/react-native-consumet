@@ -7,7 +7,7 @@ Meta providers combine a metadata service (AniList, TMDB, MyAnimeList) with an a
 Pass a provider explicitly. A meta provider built without one falls back to a bundled class that isn't in the extension registry (Zoro for `Anilist` and `Myanimelist`, HiMovies for `TMDB`).
 
 ```ts
-import { META, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
+import { META, MOVIES, ProviderManager, ExtensionRegistry } from 'react-native-consumet';
 
 const manager = new ProviderManager(ExtensionRegistry);
 
@@ -17,9 +17,12 @@ const anilist = new META.Anilist(await manager.getAnimeProvider('animepahe'));
 // TMDB metadata with episodes from a registry movie provider, using your own TMDB API key
 const TMDB_API_KEY = '<your TMDB API key>';
 const tmdb = new META.TMDB(TMDB_API_KEY, await manager.getMovieProvider('netflixmirror'));
+
+// MOVIES.MultiStream also calls TMDB: (ctx?, customBaseURL?, apiKey?), so the key is the third argument
+const multistream = new MOVIES.MultiStream(manager.getProviderContext(), undefined, TMDB_API_KEY);
 ```
 
-Get a TMDB API key at [themoviedb.org](https://www.themoviedb.org/settings/api) and pass it as the first argument. Without one (or with a blank one), `META.TMDB` uses a key shared by every app that passes none, which TMDB can rate-limit or revoke at any time, and logs a `console.warn` once. `MOVIES.MultiStream`, which also calls TMDB, takes the key as its third argument: `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`, for example `new MOVIES.MultiStream(undefined, undefined, TMDB_API_KEY)`. The older `new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key.
+Get a TMDB API key at [themoviedb.org](https://www.themoviedb.org/settings/api) and pass it as the first argument. Without one (or with a blank one), `META.TMDB` uses a key shared by every app that passes none, which TMDB can rate-limit or revoke at any time, and logs a `console.warn` once. `MOVIES.MultiStream` takes the key as its third argument, as above. The older `new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key. Don't pass the key second, as in `new MOVIES.MultiStream(undefined, key)` (a form that was briefly on `main`): the second argument is the base URL.
 
 `META.Myanimelist` is deprecated: use `META.Anilist`, which has the same anime, gives the MAL id as `malId`, and keys episodes with stable `uniqueId`s. Myanimelist episodes have no `uniqueId`, and the class will be removed in a future major release.
 

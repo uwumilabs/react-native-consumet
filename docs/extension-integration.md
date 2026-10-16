@@ -55,7 +55,7 @@ const provider = await providerManager.getAnimeProvider('animepahe');
 
 ```typescript
 import { ANIME } from 'react-native-consumet';
-const animepahe = new ANIME.AnimePahe();
+const animepahe = new ANIME.AnimePahe(); // or new ANIME.AnimePahe(ctx?, customBaseURL?)
 ```
 
 **Limitations:**

@@ -1,8 +1,7 @@
 <h1>AnimeUnity</h1>
 
-```ts
-const animeunity = new ANIME.AnimeUnity();
-```
+> [!WARNING]
+> AnimeUnity is not working and not exported: `ANIME.AnimeUnity` is undefined, and the class (`src/providers/anime/animeunity.ts`) sets `isWorking = false`. Its site moved from www.animeunity.to to www.animeunity.so, which the scraper hasn't been checked against. This page is kept for reference; the examples below call the class as `animeunity`.
 
 <h2>Methods</h2>
 

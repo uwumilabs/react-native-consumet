@@ -4,6 +4,8 @@
 const mangadex = new MANGA.MangaDex();
 ```
 
+The constructor takes an optional provider context, `new MANGA.MangaDex(ctx?)`, whose axios makes every request (default: `createProviderContext()`). See the [manga guide](../../guides/manga.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

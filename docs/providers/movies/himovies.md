@@ -4,6 +4,8 @@
 const himovies = new MOVIES.HiMovies();
 ```
 
+The constructor takes an optional provider context and base URL, `new MOVIES.HiMovies(ctx?, customBaseURL?)`; the older `new MOVIES.HiMovies(customBaseURL?)` still works. See the [movies guide](../../guides/movies.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

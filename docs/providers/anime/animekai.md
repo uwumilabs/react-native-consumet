@@ -4,6 +4,8 @@
 const animekai = new ANIME.AnimeKai();
 ```
 
+The constructor takes an optional provider context and base URL, `new ANIME.AnimeKai(ctx?, customBaseURL?)`; the older `new ANIME.AnimeKai(customBaseURL?)` still works. See the [anime guide](../../guides/anime.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

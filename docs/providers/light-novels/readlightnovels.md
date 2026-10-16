@@ -4,6 +4,8 @@
 const readlightnovels = new LIGHT_NOVELS.ReadLightNovels();
 ```
 
+The constructor takes an optional provider context, `new LIGHT_NOVELS.ReadLightNovels(ctx?)`, whose axios makes every request (default: `createProviderContext()`). See the [light novels guide](../../guides/light-novels.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

@@ -4,6 +4,8 @@
 const zoro = new ANIME.Zoro();
 ```
 
+The constructor takes an optional provider context and base URL, `new ANIME.Zoro(ctx?, customBaseURL?)`; the older `new ANIME.Zoro(customBaseURL?)` still works. See the [anime guide](../../guides/anime.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

@@ -4,6 +4,8 @@
 const mangaPill = new MANGA.MangaPill();
 ```
 
+The constructor takes an optional provider context, `new MANGA.MangaPill(ctx?)`, whose axios makes every request (default: `createProviderContext()`). See the [manga guide](../../guides/manga.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

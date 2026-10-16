@@ -11,9 +11,14 @@ import { ANIME, ProviderManager, ExtensionRegistry } from 'react-native-consumet
 const manager = new ProviderManager(ExtensionRegistry);
 const animepahe = await manager.getAnimeProvider('animepahe');
 
-// Or a bundled class from the list below
+// Or a bundled class from the list below. Without a context it uses createProviderContext()
 const animekai = new ANIME.AnimeKai();
+
+// With a context, its requests and extractors use that context's axios, proxy and user agent
+const anikoto = new ANIME.AniKoto(manager.getProviderContext());
 ```
+
+Bundled classes take an optional provider context and base URL, `new ANIME.AnimeKai(ctx?, customBaseURL?)`, in the order of the factories they wrap. The older `new ANIME.AnimeKai(customBaseURL?)` still works.
 
 ## Common Methods
 
@@ -39,20 +44,15 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` are protected
 
 ## Anime Providers List
 
-| Provider   | Bundled class      | Registry id (status)             | Docs                                           |
-| ---------- | ------------------ | -------------------------------- | ---------------------------------------------- |
-| AniKoto    | `ANIME.AniKoto`    | `anikoto` (stable)               |                                                |
-| AniNeko    | `ANIME.AniNeko`    | `anineko` (stable)               |                                                |
-| AnimePahe  | `ANIME.AnimePahe`  | `animepahe` (stable)             | [AnimePahe](../providers/anime/animepahe.md)   |
-| AnimeKai   | `ANIME.AnimeKai`   | `animekai` (deprecated)          | [AnimeKai](../providers/anime/animekai.md)     |
-| Zoro       | `ANIME.Zoro`       | not in the registry              | [Zoro](../providers/anime/zoro.md)             |
-| AnimeDrive | `ANIME.AnimeDrive` | not in the registry              | [AnimeDrive](../providers/anime/animedrive.md) |
-| AnimeUnity | `ANIME.AnimeUnity` | not in the registry              | [AnimeUnity](../providers/anime/animeunity.md) |
-| ReAnime    | `ANIME.ReAnime`    | not in the registry              |                                                |
-| Marin      | `ANIME.Marin`      | not in the registry              |                                                |
-| Anify      | `ANIME.Anify`      | not in the registry, **offline** | [Anify](../providers/anime/anify.md)           |
+| Provider  | Bundled class     | Registry id (status)    | Docs                                         |
+| --------- | ----------------- | ----------------------- | -------------------------------------------- |
+| AniKoto   | `ANIME.AniKoto`   | `anikoto` (stable)      |                                              |
+| AniNeko   | `ANIME.AniNeko`   | `anineko` (stable)      |                                              |
+| AnimePahe | `ANIME.AnimePahe` | `animepahe` (stable)    | [AnimePahe](../providers/anime/animepahe.md) |
+| AnimeKai  | `ANIME.AnimeKai`  | `animekai` (deprecated) | [AnimeKai](../providers/anime/animekai.md)   |
+| Zoro      | `ANIME.Zoro`      | not in the registry     | [Zoro](../providers/anime/zoro.md)           |
+| ReAnime   | `ANIME.ReAnime`   | not in the registry     |                                              |
 
-> [!WARNING]
-> Anify is offline: its API no longer answers, so every `ANIME.Anify` call fails. The meta providers no longer fall back to it.
+AnimeUnity is not working and not exported ([page kept for reference](../providers/anime/animeunity.md)). Anify, AnimeDrive, Marin, KickAssAnime and AnimeSuge were removed: their sites or APIs are gone.
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

@@ -7,11 +7,18 @@ By using `LIGHT_NOVELS` category you can interact with the light novel providers
 The bundled extension registry has no light novel providers yet, so use the bundled classes below. A registry that lists light novel providers loads them with `manager.getProvider('light-novels', id)` (see [Extension Integration](../extension-integration.md#providermanager)).
 
 ```ts
-import { LIGHT_NOVELS } from 'react-native-consumet';
+import axios from 'axios';
+import { LIGHT_NOVELS, createProviderContext } from 'react-native-consumet';
 
 // Any class from the list below
 const readlightnovels = new LIGHT_NOVELS.ReadLightNovels();
+
+// Or with a provider context, to send its requests through your own axios (timeout, headers, interceptors)
+const appAxios = axios.create({ timeout: 30000, headers: { 'User-Agent': 'MyApp/1.0' } });
+const novelupdates = new LIGHT_NOVELS.NovelUpdates(createProviderContext({ axios: appAxios }));
 ```
+
+Light novel classes take an optional provider context, `new LIGHT_NOVELS.NovelUpdates(ctx?)`, and make every request through `ctx.axios`. Without one they use `createProviderContext()`, whose axios has the library's 15 s timeout and browser headers.
 
 ## Light Novels Providers List
 

@@ -7,11 +7,18 @@ By using `MANGA` category you can interact with the manga providers. And have ac
 The bundled extension registry has no manga providers yet, so use the bundled classes below. A registry that lists manga providers loads them with `manager.getProvider('manga', id)` (see [Extension Integration](../extension-integration.md#providermanager)).
 
 ```ts
-import { MANGA } from 'react-native-consumet';
+import axios from 'axios';
+import { MANGA, createProviderContext } from 'react-native-consumet';
 
 // Any class from the list below
 const mangadex = new MANGA.MangaDex();
+
+// Or with a provider context, to send its requests through your own axios (timeout, headers, interceptors)
+const appAxios = axios.create({ timeout: 30000, headers: { 'User-Agent': 'MyApp/1.0' } });
+const mangapill = new MANGA.MangaPill(createProviderContext({ axios: appAxios }));
 ```
+
+Manga classes take an optional provider context, `new MANGA.MangaDex(ctx?)`, and make every request through `ctx.axios`. Without one they use `createProviderContext()`, whose axios has the library's 15 s timeout and browser headers.
 
 ## Common Methods
 
@@ -47,7 +54,8 @@ This list is in alphabetical order.
 - [MangaPill](../providers/manga/mangapill.md) (`MANGA.MangaPill`)
 - [MangaReader](../providers/manga/mangareader.md) (`MANGA.MangaReader`)
 - [Mangasee123](../providers/manga/mangasee123.md) (`MANGA.Mangasee123`)
-- [ReadManga](../providers/manga/readmanga.md) (`MANGA.ReadManga`)
 - [VyvyManga](../providers/manga/vyvymanga.md) (`MANGA.VyvyManga`)
+
+ReadManga is not working and not exported ([page kept for reference](../providers/manga/readmanga.md)).
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

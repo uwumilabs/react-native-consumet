@@ -153,6 +153,8 @@ _see also [Extension Integration documentation](../extension-integration.md) for
 
 The library also bundles provider classes you can construct directly. They run the code shipped with your installed library version, so they only change when you update the library.
 
+Anime and movie classes take an optional provider context and base URL, `new ANIME.AnimePahe(ctx?, customBaseURL?)`; manga and light novel classes take an optional context, `new MANGA.MangaDex(ctx?)`. Their requests go through `ctx.axios`, and without a context they use `createProviderContext()` (the library's axios: 15 s timeout, browser headers). Pass `manager.getProviderContext()` or `createProviderContext({ axios })` to use your app's axios. The older `new ANIME.AnimePahe(customBaseURL)` still works.
+
 ### Anime Example
 
 ```ts

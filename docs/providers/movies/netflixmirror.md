@@ -4,6 +4,8 @@
 const nfmirror = new MOVIES.NetflixMirror();
 ```
 
+The constructor takes an optional provider context and base URL, `new MOVIES.NetflixMirror(ctx?, customBaseURL?)`; the older `new MOVIES.NetflixMirror(customBaseURL?)` still works. See the [movies guide](../../guides/movies.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

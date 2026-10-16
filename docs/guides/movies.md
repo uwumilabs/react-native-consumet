@@ -11,9 +11,18 @@ import { MOVIES, ProviderManager, ExtensionRegistry } from 'react-native-consume
 const manager = new ProviderManager(ExtensionRegistry);
 const netflixMirror = await manager.getMovieProvider('netflixmirror');
 
-// Or a bundled class from the list below
+// Or a bundled class from the list below. Without a context it uses createProviderContext()
 const multimovies = new MOVIES.MultiMovies();
+
+// With a context, its requests and extractors use that context's axios, proxy and user agent
+const himovies = new MOVIES.HiMovies(manager.getProviderContext());
+
+// MultiStream also takes your TMDB API key, as the third argument
+const TMDB_API_KEY = '<your TMDB API key>';
+const multistream = new MOVIES.MultiStream(manager.getProviderContext(), undefined, TMDB_API_KEY);
 ```
+
+Bundled classes take an optional provider context and base URL, `new MOVIES.HiMovies(ctx?, customBaseURL?)`, in the order of the factories they wrap. The older `new MOVIES.HiMovies(customBaseURL?)` still works.
 
 ## Common Methods
 
@@ -48,10 +57,8 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` may be protec
 | HiMovies      | `MOVIES.HiMovies`      | not in the registry        | [HiMovies](../providers/movies/himovies.md)           |
 | MultiStream   | `MOVIES.MultiStream`   | not in the registry        |                                                       |
 
-`MOVIES.MultiStream` gets its titles from TMDB: pass your own TMDB API key as its third argument, `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`. Without one it uses a shared key and logs a warning (see [Meta](./meta.md)). The older `new MOVIES.MultiStream(customBaseURL?)` still works.
+`MOVIES.MultiStream` gets its titles from TMDB: pass your own TMDB API key as its third argument, `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`. Without one it uses a shared key and logs a warning (see [Meta](./meta.md)). The older `new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key.
 
 VegaMovies and the three mirrors return playable files from `fetchEpisodeSources` (`isSourceDirect` in the registry): pass the server name to `fetchEpisodeSources` instead of handing server URLs to an extractor.
-
-[DramaCool](../providers/movies/dramacool.md) is not exported in this version (`MOVIES.DramaCool` is undefined); its page is kept for reference.
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

@@ -4,6 +4,8 @@
 const multimovies = new MOVIES.MultiMovies();
 ```
 
+The constructor takes an optional provider context and base URL, `new MOVIES.MultiMovies(ctx?, customBaseURL?)`; the older `new MOVIES.MultiMovies(customBaseURL?)` still works. See the [movies guide](../../guides/movies.md).
+
 <h2>Methods</h2>
 
 - [search](#search)

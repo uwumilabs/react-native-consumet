@@ -1,8 +1,7 @@
 <h1> ReadManga </h1>
 
-```ts
-const readManga = new MANGA.ReadManga();
-```
+> [!WARNING]
+> ReadManga is not working and not exported: `MANGA.ReadManga` is undefined, and the class (`src/providers/manga/readmanga.ts`) sets `isWorking = false`. readmanga.app doesn't respond, though its shutdown isn't confirmed. This page is kept for reference; the examples below call the class as `readManga`.
 
 <h2>Methods</h2>
 
