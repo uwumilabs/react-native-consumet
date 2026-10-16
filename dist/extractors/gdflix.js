@@ -149,5 +149,4 @@ function GDFlix(ctx) {
         extract,
     };
 }
-exports.default = GDFlix;
 //# sourceMappingURL=gdflix.js.map

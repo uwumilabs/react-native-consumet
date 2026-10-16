@@ -1,8 +1,10 @@
-import { VideoExtractor, type IVideo } from '../models';
-declare class StreamTape extends VideoExtractor {
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+export declare class StreamTape extends VideoExtractor {
+    private readonly ctx;
     protected serverName: string;
     protected sources: IVideo[];
+    /** @param ctx extractor context; requests go through its axios (default: the library's) */
+    constructor(ctx?: ExtractorContext);
     extract: (videoUrl: URL) => Promise<IVideo[]>;
 }
-export default StreamTape;
 //# sourceMappingURL=streamtape.d.ts.map

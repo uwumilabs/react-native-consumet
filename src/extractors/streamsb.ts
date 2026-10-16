@@ -1,8 +1,8 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 import { USER_AGENT } from '../utils/constants';
 
-class StreamSB extends VideoExtractor {
+export class StreamSB extends VideoExtractor {
   protected override serverName = 'streamsb';
   protected override sources: IVideo[] = [];
 
@@ -12,6 +12,11 @@ class StreamSB extends VideoExtractor {
 
   private PAYLOAD = (hex: string) =>
     `566d337678566f743674494a7c7c${hex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362`;
+
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
 
   override extract = async (videoUrl: URL, isAlt: boolean = false): Promise<IVideo[]> => {
     let headers: any = {
@@ -23,7 +28,7 @@ class StreamSB extends VideoExtractor {
     if (id?.includes('html')) id = id.split('.html')[0];
     const bytes = new TextEncoder().encode(id);
 
-    const res = await axios
+    const res = await this.ctx.axios
       .get(`${isAlt ? this.host2 : this.host}/${this.PAYLOAD(Buffer.from(bytes).toString('hex'))}`, {
         headers,
       })
@@ -35,7 +40,7 @@ class StreamSB extends VideoExtractor {
       'User-Agent': USER_AGENT,
       'Referer': videoUrl.href.split('e/')[0],
     };
-    const m3u8Urls = await axios.get(res.data.stream_data.file, {
+    const m3u8Urls = await this.ctx.axios.get(res.data.stream_data.file, {
       headers,
     });
 
@@ -70,5 +75,3 @@ class StreamSB extends VideoExtractor {
     });
   };
 }
-
-export default StreamSB;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractors = exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
+exports.defaultExtractors = exports.defaultExtractorContext = exports.defaultAxios = void 0;
 const axios_1 = __importDefault(require("axios"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
 // Import extractors for fallback compatibility
@@ -41,52 +41,61 @@ exports.defaultExtractorContext = {
         deobfuscateScript: NativeConsumet_1.deobfuscateScript,
     },
 };
-// Default static extractors (for backward compatibility)
+// Default static extractors (for backward compatibility). The class-based extractors default to
+// defaultExtractorContext, so they import this module while it imports them. Getters read each class
+// when it's used, after both modules have loaded, whichever of them loaded first.
 exports.defaultExtractors = {
-    AsianLoad: extractors_1.AsianLoad,
-    Filemoon: extractors_1.Filemoon,
-    GogoCDN: extractors_1.GogoCDN,
+    get AsianLoad() {
+        return extractors_1.AsianLoad;
+    },
+    get Filemoon() {
+        return extractors_1.Filemoon;
+    },
+    get GogoCDN() {
+        return extractors_1.GogoCDN;
+    },
     Kwik: (ctx) => (0, extractors_1.Kwik)(ctx || exports.defaultExtractorContext),
-    MixDrop: extractors_1.MixDrop,
-    Mp4Player: extractors_1.Mp4Player,
-    Mp4Upload: extractors_1.Mp4Upload,
-    RapidCloud: extractors_1.RapidCloud,
+    get MixDrop() {
+        return extractors_1.MixDrop;
+    },
+    get Mp4Player() {
+        return extractors_1.Mp4Player;
+    },
+    get Mp4Upload() {
+        return extractors_1.Mp4Upload;
+    },
+    get RapidCloud() {
+        return extractors_1.RapidCloud;
+    },
     MegaCloud: (ctx) => (0, extractors_1.MegaCloud)(ctx || exports.defaultExtractorContext),
-    StreamHub: extractors_1.StreamHub,
-    StreamLare: extractors_1.StreamLare,
-    StreamSB: extractors_1.StreamSB,
-    StreamTape: extractors_1.StreamTape,
+    get StreamHub() {
+        return extractors_1.StreamHub;
+    },
+    get StreamLare() {
+        return extractors_1.StreamLare;
+    },
+    get StreamSB() {
+        return extractors_1.StreamSB;
+    },
+    get StreamTape() {
+        return extractors_1.StreamTape;
+    },
     StreamWish: (ctx) => (0, extractors_1.StreamWish)(ctx || exports.defaultExtractorContext),
-    VidMoly: extractors_1.VidMoly,
-    VizCloud: extractors_1.VizCloud,
+    get VidMoly() {
+        return extractors_1.VidMoly;
+    },
+    get VizCloud() {
+        return extractors_1.VizCloud;
+    },
     VidHide: (ctx) => (0, extractors_1.VidHide)(ctx || exports.defaultExtractorContext),
-    Voe: extractors_1.Voe,
+    get Voe() {
+        return extractors_1.Voe;
+    },
     MegaUp: (ctx) => (0, extractors_1.MegaUp)(ctx || exports.defaultExtractorContext),
     MegaPlay: (ctx) => (0, extractors_1.MegaPlay)(ctx || exports.defaultExtractorContext),
     GDFlix: (ctx) => (0, extractors_1.GDFlix)(ctx || exports.defaultExtractorContext),
     Gofile: (ctx) => (0, extractors_1.Gofile)(ctx || exports.defaultExtractorContext),
     HubCloud: (ctx) => (0, extractors_1.HubCloud)(ctx || exports.defaultExtractorContext),
     FlixCloud: (ctx) => (0, extractors_1.FlixCloud)(ctx || exports.defaultExtractorContext),
-};
-exports.extractors = {
-    GogoCDN: exports.defaultExtractors.GogoCDN,
-    StreamSB: exports.defaultExtractors.StreamSB,
-    StreamTape: exports.defaultExtractors.StreamTape,
-    MixDrop: exports.defaultExtractors.MixDrop,
-    Kwik: exports.defaultExtractors.Kwik,
-    RapidCloud: exports.defaultExtractors.RapidCloud,
-    StreamWish: exports.defaultExtractors.StreamWish,
-    Filemoon: exports.defaultExtractors.Filemoon,
-    Voe: exports.defaultExtractors.Voe,
-    AsianLoad: exports.defaultExtractors.AsianLoad,
-    StreamLare: exports.defaultExtractors.StreamLare,
-    VidMoly: exports.defaultExtractors.VidMoly,
-    MegaCloud: exports.defaultExtractors.MegaCloud,
-    MegaUp: exports.defaultExtractors.MegaUp,
-    MegaPlay: exports.defaultExtractors.MegaPlay,
-    GDFlix: exports.defaultExtractors.GDFlix,
-    Gofile: exports.defaultExtractors.Gofile,
-    HubCloud: exports.defaultExtractors.HubCloud,
-    FlixCloud: exports.defaultExtractors.FlixCloud,
 };
 //# sourceMappingURL=extension-utils.js.map

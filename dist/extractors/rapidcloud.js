@@ -1,140 +1,162 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RapidCloud = void 0;
 const cheerio_1 = require("cheerio");
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const utils_1 = require("../utils/utils");
 const models_1 = require("../models");
+const extension_utils_1 = require("../utils/extension-utils");
 class RapidCloud extends models_1.VideoExtractor {
-    serverName = 'RapidCloud';
-    sources = [];
-    fallbackKey = 'c1d17096f2ca11b7';
-    host = 'https://rapid-cloud.co';
-    extract = async (videoUrl) => {
-        const result = {
-            sources: [],
-            subtitles: [],
-        };
-        try {
-            const id = videoUrl.href.split('/').pop()?.split('?')[0];
-            const options = {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            };
-            let res = null;
-            res = await axios_1.default.get(`https://${videoUrl.hostname}/embed-2/ajax/e-1/getSources?id=${id}`, options);
-            let { data: { sources, tracks, intro, outro, encrypted }, } = res;
-            let decryptKey = await (await axios_1.default.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
-            decryptKey = (0, utils_1.substringBefore)((0, utils_1.substringAfter)(decryptKey, '"blob-code blob-code-inner js-file-line">'), '</td>');
-            if (!decryptKey) {
-                decryptKey = await (await axios_1.default.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
+  ctx;
+  serverName = 'RapidCloud';
+  sources = [];
+  fallbackKey = 'c1d17096f2ca11b7';
+  host = 'https://rapid-cloud.co';
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : extension_utils_1.defaultExtractorContext;
+    super();
+    this.ctx = ctx;
+  }
+  extract = async videoUrl => {
+    const result = {
+      sources: [],
+      subtitles: []
+    };
+    try {
+      const id = videoUrl.href.split('/').pop()?.split('?')[0];
+      const options = {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      };
+      let res = null;
+      res = await this.ctx.axios.get(`https://${videoUrl.hostname}/embed-2/ajax/e-1/getSources?id=${id}`, options);
+      let {
+        data: {
+          sources,
+          tracks,
+          intro,
+          outro,
+          encrypted
+        }
+      } = res;
+      let decryptKey = await (await this.ctx.axios.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
+      decryptKey = (0, utils_1.substringBefore)((0, utils_1.substringAfter)(decryptKey, '"blob-code blob-code-inner js-file-line">'), '</td>');
+      if (!decryptKey) {
+        decryptKey = await (await this.ctx.axios.get('https://raw.githubusercontent.com/cinemaxhq/keys/e1/key')).data;
+      }
+      if (!decryptKey) decryptKey = this.fallbackKey;
+      try {
+        if (encrypted) {
+          const sourcesArray = sources.split('');
+          let extractedKey = '';
+          let currentIndex = 0;
+          for (const index of decryptKey) {
+            const start = index[0] + currentIndex;
+            const end = start + index[1];
+            for (let i = start; i < end; i++) {
+              extractedKey += res.data.sources[i];
+              sourcesArray[i] = '';
             }
-            if (!decryptKey)
-                decryptKey = this.fallbackKey;
-            try {
-                if (encrypted) {
-                    const sourcesArray = sources.split('');
-                    let extractedKey = '';
-                    let currentIndex = 0;
-                    for (const index of decryptKey) {
-                        const start = index[0] + currentIndex;
-                        const end = start + index[1];
-                        for (let i = start; i < end; i++) {
-                            extractedKey += res.data.sources[i];
-                            sourcesArray[i] = '';
-                        }
-                        currentIndex += index[1];
-                    }
-                    decryptKey = extractedKey;
-                    sources = sourcesArray.join('');
-                    const decrypt = crypto_js_1.default.AES.decrypt(sources, decryptKey);
-                    sources = JSON.parse(decrypt.toString(crypto_js_1.default.enc.Utf8));
-                }
-            }
-            catch (err) {
-                throw new Error('Cannot decrypt sources. Perhaps the key is invalid.');
-            }
-            this.sources = sources?.map((s) => ({
-                url: s.file,
-                isM3U8: s.file.includes('.m3u8'),
-            }));
-            result.sources.push(...this.sources);
-            if (videoUrl.href.includes(new URL(this.host).host)) {
-                result.sources = [];
-                this.sources = [];
-                for (const source of sources) {
-                    const { data } = await axios_1.default.get(source.file, options);
-                    const m3u8data = data
-                        .split('\n')
-                        .filter((line) => line.includes('.m3u8') && line.includes('RESOLUTION='));
-                    const secondHalf = m3u8data.map((line) => line.match(/RESOLUTION=.*,(C)|URI=.*/g)?.map((s) => s.split('=')[1]));
-                    const TdArray = secondHalf.map((s) => {
-                        const f1 = s[0]?.split(',C')[0];
-                        const f2 = s[1]?.replace(/"/g, '');
-                        return [f1, f2];
-                    });
-                    for (const [f1, f2] of TdArray) {
-                        this.sources.push({
-                            url: `${source.file?.split('master.m3u8')[0]}${f2.replace('iframes', 'index')}`,
-                            quality: f1.split('x')[1] + 'p',
-                            isM3U8: f2.includes('.m3u8'),
-                        });
-                    }
-                    result.sources.push(...this.sources);
-                }
-            }
-            result.intro = intro?.end > 1 ? { start: intro.start, end: intro.end } : undefined;
-            result.outro = outro?.end > 1 ? { start: outro.start, end: outro.end } : undefined;
-            result.sources.push({
-                url: sources[0].file,
-                isM3U8: sources[0].file.includes('.m3u8'),
-                quality: 'auto',
+            currentIndex += index[1];
+          }
+          decryptKey = extractedKey;
+          sources = sourcesArray.join('');
+          const decrypt = crypto_js_1.default.AES.decrypt(sources, decryptKey);
+          sources = JSON.parse(decrypt.toString(crypto_js_1.default.enc.Utf8));
+        }
+      } catch (err) {
+        throw new Error('Cannot decrypt sources. Perhaps the key is invalid.');
+      }
+      this.sources = sources?.map(s => ({
+        url: s.file,
+        isM3U8: s.file.includes('.m3u8')
+      }));
+      result.sources.push(...this.sources);
+      if (videoUrl.href.includes(new URL(this.host).host)) {
+        result.sources = [];
+        this.sources = [];
+        for (const source of sources) {
+          const {
+            data
+          } = await this.ctx.axios.get(source.file, options);
+          const m3u8data = data.split('\n').filter(line => line.includes('.m3u8') && line.includes('RESOLUTION='));
+          const secondHalf = m3u8data.map(line => line.match(/RESOLUTION=.*,(C)|URI=.*/g)?.map(s => s.split('=')[1]));
+          const TdArray = secondHalf.map(s => {
+            const f1 = s[0]?.split(',C')[0];
+            const f2 = s[1]?.replace(/"/g, '');
+            return [f1, f2];
+          });
+          for (const [f1, f2] of TdArray) {
+            this.sources.push({
+              url: `${source.file?.split('master.m3u8')[0]}${f2.replace('iframes', 'index')}`,
+              quality: f1.split('x')[1] + 'p',
+              isM3U8: f2.includes('.m3u8')
             });
-            result.subtitles = tracks
-                .map((s) => s.file
-                ? {
-                    url: s.file,
-                    lang: s.label ? s.label : 'Thumbnails',
-                }
-                : null)
-                .filter((s) => s);
-            return result;
+          }
+          result.sources.push(...this.sources);
         }
-        catch (err) {
-            throw err;
-        }
-    };
-    captcha = async (url, key) => {
-        const uri = new URL(url);
-        const domain = uri.protocol + '//' + uri.host;
-        const { data } = await axios_1.default.get(`https://www.google.com/recaptcha/api.js?render=${key}`, {
-            headers: {
-                Referer: domain,
-            },
-        });
-        const v = data?.substring(data.indexOf('/releases/'), data.lastIndexOf('/recaptcha')).split('/releases/')[1];
-        //TODO: NEED to fix the co (domain) parameter to work with every domain
-        const anchor = `https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=kr42069kr&k=${key}&co=aHR0cHM6Ly9yYXBpZC1jbG91ZC5ydTo0NDM.&v=${v}`;
-        const c = (0, cheerio_1.load)((await axios_1.default.get(anchor)).data)('#recaptcha-token').attr('value');
-        // currently its not returning proper response. not sure why
-        const res = await axios_1.default.post(`https://www.google.com/recaptcha/api2/reload?k=${key}`, {
-            v: v,
-            k: key,
-            c: c,
-            co: 'aHR0cHM6Ly9yYXBpZC1jbG91ZC5ydTo0NDM.',
-            sa: '',
-            reason: 'q',
-        }, {
-            headers: {
-                Referer: anchor,
-            },
-        });
-        return res.data.substring(res.data.indexOf('rresp","'), res.data.lastIndexOf('",null'));
-    };
+      }
+      result.intro = intro?.end > 1 ? {
+        start: intro.start,
+        end: intro.end
+      } : undefined;
+      result.outro = outro?.end > 1 ? {
+        start: outro.start,
+        end: outro.end
+      } : undefined;
+      result.sources.push({
+        url: sources[0].file,
+        isM3U8: sources[0].file.includes('.m3u8'),
+        quality: 'auto'
+      });
+      result.subtitles = tracks.map(s => s.file ? {
+        url: s.file,
+        lang: s.label ? s.label : 'Thumbnails'
+      } : null).filter(s => s);
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  };
+  captcha = async (url, key) => {
+    const uri = new URL(url);
+    const domain = uri.protocol + '//' + uri.host;
+    const {
+      data
+    } = await this.ctx.axios.get(`https://www.google.com/recaptcha/api.js?render=${key}`, {
+      headers: {
+        Referer: domain
+      }
+    });
+    const v = data?.substring(data.indexOf('/releases/'), data.lastIndexOf('/recaptcha')).split('/releases/')[1];
+    //TODO: NEED to fix the co (domain) parameter to work with every domain
+    const anchor = `https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=kr42069kr&k=${key}&co=aHR0cHM6Ly9yYXBpZC1jbG91ZC5ydTo0NDM.&v=${v}`;
+    const c = (0, cheerio_1.load)((await this.ctx.axios.get(anchor)).data)('#recaptcha-token').attr('value');
+    // currently its not returning proper response. not sure why
+    const res = await this.ctx.axios.post(`https://www.google.com/recaptcha/api2/reload?k=${key}`, {
+      v: v,
+      k: key,
+      c: c,
+      co: 'aHR0cHM6Ly9yYXBpZC1jbG91ZC5ydTo0NDM.',
+      sa: '',
+      reason: 'q'
+    }, {
+      headers: {
+        Referer: anchor
+      }
+    });
+    return res.data.substring(res.data.indexOf('rresp","'), res.data.lastIndexOf('",null'));
+  };
 }
-exports.default = RapidCloud;
+exports.RapidCloud = RapidCloud;
 //# sourceMappingURL=rapidcloud.js.map

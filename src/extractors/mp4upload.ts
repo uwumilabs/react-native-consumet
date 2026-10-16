@@ -1,13 +1,18 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class Mp4Upload extends VideoExtractor {
+export class Mp4Upload extends VideoExtractor {
   protected override serverName = 'mp4upload';
   protected override sources: IVideo[] = [];
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await axios.get(videoUrl.href);
+      const { data } = await this.ctx.axios.get(videoUrl.href);
 
       const playerSrc = data
         .replace(/\n/g, ' ')
@@ -28,4 +33,3 @@ class Mp4Upload extends VideoExtractor {
     }
   };
 }
-export default Mp4Upload;

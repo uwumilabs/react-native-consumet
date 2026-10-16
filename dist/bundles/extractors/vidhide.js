@@ -20,8 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/extractors/vidhide.ts
 var vidhide_exports = {};
 __export(vidhide_exports, {
-  VidHide: () => VidHide,
-  default: () => vidhide_default
+  VidHide: () => VidHide
 });
 module.exports = __toCommonJS(vidhide_exports);
 function VidHide(ctx) {
@@ -86,5 +85,4 @@ function VidHide(ctx) {
     extract
   };
 }
-var vidhide_default = VidHide;
 if (module.exports !== exports) Object.assign(exports, module.exports);

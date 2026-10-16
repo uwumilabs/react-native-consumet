@@ -1,9 +1,8 @@
 import { load } from 'cheerio';
-import type { IVideo, ISource } from '../models';
-import VideoExtractor from '../models/video-extractor';
-import axios from 'axios';
+import { VideoExtractor, type ExtractorContext, type IVideo, type ISource } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class StreamLare extends VideoExtractor {
+export class StreamLare extends VideoExtractor {
   protected serverName: string = 'StreamLare';
   protected sources: IVideo[] = [];
 
@@ -14,8 +13,13 @@ class StreamLare extends VideoExtractor {
   private readonly USER_AGENT =
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36';
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   async extract(videoUrl: URL, userAgent: string = this.USER_AGENT.toString()): Promise<IVideo[] | ISource> {
-    const res = await axios.get(videoUrl.href);
+    const res = await this.ctx.axios.get(videoUrl.href);
 
     const $ = load(res.data);
 
@@ -27,7 +31,7 @@ class StreamLare extends VideoExtractor {
       throw new Error('Video id not matched!');
     }
 
-    const POST = await axios.post(
+    const POST = await this.ctx.axios.post(
       this.host + '/api/video/stream/get',
       {
         id: videoId,
@@ -59,5 +63,3 @@ class StreamLare extends VideoExtractor {
     return result;
   }
 }
-
-export default StreamLare;

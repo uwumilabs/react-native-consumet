@@ -20,8 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/extractors/gofile.ts
 var gofile_exports = {};
 __export(gofile_exports, {
-  Gofile: () => Gofile,
-  default: () => gofile_default
+  Gofile: () => Gofile
 });
 module.exports = __toCommonJS(gofile_exports);
 var GOFILE_API = "https://api.gofile.io";
@@ -167,5 +166,4 @@ function Gofile(ctx) {
     extract
   };
 }
-var gofile_default = Gofile;
 if (module.exports !== exports) Object.assign(exports, module.exports);

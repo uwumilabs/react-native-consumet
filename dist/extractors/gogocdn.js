@@ -1,130 +1,133 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.GogoCDN = void 0;
 const cheerio_1 = require("cheerio");
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const models_1 = require("../models");
+const extension_utils_1 = require("../utils/extension-utils");
 const constants_1 = require("../utils/constants");
 class GogoCDN extends models_1.VideoExtractor {
-    serverName = 'goload';
-    sources = [];
-    keys = {
-        key: crypto_js_1.default.enc.Utf8.parse('37911490979715163134003223491201'),
-        secondKey: crypto_js_1.default.enc.Utf8.parse('54674138327930866480207815084989'),
-        iv: crypto_js_1.default.enc.Utf8.parse('3134003223491201'),
-    };
-    referer = '';
-    extract = async (videoUrl) => {
-        this.referer = videoUrl.href;
-        const res = await axios_1.default.get(videoUrl.href);
-        const $ = (0, cheerio_1.load)(res.data);
-        const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
-        const encryptedData = await axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-        const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
-        // console.log(decryptedData.track.tracks);
-        if (!decryptedData.source)
-            throw new Error('No source found. Try a different server.');
-        const subtitles = decryptedData.track.tracks?.map((track) => ({
-            url: track.file,
-            lang: track.kind,
-        }));
-        if (decryptedData.source[0].file.includes('.m3u8')) {
-            const resResult = await axios_1.default.get(decryptedData.source[0].file.toString());
-            const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
-            resolutions?.forEach((res) => {
-                const index = decryptedData.source[0].file.lastIndexOf('/');
-                const quality = res.split('\n')[0]?.split('x')[1]?.split(',')[0];
-                const url = decryptedData.source[0].file.slice(0, index);
-                this.sources.push({
-                    url: url + '/' + res.split('\n')[1],
-                    isM3U8: (url + res.split('\n')[1]).includes('.m3u8'),
-                    quality: quality + 'p',
-                });
-            });
-            decryptedData.source.forEach((source) => {
-                this.sources.push({
-                    url: source.file,
-                    isM3U8: source.file.includes('.m3u8'),
-                    quality: 'default',
-                });
-            });
-        }
-        else
-            decryptedData.source.forEach((source) => {
-                this.sources.push({
-                    url: source.file,
-                    isM3U8: source.file.includes('.m3u8'),
-                    quality: source.label.split(' ')[0] + 'p',
-                });
-            });
-        decryptedData.source_bk.forEach((source) => {
-            this.sources.push({
-                url: source.file,
-                isM3U8: source.file.includes('.m3u8'),
-                quality: 'backup',
-            });
-        });
-        return {
-            sources: this.sources,
-            subtitles: subtitles,
-        };
-    };
-    addSources = async (source) => {
-        if (source.file.includes('m3u8')) {
-            const m3u8Urls = await axios_1.default
-                .get(source.file, {
-                headers: {
-                    'Referer': this.referer,
-                    'User-Agent': constants_1.USER_AGENT,
-                },
-            })
-                .catch(() => null);
-            const videoList = m3u8Urls?.data.split('#EXT-X-I-FRAME-STREAM-INF:');
-            for (const video of videoList ?? []) {
-                if (!video.includes('m3u8'))
-                    continue;
-                const url = video
-                    .split('\n')
-                    .find((line) => line.includes('URI='))
-                    .split('URI=')[1]
-                    .replace(/"/g, '');
-                const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
-                this.sources.push({
-                    url: url,
-                    quality: `${quality}p`,
-                    isM3U8: true,
-                });
-            }
-            return;
-        }
+  ctx;
+  serverName = 'goload';
+  sources = [];
+  keys = {
+    key: crypto_js_1.default.enc.Utf8.parse('37911490979715163134003223491201'),
+    secondKey: crypto_js_1.default.enc.Utf8.parse('54674138327930866480207815084989'),
+    iv: crypto_js_1.default.enc.Utf8.parse('3134003223491201')
+  };
+  referer = '';
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : extension_utils_1.defaultExtractorContext;
+    super();
+    this.ctx = ctx;
+  }
+  extract = async videoUrl => {
+    this.referer = videoUrl.href;
+    const res = await this.ctx.axios.get(videoUrl.href);
+    const $ = (0, cheerio_1.load)(res.data);
+    const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
+    const encryptedData = await this.ctx.axios.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
+    // console.log(decryptedData.track.tracks);
+    if (!decryptedData.source) throw new Error('No source found. Try a different server.');
+    const subtitles = decryptedData.track.tracks?.map(track => ({
+      url: track.file,
+      lang: track.kind
+    }));
+    if (decryptedData.source[0].file.includes('.m3u8')) {
+      const resResult = await this.ctx.axios.get(decryptedData.source[0].file.toString());
+      const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
+      resolutions?.forEach(res => {
+        const index = decryptedData.source[0].file.lastIndexOf('/');
+        const quality = res.split('\n')[0]?.split('x')[1]?.split(',')[0];
+        const url = decryptedData.source[0].file.slice(0, index);
         this.sources.push({
-            url: source.file,
-            isM3U8: source.file.includes('.m3u8'),
+          url: url + '/' + res.split('\n')[1],
+          isM3U8: (url + res.split('\n')[1]).includes('.m3u8'),
+          quality: quality + 'p'
         });
-    };
-    generateEncryptedAjaxParams = async ($, id) => {
-        const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
-            iv: this.keys.iv,
+      });
+      decryptedData.source.forEach(source => {
+        this.sources.push({
+          url: source.file,
+          isM3U8: source.file.includes('.m3u8'),
+          quality: 'default'
         });
-        const scriptValue = $("script[data-name='episode']").attr('data-value');
-        const decryptedToken = crypto_js_1.default.AES.decrypt(scriptValue, this.keys.key, {
-            iv: this.keys.iv,
-        }).toString(crypto_js_1.default.enc.Utf8);
-        return `id=${encryptedKey}&alias=${id}&${decryptedToken}`;
+      });
+    } else decryptedData.source.forEach(source => {
+      this.sources.push({
+        url: source.file,
+        isM3U8: source.file.includes('.m3u8'),
+        quality: source.label.split(' ')[0] + 'p'
+      });
+    });
+    decryptedData.source_bk.forEach(source => {
+      this.sources.push({
+        url: source.file,
+        isM3U8: source.file.includes('.m3u8'),
+        quality: 'backup'
+      });
+    });
+    return {
+      sources: this.sources,
+      subtitles: subtitles
     };
-    decryptAjaxData = async (encryptedData) => {
-        const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.secondKey, {
-            iv: this.keys.iv,
-        }));
-        return JSON.parse(decryptedData);
-    };
+  };
+  addSources = async source => {
+    if (source.file.includes('m3u8')) {
+      const m3u8Urls = await this.ctx.axios.get(source.file, {
+        headers: {
+          'Referer': this.referer,
+          'User-Agent': constants_1.USER_AGENT
+        }
+      }).catch(() => null);
+      const videoList = m3u8Urls?.data.split('#EXT-X-I-FRAME-STREAM-INF:');
+      for (const video of videoList ?? []) {
+        if (!video.includes('m3u8')) continue;
+        const url = video.split('\n').find(line => line.includes('URI=')).split('URI=')[1].replace(/"/g, '');
+        const quality = video.split('RESOLUTION=')[1].split(',')[0].split('x')[1];
+        this.sources.push({
+          url: url,
+          quality: `${quality}p`,
+          isM3U8: true
+        });
+      }
+      return;
+    }
+    this.sources.push({
+      url: source.file,
+      isM3U8: source.file.includes('.m3u8')
+    });
+  };
+  generateEncryptedAjaxParams = async ($, id) => {
+    const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
+      iv: this.keys.iv
+    });
+    const scriptValue = $("script[data-name='episode']").attr('data-value');
+    const decryptedToken = crypto_js_1.default.AES.decrypt(scriptValue, this.keys.key, {
+      iv: this.keys.iv
+    }).toString(crypto_js_1.default.enc.Utf8);
+    return `id=${encryptedKey}&alias=${id}&${decryptedToken}`;
+  };
+  decryptAjaxData = async encryptedData => {
+    const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.secondKey, {
+      iv: this.keys.iv
+    }));
+    return JSON.parse(decryptedData);
+  };
 }
-exports.default = GogoCDN;
+exports.GogoCDN = GogoCDN;
 //# sourceMappingURL=gogocdn.js.map

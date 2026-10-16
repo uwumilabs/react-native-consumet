@@ -1,10 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaUp = MegaUp;
-const axios_1 = __importDefault(require("axios"));
 /**
  * MegaUp extractor factory that relies on the shared extractor context
  */
@@ -12,7 +8,7 @@ function MegaUp(ctx) {
     const serverName = 'MegaUp';
     const sources = [];
     const apiBase = 'https://enc-dec.app/api';
-    const client = ctx.axios ?? axios_1.default;
+    const client = ctx.axios;
     const userAgent = ctx.USER_AGENT ||
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36';
     const decodeSources = async (payload) => {
@@ -33,7 +29,7 @@ function MegaUp(ctx) {
             const subsUrl = videoUrl.searchParams.get('sub.list');
             let externalSubs = [];
             if (subsUrl) {
-                externalSubs = await axios_1.default.get(subsUrl).then((res) => res.data.map((sub) => ({
+                externalSubs = await client.get(subsUrl).then((res) => res.data.map((sub) => ({
                     kind: sub.kind,
                     url: sub.file,
                     lang: sub.label,
@@ -109,5 +105,4 @@ function MegaUp(ctx) {
         extract,
     };
 }
-exports.default = MegaUp;
 //# sourceMappingURL=megaup.js.map

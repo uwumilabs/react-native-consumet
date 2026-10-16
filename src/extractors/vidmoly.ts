@@ -1,17 +1,22 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class VidMoly extends VideoExtractor {
+export class VidMoly extends VideoExtractor {
   protected override serverName = 'vidmoly';
   protected override sources: IVideo[] = [];
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await axios.get(videoUrl.href);
+      const { data } = await this.ctx.axios.get(videoUrl.href);
 
       const links = data.match(/file:\s*"([^"]+)"/);
 
-      const m3u8Content = await axios.get(links[1], {
+      const m3u8Content = await this.ctx.axios.get(links[1], {
         headers: {
           Referer: videoUrl.href,
         },
@@ -45,4 +50,3 @@ class VidMoly extends VideoExtractor {
     }
   };
 }
-export default VidMoly;

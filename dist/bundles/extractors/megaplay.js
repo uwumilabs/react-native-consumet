@@ -20,8 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/extractors/megaplay.ts
 var megaplay_exports = {};
 __export(megaplay_exports, {
-  MegaPlay: () => MegaPlay,
-  default: () => megaplay_default
+  MegaPlay: () => MegaPlay
 });
 module.exports = __toCommonJS(megaplay_exports);
 var MEGA_KEY_STR = "i?LMTAx0Q6,:}50U";
@@ -202,5 +201,4 @@ function MegaPlay(ctx) {
   };
   return { serverName, sources, extract };
 }
-var megaplay_default = MegaPlay;
 if (module.exports !== exports) Object.assign(exports, module.exports);

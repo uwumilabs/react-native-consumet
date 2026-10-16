@@ -84,5 +84,4 @@ function Kwik(ctx) {
     extract
   };
 }
-exports.default = Kwik;
 //# sourceMappingURL=kwik.js.map

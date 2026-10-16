@@ -1,10 +1,10 @@
-import axios from 'axios';
 import { type CheerioAPI, load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class AsianLoad extends VideoExtractor {
+export class AsianLoad extends VideoExtractor {
   protected override serverName = 'asianload';
   protected override sources: IVideo[] = [];
 
@@ -13,13 +13,18 @@ class AsianLoad extends VideoExtractor {
     iv: CryptoJS.enc.Utf8.parse('9262859232435825'),
   };
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
-    const res = await axios.get(videoUrl.href);
+    const res = await this.ctx.axios.get(videoUrl.href);
     const $ = load(res.data);
 
     const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
-    const encryptedData = await axios.get(
+    const encryptedData = await this.ctx.axios.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
       {
         headers: {
@@ -82,5 +87,3 @@ class AsianLoad extends VideoExtractor {
     return JSON.parse(decryptedData);
   };
 }
-
-export default AsianLoad;

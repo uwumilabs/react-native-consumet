@@ -1,13 +1,18 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
-import { type IVideo, VideoExtractor, type ISubtitle } from '../models';
+import { type IVideo, VideoExtractor, type ISubtitle, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class Voe extends VideoExtractor {
+export class Voe extends VideoExtractor {
   protected override serverName = 'voe';
   protected override sources: IVideo[] = [];
 
   private readonly domains = ['voe.sx'];
+
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
 
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
@@ -66,14 +71,14 @@ class Voe extends VideoExtractor {
         }
       }
 
-      const res = await axios.get(videoUrl.href);
+      const res = await this.ctx.axios.get(videoUrl.href);
       const $ = load(res.data);
       const scriptContent = $('script').html();
       const pageUrl = scriptContent
         ? (scriptContent.match(/window\.location\.href\s*=\s*'(https:\/\/[^']+)';/)?.[1] ?? '')
         : '';
 
-      const { data } = await axios.get(pageUrl);
+      const { data } = await this.ctx.axios.get(pageUrl);
       const $$ = load(data);
       const encodedString = $$('script[type="application/json"]').html()?.trim() || '';
       const jsonData = decryptF7(encodedString);
@@ -100,5 +105,3 @@ class Voe extends VideoExtractor {
     }
   };
 }
-
-export default Voe;

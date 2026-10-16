@@ -178,5 +178,3 @@ export function Gofile(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
-
-export default Gofile;

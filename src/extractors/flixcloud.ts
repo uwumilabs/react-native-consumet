@@ -135,5 +135,3 @@ export function FlixCloud(ctx: ExtractorContext): IVideoExtractor {
 
   return { serverName, sources, extract };
 }
-
-export default FlixCloud;

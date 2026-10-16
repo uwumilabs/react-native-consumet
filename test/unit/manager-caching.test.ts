@@ -3,7 +3,7 @@ import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
 import { IntegrityError, sha256Hex } from '../../src/utils/extension-integrity';
 import { defaultExtractors } from '../../src/utils/extension-utils';
-import AsianLoad from '../../src/extractors/asianload';
+import { AsianLoad } from '../../src/extractors/asianload';
 
 declare global {
   // eslint-disable-next-line no-var

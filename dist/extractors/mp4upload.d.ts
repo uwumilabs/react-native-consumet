@@ -1,8 +1,10 @@
-import { VideoExtractor, type IVideo } from '../models';
-declare class Mp4Upload extends VideoExtractor {
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+export declare class Mp4Upload extends VideoExtractor {
+    private readonly ctx;
     protected serverName: string;
     protected sources: IVideo[];
+    /** @param ctx extractor context; requests go through its axios (default: the library's) */
+    constructor(ctx?: ExtractorContext);
     extract: (videoUrl: URL) => Promise<IVideo[]>;
 }
-export default Mp4Upload;
 //# sourceMappingURL=mp4upload.d.ts.map

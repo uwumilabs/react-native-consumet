@@ -26,8 +26,7 @@ var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
 // src/extractors/kwik.ts
 var kwik_exports = {};
 __export(kwik_exports, {
-  Kwik: () => Kwik,
-  default: () => kwik_default
+  Kwik: () => Kwik
 });
 module.exports = __toCommonJS(kwik_exports);
 function Kwik(ctx) {
@@ -104,5 +103,4 @@ function Kwik(ctx) {
     extract
   };
 }
-var kwik_default = Kwik;
 if (module.exports !== exports) Object.assign(exports, module.exports);

@@ -217,5 +217,4 @@ function MegaPlay(ctx) {
     };
     return { serverName, sources, extract };
 }
-exports.default = MegaPlay;
 //# sourceMappingURL=megaplay.js.map

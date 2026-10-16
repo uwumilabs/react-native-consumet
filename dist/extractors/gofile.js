@@ -144,5 +144,4 @@ function Gofile(ctx) {
         extract,
     };
 }
-exports.default = Gofile;
 //# sourceMappingURL=gofile.js.map

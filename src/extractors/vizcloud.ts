@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class VizCloud extends VideoExtractor {
+export class VizCloud extends VideoExtractor {
   protected override serverName = 'VizCloud';
   protected override sources: IVideo[] = [];
 
@@ -22,6 +22,11 @@ class VizCloud extends VideoExtractor {
     post: [],
   };
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL, vizCloudHelper: string, apiKey: string): Promise<IVideo[]> => {
     const vizID: Array<string> = videoUrl.href.split('/');
     let url;
@@ -31,7 +36,7 @@ class VizCloud extends VideoExtractor {
       url = `${vizCloudHelper}/vizcloud?query=${encodeURIComponent(vizID.pop() ?? '')}&apikey=${apiKey}`;
     }
 
-    const { data } = await axios.get(url);
+    const { data } = await this.ctx.axios.get(url);
     if (!data.data?.media) throw new Error('Video not found');
 
     this.sources = [
@@ -44,7 +49,7 @@ class VizCloud extends VideoExtractor {
     ];
 
     const main = this.sources[this.sources.length - 1]!.url;
-    const req = await axios({
+    const req = await this.ctx.axios({
       method: 'get',
       url: main,
       headers: { referer: 'https://9anime.to' },
@@ -63,5 +68,3 @@ class VizCloud extends VideoExtractor {
     return this.sources;
   };
 }
-
-export default VizCloud;

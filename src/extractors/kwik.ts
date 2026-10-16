@@ -90,5 +90,3 @@ export function Kwik(ctx: ExtractorContext): IVideoExtractor {
 
   return { serverName, sources, extract };
 }
-
-export default Kwik;

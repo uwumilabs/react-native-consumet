@@ -1,8 +1,11 @@
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-declare class AsianLoad extends VideoExtractor {
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+export declare class AsianLoad extends VideoExtractor {
+    private readonly ctx;
     protected serverName: string;
     protected sources: IVideo[];
     private readonly keys;
+    /** @param ctx extractor context; requests go through its axios (default: the library's) */
+    constructor(ctx?: ExtractorContext);
     extract: (videoUrl: URL) => Promise<{
         sources: IVideo[];
     } & {
@@ -11,5 +14,4 @@ declare class AsianLoad extends VideoExtractor {
     private generateEncryptedAjaxParams;
     private decryptAjaxData;
 }
-export default AsianLoad;
 //# sourceMappingURL=asianload.d.ts.map

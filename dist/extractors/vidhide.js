@@ -76,5 +76,4 @@ function VidHide(ctx) {
         extract,
     };
 }
-exports.default = VidHide;
 //# sourceMappingURL=vidhide.js.map

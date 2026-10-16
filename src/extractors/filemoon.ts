@@ -1,16 +1,21 @@
-import axios from 'axios';
 import { load } from 'cheerio';
-import { type IVideo, VideoExtractor } from '../models';
+import { type IVideo, VideoExtractor, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 import { USER_AGENT } from '../utils/constants';
 
 /**
  * work in progress
  */
-class Filemoon extends VideoExtractor {
+export class Filemoon extends VideoExtractor {
   protected override serverName = 'Filemoon';
   protected override sources: IVideo[] = [];
 
   private readonly host = 'https://filemoon.sx';
+
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
 
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     const options = {
@@ -33,10 +38,10 @@ class Filemoon extends VideoExtractor {
       },
     };
 
-    const { data } = await axios.get(videoUrl.href, options);
+    const { data } = await this.ctx.axios.get(videoUrl.href, options);
     const $ = load(data);
     try {
-      const { data } = await axios.get($('iframe').attr('src')!, options)!;
+      const { data } = await this.ctx.axios.get($('iframe').attr('src')!, options)!;
       const unpackedData = eval(
         /(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', '')
       );
@@ -53,5 +58,3 @@ class Filemoon extends VideoExtractor {
     return this.sources;
   };
 }
-
-export default Filemoon;

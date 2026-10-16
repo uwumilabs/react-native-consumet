@@ -250,5 +250,3 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
 
   return { serverName, sources, extract };
 }
-
-export default MegaPlay;

@@ -1,9 +1,12 @@
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
-declare class GogoCDN extends VideoExtractor {
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+export declare class GogoCDN extends VideoExtractor {
+    private readonly ctx;
     protected serverName: string;
     protected sources: IVideo[];
     private readonly keys;
     private referer;
+    /** @param ctx extractor context; requests go through its axios (default: the library's) */
+    constructor(ctx?: ExtractorContext);
     extract: (videoUrl: URL) => Promise<{
         sources: IVideo[];
     } & {
@@ -13,5 +16,4 @@ declare class GogoCDN extends VideoExtractor {
     private generateEncryptedAjaxParams;
     private decryptAjaxData;
 }
-export default GogoCDN;
 //# sourceMappingURL=gogocdn.d.ts.map

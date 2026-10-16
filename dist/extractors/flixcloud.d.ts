@@ -14,5 +14,4 @@ import { type ExtractorContext, type IVideoExtractor } from '../models';
  *     the #EXT-X-KEY lines embedded in the manifest.
  */
 export declare function FlixCloud(ctx: ExtractorContext): IVideoExtractor;
-export default FlixCloud;
 //# sourceMappingURL=flixcloud.d.ts.map

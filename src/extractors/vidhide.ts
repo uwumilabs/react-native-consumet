@@ -83,5 +83,3 @@ export function VidHide(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
-
-export default VidHide;

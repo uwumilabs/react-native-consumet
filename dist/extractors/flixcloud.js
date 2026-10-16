@@ -101,5 +101,4 @@ function FlixCloud(ctx) {
     };
     return { serverName, sources, extract };
 }
-exports.default = FlixCloud;
 //# sourceMappingURL=flixcloud.js.map

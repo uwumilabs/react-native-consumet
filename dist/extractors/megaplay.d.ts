@@ -5,5 +5,4 @@ import { type ExtractorContext, type IVideoExtractor } from '../models';
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 export declare function MegaPlay(ctx: ExtractorContext): IVideoExtractor;
-export default MegaPlay;
 //# sourceMappingURL=megaplay.d.ts.map

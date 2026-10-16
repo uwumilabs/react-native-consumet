@@ -1,68 +1,80 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AsianLoad = void 0;
 const cheerio_1 = require("cheerio");
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const models_1 = require("../models");
+const extension_utils_1 = require("../utils/extension-utils");
 class AsianLoad extends models_1.VideoExtractor {
-    serverName = 'asianload';
-    sources = [];
-    keys = {
-        key: crypto_js_1.default.enc.Utf8.parse('93422192433952489752342908585752'),
-        iv: crypto_js_1.default.enc.Utf8.parse('9262859232435825'),
+  ctx;
+  serverName = 'asianload';
+  sources = [];
+  keys = {
+    key: crypto_js_1.default.enc.Utf8.parse('93422192433952489752342908585752'),
+    iv: crypto_js_1.default.enc.Utf8.parse('9262859232435825')
+  };
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : extension_utils_1.defaultExtractorContext;
+    super();
+    this.ctx = ctx;
+  }
+  extract = async videoUrl => {
+    const res = await this.ctx.axios.get(videoUrl.href);
+    const $ = (0, cheerio_1.load)(res.data);
+    const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
+    const encryptedData = await this.ctx.axios.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
+    if (!decryptedData.source) throw new Error('No source found. Try a different server.');
+    decryptedData.source.forEach(source => {
+      this.sources.push({
+        url: source.file,
+        isM3U8: source.file.includes('.m3u8')
+      });
+    });
+    decryptedData.source_bk.forEach(source => {
+      this.sources.push({
+        url: source.file,
+        isM3U8: source.file.includes('.m3u8')
+      });
+    });
+    const subtitles = decryptedData.track?.tracks?.map(track => ({
+      url: track.file,
+      lang: track.kind === 'thumbnails' ? 'Default (maybe)' : track.kind
+    }));
+    return {
+      sources: this.sources,
+      subtitles: subtitles
     };
-    extract = async (videoUrl) => {
-        const res = await axios_1.default.get(videoUrl.href);
-        const $ = (0, cheerio_1.load)(res.data);
-        const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
-        const encryptedData = await axios_1.default.get(`${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-        const decryptedData = await this.decryptAjaxData(encryptedData.data.data);
-        if (!decryptedData.source)
-            throw new Error('No source found. Try a different server.');
-        decryptedData.source.forEach((source) => {
-            this.sources.push({
-                url: source.file,
-                isM3U8: source.file.includes('.m3u8'),
-            });
-        });
-        decryptedData.source_bk.forEach((source) => {
-            this.sources.push({
-                url: source.file,
-                isM3U8: source.file.includes('.m3u8'),
-            });
-        });
-        const subtitles = decryptedData.track?.tracks?.map((track) => ({
-            url: track.file,
-            lang: track.kind === 'thumbnails' ? 'Default (maybe)' : track.kind,
-        }));
-        return {
-            sources: this.sources,
-            subtitles: subtitles,
-        };
-    };
-    generateEncryptedAjaxParams = async ($, id) => {
-        const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
-            iv: this.keys.iv,
-        }).toString();
-        const scriptValue = $("script[data-name='crypto']").data().value;
-        const decryptedToken = crypto_js_1.default.AES.decrypt(scriptValue, this.keys.key, {
-            iv: this.keys.iv,
-        }).toString(crypto_js_1.default.enc.Utf8);
-        return `id=${encryptedKey}&alias=${decryptedToken}`;
-    };
-    decryptAjaxData = async (encryptedData) => {
-        const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.key, {
-            iv: this.keys.iv,
-        }));
-        return JSON.parse(decryptedData);
-    };
+  };
+  generateEncryptedAjaxParams = async ($, id) => {
+    const encryptedKey = crypto_js_1.default.AES.encrypt(id, this.keys.key, {
+      iv: this.keys.iv
+    }).toString();
+    const scriptValue = $("script[data-name='crypto']").data().value;
+    const decryptedToken = crypto_js_1.default.AES.decrypt(scriptValue, this.keys.key, {
+      iv: this.keys.iv
+    }).toString(crypto_js_1.default.enc.Utf8);
+    return `id=${encryptedKey}&alias=${decryptedToken}`;
+  };
+  decryptAjaxData = async encryptedData => {
+    const decryptedData = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedData, this.keys.key, {
+      iv: this.keys.iv
+    }));
+    return JSON.parse(decryptedData);
+  };
 }
-exports.default = AsianLoad;
+exports.AsianLoad = AsianLoad;
 //# sourceMappingURL=asianload.js.map

@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,29 +15,19 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/extractors/megaup.ts
 var megaup_exports = {};
 __export(megaup_exports, {
-  MegaUp: () => MegaUp,
-  default: () => megaup_default
+  MegaUp: () => MegaUp
 });
 module.exports = __toCommonJS(megaup_exports);
-var import_axios = __toESM(require("axios"));
 function MegaUp(ctx) {
   const serverName = "MegaUp";
   const sources = [];
   const apiBase = "https://enc-dec.app/api";
-  const client = ctx.axios ?? import_axios.default;
+  const client = ctx.axios;
   const userAgent = ctx.USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
   const decodeSources = async (payload) => {
     try {
@@ -62,7 +50,7 @@ function MegaUp(ctx) {
       const subsUrl = videoUrl.searchParams.get("sub.list");
       let externalSubs = [];
       if (subsUrl) {
-        externalSubs = await import_axios.default.get(subsUrl).then(
+        externalSubs = await client.get(subsUrl).then(
           (res) => res.data.map((sub) => ({
             kind: sub.kind,
             url: sub.file,
@@ -138,5 +126,4 @@ function MegaUp(ctx) {
     extract
   };
 }
-var megaup_default = MegaUp;
 if (module.exports !== exports) Object.assign(exports, module.exports);

@@ -1,11 +1,11 @@
-import axios from 'axios';
 import { type CheerioAPI, load } from 'cheerio';
 import CryptoJS from 'crypto-js';
 
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 import { USER_AGENT } from '../utils/constants';
 
-class GogoCDN extends VideoExtractor {
+export class GogoCDN extends VideoExtractor {
   protected override serverName = 'goload';
   protected override sources: IVideo[] = [];
 
@@ -17,15 +17,20 @@ class GogoCDN extends VideoExtractor {
 
   private referer: string = '';
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     this.referer = videoUrl.href;
 
-    const res = await axios.get(videoUrl.href);
+    const res = await this.ctx.axios.get(videoUrl.href);
     const $ = load(res.data);
 
     const encyptedParams = await this.generateEncryptedAjaxParams($, videoUrl.searchParams.get('id') ?? '');
 
-    const encryptedData = await axios.get(
+    const encryptedData = await this.ctx.axios.get(
       `${videoUrl.protocol}//${videoUrl.hostname}/encrypt-ajax.php?${encyptedParams}`,
       {
         headers: {
@@ -43,7 +48,7 @@ class GogoCDN extends VideoExtractor {
     }));
 
     if (decryptedData.source[0].file.includes('.m3u8')) {
-      const resResult = await axios.get(decryptedData.source[0].file.toString());
+      const resResult = await this.ctx.axios.get(decryptedData.source[0].file.toString());
       const resolutions = resResult.data.match(/(RESOLUTION=)(.*)(\s*?)(\s*.*)/g);
       resolutions?.forEach((res: string) => {
         const index = decryptedData.source[0].file.lastIndexOf('/');
@@ -88,7 +93,7 @@ class GogoCDN extends VideoExtractor {
 
   private addSources = async (source: any) => {
     if (source.file.includes('m3u8')) {
-      const m3u8Urls = await axios
+      const m3u8Urls = await this.ctx.axios
         .get(source.file, {
           headers: {
             'Referer': this.referer,
@@ -148,5 +153,3 @@ class GogoCDN extends VideoExtractor {
     return JSON.parse(decryptedData);
   };
 }
-
-export default GogoCDN;

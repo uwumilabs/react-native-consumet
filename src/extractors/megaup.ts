@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 import { type ExtractorContext, type ISource, type IVideo, type IVideoExtractor } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
 
@@ -10,7 +8,7 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
   const serverName = 'MegaUp';
   const sources: IVideo[] = [];
   const apiBase = 'https://enc-dec.app/api';
-  const client = ctx.axios ?? axios;
+  const client = ctx.axios;
   const userAgent =
     ctx.USER_AGENT ||
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36';
@@ -43,7 +41,7 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
       const subsUrl = videoUrl.searchParams.get('sub.list');
       let externalSubs: { kind: string; url: string; lang: string }[] = [];
       if (subsUrl) {
-        externalSubs = await axios.get(subsUrl).then((res) =>
+        externalSubs = await client.get(subsUrl).then((res) =>
           res.data.map((sub: { kind: string; file: string; label: string }) => ({
             kind: sub.kind,
             url: sub.file,
@@ -125,5 +123,3 @@ export function MegaUp(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
-
-export default MegaUp;

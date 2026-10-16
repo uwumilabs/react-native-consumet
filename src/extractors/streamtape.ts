@@ -1,15 +1,20 @@
-import axios from 'axios';
 import { load } from 'cheerio';
 
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class StreamTape extends VideoExtractor {
+export class StreamTape extends VideoExtractor {
   protected override serverName = 'StreamTape';
   protected override sources: IVideo[] = [];
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await axios.get(videoUrl.href).catch(() => {
+      const { data } = await this.ctx.axios.get(videoUrl.href).catch(() => {
         throw new Error('Video not found');
       });
 
@@ -35,4 +40,3 @@ class StreamTape extends VideoExtractor {
     }
   };
 }
-export default StreamTape;

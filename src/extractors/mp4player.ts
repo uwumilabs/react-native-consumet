@@ -1,11 +1,16 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class Mp4Player extends VideoExtractor {
+export class Mp4Player extends VideoExtractor {
   protected override serverName = 'mp4player';
   protected override sources: IVideo[] = [];
 
   private readonly domains = ['mp4player.site'];
+
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
 
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
@@ -14,14 +19,14 @@ class Mp4Player extends VideoExtractor {
         subtitles: [],
       };
 
-      const response = await axios.get(videoUrl.href);
+      const response = await this.ctx.axios.get(videoUrl.href);
 
       const data = response.data.match(new RegExp('(?<=sniff\\()(.*)(?=\\))'))[0]?.replace(/\"/g, '')?.split(',');
 
       const link = `https://${videoUrl.host}/m3u8/${data[1]}/${data[2]}/master.txt?s=1&cache=${data[7]}`;
       //const thumbnails = response.data.match(new RegExp('(?<=file":")(.*)(?=","kind)'))[0]?.replace(/\\/g, '');
 
-      const m3u8Content = await axios.get(link, {
+      const m3u8Content = await this.ctx.axios.get(link, {
         headers: {
           accept: '*/*',
           referer: videoUrl.href,
@@ -50,4 +55,3 @@ class Mp4Player extends VideoExtractor {
     }
   };
 }
-export default Mp4Player;

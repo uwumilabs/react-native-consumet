@@ -1,13 +1,18 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo } from '../models';
+import { VideoExtractor, type IVideo, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class MixDrop extends VideoExtractor {
+export class MixDrop extends VideoExtractor {
   protected override serverName = 'MixDrop';
   protected override sources: IVideo[] = [];
 
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
+
   override extract = async (videoUrl: URL): Promise<IVideo[]> => {
     try {
-      const { data } = await axios.get(videoUrl.href);
+      const { data } = await this.ctx.axios.get(videoUrl.href);
 
       const formated = eval(/(eval)(\(f.*?)(\n<\/script>)/m.exec(data.replace(/\n/g, ' '))![2]!.replace('eval', ''));
 
@@ -28,4 +33,3 @@ class MixDrop extends VideoExtractor {
     }
   };
 }
-export default MixDrop;

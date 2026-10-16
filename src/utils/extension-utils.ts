@@ -71,26 +71,56 @@ export const defaultExtractorContext: ExtractorContext = {
   },
 };
 
-// Default static extractors (for backward compatibility)
+// Default static extractors (for backward compatibility). The class-based extractors default to
+// defaultExtractorContext, so they import this module while it imports them. Getters read each class
+// when it's used, after both modules have loaded, whichever of them loaded first.
 export const defaultExtractors = {
-  AsianLoad: AsianLoad,
-  Filemoon: Filemoon,
-  GogoCDN: GogoCDN,
+  get AsianLoad() {
+    return AsianLoad;
+  },
+  get Filemoon() {
+    return Filemoon;
+  },
+  get GogoCDN() {
+    return GogoCDN;
+  },
   Kwik: (ctx: ExtractorContext) => Kwik(ctx || defaultExtractorContext),
-  MixDrop: MixDrop,
-  Mp4Player: Mp4Player,
-  Mp4Upload: Mp4Upload,
-  RapidCloud: RapidCloud,
+  get MixDrop() {
+    return MixDrop;
+  },
+  get Mp4Player() {
+    return Mp4Player;
+  },
+  get Mp4Upload() {
+    return Mp4Upload;
+  },
+  get RapidCloud() {
+    return RapidCloud;
+  },
   MegaCloud: (ctx: ExtractorContext) => MegaCloud(ctx || defaultExtractorContext),
-  StreamHub: StreamHub,
-  StreamLare: StreamLare,
-  StreamSB: StreamSB,
-  StreamTape: StreamTape,
+  get StreamHub() {
+    return StreamHub;
+  },
+  get StreamLare() {
+    return StreamLare;
+  },
+  get StreamSB() {
+    return StreamSB;
+  },
+  get StreamTape() {
+    return StreamTape;
+  },
   StreamWish: (ctx?: ExtractorContext) => StreamWish(ctx || defaultExtractorContext),
-  VidMoly: VidMoly,
-  VizCloud: VizCloud,
+  get VidMoly() {
+    return VidMoly;
+  },
+  get VizCloud() {
+    return VizCloud;
+  },
   VidHide: (ctx?: ExtractorContext) => VidHide(ctx || defaultExtractorContext),
-  Voe: Voe,
+  get Voe() {
+    return Voe;
+  },
   MegaUp: (ctx?: ExtractorContext) => MegaUp(ctx || defaultExtractorContext),
   MegaPlay: (ctx?: ExtractorContext) => MegaPlay(ctx || defaultExtractorContext),
   GDFlix: (ctx?: ExtractorContext) => GDFlix(ctx || defaultExtractorContext),
@@ -98,28 +128,3 @@ export const defaultExtractors = {
   HubCloud: (ctx?: ExtractorContext) => HubCloud(ctx || defaultExtractorContext),
   FlixCloud: (ctx?: ExtractorContext) => FlixCloud(ctx || defaultExtractorContext),
 };
-
-export const extractors = {
-  GogoCDN: defaultExtractors.GogoCDN,
-  StreamSB: defaultExtractors.StreamSB,
-  StreamTape: defaultExtractors.StreamTape,
-  MixDrop: defaultExtractors.MixDrop,
-  Kwik: defaultExtractors.Kwik,
-  RapidCloud: defaultExtractors.RapidCloud,
-  StreamWish: defaultExtractors.StreamWish,
-  Filemoon: defaultExtractors.Filemoon,
-  Voe: defaultExtractors.Voe,
-  AsianLoad: defaultExtractors.AsianLoad,
-  StreamLare: defaultExtractors.StreamLare,
-  VidMoly: defaultExtractors.VidMoly,
-  MegaCloud: defaultExtractors.MegaCloud,
-  MegaUp: defaultExtractors.MegaUp,
-  MegaPlay: defaultExtractors.MegaPlay,
-  GDFlix: defaultExtractors.GDFlix,
-  Gofile: defaultExtractors.Gofile,
-  HubCloud: defaultExtractors.HubCloud,
-  FlixCloud: defaultExtractors.FlixCloud,
-};
-
-// Type definitions for provider and extractor instances
-export type Extractor = keyof typeof extractors;

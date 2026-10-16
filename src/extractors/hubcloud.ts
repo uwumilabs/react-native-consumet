@@ -353,5 +353,3 @@ export function HubCloud(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
-
-export default HubCloud;

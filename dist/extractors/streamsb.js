@@ -1,23 +1,26 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.StreamSB = void 0;
 const models_1 = require("../models");
+const extension_utils_1 = require("../utils/extension-utils");
 const constants_1 = require("../utils/constants");
 class StreamSB extends models_1.VideoExtractor {
+  ctx;
   serverName = 'streamsb';
   sources = [];
   host = 'https://streamsss.net/sources50';
   // TODO: update host2
   host2 = 'https://watchsb.com/sources50';
   PAYLOAD = hex => `566d337678566f743674494a7c7c${hex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362`;
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor() {
+    let ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : extension_utils_1.defaultExtractorContext;
+    super();
+    this.ctx = ctx;
+  }
   extract = (() => {
     var _this = this;
     return async function (videoUrl) {
@@ -30,7 +33,7 @@ class StreamSB extends models_1.VideoExtractor {
       let id = videoUrl.href.split('/e/').pop();
       if (id?.includes('html')) id = id.split('.html')[0];
       const bytes = new TextEncoder().encode(id);
-      const res = await axios_1.default.get(`${isAlt ? _this.host2 : _this.host}/${_this.PAYLOAD(Buffer.from(bytes).toString('hex'))}`, {
+      const res = await _this.ctx.axios.get(`${isAlt ? _this.host2 : _this.host}/${_this.PAYLOAD(Buffer.from(bytes).toString('hex'))}`, {
         headers
       }).catch(() => null);
       if (!res?.data.stream_data) throw new Error('No source found. Try a different server.');
@@ -38,7 +41,7 @@ class StreamSB extends models_1.VideoExtractor {
         'User-Agent': constants_1.USER_AGENT,
         'Referer': videoUrl.href.split('e/')[0]
       };
-      const m3u8Urls = await axios_1.default.get(res.data.stream_data.file, {
+      const m3u8Urls = await _this.ctx.axios.get(res.data.stream_data.file, {
         headers
       });
       const videoList = m3u8Urls.data.split('#EXT-X-STREAM-INF:');
@@ -67,5 +70,5 @@ class StreamSB extends models_1.VideoExtractor {
     });
   };
 }
-exports.default = StreamSB;
+exports.StreamSB = StreamSB;
 //# sourceMappingURL=streamsb.js.map

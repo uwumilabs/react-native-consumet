@@ -163,5 +163,3 @@ export function GDFlix(ctx: ExtractorContext): IVideoExtractor {
     extract,
   };
 }
-
-export default GDFlix;

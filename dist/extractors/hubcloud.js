@@ -313,5 +313,4 @@ function HubCloud(ctx) {
     extract
   };
 }
-exports.default = HubCloud;
 //# sourceMappingURL=hubcloud.js.map

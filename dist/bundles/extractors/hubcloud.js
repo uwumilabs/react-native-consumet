@@ -26,8 +26,7 @@ var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
 // src/extractors/hubcloud.ts
 var hubcloud_exports = {};
 __export(hubcloud_exports, {
-  HubCloud: () => HubCloud,
-  default: () => hubcloud_default
+  HubCloud: () => HubCloud
 });
 module.exports = __toCommonJS(hubcloud_exports);
 
@@ -470,5 +469,4 @@ function HubCloud(ctx) {
     extract
   };
 }
-var hubcloud_default = HubCloud;
 if (module.exports !== exports) Object.assign(exports, module.exports);

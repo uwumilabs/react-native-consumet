@@ -20,8 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/extractors/gdflix.ts
 var gdflix_exports = {};
 __export(gdflix_exports, {
-  GDFlix: () => GDFlix,
-  default: () => gdflix_default
+  GDFlix: () => GDFlix
 });
 module.exports = __toCommonJS(gdflix_exports);
 var DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -158,5 +157,4 @@ function GDFlix(ctx) {
     extract
   };
 }
-var gdflix_default = GDFlix;
 if (module.exports !== exports) Object.assign(exports, module.exports);

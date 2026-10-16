@@ -1,9 +1,14 @@
-import axios from 'axios';
-import { VideoExtractor, type IVideo, type ISubtitle } from '../models';
+import { VideoExtractor, type IVideo, type ISubtitle, type ExtractorContext } from '../models';
+import { defaultExtractorContext } from '../utils/extension-utils';
 
-class StreamHub extends VideoExtractor {
+export class StreamHub extends VideoExtractor {
   protected override serverName = 'StreamHub';
   protected override sources: IVideo[] = [];
+
+  /** @param ctx extractor context; requests go through its axios (default: the library's) */
+  constructor(private readonly ctx: ExtractorContext = defaultExtractorContext) {
+    super();
+  }
 
   override extract = async (videoUrl: URL): Promise<{ sources: IVideo[] } & { subtitles: ISubtitle[] }> => {
     try {
@@ -12,7 +17,7 @@ class StreamHub extends VideoExtractor {
         subtitles: [],
       };
 
-      const { data } = await axios.get(videoUrl.href).catch(() => {
+      const { data } = await this.ctx.axios.get(videoUrl.href).catch(() => {
         throw new Error('Video not found');
       });
 
@@ -21,7 +26,7 @@ class StreamHub extends VideoExtractor {
       );
 
       const links = unpackedData.match(new RegExp('sources:\\[\\{src:"(.*?)"')) ?? [];
-      const m3u8Content = await axios.get(links[1], {
+      const m3u8Content = await this.ctx.axios.get(links[1], {
         headers: {
           Referer: links[1],
         },
@@ -55,4 +60,3 @@ class StreamHub extends VideoExtractor {
     }
   };
 }
-export default StreamHub;
