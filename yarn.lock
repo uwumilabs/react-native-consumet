@@ -3224,6 +3224,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/curves@npm:^1.9.7":
+  version: 1.9.7
+  resolution: "@noble/curves@npm:1.9.7"
+  dependencies:
+    "@noble/hashes": 1.8.0
+  checksum: 65acad44ac6944ab96471109087d6cfcbcaa251faad6295961be9a5ace220634f4b7c74a96d1ee2274ad3880ea953d8e8259893ed8c906c831ef29f5c04ec9cc
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:1.8.0":
+  version: 1.8.0
+  resolution: "@noble/hashes@npm:1.8.0"
+  checksum: c94e98b941963676feaba62475b1ccfa8341e3f572adbb3b684ee38b658df44100187fa0ef4220da580b13f8d27e87d5492623c8a02ecc61f23fb9960c7918f5
+  languageName: node
+  linkType: hard
+
 "@nodable/entities@npm:^3.0.0":
   version: 3.0.0
   resolution: "@nodable/entities@npm:3.0.0"
@@ -12176,6 +12192,7 @@ __metadata:
     "@babel/runtime": ^7.28.3
     "@commitlint/config-conventional": ^19.6.0
     "@eslint/compat": ^1.2.7
+    "@noble/curves": ^1.9.7
     "@react-native-community/cli": 20.2.0
     "@react-native/eslint-config": 0.87.1
     "@release-it/conventional-changelog": ^10.0.6
