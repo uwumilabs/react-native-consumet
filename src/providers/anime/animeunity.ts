@@ -11,11 +11,17 @@ import {
   SubOrDub,
 } from '../../models';
 
+/**
+ * Not working, and not exported from `ANIME`: www.animeunity.to now redirects to www.animeunity.so,
+ * and the scraper hasn't been checked against the new site. Kept so it can be ported to a registry
+ * factory; delete it if nobody does.
+ */
 class AnimeUnity extends AnimeParser {
   override readonly name = 'AnimeUnity';
   protected override baseUrl = 'https://www.animeunity.to';
   protected override logo = 'https://www.animeunity.to/favicon-32x32.png';
   protected override classPath = 'ANIME.AnimeUnity';
+  override readonly isWorking = false;
 
   /**
    * @param query Search query

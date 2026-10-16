@@ -16,11 +16,17 @@ var RankingType;
   RankingType["TOPRATED"] = "top-rated";
   RankingType["NEW"] = "new";
 })(RankingType || (RankingType = {}));
+/**
+ * Not working, and not exported from `MANGA`: readmanga.app doesn't respond, which hasn't been
+ * confirmed as a permanent shutdown. Kept so it can be restored if the site comes back; delete it
+ * if it doesn't.
+ */
 class ReadManga extends models_1.MangaParser {
   name = 'ReadManga';
   baseUrl = 'https://readmanga.app';
   logo = 'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
   classPath = 'MANGA.ReadManga';
+  isWorking = false;
   darkLogo = 'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
   /**
    *

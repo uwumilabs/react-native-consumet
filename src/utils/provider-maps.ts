@@ -53,23 +53,10 @@ export const movieProviders = {
   },
 };
 
-const metaProviders = {
-  get Anilist() {
-    return require('../providers/meta/anilist').default;
-  },
-  get TMDB() {
-    return require('../providers/meta/tmdb').default;
-  },
-  get MAL() {
-    return require('../providers/meta/mal').default;
-  },
-};
-
 /** @deprecated Class keys of the bundled providers; registry ids are lowercase, use `AnimeProviderId`. */
 export type AnimeProvider = keyof typeof animeProviders;
 /** @deprecated Class keys of the bundled providers; registry ids are lowercase, use `MovieProviderId`. */
 export type MovieProvider = keyof typeof movieProviders;
-export type MetaProvider = keyof typeof metaProviders;
 
 /** Registry ids of the providers in the bundled registry. */
 export type KnownAnimeProviderId = 'animepahe' | 'animekai' | 'anikoto' | 'anineko';

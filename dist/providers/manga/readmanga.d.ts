@@ -1,9 +1,15 @@
 import { type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ISearch, MangaParser } from '../../models';
+/**
+ * Not working, and not exported from `MANGA`: readmanga.app doesn't respond, which hasn't been
+ * confirmed as a permanent shutdown. Kept so it can be restored if the site comes back; delete it
+ * if it doesn't.
+ */
 declare class ReadManga extends MangaParser {
     readonly name = "ReadManga";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
+    readonly isWorking = false;
     protected darkLogo: string;
     /**
      *

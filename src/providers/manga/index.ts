@@ -10,7 +10,6 @@ import AsuraScans from './asurascans';
 import FlameScans from './flamescans';
 import MangaHost from './mangahost';
 import BRMangas from './brmangas';
-import ReadManga from './readmanga';
 import VyvyManga from './vyvymanga';
 
 export default {
@@ -26,6 +25,5 @@ export default {
   FlameScans,
   MangaHost,
   BRMangas,
-  ReadManga,
   VyvyManga,
 };

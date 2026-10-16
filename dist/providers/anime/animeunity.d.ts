@@ -1,9 +1,15 @@
 import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer } from '../../models';
+/**
+ * Not working, and not exported from `ANIME`: www.animeunity.to now redirects to www.animeunity.so,
+ * and the scraper hasn't been checked against the new site. Kept so it can be ported to a registry
+ * factory; delete it if nobody does.
+ */
 declare class AnimeUnity extends AnimeParser {
     readonly name = "AnimeUnity";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
+    readonly isWorking = false;
     /**
      * @param query Search query
      */

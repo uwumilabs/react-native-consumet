@@ -48,11 +48,17 @@ interface RatingResult {
   hasNextLink: boolean;
 }
 
+/**
+ * Not working, and not exported from `MANGA`: readmanga.app doesn't respond, which hasn't been
+ * confirmed as a permanent shutdown. Kept so it can be restored if the site comes back; delete it
+ * if it doesn't.
+ */
 class ReadManga extends MangaParser {
   override readonly name = 'ReadManga';
   protected override baseUrl: string = 'https://readmanga.app';
   protected override logo = 'https://readmanga.app/assets/new/images/readmangapp-light.png'; // light logo
   protected override classPath = 'MANGA.ReadManga';
+  override readonly isWorking = false;
   protected darkLogo = 'https://readmanga.app/assets/new/images/readmangaapp-dark.png';
 
   /**

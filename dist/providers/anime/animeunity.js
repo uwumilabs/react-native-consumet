@@ -11,11 +11,17 @@ Object.defineProperty(exports, "__esModule", {
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
+/**
+ * Not working, and not exported from `ANIME`: www.animeunity.to now redirects to www.animeunity.so,
+ * and the scraper hasn't been checked against the new site. Kept so it can be ported to a registry
+ * factory; delete it if nobody does.
+ */
 class AnimeUnity extends models_1.AnimeParser {
   name = 'AnimeUnity';
   baseUrl = 'https://www.animeunity.to';
   logo = 'https://www.animeunity.to/favicon-32x32.png';
   classPath = 'ANIME.AnimeUnity';
+  isWorking = false;
   /**
    * @param query Search query
    */

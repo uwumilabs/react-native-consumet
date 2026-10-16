@@ -43,15 +43,4 @@ exports.movieProviders = {
         return require('../providers/movies/netflixmirror/disneymirror').default;
     },
 };
-const metaProviders = {
-    get Anilist() {
-        return require('../providers/meta/anilist').default;
-    },
-    get TMDB() {
-        return require('../providers/meta/tmdb').default;
-    },
-    get MAL() {
-        return require('../providers/meta/mal').default;
-    },
-};
 //# sourceMappingURL=provider-maps.js.map

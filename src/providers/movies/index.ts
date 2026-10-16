@@ -1,4 +1,3 @@
-// import DramaCool from './dramacool';
 import MultiMovies from './multimovies/multimovies';
 import { createMultiMovies } from './multimovies/create-multimovies';
 import NetflixMirror from './netflixmirror/netflixmirror';
@@ -14,7 +13,6 @@ import VegaMovies from './vegamovies/vegamovies';
 import { createVegaMovies } from './vegamovies/create-vegamovies';
 
 export default {
-  // DramaCool,
   MultiMovies,
   NetflixMirror,
   PrimeMirror,
