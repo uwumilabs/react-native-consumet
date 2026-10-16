@@ -18,7 +18,6 @@ import {
 import {
   anilistSearchQuery,
   anilistMediaDetailQuery,
-  kitsuSearchQuery,
   anilistTrendingQuery,
   anilistPopularQuery,
   anilistAiringScheduleQuery,
@@ -47,7 +46,6 @@ export {
   calculateStringSimilarity,
   anilistSearchQuery,
   anilistMediaDetailQuery,
-  kitsuSearchQuery,
   anilistTrendingQuery,
   anilistPopularQuery,
   anilistAiringScheduleQuery,

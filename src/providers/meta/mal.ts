@@ -17,7 +17,8 @@ import {
   MetaError,
   type FuzzyDate,
 } from '../../models';
-import { substringAfter, substringBefore, calculateStringSimilarity, kitsuSearchQuery } from '../../utils';
+import { substringAfter, substringBefore, calculateStringSimilarity } from '../../utils';
+import { kitsuTitleSearchQuery } from '../../utils/queries';
 import Zoro from '../anime/zoro/zoro';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -322,7 +323,8 @@ class Myanimelist extends AnimeParser {
 
     const options = {
       headers: { 'Content-Type': 'application/json' },
-      query: kitsuSearchQuery(slug),
+      query: kitsuTitleSearchQuery(),
+      variables: { title: slug },
     };
 
     const newEpisodeList = await this.findKitsuAnime(possibleProviderEpisodes, options, season, startDate);

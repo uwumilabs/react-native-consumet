@@ -1,0 +1,128 @@
+{
+  "request": "https://graphql.anilist.co",
+  "recordedAt": "2026-10-16",
+  "note": "Search text with a double quote and a backslash.",
+  "variables": {
+    "search": "\"Fate\\stay night\"",
+    "page": 1,
+    "perPage": 3,
+    "type": "ANIME"
+  },
+  "status": 200,
+  "body": {
+    "data": {
+      "Page": {
+        "pageInfo": {
+          "total": 5000,
+          "perPage": 3,
+          "currentPage": 1,
+          "lastPage": 1666,
+          "hasNextPage": true
+        },
+        "media": [
+          {
+            "id": 356,
+            "idMal": 356,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Fate/stay night",
+              "romaji": "Fate/stay night",
+              "english": "Fate/stay night",
+              "native": "Fate/stay night"
+            },
+            "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/356-0VzS7BcObayT.jpg",
+            "popularity": 190850,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx356-mTpMvtillumS.png",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx356-mTpMvtillumS.png",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx356-mTpMvtillumS.png",
+              "color": "#ff5d43"
+            },
+            "episodes": 24,
+            "format": "TV",
+            "season": "WINTER",
+            "description": "Raised by a mysterious sorcerer after the death of his parents in a catastrophic fire, Shirou Emiya has only just begun …",
+            "seasonYear": 2006,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 69,
+            "genres": [
+              "Action",
+              "Fantasy",
+              "Romance",
+              "Supernatural"
+            ],
+            "nextAiringEpisode": null
+          },
+          {
+            "id": 6922,
+            "idMal": 6922,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Fate/stay night Movie: UNLIMITED BLADE WORKS",
+              "romaji": "Fate/stay night Movie: UNLIMITED BLADE WORKS",
+              "english": "Fate/stay night: Unlimited Blade Works (Movie)",
+              "native": "劇場版 Fate/stay night UNLIMITED BLADE WORKS"
+            },
+            "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/6922-md365Zwl4Y06.jpg",
+            "popularity": 55575,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx6922-g3hsIYOWGXL8.jpg",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx6922-g3hsIYOWGXL8.jpg",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx6922-g3hsIYOWGXL8.jpg",
+              "color": "#e47835"
+            },
+            "episodes": 1,
+            "format": "MOVIE",
+            "season": "WINTER",
+            "description": "In Fuyuki City, the Fifth Holy Grail War is about to commence a lengthy battle of blood, death, and misery. High school …",
+            "seasonYear": 2010,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 70,
+            "genres": [
+              "Action",
+              "Drama",
+              "Fantasy",
+              "Supernatural"
+            ],
+            "nextAiringEpisode": null
+          },
+          {
+            "id": 19603,
+            "idMal": 22297,
+            "status": "FINISHED",
+            "title": {
+              "userPreferred": "Fate/stay night: Unlimited Blade Works",
+              "romaji": "Fate/stay night: Unlimited Blade Works",
+              "english": "Fate/stay night: Unlimited Blade Works",
+              "native": "Fate/stay night [Unlimited Blade Works]"
+            },
+            "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/19603.jpg",
+            "popularity": 267862,
+            "coverImage": {
+              "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx19603-ycT0pyEgDVQu.jpg",
+              "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx19603-ycT0pyEgDVQu.jpg",
+              "medium": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/small/bx19603-ycT0pyEgDVQu.jpg",
+              "color": "#e4a135"
+            },
+            "episodes": 13,
+            "format": "TV",
+            "season": "FALL",
+            "description": "Fuyuki City - a city surrounded by the sea and mountains becomes the setting for an ancient ritual. Seven masters are gi…",
+            "seasonYear": 2014,
+            "chapters": null,
+            "volumes": null,
+            "averageScore": 80,
+            "genres": [
+              "Action",
+              "Fantasy",
+              "Supernatural"
+            ],
+            "nextAiringEpisode": null
+          }
+        ]
+      }
+    }
+  }
+}

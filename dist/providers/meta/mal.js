@@ -12,6 +12,7 @@ const meta_http_1 = require("../../utils/meta-http");
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
+const queries_1 = require("../../utils/queries");
 const zoro_1 = __importDefault(require("../anime/zoro/zoro"));
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 /**
@@ -246,7 +247,10 @@ class Myanimelist extends models_1.AnimeParser {
       headers: {
         'Content-Type': 'application/json'
       },
-      query: (0, utils_1.kitsuSearchQuery)(slug)
+      query: (0, queries_1.kitsuTitleSearchQuery)(),
+      variables: {
+        title: slug
+      }
     };
     const newEpisodeList = await this.findKitsuAnime(possibleProviderEpisodes, options, season, startDate);
     return newEpisodeList;

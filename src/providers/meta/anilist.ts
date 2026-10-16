@@ -33,7 +33,6 @@ import {
   anilistAiringScheduleQuery,
   anilistGenresQuery,
   anilistAdvancedQuery,
-  anilistSiteStatisticsQuery,
   anilistCharacterQuery,
   anilistStaffInfoQuery,
   getDays,
@@ -55,6 +54,19 @@ const anilistError = (err: unknown): MetaError => {
     return MetaError.from('anilist', err, 'You have been ratelimited by anilist. Please try again later');
   return MetaError.from('anilist', err);
 };
+
+const ANILIST_GRAPHQL_URL = 'https://graphql.anilist.co';
+
+/**
+ * POST a query to AniList. Values always go in `variables`, never into the query text, so a search
+ * containing `"` or `\` can't break the query (it used to fail with a 400).
+ */
+const anilistQuery = (query: string, variables?: Record<string, unknown>) =>
+  metaHttp.post(
+    ANILIST_GRAPHQL_URL,
+    { query, variables },
+    { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } }
+  );
 
 const DAY_MS = 86_400_000;
 
@@ -98,7 +110,6 @@ class Anilist extends AnimeParser {
   protected override logo = 'https://upload.wikimedia.org/wikipedia/commons/6/61/AniList_logo.svg';
   protected override classPath = 'META.Anilist';
 
-  private readonly anilistGraphqlUrl = 'https://graphql.anilist.co';
   private readonly kitsuGraphqlUrl = 'https://kitsu.io/api/graphql';
   private readonly malSyncUrl = 'https://api.malsync.moe';
   private readonly anifyUrl = ANIFY_URL;
@@ -127,16 +138,8 @@ class Anilist extends AnimeParser {
    * @param perPage Number of results per page (optional) (default: 15) (max: 50)
    */
   override search = async (query: string, page: number = 1, perPage: number = 15): Promise<ISearch<IAnimeResult>> => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistSearchQuery(query, page, perPage),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistSearchQuery(), { search: query, page, perPage, type: 'ANIME' });
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data?.Page?.pageInfo?.currentPage,
@@ -216,25 +219,18 @@ class Anilist extends AnimeParser {
     status?: string,
     season?: string
   ): Promise<ISearch<IAnimeResult>> => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistAdvancedQuery(),
-      variables: {
-        search: query,
-        type: type,
-        page: page,
-        size: perPage,
-        format: format,
-        sort: sort,
-        genres: genres,
-        id: id,
-        year: year ? `${year}%` : undefined,
-        status: status,
-        season: season,
-      },
+    const variables = {
+      search: query,
+      type: type,
+      page: page,
+      size: perPage,
+      format: format,
+      sort: sort,
+      genres: genres,
+      id: id,
+      year: year ? `${year}%` : undefined,
+      status: status,
+      season: season,
     };
 
     if (genres) {
@@ -246,7 +242,7 @@ class Anilist extends AnimeParser {
     }
 
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistAdvancedQuery(), variables);
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data?.Page?.pageInfo?.currentPage,
@@ -315,17 +311,9 @@ class Anilist extends AnimeParser {
       title: '',
     };
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistMediaDetailQuery(id),
-    };
-
     let fillerEpisodes: { 'number': string; 'filler-bool': boolean }[];
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
 
       animeInfo.malId = data.data?.Media?.idMal;
       animeInfo.title = {
@@ -592,16 +580,8 @@ class Anilist extends AnimeParser {
    * @param perPage number of results per page (optional)
    */
   fetchTrendingAnime = async (page: number = 1, perPage: number = 10): Promise<ISearch<IAnimeResult>> => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistTrendingQuery(page, perPage),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistTrendingQuery(), { page, perPage });
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -665,16 +645,8 @@ class Anilist extends AnimeParser {
    * @param perPage number of results per page (optional)
    */
   fetchPopularAnime = async (page: number = 1, perPage: number = 10): Promise<ISearch<IAnimeResult>> => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistPopularQuery(page, perPage),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistPopularQuery(), { page, perPage });
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -758,16 +730,14 @@ class Anilist extends AnimeParser {
     else if (typeof weekStart === 'number' && typeof weekEnd === 'number') [day1, day2] = [weekStart, weekEnd];
     else throw new Error('Invalid weekStart or weekEnd');
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistAiringScheduleQuery(page, perPage, day1!, day2!, notYetAired),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistAiringScheduleQuery(), {
+        page,
+        perPage,
+        notYetAired,
+        airingAtGreater: day1,
+        airingAtLesser: day2,
+      });
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -826,15 +796,8 @@ class Anilist extends AnimeParser {
 
     for (const genre of genres) if (!Object.values(Genres).includes(genre as Genres)) throw new Error('Invalid genre');
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistGenresQuery(genres, page, perPage),
-    };
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistGenresQuery(), { genres, page, perPage });
 
       const res: ISearch<IAnimeResult> = {
         currentPage: data.data.Page.pageInfo.currentPage,
@@ -923,24 +886,7 @@ class Anilist extends AnimeParser {
    * @returns a random anime
    */
   fetchRandomAnime = async (): Promise<IAnimeInfo> => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistSiteStatisticsQuery(),
-    };
-
     try {
-      // const {
-      //   data: { data },
-      // } = await metaHttp.post(this.anilistGraphqlUrl, options);
-
-      // const selectedAnime = Math.floor(
-      //   Math.random() * data.SiteStatistics.anime.nodes[data.SiteStatistics.anime.nodes.length - 1].count
-      // );
-      // const { results } = await this.advancedSearch(undefined, 'ANIME', Math.ceil(selectedAnime / 50), 50);
-
       const { data: data } = await metaHttp.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
 
       const ids = data?.trim().split('\n');
@@ -963,7 +909,9 @@ class Anilist extends AnimeParser {
     perPage: number = 25
   ): Promise<ISearch<IAnimeResult>> => {
     try {
-      const { data } = await metaHttp.get(`${this.anifyUrl}/recent?page=${page}&perPage=${perPage}&type=anime`);
+      const { data } = await metaHttp.get(
+        `${this.anifyUrl}/recent?page=${encodeURIComponent(page)}&perPage=${encodeURIComponent(perPage)}&type=anime`
+      );
 
       const results: IAnimeInfo[] = data?.map((item: any) => {
         return {
@@ -1041,14 +989,12 @@ class Anilist extends AnimeParser {
       data: {
         data: { Media },
       },
-    } = await metaHttp
-      .post(this.anilistGraphqlUrl, {
-        query: `query($id: Int){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
-        variables: { id: Number(id) },
-      })
-      .catch((err) => {
-        throw anilistError(err);
-      });
+    } = await anilistQuery(
+      `query($id: Int){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
+      { id: Number(id) }
+    ).catch((err) => {
+      throw anilistError(err);
+    });
 
     const fillerRequest = fetchFiller && Media.idMal ? this.fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
 
@@ -1107,7 +1053,7 @@ class Anilist extends AnimeParser {
   private fetchFillerEpisodes = async (malId: number): Promise<{ 'number': string; 'filler-bool': boolean }[]> => {
     try {
       const { data } = await metaHttp.get(
-        `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${malId}.json`,
+        `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${encodeURIComponent(malId)}.json`,
         { timeout: ENRICHMENT_TIMEOUT_MS }
       );
       return Array.isArray(data?.episodes) ? data.episodes : [];
@@ -1236,16 +1182,8 @@ class Anilist extends AnimeParser {
       title: '',
     };
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistMediaDetailQuery(id),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
       animeInfo.malId = data.data.Media.idMal;
       animeInfo.title = {
         romaji: data.data.Media.title.romaji,
@@ -1457,16 +1395,8 @@ class Anilist extends AnimeParser {
       name: { first: '', last: '', native: '', full: '' },
     };
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistStaffInfoQuery(id),
-    };
-
     try {
-      const { data } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      const { data } = await anilistQuery(anilistStaffInfoQuery(), { id: Number(id) });
       const staff = data.data.Staff;
 
       staffInfo.id = staff?.id;
@@ -1498,23 +1428,12 @@ class Anilist extends AnimeParser {
    * @param id character id from anilist
    */
   fetchCharacterInfoById = async (id: string) => {
-    const options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      query: anilistCharacterQuery(),
-      variables: {
-        id: id,
-      },
-    };
-
     try {
       const {
         data: {
           data: { Character },
         },
-      } = await metaHttp.post(this.anilistGraphqlUrl, options);
+      } = await anilistQuery(anilistCharacterQuery(), { id: Number(id) });
 
       const height = Character.description.match(/__Height:__(.*)/)?.[1].trim();
       const weight = Character.description.match(/__Weight:__(.*)/)?.[1].trim();
@@ -1658,16 +1577,8 @@ class Anilist extends AnimeParser {
      * @param perPage (optional) number of results per page (default: `20`)
      */
     search = async (query: string, page: number = 1, perPage: number = 20): Promise<ISearch<IMangaResult>> => {
-      const options = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        query: anilistSearchQuery(query, page, perPage, 'MANGA'),
-      };
-
       try {
-        const { data } = await metaHttp.post(new Anilist().anilistGraphqlUrl, options);
+        const { data } = await anilistQuery(anilistSearchQuery(), { search: query, page, perPage, type: 'MANGA' });
 
         const res: ISearch<IMangaResult> = {
           currentPage: data.data.Page.pageInfo.currentPage,
@@ -1737,16 +1648,8 @@ class Anilist extends AnimeParser {
         title: '',
       };
 
-      const options = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        query: anilistMediaDetailQuery(id),
-      };
-
       try {
-        const { data } = await metaHttp.post(new Anilist().anilistGraphqlUrl, options);
+        const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
         mangaInfo.malId = data.data.Media.idMal;
         mangaInfo.title = {
           romaji: data.data.Media.title.romaji,
@@ -1941,7 +1844,7 @@ class Anilist extends AnimeParser {
     let possibleManga: any;
 
     if (malId) {
-      const malAsyncReq = await metaHttp.get(`${this.malSyncUrl}/mal/manga/${malId}`, {
+      const malAsyncReq = await metaHttp.get(`${this.malSyncUrl}/mal/manga/${encodeURIComponent(malId)}`, {
         validateStatus: () => true,
       });
 

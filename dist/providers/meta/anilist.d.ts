@@ -7,7 +7,6 @@ declare class Anilist extends AnimeParser {
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
-    private readonly anilistGraphqlUrl;
     private readonly kitsuGraphqlUrl;
     private readonly malSyncUrl;
     private readonly anifyUrl;
