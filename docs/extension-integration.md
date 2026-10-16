@@ -8,6 +8,7 @@ A powerful React Native library for accessing anime, movie, and media content th
 - [Why Use Extensions?](#why-use-extensions)
 - [Core Components](#core-components)
 - [Registry Versions and Compatibility](#registry-versions-and-compatibility)
+- [Downloaded Registries and Signatures](#downloaded-registries-and-signatures)
 - [Usage Examples](#usage-examples)
 - [Custom HTTP Configuration](#custom-http-configuration)
 - [React Integration](#react-integration)
@@ -85,11 +86,26 @@ const movieProvider = await providerManager.getMovieProvider('netflixmirror');
 // You can also use loadExtension directly
 const anikoto = await providerManager.loadExtension('anikoto');
 
+// Or getProvider, for any category: the result is typed by the category
+const anineko = await providerManager.getProvider('anime', 'anineko');
+
 // Override the registry's baseUrl, e.g. when a site moves before the registry is updated
 const mirror = await providerManager.getAnimeProvider('animepahe', { baseUrl: 'https://animepahe.example' });
 ```
 
-Ids are the registry `id`s (case-insensitive; the provider `name` also works). `AnimeProviderId` and `MovieProviderId` autocomplete the ids in the bundled registry and accept any other string, so providers added to a downloaded registry later still type-check. Loaded providers are typed as `IAnimeProvider` / `IMovieProvider`. Each provider is loaded once per id and `baseUrl`, then cached.
+Ids are the registry `id`s (case-insensitive; the provider `name` also works). `AnimeProviderId` and `MovieProviderId` autocomplete the ids in the bundled registry and accept any other string, so providers added to a downloaded registry later still type-check. Loaded providers are typed as `IAnimeProvider` / `IMovieProvider`.
+
+`getProvider(category, id)` loads a provider of any category, including manga and light novels, and refuses an entry of another category before downloading it. The bundled registry only lists anime and movie providers; manga and light-novel entries in a downloaded registry load the same way. Loading checks that the provider has the methods its category needs, listed in `REQUIRED_PROVIDER_METHODS`, and throws with every missing method:
+
+| Category       | Required methods                                                         |
+| -------------- | ------------------------------------------------------------------------ |
+| `anime`        | `search`, `fetchAnimeInfo`, `fetchEpisodeSources`, `fetchEpisodeServers` |
+| `movies`       | `search`, `fetchMediaInfo`, `fetchEpisodeSources`, `fetchEpisodeServers` |
+| `manga`        | `search`, `fetchMangaInfo`, `fetchChapterPages`                          |
+| `light-novels` | `search`, `fetchLightNovelInfo`, `fetchChapterContent`                   |
+| `meta`         | `search`, `fetchEpisodeSources`, `fetchEpisodeServers`                   |
+
+Each provider is loaded once per id, `sha256` and `baseUrl`. Concurrent calls share one download, a failed load is retried on the next call, and an entry with a new `sha256` is loaded again. `invalidate(id)` forgets a loaded provider and its compiled code, so the next call downloads and runs it again. A manager compiles each provider's code once per id and `sha256`, so keep one `ProviderManager` per registry (for example at module scope) instead of creating one per call.
 
 ### ExtractorManager
 
@@ -102,6 +118,8 @@ const extractorManager = new ExtractorManager(ExtensionRegistry);
 const extractor = await extractorManager.loadExtractor('megacloud');
 const sources = await extractor.extract(new PolyURL(embedUrl), referer);
 ```
+
+`loadExtractor` takes an extractor or server name and always returns an extractor instance: the registry version, or, when the registry has none or its copy can't be used, the bundled one built with the manager's context. The server names of one extractor share one load (`megacloud-hd-1`, `MegaCloud` and `upcloud` all load MegaCloud once), and `invalidate(name)` forgets it.
 
 Providers loaded through a `ProviderManager` share one `ExtractorManager`, built from the same registry. When a provider calls `ctx.extractors.MegaPlay()`, the call runs the registry version of MegaPlay, hash-checked and fetched once, then cached. If the registry code can't be fetched or fails its hash, the bundled MegaPlay runs instead. An extractor that is in neither throws `Extractor '<name>' not found in the registry or the bundled extractors`.
 
@@ -183,6 +201,63 @@ try {
 | `required` / `supported` | The `schemaVersion` or `minContextVersion` asked for, and what this library supports                                    |
 
 `assertCompatibleEntry(entry)` throws the same `INCOMPATIBLE_ENTRY` error, for apps that check entries themselves.
+
+## Downloaded Registries and Signatures
+
+The bundled `ExtensionRegistry` ships inside the app and needs no signature. A registry the app downloads carries the code URLs and the hashes that check that code, so it is only as trustworthy as where it came from. CI signs the registry on `main` with ed25519 and publishes the signature next to it, at the registry URL plus `.sig`. Check it with `parseSignedRegistry` before using a downloaded registry:
+
+```typescript
+import {
+  ExtensionRegistry,
+  ProviderManager,
+  RegistryError,
+  RegistrySignatureError,
+  parseSignedRegistry,
+  type ExtensionRegistryData,
+} from 'react-native-consumet';
+
+const REGISTRY_URL =
+  'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/src/extension-registry.json';
+
+const download = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+  return response.text();
+};
+
+// The verified registry, or undefined to keep the one the app already has
+const downloadRegistry = async (): Promise<ExtensionRegistryData | undefined> => {
+  try {
+    // Verify the exact bytes that were signed: pass the text as downloaded, never re-serialized JSON
+    const [text, signature] = await Promise.all([download(REGISTRY_URL), download(`${REGISTRY_URL}.sig`)]);
+    // Checks the signature before parsing, then runs validateRegistry
+    return parseSignedRegistry(text, signature);
+  } catch (error) {
+    if (error instanceof RegistrySignatureError) console.warn(`Registry not verified: ${error.code}`);
+    else if (error instanceof RegistryError && error.updateRequired)
+      console.warn('Update the app to use this registry');
+    else console.warn('Could not download the registry', error);
+    return undefined;
+  }
+};
+
+const manager = new ProviderManager((await downloadRegistry()) ?? ExtensionRegistry);
+```
+
+`parseSignedRegistry` fails closed: it returns a registry only when a signature line verifies under a trusted key. It throws a `RegistrySignatureError` with one of these codes before it parses anything, and a `RegistryError` when the signed registry is invalid:
+
+| `code`                | Meaning                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `NO_SIGNING_KEYS`     | This library version bundles no public key, so no downloaded registry verifies                             |
+| `INVALID_SIGNING_KEY` | A trusted key isn't a 64-character hex ed25519 public key                                                  |
+| `MALFORMED_SIGNATURE` | The signature file isn't 1 to 4 lines of 128-character hex signatures                                      |
+| `SIGNATURE_MISMATCH`  | No signature verifies: the registry changed after it was signed, or a key this app doesn't trust signed it |
+
+- **No key is bundled yet.** The trusted keys are `REGISTRY_SIGNING_KEYS` (from `src/registry-signing-keys.ts`), and the list is empty until a maintainer generates the first key and a release bundles it. Until then every downloaded registry fails with `NO_SIGNING_KEYS`, so keep using the bundled `ExtensionRegistry`.
+- **Right after a registry change**, the signature is stale until CI re-signs it, so verification fails with `SIGNATURE_MISMATCH`. Keep the previous registry and try again later.
+- **Self-hosted registries:** pass your own keys with `parseSignedRegistry(text, signature, { publicKeys: [...REGISTRY_SIGNING_KEYS, yourKey] })`. `verifyRegistrySignature(text, signature, publicKeys?)` checks a signature without parsing, and returns the key that verified it.
+
+The signature doesn't stop an older registry being served with its older signature. See the [Security Model](./security.md#6-signed-registry-downloads) for what signing covers.
 
 ## Usage Examples
 
@@ -552,8 +627,7 @@ const manager = new ProviderManager(ExtensionRegistry);
 export const useMultiProvider = () => {
   const [loading, setLoading] = useState(false);
 
-  // Only anime and movie providers can be loaded from a registry
-  const searchContent = useCallback(async (query: string, category: 'anime' | 'movies') => {
+  const searchContent = useCallback(async (query: string, category: ProviderType) => {
     setLoading(true);
     try {
       return await manager.searchAcrossProviders(category, query);
@@ -598,8 +672,16 @@ class ProviderManager {
 
   // Provider loading. options.baseUrl overrides the registry entry's baseUrl.
   loadExtension<T extends string>(extensionId: T, options?: ProviderLoadOptions): Promise<ProviderInstanceOf<T>>;
+  getProvider<C extends ProviderType>(
+    category: C,
+    extensionId: string,
+    options?: ProviderLoadOptions
+  ): Promise<ProviderOfCategory<C>>; // throws if the entry is of another category
   getAnimeProvider(extensionId: AnimeProviderId, options?: ProviderLoadOptions): Promise<IAnimeProvider>;
   getMovieProvider(extensionId: MovieProviderId, options?: ProviderLoadOptions): Promise<IMovieProvider>;
+
+  // Forget a loaded provider and its compiled code; the next load fetches and runs it again
+  invalidate(extensionId: string): void;
 
   // Cross-provider operations
   searchAcrossProviders(
@@ -614,6 +696,7 @@ class ProviderManager {
 
   // Run provider code your app already has. Throws IntegrityError unless the code matches
   // metadata.sha256 (options.skipIntegrity opts out), and RegistryError for incompatible entries.
+  // Verified code is compiled once per id and sha256; each call returns a new instance.
   executeProviderCode<T extends string>(
     code: string,
     factoryName: string,
@@ -634,8 +717,12 @@ class ExtractorManager {
     integrityOptions?: IntegrityOptions
   );
 
-  // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1', 'upcloud')
+  // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1', 'upcloud').
+  // Always an instance: the registry version, or the bundled one built with this manager's context.
   loadExtractor(extractorId: string): Promise<IVideoExtractor>;
+
+  // Forget a loaded extractor and its compiled code (takes the same names as loadExtractor)
+  invalidate(extractorId: string): void;
 
   // Extractor metadata, resolving aliases and server-name suffixes; undefined if not in the registry
   getExtractorMetadata(extractorId: string): ExtractorInfo | undefined;
@@ -667,13 +754,16 @@ import {
   ExtractorManager,
   createExtractorContext,
   ExtensionRegistry, // the registry bundled with the library
-  PolyURL, // Polyfill for URL handling
-  PolyURLSearchParams, // Polyfill for URLSearchParams
+  PolyURL, // WHATWG URL Standard implementation; throws a TypeError on invalid input
+  PolyURLSearchParams, // WHATWG URLSearchParams
   defaultAxios, // default axios instance
   defaultExtractorContext,
   defaultExtractors,
   RegistryError, // invalid or incompatible registry / entry
   IntegrityError, // code that doesn't match its registry hash
+  parseSignedRegistry, // verify, parse and validate a downloaded registry
+  RegistrySignatureError, // a downloaded registry whose signature doesn't verify
+  REQUIRED_PROVIDER_METHODS, // the methods each category's providers must have
   MetaError, // failures from META.Anilist, META.TMDB and META.Myanimelist
   type AnimeProviderId, // registry ids of anime providers
   type MovieProviderId, // registry ids of movie providers

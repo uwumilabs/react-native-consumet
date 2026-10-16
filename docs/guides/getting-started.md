@@ -229,7 +229,7 @@ The bundled registry lists these providers (registry id, then status). `manager.
 
 ### 📚 Manga and 📖 Light Novel Providers
 
-Manga and light novel providers are only available as bundled classes, such as `MANGA.MangaDex` and `LIGHT_NOVELS.ReadLightNovels`. See the [Manga](./manga.md) and [Light Novels](./light-novels.md) guides.
+The bundled registry has no manga or light novel providers yet: use the bundled classes, such as `MANGA.MangaDex` and `LIGHT_NOVELS.ReadLightNovels`. A registry that lists them loads them with `manager.getProvider('manga', id)` or `manager.getProvider('light-novels', id)`. See the [Manga](./manga.md) and [Light Novels](./light-novels.md) guides.
 
 ### 🔍 Meta Providers
 

@@ -4,7 +4,7 @@
 
 By using `MANGA` category you can interact with the manga providers. And have access to the manga providers methods. Which allows you to search for manga, get the manga information, get the manga chapters with images to read.
 
-Manga providers are bundled classes; they are not in the extension registry.
+The bundled extension registry has no manga providers yet, so use the bundled classes below. A registry that lists manga providers loads them with `manager.getProvider('manga', id)` (see [Extension Integration](../extension-integration.md#providermanager)).
 
 ```ts
 import { MANGA } from 'react-native-consumet';
