@@ -83,6 +83,32 @@ The Android native module has its own tests. Run them from `apps/android`, the s
 ./gradlew :react-native-consumet:connectedDebugAndroidTest
 ```
 
+#### Updating Synchrony
+
+`deobfuscateScript` downloads the Synchrony deobfuscator once, checks it against a pinned SHA-256, and caches it in memory and on disk. To move to another Synchrony version, change the URL and the SHA-256 together, in `android/src/main/java/com/consumet/Synchrony.kt` (`SCRIPT_URL`, `SCRIPT_SHA256`) and `ios/RCConsumetSynchronyCache.m` (`kSynchronyURL`, `kSynchronySHA256`). Then check that both platforms pin the same values and that the URL serves that hash:
+
+```sh
+LIVE_TESTS=1 npx jest test/unit/native-synchrony-cache
+```
+
+### Testing in the example app
+
+The example app's **Registry** tab loads anime and movie providers through a `ProviderManager` built from the bundled registry. Its **Load from** toggle picks where the code comes from:
+
+- **Local dist**, for a provider or change that isn't published yet. Rebuild, publish the entry locally and regenerate the app's map of bundles, then load it in the app:
+
+  ```sh
+  yarn build
+  node scripts/prepare-registry.js
+  yarn example gen:local-dist
+  ```
+
+  The app still checks the code against the entry's `sha256`, so a stale map shows an integrity mismatch.
+
+- **Registry**, the path real apps use, once the new version is on `main`: it fetches the entry's `main` URL and verifies its hash. Before that, it reports a 404.
+
+See [`apps/README.md`](./apps/README.md) for the errors each mode shows.
+
 ### Adding New Providers
 
 If you're looking to contribute by adding a new content provider (e.g., for anime, movies, manga, or light novels), please refer to our detailed guide:
@@ -117,7 +143,26 @@ The pre-commit hook:
 
 The hook doesn't run the tests; run `yarn test` yourself.
 
-CI runs `yarn lint` (plain `eslint .`) and `yarn typecheck`, rebuilds `dist/` and checks it and the registry against the rebuild, builds the package, and builds the example app for Android and iOS.
+CI runs `yarn lint` (plain `eslint .`) and `yarn typecheck`, rebuilds `dist/` and checks it and the registry against the rebuild, builds the package, and builds the example app for Android and iOS. When the registry or the signing keys change on `main`, the Sign registry workflow signs the registry, after a maintainer approves the run (see below).
+
+### Registry signing (maintainers)
+
+Apps that download the registry verify it with the ed25519 public keys bundled in the library (see the [Security Model](./docs/security.md#6-signed-registry-downloads)). The Sign registry workflow (`.github/workflows/sign-registry.yml`) signs the exact bytes of `src/extension-registry.json` and commits `src/extension-registry.json.sig` to `main`. Two scripts support it:
+
+- `yarn registry:keygen` generates a key pair, adds the public key to `src/registry-signing-keys.ts` and prints the private key once. It never writes the private key to disk.
+- `yarn registry:sign` signs the registry with the private keys in the `REGISTRY_SIGNING_KEY` environment variable and writes the `.sig` file. It refuses a key whose public key isn't listed in `src/registry-signing-keys.ts`. CI runs it; you rarely need to.
+
+One-time setup:
+
+1. Run `yarn registry:keygen`, and commit `src/registry-signing-keys.ts` with the new public key.
+2. In the GitHub repository settings, create the `registry-signing` environment. Give it a required reviewer and limit it to the `main` branch. The reviewer is the trust boundary: nothing gets signed without their approval.
+3. Add the private key the script printed as the environment secret `REGISTRY_SIGNING_KEY` (or run `gh secret set REGISTRY_SIGNING_KEY --env registry-signing`). Then clear your terminal's scrollback.
+4. Push to `main`, and approve the Sign registry run. It commits the signature.
+5. Release the library. Apps only trust the keys bundled in the version they ship.
+
+After every registry change that reaches `main`, approve the Sign registry run. Until then the signature is stale: `yarn registry:check` notes it, and apps that verify downloads keep their previous registry.
+
+To rotate keys, run `yarn registry:keygen` again and store the new private key as `REGISTRY_SIGNING_KEY_2`. CI signs with both keys, so apps that only trust the old one keep verifying. Once no supported release needs the old key, remove it from `src/registry-signing-keys.ts`, release, and delete its secret. Remove a leaked key and its secret at once.
 
 ### Publishing to npm
 
@@ -138,11 +183,15 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn lint`: lint files with ESLint (no fixes).
 - `yarn lint:fix`: lint files with ESLint and apply fixes.
 - `yarn build`: build `dist/`, including one bundle per registry entry.
-- `yarn registry:check`: check the registry against `dist/` and the published files under `registry/`.
-- `yarn test`: run unit tests with Jest.
+- `yarn registry:check`: check the registry against `dist/` and the published files under `registry/`, and note whether its signature is current.
+- `yarn registry:prune`: list published registry versions the retention rule allows deleting (`--delete` removes them).
+- `yarn registry:keygen`: generate a registry signing key (maintainers, see above).
+- `yarn registry:sign`: sign the registry with the keys in `REGISTRY_SIGNING_KEY` (CI runs it).
+- `yarn test`: run the offline unit tests with Jest; `yarn test:live` also runs the live suites.
 - `yarn example start`: start the Metro server for the example app.
 - `yarn example android`: run the example app on Android.
 - `yarn example ios`: run the example app on iOS.
+- `yarn example gen:local-dist`: regenerate the example app's local dist map after `yarn build`.
 
 ### Sending a pull request
 
