@@ -328,13 +328,13 @@ describe('TMDB errors (META-7)', () => {
     expect(provider.search).not.toHaveBeenCalled();
   });
 
-  it('throws a MetaError when a season request fails', async () => {
+  it('throws a MetaError when every season request fails', async () => {
     const cause = httpError(503);
     stubTmdb();
     const get = metaHttp.get as jest.Mock;
     const respond = get.getMockImplementation()!;
     get.mockImplementation(async (url: string) => {
-      if (url.includes('/season/2')) throw cause;
+      if (url.includes('/season/')) throw cause;
       return respond(url);
     });
 
@@ -348,5 +348,99 @@ describe('TMDB errors (META-7)', () => {
 
     await expectMetaError(tmdb.search('loki'), cause, 429);
     await expectMetaError(tmdb.fetchTrending('all'), cause, 429);
+  });
+});
+
+describe('TMDB.fetchMediaInfo seasons and mapping (META-10)', () => {
+  const image = (path: string) => ({
+    mobile: `https://image.tmdb.org/t/p/w300${path}`,
+    hd: `https://image.tmdb.org/t/p/w780${path}`,
+  });
+  const failSeasons = (...seasons: number[]) => {
+    const get = metaHttp.get as jest.Mock;
+    const respond = get.getMockImplementation()!;
+    get.mockImplementation(async (url: string) => {
+      const season = Number(/\/season\/(\d+)/.exec(url)?.[1]);
+      if (seasons.includes(season)) throw new Error('socket hang up');
+      return respond(url);
+    });
+  };
+
+  it('returns the other seasons when one season request fails', async () => {
+    stubTmdb();
+    failSeasons(1);
+
+    const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
+
+    // The failed season keeps its place, so season indexes stay the same.
+    expect(info.seasons!.map((s) => [s.season, s.episodes.length, s.failed])).toEqual([
+      [1, 0, true],
+      [2, 6, undefined],
+    ]);
+    expect(info.seasons![0]!.image).toBeUndefined();
+    expect(info.seasons![1]!.episodes[0]!.uniqueId).toBe(`${SHOW_ID}-tv-s2-e1`);
+  });
+
+  it('matches provider episodes into the seasons that loaded', async () => {
+    stubTmdb();
+    failSeasons(2);
+    const provider = fakeProvider([{ id: 'tv/loki', title: 'Loki', type: TvType.TVSERIES }], {
+      id: 'tv/loki',
+      title: 'Loki',
+      episodes: lokiEpisodes,
+    });
+
+    const info = await fetchInfo(provider, SHOW_ID, 'tv');
+
+    expect(info.providerId).toBe('tv/loki');
+    expect(info.seasons![0]!.episodes.slice(0, 2).map((e) => e.id)).toEqual(['loki-s1e1', 'loki-s1e2']);
+    expect(info.seasons![1]).toEqual({ season: 2, episodes: [], failed: true });
+  });
+
+  it('leaves duration unset when TMDB sends no runtime or episode_run_time', async () => {
+    // An unreleased movie has runtime 0, and movies never have episode_run_time.
+    stubTmdb({ [`movie/${MOVIE_ID}`]: { ...movie, runtime: 0 } });
+    const movieInfo = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
+    expect(movieInfo.duration).toBeUndefined();
+    expect(movieInfo.title).toBe(movie.title);
+
+    jest.restoreAllMocks();
+    const { episode_run_time: _, ...showWithoutRunTime } = show;
+    stubTmdb({ [`tv/${SHOW_ID}`]: showWithoutRunTime });
+    const showInfo = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
+    expect(showInfo.duration).toBeUndefined();
+    expect(showInfo.seasons).toHaveLength(2);
+  });
+
+  it("uses the movie's poster for its season and its backdrop for the episode", async () => {
+    stubTmdb();
+    const info = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
+
+    const [season] = info.seasons!;
+    expect(season!.image).toEqual(image(movie.poster_path));
+    expect(season!.episodes[0]!.image).toEqual(image(movie.backdrop_path));
+  });
+
+  it('leaves the season image unset when the movie has no poster', async () => {
+    stubTmdb({ [`movie/${MOVIE_ID}`]: { ...movie, poster_path: null } });
+    const info = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
+
+    const [season] = info.seasons!;
+    expect(season!.image).toBeUndefined();
+    expect(season!.episodes[0]!.image).toEqual(image(movie.backdrop_path));
+  });
+
+  it("matches on the first air date's year and treats a missing date as unknown", async () => {
+    const loki = (releaseDate: string) => ({ id: `tv/loki-${releaseDate}`, title: 'Loki', type: TvType.TVSERIES, releaseDate });
+    stubTmdb();
+    const provider = fakeProvider([loki('2015'), loki('2021')], { id: 'tv/loki-2021', title: 'Loki', episodes: [] });
+    await fetchInfo(provider, SHOW_ID, 'tv');
+    expect(provider.fetchMediaInfo).toHaveBeenCalledWith('tv/loki-2021');
+
+    jest.restoreAllMocks();
+    stubTmdb({ [`tv/${SHOW_ID}`]: { ...show, first_air_date: '' } });
+    const undated = fakeProvider([loki('2015')], { id: 'tv/loki-2015', title: 'Loki', episodes: [] });
+    await fetchInfo(undated, SHOW_ID, 'tv');
+    expect(undated.fetchMediaInfo).toHaveBeenCalledWith('tv/loki-2015');
   });
 });

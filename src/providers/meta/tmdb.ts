@@ -28,6 +28,10 @@ type TitleHints = {
   [key: string]: any;
 };
 
+/** The year of a TMDB result's release or first air date, or undefined when TMDB has no date. */
+const releaseYear = (result: any): string | undefined =>
+  /^\d{4}/.exec(result?.release_date || result?.first_air_date || '')?.[0];
+
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
   protected override baseUrl = 'https://www.themoviedb.org';
@@ -86,15 +90,13 @@ class TMDB extends MovieParser {
 
       result.results = data.results.map((result: any) => {
         if (result.media_type !== 'person') {
-          const date = new Date(result?.release_date || result?.first_air_date);
-
           const movie: IMovieResult = {
             id: result.id,
             title: result?.title || result?.name,
             image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
             type: result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
             rating: result?.vote_average || 0,
-            releaseDate: `${date.getFullYear()}` || '0',
+            releaseDate: releaseYear(result),
           };
 
           return movie;
@@ -107,16 +109,15 @@ class TMDB extends MovieParser {
             movies: [],
           };
 
-          user.movies = result.known_for.map((movie: any) => {
-            const date = new Date(movie?.release_date || movie?.first_air_date);
-
+          // TMDB's trending people no longer come with known_for
+          user.movies = (result.known_for ?? []).map((movie: any) => {
             const xmovie: IMovieResult = {
               id: movie.id,
               title: movie?.title || movie?.name,
               image: `https://image.tmdb.org/t/p/original${movie?.poster_path}`,
               type: movie.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
               rating: movie?.vote_average || 0,
-              releaseDate: `${date.getFullYear()}` || '0',
+              releaseDate: releaseYear(movie),
             };
 
             return xmovie;
@@ -156,15 +157,13 @@ class TMDB extends MovieParser {
       search.totalPages = data.total_pages;
 
       data.results.forEach((result: any) => {
-        const date = new Date(result?.release_date || result?.first_air_date);
-
         const movie: IMovieResult = {
           id: result.id,
           title: result?.title || result?.name,
           image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
           type: result.media_type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
           rating: result?.vote_average || 0,
-          releaseDate: `${date.getFullYear()}` || '0',
+          releaseDate: releaseYear(result),
         };
 
         return search.results.push(movie);
@@ -201,7 +200,7 @@ class TMDB extends MovieParser {
         type: type === 'movie' ? TvType.MOVIE : TvType.TVSERIES,
         totalSeasons: data?.number_of_seasons,
         totalEpisodes: data?.number_of_episodes,
-        year: new Date(data?.release_year || data?.first_air_date || data?.release_date).getFullYear(),
+        year: Number(releaseYear(data)) || undefined,
       });
 
       // with no match there is nothing playable to map; the TMDB info and seasons are still returned
@@ -222,7 +221,7 @@ class TMDB extends MovieParser {
       info.releaseDate = data?.release_date || data?.first_air_date;
       info.description = data?.overview;
       info.genres = data?.genres.map((genre: { name: string }) => genre.name);
-      info.duration = data?.runtime || data?.episode_run_time[0];
+      info.duration = data?.runtime || data?.episode_run_time?.[0];
       info.totalEpisodes = data?.number_of_episodes;
       info.totalSeasons = data?.number_of_seasons as number;
       info.directors = data?.credits?.crew
@@ -279,10 +278,7 @@ class TMDB extends MovieParser {
 
       const totalSeasons = (info?.totalSeasons as number) || 0;
       if (type === 'tv' && totalSeasons > 0) {
-        const seasonUrl = (season: string) => `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
-
-        const seasons: IMovieSeason[] = [];
-        info.seasons = seasons;
+        const seasonUrl = (season: number) => `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
 
         const providerEpisodes = InfoFromProvider?.episodes as any[];
 
@@ -297,8 +293,17 @@ class TMDB extends MovieParser {
             }
           : undefined;
 
-        for (let i = 1; i <= totalSeasons; i++) {
-          const { data: seasonData } = await metaHttp.get(seasonUrl(i.toString()));
+        // Fetch the seasons together. A season whose request fails keeps its place, with no episodes
+        // and `failed` set, so the other seasons (and the season indexes apps store) survive it.
+        const seasonNumbers = Array.from({ length: totalSeasons }, (_, index) => index + 1);
+        const responses = await Promise.allSettled(seasonNumbers.map((i) => metaHttp.get(seasonUrl(i))));
+        const failure = responses.find((response): response is PromiseRejectedResult => response.status === 'rejected');
+        if (failure && responses.every((response) => response.status === 'rejected')) throw failure.reason;
+
+        info.seasons = responses.map((response, index): IMovieSeason => {
+          const i = index + 1;
+          if (response.status === 'rejected') return { season: i, episodes: [], failed: true };
+          const seasonData = response.value.data;
 
           //find season in each episode (providerEpisodes)
           const seasonEpisodes = providerEpisodes?.filter((episode) => episode.season === i);
@@ -326,7 +331,7 @@ class TMDB extends MovieParser {
             };
           });
 
-          seasons.push({
+          return {
             season: i,
             image: !seasonData?.poster_path
               ? undefined
@@ -336,8 +341,8 @@ class TMDB extends MovieParser {
                 },
             episodes,
             isReleased: tmdbEpisodes[0]?.air_date > new Date().toISOString() ? false : true,
-          });
-        }
+          };
+        });
       } else {
         info.seasons = [];
         info.seasons.push({
@@ -345,8 +350,8 @@ class TMDB extends MovieParser {
           image: !data?.poster_path
             ? undefined
             : {
-                mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
-                hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`,
+                mobile: `https://image.tmdb.org/t/p/w300${data.poster_path}`,
+                hd: `https://image.tmdb.org/t/p/w780${data.poster_path}`,
               },
           episodes: [
             {

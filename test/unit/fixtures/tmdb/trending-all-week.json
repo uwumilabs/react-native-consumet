@@ -1,0 +1,25 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 123542,
+      "media_type": "tv",
+      "name": "LINK CLICK",
+      "first_air_date": "2021-04-30",
+      "poster_path": "/wo9jwu5qMvXzhW2cyy5E6hOVs92.jpg",
+      "backdrop_path": "/w3agwUSMpJ4X9t1jGrDtqqRPjDQ.jpg",
+      "vote_average": 8.1
+    },
+    {
+      "id": 1148365,
+      "media_type": "movie",
+      "title": "Matchbox the Movie",
+      "release_date": "2026-10-05",
+      "poster_path": "/lFKA4GMz36dImEy3DQPdPF7G4V9.jpg",
+      "backdrop_path": "/y6RIuwuxLG3Nsb37KUj5yatnTIp.jpg",
+      "vote_average": 7.899
+    }
+  ],
+  "total_pages": 500,
+  "total_results": 10000
+}

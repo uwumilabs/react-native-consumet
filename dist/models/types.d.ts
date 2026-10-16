@@ -472,6 +472,11 @@ export interface IMovieSeason {
     episodes: IMovieEpisode[];
     /** False when the season's first episode hasn't aired yet */
     isReleased?: boolean;
+    /**
+     * TMDB meta only: true when TMDB's request for this season failed. `episodes` is empty; fetching
+     * the info again may fill it.
+     */
+    failed?: boolean;
 }
 export interface IMovieInfo extends IMovieResult {
     /**

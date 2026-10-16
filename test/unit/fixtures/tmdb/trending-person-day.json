@@ -1,0 +1,23 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 510,
+      "media_type": "person",
+      "name": "Tim Burton",
+      "known_for_department": "Directing",
+      "popularity": 4.4949,
+      "profile_path": "/yHEHAHQpN9PfSEQx1UxZPczhcAi.jpg"
+    },
+    {
+      "id": 22226,
+      "media_type": "person",
+      "name": "Paul Rudd",
+      "known_for_department": "Acting",
+      "popularity": 6.6152,
+      "profile_path": "/6jtwNOLKy0LdsRAKwZqgYMAfd5n.jpg"
+    }
+  ],
+  "total_pages": 191,
+  "total_results": 3810
+}
