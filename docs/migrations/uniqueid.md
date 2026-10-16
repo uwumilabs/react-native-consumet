@@ -91,6 +91,8 @@ This uses the new `tvdbNumber` field, so it needs no extra requests.
 4. Remove the show's keys from `legacyKeys`, including keys like `S1` or `O3` that can't be mapped. Do this only if at least one episode came back with `tvdbNumber`. If ani.zip failed on this load, there is nothing to map yet, so try again on the next load.
 
 ```ts
+import type { IMetaAnimeEpisode } from 'react-native-consumet';
+
 const migrateShow = (anilistId: string, episodes: IMetaAnimeEpisode[], legacyKeys: Set<string>) => {
   const prefix = `${anilistId}$ep=`;
   const legacy = [...legacyKeys].filter((key) => key.startsWith(prefix));
