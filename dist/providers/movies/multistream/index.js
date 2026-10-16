@@ -1,15 +1,11 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const axios_1 = __importDefault(require("axios"));
+exports.MultiStream = void 0;
 const models_1 = require("../../../models");
+const provider_args_1 = require("../../provider-args");
 const utils_1 = require("./utils");
 const tmdb_api_key_1 = require("../../meta/tmdb-api-key");
 class MultiStream extends models_1.MovieParser {
@@ -20,18 +16,17 @@ class MultiStream extends models_1.MovieParser {
   logo = 'https://himovies.sx/images/group_1/theme_1/favicon.png';
   classPath = 'MOVIES.MultiStream';
   supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES]);
-  /**
-   * @param customBaseURL base URL to use instead of the default
-   * @param apiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
-   */
-  constructor(customBaseURL, apiKey) {
+  ctx;
+  constructor(ctxOrBaseURL, customBaseURL, apiKey) {
     super();
+    const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+    this.ctx = ctx;
     this.apiKey = (0, tmdb_api_key_1.resolveTmdbApiKey)(apiKey, 'MOVIES.MultiStream');
-    if (customBaseURL) {
-      if (customBaseURL.startsWith('http://') || customBaseURL.startsWith('https://')) {
-        this.baseUrl = customBaseURL;
+    if (baseURL) {
+      if (baseURL.startsWith('http://') || baseURL.startsWith('https://')) {
+        this.baseUrl = baseURL;
       } else {
-        this.baseUrl = `http://${customBaseURL}`;
+        this.baseUrl = `http://${baseURL}`;
       }
     } else {
       this.baseUrl = this.baseUrl;
@@ -55,7 +50,7 @@ class MultiStream extends models_1.MovieParser {
       try {
         const {
           data
-        } = await axios_1.default.get(searchUrl);
+        } = await _this.ctx.axios.get(searchUrl);
         if (data.results.length < 1) return search;
         search.hasNextPage = page + 1 <= data.total_pages;
         search.currentPage = page;
@@ -68,7 +63,7 @@ class MultiStream extends models_1.MovieParser {
             try {
               const {
                 data: tvData
-              } = await axios_1.default.get(`${_this.apiUrl}/tv/${result.id}?api_key=${_this.apiKey}&language=en-US`);
+              } = await _this.ctx.axios.get(`${_this.apiUrl}/tv/${result.id}?api_key=${_this.apiKey}&language=en-US`);
               totalSeasons = tvData.number_of_seasons;
             } catch (err) {
               // Continue without seasons data if request fails
@@ -108,7 +103,7 @@ class MultiStream extends models_1.MovieParser {
     try {
       const {
         data
-      } = await axios_1.default.get(infoUrl);
+      } = await this.ctx.axios.get(infoUrl);
       movieInfo.title = data?.title || data?.name;
       movieInfo.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
       movieInfo.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
@@ -147,7 +142,7 @@ class MultiStream extends models_1.MovieParser {
         for (let i = 1; i <= data?.number_of_seasons; i++) {
           const {
             data
-          } = await axios_1.default.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
+          } = await this.ctx.axios.get(`${this.apiUrl}/tv/${mediaId}/season/${i}?api_key=${this.apiKey}`);
           data.episodes.map(item => {
             const episode = {
               id: `${mediaId}$tv$${item.episode_number}$${item.season_number}$${item.id}`,
@@ -184,7 +179,7 @@ class MultiStream extends models_1.MovieParser {
    */
   fetchEpisodeSources = async (episodeId, mediaId, server) => {
     const firstServer = (await this.fetchEpisodeServers(episodeId, mediaId))[0].name;
-    return await (0, utils_1.getMultiSources)(episodeId, server ? server : firstServer);
+    return await (0, utils_1.getMultiSources)(this.ctx.axios, episodeId, server ? server : firstServer);
   };
   /**
    *
@@ -193,7 +188,7 @@ class MultiStream extends models_1.MovieParser {
    */
   fetchEpisodeServers = async (episodeId, mediaId) => {
     try {
-      const servers = await (0, utils_1.getMultiServers)(episodeId);
+      const servers = await (0, utils_1.getMultiServers)(this.ctx.axios, episodeId);
       return servers;
     } catch (err) {
       console.log(err);
@@ -201,6 +196,7 @@ class MultiStream extends models_1.MovieParser {
     }
   };
 }
+exports.MultiStream = MultiStream;
 // (async () => {
 //   const movie = new MultiStream();
 //   const search = await movie.search('jujutsu');
@@ -215,5 +211,4 @@ class MultiStream extends models_1.MovieParser {
 //   );
 //   console.log(genre);
 // })();
-exports.default = MultiStream;
 //# sourceMappingURL=index.js.map

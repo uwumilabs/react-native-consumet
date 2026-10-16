@@ -225,19 +225,19 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
         case StreamingServersEnum.StreamWish:
           return {
             headers: { Referer: referer },
-            ...(await StreamWish().extract(serverUrl, referer)),
+            ...(await StreamWish(ctx).extract(serverUrl, referer)),
             download: downloadUrl,
           };
         case StreamingServersEnum.VidHide:
           return {
             headers: { Referer: referer },
-            ...(await VidHide().extract(serverUrl)),
+            ...(await VidHide(ctx).extract(serverUrl)),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : '',
           };
         default:
           return {
             headers: { Referer: referer },
-            ...(await StreamWish().extract(serverUrl, referer)),
+            ...(await StreamWish(ctx).extract(serverUrl, referer)),
             download: downloadUrl,
           };
       }

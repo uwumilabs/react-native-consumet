@@ -1,6 +1,6 @@
 import type { AxiosStatic } from 'axios';
 import type TMDBClass from '../../src/providers/meta/tmdb';
-import type MultiStreamClass from '../../src/providers/movies/multistream';
+import type { MultiStream as MultiStreamClass } from '../../src/providers/movies/multistream';
 import type { IMovieProvider } from '../../src/models/types';
 import type { metaHttp as MetaHttp } from '../../src/utils/meta-http';
 import show from './fixtures/tmdb/tv-84958.json';
@@ -27,21 +27,24 @@ const load = () => {
     TMDB: typeof TMDBClass;
     MultiStream: typeof MultiStreamClass;
     axios: AxiosStatic;
+    defaultAxios: AxiosStatic;
     metaHttp: typeof MetaHttp;
   };
   jest.isolateModules(() => {
     modules = {
       TMDB: require('../../src/providers/meta/tmdb').default,
-      MultiStream: require('../../src/providers/movies/multistream').default,
+      MultiStream: require('../../src/providers/movies/multistream').MultiStream,
       axios: require('axios').default,
+      // MultiStream without a context sends its requests through this instance
+      defaultAxios: require('../../src/utils/extension-utils').defaultAxios,
       metaHttp: require('../../src/utils/meta-http').metaHttp,
     };
   });
-  const keys = stubTmdb(modules.axios, modules.metaHttp);
+  const keys = stubTmdb([modules.axios, modules.defaultAxios], modules.metaHttp);
   return { ...modules, keys };
 };
 
-const stubTmdb = (axios: AxiosStatic, metaHttp: typeof MetaHttp) => {
+const stubTmdb = (clients: AxiosStatic[], metaHttp: typeof MetaHttp) => {
   const keys: (string | null)[] = [];
   const respond = async (url: string) => {
     const { pathname, searchParams } = new URL(url);
@@ -57,7 +60,7 @@ const stubTmdb = (axios: AxiosStatic, metaHttp: typeof MetaHttp) => {
     return { data: responses[pathname] } as any;
   };
   jest.spyOn(metaHttp, 'get').mockImplementation(respond);
-  jest.spyOn(axios, 'get').mockImplementation(respond);
+  for (const client of clients) jest.spyOn(client, 'get').mockImplementation(respond);
   return keys;
 };
 
@@ -105,7 +108,7 @@ describe('MultiStream TMDB API key (META-12)', () => {
   it("sends the caller's key and warns about nothing", async () => {
     const { MultiStream, keys } = load();
 
-    await new MultiStream(undefined, 'my-key').search('tom and jerry');
+    await new MultiStream(undefined, undefined, 'my-key').search('tom and jerry');
 
     expect(keys).toEqual(['my-key']);
     expect(warn).not.toHaveBeenCalled();

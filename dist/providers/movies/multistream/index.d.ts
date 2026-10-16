@@ -1,5 +1,5 @@
-import { MovieParser, TvType, type IMovieInfo, type IEpisodeServer, StreamingServers, type ISource, type IMovieResult, type ISearch } from '../../../models';
-declare class MultiStream extends MovieParser {
+import { MovieParser, TvType, type IMovieInfo, type IEpisodeServer, StreamingServers, type ISource, type IMovieResult, type ISearch, type ProviderContext } from '../../../models';
+export declare class MultiStream extends MovieParser {
     readonly name = "MultiStream";
     protected baseUrl: string;
     protected apiUrl: string;
@@ -7,11 +7,15 @@ declare class MultiStream extends MovieParser {
     protected logo: string;
     protected classPath: string;
     supportedTypes: Set<TvType>;
+    private readonly ctx;
     /**
-     * @param customBaseURL base URL to use instead of the default
+     * @param ctx provider context; requests go through its axios (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
      * @param apiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
      */
-    constructor(customBaseURL?: string, apiKey?: string);
+    constructor(ctx?: ProviderContext, customBaseURL?: string, apiKey?: string);
+    /** The older form, without a context. */
+    constructor(customBaseURL?: string);
     /**
      *
      * @param query search query string
@@ -37,5 +41,4 @@ declare class MultiStream extends MovieParser {
      */
     fetchEpisodeServers: (episodeId: string, mediaId?: string) => Promise<IEpisodeServer[]>;
 }
-export default MultiStream;
 //# sourceMappingURL=index.d.ts.map

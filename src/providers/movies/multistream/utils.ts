@@ -1,4 +1,4 @@
-import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import type { IEpisodeServer, ISource, ISubtitle, IVideo } from '../../../models';
 import { load } from 'cheerio';
 import { URL } from '../../../utils/url-polyfill';
@@ -27,7 +27,10 @@ function getParts(id: string) {
   return [tmdbId, type, episode, season];
 }
 
-export async function getVidsrcSourcesAndServers(id: string): Promise<ISource & { servers: IEpisodeServer[] }> {
+export async function getVidsrcSourcesAndServers(
+  axios: AxiosInstance,
+  id: string
+): Promise<ISource & { servers: IEpisodeServer[] }> {
   const [tmdbId, type, episode, season] = getParts(id);
   const baseURL = 'https://vidsrc-embed.ru/embed/';
   const headers = {
@@ -110,7 +113,10 @@ export async function getVidsrcSourcesAndServers(id: string): Promise<ISource & 
   }
 }
 
-export async function get111MoviesSourcesAndServers(id: string): Promise<ISource & { servers: IEpisodeServer[] }> {
+export async function get111MoviesSourcesAndServers(
+  axios: AxiosInstance,
+  id: string
+): Promise<ISource & { servers: IEpisodeServer[] }> {
   const [tmdbId, type, episode, season] = getParts(id);
   const baseUrl = 'https://111movies.com';
   const userAgent =
@@ -246,7 +252,10 @@ export async function get111MoviesSourcesAndServers(id: string): Promise<ISource
   };
 }
 
-export async function getVideasySourcesAndServers(id: string): Promise<ISource & { servers: IEpisodeServer[] }> {
+export async function getVideasySourcesAndServers(
+  axios: AxiosInstance,
+  id: string
+): Promise<ISource & { servers: IEpisodeServer[] }> {
   const servers: IEpisodeServer[] = [
     { name: 'neon-org', url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title' },
     { name: 'sage-org', url: 'https://api.videasy.net/1movies/sources-with-title' },
@@ -328,7 +337,10 @@ export async function getVideasySourcesAndServers(id: string): Promise<ISource &
   };
 }
 
-export async function getHexaSourcesAndServers(id: string): Promise<ISource & { servers: IEpisodeServer[] }> {
+export async function getHexaSourcesAndServers(
+  axios: AxiosInstance,
+  id: string
+): Promise<ISource & { servers: IEpisodeServer[] }> {
   const sources: IVideo[] = [];
   const subtitles: ISubtitle[] = [];
   const servers: IEpisodeServer[] = [];
@@ -398,17 +410,17 @@ export async function getHexaSourcesAndServers(id: string): Promise<ISource & { 
   };
 }
 
-export async function getMultiServers(id: string): Promise<IEpisodeServer[]> {
+export async function getMultiServers(axios: AxiosInstance, id: string): Promise<IEpisodeServer[]> {
   try {
     const servers: IEpisodeServer[] = [];
 
     // Fetch from all sources, handle errors individually
     const results = await Promise.allSettled([
       // getDummySourcesAndServers(id),
-      get111MoviesSourcesAndServers(id),
-      getVidsrcSourcesAndServers(id),
-      getVideasySourcesAndServers(id),
-      getHexaSourcesAndServers(id),
+      get111MoviesSourcesAndServers(axios, id),
+      getVidsrcSourcesAndServers(axios, id),
+      getVideasySourcesAndServers(axios, id),
+      getHexaSourcesAndServers(axios, id),
     ]);
 
     // Add servers from successful results only
@@ -424,15 +436,15 @@ export async function getMultiServers(id: string): Promise<IEpisodeServer[]> {
   }
 }
 
-export async function getMultiSources(id: string, server: string): Promise<ISource> {
+export async function getMultiSources(axios: AxiosInstance, id: string, server: string): Promise<ISource> {
   try {
     // Fetch from all sources, handle errors individually
     const results = await Promise.allSettled([
       // getDummySourcesAndServers(id),
-      get111MoviesSourcesAndServers(id),
-      getVidsrcSourcesAndServers(id),
-      getVideasySourcesAndServers(id),
-      getHexaSourcesAndServers(id),
+      get111MoviesSourcesAndServers(axios, id),
+      getVidsrcSourcesAndServers(axios, id),
+      getVideasySourcesAndServers(axios, id),
+      getHexaSourcesAndServers(axios, id),
     ]);
 
     const allSources: IVideo[] = [];

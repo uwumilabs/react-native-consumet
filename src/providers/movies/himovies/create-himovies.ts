@@ -207,17 +207,17 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.MegaCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
           };
         case StreamingServersEnum.UpCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await MegaCloud().extract(serverUrl, config.baseUrl)),
+            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
           };
       }
     }

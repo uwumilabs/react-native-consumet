@@ -176,14 +176,14 @@ function createYFlix(ctx, customBaseURL) {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl))
+            ...(await MegaUp(ctx).extract(serverUrl))
           };
         default:
           return {
             headers: {
               Referer: serverUrl.href
             },
-            ...(await MegaUp().extract(serverUrl))
+            ...(await MegaUp(ctx).extract(serverUrl))
           };
       }
     }

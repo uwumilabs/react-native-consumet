@@ -1,6 +1,6 @@
-import { MovieParser } from '../../../models';
+import { MovieParser, type ProviderContext } from '../../../models';
 import { type HiMoviesProviderInstance } from './create-himovies';
-declare class HiMovies extends MovieParser {
+export declare class HiMovies extends MovieParser {
     private instance;
     logo: string;
     name: string;
@@ -9,6 +9,12 @@ declare class HiMovies extends MovieParser {
     supportedTypes: Set<any>;
     isNSFW: boolean;
     isWorking: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     /**
      *

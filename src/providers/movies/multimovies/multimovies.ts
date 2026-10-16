@@ -1,9 +1,9 @@
-import { MovieParser } from '../../../models';
-import { createProviderContext } from '../../../utils';
+import { MovieParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
 import { createMultiMovies, type MultiMoviesProviderInstance } from './create-multimovies';
 
 // Backward compatibility wrapper class
-class MultiMovies extends MovieParser {
+export class MultiMovies extends MovieParser {
   private instance: MultiMoviesProviderInstance;
   override logo: string;
   override name: string;
@@ -13,13 +13,17 @@ class MultiMovies extends MovieParser {
   override isNSFW: boolean;
   override isWorking: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createMultiMovies(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createMultiMovies(ctx, baseURL);
     this.logo = this.instance.logo;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
@@ -53,5 +57,3 @@ class MultiMovies extends MovieParser {
   fetchPopular!: MultiMoviesProviderInstance['fetchPopular'];
   fetchByGenre!: MultiMoviesProviderInstance['fetchByGenre'];
 }
-
-export default MultiMovies;

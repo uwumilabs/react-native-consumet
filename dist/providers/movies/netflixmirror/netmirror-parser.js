@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.NetMirrorParser = void 0;
 const models_1 = require("../../../models");
-const utils_1 = require("../../../utils");
+const provider_args_1 = require("../../provider-args");
 // Backward compatibility wrapper shared by the NetflixMirror, PrimeMirror and DisneyMirror classes
 class NetMirrorParser extends models_1.MovieParser {
     instance;
@@ -12,9 +13,10 @@ class NetMirrorParser extends models_1.MovieParser {
     supportedTypes;
     isNSFW;
     isWorking;
-    constructor(factory, customBaseURL) {
+    constructor(factory, ctxOrBaseURL, customBaseURL) {
         super();
-        this.instance = factory((0, utils_1.createProviderContext)(), customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = factory(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -34,5 +36,5 @@ class NetMirrorParser extends models_1.MovieParser {
     fetchEpisodeServers;
     fetchHlsPlaylist;
 }
-exports.default = NetMirrorParser;
+exports.NetMirrorParser = NetMirrorParser;
 //# sourceMappingURL=netmirror-parser.js.map

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createVegaMovies = exports.VegaMovies = void 0;
+exports.VegaMovies = void 0;
 const models_1 = require("../../../models");
-const utils_1 = require("../../../utils");
+const provider_args_1 = require("../../provider-args");
 const create_vegamovies_1 = require("./create-vegamovies");
 // Backward compatibility wrapper class
 class VegaMovies extends models_1.MovieParser {
@@ -14,11 +14,10 @@ class VegaMovies extends models_1.MovieParser {
     supportedTypes;
     isNSFW;
     isWorking;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        // Use the context factory to create a complete context with all defaults
-        const defaultContext = (0, utils_1.createProviderContext)();
-        this.instance = (0, create_vegamovies_1.createVegaMovies)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_vegamovies_1.createVegaMovies)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -51,7 +50,4 @@ class VegaMovies extends models_1.MovieParser {
     fetchByFilter;
 }
 exports.VegaMovies = VegaMovies;
-var create_vegamovies_2 = require("./create-vegamovies");
-Object.defineProperty(exports, "createVegaMovies", { enumerable: true, get: function () { return create_vegamovies_2.createVegaMovies; } });
-exports.default = VegaMovies;
 //# sourceMappingURL=vegamovies.js.map

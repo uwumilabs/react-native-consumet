@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MultiMovies = void 0;
 const models_1 = require("../../../models");
-const utils_1 = require("../../../utils");
+const provider_args_1 = require("../../provider-args");
 const create_multimovies_1 = require("./create-multimovies");
 // Backward compatibility wrapper class
 class MultiMovies extends models_1.MovieParser {
@@ -13,11 +14,10 @@ class MultiMovies extends models_1.MovieParser {
     supportedTypes;
     isNSFW;
     isWorking;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        // Use the context factory to create a complete context with all defaults
-        const defaultContext = (0, utils_1.createProviderContext)();
-        this.instance = (0, create_multimovies_1.createMultiMovies)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_multimovies_1.createMultiMovies)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -45,5 +45,5 @@ class MultiMovies extends models_1.MovieParser {
     fetchPopular;
     fetchByGenre;
 }
-exports.default = MultiMovies;
+exports.MultiMovies = MultiMovies;
 //# sourceMappingURL=multimovies.js.map

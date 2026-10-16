@@ -1,9 +1,9 @@
-import { MovieParser } from '../../../models';
-import { createProviderContext } from '../../../utils';
+import { MovieParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
 import { createVegaMovies, type VegaMoviesProviderInstance } from './create-vegamovies';
 
 // Backward compatibility wrapper class
-class VegaMovies extends MovieParser {
+export class VegaMovies extends MovieParser {
   private instance: VegaMoviesProviderInstance;
   override logo: string;
   override name: string;
@@ -13,13 +13,17 @@ class VegaMovies extends MovieParser {
   override isNSFW: boolean;
   override isWorking: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createVegaMovies(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createVegaMovies(ctx, baseURL);
     this.logo = this.instance.logo;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
@@ -57,7 +61,3 @@ class VegaMovies extends MovieParser {
   fetchRecentTVShows!: VegaMoviesProviderInstance['fetchRecentTVShows'];
   fetchByFilter!: VegaMoviesProviderInstance['fetchByFilter'];
 }
-
-export { VegaMovies };
-export { createVegaMovies } from './create-vegamovies';
-export default VegaMovies;

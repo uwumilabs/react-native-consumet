@@ -15,7 +15,6 @@ exports.getVideasySourcesAndServers = getVideasySourcesAndServers;
 exports.getHexaSourcesAndServers = getHexaSourcesAndServers;
 exports.getMultiServers = getMultiServers;
 exports.getMultiSources = getMultiSources;
-const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = require("cheerio");
 const url_polyfill_1 = require("../../../utils/url-polyfill");
 const crypto_js_1 = __importDefault(require("crypto-js"));
@@ -52,7 +51,7 @@ function getParts(id) {
   const [tmdbId, type, episode, season] = parts;
   return [tmdbId, type, episode, season];
 }
-async function getVidsrcSourcesAndServers(id) {
+async function getVidsrcSourcesAndServers(axios, id) {
   const [tmdbId, type, episode, season] = getParts(id);
   const baseURL = 'https://vidsrc-embed.ru/embed/';
   const headers = {
@@ -66,7 +65,7 @@ async function getVidsrcSourcesAndServers(id) {
     // Step 1: Fetch embed iframe
     const {
       data: html1
-    } = await axios_1.default.get(url, {
+    } = await axios.get(url, {
       headers
     });
     const match1 = html1.match(/src="(.*?)"/)?.[1];
@@ -93,7 +92,7 @@ async function getVidsrcSourcesAndServers(id) {
         // console.log(`Fetching RCP for ${name} from ${rcpUrl}`);
         const {
           data: html2
-        } = await axios_1.default.get(rcpUrl, {
+        } = await axios.get(rcpUrl, {
           headers: {
             ...headers,
             Referer: url
@@ -107,7 +106,7 @@ async function getVidsrcSourcesAndServers(id) {
         // console.log(`Fetching M3U8 for ${name} from ${urlPRORCP}`);
         const {
           data: html3
-        } = await axios_1.default.get(urlPRORCP, {
+        } = await axios.get(urlPRORCP, {
           headers: {
             ...headers,
             Referer: rcpUrl
@@ -143,7 +142,7 @@ async function getVidsrcSourcesAndServers(id) {
     throw new Error(`Failed to fetch Vidsrc stream: ${error.message}`);
   }
 }
-async function get111MoviesSourcesAndServers(id) {
+async function get111MoviesSourcesAndServers(axios, id) {
   const [tmdbId, type, episode, season] = getParts(id);
   const baseUrl = 'https://111movies.com';
   const userAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
@@ -177,7 +176,7 @@ async function get111MoviesSourcesAndServers(id) {
   } else {
     url = `${baseUrl}/movie/${tmdbId}`;
   }
-  const res = await axios_1.default.get(url, {
+  const res = await axios.get(url, {
     headers
   });
   const html = res.data;
@@ -216,7 +215,7 @@ async function get111MoviesSourcesAndServers(id) {
   const apiServers = `https://111movies.com/${staticPath}/${encodedFinal}/sr`;
   const {
     data: serversData
-  } = await axios_1.default.post(apiServers, {}, {
+  } = await axios.post(apiServers, {}, {
     headers
   });
   // const servers = serverRes.data;
@@ -235,7 +234,7 @@ async function get111MoviesSourcesAndServers(id) {
     try {
       const {
         data: streamData
-      } = await axios_1.default.post(server.url, {}, {
+      } = await axios.post(server.url, {}, {
         headers
       });
       if (streamData.tracks && streamData.tracks.length > 0) {
@@ -263,7 +262,7 @@ async function get111MoviesSourcesAndServers(id) {
     subtitles
   };
 }
-async function getVideasySourcesAndServers(id) {
+async function getVideasySourcesAndServers(axios, id) {
   const servers = [{
     name: 'neon-org',
     url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title'
@@ -326,11 +325,11 @@ async function getVideasySourcesAndServers(id) {
       console.log('step 2');
       const {
         data: encData
-      } = await axios_1.default.get(url);
+      } = await axios.get(url);
       console.log('step 3');
       const {
         data: decData
-      } = await axios_1.default.post('https://enc-dec.app/api/dec-videasy', {
+      } = await axios.post('https://enc-dec.app/api/dec-videasy', {
         text: encData,
         id: tmdbId
       });
@@ -370,7 +369,7 @@ async function getVideasySourcesAndServers(id) {
     subtitles
   };
 }
-async function getHexaSourcesAndServers(id) {
+async function getHexaSourcesAndServers(axios, id) {
   const sources = [];
   const subtitles = [];
   const servers = [];
@@ -382,7 +381,7 @@ async function getHexaSourcesAndServers(id) {
     // Get encrypted text with API key in header
     const {
       data: encData
-    } = await axios_1.default.get(url, {
+    } = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
         'Accept': 'plain/text',
@@ -392,7 +391,7 @@ async function getHexaSourcesAndServers(id) {
     // Decrypt using the API
     const {
       data: decData
-    } = await axios_1.default.post('https://enc-dec.app/api/dec-hexa', {
+    } = await axios.post('https://enc-dec.app/api/dec-hexa', {
       text: encData,
       key: key
     });
@@ -433,13 +432,13 @@ async function getHexaSourcesAndServers(id) {
     subtitles
   };
 }
-async function getMultiServers(id) {
+async function getMultiServers(axios, id) {
   try {
     const servers = [];
     // Fetch from all sources, handle errors individually
     const results = await Promise.allSettled([
     // getDummySourcesAndServers(id),
-    get111MoviesSourcesAndServers(id), getVidsrcSourcesAndServers(id), getVideasySourcesAndServers(id), getHexaSourcesAndServers(id)]);
+    get111MoviesSourcesAndServers(axios, id), getVidsrcSourcesAndServers(axios, id), getVideasySourcesAndServers(axios, id), getHexaSourcesAndServers(axios, id)]);
     // Add servers from successful results only
     results.forEach(result => {
       if (result.status === 'fulfilled') {
@@ -451,12 +450,12 @@ async function getMultiServers(id) {
     throw new Error(`Failed to fetch Multistream servers: ${error.message}`);
   }
 }
-async function getMultiSources(id, server) {
+async function getMultiSources(axios, id, server) {
   try {
     // Fetch from all sources, handle errors individually
     const results = await Promise.allSettled([
     // getDummySourcesAndServers(id),
-    get111MoviesSourcesAndServers(id), getVidsrcSourcesAndServers(id), getVideasySourcesAndServers(id), getHexaSourcesAndServers(id)]);
+    get111MoviesSourcesAndServers(axios, id), getVidsrcSourcesAndServers(axios, id), getVideasySourcesAndServers(axios, id), getHexaSourcesAndServers(axios, id)]);
     const allSources = [];
     const allSubtitles = [];
     // Collect sources and subtitles from successful results only

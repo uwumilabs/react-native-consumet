@@ -1,8 +1,8 @@
-import { MovieParser } from '../../../models';
-import { createProviderContext } from '../../../utils/create-provider-context';
+import { MovieParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
 import { createYFlix, type YFlixProviderInstance } from './create-yflix';
 
-class YFlix extends MovieParser {
+export class YFlix extends MovieParser {
   private instance: YFlixProviderInstance;
   override logo: string;
   override name: string;
@@ -12,12 +12,17 @@ class YFlix extends MovieParser {
   override isNSFW: boolean;
   override isWorking: boolean;
 
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    const defaultContext = createProviderContext();
-
-    this.instance = createYFlix(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createYFlix(ctx, baseURL);
     this.logo = this.instance.logo;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
@@ -78,5 +83,3 @@ class YFlix extends MovieParser {
 
   fetchByGenre!: typeof this.instance.fetchByGenre;
 }
-
-export default YFlix;

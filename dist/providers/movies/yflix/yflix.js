@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.YFlix = void 0;
 const models_1 = require("../../../models");
-const create_provider_context_1 = require("../../../utils/create-provider-context");
+const provider_args_1 = require("../../provider-args");
 const create_yflix_1 = require("./create-yflix");
 class YFlix extends models_1.MovieParser {
     instance;
@@ -12,10 +13,10 @@ class YFlix extends models_1.MovieParser {
     supportedTypes;
     isNSFW;
     isWorking;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        const defaultContext = (0, create_provider_context_1.createProviderContext)();
-        this.instance = (0, create_yflix_1.createYFlix)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_yflix_1.createYFlix)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -65,5 +66,5 @@ class YFlix extends models_1.MovieParser {
     fetchByCountry;
     fetchByGenre;
 }
-exports.default = YFlix;
+exports.YFlix = YFlix;
 //# sourceMappingURL=yflix.js.map

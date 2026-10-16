@@ -5,42 +5,42 @@ exports.movieProviders = exports.animeProviders = void 0;
 // Providers are loaded only when accessed, after all modules are initialized
 exports.animeProviders = {
     get Zoro() {
-        return require('../providers/anime/zoro/zoro').default;
+        return require('../providers/anime/zoro/zoro').Zoro;
     },
     get AnimePahe() {
-        return require('../providers/anime/animepahe/animepahe').default;
+        return require('../providers/anime/animepahe/animepahe').AnimePahe;
     },
     get AnimeKai() {
-        return require('../providers/anime/animekai/animekai').default;
+        return require('../providers/anime/animekai/animekai').AnimeKai;
     },
     get AniKoto() {
-        return require('../providers/anime/anikoto/anikoto').default;
+        return require('../providers/anime/anikoto/anikoto').AniKoto;
     },
 };
 exports.movieProviders = {
     get HiMovies() {
-        return require('../providers/movies/himovies/himovies').default;
+        return require('../providers/movies/himovies/himovies').HiMovies;
     },
     get MultiMovies() {
-        return require('../providers/movies/multimovies/multimovies').default;
+        return require('../providers/movies/multimovies/multimovies').MultiMovies;
     },
     get MultiStream() {
-        return require('../providers/movies/multistream').default;
+        return require('../providers/movies/multistream').MultiStream;
     },
     get YFlix() {
-        return require('../providers/movies/yflix/yflix').default;
+        return require('../providers/movies/yflix/yflix').YFlix;
     },
     get VegaMovies() {
-        return require('../providers/movies/vegamovies/vegamovies').default;
+        return require('../providers/movies/vegamovies/vegamovies').VegaMovies;
     },
     get NetflixMirror() {
-        return require('../providers/movies/netflixmirror/netflixmirror').default;
+        return require('../providers/movies/netflixmirror/netflixmirror').NetflixMirror;
     },
     get PrimeMirror() {
-        return require('../providers/movies/netflixmirror/primemirror').default;
+        return require('../providers/movies/netflixmirror/primemirror').PrimeMirror;
     },
     get DisneyMirror() {
-        return require('../providers/movies/netflixmirror/disneymirror').default;
+        return require('../providers/movies/netflixmirror/disneymirror').DisneyMirror;
     },
 };
 //# sourceMappingURL=provider-maps.js.map

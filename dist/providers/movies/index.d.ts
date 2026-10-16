@@ -1,17 +1,17 @@
-import MultiMovies from './multimovies/multimovies';
+import { MultiMovies } from './multimovies/multimovies';
 import { createMultiMovies } from './multimovies/create-multimovies';
-import NetflixMirror from './netflixmirror/netflixmirror';
-import PrimeMirror from './netflixmirror/primemirror';
-import DisneyMirror from './netflixmirror/disneymirror';
+import { NetflixMirror } from './netflixmirror/netflixmirror';
+import { PrimeMirror } from './netflixmirror/primemirror';
+import { DisneyMirror } from './netflixmirror/disneymirror';
 import { createNetflixMirror, createPrimeMirror, createDisneyMirror } from './netflixmirror/create-netflixmirror';
-import MultiStream from './multistream';
-import HiMovies from './himovies/himovies';
+import { MultiStream } from './multistream';
+import { HiMovies } from './himovies/himovies';
 import { createHiMovies } from './himovies/create-himovies';
-import YFlix from './yflix/yflix';
+import { YFlix } from './yflix/yflix';
 import { createYFlix } from './yflix/create-yflix';
-import VegaMovies from './vegamovies/vegamovies';
+import { VegaMovies } from './vegamovies/vegamovies';
 import { createVegaMovies } from './vegamovies/create-vegamovies';
-declare const _default: {
+export declare const MOVIES: {
     MultiMovies: typeof MultiMovies;
     NetflixMirror: typeof NetflixMirror;
     PrimeMirror: typeof PrimeMirror;
@@ -28,5 +28,4 @@ declare const _default: {
     createYFlix: typeof createYFlix;
     createVegaMovies: typeof createVegaMovies;
 };
-export default _default;
 //# sourceMappingURL=index.d.ts.map

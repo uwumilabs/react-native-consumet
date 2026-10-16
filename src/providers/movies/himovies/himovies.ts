@@ -1,9 +1,9 @@
-import { MovieParser } from '../../../models';
-import { createProviderContext } from '../../../utils';
+import { MovieParser, type ProviderContext } from '../../../models';
+import { providerArgs } from '../../provider-args';
 import { createHiMovies, type HiMoviesProviderInstance } from './create-himovies';
 
 // Backward compatibility wrapper class
-class HiMovies extends MovieParser {
+export class HiMovies extends MovieParser {
   private instance: HiMoviesProviderInstance;
   override logo: string;
   override name: string;
@@ -12,13 +12,17 @@ class HiMovies extends MovieParser {
   override supportedTypes: Set<any>;
   override isNSFW: boolean;
   override isWorking: boolean;
-  constructor(customBaseURL?: string) {
+  /**
+   * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+   * @param customBaseURL site URL to use instead of the default (optional)
+   */
+  constructor(ctx?: ProviderContext, customBaseURL?: string);
+  /** The older form, without a context. */
+  constructor(customBaseURL?: string);
+  constructor(ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
-
-    // Use the context factory to create a complete context with all defaults
-    const defaultContext = createProviderContext();
-
-    this.instance = createHiMovies(defaultContext, customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = createHiMovies(ctx, baseURL);
 
     this.logo = this.instance.logo;
     this.name = this.instance.name;
@@ -84,4 +88,5 @@ class HiMovies extends MovieParser {
 //   // console.log(genre);
 // })();
 
+// Kept only while src/providers/meta imports the default; import { HiMovies } instead.
 export default HiMovies;

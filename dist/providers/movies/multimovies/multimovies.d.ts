@@ -1,6 +1,6 @@
-import { MovieParser } from '../../../models';
+import { MovieParser, type ProviderContext } from '../../../models';
 import { type MultiMoviesProviderInstance } from './create-multimovies';
-declare class MultiMovies extends MovieParser {
+export declare class MultiMovies extends MovieParser {
     private instance;
     logo: string;
     name: string;
@@ -9,6 +9,12 @@ declare class MultiMovies extends MovieParser {
     supportedTypes: Set<any>;
     isNSFW: boolean;
     isWorking: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     search: MultiMoviesProviderInstance['search'];
     fetchMediaInfo: MultiMoviesProviderInstance['fetchMediaInfo'];
@@ -17,5 +23,4 @@ declare class MultiMovies extends MovieParser {
     fetchPopular: MultiMoviesProviderInstance['fetchPopular'];
     fetchByGenre: MultiMoviesProviderInstance['fetchByGenre'];
 }
-export default MultiMovies;
 //# sourceMappingURL=multimovies.d.ts.map

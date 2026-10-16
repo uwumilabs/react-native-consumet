@@ -1,14 +1,12 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const netmirror_parser_1 = __importDefault(require("./netmirror-parser"));
+exports.NetflixMirror = void 0;
+const netmirror_parser_1 = require("./netmirror-parser");
 const create_netflixmirror_1 = require("./create-netflixmirror");
-class NetflixMirror extends netmirror_parser_1.default {
-    constructor(customBaseURL) {
-        super(create_netflixmirror_1.createNetflixMirror, customBaseURL);
+class NetflixMirror extends netmirror_parser_1.NetMirrorParser {
+    constructor(ctxOrBaseURL, customBaseURL) {
+        super(create_netflixmirror_1.createNetflixMirror, ctxOrBaseURL, customBaseURL);
     }
 }
-exports.default = NetflixMirror;
+exports.NetflixMirror = NetflixMirror;
 //# sourceMappingURL=netflixmirror.js.map

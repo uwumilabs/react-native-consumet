@@ -202,14 +202,14 @@
       "id": "multimovies",
       "name": "MultiMovies",
       "description": "Movies and TV shows streaming from MultiMovies",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/multimovies/1.0.2.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/multimovies/1.0.3.js",
       "factoryName": "createMultiMovies",
       "baseUrl": "https://multimovies.center",
       "logo": "https://multimovies.center/wp-content/uploads/2024/01/cropped-CompressJPEG.online_512x512_image.png",
@@ -225,21 +225,21 @@
       ],
       "isSourceEmbed": true,
       "haveMultiServers": true,
-      "sha256": "fe92f0d92311923deb8264b452e9f83e60dd3986200c15edd57e114c0922e390",
+      "sha256": "b1237364b847fc1d6307e523bbec94d37c09a3dafd7b6b23e59cf7a4f0bed6d1",
       "distFile": "dist/bundles/providers/movies/multimovies/create-multimovies.js"
     },
     {
       "id": "yflix",
       "name": "YFlix",
       "description": "Movies and TV shows streaming from YFlix",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/yflix/1.0.2.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/yflix/1.0.3.js",
       "factoryName": "createYFlix",
       "baseUrl": "https://yflix.to",
       "logo": "https://yflix.to/assets/uploads/2f505f3de3c99889c1a72557f3e3714fc0c457b0.png",
@@ -254,7 +254,7 @@
       ],
       "isSourceEmbed": true,
       "haveMultiServers": true,
-      "sha256": "7ac313ad95fb9038c45920978c3cc593e1f87090b08379867e7d97cfeb3f04c7",
+      "sha256": "bb6c383f03d98ee2895fc28e2b49a6c7220d43f6cabbaa3902db09b04fba7a9b",
       "distFile": "dist/bundles/providers/movies/yflix/create-yflix.js"
     },
     {

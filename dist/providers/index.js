@@ -10,8 +10,8 @@ const manga_1 = __importDefault(require("./manga"));
 exports.MANGA = manga_1.default;
 const light_novels_1 = __importDefault(require("./light-novels"));
 exports.LIGHT_NOVELS = light_novels_1.default;
-const movies_1 = __importDefault(require("./movies"));
-exports.MOVIES = movies_1.default;
+const movies_1 = require("./movies");
+Object.defineProperty(exports, "MOVIES", { enumerable: true, get: function () { return movies_1.MOVIES; } });
 const meta_1 = __importDefault(require("./meta"));
 exports.META = meta_1.default;
 //# sourceMappingURL=index.js.map

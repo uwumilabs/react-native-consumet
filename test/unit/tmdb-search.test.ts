@@ -1,8 +1,8 @@
-import axios from 'axios';
 import TMDB from '../../src/providers/meta/tmdb';
-import MultiStream from '../../src/providers/movies/multistream';
+import { MultiStream } from '../../src/providers/movies/multistream';
 import type { IMovieProvider } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
+import { defaultAxios } from '../../src/utils/extension-utils';
 import search from './fixtures/tmdb/search-multi-tom-and-jerry-1.json';
 import trendingAll from './fixtures/tmdb/trending-all-week.json';
 import trendingPeople from './fixtures/tmdb/trending-person-day.json';
@@ -41,9 +41,10 @@ describe('TMDB search query encoding (META-8)', () => {
   });
 
   it('MultiStream encodes its TMDB search query the same way', async () => {
-    const get = jest.spyOn(axios, 'get').mockResolvedValue({ data: search });
+    // Without a context, MultiStream sends its requests through the library's defaultAxios.
+    const get = jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: search });
 
-    const result = await new MultiStream(undefined, 'test-key').search(QUERY);
+    const result = await new MultiStream(undefined, undefined, 'test-key').search(QUERY);
 
     const url = new URL(get.mock.calls[0]![0] as string);
     expect(url.hash).toBe('');

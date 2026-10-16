@@ -198,12 +198,12 @@ export function createYFlix(ctx: ProviderContext, customBaseURL?: string) {
         case StreamingServersEnum.MegaUp:
           return {
             headers: { Referer: serverUrl.href },
-            ...((await MegaUp().extract(serverUrl)) as ISource),
+            ...((await MegaUp(ctx).extract(serverUrl)) as ISource),
           };
         default:
           return {
             headers: { Referer: serverUrl.href },
-            ...((await MegaUp().extract(serverUrl)) as ISource),
+            ...((await MegaUp(ctx).extract(serverUrl)) as ISource),
           };
       }
     }

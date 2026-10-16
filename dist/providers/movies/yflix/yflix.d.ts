@@ -1,5 +1,5 @@
-import { MovieParser } from '../../../models';
-declare class YFlix extends MovieParser {
+import { MovieParser, type ProviderContext } from '../../../models';
+export declare class YFlix extends MovieParser {
     private instance;
     logo: string;
     name: string;
@@ -8,6 +8,12 @@ declare class YFlix extends MovieParser {
     supportedTypes: Set<any>;
     isNSFW: boolean;
     isWorking: boolean;
+    /**
+     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
+     * @param customBaseURL site URL to use instead of the default (optional)
+     */
+    constructor(ctx?: ProviderContext, customBaseURL?: string);
+    /** The older form, without a context. */
     constructor(customBaseURL?: string);
     /**
      *
@@ -40,5 +46,4 @@ declare class YFlix extends MovieParser {
     fetchByCountry: typeof this.instance.fetchByCountry;
     fetchByGenre: typeof this.instance.fetchByGenre;
 }
-export default YFlix;
 //# sourceMappingURL=yflix.d.ts.map

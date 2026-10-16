@@ -1,11 +1,11 @@
 import { MovieParser, type ProviderContext } from '../../../models';
-import { createProviderContext } from '../../../utils';
+import { providerArgs } from '../../provider-args';
 import type { NetflixMirrorProviderInstance } from './create-netflixmirror';
 
 type NetMirrorFactory = (ctx: ProviderContext, customBaseURL?: string) => NetflixMirrorProviderInstance;
 
 // Backward compatibility wrapper shared by the NetflixMirror, PrimeMirror and DisneyMirror classes
-class NetMirrorParser extends MovieParser {
+export class NetMirrorParser extends MovieParser {
   private instance: NetflixMirrorProviderInstance;
   override logo: string;
   override name: string;
@@ -15,10 +15,11 @@ class NetMirrorParser extends MovieParser {
   override isNSFW: boolean;
   override isWorking: boolean;
 
-  constructor(factory: NetMirrorFactory, customBaseURL?: string) {
+  constructor(factory: NetMirrorFactory, ctxOrBaseURL?: ProviderContext | string, customBaseURL?: string) {
     super();
 
-    this.instance = factory(createProviderContext(), customBaseURL);
+    const [ctx, baseURL] = providerArgs(ctxOrBaseURL, customBaseURL);
+    this.instance = factory(ctx, baseURL);
     this.logo = this.instance.logo;
     this.name = this.instance.name;
     this.baseUrl = this.instance.baseUrl;
@@ -40,5 +41,3 @@ class NetMirrorParser extends MovieParser {
   override fetchEpisodeServers!: NetflixMirrorProviderInstance['fetchEpisodeServers'];
   fetchHlsPlaylist!: NetflixMirrorProviderInstance['fetchHlsPlaylist'];
 }
-
-export default NetMirrorParser;

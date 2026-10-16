@@ -204,7 +204,7 @@ function createMultiMovies(ctx, customBaseURL) {
             headers: {
               Referer: referer
             },
-            ...(await StreamWish().extract(serverUrl, referer)),
+            ...(await StreamWish(ctx).extract(serverUrl, referer)),
             download: downloadUrl
           };
         case StreamingServersEnum.VidHide:
@@ -212,7 +212,7 @@ function createMultiMovies(ctx, customBaseURL) {
             headers: {
               Referer: referer
             },
-            ...(await VidHide().extract(serverUrl)),
+            ...(await VidHide(ctx).extract(serverUrl)),
             download: fileId ? `https://gdmirrorbot.nl/file/${fileId}` : ""
           };
         default:
@@ -220,7 +220,7 @@ function createMultiMovies(ctx, customBaseURL) {
             headers: {
               Referer: referer
             },
-            ...(await StreamWish().extract(serverUrl, referer)),
+            ...(await StreamWish(ctx).extract(serverUrl, referer)),
             download: downloadUrl
           };
       }

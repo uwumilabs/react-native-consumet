@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.HiMovies = void 0;
 const models_1 = require("../../../models");
-const utils_1 = require("../../../utils");
+const provider_args_1 = require("../../provider-args");
 const create_himovies_1 = require("./create-himovies");
 // Backward compatibility wrapper class
 class HiMovies extends models_1.MovieParser {
@@ -13,11 +14,10 @@ class HiMovies extends models_1.MovieParser {
     supportedTypes;
     isNSFW;
     isWorking;
-    constructor(customBaseURL) {
+    constructor(ctxOrBaseURL, customBaseURL) {
         super();
-        // Use the context factory to create a complete context with all defaults
-        const defaultContext = (0, utils_1.createProviderContext)();
-        this.instance = (0, create_himovies_1.createHiMovies)(defaultContext, customBaseURL);
+        const [ctx, baseURL] = (0, provider_args_1.providerArgs)(ctxOrBaseURL, customBaseURL);
+        this.instance = (0, create_himovies_1.createHiMovies)(ctx, baseURL);
         this.logo = this.instance.logo;
         this.name = this.instance.name;
         this.baseUrl = this.instance.baseUrl;
@@ -68,6 +68,7 @@ class HiMovies extends models_1.MovieParser {
      */
     fetchEpisodeServers;
 }
+exports.HiMovies = HiMovies;
 // (async () => {
 //   const movie = new HiMovies();
 //   const search = await movie.search('jujutsu');
@@ -77,5 +78,6 @@ class HiMovies extends models_1.MovieParser {
 //   const genre = await movie.fetchEpisodeSources(movieInfo.episodes![0]!.id, movieInfo.id);
 //   // console.log(genre);
 // })();
+// Kept only while src/providers/meta imports the default; import { HiMovies } instead.
 exports.default = HiMovies;
 //# sourceMappingURL=himovies.js.map
