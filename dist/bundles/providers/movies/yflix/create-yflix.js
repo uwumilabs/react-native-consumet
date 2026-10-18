@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -30,7 +35,7 @@ __export(create_yflix_exports, {
 });
 module.exports = __toCommonJS(create_yflix_exports);
 function createYFlix(ctx, customBaseURL) {
-  const {
+  var {
     load,
     extractors,
     enums,
@@ -38,16 +43,16 @@ function createYFlix(ctx, customBaseURL) {
     createCustomBaseUrl,
     PolyURL
   } = ctx;
-  const {
+  var {
     MegaUp
   } = extractors;
-  const {
+  var {
     TvType: TvTypeEnum,
     StreamingServers: StreamingServersEnum
   } = enums;
-  const apiBase = "https://enc-dec.app/api";
-  const baseUrl = createCustomBaseUrl("https://yflix.to", customBaseURL);
-  const config = {
+  var apiBase = "https://enc-dec.app/api";
+  var baseUrl = createCustomBaseUrl("https://yflix.to", customBaseURL);
+  var config = {
     name: "YFlix",
     languages: "all",
     classPath: "MOVIES.YFlix",
@@ -56,18 +61,18 @@ function createYFlix(ctx, customBaseURL) {
     isNSFW: false,
     isWorking: true
   };
-  const supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
-  const GenerateToken = async n => {
+  var supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+  var GenerateToken = async n => {
     try {
-      const res = await axios.get(`${apiBase}/enc-movies-flix?text=${encodeURIComponent(n)}`);
+      var res = await axios.get(`${apiBase}/enc-movies-flix?text=${encodeURIComponent(n)}`);
       return res.data.result;
     } catch (error) {
       throw new Error(error.message);
     }
   };
-  const DecodeIframeData = async n => {
+  var DecodeIframeData = async n => {
     try {
-      const res = await axios.post(`${apiBase}/dec-movies-flix`, {
+      var res = await axios.post(`${apiBase}/dec-movies-flix`, {
         text: n
       });
       return res.data.result;
@@ -75,22 +80,22 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(error.message);
     }
   };
-  const search = async function (query) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const searchResult = {
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var searchResult = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/browser?keyword=${query.replace(/[\W_]+/g, "+")}&page=${page}`);
-      const $ = load(data);
-      const navSelector = "nav.navigation > ul.pagination";
+      var $ = load(data);
+      var navSelector = "nav.navigation > ul.pagination";
       searchResult.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass("active") : false;
       $(".film-section > div.item").each((i, el) => {
-        const releaseDate = $(el).find("div.metadata > span:nth-child(2)").text();
+        var releaseDate = $(el).find("div.metadata > span:nth-child(2)").text();
         searchResult.results.push({
           id: $(el).find("div.inner > a").attr("href")?.split("/watch/")[1],
           title: $(el).find("div.info > a").text().trim(),
@@ -106,23 +111,23 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchMediaInfo = async mediaId => {
+  var fetchMediaInfo = async mediaId => {
     if (!mediaId.startsWith(baseUrl)) {
       mediaId = `${baseUrl}/watch/${mediaId}`;
     }
-    const movieInfo = {
+    var movieInfo = {
       id: mediaId.split("to/").pop(),
       title: "",
       url: mediaId
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(mediaId);
-      const $ = load(data);
-      const recommendationsArray = [];
+      var $ = load(data);
+      var recommendationsArray = [];
       $("section.movie-related > div.film-section > div.item").each((i, el) => {
-        const releaseDate = $(el).find("div.metadata > span:nth-child(2)").text();
+        var releaseDate = $(el).find("div.metadata > span:nth-child(2)").text();
         recommendationsArray.push({
           id: $(el).find("div.inner > a").attr("href")?.split("/watch/")[1],
           title: $(el).find("div.info > a").text().trim(),
@@ -132,7 +137,7 @@ function createYFlix(ctx, customBaseURL) {
           type: $(el).find("div.metadata > span:nth-child(1)").text() === "Movie" ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES
         });
       });
-      const uid = $("#movie-rating").attr("data-id");
+      var uid = $("#movie-rating").attr("data-id");
       movieInfo.cover = $("div.detail-bg").attr("style")?.slice(22).replace(")", "").replace(";", "");
       movieInfo.title = $("h1.title").text();
       movieInfo.image = $(".poster  img").attr("src");
@@ -143,23 +148,23 @@ function createYFlix(ctx, customBaseURL) {
       movieInfo.country = $("ul.mics > li:contains(Country:) a").text().trim();
       movieInfo.rating = parseFloat($(".metadata > span.IMDb").text().replace("IMDb", "").trim());
       movieInfo.recommendations = recommendationsArray;
-      const episodesAjax = await axios.get(`${baseUrl}/ajax/episodes/list?id=${uid}&_=${await GenerateToken(uid)}`, {
+      var episodesAjax = await axios.get(`${baseUrl}/ajax/episodes/list?id=${uid}&_=${await GenerateToken(uid)}`, {
         headers: {
           "X-Requested-With": "XMLHttpRequest",
           "Referer": `${baseUrl}/watch/${mediaId}`
         }
       });
-      const $$ = load(episodesAjax.data.result);
+      var $$ = load(episodesAjax.data.result);
       movieInfo.episodes = [];
       $$(".episodes").each((_, el) => {
-        const season = parseInt($$(el).attr("data-season"), 10);
+        var season = parseInt($$(el).attr("data-season"), 10);
         $$(el).find("li a").each((_2, link) => {
-          const $link = $(link);
-          const id = $link.attr("eid")?.trim() || "";
-          const url = baseUrl + $link.attr("href")?.trim() || "";
-          const number = parseInt($link.attr("num") || "", 10);
-          const releaseDate = $link.attr("title")?.trim() || "";
-          const title = $link.find("span:last-child").text().trim();
+          var $link = $(link);
+          var id = $link.attr("eid")?.trim() || "";
+          var url = baseUrl + $link.attr("href")?.trim() || "";
+          var number = parseInt($link.attr("num") || "", 10);
+          var releaseDate = $link.attr("title")?.trim() || "";
+          var title = $link.find("span:last-child").text().trim();
           movieInfo.episodes?.push({
             id,
             title,
@@ -176,10 +181,10 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchEpisodeSources = async function (episodeId, mediaId) {
-    let server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.MegaUp;
+  var fetchEpisodeSources = async function (episodeId, mediaId) {
+    var server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.MegaUp;
     if (episodeId.startsWith("http")) {
-      const serverUrl = new PolyURL(episodeId);
+      var serverUrl = new PolyURL(episodeId);
       switch (server) {
         case StreamingServersEnum.MegaUp:
           return {
@@ -198,33 +203,33 @@ function createYFlix(ctx, customBaseURL) {
       }
     }
     try {
-      const servers = await fetchEpisodeServers(episodeId, mediaId);
-      const i = servers.findIndex(s => s.name.toLowerCase().includes(server));
+      var servers = await fetchEpisodeServers(episodeId, mediaId);
+      var i = servers.findIndex(s => s.name.toLowerCase().includes(server));
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
-      const serverUrl = new URL(servers[i]?.url);
-      const sources = await fetchEpisodeSources(serverUrl.href, mediaId, server);
+      var _serverUrl = new URL(servers[i]?.url);
+      var sources = await fetchEpisodeSources(_serverUrl.href, mediaId, server);
       return sources;
     } catch (err) {
       console.log(err, "err");
       throw new Error(err.message);
     }
   };
-  const fetchEpisodeServers = async (episodeId, mediaId) => {
+  var fetchEpisodeServers = async (episodeId, mediaId) => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/ajax/links/list?eid=${episodeId}&_=${await GenerateToken(episodeId)}`);
-      const $ = load(data.result);
-      const servers = [];
-      const serverItems = $("ul > li.server");
+      var $ = load(data.result);
+      var servers = [];
+      var serverItems = $("ul > li.server");
       await Promise.all(serverItems.map(async (i, server) => {
-        const id = $(server).attr("data-lid");
-        const {
+        var id = $(server).attr("data-lid");
+        var {
           data: data2
         } = await axios.get(`${baseUrl}/ajax/links/view?id=${id}&_=${await GenerateToken(id)}`);
-        const decodedIframeData = await DecodeIframeData(data2.result);
+        var decodedIframeData = await DecodeIframeData(data2.result);
         servers.push({
           name: `MegaUp ${$(server).text().trim()}`.toLowerCase(),
           url: decodedIframeData.url
@@ -235,15 +240,15 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchRecentMovies = async () => {
+  var fetchRecentMovies = async () => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/home`);
-      const $ = load(data);
-      const movies = $('section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item').map((i, el) => {
-        const releaseDate = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text();
-        const movie = {
+      var $ = load(data);
+      var movies = $('section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item').map((i, el) => {
+        var releaseDate = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text();
+        var movie = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1),
           title: $(el).find("div.film-detail > h3.film-name > a").attr("title"),
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
@@ -259,14 +264,14 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchRecentTvShows = async () => {
+  var fetchRecentTvShows = async () => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/home`);
-      const $ = load(data);
-      const tvshows = $('section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item').map((i, el) => {
-        const tvshow = {
+      var $ = load(data);
+      var tvshows = $('section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item').map((i, el) => {
+        var tvshow = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1),
           title: $(el).find("div.film-detail > h3.film-name > a").attr("title"),
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
@@ -282,15 +287,15 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchTrendingMovies = async () => {
+  var fetchTrendingMovies = async () => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/home`);
-      const $ = load(data);
-      const movies = $("div#trending-movies div.film_list-wrap div.flw-item").map((i, el) => {
-        const releaseDate = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text();
-        const movie = {
+      var $ = load(data);
+      var movies = $("div#trending-movies div.film_list-wrap div.flw-item").map((i, el) => {
+        var releaseDate = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text();
+        var movie = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1),
           title: $(el).find("div.film-detail > h3.film-name > a").attr("title"),
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
@@ -306,14 +311,14 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchTrendingTvShows = async () => {
+  var fetchTrendingTvShows = async () => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/home`);
-      const $ = load(data);
-      const tvshows = $("div#trending-tv div.film_list-wrap div.flw-item").map((i, el) => {
-        const tvshow = {
+      var $ = load(data);
+      var tvshows = $("div#trending-tv div.film_list-wrap div.flw-item").map((i, el) => {
+        var tvshow = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1),
           title: $(el).find("div.film-detail > h3.film-name > a").attr("title"),
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
@@ -329,30 +334,30 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchByCountry = async function (country) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const result = {
+  var fetchByCountry = async function (country) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var result = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
-    const navSelector = "div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)";
+    var navSelector = "div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)";
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/country/${country}/?page=${page}`);
-      const $ = load(data);
+      var $ = load(data);
       result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass("active") : false;
       $("div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item").each((i, el) => {
-        const resultItem = {
+        var resultItem = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1) ?? "",
           title: $(el).find("div.film-detail > h2.film-name > a").attr("title") ?? "",
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
           image: $(el).find("div.film-poster > img").attr("data-src"),
           type: $(el).find("div.film-detail > div.fd-infor > span.float-right").text() === "Movie" ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES
         };
-        const season = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text().replace("SS", "").trim();
-        const latestEpisode = $(el).find("div.film-detail > div.fd-infor > span:nth-child(3)").text().replace("EPS", "").trim() ?? null;
+        var season = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text().replace("SS", "").trim();
+        var latestEpisode = $(el).find("div.film-detail > div.fd-infor > span:nth-child(3)").text().replace("EPS", "").trim() ?? null;
         if (resultItem.type === TvTypeEnum.TVSERIES) {
           resultItem.season = season;
           resultItem.latestEpisode = latestEpisode;
@@ -367,30 +372,30 @@ function createYFlix(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchByGenre = async function (genre) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const result = {
+  var fetchByGenre = async function (genre) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var result = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(`${baseUrl}/genre/${genre}?page=${page}`);
-      const $ = load(data);
-      const navSelector = "div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)";
+      var $ = load(data);
+      var navSelector = "div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)";
       result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass("active") : false;
       $(".film_list-wrap > div.flw-item").each((i, el) => {
-        const resultItem = {
+        var resultItem = {
           id: $(el).find("div.film-poster > a").attr("href")?.slice(1) ?? "",
           title: $(el).find("div.film-detail > h2 > a").attr("title") ?? "",
           url: `${baseUrl}${$(el).find("div.film-poster > a").attr("href")}`,
           image: $(el).find("div.film-poster > img").attr("data-src"),
           type: $(el).find("div.film-detail > div.fd-infor > span.float-right").text() === "Movie" ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES
         };
-        const season = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text().replace("SS", "").trim();
-        const latestEpisode = $(el).find("div.film-detail > div.fd-infor > span:nth-child(3)").text().replace("EPS", "").trim() ?? null;
+        var season = $(el).find("div.film-detail > div.fd-infor > span:nth-child(1)").text().replace("SS", "").trim();
+        var latestEpisode = $(el).find("div.film-detail > div.fd-infor > span:nth-child(3)").text().replace("EPS", "").trim() ?? null;
         if (resultItem.type === TvTypeEnum.TVSERIES) {
           resultItem.season = season;
           resultItem.latestEpisode = latestEpisode;

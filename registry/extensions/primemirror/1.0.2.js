@@ -1,0 +1,506 @@
+"use strict";
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all) __defProp(target, name, {
+    get: all[name],
+    enumerable: true
+  });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
+  }
+  return to;
+};
+var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
+  value: true
+}), mod);
+
+// src/providers/movies/netflixmirror/create-netflixmirror.ts
+var create_netflixmirror_exports = {};
+__export(create_netflixmirror_exports, {
+  createDisneyMirror: () => createDisneyMirror,
+  createNetflixMirror: () => createNetflixMirror,
+  createPrimeMirror: () => createPrimeMirror
+});
+module.exports = __toCommonJS(create_netflixmirror_exports);
+var PLATFORMS = {
+  nf: {
+    ott: "nf",
+    label: "Netflix",
+    name: "NetflixMirror",
+    classPath: "MOVIES.NetflixMirror",
+    path: "",
+    cookieOtt: "nf",
+    seriesYearIsFirstAired: true,
+    poster: id => `https://imgcdn.kim/poster/v/${id}.jpg`,
+    cover: id => `https://imgcdn.kim/poster/h/${id}.jpg`,
+    episodeImage: id => `https://imgcdn.kim/epimg/150/${id}.jpg`
+  },
+  pv: {
+    ott: "pv",
+    label: "Prime Video",
+    name: "PrimeMirror",
+    classPath: "MOVIES.PrimeMirror",
+    path: "pv/",
+    cookieOtt: "pv",
+    seriesYearIsFirstAired: true,
+    poster: id => id.length > 10 ? `https://imgcdn.kim/pv/v/350/${id}.jpg` : `https://imgcdn.kim/pv/341/${id}.jpg`,
+    cover: id => `https://imgcdn.kim/pv/1920/${id}.jpg`,
+    episodeImage: id => `https://imgcdn.kim/pvepimg/${id}.jpg`
+  },
+  hs: {
+    ott: "hs",
+    label: "Disney+",
+    name: "DisneyMirror",
+    classPath: "MOVIES.DisneyMirror",
+    path: "hs/",
+    cookieOtt: "dp",
+    seriesYearIsFirstAired: false,
+    poster: id => `https://imgcdn.kim/hs/v/${id}.jpg`,
+    cover: id => `https://imgcdn.kim/hs/h/${id}.jpg`,
+    episodeImage: id => `https://imgcdn.kim/hsepimg/${id}.jpg`
+  }
+};
+var APP_UA = "Mozilla/5.0 (Linux; Android 13; Pixel 5 Build/TQ3A.230901.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/144.0.7559.132 Safari/537.36 /OS.Gatu v3.0";
+var SESSION_TTL_MS = 12 * 60 * 60 * 1e3;
+var UNLOCK_TIMEOUT_MS = 60 * 1e3;
+var NEWTV_API = "https://tv.imgcdn.kim";
+var NEWTV_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0 /OS.GatuNewTV v1.0";
+var sessions = /* @__PURE__ */new Map();
+var pendingUnlocks = /* @__PURE__ */new Map();
+function createNetMirror(ctx, platform, customBaseURL) {
+  var {
+    enums,
+    axios,
+    createCustomBaseUrl
+  } = ctx;
+  var {
+    TvType: TvTypeEnum
+  } = enums;
+  var baseUrl = createCustomBaseUrl("https://net52.cc", customBaseURL);
+  var config = {
+    name: platform.name,
+    languages: "all",
+    classPath: platform.classPath,
+    logo: `${baseUrl}/img/nf2/icon_x192.png`,
+    baseUrl,
+    isNSFW: false,
+    isWorking: true
+  };
+  var supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+  var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  var now = () => Math.round(Date.now() / 1e3);
+  var readSetCookies = headers => {
+    var raw = headers?.["set-cookie"] ?? headers?.["x-set-cookie"] ?? [];
+    return (Array.isArray(raw) ? raw : [raw]).map(String);
+  };
+  var extractToken = cookies => {
+    for (var cookie of cookies) {
+      var match = /t_hash_t=([^;,]+)/.exec(cookie);
+      if (!match) continue;
+      var token = decodeURIComponent(match[1]);
+      if (token && !token.includes("::99")) return token;
+    }
+    return void 0;
+  };
+  var storeToken = token => {
+    sessions.set(baseUrl, {
+      token,
+      ts: Date.now()
+    });
+    return token;
+  };
+  var unlockSession = async () => {
+    var home = await axios.get(`${baseUrl}/mobile/home?app=1`, {
+      headers: {
+        "User-Agent": APP_UA,
+        "X-Requested-With": "com.netmirror.app",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      },
+      timeout: 15e3
+    });
+    var homeCookies = readSetCookies(home.headers);
+    var alreadyVerified = extractToken(homeCookies);
+    if (alreadyVerified) return storeToken(alreadyVerified);
+    var addhash = /data-addhash=["']([^"']+)["']/.exec(String(home.data))?.[1];
+    if (!addhash) throw new Error("session unlock failed: no addhash on home page");
+    var initialCookie = homeCookies.map(cookie => cookie.split(";")[0]).filter(Boolean).join("; ");
+    var host = baseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    await axios.get(`https://userver.${host}/?hee5=${addhash}&a=y&t=${Math.random()}`, {
+      headers: {
+        "User-Agent": APP_UA,
+        "Referer": `${baseUrl}/mobile/home?app=1`,
+        "Cookie": initialCookie
+      },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 1e4
+    }).catch(() => void 0);
+    var pollCookie = ["ext_name=ojplmecpdpgccookcobabopnaifgidhf", `addhash=${encodeURIComponent(addhash)}`, initialCookie].filter(Boolean).join("; ");
+    var deadline = Date.now() + UNLOCK_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      await sleep(2e3);
+      var res = await axios.post(`${baseUrl}/mobile/verify2.php`, `verify=${encodeURIComponent(addhash)}`, {
+        headers: {
+          "User-Agent": APP_UA,
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "Referer": `${baseUrl}/mobile/home`,
+          "Origin": baseUrl,
+          "Cookie": pollCookie
+        },
+        validateStatus: () => true,
+        timeout: 1e4
+      }).catch(() => void 0);
+      if (!res) continue;
+      var token = extractToken(readSetCookies(res.headers));
+      if (token) return storeToken(token);
+      if (res.data?.statusup === "All Done") {
+        var reload = await axios.get(`${baseUrl}/mobile/home?app=1`, {
+          headers: {
+            "User-Agent": APP_UA,
+            "X-Requested-With": "com.netmirror.app",
+            "Cookie": pollCookie
+          },
+          timeout: 15e3
+        });
+        var verified = extractToken(readSetCookies(reload.headers));
+        if (verified) return storeToken(verified);
+        break;
+      }
+    }
+    throw new Error("session unlock did not complete");
+  };
+  var getSessionToken = async function () {
+    var forceRefresh = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+    var cached = sessions.get(baseUrl);
+    if (!forceRefresh && cached && Date.now() - cached.ts < SESSION_TTL_MS) return cached.token;
+    if (forceRefresh) sessions.delete(baseUrl);
+    var pending = pendingUnlocks.get(baseUrl);
+    if (!pending) {
+      pending = unlockSession().finally(() => pendingUnlocks.delete(baseUrl));
+      pendingUnlocks.set(baseUrl, pending);
+    }
+    return pending;
+  };
+  var requestHeaders = token => ({
+    "User-Agent": APP_UA,
+    "Referer": `${baseUrl}/home`,
+    "Origin": baseUrl,
+    "Accept": "application/json, text/plain, */*",
+    "Cookie": `t_hash_t=${token}; hd=on; ott=${platform.cookieOtt}`
+  });
+  var getVerified = async (path, isUnverified) => {
+    var token = await getSessionToken();
+    var {
+      data
+    } = await axios.get(`${baseUrl}${path}`, {
+      headers: requestHeaders(token)
+    });
+    if (!isUnverified(data)) return data;
+    token = await getSessionToken(true);
+    ({
+      data
+    } = await axios.get(`${baseUrl}${path}`, {
+      headers: requestHeaders(token)
+    }));
+    if (isUnverified(data)) throw new Error("session not accepted by server");
+    return data;
+  };
+  var rejectedStatus = data => data?.status === "n";
+  var warmUpSession = () => {
+    getSessionToken().catch(() => void 0);
+  };
+  var getNewTv = async path => {
+    var {
+      data
+    } = await axios.get(`${NEWTV_API}/newtv/${path}`, {
+      headers: {
+        "Ott": platform.ott,
+        "X-Requested-With": "NetmirrorNewTV v1.0",
+        "User-Agent": NEWTV_UA,
+        "Accept": "application/json, text/plain, */*"
+      },
+      timeout: 1e4
+    });
+    return data;
+  };
+  var postUrl = id => `${baseUrl}/mobile/${platform.path}post.php?id=${id}`;
+  var playlistUrl = id => `${baseUrl}/mobile/${platform.path}playlist.php?id=${id}`;
+  var withPostDetails = async result => {
+    try {
+      var post = await getNewTv(`post.php?id=${result.id}`);
+      if (post?.status !== "ok") return result;
+      var isSeries = post.type === "t";
+      return {
+        ...result,
+        type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
+        seasons: isSeries ? post.season?.length || 1 : void 0,
+        // TMDB requires an exact year match whenever any result has one, so omit years
+        // entirely for catalogs that report a series' latest-season year.
+        releaseDate: platform.seriesYearIsFirstAired ? post.year || void 0 : void 0
+      };
+    } catch {
+      return result;
+    }
+  };
+  var searchNewTv = async query => {
+    var data = await getNewTv(`search.php?s=${encodeURIComponent(query)}`);
+    if (data?.status !== "y") throw new Error("NewTV search unavailable");
+    return Promise.all((data.searchResult ?? []).map(item => {
+      var id = String(item.id);
+      return withPostDetails({
+        id,
+        title: item.t,
+        url: postUrl(id),
+        image: platform.poster(id)
+      });
+    }));
+  };
+  var searchViaSession = async query => {
+    var data = await getVerified(`/mobile/${platform.path}search.php?s=${encodeURIComponent(query)}&t=${now()}`, rejectedStatus);
+    return (data.searchResult ?? []).map(item => {
+      var id = String(item.id);
+      return {
+        id,
+        title: item.t,
+        url: postUrl(id),
+        image: platform.poster(id),
+        releaseDate: item.y,
+        type: item.r === "Series" ? TvTypeEnum.TVSERIES : item.r ? TvTypeEnum.MOVIE : void 0
+      };
+    });
+  };
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    warmUpSession();
+    try {
+      var results = await searchNewTv(query).catch(() => searchViaSession(query));
+      return {
+        currentPage: page,
+        hasNextPage: false,
+        results
+      };
+    } catch (err) {
+      throw new Error(`${config.name} search failed: ${err.message}`);
+    }
+  };
+  var mapEpisode = (ep, fallbackSeason) => ({
+    id: ep.id,
+    title: ep.t,
+    number: parseInt(ep.ep.replace(/\D/g, ""), 10) || void 0,
+    season: parseInt(ep.s.replace(/\D/g, ""), 10) || fallbackSeason,
+    url: playlistUrl(ep.id),
+    description: ep.ep_desc,
+    duration: ep.time,
+    image: platform.episodeImage(ep.id)
+  });
+  var movieEpisodes = (mediaId, title) => [{
+    id: mediaId,
+    title: title || "Full Movie",
+    number: 1,
+    season: 1,
+    url: playlistUrl(mediaId)
+  }];
+  var fetchSeasonEpisodes = async (seasonId, seriesId, seasonNumber) => {
+    var token = await getSessionToken();
+    var episodes = [];
+    for (var page = 1; page <= 20; page++) {
+      var {
+        data
+      } = await axios.get(`${baseUrl}/mobile/${platform.path}episodes.php?s=${seasonId}&series=${seriesId}&t=${now()}&page=${page}`, {
+        headers: requestHeaders(token)
+      });
+      for (var ep of data.episodes ?? []) {
+        if (ep) episodes.push(mapEpisode(ep, seasonNumber));
+      }
+      if (!data.nextPageShow) break;
+    }
+    return episodes;
+  };
+  var splitList = value => value ? value.split(",").map(v => v.trim()).filter(Boolean) : [];
+  var baseInfo = (mediaId, post) => ({
+    id: mediaId,
+    title: post.title || "",
+    url: postUrl(mediaId),
+    type: post.type === "t" ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
+    image: platform.poster(mediaId),
+    cover: platform.cover(mediaId),
+    releaseDate: post.year || void 0
+  });
+  var mapNewTvEpisode = (ep, season) => ({
+    id: ep.id,
+    title: ep.t,
+    number: parseInt(ep.ep, 10) || void 0,
+    season,
+    url: playlistUrl(ep.id),
+    description: ep.ep_desc,
+    duration: ep.info?.find(part => /^\d+\s*m(in)?$/i.test(part)),
+    // Only some catalogs include an air date, e.g. "9 Jun 2021".
+    releaseDate: ep.info?.find(part => /[a-z]/i.test(part) && /\b\d{4}\b/.test(part)),
+    image: platform.episodeImage(ep.id)
+  });
+  var fetchNewTvSeasonEpisodes = async (seasonId, seriesId, season) => {
+    var episodes = [];
+    for (var page = 1; page <= 20; page++) {
+      var data = await getNewTv(`episodes.php?id=${seasonId}&series=${seriesId}&page=${page}`);
+      for (var ep of data.episodes ?? []) {
+        if (ep) episodes.push(mapNewTvEpisode(ep, season));
+      }
+      if (!data.nextPageShow) break;
+    }
+    return episodes;
+  };
+  var fetchMediaInfoNewTv = async mediaId => {
+    var post = await getNewTv(`post.php?id=${mediaId}`);
+    if (post?.status !== "ok") throw new Error("NewTV title unavailable");
+    var detail = key => post.moredetails?.find(d => d.k === key)?.v;
+    var info = {
+      ...baseInfo(mediaId, post),
+      genres: splitList(detail("Genre") ?? detail("HotStar Genres") ?? detail("IMDB Genres")),
+      casts: splitList(detail("Cast")),
+      rating: parseFloat(detail("IMDB Rating") ?? "") || void 0,
+      duration: post.type === "t" ? void 0 : post.runtime,
+      description: post.desc || ""
+    };
+    if (post.type !== "t") {
+      info.episodes = movieEpisodes(mediaId, post.title);
+      return info;
+    }
+    if (post.season?.length) {
+      var perSeason = await Promise.all(post.season.map((season, index) => fetchNewTvSeasonEpisodes(season.id, mediaId, parseInt(/(\d+)/.exec(season.s)?.[1] ?? "", 10) || index + 1)));
+      info.episodes = perSeason.flat();
+    } else {
+      info.episodes = (post.episodes ?? []).filter(ep => Boolean(ep)).map(ep => mapNewTvEpisode(ep, 1));
+    }
+    info.totalEpisodes = info.episodes.length;
+    var airYears = info.episodes.map(ep => /\b(\d{4})\b/.exec(String(ep.releaseDate ?? ""))?.[1]).filter(year => Boolean(year));
+    if (airYears.length) info.releaseDate = airYears.sort()[0];
+    return info;
+  };
+  var fetchMediaInfoViaSession = async mediaId => {
+    var post = await getVerified(`/mobile/${platform.path}post.php?id=${mediaId}&t=${now()}`, rejectedStatus);
+    var info = {
+      ...baseInfo(mediaId, post),
+      genres: splitList(post.genre),
+      casts: splitList(post.cast),
+      duration: post.type === "t" ? void 0 : post.runtime,
+      description: post.desc || post.m_desc || ""
+    };
+    if (post.type !== "t") {
+      info.episodes = movieEpisodes(mediaId, post.title);
+      return info;
+    }
+    if (post.season?.length) {
+      var perSeason = await Promise.all(post.season.map(season => fetchSeasonEpisodes(season.id, mediaId, parseInt(season.s.replace(/\D/g, ""), 10) || 1)));
+      info.episodes = perSeason.flat();
+    } else {
+      info.episodes = (post.episodes ?? []).filter(ep => Boolean(ep)).map(ep => mapEpisode(ep, 1));
+    }
+    info.totalEpisodes = info.episodes.length;
+    return info;
+  };
+  var fetchMediaInfo = async mediaId => {
+    warmUpSession();
+    try {
+      return await fetchMediaInfoNewTv(mediaId).catch(() => fetchMediaInfoViaSession(mediaId));
+    } catch (err) {
+      throw new Error(`${config.name} fetchMediaInfo failed: ${err.message}`);
+    }
+  };
+  var playlistPath = episodeId => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
+  var fetchEpisodeServers = async (episodeId, mediaId) => {
+    return [{
+      name: platform.label,
+      url: `${baseUrl}${playlistPath(episodeId)}`
+    }];
+  };
+  var qualityFromLabel = label => {
+    var normalized = label.toLowerCase();
+    if (normalized.includes("full hd")) return "1080p";
+    if (normalized.includes("mid hd")) return "720p";
+    if (normalized.includes("low hd")) return "480p";
+    if (normalized.includes("auto")) return "auto";
+    return label;
+  };
+  var fetchEpisodeSources = async (episodeId, mediaId) => {
+    try {
+      var data = await getVerified(playlistPath(episodeId), res => {
+        var playlist2 = Array.isArray(res) ? res[0] : res;
+        return Boolean(playlist2?.sources?.some(s => s.file.includes("in=unknown")));
+      });
+      var playlist = Array.isArray(data) ? data[0] : data;
+      if (!playlist?.sources?.length) throw new Error("No sources in playlist");
+      var sources = playlist.sources.map(s => ({
+        url: s.file.startsWith("http") ? s.file : `${baseUrl}${s.file}`,
+        quality: qualityFromLabel(s.label || ""),
+        isM3U8: true
+      }));
+      var subtitles = (playlist.tracks ?? []).filter(t => t.kind === "captions" && t.file).map(t => ({
+        url: t.file.startsWith("//") ? `https:${t.file}` : t.file,
+        lang: t.label || t.language || "Unknown"
+      }));
+      return {
+        // The CDN serving variant playlists and segments rejects requests without this Referer.
+        headers: {
+          "Referer": `${baseUrl}/`,
+          "User-Agent": APP_UA
+        },
+        sources,
+        subtitles
+      };
+    } catch (err) {
+      throw new Error(`${config.name} fetchEpisodeSources failed: ${err.message}`);
+    }
+  };
+  var fetchHlsPlaylist = async episodeId => {
+    try {
+      var {
+        sources,
+        headers
+      } = await fetchEpisodeSources(episodeId);
+      var master = sources.find(s => s.quality === "auto") ?? sources[0];
+      var {
+        data
+      } = await axios.get(master.url, {
+        headers,
+        responseType: "text"
+      });
+      return data;
+    } catch (err) {
+      throw new Error(`${config.name} fetchHlsPlaylist failed: ${err.message}`);
+    }
+  };
+  return {
+    ...config,
+    supportedTypes,
+    search,
+    fetchMediaInfo,
+    fetchEpisodeServers,
+    fetchEpisodeSources,
+    fetchHlsPlaylist
+  };
+}
+function createNetflixMirror(ctx, customBaseURL) {
+  return createNetMirror(ctx, PLATFORMS.nf, customBaseURL);
+}
+function createPrimeMirror(ctx, customBaseURL) {
+  return createNetMirror(ctx, PLATFORMS.pv, customBaseURL);
+}
+function createDisneyMirror(ctx, customBaseURL) {
+  return createNetMirror(ctx, PLATFORMS.hs, customBaseURL);
+}
+if (module.exports !== exports) Object.assign(exports, module.exports);

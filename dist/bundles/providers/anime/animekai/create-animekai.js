@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -30,7 +35,7 @@ __export(create_animekai_exports, {
 });
 module.exports = __toCommonJS(create_animekai_exports);
 function createAnimeKai(ctx, customBaseURL) {
-  const {
+  var {
     axios,
     load,
     enums,
@@ -39,17 +44,17 @@ function createAnimeKai(ctx, customBaseURL) {
     PolyURL,
     extractors
   } = ctx;
-  const {
+  var {
     StreamingServers: StreamingServersEnum,
     MediaStatus: MediaStatusEnum,
     SubOrDub: SubOrDubEnum
   } = enums;
-  const {
+  var {
     MegaUp
   } = extractors;
-  const baseUrl = createCustomBaseUrl("https://anikai.to", customBaseURL);
-  const apiBase = "https://enc-dec.app/api";
-  const config = {
+  var baseUrl = createCustomBaseUrl("https://anikai.to", customBaseURL);
+  var apiBase = "https://enc-dec.app/api";
+  var config = {
     name: "AnimeKai",
     languages: "en",
     classPath: "ANIME.AnimeKai",
@@ -59,7 +64,7 @@ function createAnimeKai(ctx, customBaseURL) {
     isWorking: true,
     isDubAvailableSeparately: true
   };
-  const buildHeaders = () => ({
+  var buildHeaders = () => ({
     "User-Agent": USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
     "Connection": "keep-alive",
     "Accept": "text/html, */*; q=0.01",
@@ -74,19 +79,19 @@ function createAnimeKai(ctx, customBaseURL) {
     "Referer": `${config.baseUrl}/`,
     "Cookie": "__p_mov=1; usertype=guest; session=vLrU4aKItp0QltI2asH83yugyWDsSSQtyl9sxWKO"
   });
-  const normalizePage = function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var normalizePage = function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return page <= 0 ? 1 : page;
   };
-  const scrapeCard = async $ => {
-    const results = [];
+  var scrapeCard = async $ => {
+    var results = [];
     $(".aitem").each((_, element) => {
-      const card = $(element);
-      const anchor = card.find("div.inner > a");
-      const id = anchor.attr("href")?.replace("/watch/", "");
+      var card = $(element);
+      var anchor = card.find("div.inner > a");
+      var id = anchor.attr("href")?.replace("/watch/", "");
       if (!id) return;
-      const infoElements = card.find(".info").children();
-      const type = infoElements.last()?.text().trim();
+      var infoElements = card.find(".info").children();
+      var type = infoElements.last()?.text().trim();
       results.push({
         id,
         title: anchor.text().trim(),
@@ -101,24 +106,24 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     return results;
   };
-  const scrapeCardPage = async url => {
-    const res = {
+  var scrapeCardPage = async url => {
+    var res = {
       currentPage: 0,
       hasNextPage: false,
       totalPages: 0,
       results: []
     };
-    const {
+    var {
       data
     } = await axios.get(url, {
       headers: buildHeaders()
     });
-    const $ = load(data);
-    const pagination = $("ul.pagination");
+    var $ = load(data);
+    var pagination = $("ul.pagination");
     res.currentPage = parseInt(pagination.find(".page-item.active span.page-link").text().trim(), 10) || 0;
-    const nextHref = pagination.find(".page-item.active").next().find("a.page-link").attr("href");
+    var nextHref = pagination.find(".page-item.active").next().find("a.page-link").attr("href");
     res.hasNextPage = Boolean(nextHref && nextHref.includes("page="));
-    const totalHref = pagination.find(".page-item:last-child a.page-link").attr("href");
+    var totalHref = pagination.find(".page-item:last-child a.page-link").attr("href");
     res.totalPages = totalHref && totalHref.includes("page=") ? parseInt(totalHref.split("page=")[1] ?? "0", 10) || 0 : res.currentPage;
     res.results = await scrapeCard($);
     if (res.results.length === 0) {
@@ -128,86 +133,86 @@ function createAnimeKai(ctx, customBaseURL) {
     }
     return res;
   };
-  const search = async function (query) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const normalizedPage = normalizePage(page);
-    const sanitizedQuery = query.replace(/[^\w]+/g, "+");
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var normalizedPage = normalizePage(page);
+    var sanitizedQuery = query.replace(/[^\w]+/g, "+");
     return scrapeCardPage(`${config.baseUrl}/browser?keyword=${sanitizedQuery}&page=${normalizedPage}`);
   };
-  const fetchLatestCompleted = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchLatestCompleted = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/completed?page=${normalizePage(page)}`);
   };
-  const fetchRecentlyAdded = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchRecentlyAdded = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/recent?page=${normalizePage(page)}`);
   };
-  const fetchRecentlyUpdated = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchRecentlyUpdated = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/updates?page=${normalizePage(page)}`);
   };
-  const fetchNewReleases = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchNewReleases = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/new-releases?page=${normalizePage(page)}`);
   };
-  const fetchMovie = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchMovie = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/movie?page=${normalizePage(page)}`);
   };
-  const fetchTV = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchTV = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/tv?page=${normalizePage(page)}`);
   };
-  const fetchOVA = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchOVA = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/ova?page=${normalizePage(page)}`);
   };
-  const fetchONA = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchONA = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/ona?page=${normalizePage(page)}`);
   };
-  const fetchSpecial = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchSpecial = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return scrapeCardPage(`${config.baseUrl}/special?page=${normalizePage(page)}`);
   };
-  const fetchGenres = async () => {
-    const genres = [];
-    const {
+  var fetchGenres = async () => {
+    var genres = [];
+    var {
       data
     } = await axios.get(`${config.baseUrl}/home`, {
       headers: buildHeaders()
     });
-    const $ = load(data);
+    var $ = load(data);
     $("#menu").find("ul.c4 li a").each((_, element) => {
-      const genreText = $(element).text().toLowerCase();
+      var genreText = $(element).text().toLowerCase();
       if (genreText) genres.push(genreText);
     });
     return genres;
   };
-  const genreSearch = async function (genre) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+  var genreSearch = async function (genre) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     if (!genre) {
       throw new Error("genre is empty");
     }
     return scrapeCardPage(`${config.baseUrl}/genres/${genre}?page=${normalizePage(page)}`);
   };
-  const fetchSchedule = async function () {
-    let date = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (/* @__PURE__ */new Date()).toISOString().split("T")[0];
-    const res = {
+  var fetchSchedule = async function () {
+    var date = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : (/* @__PURE__ */new Date()).toISOString().split("T")[0];
+    var res = {
       results: []
     };
-    const scheduleUnix = Math.floor((/* @__PURE__ */new Date(`${date}T00:00:00Z`)).getTime() / 1e3);
-    const {
+    var scheduleUnix = Math.floor((/* @__PURE__ */new Date(`${date}T00:00:00Z`)).getTime() / 1e3);
+    var {
       data
     } = await axios.get(`${config.baseUrl}/ajax/schedule/items?tz=5.5&time=${scheduleUnix}`, {
       headers: buildHeaders()
     });
-    const $ = load(data.result);
+    var $ = load(data.result);
     $("ul.collapsed li").each((_, element) => {
-      const card = $(element);
-      const titleElement = card.find("span.title");
-      const episodeText = card.find("span").last().text().trim();
-      const id = card.find("a").attr("href")?.split("/")[2] ?? "";
+      var card = $(element);
+      var titleElement = card.find("span.title");
+      var episodeText = card.find("span").last().text().trim();
+      var id = card.find("a").attr("href")?.split("/")[2] ?? "";
       if (!id) return;
       res.results.push({
         id,
@@ -219,22 +224,22 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     return res;
   };
-  const fetchSpotlight = async () => {
-    const res = {
+  var fetchSpotlight = async () => {
+    var res = {
       results: []
     };
-    const {
+    var {
       data
     } = await axios.get(`${config.baseUrl}/home`, {
       headers: buildHeaders()
     });
-    const $ = load(data);
+    var $ = load(data);
     $("div.swiper-wrapper > div.swiper-slide").each((_, element) => {
-      const card = $(element);
-      const titleElement = card.find("div.detail > p.title");
-      const id = card.find("div.swiper-ctrl > a.btn").attr("href")?.replace("/watch/", "") || "";
+      var card = $(element);
+      var titleElement = card.find("div.detail > p.title");
+      var id = card.find("div.swiper-ctrl > a.btn").attr("href")?.replace("/watch/", "") || "";
       if (!id) return;
-      const infoElements = card.find("div.detail > div.info").children();
+      var infoElements = card.find("div.detail > div.info").children();
       res.results.push({
         id,
         title: titleElement.text(),
@@ -252,22 +257,22 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     return res;
   };
-  const fetchSearchSuggestions = async query => {
-    const {
+  var fetchSearchSuggestions = async query => {
+    var {
       data
     } = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${query.replace(/[^\w]+/g, "+")}`, {
       headers: buildHeaders()
     });
-    const $ = load(data.result.html);
-    const res = {
+    var $ = load(data.result.html);
+    var res = {
       results: []
     };
     $("a.aitem").each((_, element) => {
-      const card = $(element);
-      const id = card.attr("href")?.split("/")[2];
+      var card = $(element);
+      var id = card.attr("href")?.split("/")[2];
       if (!id) return;
-      const infoElements = card.find(".info").children();
-      const titleElement = card.find(".title");
+      var infoElements = card.find(".info").children();
+      var titleElement = card.find(".title");
       res.results.push({
         id,
         title: titleElement.text().trim(),
@@ -283,17 +288,17 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     return res;
   };
-  const fetchAnimeInfo = async id => {
-    const info = {
+  var fetchAnimeInfo = async id => {
+    var info = {
       id,
       title: ""
     };
-    const {
+    var {
       data
     } = await axios.get(`${config.baseUrl}/watch/${id}`, {
       headers: buildHeaders()
     });
-    const $ = load(data);
+    var $ = load(data);
     info.title = $(".entity-scroll > .title").text().trim();
     info.japaneseTitle = $(".entity-scroll > .title").attr("data-jp")?.trim();
     info.image = $("div.poster > div > img").attr("src");
@@ -302,8 +307,8 @@ function createAnimeKai(ctx, customBaseURL) {
     info.url = `${config.baseUrl}/watch/${id}`;
     info.recommendations = [];
     $("section.sidebar-section:not(#related-anime) .aitem-col .aitem").each((_, element) => {
-      const card = $(element);
-      const recommendationId = card.attr("href")?.replace("/watch/", "");
+      var card = $(element);
+      var recommendationId = card.attr("href")?.replace("/watch/", "");
       if (!recommendationId) return;
       info.recommendations?.push({
         id: recommendationId,
@@ -319,9 +324,9 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     info.relations = [];
     $("section#related-anime .tab-body .aitem-col").each((_, element) => {
-      const card = $(element);
-      const relationAnchor = card.find("a.aitem");
-      const relationId = relationAnchor.attr("href")?.replace("/watch/", "");
+      var card = $(element);
+      var relationAnchor = card.find("a.aitem");
+      var relationId = relationAnchor.attr("href")?.replace("/watch/", "");
       if (!relationId) return;
       info.relations?.push({
         id: relationId,
@@ -336,8 +341,8 @@ function createAnimeKai(ctx, customBaseURL) {
         episodes: parseInt(card.find(".info").children().eq(-3).text().trim() || card.find(".info span.sub")?.text() || "0", 10) || 0
       });
     });
-    const hasSub = $(".entity-scroll > .info > span.sub").length > 0;
-    const hasDub = $(".entity-scroll > .info > span.dub").length > 0;
+    var hasSub = $(".entity-scroll > .info > span.sub").length > 0;
+    var hasDub = $(".entity-scroll > .info > span.dub").length > 0;
     if (hasSub && hasDub) {
       info.subOrDub = SubOrDubEnum.BOTH;
     } else if (hasSub) {
@@ -349,10 +354,10 @@ function createAnimeKai(ctx, customBaseURL) {
     info.hasDub = hasDub;
     info.genres = [];
     $(".entity-scroll > .detail").find("div:contains('Genres')").each(function () {
-      const genre = $(this).text().trim();
+      var genre = $(this).text().trim();
       if (genre) info.genres?.push(genre);
     });
-    const statusText = $(".entity-scroll > .detail").find("div:contains('Status') > span").text().trim();
+    var statusText = $(".entity-scroll > .detail").find("div:contains('Status') > span").text().trim();
     switch (statusText) {
       case "Completed":
         info.status = MediaStatusEnum.COMPLETED;
@@ -368,31 +373,31 @@ function createAnimeKai(ctx, customBaseURL) {
         break;
     }
     info.season = $(".entity-scroll > .detail").find("div:contains('Premiered') > span").text().trim();
-    const totalEpisodes = $("div.eplist > ul > li").length;
+    var totalEpisodes = $("div.eplist > ul > li").length;
     info.totalEpisodes = totalEpisodes;
-    const aniId = $(".rate-box#anime-rating").attr("data-id");
+    var aniId = $(".rate-box#anime-rating").attr("data-id");
     if (!aniId) {
       throw new Error("Failed to locate anime id");
     }
-    const episodeToken = await GenerateToken(aniId);
-    const episodesResponse = await axios.get(`${config.baseUrl}/ajax/episodes/list?ani_id=${aniId}&_=${episodeToken}`, {
+    var episodeToken = await GenerateToken(aniId);
+    var episodesResponse = await axios.get(`${config.baseUrl}/ajax/episodes/list?ani_id=${aniId}&_=${episodeToken}`, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "Referer": `${config.baseUrl}/watch/${id}`,
         ...buildHeaders()
       }
     });
-    const $$ = load(episodesResponse.data.result);
-    const subCount = parseInt($(".entity-scroll > .info > span.sub").text().trim() || "0", 10);
-    const dubCount = parseInt($(".entity-scroll > .info > span.dub").text().trim() || "0", 10);
+    var $$ = load(episodesResponse.data.result);
+    var subCount = parseInt($(".entity-scroll > .info > span.sub").text().trim() || "0", 10);
+    var dubCount = parseInt($(".entity-scroll > .info > span.dub").text().trim() || "0", 10);
     info.episodes = [];
     $$("div.eplist > ul > li > a").each((_, element) => {
-      const el = $$(element);
-      const href = `${el.attr("href")}ep=${el.attr("num")}` || "";
-      const number = parseInt(el.attr("data-number") || "0", 10);
-      const token = el.attr("token");
+      var el = $$(element);
+      var href = `${el.attr("href")}ep=${el.attr("num")}` || "";
+      var number = parseInt(el.attr("data-number") || "0", 10);
+      var token = el.attr("token");
       if (!token) return;
-      const epId = `${info.id}$ep=${el.attr("num")}$token=${token}`;
+      var epId = `${info.id}$ep=${el.attr("num")}$token=${token}`;
       info.episodes?.push({
         id: epId,
         number,
@@ -405,25 +410,25 @@ function createAnimeKai(ctx, customBaseURL) {
     });
     return info;
   };
-  const fetchEpisodeServers = async function (episodeId) {
-    let subOrDub = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SubOrDubEnum.SUB;
-    let requestUrl = episodeId;
+  var fetchEpisodeServers = async function (episodeId) {
+    var subOrDub = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SubOrDubEnum.SUB;
+    var requestUrl = episodeId;
     if (!episodeId.startsWith(`${config.baseUrl}/ajax`)) {
-      const token = episodeId.split("$token=")[1];
+      var token = episodeId.split("$token=")[1];
       if (!token) {
         throw new Error("Invalid episodeId format: missing token");
       }
-      const listToken = await GenerateToken(token);
+      var listToken = await GenerateToken(token);
       requestUrl = `${config.baseUrl}/ajax/links/list?token=${token}&_=${listToken}`;
     }
-    const {
+    var {
       data
     } = await axios.get(requestUrl, {
       headers: buildHeaders()
     });
-    const $ = load(data.result);
-    const servers = [];
-    const serverGroups = subOrDub === SubOrDubEnum.SUB ? [{
+    var $ = load(data.result);
+    var servers = [];
+    var serverGroups = subOrDub === SubOrDubEnum.SUB ? [{
       selector: '.server-items.lang-group[data-id="sub"] .server',
       type: "hardsub"
     }, {
@@ -433,21 +438,21 @@ function createAnimeKai(ctx, customBaseURL) {
       selector: '.server-items.lang-group[data-id="dub"] .server',
       type: "dub"
     }];
-    const serverPromises = [];
-    for (const group of serverGroups) {
+    var serverPromises = [];
+    var _loop2 = async function (group) {
       $(group.selector).each((_, server) => {
-        const serverId = $(server).attr("data-lid");
+        var serverId = $(server).attr("data-lid");
         if (!serverId) return;
-        const serverName = $(server).text().trim();
-        const serverType = group.type;
+        var serverName = $(server).text().trim();
+        var serverType = group.type;
         serverPromises.push((async () => {
-          const viewToken = await GenerateToken(serverId);
-          const {
+          var viewToken = await GenerateToken(serverId);
+          var {
             data: linkData
           } = await axios.get(`${config.baseUrl}/ajax/links/view?id=${serverId}&_=${viewToken}`, {
             headers: buildHeaders()
           });
-          const decoded = await DecodeIframeData(linkData.result);
+          var decoded = await DecodeIframeData(linkData.result);
           servers.push({
             name: `megaup ${serverName}-${serverType}`.toLowerCase(),
             url: decoded.url,
@@ -462,15 +467,18 @@ function createAnimeKai(ctx, customBaseURL) {
           });
         })());
       });
+    };
+    for (var group of serverGroups) {
+      await _loop2(group);
     }
     await Promise.all(serverPromises);
     return servers;
   };
-  const fetchEpisodeSources = async function (episodeId) {
-    let server = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : StreamingServersEnum.MegaUp;
-    let subOrDub = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : SubOrDubEnum.SUB;
+  var fetchEpisodeSources = async function (episodeId) {
+    var server = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : StreamingServersEnum.MegaUp;
+    var subOrDub = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : SubOrDubEnum.SUB;
     if (episodeId.startsWith("http")) {
-      const serverUrl = new PolyURL(episodeId);
+      var serverUrl = new PolyURL(episodeId);
       switch (server) {
         case StreamingServersEnum.MegaUp:
           return {
@@ -491,13 +499,13 @@ function createAnimeKai(ctx, customBaseURL) {
       }
     }
     try {
-      const servers = await fetchEpisodeServers(episodeId, subOrDub);
-      const i = servers.findIndex(s => s.name.includes(server.toLowerCase()));
+      var servers = await fetchEpisodeServers(episodeId, subOrDub);
+      var i = servers.findIndex(s => s.name.includes(server.toLowerCase()));
       if (i === -1) {
         throw new Error(`Server ${server} not found. Available servers: ${servers.map(s => s.name).join(", ")}`);
       }
-      const serverUrl = new URL(servers[i].url);
-      const sources = await fetchEpisodeSources(serverUrl.href, server, subOrDub);
+      var _serverUrl = new URL(servers[i].url);
+      var sources = await fetchEpisodeSources(_serverUrl.href, server, subOrDub);
       sources.intro = servers[i]?.intro;
       sources.outro = servers[i]?.outro;
       return sources;
@@ -505,9 +513,9 @@ function createAnimeKai(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const GenerateToken = async text => {
+  var GenerateToken = async text => {
     try {
-      const {
+      var {
         data
       } = await axios.get(`${apiBase}/enc-kai`, {
         params: {
@@ -519,9 +527,9 @@ function createAnimeKai(ctx, customBaseURL) {
       throw new Error(error.message);
     }
   };
-  const DecodeIframeData = async payload => {
+  var DecodeIframeData = async payload => {
     try {
-      const {
+      var {
         data
       } = await axios.post(`${apiBase}/dec-kai`, {
         text: payload

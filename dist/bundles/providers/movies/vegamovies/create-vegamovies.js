@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -30,7 +35,7 @@ __export(create_vegamovies_exports, {
 });
 module.exports = __toCommonJS(create_vegamovies_exports);
 var cleanTitle = raw => {
-  let t = raw;
+  var t = raw;
   t = t.replace(/^(?:Download|Watch)\s+/i, "");
   t = t.replace(/\s*[-–—:]?\s*\(?\b(?:Season\s*\d+|S\d{1,2})\b.*$/i, "");
   t = t.replace(/\s*\(\s*(?:19\d{2}|20\d{2})\s*\).*$/, "");
@@ -40,7 +45,7 @@ var cleanTitle = raw => {
   return t.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim().replace(/[-–—:|/]+$/, "").trim();
 };
 function createVegaMovies(ctx, customBaseURL) {
-  const {
+  var {
     load,
     extractors,
     enums,
@@ -49,15 +54,15 @@ function createVegaMovies(ctx, customBaseURL) {
     PolyURL,
     USER_AGENT
   } = ctx;
-  const {
+  var {
     HubCloud
   } = extractors;
-  const {
+  var {
     StreamingServers: StreamingServersEnum,
     TvType: TvTypeEnum
   } = enums;
-  const baseUrl = createCustomBaseUrl("https://new2.vegamovies.futbol", customBaseURL);
-  const config = {
+  var baseUrl = createCustomBaseUrl("https://new2.vegamovies.futbol", customBaseURL);
+  var config = {
     name: "VegaMovies",
     languages: "all",
     classPath: "MOVIES.VegaMovies",
@@ -66,54 +71,54 @@ function createVegaMovies(ctx, customBaseURL) {
     isNSFW: false,
     isWorking: true
   };
-  const defaultHeaders = {
+  var defaultHeaders = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
     "Cookie": "xla=s4t",
     "User-Agent": USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
   };
-  const supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
-  const extractYear = text => {
-    const match = text.match(/\b(19\d{2}|20\d{2})\b/);
+  var supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+  var extractYear = text => {
+    var match = text.match(/\b(19\d{2}|20\d{2})\b/);
     return match ? match[1] : void 0;
   };
-  const extractSeasonNumber = text => {
-    const match = text.match(/season\s*(\d+)|s(\d+)/i);
+  var extractSeasonNumber = text => {
+    var match = text.match(/season\s*(\d+)|s(\d+)/i);
     if (match) {
-      const num = match[1] || match[2];
+      var num = match[1] || match[2];
       if (num) return parseInt(num, 10);
     }
     return 1;
   };
-  const countSeasons = text => {
-    const range = /seasons?\s*(\d+)\s*(?:-|–|—|to|&)\s*(\d+)/i.exec(text);
+  var countSeasons = text => {
+    var range = /seasons?\s*(\d+)\s*(?:-|–|—|to|&)\s*(\d+)/i.exec(text);
     if (range) return Math.abs(parseInt(range[2], 10) - parseInt(range[1], 10)) + 1;
     return /season\s*\d+/i.test(text) ? 1 : void 0;
   };
-  const resultMeta = (rawTitle, slug, isSeries) => ({
+  var resultMeta = (rawTitle, slug, isSeries) => ({
     type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
     releaseDate: isSeries ? void 0 : extractYear(rawTitle),
     seasons: isSeries ? countSeasons(rawTitle) ?? countSeasons(slug.replace(/-(\d+)-(\d+)/, " $1-$2")) : void 0
   });
-  const parseHtmlGrid = html => {
-    const $ = load(html);
-    const results = [];
-    const seen = /* @__PURE__ */new Set();
-    const items = $(".movies-grid, #moviesGridMain, .blog-items, .post-list, #archive-container").children("a, article, .entry-list-item, .poster-card");
+  var parseHtmlGrid = html => {
+    var $ = load(html);
+    var results = [];
+    var seen = /* @__PURE__ */new Set();
+    var items = $(".movies-grid, #moviesGridMain, .blog-items, .post-list, #archive-container").children("a, article, .entry-list-item, .poster-card");
     items.each((_, el) => {
-      const element = $(el);
-      const linkEl = element.is("a") ? element : element.find("a").first();
-      const href = linkEl.attr("href") || element.attr("href") || "";
+      var element = $(el);
+      var linkEl = element.is("a") ? element : element.find("a").first();
+      var href = linkEl.attr("href") || element.attr("href") || "";
       if (!href || href === "#" || href === "/") return;
-      const postUrl = new PolyURL(href, `${config.baseUrl}/`);
-      const cleanId = postUrl.pathname.replace(/^\/|\/$/g, "");
+      var postUrl = new PolyURL(href, `${config.baseUrl}/`);
+      var cleanId = postUrl.pathname.replace(/^\/|\/$/g, "");
       if (!cleanId || seen.has(cleanId)) return;
       seen.add(cleanId);
-      const rawTitle = element.find(".poster-title, .entry-title, .post-title").text().trim() || element.find("img").attr("alt") || linkEl.attr("aria-label") || linkEl.attr("title") || "";
-      const isSeries = /\b(?:season|s\d+|web series|series)\b/i.test(rawTitle) || href.includes("season") || href.includes("series");
-      const title = cleanTitle(rawTitle);
+      var rawTitle = element.find(".poster-title, .entry-title, .post-title").text().trim() || element.find("img").attr("alt") || linkEl.attr("aria-label") || linkEl.attr("title") || "";
+      var isSeries = /\b(?:season|s\d+|web series|series)\b/i.test(rawTitle) || href.includes("season") || href.includes("series");
+      var title = cleanTitle(rawTitle);
       if (!title) return;
-      let image = element.find("img").attr("data-lazy-src") || element.find("img").attr("data-src") || element.find("img").attr("src") || "";
+      var image = element.find("img").attr("data-lazy-src") || element.find("img").attr("data-src") || element.find("img").attr("src") || "";
       if (image.startsWith("//")) {
         image = `https:${image}`;
       }
@@ -127,16 +132,16 @@ function createVegaMovies(ctx, customBaseURL) {
     });
     return results;
   };
-  const search = async function (query) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const searchResult = {
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var searchResult = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const searchUrl = `${config.baseUrl}/search.php?q=${encodeURIComponent(query)}&page=${page}`;
-      const {
+      var searchUrl = `${config.baseUrl}/search.php?q=${encodeURIComponent(query)}&page=${page}`;
+      var {
         data
       } = await axios.get(searchUrl, {
         headers: {
@@ -145,19 +150,19 @@ function createVegaMovies(ctx, customBaseURL) {
         }
       });
       if (data && Array.isArray(data.hits) && data.hits.length > 0) {
-        const perPage = data.request_params?.per_page || 15;
-        const total = typeof data.found === "number" ? data.found : 0;
+        var perPage = data.request_params?.per_page || 15;
+        var total = typeof data.found === "number" ? data.found : 0;
         searchResult.hasNextPage = page * perPage < total;
-        for (const hit of data.hits) {
-          const doc = hit.document;
+        for (var hit of data.hits) {
+          var doc = hit.document;
           if (!doc) continue;
-          const permalink = doc.permalink || "";
-          const postUrl = new PolyURL(permalink, `${config.baseUrl}/`);
-          const cleanId = postUrl.pathname.replace(/^\/|\/$/g, "");
-          const rawPostTitle = doc.post_title || "";
-          const title = cleanTitle(rawPostTitle);
-          const categories = Array.isArray(doc.category) ? doc.category : [];
-          const isSeries = categories.some(c => /series/i.test(c)) || /\b(?:season|s\d+|web series|series)\b/i.test(rawPostTitle);
+          var permalink = doc.permalink || "";
+          var postUrl = new PolyURL(permalink, `${config.baseUrl}/`);
+          var cleanId = postUrl.pathname.replace(/^\/|\/$/g, "");
+          var rawPostTitle = doc.post_title || "";
+          var title = cleanTitle(rawPostTitle);
+          var categories = Array.isArray(doc.category) ? doc.category : [];
+          var isSeries = categories.some(c => /series/i.test(c)) || /\b(?:season|s\d+|web series|series)\b/i.test(rawPostTitle);
           searchResult.results.push({
             id: cleanId,
             title,
@@ -170,37 +175,37 @@ function createVegaMovies(ctx, customBaseURL) {
       }
     } catch {}
     try {
-      const fallbackUrl = page === 1 ? `${config.baseUrl}/?s=${encodeURIComponent(query)}` : `${config.baseUrl}/page/${page}/?s=${encodeURIComponent(query)}`;
-      const {
-        data
+      var fallbackUrl = page === 1 ? `${config.baseUrl}/?s=${encodeURIComponent(query)}` : `${config.baseUrl}/page/${page}/?s=${encodeURIComponent(query)}`;
+      var {
+        data: _data
       } = await axios.get(fallbackUrl, {
         headers: {
           ...defaultHeaders,
           Referer: config.baseUrl
         }
       });
-      const $ = load(data);
-      searchResult.results = parseHtmlGrid(data);
-      const navSelector = ".pagination, .nav-links";
+      var $ = load(_data);
+      searchResult.results = parseHtmlGrid(_data);
+      var navSelector = ".pagination, .nav-links";
       searchResult.hasNextPage = $(navSelector).find('.next, a:contains("Next")').length > 0;
       return searchResult;
     } catch (err) {
       throw new Error(err.message);
     }
   };
-  const fetchMediaInfo = async mediaId => {
-    let fullUrl = mediaId;
+  var fetchMediaInfo = async mediaId => {
+    var fullUrl = mediaId;
     if (!fullUrl?.startsWith("http")) {
       fullUrl = `${config.baseUrl}/${(mediaId ?? "").replace(/^\//, "")}`;
     }
-    const cleanId = fullUrl.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, "");
-    const movieInfo = {
+    var cleanId = fullUrl.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, "");
+    var movieInfo = {
       id: cleanId,
       title: "",
       url: fullUrl
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(fullUrl, {
         headers: {
@@ -208,18 +213,18 @@ function createVegaMovies(ctx, customBaseURL) {
           Referer: config.baseUrl
         }
       });
-      const $ = load(data);
-      const content = $(".entry-content, .post-content").first();
-      const infoText = $("h3, h4").filter((_, el) => /(series|movie)\s*info/i.test($(el).text())).first().nextAll().slice(0, 2).text().replace(/\s+/g, " ");
-      const rawTitle = $("h1.entry-title").text().trim() || $('meta[property="og:title"]').attr("content") || $("h1").first().text().trim() || "";
+      var $ = load(data);
+      var content = $(".entry-content, .post-content").first();
+      var infoText = $("h3, h4").filter((_, el) => /(series|movie)\s*info/i.test($(el).text())).first().nextAll().slice(0, 2).text().replace(/\s+/g, " ");
+      var rawTitle = $("h1.entry-title").text().trim() || $('meta[property="og:title"]').attr("content") || $("h1").first().text().trim() || "";
       movieInfo.title = cleanTitle((rawTitle.split("|")[0] || "").trim());
-      let image = $('meta[property="og:image"]').attr("content") || content.find("img[data-lazy-src]").attr("data-lazy-src") || content.find("img[data-src]").attr("data-src") || content.find("img").first().attr("src") || "";
+      var image = $('meta[property="og:image"]').attr("content") || content.find("img[data-lazy-src]").attr("data-lazy-src") || content.find("img[data-src]").attr("data-src") || content.find("img").first().attr("src") || "";
       if (image?.startsWith("//")) {
         image = `https:${image}`;
       }
       movieInfo.image = image;
-      let synopsis = "";
-      const synopsisHeader = $("h3, h4, h5").filter((_, el) => /synopsis|plot/i.test($(el).text()));
+      var synopsis = "";
+      var synopsisHeader = $("h3, h4, h5").filter((_, el) => /synopsis|plot/i.test($(el).text()));
       if (synopsisHeader.length > 0) {
         synopsis = synopsisHeader.next("p").text().trim();
       }
@@ -227,83 +232,83 @@ function createVegaMovies(ctx, customBaseURL) {
         synopsis = $('meta[property="og:description"]').attr("content")?.trim() || "";
       }
       movieInfo.description = synopsis;
-      const imdbMatch = $('a[href*="imdb.com"]').attr("href")?.match(/tt\d+/) || data.match(/tt\d{7,}/);
+      var imdbMatch = $('a[href*="imdb.com"]').attr("href")?.match(/tt\d+/) || data.match(/tt\d{7,}/);
       if (imdbMatch?.[0]) {
         movieInfo.imdbId = imdbMatch[0];
       }
-      const ratingText = $(".imdb-score, .starstruck-rating").text() || /IMDb Rating\W*([\d.]+)/i.exec(infoText)?.[1] || "";
-      const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
+      var ratingText = $(".imdb-score, .starstruck-rating").text() || /IMDb Rating\W*([\d.]+)/i.exec(infoText)?.[1] || "";
+      var ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
       if (ratingMatch?.[1]) {
         movieInfo.rating = parseFloat(ratingMatch[1]);
       }
       movieInfo.releaseDate = extractYear(/Released?\s*Year\s*:?\s*([^\s]+)/i.exec(infoText)?.[1] ?? "") ?? extractYear(movieInfo.title);
       movieInfo.genres = $('a[rel="category tag"], .category a').map((_, el) => $(el).text().trim()).get().filter(g => g && !g.includes("1080p") && !g.includes("720p") && !g.includes("480p"));
-      const pageText = `${movieInfo.title} ${content.text()}`;
-      const isSeries = /\b(?:web\s*series|season\s*\d+|s\d+\s*e\d+)\b/i.test(pageText) || $('a:contains("V-Cloud"), a:contains("vcloud")').length > 1;
+      var pageText = `${movieInfo.title} ${content.text()}`;
+      var isSeries = /\b(?:web\s*series|season\s*\d+|s\d+\s*e\d+)\b/i.test(pageText) || $('a:contains("V-Cloud"), a:contains("vcloud")').length > 1;
       movieInfo.type = isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE;
-      const episodesList = [];
+      var episodesList = [];
       if (movieInfo.type === TvTypeEnum.TVSERIES) {
-        const seasonPacks = [];
-        const getPackPriority = t => {
+        var seasonPacks = [];
+        var getPackPriority = t => {
           if (/1080p|2160p|4k/i.test(t)) return 3;
           if (/720p/i.test(t)) return 2;
           if (/480p/i.test(t)) return 1;
           return 0;
         };
-        const downloadHost = /nexdrive|vcloud|hubcloud|gdflix|fastdl|filepress/i;
+        var downloadHost = /nexdrive|vcloud|hubcloud|gdflix|fastdl|filepress/i;
         $("h3, h4, h5, p").each((_, element) => {
-          const el = $(element);
-          const blockText = el.text().trim();
+          var el = $(element);
+          var blockText = el.text().trim();
           if (!/season\s*\d+|s\d+/i.test(blockText)) return;
-          let nextP = el.next();
+          var nextP = el.next();
           while (nextP.length && !nextP.is("p") && !nextP.find("a[href]").length) {
             nextP = nextP.next();
           }
-          const links = nextP.find("a[href]").toArray().map(a => ({
+          var links = nextP.find("a[href]").toArray().map(a => ({
             href: $(a).attr("href") || "",
             text: $(a).text().trim()
           })).filter(l => l.href.startsWith("http") && downloadHost.test(l.href) && !/zip|batch|login/i.test(l.text));
           if (!links.length) return;
-          const preferred = links.find(l => /v-?cloud/i.test(l.text)) ?? links[0];
-          const best = links.reduce((acc, l) => getPackPriority(l.text) > getPackPriority(acc.text) ? l : acc, preferred);
+          var preferred = links.find(l => /v-?cloud/i.test(l.text)) ?? links[0];
+          var best = links.reduce((acc, l) => getPackPriority(l.text) > getPackPriority(acc.text) ? l : acc, preferred);
           seasonPacks.push({
             title: `${blockText} ${best.text}`,
             season: extractSeasonNumber(blockText),
             url: best.href
           });
         });
-        const selectedPacksBySeason = /* @__PURE__ */new Map();
-        for (const pack of seasonPacks) {
+        var selectedPacksBySeason = /* @__PURE__ */new Map();
+        for (var pack of seasonPacks) {
           if (!selectedPacksBySeason.has(pack.season)) {
             selectedPacksBySeason.set(pack.season, pack);
           } else {
-            const existing = selectedPacksBySeason.get(pack.season);
+            var existing = selectedPacksBySeason.get(pack.season);
             if (getPackPriority(pack.title) > getPackPriority(existing.title)) {
               selectedPacksBySeason.set(pack.season, pack);
             }
           }
         }
-        const packResults = await Promise.allSettled(Array.from(selectedPacksBySeason.values()).map(async pack => {
-          const res = await axios.get(pack.url, {
+        var packResults = await Promise.allSettled(Array.from(selectedPacksBySeason.values()).map(async pack => {
+          var res = await axios.get(pack.url, {
             headers: {
               ...defaultHeaders,
               Referer: fullUrl
             }
           });
-          const $ep = load(res.data);
-          const eps = [];
+          var $ep = load(res.data);
+          var eps = [];
           $ep("h3, h4, h5, p").each((_, element) => {
-            const el = $ep(element);
-            const text = el.text().trim();
+            var el = $ep(element);
+            var text = el.text().trim();
             if (/episodes?\s*[:\d\-]/i.test(text) || /e\d{1,3}\b/i.test(text) || /^episode\s*\d+/i.test(text)) {
-              const epTitle = text.replace(/\s+/g, " ").trim().replace(/^[-:\s]+|[-:\s]+$/g, "").replace(/^episodes?\s*:\s*/i, "Episode ");
-              const epNumMatch = epTitle.match(/\b(?:episode|e)\s*(\d+)/i);
-              const epNumber = epNumMatch && epNumMatch[1] ? parseInt(epNumMatch[1], 10) : void 0;
-              let nextP = el.next();
+              var epTitle = text.replace(/\s+/g, " ").trim().replace(/^[-:\s]+|[-:\s]+$/g, "").replace(/^episodes?\s*:\s*/i, "Episode ");
+              var epNumMatch = epTitle.match(/\b(?:episode|e)\s*(\d+)/i);
+              var epNumber = epNumMatch && epNumMatch[1] ? parseInt(epNumMatch[1], 10) : void 0;
+              var nextP = el.next();
               while (nextP.length && !nextP.is("p") && !nextP.find("a[href]").length) {
                 nextP = nextP.next();
               }
-              const link = nextP.find('a[href*="vcloud"]').attr("href") || nextP.find('a[href*="hubcloud"]').attr("href") || nextP.find('a[href*="fastdl"]').attr("href") || nextP.find(".btn-outline").parent().attr("href") || nextP.find(".btn-outline").attr("href") || nextP.find("a[href]").first().attr("href");
+              var link = nextP.find('a[href*="vcloud"]').attr("href") || nextP.find('a[href*="hubcloud"]').attr("href") || nextP.find('a[href*="fastdl"]').attr("href") || nextP.find(".btn-outline").parent().attr("href") || nextP.find(".btn-outline").attr("href") || nextP.find("a[href]").first().attr("href");
               if (link && link?.startsWith("http") && !eps.some(e => e.url === link)) {
                 eps.push({
                   id: link,
@@ -317,14 +322,14 @@ function createVegaMovies(ctx, customBaseURL) {
           });
           return eps;
         }));
-        for (const r of packResults) {
+        for (var r of packResults) {
           if (r.status === "fulfilled" && Array.isArray(r.value)) {
             episodesList.push(...r.value);
           }
         }
         if (episodesList.length === 0 && seasonPacks.length > 0) {
-          for (let i = 0; i < seasonPacks.length; i++) {
-            const sp = seasonPacks[i];
+          for (var i = 0; i < seasonPacks.length; i++) {
+            var sp = seasonPacks[i];
             if (sp) {
               episodesList.push({
                 id: sp.url,
@@ -337,17 +342,17 @@ function createVegaMovies(ctx, customBaseURL) {
           }
         }
       } else {
-        let count = 0;
+        var count = 0;
         $("h3, h4, h5, p").each((_, element) => {
-          const el = $(element);
-          const text = el.text().trim();
-          const qualityMatch = text.match(/\d+p\b/i);
-          let nextP = el.next();
+          var el = $(element);
+          var text = el.text().trim();
+          var qualityMatch = text.match(/\d+p\b/i);
+          var nextP = el.next();
           while (nextP.length && !nextP.is("p") && !nextP.find("a[href]").length) {
             nextP = nextP.next();
           }
-          const btn = nextP.find('a[href*="nexdrive"], a[href*="vcloud"], a[href*="hubcloud"], a[href*="fastdl"]').first().length > 0 ? nextP.find('a[href*="nexdrive"], a[href*="vcloud"], a[href*="hubcloud"], a[href*="fastdl"]').first() : nextP.find(".dwd-button, .btn-outline").first().is("a") ? nextP.find(".dwd-button, .btn-outline").first() : nextP.find(".dwd-button, .btn-outline").first().parent("a");
-          const btnHref = btn.attr("href");
+          var btn = nextP.find('a[href*="nexdrive"], a[href*="vcloud"], a[href*="hubcloud"], a[href*="fastdl"]').first().length > 0 ? nextP.find('a[href*="nexdrive"], a[href*="vcloud"], a[href*="hubcloud"], a[href*="fastdl"]').first() : nextP.find(".dwd-button, .btn-outline").first().is("a") ? nextP.find(".dwd-button, .btn-outline").first() : nextP.find(".dwd-button, .btn-outline").first().parent("a");
+          var btnHref = btn.attr("href");
           if (btnHref && btnHref?.startsWith("http") && !episodesList.some(e => e.url === btnHref)) {
             count++;
             episodesList.push({
@@ -361,7 +366,7 @@ function createVegaMovies(ctx, customBaseURL) {
         });
         if (episodesList.length === 0) {
           $('a[href*="nexdrive.fit"], a[href*="vcloud"], a[href*="hubcloud"]').each((i, el) => {
-            const href = $(el).attr("href");
+            var href = $(el).attr("href");
             if (href && href?.startsWith("http") && !episodesList.some(e => e.url === href)) {
               episodesList.push({
                 id: href,
@@ -390,13 +395,13 @@ function createVegaMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchEpisodeServers = async (episodeId, mediaId) => {
-    const servers = [];
-    let resolvedUrl = episodeId;
+  var fetchEpisodeServers = async (episodeId, mediaId) => {
+    var servers = [];
+    var resolvedUrl = episodeId;
     if (!resolvedUrl?.startsWith("http")) {
       try {
-        const info = await fetchMediaInfo(episodeId);
-        const firstEp = info.episodes?.[0];
+        var info = await fetchMediaInfo(episodeId);
+        var firstEp = info.episodes?.[0];
         if (firstEp?.url) {
           resolvedUrl = firstEp.url;
         }
@@ -410,17 +415,20 @@ function createVegaMovies(ctx, customBaseURL) {
     }
     if (resolvedUrl.includes("vcloud") || resolvedUrl.includes("hubcloud")) {
       try {
-        const hubCloudExtractor = HubCloud(ctx);
-        const hubRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
+        var hubCloudExtractor = HubCloud(ctx);
+        var hubRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
         if (hubRes?.sources && hubRes.sources.length > 0) {
-          for (const s of hubRes.sources) {
-            const sName = s.server || s.quality || "HubCloud";
+          var _loop2 = async function () {
+            var sName = s.server || s.quality || "HubCloud";
             if (!servers.some(srv => srv.name === sName)) {
               servers.push({
                 name: sName,
                 url: s.url
               });
             }
+          };
+          for (var s of hubRes.sources) {
+            await _loop2();
           }
         }
       } catch {}
@@ -433,7 +441,7 @@ function createVegaMovies(ctx, customBaseURL) {
       return servers;
     }
     try {
-      const {
+      var {
         data
       } = await axios.get(resolvedUrl, {
         headers: {
@@ -441,21 +449,24 @@ function createVegaMovies(ctx, customBaseURL) {
           Referer: config.baseUrl
         }
       });
-      const $ = load(data);
-      const vcloudLink = $('a[href*="vcloud"], a[href*="hubcloud"]').attr("href");
+      var $ = load(data);
+      var vcloudLink = $('a[href*="vcloud"], a[href*="hubcloud"]').attr("href");
       if (vcloudLink) {
         try {
-          const hubCloudExtractor = HubCloud(ctx);
-          const hubRes = await hubCloudExtractor.extract(new PolyURL(vcloudLink));
-          if (hubRes?.sources && hubRes.sources.length > 0) {
-            for (const s of hubRes.sources) {
-              const sName = s.server || s.quality || "HubCloud";
+          var _hubCloudExtractor = HubCloud(ctx);
+          var _hubRes = await _hubCloudExtractor.extract(new PolyURL(vcloudLink));
+          if (_hubRes?.sources && _hubRes.sources.length > 0) {
+            var _loop3 = async function () {
+              var sName = _s.server || _s.quality || "HubCloud";
               if (!servers.some(srv => srv.name === sName)) {
                 servers.push({
                   name: sName,
-                  url: s.url
+                  url: _s.url
                 });
               }
+            };
+            for (var _s of _hubRes.sources) {
+              await _loop3();
             }
           }
         } catch {}
@@ -466,14 +477,14 @@ function createVegaMovies(ctx, customBaseURL) {
           });
         }
       }
-      const gdirectLink = $('a[href*="fastdl"], a:contains("G-Direct")').attr("href");
+      var gdirectLink = $('a[href*="fastdl"], a:contains("G-Direct")').attr("href");
       if (gdirectLink) {
         servers.push({
           name: "FastDL",
           url: gdirectLink
         });
       }
-      const filepressLink = $('a[href*="filebee"], a[href*="filepress"]').attr("href");
+      var filepressLink = $('a[href*="filebee"], a[href*="filepress"]').attr("href");
       if (filepressLink) {
         servers.push({
           name: "Filepress",
@@ -489,41 +500,41 @@ function createVegaMovies(ctx, customBaseURL) {
     }
     return servers;
   };
-  const fetchEpisodeSources = async function (episodeId, mediaId) {
-    let server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.HubCloud;
-    let resolvedUrl = episodeId;
+  var fetchEpisodeSources = async function (episodeId, mediaId) {
+    var server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.HubCloud;
+    var resolvedUrl = episodeId;
     if (!resolvedUrl?.startsWith("http")) {
-      const info = await fetchMediaInfo(episodeId);
-      const firstEp = info.episodes?.[0];
+      var info = await fetchMediaInfo(episodeId);
+      var firstEp = info.episodes?.[0];
       if (firstEp?.url) {
         resolvedUrl = firstEp.url;
       } else {
         throw new Error(`Unable to resolve episode source for ${episodeId}`);
       }
     }
-    const epQualityMatch = resolvedUrl.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i);
-    const epQuality = epQualityMatch ? epQualityMatch[1].toLowerCase() === "4k" ? "2160p" : epQualityMatch[1].toLowerCase() : "auto";
-    const extraSources = [];
+    var epQualityMatch = resolvedUrl.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i);
+    var epQuality = epQualityMatch ? epQualityMatch[1].toLowerCase() === "4k" ? "2160p" : epQualityMatch[1].toLowerCase() : "auto";
+    var extraSources = [];
     if (!resolvedUrl.includes("cloud")) {
       try {
-        const dotlinkRes = await axios.get(resolvedUrl, {
+        var dotlinkRes = await axios.get(resolvedUrl, {
           headers: defaultHeaders
         });
-        const dotlinkText = dotlinkRes.data;
-        const vlinkMatch = dotlinkText.match(/<a\s+href="([^"]*cloud\.[^"]*)"/i);
+        var dotlinkText = dotlinkRes.data;
+        var vlinkMatch = dotlinkText.match(/<a\s+href="([^"]*cloud\.[^"]*)"/i);
         if (vlinkMatch?.[1]) {
           resolvedUrl = vlinkMatch[1];
         }
-        const fastdlMatch = dotlinkText.match(/<a\s+href="([^"]*fastdl\.[^"]*)"/i);
+        var fastdlMatch = dotlinkText.match(/<a\s+href="([^"]*fastdl\.[^"]*)"/i);
         if (fastdlMatch?.[1]) {
           try {
-            const fdlRes = await axios.get(fastdlMatch[1], {
+            var fdlRes = await axios.get(fastdlMatch[1], {
               headers: {
                 ...defaultHeaders,
                 Referer: resolvedUrl
               }
             });
-            const reurlMatch = fdlRes.data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
+            var reurlMatch = fdlRes.data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
             if (reurlMatch?.[1]) {
               extraSources.push({
                 url: reurlMatch[1],
@@ -535,12 +546,12 @@ function createVegaMovies(ctx, customBaseURL) {
           } catch {}
         }
         try {
-          const $ = load(dotlinkText);
-          const filepressLink = $('.btn.btn-sm.btn-outline[style*="rgb(252,185,0)"]').parent().attr("href") || $('a[href*="filebee"], a[href*="filepress"]').attr("href");
+          var $ = load(dotlinkText);
+          var filepressLink = $('.btn.btn-sm.btn-outline[style*="rgb(252,185,0)"]').parent().attr("href") || $('a[href*="filebee"], a[href*="filepress"]').attr("href");
           if (filepressLink) {
-            const filepressID = filepressLink.split("/").filter(Boolean).pop();
-            const filepressBaseUrl = filepressLink.split("/").slice(0, 3).join("/");
-            const fpRes1 = await axios.post(`${filepressBaseUrl}/api/file/downlaod/`, {
+            var filepressID = filepressLink.split("/").filter(Boolean).pop();
+            var filepressBaseUrl = filepressLink.split("/").slice(0, 3).join("/");
+            var fpRes1 = await axios.post(`${filepressBaseUrl}/api/file/downlaod/`, {
               id: filepressID,
               method: "indexDownlaod",
               captchaValue: null
@@ -551,8 +562,8 @@ function createVegaMovies(ctx, customBaseURL) {
               }
             });
             if (fpRes1.data?.status && fpRes1.data?.data) {
-              const fpToken = fpRes1.data.data;
-              const fpRes2 = await axios.post(`${filepressBaseUrl}/api/file/downlaod2/`, {
+              var fpToken = fpRes1.data.data;
+              var fpRes2 = await axios.post(`${filepressBaseUrl}/api/file/downlaod2/`, {
                 id: fpToken,
                 method: "indexDownlaod",
                 captchaValue: null
@@ -562,7 +573,7 @@ function createVegaMovies(ctx, customBaseURL) {
                   "Referer": filepressBaseUrl
                 }
               });
-              const fpStreamUrl = fpRes2.data?.data?.[0];
+              var fpStreamUrl = fpRes2.data?.data?.[0];
               if (fpStreamUrl && fpStreamUrl?.startsWith("http")) {
                 extraSources.push({
                   url: fpStreamUrl,
@@ -578,7 +589,7 @@ function createVegaMovies(ctx, customBaseURL) {
     }
     if (resolvedUrl.includes("fastdl.zip")) {
       try {
-        const {
+        var {
           data
         } = await axios.get(resolvedUrl, {
           headers: {
@@ -586,8 +597,8 @@ function createVegaMovies(ctx, customBaseURL) {
             Referer: "https://nexdrive.fit/"
           }
         });
-        const reurlMatch = data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
-        const directUrl = reurlMatch ? reurlMatch[1] : resolvedUrl;
+        var _reurlMatch = data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
+        var directUrl = _reurlMatch ? _reurlMatch[1] : resolvedUrl;
         return {
           headers: {
             Referer: "https://fastdl.zip/"
@@ -602,14 +613,14 @@ function createVegaMovies(ctx, customBaseURL) {
         };
       } catch {}
     }
-    let hubCloudSources = [];
-    let hubHeaders = {
+    var hubCloudSources = [];
+    var hubHeaders = {
       Referer: config.baseUrl
     };
     if (resolvedUrl.includes("cloud")) {
       try {
-        const hubCloudExtractor = HubCloud(ctx);
-        const hubCloudRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
+        var hubCloudExtractor = HubCloud(ctx);
+        var hubCloudRes = await hubCloudExtractor.extract(new PolyURL(resolvedUrl));
         if (hubCloudRes?.sources && Array.isArray(hubCloudRes.sources)) {
           hubCloudSources = hubCloudRes.sources.map(s => ({
             ...s,
@@ -622,12 +633,12 @@ function createVegaMovies(ctx, customBaseURL) {
         }
       } catch {}
     }
-    let allSources = [...extraSources, ...hubCloudSources];
+    var allSources = [...extraSources, ...hubCloudSources];
     if (server && server.toLowerCase() !== "hubcloud") {
-      const serverLower = server.toLowerCase();
-      const matched = allSources.filter(s => (s.server || "").toLowerCase().includes(serverLower));
+      var serverLower = server.toLowerCase();
+      var matched = allSources.filter(s => (s.server || "").toLowerCase().includes(serverLower));
       if (matched.length > 0) {
-        const others = allSources.filter(s => !(s.server || "").toLowerCase().includes(serverLower));
+        var others = allSources.filter(s => !(s.server || "").toLowerCase().includes(serverLower));
         allSources = [...matched, ...others];
       }
     }
@@ -640,16 +651,16 @@ function createVegaMovies(ctx, customBaseURL) {
       download: allSources[0]?.url
     };
   };
-  const fetchLatest = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const searchResult = {
+  var fetchLatest = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+    var searchResult = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const url = page === 1 ? `${config.baseUrl}/` : `${config.baseUrl}/page/${page}/`;
-      const {
+      var url = page === 1 ? `${config.baseUrl}/` : `${config.baseUrl}/page/${page}/`;
+      var {
         data
       } = await axios.get(url, {
         headers: {
@@ -657,34 +668,34 @@ function createVegaMovies(ctx, customBaseURL) {
           Referer: config.baseUrl
         }
       });
-      const $ = load(data);
+      var $ = load(data);
       searchResult.results = parseHtmlGrid(data);
-      const navSelector = ".pagination, .nav-links";
+      var navSelector = ".pagination, .nav-links";
       searchResult.hasNextPage = $(navSelector).find('.next, a:contains("Next")').length > 0;
       return searchResult;
     } catch (err) {
       throw new Error(err.message);
     }
   };
-  const fetchRecentMovies = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchRecentMovies = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return fetchByFilter("category/movies-by-genres", page);
   };
-  const fetchRecentTVShows = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+  var fetchRecentTVShows = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return fetchByFilter("web-series", page);
   };
-  const fetchByFilter = async function (filter) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const searchResult = {
+  var fetchByFilter = async function (filter) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var searchResult = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const cleanFilter = filter.replace(/^\/|\/$/g, "");
-      const url = page === 1 ? `${config.baseUrl}/${cleanFilter}/` : `${config.baseUrl}/${cleanFilter}/page/${page}/`;
-      const {
+      var cleanFilter = filter.replace(/^\/|\/$/g, "");
+      var url = page === 1 ? `${config.baseUrl}/${cleanFilter}/` : `${config.baseUrl}/${cleanFilter}/page/${page}/`;
+      var {
         data
       } = await axios.get(url, {
         headers: {
@@ -692,9 +703,9 @@ function createVegaMovies(ctx, customBaseURL) {
           Referer: config.baseUrl
         }
       });
-      const $ = load(data);
+      var $ = load(data);
       searchResult.results = parseHtmlGrid(data);
-      const navSelector = ".pagination, .nav-links";
+      var navSelector = ".pagination, .nav-links";
       searchResult.hasNextPage = $(navSelector).find('.next, a:contains("Next")').length > 0;
       return searchResult;
     } catch (err) {

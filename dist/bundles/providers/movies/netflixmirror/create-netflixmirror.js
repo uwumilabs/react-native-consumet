@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -77,16 +82,16 @@ var NEWTV_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/201001
 var sessions = /* @__PURE__ */new Map();
 var pendingUnlocks = /* @__PURE__ */new Map();
 function createNetMirror(ctx, platform, customBaseURL) {
-  const {
+  var {
     enums,
     axios,
     createCustomBaseUrl
   } = ctx;
-  const {
+  var {
     TvType: TvTypeEnum
   } = enums;
-  const baseUrl = createCustomBaseUrl("https://net52.cc", customBaseURL);
-  const config = {
+  var baseUrl = createCustomBaseUrl("https://net52.cc", customBaseURL);
+  var config = {
     name: platform.name,
     languages: "all",
     classPath: platform.classPath,
@@ -95,31 +100,31 @@ function createNetMirror(ctx, platform, customBaseURL) {
     isNSFW: false,
     isWorking: true
   };
-  const supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-  const now = () => Math.round(Date.now() / 1e3);
-  const readSetCookies = headers => {
-    const raw = headers?.["set-cookie"] ?? headers?.["x-set-cookie"] ?? [];
+  var supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+  var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  var now = () => Math.round(Date.now() / 1e3);
+  var readSetCookies = headers => {
+    var raw = headers?.["set-cookie"] ?? headers?.["x-set-cookie"] ?? [];
     return (Array.isArray(raw) ? raw : [raw]).map(String);
   };
-  const extractToken = cookies => {
-    for (const cookie of cookies) {
-      const match = /t_hash_t=([^;,]+)/.exec(cookie);
+  var extractToken = cookies => {
+    for (var cookie of cookies) {
+      var match = /t_hash_t=([^;,]+)/.exec(cookie);
       if (!match) continue;
-      const token = decodeURIComponent(match[1]);
+      var token = decodeURIComponent(match[1]);
       if (token && !token.includes("::99")) return token;
     }
     return void 0;
   };
-  const storeToken = token => {
+  var storeToken = token => {
     sessions.set(baseUrl, {
       token,
       ts: Date.now()
     });
     return token;
   };
-  const unlockSession = async () => {
-    const home = await axios.get(`${baseUrl}/mobile/home?app=1`, {
+  var unlockSession = async () => {
+    var home = await axios.get(`${baseUrl}/mobile/home?app=1`, {
       headers: {
         "User-Agent": APP_UA,
         "X-Requested-With": "com.netmirror.app",
@@ -127,13 +132,13 @@ function createNetMirror(ctx, platform, customBaseURL) {
       },
       timeout: 15e3
     });
-    const homeCookies = readSetCookies(home.headers);
-    const alreadyVerified = extractToken(homeCookies);
+    var homeCookies = readSetCookies(home.headers);
+    var alreadyVerified = extractToken(homeCookies);
     if (alreadyVerified) return storeToken(alreadyVerified);
-    const addhash = /data-addhash=["']([^"']+)["']/.exec(String(home.data))?.[1];
+    var addhash = /data-addhash=["']([^"']+)["']/.exec(String(home.data))?.[1];
     if (!addhash) throw new Error("session unlock failed: no addhash on home page");
-    const initialCookie = homeCookies.map(cookie => cookie.split(";")[0]).filter(Boolean).join("; ");
-    const host = baseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    var initialCookie = homeCookies.map(cookie => cookie.split(";")[0]).filter(Boolean).join("; ");
+    var host = baseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     await axios.get(`https://userver.${host}/?hee5=${addhash}&a=y&t=${Math.random()}`, {
       headers: {
         "User-Agent": APP_UA,
@@ -144,11 +149,11 @@ function createNetMirror(ctx, platform, customBaseURL) {
       validateStatus: () => true,
       timeout: 1e4
     }).catch(() => void 0);
-    const pollCookie = ["ext_name=ojplmecpdpgccookcobabopnaifgidhf", `addhash=${encodeURIComponent(addhash)}`, initialCookie].filter(Boolean).join("; ");
-    const deadline = Date.now() + UNLOCK_TIMEOUT_MS;
+    var pollCookie = ["ext_name=ojplmecpdpgccookcobabopnaifgidhf", `addhash=${encodeURIComponent(addhash)}`, initialCookie].filter(Boolean).join("; ");
+    var deadline = Date.now() + UNLOCK_TIMEOUT_MS;
     while (Date.now() < deadline) {
       await sleep(2e3);
-      const res = await axios.post(`${baseUrl}/mobile/verify2.php`, `verify=${encodeURIComponent(addhash)}`, {
+      var res = await axios.post(`${baseUrl}/mobile/verify2.php`, `verify=${encodeURIComponent(addhash)}`, {
         headers: {
           "User-Agent": APP_UA,
           "X-Requested-With": "XMLHttpRequest",
@@ -161,10 +166,10 @@ function createNetMirror(ctx, platform, customBaseURL) {
         timeout: 1e4
       }).catch(() => void 0);
       if (!res) continue;
-      const token = extractToken(readSetCookies(res.headers));
+      var token = extractToken(readSetCookies(res.headers));
       if (token) return storeToken(token);
       if (res.data?.statusup === "All Done") {
-        const reload = await axios.get(`${baseUrl}/mobile/home?app=1`, {
+        var reload = await axios.get(`${baseUrl}/mobile/home?app=1`, {
           headers: {
             "User-Agent": APP_UA,
             "X-Requested-With": "com.netmirror.app",
@@ -172,35 +177,35 @@ function createNetMirror(ctx, platform, customBaseURL) {
           },
           timeout: 15e3
         });
-        const verified = extractToken(readSetCookies(reload.headers));
+        var verified = extractToken(readSetCookies(reload.headers));
         if (verified) return storeToken(verified);
         break;
       }
     }
     throw new Error("session unlock did not complete");
   };
-  const getSessionToken = async function () {
-    let forceRefresh = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-    const cached = sessions.get(baseUrl);
+  var getSessionToken = async function () {
+    var forceRefresh = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+    var cached = sessions.get(baseUrl);
     if (!forceRefresh && cached && Date.now() - cached.ts < SESSION_TTL_MS) return cached.token;
     if (forceRefresh) sessions.delete(baseUrl);
-    let pending = pendingUnlocks.get(baseUrl);
+    var pending = pendingUnlocks.get(baseUrl);
     if (!pending) {
       pending = unlockSession().finally(() => pendingUnlocks.delete(baseUrl));
       pendingUnlocks.set(baseUrl, pending);
     }
     return pending;
   };
-  const requestHeaders = token => ({
+  var requestHeaders = token => ({
     "User-Agent": APP_UA,
     "Referer": `${baseUrl}/home`,
     "Origin": baseUrl,
     "Accept": "application/json, text/plain, */*",
     "Cookie": `t_hash_t=${token}; hd=on; ott=${platform.cookieOtt}`
   });
-  const getVerified = async (path, isUnverified) => {
-    let token = await getSessionToken();
-    let {
+  var getVerified = async (path, isUnverified) => {
+    var token = await getSessionToken();
+    var {
       data
     } = await axios.get(`${baseUrl}${path}`, {
       headers: requestHeaders(token)
@@ -215,12 +220,12 @@ function createNetMirror(ctx, platform, customBaseURL) {
     if (isUnverified(data)) throw new Error("session not accepted by server");
     return data;
   };
-  const rejectedStatus = data => data?.status === "n";
-  const warmUpSession = () => {
+  var rejectedStatus = data => data?.status === "n";
+  var warmUpSession = () => {
     getSessionToken().catch(() => void 0);
   };
-  const getNewTv = async path => {
-    const {
+  var getNewTv = async path => {
+    var {
       data
     } = await axios.get(`${NEWTV_API}/newtv/${path}`, {
       headers: {
@@ -233,13 +238,13 @@ function createNetMirror(ctx, platform, customBaseURL) {
     });
     return data;
   };
-  const postUrl = id => `${baseUrl}/mobile/${platform.path}post.php?id=${id}`;
-  const playlistUrl = id => `${baseUrl}/mobile/${platform.path}playlist.php?id=${id}`;
-  const withPostDetails = async result => {
+  var postUrl = id => `${baseUrl}/mobile/${platform.path}post.php?id=${id}`;
+  var playlistUrl = id => `${baseUrl}/mobile/${platform.path}playlist.php?id=${id}`;
+  var withPostDetails = async result => {
     try {
-      const post = await getNewTv(`post.php?id=${result.id}`);
+      var post = await getNewTv(`post.php?id=${result.id}`);
       if (post?.status !== "ok") return result;
-      const isSeries = post.type === "t";
+      var isSeries = post.type === "t";
       return {
         ...result,
         type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
@@ -252,11 +257,11 @@ function createNetMirror(ctx, platform, customBaseURL) {
       return result;
     }
   };
-  const searchNewTv = async query => {
-    const data = await getNewTv(`search.php?s=${encodeURIComponent(query)}`);
+  var searchNewTv = async query => {
+    var data = await getNewTv(`search.php?s=${encodeURIComponent(query)}`);
     if (data?.status !== "y") throw new Error("NewTV search unavailable");
     return Promise.all((data.searchResult ?? []).map(item => {
-      const id = String(item.id);
+      var id = String(item.id);
       return withPostDetails({
         id,
         title: item.t,
@@ -265,10 +270,10 @@ function createNetMirror(ctx, platform, customBaseURL) {
       });
     }));
   };
-  const searchViaSession = async query => {
-    const data = await getVerified(`/mobile/${platform.path}search.php?s=${encodeURIComponent(query)}&t=${now()}`, rejectedStatus);
+  var searchViaSession = async query => {
+    var data = await getVerified(`/mobile/${platform.path}search.php?s=${encodeURIComponent(query)}&t=${now()}`, rejectedStatus);
     return (data.searchResult ?? []).map(item => {
-      const id = String(item.id);
+      var id = String(item.id);
       return {
         id,
         title: item.t,
@@ -279,11 +284,11 @@ function createNetMirror(ctx, platform, customBaseURL) {
       };
     });
   };
-  const search = async function (query) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     warmUpSession();
     try {
-      const results = await searchNewTv(query).catch(() => searchViaSession(query));
+      var results = await searchNewTv(query).catch(() => searchViaSession(query));
       return {
         currentPage: page,
         hasNextPage: false,
@@ -293,7 +298,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
       throw new Error(`${config.name} search failed: ${err.message}`);
     }
   };
-  const mapEpisode = (ep, fallbackSeason) => ({
+  var mapEpisode = (ep, fallbackSeason) => ({
     id: ep.id,
     title: ep.t,
     number: parseInt(ep.ep.replace(/\D/g, ""), 10) || void 0,
@@ -303,31 +308,31 @@ function createNetMirror(ctx, platform, customBaseURL) {
     duration: ep.time,
     image: platform.episodeImage(ep.id)
   });
-  const movieEpisodes = (mediaId, title) => [{
+  var movieEpisodes = (mediaId, title) => [{
     id: mediaId,
     title: title || "Full Movie",
     number: 1,
     season: 1,
     url: playlistUrl(mediaId)
   }];
-  const fetchSeasonEpisodes = async (seasonId, seriesId, seasonNumber) => {
-    const token = await getSessionToken();
-    const episodes = [];
-    for (let page = 1; page <= 20; page++) {
-      const {
+  var fetchSeasonEpisodes = async (seasonId, seriesId, seasonNumber) => {
+    var token = await getSessionToken();
+    var episodes = [];
+    for (var page = 1; page <= 20; page++) {
+      var {
         data
       } = await axios.get(`${baseUrl}/mobile/${platform.path}episodes.php?s=${seasonId}&series=${seriesId}&t=${now()}&page=${page}`, {
         headers: requestHeaders(token)
       });
-      for (const ep of data.episodes ?? []) {
+      for (var ep of data.episodes ?? []) {
         if (ep) episodes.push(mapEpisode(ep, seasonNumber));
       }
       if (!data.nextPageShow) break;
     }
     return episodes;
   };
-  const splitList = value => value ? value.split(",").map(v => v.trim()).filter(Boolean) : [];
-  const baseInfo = (mediaId, post) => ({
+  var splitList = value => value ? value.split(",").map(v => v.trim()).filter(Boolean) : [];
+  var baseInfo = (mediaId, post) => ({
     id: mediaId,
     title: post.title || "",
     url: postUrl(mediaId),
@@ -336,7 +341,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     cover: platform.cover(mediaId),
     releaseDate: post.year || void 0
   });
-  const mapNewTvEpisode = (ep, season) => ({
+  var mapNewTvEpisode = (ep, season) => ({
     id: ep.id,
     title: ep.t,
     number: parseInt(ep.ep, 10) || void 0,
@@ -348,22 +353,22 @@ function createNetMirror(ctx, platform, customBaseURL) {
     releaseDate: ep.info?.find(part => /[a-z]/i.test(part) && /\b\d{4}\b/.test(part)),
     image: platform.episodeImage(ep.id)
   });
-  const fetchNewTvSeasonEpisodes = async (seasonId, seriesId, season) => {
-    const episodes = [];
-    for (let page = 1; page <= 20; page++) {
-      const data = await getNewTv(`episodes.php?id=${seasonId}&series=${seriesId}&page=${page}`);
-      for (const ep of data.episodes ?? []) {
+  var fetchNewTvSeasonEpisodes = async (seasonId, seriesId, season) => {
+    var episodes = [];
+    for (var page = 1; page <= 20; page++) {
+      var data = await getNewTv(`episodes.php?id=${seasonId}&series=${seriesId}&page=${page}`);
+      for (var ep of data.episodes ?? []) {
         if (ep) episodes.push(mapNewTvEpisode(ep, season));
       }
       if (!data.nextPageShow) break;
     }
     return episodes;
   };
-  const fetchMediaInfoNewTv = async mediaId => {
-    const post = await getNewTv(`post.php?id=${mediaId}`);
+  var fetchMediaInfoNewTv = async mediaId => {
+    var post = await getNewTv(`post.php?id=${mediaId}`);
     if (post?.status !== "ok") throw new Error("NewTV title unavailable");
-    const detail = key => post.moredetails?.find(d => d.k === key)?.v;
-    const info = {
+    var detail = key => post.moredetails?.find(d => d.k === key)?.v;
+    var info = {
       ...baseInfo(mediaId, post),
       genres: splitList(detail("Genre") ?? detail("HotStar Genres") ?? detail("IMDB Genres")),
       casts: splitList(detail("Cast")),
@@ -376,19 +381,19 @@ function createNetMirror(ctx, platform, customBaseURL) {
       return info;
     }
     if (post.season?.length) {
-      const perSeason = await Promise.all(post.season.map((season, index) => fetchNewTvSeasonEpisodes(season.id, mediaId, parseInt(/(\d+)/.exec(season.s)?.[1] ?? "", 10) || index + 1)));
+      var perSeason = await Promise.all(post.season.map((season, index) => fetchNewTvSeasonEpisodes(season.id, mediaId, parseInt(/(\d+)/.exec(season.s)?.[1] ?? "", 10) || index + 1)));
       info.episodes = perSeason.flat();
     } else {
       info.episodes = (post.episodes ?? []).filter(ep => Boolean(ep)).map(ep => mapNewTvEpisode(ep, 1));
     }
     info.totalEpisodes = info.episodes.length;
-    const airYears = info.episodes.map(ep => /\b(\d{4})\b/.exec(String(ep.releaseDate ?? ""))?.[1]).filter(year => Boolean(year));
+    var airYears = info.episodes.map(ep => /\b(\d{4})\b/.exec(String(ep.releaseDate ?? ""))?.[1]).filter(year => Boolean(year));
     if (airYears.length) info.releaseDate = airYears.sort()[0];
     return info;
   };
-  const fetchMediaInfoViaSession = async mediaId => {
-    const post = await getVerified(`/mobile/${platform.path}post.php?id=${mediaId}&t=${now()}`, rejectedStatus);
-    const info = {
+  var fetchMediaInfoViaSession = async mediaId => {
+    var post = await getVerified(`/mobile/${platform.path}post.php?id=${mediaId}&t=${now()}`, rejectedStatus);
+    var info = {
       ...baseInfo(mediaId, post),
       genres: splitList(post.genre),
       casts: splitList(post.cast),
@@ -400,7 +405,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
       return info;
     }
     if (post.season?.length) {
-      const perSeason = await Promise.all(post.season.map(season => fetchSeasonEpisodes(season.id, mediaId, parseInt(season.s.replace(/\D/g, ""), 10) || 1)));
+      var perSeason = await Promise.all(post.season.map(season => fetchSeasonEpisodes(season.id, mediaId, parseInt(season.s.replace(/\D/g, ""), 10) || 1)));
       info.episodes = perSeason.flat();
     } else {
       info.episodes = (post.episodes ?? []).filter(ep => Boolean(ep)).map(ep => mapEpisode(ep, 1));
@@ -408,7 +413,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     info.totalEpisodes = info.episodes.length;
     return info;
   };
-  const fetchMediaInfo = async mediaId => {
+  var fetchMediaInfo = async mediaId => {
     warmUpSession();
     try {
       return await fetchMediaInfoNewTv(mediaId).catch(() => fetchMediaInfoViaSession(mediaId));
@@ -416,35 +421,35 @@ function createNetMirror(ctx, platform, customBaseURL) {
       throw new Error(`${config.name} fetchMediaInfo failed: ${err.message}`);
     }
   };
-  const playlistPath = episodeId => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
-  const fetchEpisodeServers = async (episodeId, mediaId) => {
+  var playlistPath = episodeId => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
+  var fetchEpisodeServers = async (episodeId, mediaId) => {
     return [{
       name: platform.label,
       url: `${baseUrl}${playlistPath(episodeId)}`
     }];
   };
-  const qualityFromLabel = label => {
-    const normalized = label.toLowerCase();
+  var qualityFromLabel = label => {
+    var normalized = label.toLowerCase();
     if (normalized.includes("full hd")) return "1080p";
     if (normalized.includes("mid hd")) return "720p";
     if (normalized.includes("low hd")) return "480p";
     if (normalized.includes("auto")) return "auto";
     return label;
   };
-  const fetchEpisodeSources = async (episodeId, mediaId) => {
+  var fetchEpisodeSources = async (episodeId, mediaId) => {
     try {
-      const data = await getVerified(playlistPath(episodeId), res => {
-        const playlist2 = Array.isArray(res) ? res[0] : res;
+      var data = await getVerified(playlistPath(episodeId), res => {
+        var playlist2 = Array.isArray(res) ? res[0] : res;
         return Boolean(playlist2?.sources?.some(s => s.file.includes("in=unknown")));
       });
-      const playlist = Array.isArray(data) ? data[0] : data;
+      var playlist = Array.isArray(data) ? data[0] : data;
       if (!playlist?.sources?.length) throw new Error("No sources in playlist");
-      const sources = playlist.sources.map(s => ({
+      var sources = playlist.sources.map(s => ({
         url: s.file.startsWith("http") ? s.file : `${baseUrl}${s.file}`,
         quality: qualityFromLabel(s.label || ""),
         isM3U8: true
       }));
-      const subtitles = (playlist.tracks ?? []).filter(t => t.kind === "captions" && t.file).map(t => ({
+      var subtitles = (playlist.tracks ?? []).filter(t => t.kind === "captions" && t.file).map(t => ({
         url: t.file.startsWith("//") ? `https:${t.file}` : t.file,
         lang: t.label || t.language || "Unknown"
       }));
@@ -461,14 +466,14 @@ function createNetMirror(ctx, platform, customBaseURL) {
       throw new Error(`${config.name} fetchEpisodeSources failed: ${err.message}`);
     }
   };
-  const fetchHlsPlaylist = async episodeId => {
+  var fetchHlsPlaylist = async episodeId => {
     try {
-      const {
+      var {
         sources,
         headers
       } = await fetchEpisodeSources(episodeId);
-      const master = sources.find(s => s.quality === "auto") ?? sources[0];
-      const {
+      var master = sources.find(s => s.quality === "auto") ?? sources[0];
+      var {
         data
       } = await axios.get(master.url, {
         headers,

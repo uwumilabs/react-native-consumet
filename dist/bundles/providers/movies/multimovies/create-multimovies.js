@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -30,7 +35,7 @@ __export(create_multimovies_exports, {
 });
 module.exports = __toCommonJS(create_multimovies_exports);
 function createMultiMovies(ctx, customBaseURL) {
-  const {
+  var {
     load,
     extractors,
     enums,
@@ -40,19 +45,19 @@ function createMultiMovies(ctx, customBaseURL) {
     USER_AGENT,
     NativeConsumet
   } = ctx;
-  const {
+  var {
     StreamWish,
     VidHide
   } = extractors;
-  const {
+  var {
     StreamingServers: StreamingServersEnum,
     TvType: TvTypeEnum
   } = enums;
-  const {
+  var {
     makePostRequest
   } = NativeConsumet;
-  const baseUrl = createCustomBaseUrl("https://multimovies.center", customBaseURL);
-  const config = {
+  var baseUrl = createCustomBaseUrl("https://multimovies.center", customBaseURL);
+  var config = {
     name: "MultiMovies",
     languages: "all",
     classPath: "MOVIES.MultiMovies",
@@ -61,34 +66,34 @@ function createMultiMovies(ctx, customBaseURL) {
     isNSFW: false,
     isWorking: true
   };
-  const supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
-  const search = async function (query) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const searchResult = {
+  var supportedTypes = /* @__PURE__ */new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
+  var search = async function (query) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var searchResult = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      let url;
+      var url;
       if (page === 1) {
         url = `${config.baseUrl}/?s=${query.replace(/[\W_]+/g, "+")}`;
       } else {
         url = `${config.baseUrl}/page/${page}/?s=${query.replace(/[\W_]+/g, "+")}`;
       }
-      const {
+      var {
         data
       } = await axios.get(url);
-      const $ = load(data);
-      const navSelector = "div.pagination";
+      var $ = load(data);
+      var navSelector = "div.pagination";
       searchResult.hasNextPage = $(navSelector).find("#nextpagination").length > 0;
-      const articles = $(".search-page .result-item article").toArray();
+      var articles = $(".search-page .result-item article").toArray();
       await Promise.all(articles.map(async el => {
-        const seasonSet = /* @__PURE__ */new Set();
-        const href = $(el).find(".thumbnail a").attr("href")?.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, "") ?? "";
-        const episodesInfo = await fetchMediaInfo(href);
-        const episodes = episodesInfo?.episodes || [];
-        for (const episode of episodes) {
+        var seasonSet = /* @__PURE__ */new Set();
+        var href = $(el).find(".thumbnail a").attr("href")?.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, "") ?? "";
+        var episodesInfo = await fetchMediaInfo(href);
+        var episodes = episodesInfo?.episodes || [];
+        for (var episode of episodes) {
           if (episode.season != null) {
             seasonSet.add(episode.season);
           }
@@ -110,21 +115,21 @@ function createMultiMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchMediaInfo = async mediaId => {
+  var fetchMediaInfo = async mediaId => {
     if (!mediaId.startsWith(config.baseUrl)) {
       mediaId = `${config.baseUrl}/${mediaId}`;
     }
-    const movieInfo = {
+    var movieInfo = {
       id: mediaId.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, ""),
       title: "",
       url: mediaId
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(mediaId);
-      const $ = load(data);
-      const recommendationsArray = [];
+      var $ = load(data);
+      var recommendationsArray = [];
       $("div#single_relacionados  article").each((i, el) => {
         recommendationsArray.push({
           id: $(el).find("a").attr("href")?.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, ""),
@@ -146,10 +151,10 @@ function createMultiMovies(ctx, customBaseURL) {
       movieInfo.genres = $(".sgeneros a").map((i, el) => $(el).text()).get().map(v => v.trim());
       movieInfo.characters = [];
       $("div#cast .persons .person").each((i, el) => {
-        const url = $(el).find(".img > a").attr("href");
-        const image = $(el).find(".img > a > img").attr("data-src") ?? $(el).find(".img > a > img").attr("src");
-        const name = $(el).find(".data > .name > a").text();
-        const character = $(el).find(".data > .caracter").text();
+        var url = $(el).find(".img > a").attr("href");
+        var image = $(el).find(".img > a > img").attr("data-src") ?? $(el).find(".img > a > img").attr("src");
+        var name = $(el).find(".data > .name > a").text();
+        var character = $(el).find(".data > .caracter").text();
         movieInfo.characters.push({
           url,
           image,
@@ -164,9 +169,9 @@ function createMultiMovies(ctx, customBaseURL) {
       if (movieInfo.type === TvTypeEnum.TVSERIES) {
         movieInfo.episodes = [];
         $("#seasons .se-c").each((i, el) => {
-          const seasonNumber = parseInt($(el).find(".se-t").text().trim());
+          var seasonNumber = parseInt($(el).find(".se-t").text().trim());
           $(el).find(".episodios li").each((j, ep) => {
-            const episode = {
+            var episode = {
               id: $(ep).find(".episodiotitle a").attr("href")?.replace(/^https?:\/\/[^/]+\//, "").replace(/^\/|\/$/g, ""),
               season: seasonNumber,
               number: parseInt($(ep).find(".numerando").text().trim().split("-")[1]),
@@ -191,13 +196,13 @@ function createMultiMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchEpisodeSources = async function (episodeId, mediaId) {
-    let server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.StreamWish;
-    let fileId = arguments.length > 3 ? arguments[3] : undefined;
+  var fetchEpisodeSources = async function (episodeId, mediaId) {
+    var server = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : StreamingServersEnum.StreamWish;
+    var fileId = arguments.length > 3 ? arguments[3] : undefined;
     if (episodeId.startsWith("http")) {
-      const serverUrl = new PolyURL(episodeId);
-      const referer = serverUrl.origin;
-      const downloadUrl = fileId ? `${serverUrl.href.toString().replace("/e/", "/f/")}/${fileId}` : "";
+      var serverUrl = new PolyURL(episodeId);
+      var referer = serverUrl.origin;
+      var downloadUrl = fileId ? `${serverUrl.href.toString().replace("/e/", "/f/")}/${fileId}` : "";
       switch (server) {
         case StreamingServersEnum.StreamWish:
           return {
@@ -226,30 +231,30 @@ function createMultiMovies(ctx, customBaseURL) {
       }
     }
     try {
-      const servers = await fetchEpisodeServers(episodeId, episodeId);
-      const i = servers.findIndex(s => s.name.toLowerCase() === server.toLowerCase());
+      var servers = await fetchEpisodeServers(episodeId, episodeId);
+      var i = servers.findIndex(s => s.name.toLowerCase() === server.toLowerCase());
       if (i === -1) {
         throw new Error(`Server ${server} not found`);
       }
-      const serverUrl = new URL(servers[i].url);
-      let fId = "";
+      var _serverUrl = new URL(servers[i].url);
+      var fId = "";
       if (!episodeId.startsWith("http")) {
-        const {
+        var {
           fileId: id
         } = await getServer(`${config.baseUrl}/${episodeId}`);
         fId = id ?? "";
       }
-      return await fetchEpisodeSources(serverUrl.href, mediaId, server, fId);
+      return await fetchEpisodeSources(_serverUrl.href, mediaId, server, fId);
     } catch (err) {
       throw new Error(err.message);
     }
   };
-  const fetchEpisodeServers = async (episodeId, mediaId) => {
+  var fetchEpisodeServers = async (episodeId, mediaId) => {
     if (!episodeId.startsWith(config.baseUrl)) {
       episodeId = `${config.baseUrl}/${episodeId}`;
     }
     try {
-      const {
+      var {
         servers
       } = await getServer(episodeId);
       return servers;
@@ -257,22 +262,22 @@ function createMultiMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchPopular = async function () {
-    let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const result = {
+  var fetchPopular = async function () {
+    var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+    var result = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(`${config.baseUrl}/trending/page/${page}/`);
-      const $ = load(data);
-      const navSelector = "div.pagination";
+      var $ = load(data);
+      var navSelector = "div.pagination";
       result.hasNextPage = $(navSelector).find("#nextpagination").length > 0;
       $(".items > article").each((i, el) => {
-        const resultItem = {
+        var resultItem = {
           id: $(el).attr("id"),
           title: $(el).find("div.data > h3").text() ?? "",
           url: $(el).find("div.poster > a").attr("href"),
@@ -288,22 +293,22 @@ function createMultiMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const fetchByGenre = async function (genre) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const result = {
+  var fetchByGenre = async function (genre) {
+    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    var result = {
       currentPage: page,
       hasNextPage: false,
       results: []
     };
     try {
-      const {
+      var {
         data
       } = await axios.get(`${config.baseUrl}/genre/${genre}/page/${page}`);
-      const $ = load(data);
-      const navSelector = "div.pagination";
+      var $ = load(data);
+      var navSelector = "div.pagination";
       result.hasNextPage = $(navSelector).find("#nextpagination").length > 0;
       $(".items > article").each((i, el) => {
-        const resultItem = {
+        var resultItem = {
           id: $(el).attr("id"),
           title: $(el).find("div.data > h3").text() ?? "",
           url: $(el).find("div.poster > a").attr("href"),
@@ -319,13 +324,13 @@ function createMultiMovies(ctx, customBaseURL) {
       throw new Error(err.message);
     }
   };
-  const getServer = async url => {
+  var getServer = async url => {
     try {
-      const {
+      var {
         data
       } = await axios.get(url);
-      const $ = load(data);
-      const playerConfig = {
+      var $ = load(data);
+      var playerConfig = {
         postId: $("#player-option-1").attr("data-post"),
         nume: $("#player-option-1").attr("data-nume"),
         type: $("#player-option-1").attr("data-type")
@@ -333,14 +338,14 @@ function createMultiMovies(ctx, customBaseURL) {
       if (!playerConfig.postId || !playerConfig.nume || !playerConfig.type) {
         throw new Error("Missing player configuration");
       }
-      const headers = {
+      var headers = {
         "User-Agent": USER_AGENT,
         "Content-Type": "application/x-www-form-urlencoded"
       };
-      const urlEncodedBody = `action=doo_player_ajax&post=${playerConfig.postId}&nume=${playerConfig.nume}&type=${playerConfig.type}`;
+      var urlEncodedBody = `action=doo_player_ajax&post=${playerConfig.postId}&nume=${playerConfig.nume}&type=${playerConfig.type}`;
       console.log(`${baseUrl}/wp-admin/admin-ajax.php`);
       console.time("POST Request - WebView");
-      const postTestWebView = await NativeConsumet.makePostRequestWithWebView(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
+      var postTestWebView = await NativeConsumet.makePostRequestWithWebView(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
       console.timeEnd("POST Request - WebView");
       console.log("POST Response (WebView):", {
         status: postTestWebView.status,
@@ -349,23 +354,23 @@ function createMultiMovies(ctx, customBaseURL) {
         contentType: postTestWebView.contentType
       });
       console.time("POST Request - OkHttp");
-      const postTestOkHttp = await makePostRequest(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
+      var postTestOkHttp = await makePostRequest(`${baseUrl}/wp-admin/admin-ajax.php`, headers, urlEncodedBody);
       console.timeEnd("POST Request - OkHttp");
       console.log("POST Response (OkHttp):", {
         statusCode: postTestOkHttp.statusCode,
         body: postTestOkHttp.body,
         headers: postTestOkHttp.headers
       });
-      const res = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
+      var res = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
         method: "POST",
         headers,
         body: urlEncodedBody
       });
-      const playerRes = await res.json();
+      var playerRes = await res.json();
       console.log({
         playerRes
       });
-      const iframeUrl = playerRes.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.embed_url;
+      var iframeUrl = playerRes.embed_url?.match(/<iframe[^>]+src="([^"]+)"[^>]*>/i)?.[1] || playerRes.embed_url;
       if (!iframeUrl.includes("multimovies")) {
         if (iframeUrl.includes("dhcplay")) {
           return {
@@ -376,13 +381,13 @@ function createMultiMovies(ctx, customBaseURL) {
             fileId: iframeUrl.split("/").pop() ?? ""
           };
         }
-        const fileId = iframeUrl.split("/").pop();
+        var fileId = iframeUrl.split("/").pop();
         if (!fileId) {
           throw new Error("No player ID found");
         }
-        const streamRequestData = new FormData();
+        var streamRequestData = new FormData();
         streamRequestData.append("sid", fileId);
-        const streamRes = await fetch(`https://pro.gtxgamer.site/embedhelper.php`, {
+        var streamRes = await fetch(`https://pro.gtxgamer.site/embedhelper.php`, {
           method: "POST",
           headers: {
             ...headers
@@ -390,15 +395,15 @@ function createMultiMovies(ctx, customBaseURL) {
           },
           body: streamRequestData
         });
-        const streamResponse = await streamRes.json();
+        var streamResponse = await streamRes.json();
         if (!streamResponse) {
           throw new Error("No stream data found");
         }
-        const decodedMresult = JSON.parse(atob(streamResponse.mresult));
-        const mresultKeys = Object.keys(decodedMresult);
-        const commonKeys = mresultKeys.filter(key => streamResponse.siteUrls.hasOwnProperty(key));
-        const commonStreamSites = new Set(commonKeys);
-        const servers = Array.from(commonStreamSites).map(site => {
+        var decodedMresult = JSON.parse(atob(streamResponse.mresult));
+        var mresultKeys = Object.keys(decodedMresult);
+        var commonKeys = mresultKeys.filter(key => streamResponse.siteUrls.hasOwnProperty(key));
+        var commonStreamSites = new Set(commonKeys);
+        var servers = Array.from(commonStreamSites).map(site => {
           return {
             name: streamResponse.siteFriendlyNames[site] === "StreamHG" ? "StreamWish" : streamResponse.siteFriendlyNames[site] === "EarnVids" ? "VidHide" : streamResponse.siteFriendlyNames[site],
             url: streamResponse.siteUrls[site] + JSON.parse(atob(streamResponse.mresult))[site]

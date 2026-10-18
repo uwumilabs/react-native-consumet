@@ -7,12 +7,21 @@
  * function with a non-simple parameter list (e.g. `async (q, page = 1) => {}`)
  * does not wait and evaluates to `undefined`. Rewriting default/rest/destructured
  * params into the function body sidesteps it; everything else stays ES2022.
+ *
+ * Hermes also compiles runtime code without block scoping: `let` and `const` act like `var`, so
+ * closures created in a loop share one binding. esbuild's CommonJS export getters are built in
+ * such a loop, and on Hermes every getter of a multi-export bundle returned the last export (the
+ * NetflixMirror, PrimeMirror and DisneyMirror bundle ran PrimeMirror for all three). Registry
+ * bundles (dist/bundles), the code that runs through `new Function`, therefore also get block
+ * scoping compiled to `var`.
  */
 const fs = require('fs');
 const path = require('path');
 const babel = require('@babel/core');
 
 const distDir = path.join(__dirname, '..', 'dist');
+const bundlesDir = path.join(distDir, 'bundles');
+const isBundle = (file) => file.startsWith(bundlesDir + path.sep);
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -29,15 +38,17 @@ let rewritten = 0;
 for (const file of walk(distDir)) {
   const code = fs.readFileSync(file, 'utf8');
   const ast = babel.parseSync(code, { babelrc: false, configFile: false, sourceType: 'script' });
-  let needsRewrite = false;
-  babel.traverse(ast, {
-    Function(p) {
-      if (hasNonSimpleParams(p.node)) {
-        needsRewrite = true;
-        p.stop();
-      }
-    },
-  });
+  const bundle = isBundle(file);
+  let needsRewrite = bundle;
+  if (!needsRewrite)
+    babel.traverse(ast, {
+      Function(p) {
+        if (hasNonSimpleParams(p.node)) {
+          needsRewrite = true;
+          p.stop();
+        }
+      },
+    });
   if (!needsRewrite) continue;
 
   const mapFile = `${file}.map`;
@@ -48,7 +59,9 @@ for (const file of walk(distDir)) {
     configFile: false,
     filename: file,
     sourceType: 'script',
-    plugins: ['@babel/plugin-transform-parameters'],
+    plugins: bundle
+      ? ['@babel/plugin-transform-parameters', '@babel/plugin-transform-block-scoping']
+      : ['@babel/plugin-transform-parameters'],
     sourceMaps: Boolean(inputSourceMap),
     inputSourceMap,
   });
@@ -58,4 +71,4 @@ for (const file of walk(distDir)) {
   rewritten++;
 }
 
-console.log(`hermes-safe-dist: rewrote params in ${rewritten} file(s)`);
+console.log(`hermes-safe-dist: rewrote ${rewritten} file(s)`);

@@ -65,11 +65,13 @@ function evaluateExtensionCode(code, name, globals, kind) {
         console.error(`Syntax error in ${kind} code:`, syntaxError);
         throw new Error(`Failed to parse ${kind} code: ${syntaxError.message}`);
     }
-    // A top-level function declaration is only visible here through sloppy-mode block hoisting,
-    // so the exports come first and the default export (`export default`) is the last resort.
+    // The top-level declaration comes first: it always binds its own name, while bundle export
+    // getters built without block scoping can point at another export on Hermes (see
+    // scripts/hermes-safe-dist.js). Exports cover code without a top-level declaration, and the
+    // default export (`export default`) is the last resort.
     const declared = run(globals);
     const { exports, module } = globals;
-    return [exports[name], module.exports?.[name], declared, exports.default, module.exports?.default].find((candidate) => typeof candidate === 'function');
+    return [declared, exports[name], module.exports?.[name], exports.default, module.exports?.default].find((candidate) => typeof candidate === 'function');
 }
 /**
  * Share one load per key: concurrent callers get the same promise, later callers the result.

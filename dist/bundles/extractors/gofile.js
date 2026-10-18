@@ -1,21 +1,32 @@
 "use strict";
+
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all) __defProp(target, name, {
+    get: all[name],
+    enumerable: true
+  });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
+  value: true
+}), mod);
 
 // src/extractors/gofile.ts
 var gofile_exports = {};
@@ -30,31 +41,25 @@ var cachedAccountToken = null;
 var cachedGenerateWT = null;
 var cachedWTTime = 0;
 async function getOrFetchGenerateWT(axiosClient, userAgent) {
-  const now = Date.now();
+  var now = Date.now();
   if (cachedGenerateWT && now - cachedWTTime < 3 * 60 * 60 * 1e3) {
     return cachedGenerateWT;
   }
   try {
-    const res = await axiosClient.get("https://gofile.io/js/wt.obf.js", {
+    var res = await axiosClient.get("https://gofile.io/js/wt.obf.js", {
       headers: {
         "User-Agent": userAgent,
         "Referer": "https://gofile.io/"
       }
     });
-    const code = res.data;
-    const runner = new Function(
-      "navigator",
-      "window",
-      "document",
-      "location",
-      `${code}
-return typeof generateWT !== 'undefined' ? generateWT : (window && window.generateWT);`
-    );
-    const fakeNav = {
+    var code = res.data;
+    var runner = new Function("navigator", "window", "document", "location", `${code}
+return typeof generateWT !== 'undefined' ? generateWT : (window && window.generateWT);`);
+    var fakeNav = {
       userAgent,
       language: GOFILE_LANGUAGE
     };
-    const fakeWin = {
+    var fakeWin = {
       navigator: fakeNav,
       location: {
         href: "https://gofile.io/",
@@ -62,7 +67,7 @@ return typeof generateWT !== 'undefined' ? generateWT : (window && window.genera
         host: "gofile.io"
       }
     };
-    const generateWT = runner(fakeNav, fakeWin, {}, fakeWin.location);
+    var generateWT = runner(fakeNav, fakeWin, {}, fakeWin.location);
     if (typeof generateWT === "function") {
       cachedGenerateWT = generateWT;
       cachedWTTime = now;
@@ -71,48 +76,48 @@ return typeof generateWT !== 'undefined' ? generateWT : (window && window.genera
   } catch (err) {
     console.warn("[Gofile] Failed to fetch or execute wt.obf.js:", err?.message || err);
   }
-  return (accountToken) => accountToken;
+  return accountToken => accountToken;
 }
 async function getOrFetchToken(axiosClient, userAgent) {
   if (cachedAccountToken) return cachedAccountToken;
-  const accountResponse = await axiosClient.post(
-    `${GOFILE_API}/accounts`,
-    {},
-    {
-      headers: {
-        "User-Agent": userAgent,
-        "Origin": "https://gofile.io",
-        "Referer": "https://gofile.io/"
-      }
+  var accountResponse = await axiosClient.post(`${GOFILE_API}/accounts`, {}, {
+    headers: {
+      "User-Agent": userAgent,
+      "Origin": "https://gofile.io",
+      "Referer": "https://gofile.io/"
     }
-  );
-  const token = accountResponse.data?.data?.token;
+  });
+  var token = accountResponse.data?.data?.token;
   if (!token) throw new Error("[Gofile] Did not return an account token");
   cachedAccountToken = token;
   return token;
 }
 function findFirstFile(content) {
   if (content?.type === "file" && content?.link) return content;
-  for (const child of Object.values(content?.children ?? {})) {
-    const file = findFirstFile(child);
+  for (var child of Object.values(content?.children ?? {})) {
+    var file = findFirstFile(child);
     if (file) return file;
   }
   return void 0;
 }
 function Gofile(ctx) {
-  const serverName = "Gofile";
-  const sources = [];
-  const { axios: client, USER_AGENT, PolyURL } = ctx;
-  const userAgent = USER_AGENT || DEFAULT_USER_AGENT;
-  const extract = async (videoUrl) => {
+  var serverName = "Gofile";
+  var sources = [];
+  var {
+    axios: client,
+    USER_AGENT,
+    PolyURL
+  } = ctx;
+  var userAgent = USER_AGENT || DEFAULT_USER_AGENT;
+  var extract = async videoUrl => {
     try {
-      const urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
-      const urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
-      const id = urlObj.searchParams.get("c") || urlObj.pathname.split("/").filter(Boolean).pop() || urlHref;
-      const token = await getOrFetchToken(client, userAgent);
-      const generateWT = await getOrFetchGenerateWT(client, userAgent);
-      const websiteToken = generateWT(token);
-      const response = await client.get(`${GOFILE_API}/contents/${id}`, {
+      var urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
+      var urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
+      var id = urlObj.searchParams.get("c") || urlObj.pathname.split("/").filter(Boolean).pop() || urlHref;
+      var token = await getOrFetchToken(client, userAgent);
+      var generateWT = await getOrFetchGenerateWT(client, userAgent);
+      var websiteToken = generateWT(token);
+      var response = await client.get(`${GOFILE_API}/contents/${id}`, {
         params: {
           contentFilter: "",
           page: 1,
@@ -137,11 +142,11 @@ function Gofile(ctx) {
         }
         throw new Error(`[Gofile] API returned ${response.data?.status ?? "invalid data"}`);
       }
-      const file = findFirstFile(response.data.data);
+      var file = findFirstFile(response.data.data);
       if (!file?.link) {
         throw new Error("[Gofile] No downloadable file found in Gofile response");
       }
-      const defaultSource = {
+      var defaultSource = {
         url: file.link,
         isM3U8: file.link.includes(".m3u8"),
         isDASH: file.link.includes(".mpd"),

@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -38,25 +43,25 @@ var cachedAccountToken = null;
 var cachedGenerateWT = null;
 var cachedWTTime = 0;
 async function getOrFetchGenerateWT(axiosClient, userAgent) {
-  const now = Date.now();
+  var now = Date.now();
   if (cachedGenerateWT && now - cachedWTTime < 3 * 60 * 60 * 1e3) {
     return cachedGenerateWT;
   }
   try {
-    const res = await axiosClient.get("https://gofile.io/js/wt.obf.js", {
+    var res = await axiosClient.get("https://gofile.io/js/wt.obf.js", {
       headers: {
         "User-Agent": userAgent,
         "Referer": "https://gofile.io/"
       }
     });
-    const code = res.data;
-    const runner = new Function("navigator", "window", "document", "location", `${code}
+    var code = res.data;
+    var runner = new Function("navigator", "window", "document", "location", `${code}
 return typeof generateWT !== 'undefined' ? generateWT : (window && window.generateWT);`);
-    const fakeNav = {
+    var fakeNav = {
       userAgent,
       language: GOFILE_LANGUAGE
     };
-    const fakeWin = {
+    var fakeWin = {
       navigator: fakeNav,
       location: {
         href: "https://gofile.io/",
@@ -64,7 +69,7 @@ return typeof generateWT !== 'undefined' ? generateWT : (window && window.genera
         host: "gofile.io"
       }
     };
-    const generateWT = runner(fakeNav, fakeWin, {}, fakeWin.location);
+    var generateWT = runner(fakeNav, fakeWin, {}, fakeWin.location);
     if (typeof generateWT === "function") {
       cachedGenerateWT = generateWT;
       cachedWTTime = now;
@@ -77,44 +82,44 @@ return typeof generateWT !== 'undefined' ? generateWT : (window && window.genera
 }
 async function getOrFetchToken(axiosClient, userAgent) {
   if (cachedAccountToken) return cachedAccountToken;
-  const accountResponse = await axiosClient.post(`${GOFILE_API}/accounts`, {}, {
+  var accountResponse = await axiosClient.post(`${GOFILE_API}/accounts`, {}, {
     headers: {
       "User-Agent": userAgent,
       "Origin": "https://gofile.io",
       "Referer": "https://gofile.io/"
     }
   });
-  const token = accountResponse.data?.data?.token;
+  var token = accountResponse.data?.data?.token;
   if (!token) throw new Error("[Gofile] Did not return an account token");
   cachedAccountToken = token;
   return token;
 }
 function findFirstFile(content) {
   if (content?.type === "file" && content?.link) return content;
-  for (const child of Object.values(content?.children ?? {})) {
-    const file = findFirstFile(child);
+  for (var child of Object.values(content?.children ?? {})) {
+    var file = findFirstFile(child);
     if (file) return file;
   }
   return void 0;
 }
 function Gofile(ctx) {
-  const serverName = "Gofile";
-  const sources = [];
-  const {
+  var serverName = "Gofile";
+  var sources = [];
+  var {
     axios: client,
     USER_AGENT,
     PolyURL
   } = ctx;
-  const userAgent = USER_AGENT || DEFAULT_USER_AGENT;
-  const extract = async videoUrl => {
+  var userAgent = USER_AGENT || DEFAULT_USER_AGENT;
+  var extract = async videoUrl => {
     try {
-      const urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
-      const urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
-      const id = urlObj.searchParams.get("c") || urlObj.pathname.split("/").filter(Boolean).pop() || urlHref;
-      const token = await getOrFetchToken(client, userAgent);
-      const generateWT = await getOrFetchGenerateWT(client, userAgent);
-      const websiteToken = generateWT(token);
-      const response = await client.get(`${GOFILE_API}/contents/${id}`, {
+      var urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
+      var urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
+      var id = urlObj.searchParams.get("c") || urlObj.pathname.split("/").filter(Boolean).pop() || urlHref;
+      var token = await getOrFetchToken(client, userAgent);
+      var generateWT = await getOrFetchGenerateWT(client, userAgent);
+      var websiteToken = generateWT(token);
+      var response = await client.get(`${GOFILE_API}/contents/${id}`, {
         params: {
           contentFilter: "",
           page: 1,
@@ -139,11 +144,11 @@ function Gofile(ctx) {
         }
         throw new Error(`[Gofile] API returned ${response.data?.status ?? "invalid data"}`);
       }
-      const file = findFirstFile(response.data.data);
+      var file = findFirstFile(response.data.data);
       if (!file?.link) {
         throw new Error("[Gofile] No downloadable file found in Gofile response");
       }
-      const defaultSource = {
+      var defaultSource = {
         url: file.link,
         isM3U8: file.link.includes(".m3u8"),
         isDASH: file.link.includes(".mpd"),
@@ -190,24 +195,24 @@ var hubcloudDecode = function (value) {
   return safeAtob(value.toString());
 };
 var extractUrlFromScript = html => {
-  const doubleAtobMatch = html.match(/(?:var|let|const)\s+\w+\s*=\s*atob\(atob\(['"]([^'"]+)['"]\)\)/);
+  var doubleAtobMatch = html.match(/(?:var|let|const)\s+\w+\s*=\s*atob\(atob\(['"]([^'"]+)['"]\)\)/);
   if (doubleAtobMatch?.[1]) {
     return safeAtob(safeAtob(doubleAtobMatch[1]));
   }
-  const plainMatch = html.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
+  var plainMatch = html.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
   return hubcloudDecode(plainMatch?.[1]?.split("r=")?.[1] ?? "") || plainMatch?.[1] || "";
 };
 var getPixelDrainUrl = html => {
-  const match = html.match(/var\s+pxl\s*=\s*['"]([^'"]+)['"];?/i);
+  var match = html.match(/var\s+pxl\s*=\s*['"]([^'"]+)['"];?/i);
   return match?.[1] || "";
 };
 var getRedirectedPixelDrainUrl = function () {
   for (var _len = arguments.length, htmlSources = new Array(_len), _key = 0; _key < _len; _key++) {
     htmlSources[_key] = arguments[_key];
   }
-  for (const html of htmlSources) {
+  for (var html of htmlSources) {
     if (!html) continue;
-    const redirectedUrl = getPixelDrainUrl(html);
+    var redirectedUrl = getPixelDrainUrl(html);
     if (redirectedUrl) {
       return redirectedUrl;
     }
@@ -215,54 +220,54 @@ var getRedirectedPixelDrainUrl = function () {
   return "";
 };
 function HubCloud(ctx) {
-  const serverName = "HubCloud";
-  const sources = [];
-  const {
+  var serverName = "HubCloud";
+  var sources = [];
+  var {
     axios: client,
     load,
     USER_AGENT,
     PolyURL
   } = ctx;
-  const userAgent = USER_AGENT || DEFAULT_USER_AGENT2;
-  const extract = async (videoUrl, referer) => {
+  var userAgent = USER_AGENT || DEFAULT_USER_AGENT2;
+  var extract = async (videoUrl, referer) => {
     try {
-      const urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
-      const urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
-      const baseUrl = urlObj.origin;
-      const pageHeaders = {
+      var urlHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
+      var urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new PolyURL(urlHref);
+      var baseUrl = urlObj.origin;
+      var pageHeaders = {
         "User-Agent": userAgent,
         "Referer": referer || baseUrl,
         "Cookie": "ext_name=ojplmecpdpgccookcobabopnaifgidhf; xla=s4t; cf_clearance=woQrFGXtLfmEMBEiGUsVHrUBMT8s3cmguIzmMjmvpkg-1770053679-1.2.1.1-xBrQdciOJsweUF6F2T_OtH6jmyanN_TduQ0yslc_XqjU6RcHSxI7.YOKv6ry7oYo64868HYoULnVyww536H2eVI3R2e4wKzsky6abjPdfQPxqpUaXjxfJ02o6jl3_Vkwr4uiaU7Wy596Vdst3y78HXvVmKdIohhtPvp.vZ9_L7wvWdce0GRixjh_6JiqWmWMws46hwEt3hboaS1e1e4EoWCvj5b0M_jVwvSxBOAW5emFzvT3QrnRh4nyYmKDERnY"
       };
-      const vLinkRes = await client.get(urlHref, {
+      var vLinkRes = await client.get(urlHref, {
         headers: pageHeaders
       });
-      const vLinkText = vLinkRes.data;
-      const $vLink = load(vLinkText);
-      const extractQualityFromText = text => {
-        const m = text.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i);
+      var vLinkText = vLinkRes.data;
+      var $vLink = load(vLinkText);
+      var extractQualityFromText = text => {
+        var m = text.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i);
         if (m) {
           return m[1].toLowerCase() === "4k" ? "2160p" : m[1].toLowerCase();
         }
         return "";
       };
-      const parseSizeInBytes = text => {
-        const match = text.match(/([\d.]+)\s*(GB|MB|KB|B)/i);
+      var parseSizeInBytes = text => {
+        var match = text.match(/([\d.]+)\s*(GB|MB|KB|B)/i);
         if (!match) return void 0;
-        const val = parseFloat(match[1]);
-        const unit = match[2].toUpperCase();
+        var val = parseFloat(match[1]);
+        var unit = match[2].toUpperCase();
         if (unit === "GB") return Math.round(val * 1024 * 1024 * 1024);
         if (unit === "MB") return Math.round(val * 1024 * 1024);
         if (unit === "KB") return Math.round(val * 1024);
         return Math.round(val);
       };
-      let pageQuality = extractQualityFromText($vLink("title").text()) || extractQualityFromText($vLink(".card-header").text()) || extractQualityFromText(urlHref) || "auto";
-      let fileSize = parseSizeInBytes($vLink('#size, .list-group-item:contains("Size")').text());
-      const extractedSources = [];
-      const addGofileSources = res => {
-        const list = Array.isArray(res) ? res : res.sources;
+      var pageQuality = extractQualityFromText($vLink("title").text()) || extractQualityFromText($vLink(".card-header").text()) || extractQualityFromText(urlHref) || "auto";
+      var fileSize = parseSizeInBytes($vLink('#size, .list-group-item:contains("Size")').text());
+      var extractedSources = [];
+      var addGofileSources = res => {
+        var list = Array.isArray(res) ? res : res.sources;
         if (Array.isArray(list)) {
-          for (const s of list) {
+          var _loop2 = function (s) {
             if (!extractedSources.some(item => item.url === s.url)) {
               extractedSources.push({
                 ...s,
@@ -271,56 +276,59 @@ function HubCloud(ctx) {
                 size: s.size || fileSize
               });
             }
+          };
+          for (var s of list) {
+            _loop2(s);
           }
         }
       };
-      const vLinkGofileBtns = $vLink("a[href*='gofile.io']");
-      for (const el of vLinkGofileBtns.toArray()) {
-        const gfHref = $vLink(el).attr("href");
+      var vLinkGofileBtns = $vLink("a[href*='gofile.io']");
+      for (var el of vLinkGofileBtns.toArray()) {
+        var gfHref = $vLink(el).attr("href");
         if (gfHref) {
           try {
-            const gofileRes = await Gofile(ctx).extract(new PolyURL(gfHref));
+            var gofileRes = await Gofile(ctx).extract(new PolyURL(gfHref));
             addGofileSources(gofileRes);
           } catch {}
         }
       }
-      let vcloudLink = extractUrlFromScript(vLinkText) || $vLink(".fa-file-download.fa-lg").parent().attr("href") || urlHref;
+      var vcloudLink = extractUrlFromScript(vLinkText) || $vLink(".fa-file-download.fa-lg").parent().attr("href") || urlHref;
       if (vcloudLink?.startsWith("/")) {
         vcloudLink = `${baseUrl}${vcloudLink}`;
       }
       if (vcloudLink?.includes("gofile.io")) {
         try {
-          const gofileRes = await Gofile(ctx).extract(new PolyURL(vcloudLink));
-          addGofileSources(gofileRes);
+          var _gofileRes = await Gofile(ctx).extract(new PolyURL(vcloudLink));
+          addGofileSources(_gofileRes);
         } catch {}
       }
-      let vcloudText = "";
+      var vcloudText = "";
       if (vcloudLink && !vcloudLink.includes("gofile.io") && vcloudLink !== urlHref) {
-        const vcloudRes = await client.get(vcloudLink, {
+        var vcloudRes = await client.get(vcloudLink, {
           headers: pageHeaders
         });
         vcloudText = vcloudRes.data;
       }
-      const $ = load(vcloudText || vLinkText);
+      var $ = load(vcloudText || vLinkText);
       if (pageQuality === "auto") {
         pageQuality = extractQualityFromText($("title").text()) || extractQualityFromText($(".card-header").text()) || extractQualityFromText(vcloudLink) || "auto";
       }
       if (!fileSize) {
         fileSize = parseSizeInBytes($('#size, .list-group-item:contains("Size")').text());
       }
-      const linkClass = $(".btn-success.btn-lg.h6, .btn-danger, .btn-secondary");
-      for (const element of linkClass.toArray()) {
-        const itm = $(element);
-        let btnUrl = itm.attr("href") || "";
+      var linkClass = $(".btn-success.btn-lg.h6, .btn-danger, .btn-secondary");
+      for (var element of linkClass.toArray()) {
+        var itm = $(element);
+        var btnUrl = itm.attr("href") || "";
         switch (true) {
           case btnUrl.includes("pixeld"):
             if (!btnUrl.includes("api")) {
-              const redirectedPixelDrainUrl = getRedirectedPixelDrainUrl(vLinkText, vcloudText);
+              var redirectedPixelDrainUrl = getRedirectedPixelDrainUrl(vLinkText, vcloudText);
               if (redirectedPixelDrainUrl) {
                 btnUrl = redirectedPixelDrainUrl;
               }
-              const token = btnUrl.split("/").pop()?.split("?")[0];
-              const pxlBaseUrl = btnUrl.split("/").slice(0, -2).join("/");
+              var token = btnUrl.split("/").pop()?.split("?")[0];
+              var pxlBaseUrl = btnUrl.split("/").slice(0, -2).join("/");
               btnUrl = `${pxlBaseUrl}/api/file/${token}?download`;
             }
             extractedSources.push({
@@ -342,10 +350,10 @@ function HubCloud(ctx) {
             break;
           case btnUrl.includes("hubcloud") || btnUrl.includes("/?id="):
             try {
-              let newUrl = btnUrl;
+              var newUrl = btnUrl;
               try {
                 if (typeof fetch !== "undefined") {
-                  const fRes = await fetch(btnUrl, {
+                  var fRes = await fetch(btnUrl, {
                     headers: pageHeaders,
                     redirect: "follow"
                   });
@@ -358,7 +366,7 @@ function HubCloud(ctx) {
               } catch {}
               if (!newUrl.includes("googleusercontent")) {
                 try {
-                  const res1 = await client.get(newUrl, {
+                  var res1 = await client.get(newUrl, {
                     headers: pageHeaders,
                     maxRedirects: 0,
                     validateStatus: s => s >= 200 && s < 400
@@ -369,13 +377,13 @@ function HubCloud(ctx) {
                   if (newUrl.includes("googleusercontent")) {
                     newUrl = newUrl.split("?link=")[1] || newUrl;
                   } else if (newUrl.includes("http")) {
-                    const res2 = await client.get(newUrl, {
+                    var res2 = await client.get(newUrl, {
                       headers: pageHeaders,
                       maxRedirects: 0,
                       validateStatus: s => s >= 200 && s < 400
                     });
                     if (res2.headers?.location) {
-                      const loc2 = res2.headers.location;
+                      var loc2 = res2.headers.location;
                       newUrl = loc2.includes("?link=") ? loc2.split("?link=")[1] : loc2;
                     }
                   }
@@ -395,8 +403,8 @@ function HubCloud(ctx) {
             break;
           case btnUrl.includes("gofile.io"):
             try {
-              const gofileRes = await Gofile(ctx).extract(new PolyURL(btnUrl));
-              addGofileSources(gofileRes);
+              var _gofileRes2 = await Gofile(ctx).extract(new PolyURL(btnUrl));
+              addGofileSources(_gofileRes2);
             } catch {}
             break;
           case btnUrl.includes("cloudflarestorage"):
@@ -439,9 +447,9 @@ function HubCloud(ctx) {
             break;
         }
       }
-      const getPriority = function () {
-        let serverName2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
-        const s = serverName2.toLowerCase();
+      var getPriority = function () {
+        var serverName2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
+        var s = serverName2.toLowerCase();
         if (s.includes("cf storage") || s.includes("storage")) return 1;
         if (s.includes("cf worker") || s.includes("worker") || s.includes("fast cloud")) return 2;
         if (s.includes("gofile")) return 3;

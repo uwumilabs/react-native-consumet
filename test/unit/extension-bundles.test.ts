@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { parseSync, traverse } from '@babel/core';
 import registry from '../../src/extension-registry.json';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
@@ -100,5 +101,44 @@ describe('extension runtime require (EXT-5)', () => {
 
     expect(provider.models.TvType.MOVIE).toBe(TvType.MOVIE);
     expect(provider.models.AnimeParser).toBe(manager.getProviderContext().AnimeParser);
+  });
+});
+
+describe('registry bundles on Hermes, which compiles runtime code without block scoping', () => {
+  it.each(entries)('$label declares no let or const', ({ distFile }) => {
+    const ast = parseSync(read(distFile), { babelrc: false, configFile: false, sourceType: 'script' });
+    const blockScoped: string[] = [];
+    traverse(ast!, {
+      VariableDeclaration(p) {
+        if (p.node.kind !== 'var') blockScoped.push(`${p.node.kind} at line ${p.node.loc?.start.line}`);
+      },
+    });
+    expect(blockScoped).toEqual([]);
+  });
+
+  it('runs each mirror in the shared bundle with its own platform', async () => {
+    const manager = new ProviderManager(registry as any);
+    for (const id of ['netflixmirror', 'primemirror', 'disneymirror']) {
+      const entry = registry.extensions.find((e) => e.id === id)!;
+      const provider: any = await manager.executeProviderCode(read(entry.distFile), entry.factoryName, entry as any);
+      expect(provider.name).toBe(entry.name);
+    }
+  });
+
+  it('prefers the declared factory over an export that points at another one', async () => {
+    // What Hermes did to esbuild's export getters: exports.createProbe returned another factory.
+    const methods = 'search() {}, fetchEpisodeSources() {}, fetchEpisodeServers() {}, fetchAnimeInfo() {}';
+    const code = `
+      function createProbe(ctx) { return { which: 'declared', ${methods} }; }
+      function createOther(ctx) { return { which: 'other', ${methods} }; }
+      exports.createProbe = createOther;
+    `;
+    const provider: any = await new ProviderManager(registry as any).executeProviderCode(
+      code,
+      'createProbe',
+      { id: 'probe', category: 'anime' } as any,
+      { skipIntegrity: true }
+    );
+    expect(provider.which).toBe('declared');
   });
 });

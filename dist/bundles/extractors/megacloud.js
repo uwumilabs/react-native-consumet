@@ -12,10 +12,15 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    });
+    var _loop = function (key) {
+      if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+        get: () => from[key],
+        enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+      });
+    };
+    for (var key of __getOwnPropNames(from)) {
+      _loop(key);
+    }
   }
   return to;
 };
@@ -30,32 +35,32 @@ __export(megacloud_exports, {
 });
 module.exports = __toCommonJS(megacloud_exports);
 function MegaCloud(ctx) {
-  const serverName = "MegaCloud";
-  const sources = [];
-  const {
+  var serverName = "MegaCloud";
+  var sources = [];
+  var {
     axios,
     load,
     USER_AGENT,
     PolyURL
   } = ctx;
   async function getSources(embed_url, site) {
-    const regex = /\/([^/?]+)(?=\?)/;
-    const xrax = embed_url.toString().match(regex)?.[1];
-    const basePath = embed_url.pathname.split("/").slice(0, 4).join("/");
-    const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
-    const headers = {
+    var regex = /\/([^/?]+)(?=\?)/;
+    var xrax = embed_url.toString().match(regex)?.[1];
+    var basePath = embed_url.pathname.split("/").slice(0, 4).join("/");
+    var url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
+    var headers = {
       "Accept": "*/*",
       "X-Requested-With": "XMLHttpRequest",
       "Referer": site,
       "User-Agent": USER_AGENT
     };
-    let videoTag;
-    let embedRes;
+    var videoTag;
+    var embedRes;
     try {
       embedRes = await axios?.get(embed_url.href, {
         headers
       });
-      const $ = load(embedRes.data);
+      var $ = load(embedRes.data);
       videoTag = $('[id$="-player"]');
     } catch (error) {
       console.error("\u274C Error fetching embed URL:", error);
@@ -65,22 +70,22 @@ function MegaCloud(ctx) {
       console.error("\u274C Looks like URL expired!");
       return;
     }
-    const rawText = embedRes.data;
-    let nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
+    var rawText = embedRes.data;
+    var nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
     if (!nonceMatch) {
-      const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
+      var altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
       if (altMatch) nonceMatch = [altMatch.slice(1).join("")];
     }
-    const nonce = nonceMatch?.[0];
+    var nonce = nonceMatch?.[0];
     if (!nonce) return console.error("\u274C Nonce not found!");
-    const fileId = videoTag.attr("data-id");
-    const {
+    var fileId = videoTag.attr("data-id");
+    var {
       data: encryptedResData
     } = await axios.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
       headers
     });
-    const sources2 = encryptedResData.sources;
-    let videoSrc = [];
+    var sources2 = encryptedResData.sources;
+    var videoSrc = [];
     if (encryptedResData.encrypted) {
       console.warn("\u274C API returned encrypted sources which we are no longer decrypting. Returning empty array.");
     } else {
@@ -93,9 +98,9 @@ function MegaCloud(ctx) {
       outro: encryptedResData?.outro
     };
   }
-  const extract = async function (embedIframeURL) {
-    let referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "https://himovies.sx";
-    const extractedData = {
+  var extract = async function (embedIframeURL) {
+    var referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "https://himovies.sx";
+    var extractedData = {
       subtitles: [],
       intro: {
         start: 0,
@@ -108,11 +113,11 @@ function MegaCloud(ctx) {
       sources: []
     };
     try {
-      const resp = await getSources(embedIframeURL, referer);
+      var resp = await getSources(embedIframeURL, referer);
       if (!resp) return extractedData;
       if (Array.isArray(resp.sources)) {
-        for (const s of resp.sources) {
-          const isM3U8 = s.type === "hls";
+        for (var s of resp.sources) {
+          var isM3U8 = s.type === "hls";
           extractedData.sources.push({
             url: s.file,
             isM3U8,
@@ -120,23 +125,23 @@ function MegaCloud(ctx) {
           });
           if (isM3U8) {
             try {
-              const m3u8Response = await fetch(s.file, {
+              var m3u8Response = await fetch(s.file, {
                 headers: {
                   "Referer": referer,
                   "User-Agent": USER_AGENT || "Mozilla/5.0"
                 }
               });
-              const m3u8Content = await m3u8Response.text();
+              var m3u8Content = await m3u8Response.text();
               if (m3u8Content.includes("EXTM3U")) {
-                const pathWithoutMaster = s.file.split("/master.m3u8")[0] || s.file.split("/index.m3u8")[0];
-                const videoList = m3u8Content.split("#EXT-X-STREAM-INF:");
-                for (const video of videoList ?? []) {
+                var pathWithoutMaster = s.file.split("/master.m3u8")[0] || s.file.split("/index.m3u8")[0];
+                var videoList = m3u8Content.split("#EXT-X-STREAM-INF:");
+                for (var video of videoList ?? []) {
                   if (!video.includes("m3u8")) continue;
-                  const url = video.split("\n")[1].trim();
-                  const resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
-                  const quality = resolutionMatch ? resolutionMatch[2] : null;
-                  const isAbsoluteUrl = url.startsWith("http://") || url.startsWith("https://");
-                  const finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
+                  var url = video.split("\n")[1].trim();
+                  var resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
+                  var quality = resolutionMatch ? resolutionMatch[2] : null;
+                  var isAbsoluteUrl = url.startsWith("http://") || url.startsWith("https://");
+                  var finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
                   extractedData.sources.push({
                     url: finalUrl,
                     quality: quality ? `${quality}p` : "auto",
