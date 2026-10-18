@@ -61,7 +61,7 @@ function createVegaMovies(ctx, customBaseURL) {
     StreamingServers: StreamingServersEnum,
     TvType: TvTypeEnum
   } = enums;
-  var baseUrl = createCustomBaseUrl("https://new2.vegamovies.futbol", customBaseURL);
+  var baseUrl = createCustomBaseUrl("https://new1.vegamovies.lease", customBaseURL);
   var config = {
     name: "VegaMovies",
     languages: "all",

@@ -11,7 +11,7 @@ describe('VegaMovies Provider', () => {
   it('should instantiate both class and factory successfully', () => {
     expect(vegaMovies).toBeDefined();
     expect(vegaMovies.name).toBe('VegaMovies');
-    expect(vegaMovies.baseUrl).toBe('https://new2.vegamovies.futbol');
+    expect(vegaMovies.baseUrl).toBe('https://new1.vegamovies.lease');
 
     const ctx = createProviderContext();
     const instance = createVegaMovies(ctx);

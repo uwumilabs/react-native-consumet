@@ -49,7 +49,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { HubCloud } = extractors;
   const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
 
-  const baseUrl = createCustomBaseUrl('https://new2.vegamovies.futbol', customBaseURL);
+  const baseUrl = createCustomBaseUrl('https://new1.vegamovies.lease', customBaseURL);
 
   const config: ProviderConfig = {
     name: 'VegaMovies',
@@ -108,7 +108,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
   const resultMeta = (rawTitle: string, slug: string, isSeries: boolean) => ({
     type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
     releaseDate: isSeries ? undefined : extractYear(rawTitle),
-    seasons: isSeries ? countSeasons(rawTitle) ?? countSeasons(slug.replace(/-(\d+)-(\d+)/, ' $1-$2')) : undefined,
+    seasons: isSeries ? (countSeasons(rawTitle) ?? countSeasons(slug.replace(/-(\d+)-(\d+)/, ' $1-$2'))) : undefined,
   });
 
   /**
@@ -325,14 +325,16 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
       }
 
       // Rating
-      const ratingText = $('.imdb-score, .starstruck-rating').text() || /IMDb Rating\W*([\d.]+)/i.exec(infoText)?.[1] || '';
+      const ratingText =
+        $('.imdb-score, .starstruck-rating').text() || /IMDb Rating\W*([\d.]+)/i.exec(infoText)?.[1] || '';
       const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
       if (ratingMatch?.[1]) {
         movieInfo.rating = parseFloat(ratingMatch[1]);
       }
 
       // Release year: "Released Year: 2008-2013" gives the first-air year; titles often carry a season's year
-      movieInfo.releaseDate = extractYear(/Released?\s*Year\s*:?\s*([^\s]+)/i.exec(infoText)?.[1] ?? '') ?? extractYear(movieInfo.title);
+      movieInfo.releaseDate =
+        extractYear(/Released?\s*Year\s*:?\s*([^\s]+)/i.exec(infoText)?.[1] ?? '') ?? extractYear(movieInfo.title);
 
       // Genres
       movieInfo.genres = $('a[rel="category tag"], .category a')
