@@ -84,9 +84,19 @@ var pendingUnlocks = /* @__PURE__ */new Map();
 function createNetMirror(ctx, platform, customBaseURL) {
   var {
     enums,
-    axios,
+    axios: ctxAxios,
     createCustomBaseUrl
   } = ctx;
+  var axios = {
+    get: (url, options) => ctxAxios.get(url, {
+      ...options,
+      withCredentials: false
+    }),
+    post: (url, data, options) => ctxAxios.post(url, data, {
+      ...options,
+      withCredentials: false
+    })
+  };
   var {
     TvType: TvTypeEnum
   } = enums;
@@ -436,6 +446,24 @@ function createNetMirror(ctx, platform, customBaseURL) {
     if (normalized.includes("auto")) return "auto";
     return label;
   };
+  var hlsHeaders = {
+    "Referer": `${baseUrl}/`,
+    "User-Agent": APP_UA
+  };
+  var withVideoStreams = async sources => {
+    var checks = await Promise.all(sources.map(source => axios.get(source.url, {
+      headers: hlsHeaders,
+      responseType: "text",
+      timeout: 1e4
+    }).then(_ref => {
+      var {
+        data
+      } = _ref;
+      return typeof data !== "string" || data.includes("#EXT-X-STREAM-INF");
+    }).catch(() => true)));
+    var playable = sources.filter((_, i) => checks[i]);
+    return playable.length ? playable : sources;
+  };
   var fetchEpisodeSources = async (episodeId, mediaId) => {
     try {
       var data = await getVerified(playlistPath(episodeId), res => {
@@ -444,21 +472,18 @@ function createNetMirror(ctx, platform, customBaseURL) {
       });
       var playlist = Array.isArray(data) ? data[0] : data;
       if (!playlist?.sources?.length) throw new Error("No sources in playlist");
-      var sources = playlist.sources.map(s => ({
+      var listed = playlist.sources.map(s => ({
         url: s.file.startsWith("http") ? s.file : `${baseUrl}${s.file}`,
         quality: qualityFromLabel(s.label || ""),
         isM3U8: true
       }));
+      var sources = await withVideoStreams(listed);
       var subtitles = (playlist.tracks ?? []).filter(t => t.kind === "captions" && t.file).map(t => ({
         url: t.file.startsWith("//") ? `https:${t.file}` : t.file,
         lang: t.label || t.language || "Unknown"
       }));
       return {
-        // The CDN serving variant playlists and segments rejects requests without this Referer.
-        headers: {
-          "Referer": `${baseUrl}/`,
-          "User-Agent": APP_UA
-        },
+        headers: hlsHeaders,
         sources,
         subtitles
       };

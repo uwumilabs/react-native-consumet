@@ -292,14 +292,14 @@
       "id": "netflixmirror",
       "name": "NetflixMirror",
       "description": "Movies and TV shows from the Netflix catalog via NetMirror",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/netflixmirror/1.0.2.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/netflixmirror/1.0.3.js",
       "factoryName": "createNetflixMirror",
       "baseUrl": "https://net52.cc",
       "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -313,21 +313,21 @@
       "isSourceEmbed": false,
       "isSourceDirect": true,
       "haveMultiServers": false,
-      "sha256": "4c063d02b5ed109de521001493bfc18347d416e07f8df2c6b9ae3a1141e2b89c",
+      "sha256": "1079f1740027a385b5d3864ae68a28ffc6c27c8d3f7e062dd2a9aa37a836b49e",
       "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
     },
     {
       "id": "primemirror",
       "name": "PrimeMirror",
       "description": "Movies and TV shows from the Prime Video catalog via NetMirror",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/primemirror/1.0.2.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/primemirror/1.0.3.js",
       "factoryName": "createPrimeMirror",
       "baseUrl": "https://net52.cc",
       "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -341,21 +341,21 @@
       "isSourceEmbed": false,
       "isSourceDirect": true,
       "haveMultiServers": false,
-      "sha256": "4c063d02b5ed109de521001493bfc18347d416e07f8df2c6b9ae3a1141e2b89c",
+      "sha256": "1079f1740027a385b5d3864ae68a28ffc6c27c8d3f7e062dd2a9aa37a836b49e",
       "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
     },
     {
       "id": "disneymirror",
       "name": "DisneyMirror",
       "description": "Movies and TV shows from the Disney+ catalog via NetMirror",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/disneymirror/1.0.2.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/disneymirror/1.0.3.js",
       "factoryName": "createDisneyMirror",
       "baseUrl": "https://net52.cc",
       "logo": "https://net52.cc/img/nf2/icon_x192.png",
@@ -369,7 +369,7 @@
       "isSourceEmbed": false,
       "isSourceDirect": true,
       "haveMultiServers": false,
-      "sha256": "4c063d02b5ed109de521001493bfc18347d416e07f8df2c6b9ae3a1141e2b89c",
+      "sha256": "1079f1740027a385b5d3864ae68a28ffc6c27c8d3f7e062dd2a9aa37a836b49e",
       "distFile": "dist/bundles/providers/movies/netflixmirror/create-netflixmirror.js"
     }
   ]

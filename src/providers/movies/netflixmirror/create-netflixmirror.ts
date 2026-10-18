@@ -8,6 +8,7 @@ import {
   type ProviderContext,
   type ProviderConfig,
 } from '../../../models';
+import type { AxiosRequestConfig } from 'axios';
 
 type NetMirrorOtt = 'nf' | 'pv' | 'hs';
 
@@ -75,8 +76,7 @@ const UNLOCK_TIMEOUT_MS = 60 * 1000;
 // The site's TV API serves search and title metadata without a verified session,
 // so only playback has to wait for the (slow) session unlock.
 const NEWTV_API = 'https://tv.imgcdn.kim';
-const NEWTV_UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0 /OS.GatuNewTV v1.0';
+const NEWTV_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0 /OS.GatuNewTV v1.0';
 
 // One verified session works for every catalog, so share it across platforms and instances.
 const sessions = new Map<string, { token: string; ts: number }>();
@@ -169,7 +169,18 @@ function createNetMirror(
   platform: NetMirrorPlatform,
   customBaseURL?: string
 ): NetflixMirrorProviderInstance {
-  const { enums, axios, createCustomBaseUrl } = ctx;
+  const { enums, axios: ctxAxios, createCustomBaseUrl } = ctx;
+  // React Native sends its native cookie jar with every request unless withCredentials is false,
+  // and on Android the jar replaces the Cookie headers set here. With a stored session cookie the
+  // site then serves an already-unlocked home page (no data-addhash, and no Set-Cookie to read the
+  // token from) and never sees the ott cookie that picks the platform. This provider sends its own
+  // cookies, so every request opts out of the jar, as requests in Node do.
+  const axios = {
+    get: <T = any>(url: string, options?: AxiosRequestConfig) =>
+      ctxAxios.get<T>(url, { ...options, withCredentials: false }),
+    post: <T = any>(url: string, data?: unknown, options?: AxiosRequestConfig) =>
+      ctxAxios.post<T>(url, data, { ...options, withCredentials: false }),
+  };
   const { TvType: TvTypeEnum } = enums;
   const baseUrl = createCustomBaseUrl('https://net52.cc', customBaseURL);
 
@@ -561,8 +572,7 @@ function createNetMirror(
     }
   };
 
-  const playlistPath = (episodeId: string) =>
-    `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
+  const playlistPath = (episodeId: string) => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
 
   const fetchEpisodeServers = async (episodeId: string, mediaId?: string): Promise<IEpisodeServer[]> => {
     return [{ name: platform.label, url: `${baseUrl}${playlistPath(episodeId)}` }];
@@ -577,6 +587,27 @@ function createNetMirror(
     return label;
   };
 
+  // The CDN serving variant playlists and segments rejects requests without this Referer.
+  const hlsHeaders = { 'Referer': `${baseUrl}/`, 'User-Agent': APP_UA };
+
+  /**
+   * The playlist lists every quality, but a quality the title doesn't have comes back as a master
+   * playlist with audio tracks and no video stream, which players reject as malformed. Keep the
+   * sources whose master has a video stream; one that can't be checked (network error) is kept.
+   */
+  const withVideoStreams = async <S extends { url: string }>(sources: S[]): Promise<S[]> => {
+    const checks = await Promise.all(
+      sources.map((source) =>
+        axios
+          .get<string>(source.url, { headers: hlsHeaders, responseType: 'text', timeout: 10000 })
+          .then(({ data }) => typeof data !== 'string' || data.includes('#EXT-X-STREAM-INF'))
+          .catch(() => true)
+      )
+    );
+    const playable = sources.filter((_, i) => checks[i]);
+    return playable.length ? playable : sources;
+  };
+
   const fetchEpisodeSources = async (episodeId: string, mediaId?: string): Promise<ISource> => {
     try {
       // Without a verified session the server still returns a playlist, but every
@@ -589,11 +620,12 @@ function createNetMirror(
 
       if (!playlist?.sources?.length) throw new Error('No sources in playlist');
 
-      const sources = playlist.sources.map((s) => ({
+      const listed = playlist.sources.map((s) => ({
         url: s.file.startsWith('http') ? s.file : `${baseUrl}${s.file}`,
         quality: qualityFromLabel(s.label || ''),
         isM3U8: true,
       }));
+      const sources = await withVideoStreams(listed);
 
       const subtitles = (playlist.tracks ?? [])
         .filter((t) => t.kind === 'captions' && t.file)
@@ -603,8 +635,7 @@ function createNetMirror(
         }));
 
       return {
-        // The CDN serving variant playlists and segments rejects requests without this Referer.
-        headers: { 'Referer': `${baseUrl}/`, 'User-Agent': APP_UA },
+        headers: hlsHeaders,
         sources,
         subtitles,
       };
