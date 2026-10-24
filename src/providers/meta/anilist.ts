@@ -286,6 +286,35 @@ const timeOf = (date: unknown): number | undefined => {
 const episodeUniqueId = (anilistId: string, { episode, aniDbKey }: MergedEpisode, index: number) =>
   `${anilistId}$ep=${aniDbKey ?? toEpisodeNumber(episode.number) ?? index + 1}`;
 
+/** An AniList format as providers name the type: `MOVIE` → `movie`, `TV_SHORT` → `tv`. */
+const providerType = (format?: string) => (format === 'TV_SHORT' ? 'tv' : format?.toLowerCase());
+
+/** The numbers in a title, ignoring anything in parentheses: "Jujutsu Kaisen 0" → {0}, "2nd Season" → {2}. */
+const titleNumbers = (title?: string) => new Set((title ?? '').replace(/\([^)]*\)/g, '').match(/\d+/g) ?? []);
+
+/**
+ * How well a provider search result matches the AniList entry. Title similarity alone ranks "Jujutsu Kaisen (TV)"
+ * above "Jujutsu Kaisen 0 Movie" for "JUJUTSU KAISEN 0", since the part in parentheses is ignored. So a result also
+ * gains when its type is the AniList format, loses when only one of the two is a movie, and loses when its numbers
+ * don't match the title's.
+ */
+const matchScore = (result: { title?: string; type?: string; similarity?: number }, title: ITitle, format?: string) => {
+  let score = result.similarity ?? 0;
+
+  const wanted = providerType(format);
+  const type = result.type?.toLowerCase();
+  if (wanted && type) {
+    if (type === wanted) score += 0.1;
+    else if (type === 'movie' || wanted === 'movie') score -= 0.15;
+  }
+
+  const expected = titleNumbers(title.english || title.romaji);
+  const found = titleNumbers(result.title);
+  if ([...expected].some((n) => !found.has(n)) || (!expected.size && found.size)) score -= 0.2;
+
+  return score;
+};
+
 type FillerEpisode = { 'number': string; 'filler-bool': boolean };
 
 /**
@@ -442,6 +471,7 @@ class Anilist extends AnimeParser {
       const title = mapTitle(data.data.Media.title);
       animeInfo.episodes = await this.fetchDefaultEpisodeList({
         idMal: animeInfo.malId! as number,
+        format: data.data.Media.format,
         season: data.data.Media.season,
         startDate: { year: parseInt(animeInfo.releaseDate!) },
         title: {
@@ -602,7 +632,7 @@ class Anilist extends AnimeParser {
     }
   };
 
-  private findAnimeRaw = async (title: ITitle) => {
+  private findAnimeRaw = async (title: ITitle, format?: string) => {
     const searchTerm = title?.romaji || title?.english || title?.userPreferred || '';
     const findAnime = (await this.provider.search(searchTerm)) as ISearch<IAnimeResult>;
 
@@ -621,8 +651,8 @@ class Anilist extends AnimeParser {
       (str) => JSON.parse(str)
     );
 
-    // Sort by similarity score
-    uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+    // Best match first: title similarity, corrected by the format and the numbers in the title
+    uniqueResults.sort((a, b) => matchScore(b, title, format) - matchScore(a, title, format));
     const mappings: any = {};
     for (const obj of uniqueResults) {
       const match = obj.title.replace(/\(TV\)/g, '').match(/\(([^)0-9]+)\)/);
@@ -715,13 +745,14 @@ class Anilist extends AnimeParser {
 
   private fetchDefaultEpisodeList = async (Media: {
     idMal: number;
+    format?: string;
     title: { english: string; romaji: string };
     season: string;
     startDate: { year: number };
     externalLinks?: any;
   }) => {
     try {
-      return await this.findAnimeRaw({ english: Media.title?.english!, romaji: Media.title?.romaji! });
+      return await this.findAnimeRaw({ english: Media.title?.english!, romaji: Media.title?.romaji! }, Media.format);
     } catch (err) {
       throw MetaError.from('provider', err);
     }
@@ -748,7 +779,7 @@ class Anilist extends AnimeParser {
         data: { Media },
       },
     } = await anilistQuery(
-      `query($id: Int){ Media(id: $id){ idMal externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
+      `query($id: Int){ Media(id: $id){ idMal format externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
       { id: Number(id) }
     ).catch((err) => {
       throw anilistError(err);
