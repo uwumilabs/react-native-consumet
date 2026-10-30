@@ -1,4 +1,4 @@
-import { load } from 'cheerio';
+import { load, type CheerioAPI } from 'cheerio';
 
 import {
   MangaParser,
@@ -6,14 +6,100 @@ import {
   type IMangaInfo,
   type IMangaResult,
   MediaStatus,
+  type IMangaChapter,
   type IMangaChapterPage,
   type ProviderContext,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
+import { parseChapterNumber, parseVolumeNumber, sortChaptersForReading } from '../../utils/manga';
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const MINUTE = 60 * 1000;
+const UNITS: Record<string, number> = {
+  second: 1000,
+  sec: 1000,
+  minute: MINUTE,
+  min: MINUTE,
+  hour: 60 * MINUTE,
+  day: 24 * 60 * MINUTE,
+  week: 7 * 24 * 60 * MINUTE,
+};
+// How many chapterfun.ashx requests run at once while collecting a chapter's page images.
+const PAGE_REQUESTS_AT_ONCE = 4;
+
+/** Undoes a JavaScript string literal's backslash escapes (`\'` → `'`). */
+const unescapeJs = (text: string) =>
+  text.replace(/\\(.)/g, (_, char: string) => (char === 'n' ? '\n' : char === 'r' ? '\r' : char === 't' ? '\t' : char));
+
+/**
+ * Runs Dean Edwards' packer (`eval(function(p,a,c,k,e,d){...}('payload',a,c,'k|e|y|s'.split('|'),0,{}))`)
+ * in reverse without evaluating any code: every word of the payload is looked up in the keyword list.
+ * Undefined when `source` holds no packed script.
+ */
+function unpackPackedScript(source: string): string | undefined {
+  const match =
+    /\}\s*\(\s*'((?:[^'\\]|\\[\s\S])*)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'((?:[^'\\]|\\[\s\S])*)'\.split\(\s*'\|'\s*\)/.exec(
+      source
+    );
+  if (!match) return undefined;
+  const radix = Number(match[2]);
+  const count = Number(match[3]);
+  const keywords = unescapeJs(match[4]!).split('|');
+  const encode = (value: number): string => {
+    const rest = value % radix;
+    return (
+      (value < radix ? '' : encode(Math.floor(value / radix))) +
+      (rest > 35 ? String.fromCharCode(rest + 29) : rest.toString(36))
+    );
+  };
+  const words = new Map<string, string>();
+  for (let index = 0; index < count; index++) words.set(encode(index), keywords[index] || encode(index));
+  return unescapeJs(match[1]!).replace(/\b\w+\b/g, (word) => words.get(word) ?? word);
+}
+
+/** The strings inside a JavaScript array literal's quotes (`'a','b'` or `"a","b"`). */
+const quotedStrings = (list: string, quote: "'" | '"') =>
+  (list.match(quote === "'" ? /'[^']*'/g : /"[^"]*"/g) ?? []).map((item) => item.slice(1, -1));
+
+/**
+ * MangaHere's chapter dates as ISO 8601: `Oct 24,2024` → `2024-10-24`, `7 hour ago` → that hour's
+ * timestamp, `Today`/`Yesterday` → that date. Other text is returned as the site wrote it.
+ */
+function parseMangaHereDate(text: string | undefined, now: number = Date.now()): string | undefined {
+  const value = (text ?? '').trim();
+  if (!value) return undefined;
+  const calendar = /^([a-z]{3})[a-z]*\.?\s*(\d{1,2})\s*,\s*(\d{4})$/i.exec(value);
+  if (calendar) {
+    const month = MONTHS.indexOf(calendar[1]!.toLowerCase());
+    const date = new Date(Date.UTC(Number(calendar[3]), month, Number(calendar[2])));
+    if (month >= 0 && date.getUTCDate() === Number(calendar[2])) return date.toISOString().slice(0, 10);
+    return value;
+  }
+  const relative = /^(\d+)\s*(second|sec|minute|min|hour|day|week)s?\s+ago$/i.exec(value);
+  if (relative) {
+    // Rounded down to the unit, so the date doesn't change on every fetch.
+    const unit = UNITS[relative[2]!.toLowerCase()]!;
+    return new Date(Math.floor((now - Number(relative[1]) * unit) / unit) * unit).toISOString();
+  }
+  if (/^today$/i.test(value)) return new Date(now).toISOString().slice(0, 10);
+  if (/^yesterday$/i.test(value)) return new Date(now - UNITS.day!).toISOString().slice(0, 10);
+  return value;
+}
+
+const parseStatus = (text: string): MediaStatus | undefined => {
+  switch (text.trim().toLowerCase()) {
+    case 'ongoing':
+      return MediaStatus.ONGOING;
+    case 'completed':
+      return MediaStatus.COMPLETED;
+    default:
+      return undefined;
+  }
+};
 
 export class MangaHere extends MangaParser {
   override readonly name = 'MangaHere';
-  protected override baseUrl = 'http://www.mangahere.cc';
+  protected override baseUrl = 'https://www.mangahere.cc';
   protected override logo = 'https://i.pinimg.com/564x/51/08/62/51086247ed16ff8abae2df0bb06448e4.jpg';
   protected override classPath = 'MANGA.MangaHere';
 
@@ -22,49 +108,87 @@ export class MangaHere extends MangaParser {
     super();
   }
 
+  /** Covers and page images are refused (403) without a MangaHere Referer. */
+  private get imageHeaders(): Record<string, string> {
+    return { Referer: `${this.baseUrl}/` };
+  }
+
+  /**
+   * GET with the cookie that opens titles marked adult. withCredentials: false keeps React Native's
+   * native cookie jar from replacing that Cookie header on Android.
+   */
+  private request = async (url: string, headers: Record<string, string> = {}) => {
+    const { data } = await this.ctx.axios.get(url, {
+      headers: { ...headers, Cookie: 'isAdult=1' },
+      withCredentials: false,
+    });
+    return typeof data === 'string' ? data : String(data ?? '');
+  };
+
+  private absoluteUrl = (url: string | undefined): string | undefined => {
+    const value = url?.trim();
+    if (!value) return undefined;
+    if (value.startsWith('//')) return `https:${value}`;
+    if (value.startsWith('/')) return `${this.baseUrl}${value}`;
+    return /^https?:\/\//.test(value) ? value : undefined;
+  };
+
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
-    const mangaInfo: IMangaInfo = {
-      id: mangaId,
-      title: '',
-    };
     try {
-      const { data } = await this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`, {
-        headers: {
-          cookie: 'isAdult=1',
-        },
-      });
+      const url = `${this.baseUrl}/manga/${mangaId}/`;
+      const $ = load(await this.request(url));
 
-      const $ = load(data);
+      const title = $('span.detail-info-right-title-font').first().text().trim();
+      // Unknown ids redirect to the search page, which has no title.
+      if (!title) throw new Error(`MangaHere has no manga '${mangaId}'`);
 
-      mangaInfo.title = $('span.detail-info-right-title-font').text();
-      mangaInfo.description = $('div.detail-info-right > p.fullcontent').text();
-      mangaInfo.headers = { Referer: this.baseUrl };
-      mangaInfo.image = $('div.detail-info-cover > img').attr('src');
-      mangaInfo.genres = $('p.detail-info-right-tag-list > a')
-        .map((i, el) => $(el).attr('title')?.trim())
-        .get();
-      switch ($('span.detail-info-right-title-tip').text()) {
-        case 'Ongoing':
-          mangaInfo.status = MediaStatus.ONGOING;
-          break;
-        case 'Completed':
-          mangaInfo.status = MediaStatus.COMPLETED;
-          break;
-        default:
-          mangaInfo.status = MediaStatus.UNKNOWN;
-          break;
+      const mangaInfo: IMangaInfo = { id: mangaId, title, url };
+      const description = $('div.detail-info-right > p.fullcontent').text().trim();
+      if (description) mangaInfo.description = description;
+      const image = this.absoluteUrl($('div.detail-info-cover > img').attr('src'));
+      if (image) {
+        mangaInfo.image = image;
+        mangaInfo.headerForImage = this.imageHeaders;
       }
-      mangaInfo.rating = parseFloat($('span.detail-info-right-title-star > span').last().text());
-      mangaInfo.authors = $('p.detail-info-right-say > a')
-        .map((i, el) => $(el).attr('title'))
-        .get();
-      mangaInfo.chapters = $('ul.detail-main-list > li')
-        .map((i, el) => ({
-          id: $(el).find('a').attr('href')?.split('/manga/')[1]?.slice(0, -7)!,
-          title: $(el).find('a > div > p.title3').text(),
-          releasedDate: $(el).find('a > div > p.title2').text().trim(),
-        }))
-        .get();
+      const genres = $('p.detail-info-right-tag-list > a')
+        .map((_, el) => ($(el).attr('title') || $(el).text()).trim())
+        .get()
+        .filter(Boolean);
+      if (genres.length) mangaInfo.genres = genres;
+      const status = parseStatus($('span.detail-info-right-title-tip').text());
+      if (status) mangaInfo.status = status;
+      const rating = parseFloat($('span.detail-info-right-title-star span.item-score').text());
+      if (Number.isFinite(rating)) mangaInfo.rating = rating;
+      const authors = $('p.detail-info-right-say > a')
+        .map((_, el) => ($(el).attr('title') || $(el).text()).trim())
+        .get()
+        .filter(Boolean);
+      if (authors.length) mangaInfo.authors = authors;
+
+      // The site lists the newest chapter first.
+      const seen = new Set<string>();
+      const chapters: IMangaChapter[] = [];
+      $('ul.detail-main-list > li > a').each((_, el) => {
+        const href = $(el).attr('href') ?? '';
+        const id = /\/manga\/(.+?)\/(?:\d+\.html)?$/.exec(href)?.[1];
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        const label = $(el).find('p.title3').text().trim();
+        const chapterNumber = parseChapterNumber(label) ?? numberIn(/\/c(\d+(?:\.\d+)?)$/, id);
+        const volumeNumber = parseVolumeNumber(label) ?? numberIn(/\/v(\d+(?:\.\d+)?)\//, id);
+        const chapter: IMangaChapter = {
+          id,
+          title: label || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : id.split('/').pop()!),
+        };
+        if (chapterNumber !== undefined) chapter.chapterNumber = chapterNumber;
+        if (volumeNumber !== undefined) chapter.volumeNumber = volumeNumber;
+        const releaseDate = parseMangaHereDate($(el).find('p.title2').text());
+        if (releaseDate) chapter.releaseDate = releaseDate;
+        const chapterUrl = this.absoluteUrl(href);
+        if (chapterUrl) chapter.url = chapterUrl;
+        chapters.push(chapter);
+      });
+      mangaInfo.chapters = sortChaptersForReading(chapters.reverse());
 
       return mangaInfo;
     } catch (err) {
@@ -73,92 +197,120 @@ export class MangaHere extends MangaParser {
   };
 
   override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
-    const chapterPages: IMangaChapterPage[] = [];
     const url = `${this.baseUrl}/manga/${chapterId}/1.html`;
 
     try {
-      const { data } = await this.ctx.axios.get(url, {
-        headers: {
-          cookie: 'isAdult=1',
-        },
-      });
+      const html = await this.request(url);
+      const $ = load(html);
 
-      const $ = load(data);
+      const notice = $('p.detail-block-content').text().trim();
+      if (/Dear user|blocked/.test(notice)) throw new Error(notice);
 
-      const copyrightHandle =
-        $('p.detail-block-content').text().match('Dear user') || $('p.detail-block-content').text().match('blocked');
-      if (copyrightHandle) {
-        throw Error(copyrightHandle.input?.trim());
-      }
+      const scripts = $('script')
+        .map((_, el) => $(el).html() ?? '')
+        .get()
+        .filter((script) => script.includes('eval(function(p,a,c,k,e,d)'))
+        .map((script) => unpackPackedScript(script) ?? '');
 
-      const bar = $('script[src*=chapter_bar]').data();
-      const html = $.html();
-      if (typeof bar !== 'undefined') {
-        const ss = html.indexOf('eval(function(p,a,c,k,e,d)');
-        const se = html.indexOf('</script>', ss);
-        const s = html.substring(ss, se).replace('eval', '');
-        const ds = eval(s) as string;
+      // The long-strip (webtoon) reader lists every image in one packed script.
+      const strip = scripts.map((script) => /newImgs\s*=\s*\[([^\]]*)\]/.exec(script)?.[1]).find(Boolean);
+      const images =
+        strip !== undefined ? quotedStrings(strip, "'") : await this.fetchReaderImages(url, $, html, scripts);
 
-        const urls = ds.split("['")[1]?.split("']")[0]?.split("','")!;
-
-        urls.map((url, i) =>
-          chapterPages.push({
-            page: i,
-            img: `https:${url}`,
-            headerForImage: { Referer: url },
-          })
-        );
-      } else {
-        let sKey = this.extractKey(html);
-        const chapterIdsl = html.indexOf('chapterid');
-        const chapterId = html.substring(chapterIdsl + 11, html.indexOf(';', chapterIdsl)).trim();
-
-        const chapterPagesElmnt = $('body > div:nth-child(6) > div > span').children('a');
-
-        const pages = parseInt(chapterPagesElmnt.last().prev().attr('data-page') ?? '0');
-
-        const pageBase = url.substring(0, url.lastIndexOf('/'));
-
-        let resText = '';
-        for (let i = 1; i <= pages; i++) {
-          const pageLink = `${pageBase}/chapterfun.ashx?cid=${chapterId}&page=${i}&key=${sKey}`;
-
-          for (let j = 1; j <= 3; j++) {
-            const { data } = await this.ctx.axios.get(pageLink, {
-              headers: {
-                'Referer': url,
-                'X-Requested-With': 'XMLHttpRequest',
-                'cookie': 'isAdult=1',
-              },
-            });
-
-            resText = data as string;
-
-            if (resText) break;
-            else sKey = '';
-          }
-
-          const ds = eval(resText.replace('eval', ''));
-
-          const baseLinksp = ds.indexOf('pix=') + 5;
-          const baseLinkes = ds.indexOf(';', baseLinksp) - 1;
-          const baseLink = ds.substring(baseLinksp, baseLinkes);
-
-          const imageLinksp = ds.indexOf('pvalue=') + 9;
-          const imageLinkes = ds.indexOf('"', imageLinksp);
-          const imageLink = ds.substring(imageLinksp, imageLinkes);
-
-          chapterPages.push({
-            page: i - 1,
-            img: `https:${baseLink}${imageLink}`,
-            headerForImage: { Referer: url },
-          });
-        }
-      }
-      return chapterPages;
+      const pages = images.map((img) => this.absoluteUrl(img));
+      if (pages.length === 0 || pages.some((img) => !img))
+        throw new Error(`MangaHere found no pages for '${chapterId}'`);
+      return pages.map((img, index) => ({ page: index + 1, img: img!, headerForImage: this.imageHeaders }));
     } catch (err) {
       throw new Error((err as Error).message);
     }
+  };
+
+  /**
+   * The page-by-page reader loads each image from chapterfun.ashx, whose packed answer names the
+   * image of the page asked for and of the page after it; so every other page is asked for, then any
+   * page still missing on its own.
+   */
+  private fetchReaderImages = async (
+    chapterUrl: string,
+    $: CheerioAPI,
+    html: string,
+    scripts: string[]
+  ): Promise<string[]> => {
+    const chapterId = /var\s+chapterid\s*=\s*(\d+)/.exec(html)?.[1];
+    // imagecount, else the highest page the pager links to.
+    const pageCount =
+      Number(/var\s+imagecount\s*=\s*(\d+)/.exec(html)?.[1]) ||
+      Math.max(
+        0,
+        ...$('.pager-list-left a[data-page]')
+          .map((_, el) => Number($(el).attr('data-page')) || 0)
+          .get()
+      );
+    if (!chapterId || !pageCount) return [];
+
+    // guidkey=''+'4'+'2'+...; the site also answers with an empty key, which is the fallback.
+    const keyScript = scripts.map((script) => /guidkey\s*=\s*([^;]*);/.exec(script)?.[1]).find(Boolean);
+    const key = keyScript ? quotedStrings(keyScript, "'").join('') : '';
+
+    const pageBase = chapterUrl.slice(0, chapterUrl.lastIndexOf('/'));
+    const images: (string | undefined)[] = new Array(pageCount).fill(undefined);
+    let failure: unknown;
+    const fetchFrom = async (page: number) => {
+      try {
+        const found = await this.fetchChapterFun(
+          `${pageBase}/chapterfun.ashx?cid=${chapterId}&page=${page}`,
+          chapterUrl,
+          key
+        );
+        found.slice(0, 2).forEach((img, offset) => {
+          const index = page - 1 + offset;
+          if (index < pageCount && !images[index]) images[index] = img;
+        });
+      } catch (err) {
+        // The page is asked for again on its own; the error is thrown if it stays missing.
+        failure = err;
+      }
+    };
+    const missingPages = () => images.map((img, index) => (img ? 0 : index + 1)).filter((page) => page > 0);
+
+    const everyOther: number[] = [];
+    for (let page = 1; page <= pageCount; page += 2) everyOther.push(page);
+    await inBatches(everyOther, PAGE_REQUESTS_AT_ONCE, fetchFrom);
+    await inBatches(missingPages(), PAGE_REQUESTS_AT_ONCE, fetchFrom);
+
+    const lost = missingPages();
+    if (lost.length) {
+      if (failure) throw failure;
+      throw new Error(`MangaHere returned no image for page ${lost.join(', ')} of ${chapterUrl}`);
+    }
+    return images as string[];
+  };
+
+  /** The image URLs one chapterfun.ashx answer names, retried (with an empty key) when it is empty. */
+  private fetchChapterFun = async (url: string, chapterUrl: string, key: string): Promise<string[]> => {
+    let sKey = key;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      let text = '';
+      try {
+        text = await this.request(`${url}&key=${sKey}`, {
+          'Referer': chapterUrl,
+          'X-Requested-With': 'XMLHttpRequest',
+        });
+      } catch (err) {
+        if (attempt === 3) throw err;
+        continue;
+      }
+      const script = unpackPackedScript(text) ?? text;
+      const pix = /var\s+pix\s*=\s*"([^"]*)"/.exec(script)?.[1] ?? '';
+      const list = /var\s+pvalue\s*=\s*\[([^\]]*)\]/.exec(script)?.[1];
+      // The first file is joined to a literal base (the same as pix so far), the others to pix.
+      const firstBase = /pvalue\[i\]\s*=\s*"([^"]*)"\s*\+\s*pvalue\[i\]/.exec(script)?.[1] ?? pix;
+      const files = list ? quotedStrings(list, '"') : [];
+      if (files.length) return files.map((file, index) => `${index === 0 ? firstBase : pix}${file}`);
+      sKey = '';
+    }
+    return [];
   };
 
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
@@ -167,49 +319,50 @@ export class MangaHere extends MangaParser {
       results: [],
     };
     try {
-      const { data } = await this.ctx.axios.get(`${this.baseUrl}/search?title=${query}&page=${page}`);
-      const $ = load(data);
+      const $ = load(await this.request(`${this.baseUrl}/search?title=${encodeURIComponent(query)}&page=${page}`));
 
-      searchRes.hasNextPage = $('div.pager-list-left > a.active').next().text() !== '>';
+      // The last pager link is `>`; it goes nowhere (javascript:void(0)) on the last page.
+      const next = $('div.pager-list-left > a').last();
+      searchRes.hasNextPage = next.text().trim() === '>' && /^\//.test(next.attr('href') ?? '');
 
-      searchRes.results = $('div.container > div > div > ul > li')
-        .map(
-          (i, el): IMangaResult => ({
-            id: $(el).find('a').attr('href')?.split('/')[2]!,
-            title: $(el).find('p.manga-list-4-item-title > a').text(),
-            headerForImage: { Referer: this.baseUrl },
-            image: $(el).find('a > img').attr('src'),
-            description: $(el).find('p').last().text(),
-            status:
-              $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Ongoing'
-                ? MediaStatus.ONGOING
-                : $(el).find('p.manga-list-4-show-tag-list-2 > a').text() === 'Completed'
-                  ? MediaStatus.COMPLETED
-                  : MediaStatus.UNKNOWN,
-          })
-        )
-        .get();
+      $('ul.manga-list-4-list > li').each((_, el) => {
+        const link = $(el).find('p.manga-list-4-item-title > a').first();
+        const id = /\/manga\/([^/]+)/.exec(link.attr('href') ?? $(el).find('a').first().attr('href') ?? '')?.[1];
+        const title = (link.text() || link.attr('title') || '').trim();
+        if (!id || !title) return;
+        const result: IMangaResult = { id, title, url: `${this.baseUrl}/manga/${id}/` };
+        const image = this.absoluteUrl($(el).find('img.manga-list-4-cover').attr('src'));
+        if (image) {
+          result.image = image;
+          result.headerForImage = this.imageHeaders;
+        }
+        // The tips are the author, the latest chapter and then the synopsis.
+        const description = $(el)
+          .find('p.manga-list-4-item-tip')
+          .filter((_index, tip) => !/^(Author|Latest Chapter)\s*:/i.test($(tip).text().trim()))
+          .last()
+          .text()
+          .trim();
+        if (description) result.description = description;
+        const status = parseStatus($(el).find('p.manga-list-4-show-tag-list-2 > a').text());
+        if (status) result.status = status;
+        searchRes.results.push(result);
+      });
       return searchRes;
     } catch (err) {
       throw new Error((err as Error).message);
     }
   };
+}
 
-  /**
-   *  credit: [tachiyomi-extensions](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/en/mangahere/src/eu/kanade/tachiyomi/extension/en/mangahere/Mangahere.kt)
-   */
-  private extractKey = (html: string) => {
-    const skss = html.indexOf('eval(function(p,a,c,k,e,d)');
-    const skse = html.indexOf('</script>', skss);
-    const sks = html.substring(skss, skse).replace('eval', '');
+const numberIn = (pattern: RegExp, text: string): number | undefined => {
+  const digits = pattern.exec(text)?.[1];
+  return digits === undefined ? undefined : Number(digits);
+};
 
-    const skds = eval(sks);
-
-    const sksl = skds.indexOf("'");
-    const skel = skds.indexOf(';');
-
-    const skrs = skds.substring(sksl, skel);
-
-    return eval(skrs) as string;
-  };
+/** Runs `task` over `items`, `size` at a time. */
+async function inBatches<T>(items: T[], size: number, task: (item: T) => Promise<void>): Promise<void> {
+  for (let start = 0; start < items.length; start += size) {
+    await Promise.all(items.slice(start, start + size).map((item) => task(item)));
+  }
 }
