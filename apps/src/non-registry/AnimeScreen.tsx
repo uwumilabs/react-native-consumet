@@ -465,7 +465,7 @@ export default function AnimeScreen() {
   const isIdle = query.trim().length < 2;
 
   return (
-    <SafeAreaView style={S.root}>
+    <SafeAreaView style={S.root} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}

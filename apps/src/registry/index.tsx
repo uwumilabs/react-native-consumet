@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ExtAnimeScreen from './Ext-anime';
 import ExtMoviesScreen from './Ext-movies';
 import { LoadErrorView, ModeToggle } from './LoadStatus';
@@ -28,7 +29,7 @@ export default function RegistryScreen() {
   const [setup] = useState(createProviderManager);
 
   return (
-    <View style={S.root}>
+    <SafeAreaView style={S.root} edges={['top', 'left', 'right']}>
       {/* Sub-tab bar */}
       <View style={S.subTabBar}>
         {SUBTABS.map((t) => {
@@ -63,7 +64,7 @@ export default function RegistryScreen() {
           </View>
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -484,7 +484,7 @@ export default function ExtMoviesScreen({ manager, mode, onModeChange }: Props) 
   const isIdle = query.trim().length < 2;
 
   return (
-    <SafeAreaView style={S.root}>
+    <SafeAreaView style={S.root} edges={['left', 'right']}>
       <StatusBar barStyle="light-content" />
 
       {/* Header */}

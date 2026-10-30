@@ -842,7 +842,7 @@ export default function MangaScreen() {
   const isIdle = query.trim().length < 2 || (!searchedQuery && !searching);
 
   return (
-    <SafeAreaView style={S.root}>
+    <SafeAreaView style={S.root} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}

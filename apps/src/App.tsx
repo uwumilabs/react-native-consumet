@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimeScreen from './non-registry/AnimeScreen';
 import MoviesScreen from './non-registry/MoviesScreen';
 import MangaScreen from './non-registry/MangaScreen';
@@ -16,7 +17,19 @@ const TABS: { id: Tab; label: string; icon: string; activeIcon: string }[] = [
 ];
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Tabs />
+    </SafeAreaProvider>
+  );
+}
+
+function Tabs() {
   const [tab, setTab] = useState<Tab>('anime');
+  // The app draws edge to edge: each screen's SafeAreaView clears the status bar, and the tab bar
+  // sits above the system navigation bar (three buttons or gesture handle) with a little room.
+  const { bottom } = useSafeAreaInsets();
+  const barBottom = bottom + 8;
 
   return (
     <View style={S.root}>
@@ -37,7 +50,7 @@ export default function App() {
       </View>
 
       {/* Bottom tab bar */}
-      <View style={S.tabBar}>
+      <View style={[S.tabBar, { height: BAR_H + barBottom, paddingBottom: barBottom }]}>
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -53,20 +66,19 @@ export default function App() {
   );
 }
 
-const BAR_H = Platform.OS === 'ios' ? 80 : 62;
+// Tab bar height above the bottom inset.
+const BAR_H = 54;
 
 const S = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  screen: { flex: 1, paddingTop: 50 },
+  screen: { flex: 1 },
   hidden: { display: 'none' },
 
   tabBar: {
     flexDirection: 'row',
-    height: BAR_H,
     backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
     paddingTop: 8,
   },
   tab: {

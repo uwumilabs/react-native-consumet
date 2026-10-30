@@ -12,7 +12,8 @@
  */
 
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, PAD, R } from '../theme';
 
 export type ProviderItem = {
@@ -38,6 +39,8 @@ export function ProviderSheet({
   onSelect,
   onClose,
 }: Props) {
+  const { bottom } = useSafeAreaInsets();
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       {/* Dim backdrop — tap to dismiss */}
@@ -76,7 +79,8 @@ export function ProviderSheet({
           })}
         </ScrollView>
 
-        <View style={{ height: Platform.OS === 'ios' ? 30 : 14 }} />
+        {/* Keep the last row above the home indicator or the system navigation bar */}
+        <View style={{ height: bottom + 14 }} />
       </View>
     </Modal>
   );
