@@ -1,0 +1,86 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/solo-farming-in-the-tower/chapters/100.5",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "pages: 1 (all); chapter_list cut to 1",
+  "status": 200,
+  "body": {
+    "data": {
+      "access_gate": "",
+      "chapter": {
+        "id": 167240,
+        "series_id": 2201,
+        "number": 100.5,
+        "slug": "2896fb06-02b4-4366-9eab-1e097b6bd42f",
+        "pages": [
+          {
+            "url": "https://cdn.asurascans.com/asura-images/chapters/solo-farming-in-the-tower/100.5/001.webp?v=1779524162",
+            "width": 900,
+            "height": 3235
+          }
+        ],
+        "page_count": 1,
+        "is_premium": false,
+        "comments_enabled": true,
+        "published_at": "2025-12-25T22:21:13Z",
+        "view_count": 215853,
+        "created_at": "2025-12-25T20:16:44Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      "chapter_list": [
+        {
+          "id": 262611,
+          "series_id": 0,
+          "number": 149,
+          "title": "Hide-and-Seek",
+          "slug": "chapter-149",
+          "page_count": 0,
+          "is_premium": false,
+          "comments_enabled": false,
+          "view_count": 0,
+          "created_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "is_locked": false,
+      "next_chapter": {
+        "id": 167302,
+        "series_id": 0,
+        "number": 101,
+        "title": "The Black Dragon's Representative",
+        "slug": "chapter-101",
+        "page_count": 0,
+        "is_premium": false,
+        "comments_enabled": false,
+        "view_count": 0,
+        "created_at": "0001-01-01T00:00:00Z"
+      },
+      "prev_chapter": {
+        "id": 167239,
+        "series_id": 0,
+        "number": 100,
+        "title": "For the Black Tower",
+        "slug": "edcf9a23-a418-4695-947a-a8fca37e4d8e",
+        "page_count": 0,
+        "is_premium": false,
+        "comments_enabled": false,
+        "view_count": 0,
+        "created_at": "0001-01-01T00:00:00Z"
+      },
+      "series": {
+        "id": 2201,
+        "slug": "solo-farming-in-the-tower",
+        "title": "Solo Farming In The Tower",
+        "cover": "https://cdn.asurascans.com/asura-images/covers/solo-farming-in-the-tower.d60872.webp",
+        "status": "",
+        "type": "",
+        "bookmark_count": 0,
+        "rating": 0,
+        "chapter_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "public_url": "/comics/solo-farming-in-the-tower-3ebcc5a9",
+        "source_url": "/s/2201"
+      },
+      "unlock_time": null
+    }
+  }
+}

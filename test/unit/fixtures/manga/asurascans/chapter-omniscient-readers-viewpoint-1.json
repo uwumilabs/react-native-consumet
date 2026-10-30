@@ -1,0 +1,95 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/omniscient-readers-viewpoint/chapters/1",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "pages cut to 3 of 14, chapter_list to 1",
+  "status": 200,
+  "body": {
+    "data": {
+      "access_gate": "",
+      "chapter": {
+        "id": 151568,
+        "series_id": 1998,
+        "number": 1,
+        "slug": "29ff2333-0113-4901-a4e9-bc370f179588",
+        "pages": [
+          {
+            "url": "https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/001.webp?v=1770499638",
+            "width": 800,
+            "height": 12530
+          },
+          {
+            "url": "https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/002.webp?v=1770499638",
+            "width": 800,
+            "height": 12590
+          },
+          {
+            "url": "https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/003.webp?v=1770499638",
+            "width": 800,
+            "height": 13000
+          }
+        ],
+        "page_count": 14,
+        "is_premium": false,
+        "comments_enabled": true,
+        "published_at": "2022-12-21T16:48:51Z",
+        "view_count": 174292,
+        "created_at": "2022-12-21T16:48:51Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      },
+      "chapter_list": [
+        {
+          "id": 258703,
+          "series_id": 0,
+          "number": 311,
+          "title": "“Dokja’s Fable” Part -13 {S1 END}",
+          "slug": "chapter-311",
+          "page_count": 0,
+          "is_premium": false,
+          "comments_enabled": false,
+          "view_count": 0,
+          "created_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "is_locked": false,
+      "next_chapter": {
+        "id": 151566,
+        "series_id": 0,
+        "number": 2,
+        "slug": "1ba876b8-61fe-4d86-afae-a7c749520ad3",
+        "page_count": 0,
+        "is_premium": false,
+        "comments_enabled": false,
+        "view_count": 0,
+        "created_at": "0001-01-01T00:00:00Z"
+      },
+      "prev_chapter": {
+        "id": 151562,
+        "series_id": 0,
+        "number": 0,
+        "title": "Prologue",
+        "slug": "22df36b7-7875-46a8-b869-09a1475d79bf",
+        "page_count": 0,
+        "is_premium": false,
+        "comments_enabled": false,
+        "view_count": 0,
+        "created_at": "0001-01-01T00:00:00Z"
+      },
+      "series": {
+        "id": 1998,
+        "slug": "omniscient-readers-viewpoint",
+        "title": "Omniscient Reader’s Viewpoint",
+        "cover": "https://cdn.asurascans.com/asura-images/covers/omniscient-readers-viewpoint.c29ced.webp",
+        "status": "",
+        "type": "",
+        "bookmark_count": 0,
+        "rating": 0,
+        "chapter_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "public_url": "/comics/omniscient-readers-viewpoint-3ebcc5a9",
+        "source_url": "/s/1998"
+      },
+      "unlock_time": null
+    }
+  }
+}

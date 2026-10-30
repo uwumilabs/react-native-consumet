@@ -1,0 +1,80 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/omniscient-readers-viewpoint/chapters",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "data cut to chapters 311, 310, 2, 1 and 0 of 312 (newest first, as served)",
+  "status": 200,
+  "body": {
+    "data": [
+      {
+        "id": 258703,
+        "series_id": 1998,
+        "number": 311,
+        "title": "“Dokja’s Fable” Part -13 {S1 END}",
+        "slug": "chapter-311",
+        "page_count": 22,
+        "is_premium": false,
+        "comments_enabled": false,
+        "early_access_until": "2026-05-19T23:56:55.666Z",
+        "published_at": "2026-05-19T17:56:55.666Z",
+        "view_count": 775773,
+        "created_at": "2026-05-19T17:56:58.310822Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      },
+      {
+        "id": 258313,
+        "series_id": 1998,
+        "number": 310,
+        "title": "“Dokja’s Fable”  Part - 12",
+        "slug": "chapter-310",
+        "page_count": 13,
+        "is_premium": false,
+        "comments_enabled": false,
+        "early_access_until": "2026-05-13T06:34:16.985Z",
+        "published_at": "2026-05-13T00:34:16.985Z",
+        "view_count": 351438,
+        "created_at": "2026-05-13T00:34:18.005661Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      },
+      {
+        "id": 151566,
+        "series_id": 1998,
+        "number": 2,
+        "slug": "1ba876b8-61fe-4d86-afae-a7c749520ad3",
+        "page_count": 10,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2022-12-21T16:48:54Z",
+        "view_count": 251822,
+        "created_at": "2022-12-21T16:48:54Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      },
+      {
+        "id": 151568,
+        "series_id": 1998,
+        "number": 1,
+        "slug": "29ff2333-0113-4901-a4e9-bc370f179588",
+        "page_count": 14,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2022-12-21T16:48:51Z",
+        "view_count": 174283,
+        "created_at": "2022-12-21T16:48:51Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      },
+      {
+        "id": 151562,
+        "series_id": 1998,
+        "number": 0,
+        "title": "Prologue",
+        "slug": "22df36b7-7875-46a8-b869-09a1475d79bf",
+        "page_count": 7,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2022-12-21T16:35:42Z",
+        "view_count": 200803,
+        "created_at": "2022-12-21T16:35:42Z",
+        "series_slug": "omniscient-readers-viewpoint"
+      }
+    ]
+  }
+}

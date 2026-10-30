@@ -1,4 +1,4 @@
-import { type CheerioAPI, load } from 'cheerio';
+import { load } from 'cheerio';
 
 import {
   MangaParser,
@@ -11,12 +11,53 @@ import {
   type ProviderContext,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
-import type { AxiosResponse } from 'axios';
+import { sortChaptersForReading } from '../../utils/manga';
 
+/** The JSON API behind asurascans.com (the site's own pages call it). */
+const API_URL = 'https://api.asurascans.com/api';
+const PAGE_SIZE = 20;
+
+/** A series as the API lists it (search, browse and series detail). */
+type ApiSeries = {
+  slug: string;
+  title: string;
+  alt_titles?: string[] | null;
+  description?: string | null;
+  cover?: string | null;
+  cover_url?: string | null;
+  status?: string | null;
+  type?: string | null;
+  author?: string | null;
+  artist?: string | null;
+  rating?: number | null;
+  public_url?: string | null;
+  genres?: { name: string }[] | null;
+  latest_chapters?: { number: number }[] | null;
+};
+
+type ApiChapter = {
+  number: number;
+  title?: string | null;
+  is_premium?: boolean;
+  early_access_until?: string | null;
+  published_at?: string | null;
+};
+
+type ApiChapterRead = {
+  access_gate?: string;
+  is_locked?: boolean;
+  unlock_time?: string | null;
+  chapter?: { pages?: { url: string }[] | null };
+};
+
+/**
+ * AsuraScans (asurascans.com, formerly asuracomic.net). Ids are the site's series slug
+ * (`omniscient-readers-viewpoint`) and `<slug>/chapter/<number>` for chapters.
+ */
 export class AsuraScans extends MangaParser {
   override readonly name = 'AsuraScans';
-  protected override baseUrl = 'https://asuracomic.net';
-  protected override logo = 'https://asuracomic.net/images/logo.png';
+  protected override baseUrl = 'https://asurascans.com';
+  protected override logo = 'https://asurascans.com/images/logo.webp';
   protected override classPath = 'MANGA.AsuraScans';
 
   /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
@@ -24,147 +65,167 @@ export class AsuraScans extends MangaParser {
     super();
   }
 
-  override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
-    try {
-      const { data }: AxiosResponse = await this.ctx.axios.get(`${this.baseUrl}/${mangaId}`);
-      const $: CheerioAPI = load(data);
-
-      const dom = $('html');
-      const topInfoWrapper = dom.find('.relative.col-span-12.space-y-3.px-6');
-
-      const info: IMangaInfo = {
-        id: mangaId,
-        title: dom.find('.text-xl.font-bold:nth-child(1)').text().trim(),
-        image: $(topInfoWrapper).find('img').attr('src'),
-        rating: $(topInfoWrapper).find('div > div.px-2.py-1 > p').text().trim(),
-        status: this.determineMediaState(
-          $(topInfoWrapper).find('div > div.flex.flex-row > div:nth-child(1) > h3:nth-child(2)').text().trim()
-        ),
-        description: dom.find('span.font-medium.text-sm').text().trim(),
-        authors: dom
-          .find('.grid.grid-cols-1.gap-5.mt-8 > div:nth-child(2) > h3:nth-child(2)')
-          .text()
-          .trim()
-          .split('/')
-          .map((ele) => ele.trim()),
-        artist: dom.find('.grid.grid-cols-1.gap-5.mt-8 > div:nth-child(3) > h3:nth-child(2)').text().trim(),
-        updatedOn: dom.find('.grid.grid-cols-1.gap-5.mt-8 > div:nth-child(5) > h3:nth-child(2)').text().trim(),
-        genres: dom
-          .find('.space-y-1.pt-4 > div > button')
-          .map((index, ele) => $(ele).text().trim())
-          .get(),
-        recommendations: dom
-          .find('.grid.grid-cols-2.gap-3.p-4 > a')
-          .map((index, ele): IMangaResult => {
-            return {
-              id: $(ele).attr('href') as string,
-              title: $(ele).find('div > h2.font-bold').text().trim(),
-              image: $(ele).find('div > div > img').attr('src'),
-              latestChapter: $(ele).find('div > h2:nth-child(3)').text().trim(),
-              status: this.determineMediaState($(ele).find('div > div:nth-child(1) > span').text().trim()),
-              rating: $(ele).find('div > div.block > span > label').text().trim(),
-            };
-          })
-          .get(),
-      };
-
-      const chapMatch = data
-        .replace(/\n/g, '')
-        .replace(/\\/g, '')
-        .match(/"chapters".*:(\[\{.*?\}\]),/);
-      if (chapMatch) {
-        const chap: {
-          name: string;
-          title: string;
-          id: string;
-          published_at: string;
-        }[] = JSON.parse(chapMatch[1]);
-        info.chapters = chap.map((ele): IMangaChapter => {
-          return {
-            id: ele.name,
-            title: ele.title !== '' ? ele.title : `Chapter ${ele.name}`,
-            releaseDate: ele.published_at,
-          };
-        });
-      }
-      return info;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
-    try {
-      const { data }: AxiosResponse = await this.ctx.axios.get(`${this.baseUrl}/series/${chapterId}`);
-      const chapMatch = data.replace(/\\/g, '').match(/pages.*:(\[{['"]order["'].*?}\])/);
-      if (!chapMatch) throw new Error('Parsing error');
-      const chap: { order: string; url: string }[] = JSON.parse(chapMatch[1]);
-      return chap.map(
-        (page, index): IMangaChapterPage => ({
-          page: index + 1,
-          img: page.url,
-        })
-      );
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
   /**
-   *
    * @param query Search query
+   * @param page Page number (default: 1), 20 results per page
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
-    try {
-      const formattedQuery = encodeURI(query.toLowerCase());
-      const { data }: AxiosResponse = await this.ctx.axios.get(
-        `${this.baseUrl}/series?page=${page}&name=${formattedQuery}`
-      );
-
-      const $: CheerioAPI = load(data);
-      const dom = $('html');
-
-      const results = dom
-        .find('.grid.grid-cols-2.gap-3.p-4 > a')
-        .map((index, ele): IMangaResult => {
-          return {
-            id: $(ele).attr('href') as string,
-            title: $(ele).find('div > div > div:nth-child(2) > span:nth-child(1)').text().trim() as string,
-            image: $(ele).find('div > div > div:nth-child(1) > img').attr('src') as string,
-            status: this.determineMediaState($(ele).find('div > div > div:nth-child(1) > span').text().trim()),
-            latestChapter: $(ele).find('div > div > div:nth-child(2) > span:nth-child(2)').text().trim(),
-            rating: $(ele).find('div > div > div:nth-child(2) > span:nth-child(3) > label').text().trim(),
-          };
-        })
-        .get();
-
-      const searchResults: ISearch<IMangaResult> = {
-        currentPage: page,
-        hasNextPage:
-          (dom.find('.flex.items-center.justify-center > a').attr('style') as string)
-            .split('pointer-events:')[1]!
-            .slice(1, -1) === 'auto'
-            ? true
-            : false,
-        results: results,
-      };
-
-      return searchResults;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
+    const currentPage = Math.max(1, Math.floor(page) || 1);
+    const offset = (currentPage - 1) * PAGE_SIZE;
+    const { data, meta } = await this.api<{
+      data: ApiSeries[] | null;
+      meta?: { total?: number; has_more?: boolean };
+    }>(`/series?search=${encodeURIComponent(query)}&limit=${PAGE_SIZE}&offset=${offset}`);
+    const results = (data ?? []).map((series) => this.toResult(series));
+    return {
+      currentPage,
+      hasNextPage: meta?.has_more ?? (typeof meta?.total === 'number' && offset + results.length < meta.total),
+      results,
+    };
   };
 
-  private determineMediaState(state: string): MediaStatus {
-    switch (state.toLowerCase().trim()) {
-      case 'completed':
-        return MediaStatus.COMPLETED;
-      case 'ongoing':
-        return MediaStatus.ONGOING;
-      case 'dropped':
-        return MediaStatus.CANCELLED;
-      default:
-        return MediaStatus.UNKNOWN;
+  /** @param mangaId series slug from `search` (`series/<slug>-<hash>` ids from asuracomic.net work too) */
+  override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
+    const slug = encodeURIComponent(mangaId.replace(/^\/?(?:series|comics)\//, '').replace(/\/+$/, ''));
+    const [detail, list] = await Promise.all([
+      this.api<{ series: ApiSeries; recommended_series?: ApiSeries[] | null }>(`/series/${slug}`),
+      this.api<{ data: ApiChapter[] | null }>(`/series/${slug}/chapters`),
+    ]);
+    const { series } = detail;
+    const seriesUrl = this.absolute(series.public_url);
+    const genres = (series.genres ?? []).map((genre) => genre.name?.trim()).filter(Boolean);
+    const authors = names(series.author);
+    const artists = names(series.artist);
+
+    // The API lists newest first; early-access chapters can't be read until they unlock.
+    const chapters = (list.data ?? [])
+      .filter((chapter) => Number.isFinite(chapter.number) && !isLocked(chapter))
+      .reverse()
+      .map((chapter): IMangaChapter => {
+        const result: IMangaChapter = {
+          id: `${series.slug}/chapter/${chapter.number}`,
+          title: chapter.title?.replace(/\s+/g, ' ').trim() || `Chapter ${chapter.number}`,
+          chapterNumber: chapter.number,
+        };
+        const releaseDate = isoDate(chapter.published_at);
+        if (releaseDate) result.releaseDate = releaseDate;
+        if (seriesUrl) result.url = `${seriesUrl}/chapter/${chapter.number}`;
+        return result;
+      });
+
+    const info: IMangaInfo = this.toResult(series);
+    if (genres.length > 0) info.genres = genres;
+    if (authors) info.authors = authors;
+    if (artists) info.artists = artists;
+    const recommendations = (detail.recommended_series ?? []).map((item) => this.toResult(item));
+    if (recommendations.length > 0) info.recommendations = recommendations;
+    info.chapters = sortChaptersForReading(chapters);
+    return info;
+  };
+
+  /** @param chapterId chapter id from `fetchMangaInfo` (`<slug>/chapter/<number>`) */
+  override fetchChapterPages = async (chapterId: string): Promise<IMangaChapterPage[]> => {
+    const match = /^\/?(?:(?:series|comics)\/)?([^/]+)\/chapters?\/([^/?#]+)\/?$/.exec(chapterId);
+    if (!match) throw new Error(`AsuraScans: invalid chapter id "${chapterId}"`);
+    const [, slug, number] = match;
+    const { data } = await this.api<{ data: ApiChapterRead }>(
+      `/series/${encodeURIComponent(slug!)}/chapters/${encodeURIComponent(number!)}`
+    );
+    if (data.access_gate) throw new Error(`AsuraScans: chapter needs ${data.access_gate} on the site`);
+    if (data.is_locked) {
+      const until = data.unlock_time ? ` until ${data.unlock_time}` : '';
+      throw new Error(`AsuraScans: chapter is in early access${until}`);
+    }
+    const pages = (data.chapter?.pages ?? []).filter((page) => page?.url);
+    if (pages.length === 0) throw new Error('AsuraScans: chapter has no pages');
+    return pages.map((page, index): IMangaChapterPage => ({ page: index + 1, img: this.absolute(page.url)! }));
+  };
+
+  /** GET a path of the JSON API; failures carry the API's own error message. */
+  private async api<T>(path: string): Promise<T> {
+    try {
+      const { data } = await this.ctx.axios.get(`${API_URL}${path}`, { headers: { Accept: 'application/json' } });
+      return data as T;
+    } catch (err) {
+      const response = (err as { response?: { status?: number; data?: { error?: unknown } } }).response;
+      const reason = typeof response?.data?.error === 'string' ? response.data.error : (err as Error).message;
+      throw new Error(`AsuraScans: ${reason}${response?.status ? ` (${response.status})` : ''}`);
     }
   }
+
+  /** The fields search, info and recommendations share. */
+  private toResult(series: ApiSeries): IMangaResult {
+    const result: IMangaResult = { id: series.slug, title: series.title.trim() };
+    const altTitles = (series.alt_titles ?? []).map((title) => title?.trim()).filter(Boolean);
+    if (altTitles.length > 0) result.altTitles = altTitles;
+    const image = this.absolute(series.cover ?? series.cover_url);
+    if (image) result.image = image;
+    const url = this.absolute(series.public_url);
+    if (url) result.url = url;
+    const description = plainText(series.description);
+    if (description) result.description = description;
+    const status = mediaStatus(series.status);
+    if (status) result.status = status;
+    // Site extras: manga / manhwa / manhua, the 0-10 user rating, the newest chapter's number.
+    if (series.type) result.type = series.type;
+    if (series.rating) result.rating = Math.round(series.rating * 100) / 100;
+    const latestChapter = series.latest_chapters?.[0]?.number;
+    if (typeof latestChapter === 'number') result.latestChapter = latestChapter;
+    return result;
+  }
+
+  private absolute(url: string | null | undefined): string | undefined {
+    if (!url) return undefined;
+    if (url.startsWith('//')) return `https:${url}`;
+    return url.startsWith('/') ? `${this.baseUrl}${url}` : url;
+  }
 }
+
+/** Early-access chapters stay locked until `early_access_until`, as the site's chapter list shows. */
+const isLocked = (chapter: ApiChapter): boolean =>
+  chapter.early_access_until ? Date.parse(chapter.early_access_until) > Date.now() : chapter.is_premium === true;
+
+const mediaStatus = (status: string | null | undefined): MediaStatus | undefined => {
+  switch (status?.toLowerCase().trim()) {
+    case 'ongoing':
+      return MediaStatus.ONGOING;
+    case 'completed':
+      return MediaStatus.COMPLETED;
+    case 'hiatus':
+      return MediaStatus.HIATUS;
+    case 'dropped':
+    case 'axed':
+      return MediaStatus.CANCELLED;
+    default:
+      return undefined;
+  }
+};
+
+/** `Ahn Soseol/ Sunghyun` or `Fit, Geonjin` → separate names; undefined when there are none. */
+const names = (value: string | null | undefined): string[] | undefined => {
+  const list = (value ?? '')
+    .split(/[/,]/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : undefined;
+};
+
+/** The API's ISO timestamps, normalized; its zero date (`0001-01-01`) means none. */
+const isoDate = (value: string | null | undefined): string | undefined => {
+  if (!value || value.startsWith('0001-')) return undefined;
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? value : new Date(time).toISOString();
+};
+
+/** The API's HTML synopsis as plain text, one paragraph per line. */
+const plainText = (html: string | null | undefined): string | undefined => {
+  if (!html) return undefined;
+  const $ = load(html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n'));
+  const text = $.root()
+    .text()
+    .split('\n')
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+  return text || undefined;
+};

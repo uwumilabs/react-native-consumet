@@ -1,0 +1,109 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/solo-farming-in-the-tower/chapters",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "data cut to chapters 149 (early access until 2026-10-30T17:57:25Z), 148, 101, 100.5, 100, 2 and 1 of 150",
+  "status": 200,
+  "body": {
+    "data": [
+      {
+        "id": 262611,
+        "series_id": 2201,
+        "number": 149,
+        "title": "Hide-and-Seek",
+        "slug": "chapter-149",
+        "page_count": 24,
+        "is_premium": true,
+        "comments_enabled": false,
+        "early_access_until": "2026-10-30T17:57:25.223823Z",
+        "published_at": "2026-10-30T11:57:25.223823Z",
+        "view_count": 2769,
+        "created_at": "2026-10-30T11:57:27.561309Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 262452,
+        "series_id": 2201,
+        "number": 148,
+        "title": "An Unexpected Opportunity",
+        "slug": "chapter-148",
+        "page_count": 25,
+        "is_premium": false,
+        "comments_enabled": false,
+        "early_access_until": "2026-10-24T16:45:50.515075Z",
+        "published_at": "2026-10-24T10:45:50.515075Z",
+        "view_count": 125199,
+        "created_at": "2026-10-24T10:45:51.276121Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 167302,
+        "series_id": 2201,
+        "number": 101,
+        "title": "The Black Dragon's Representative",
+        "slug": "chapter-101",
+        "page_count": 18,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2025-12-28T17:48:22Z",
+        "view_count": 260824,
+        "created_at": "2025-12-28T16:16:16Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 167240,
+        "series_id": 2201,
+        "number": 100.5,
+        "slug": "2896fb06-02b4-4366-9eab-1e097b6bd42f",
+        "page_count": 1,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2025-12-25T22:21:13Z",
+        "view_count": 215850,
+        "created_at": "2025-12-25T20:16:44Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 167239,
+        "series_id": 2201,
+        "number": 100,
+        "title": "For the Black Tower",
+        "slug": "edcf9a23-a418-4695-947a-a8fca37e4d8e",
+        "page_count": 27,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2025-12-25T22:20:15Z",
+        "view_count": 243261,
+        "created_at": "2025-12-25T20:16:37Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 167142,
+        "series_id": 2201,
+        "number": 2,
+        "title": "Planting Green Onions",
+        "slug": "5c959377-0fdc-4e7d-b20b-0ae8a63f76c5",
+        "page_count": 19,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2025-12-25T20:42:12Z",
+        "view_count": 301055,
+        "created_at": "2025-12-25T20:01:08Z",
+        "series_slug": "solo-farming-in-the-tower"
+      },
+      {
+        "id": 167141,
+        "series_id": 2201,
+        "number": 1,
+        "title": "Into the Tower",
+        "slug": "66e058fe-0e79-4d14-adfd-956660e9300e",
+        "page_count": 19,
+        "is_premium": false,
+        "comments_enabled": false,
+        "published_at": "2025-12-25T20:41:13Z",
+        "view_count": 633222,
+        "created_at": "2025-12-25T20:01:00Z",
+        "series_slug": "solo-farming-in-the-tower"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/this-does-not-exist-zzz",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "unknown slug",
+  "status": 404,
+  "body": {
+    "error": "series not found"
+  }
+}

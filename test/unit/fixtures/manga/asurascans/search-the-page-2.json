@@ -1,0 +1,177 @@
+{
+  "request": "GET https://api.asurascans.com/api/series?search=the&limit=20&offset=20",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "data cut to 2 of 20 results (star-embracing-swordmaster, the-tale-of-cultivation-and-demon-extermination); alt_titles cut to 3, latest_chapters to 1, the second description to 2 paragraphs",
+  "status": 200,
+  "body": {
+    "data": [
+      {
+        "id": 2065,
+        "slug": "star-embracing-swordmaster",
+        "title": "Star-Embracing Swordmaster",
+        "alt_titles": [
+          "Star-Fostered Swordmaster",
+          "별을 품은 소드마스터",
+          "Byeoreul Pumeun Swordmaster"
+        ],
+        "description": "<p>Vlad was a vagrant child of the slums who always admired knights. After an incident where he was struck by black lightning, he began hearing a voice. A knight of blue moonlight appeared one day, and Vlad's back-alley life was turned upside down... Even an obscure star that does not shine in the highest peaks of the night sky is still a star if it wishes to shine.</p>",
+        "cover": "https://cdn.asurascans.com/asura-images/covers/star-embracing-swordmaster.6b1222.webp",
+        "banner": "https://cdn.asurascans.com/asura-images/banners/star-embracing-swordmaster.069afb.webp",
+        "status": "ongoing",
+        "type": "manhwa",
+        "author": "hong daeui/ Q10",
+        "artist": "juno",
+        "popularity_rank": 6,
+        "bookmark_count": 174586,
+        "rating": 9.799836734693878,
+        "chapter_count": 144,
+        "last_chapter_at": "2026-10-28T14:27:24.15679Z",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-30T14:15:08.879616Z",
+        "public_url": "/comics/star-embracing-swordmaster-3ebcc5a9",
+        "source_url": "/s/2065",
+        "genres": [
+          {
+            "id": 1,
+            "name": "Action",
+            "slug": "action"
+          },
+          {
+            "id": 4,
+            "name": "Adventure",
+            "slug": "adventure"
+          },
+          {
+            "id": 16,
+            "name": "Fantasy",
+            "slug": "fantasy"
+          },
+          {
+            "id": 20,
+            "name": "Genius MC",
+            "slug": "genius-mc"
+          }
+        ],
+        "latest_chapters": [
+          {
+            "id": 262575,
+            "series_id": 0,
+            "number": 144,
+            "slug": "chapter-144",
+            "page_count": 0,
+            "is_premium": false,
+            "comments_enabled": false,
+            "early_access_until": "2026-10-28T20:27:24.15679Z",
+            "published_at": "2026-10-28T14:27:24.15679Z",
+            "view_count": 0,
+            "created_at": "0001-01-01T00:00:00Z"
+          }
+        ],
+        "linked_novel": {
+          "id": 5,
+          "title": "Star-Embracing Swordmaster",
+          "slug": "star-embracing-swordmaster",
+          "cover_url": "https://cdn.asurascans.com/asura-images/covers/star-embracing-swordmaster.fcab53.webp",
+          "chapter_count": 259,
+          "status": "ongoing"
+        }
+      },
+      {
+        "id": 6078,
+        "slug": "the-tale-of-cultivation-and-demon-extermination",
+        "title": "The Tale of Cultivation and Demon Extermination",
+        "alt_titles": [
+          "Tale of Cultivation and Demon Extermination",
+          "Cultivation and Exorcism Story",
+          "Chronicles of the Demon Slayer"
+        ],
+        "description": "<p>By <strong>Redice</strong> Studio that brought you &lt;<strong><em>Myst, Might, Mayhem</em></strong>&gt; and &lt;<strong><em>Nano Machine</em></strong>&gt;, &lt;<strong><em>Reaper of the Drifting Moon</em></strong>&gt;, and many more!]<br><br>\"My revenge won’t end until every Demon in this world has been wiped out.”</p><p>After brutally displaying the head of the Demon that murdered his parents, the boy Yise was shunned by his village as a monster.</p>",
+        "cover": "https://cdn.asurascans.com/asura-images/covers/the-tale-of-cultivation-and-demon-extermination.787d62.webp",
+        "status": "ongoing",
+        "type": "manhwa",
+        "artist": "REDICE Studio",
+        "release_year": 2026,
+        "popularity_rank": 62,
+        "bookmark_count": 43429,
+        "rating": 9.679659815733523,
+        "chapter_count": 20,
+        "last_chapter_at": "2026-10-28T11:39:53.567263Z",
+        "created_at": "2026-07-21T14:03:53.857572Z",
+        "updated_at": "2026-10-30T14:15:08.879616Z",
+        "public_url": "/comics/the-tale-of-cultivation-and-demon-extermination-3ebcc5a9",
+        "source_url": "/s/6078",
+        "genres": [
+          {
+            "id": 1,
+            "name": "Action",
+            "slug": "action"
+          },
+          {
+            "id": 4,
+            "name": "Adventure",
+            "slug": "adventure"
+          },
+          {
+            "id": 78,
+            "name": "Dark Fantasy",
+            "slug": "dark-fantasy"
+          },
+          {
+            "id": 12,
+            "name": "Demon",
+            "slug": "demon"
+          },
+          {
+            "id": 74,
+            "name": "Martial Arts",
+            "slug": "martial-arts"
+          },
+          {
+            "id": 34,
+            "name": "Murim",
+            "slug": "murim"
+          },
+          {
+            "id": 35,
+            "name": "Mystery",
+            "slug": "mystery"
+          },
+          {
+            "id": 48,
+            "name": "Revenge",
+            "slug": "revenge"
+          }
+        ],
+        "latest_chapters": [
+          {
+            "id": 262571,
+            "series_id": 0,
+            "number": 20,
+            "title": "A Worthy Rival",
+            "slug": "chapter-20",
+            "page_count": 0,
+            "is_premium": false,
+            "comments_enabled": false,
+            "early_access_until": "2026-10-28T17:39:53.567263Z",
+            "published_at": "2026-10-28T11:39:53.567263Z",
+            "view_count": 0,
+            "created_at": "0001-01-01T00:00:00Z"
+          }
+        ],
+        "linked_novel": {
+          "id": 24,
+          "title": "The Tale of Cultivation and Demon Extermination",
+          "slug": "the-tale-of-cultivation-and-demon-extermination",
+          "cover_url": "https://cdn.asurascans.com/asura-images/covers/the-tale-of-cultivation-and-demon-extermination.028b4e.webp",
+          "chapter_count": 157,
+          "status": "ongoing"
+        }
+      }
+    ],
+    "meta": {
+      "total": 270,
+      "per_page": 20,
+      "has_more": true
+    }
+  }
+}

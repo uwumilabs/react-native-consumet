@@ -1,0 +1,78 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/omniscient-readers-viewpoint",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "alt_titles cut to 3, recommended_series to 2",
+  "status": 200,
+  "body": {
+    "series": {
+      "id": 1998,
+      "slug": "omniscient-readers-viewpoint",
+      "title": "Omniscient Reader’s Viewpoint",
+      "alt_titles": [
+        "Lector omnisciente",
+        "Punto de vista de lector omnisciente",
+        "全知讀者視角"
+      ],
+      "description": "<p>‘This is a development that I know of.’The moment he thought that the world had been destroyed, a new universe had unfolded.The new life of an ordinary reader begins within the world of the novel, a novel that he alone had finished.</p>",
+      "cover": "https://cdn.asurascans.com/asura-images/covers/omniscient-readers-viewpoint.c29ced.webp",
+      "banner": "https://cdn.asurascans.com/asura-images/banners/omniscient-readers-viewpoint.aab6e8.webp",
+      "status": "hiatus",
+      "type": "manhwa",
+      "author": "Sing-Shong",
+      "artist": "3B2S",
+      "popularity_rank": 29,
+      "bookmark_count": 115175,
+      "rating": 9.847076788830716,
+      "chapter_count": 312,
+      "last_chapter_at": "2026-05-19T17:56:55.666Z",
+      "offline_available": true,
+      "created_at": "0001-01-01T00:00:00Z",
+      "updated_at": "2026-10-30T14:20:08.883016Z",
+      "public_url": "/comics/omniscient-readers-viewpoint-3ebcc5a9",
+      "source_url": "/s/1998",
+      "genres": [
+        {
+          "id": 1,
+          "name": "Action",
+          "slug": "action"
+        },
+        {
+          "id": 4,
+          "name": "Adventure",
+          "slug": "adventure"
+        },
+        {
+          "id": 16,
+          "name": "Fantasy",
+          "slug": "fantasy"
+        }
+      ]
+    },
+    "recommended_series": [
+      {
+        "id": 2017,
+        "slug": "nano-machine",
+        "title": "Nano Machine",
+        "cover_url": "https://cdn.asurascans.com/asura-images/covers/nano-machine.e31bdb.webp",
+        "type": "manhwa",
+        "status": "ongoing",
+        "chapter_count": 336,
+        "rating": 9.265124250214225,
+        "public_url": "/comics/nano-machine-3ebcc5a9",
+        "source_url": "/s/2017"
+      },
+      {
+        "id": 2043,
+        "slug": "pick-me-up-infinite-gacha",
+        "title": "Pick Me Up, Infinite Gacha",
+        "cover_url": "https://cdn.asurascans.com/asura-images/covers/pick-me-up-infinite-gacha.3ebe61.webp",
+        "type": "manhwa",
+        "status": "ongoing",
+        "chapter_count": 225,
+        "rating": 9.766449410304158,
+        "public_url": "/comics/pick-me-up-infinite-gacha-3ebcc5a9",
+        "source_url": "/s/2043"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "request": "GET https://api.asurascans.com/api/series?search=zzzzqqqxx&limit=20&offset=0",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "no results: data is null",
+  "status": 200,
+  "body": {
+    "data": null,
+    "meta": {
+      "per_page": 20
+    }
+  }
+}

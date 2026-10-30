@@ -1,0 +1,83 @@
+{
+  "request": "GET https://api.asurascans.com/api/series/solo-farming-in-the-tower",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "alt_titles cut to 3, recommended_series to 2",
+  "status": 200,
+  "body": {
+    "series": {
+      "id": 2201,
+      "slug": "solo-farming-in-the-tower",
+      "title": "Solo Farming In The Tower",
+      "alt_titles": [
+        "我獨自在高塔種田",
+        "我独自在高塔种田",
+        "Dungeon Farming on My Own"
+      ],
+      "description": "<p>One sunny day, a mysterious tower suddenly emerged in the city, earning the name \"dungeon\" from the intrigued populace. Within its confines lie treacherous terrains and menacing creatures, yet it also holds the promise of abundant treasures and untapped opportunities.</p><p>Sejun, a young man leading a mundane life, finds himself unexpectedly invited into the tower. Filled with excitement at the prospect of wealth, he embarks on this adventure, only to find himself stranded in a concealed area of the mysterious tower.</p><p>Armed with nothing more than a handful of seeds and his own physical abilities, Sejun must now adapt to his new reality by farming crops, collecting resources, and figuring out his survival strategy!</p>",
+      "cover": "https://cdn.asurascans.com/asura-images/covers/solo-farming-in-the-tower.d60872.webp",
+      "banner": "https://cdn.asurascans.com/asura-images/banners/solo-farming-in-the-tower.jpg",
+      "status": "ongoing",
+      "type": "manhwa",
+      "author": "Lim Hyeong",
+      "artist": "Studio 389",
+      "popularity_rank": 59,
+      "bookmark_count": 55558,
+      "rating": 9.522191400832178,
+      "chapter_count": 150,
+      "last_chapter_at": "2026-10-30T11:57:25.223823Z",
+      "offline_available": true,
+      "created_at": "0001-01-01T00:00:00Z",
+      "updated_at": "2026-10-30T14:15:08.879616Z",
+      "public_url": "/comics/solo-farming-in-the-tower-3ebcc5a9",
+      "source_url": "/s/2201",
+      "genres": [
+        {
+          "id": 1,
+          "name": "Action",
+          "slug": "action"
+        },
+        {
+          "id": 4,
+          "name": "Adventure",
+          "slug": "adventure"
+        },
+        {
+          "id": 16,
+          "name": "Fantasy",
+          "slug": "fantasy"
+        },
+        {
+          "id": 67,
+          "name": "Tower",
+          "slug": "tower"
+        }
+      ]
+    },
+    "recommended_series": [
+      {
+        "id": 1896,
+        "slug": "solo-max-level-newbie",
+        "title": "Solo Max-Level Newbie",
+        "cover_url": "https://cdn.asurascans.com/asura-images/covers/solo-max-level-newbie.bac83f.webp",
+        "type": "manhwa",
+        "status": "ongoing",
+        "chapter_count": 284,
+        "rating": 9.434384164222873,
+        "public_url": "/comics/solo-max-level-newbie-3ebcc5a9",
+        "source_url": "/s/1896"
+      },
+      {
+        "id": 2099,
+        "slug": "my-exclusive-tower-guide",
+        "title": "My Exclusive Tower Guide",
+        "cover_url": "https://cdn.asurascans.com/asura-images/covers/my-exclusive-tower-guide.c61f55.webp",
+        "type": "manhwa",
+        "status": "ongoing",
+        "chapter_count": 143,
+        "rating": 8.014742014742014,
+        "public_url": "/comics/my-exclusive-tower-guide-3ebcc5a9",
+        "source_url": "/s/2099"
+      }
+    ]
+  }
+}

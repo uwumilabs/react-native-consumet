@@ -6,6 +6,15 @@ const asuraScans = new MANGA.AsuraScans();
 
 The constructor takes an optional provider context, `new MANGA.AsuraScans(ctx?)`, whose axios makes every request (default: `createProviderContext()`). See the [manga guide](../../guides/manga.md).
 
+The provider reads [asurascans.com](https://asurascans.com) (formerly asuracomic.net) through the JSON API its pages use, `https://api.asurascans.com/api`. Results follow the shape every manga provider returns ([What every manga provider returns](../../guides/manga.md#what-every-manga-provider-returns)):
+
+- Title ids are the series slug (`omniscient-readers-viewpoint`). Ids from asuracomic.net (`series/<slug>-<hash>`) still work.
+- Chapter ids are `<slug>/chapter/<number>` (`omniscient-readers-viewpoint/chapter/1`, `solo-farming-in-the-tower/chapter/100.5`). Older ids of the same form, with the `-<hash>` slug, still work.
+- Chapters come first to last, with `chapterNumber` (`100.5` included), an ISO `releaseDate` and the chapter's `url`. A chapter's `title` is its name, or `Chapter 12` when it has none.
+- Early-access chapters (paid, for the hours or days after release) are left out of `chapters` until they unlock. Fetching their pages rejects with the unlock time.
+- `cdn.asurascans.com` serves covers and pages without a Referer, so there is no `headerForImage`.
+- Besides the shared fields, results carry `type` (`manga`, `manhwa` or `manhua`), `rating` (0–10) and, in search, `latestChapter` (the newest chapter's number).
+
 <h2>Methods</h2>
 
 - [search](#search)
@@ -21,7 +30,7 @@ The constructor takes an optional provider context, `new MANGA.AsuraScans(ctx?)`
 | Parameter       | Type     | Description                                                                                |
 | --------------- | -------- | ------------------------------------------------------------------------------------------ |
 | query           | `string` | query to search for. (_In this case, we're searching for `Omniscient Reader’s Viewpoint`_) |
-| page (optional) | `number` | page number (default: 1)                                                                   |
+| page (optional) | `number` | page number, 20 results per page (default: 1)                                              |
 
 ```ts
 asuraScans.search('Omniscient Reader’s Viewpoint').then((data) => {
@@ -34,18 +43,22 @@ output:
 
 ```js
 {
-    currentPage: 1,
-    hasNextPage: false,
-    results: [
+  currentPage: 1,
+  hasNextPage: false,
+  results: [
     {
-        id: 'series/omniscient-readers-viewpoint-b88a351c',
-        title: 'Omniscient Reader’s Viewpoint',
-        image: 'https://gg.asuracomic.net/storage/media/105/conversions/9b59fdec-thumb-small.webp',
-        status: 'Ongoing',
-        latestChapter: 'Chapter 222',
-        rating: '10'
+      id: 'omniscient-readers-viewpoint',
+      title: 'Omniscient Reader’s Viewpoint',
+      altTitles: ['Lector omnisciente', 'Punto de vista de lector omnisciente', '全知讀者視角', ...],
+      image: 'https://cdn.asurascans.com/asura-images/covers/omniscient-readers-viewpoint.c29ced.webp',
+      url: 'https://asurascans.com/comics/omniscient-readers-viewpoint-3ebcc5a9',
+      description: '‘This is a development that I know of.’The moment he thought that the world had been destroyed, a new universe had unfolded.The new life of an ordinary reader begins within the world of the novel, a novel that he alone had finished.',
+      status: 'Hiatus',
+      type: 'manhwa',
+      rating: 9.85,
+      latestChapter: 311
     }
-    ]
+  ]
 }
 ```
 
@@ -58,11 +71,9 @@ output:
 | mangaId   | `string` | manga id (_can be found in the manga search results_) |
 
 ```ts
-asuraScans
-  .fetchMangaInfo('series/solo-max-level-newbie-d9977a85')
-  .then((data) => {
-    console.log(data);
-  });
+asuraScans.fetchMangaInfo('omniscient-readers-viewpoint').then((data) => {
+  console.log(data);
+});
 ```
 
 returns a promise which resolves into an manga info object (including the chapters). (_[`Promise<IMangaInfo>`](../../../src/models/types.ts)_)\
@@ -70,75 +81,54 @@ output:
 
 ```js
 {
-    id: '/series/solo-max-level-newbie-d9977a85',
-      title: 'Solo Max-Level Newbie',
-      image: 'https://gg.asuracomic.net/storage/media/1/conversions/047bc0bb-optimized.webp',
-      rating: '9.9',
+  id: 'omniscient-readers-viewpoint',
+  title: 'Omniscient Reader’s Viewpoint',
+  altTitles: ['Lector omnisciente', 'Punto de vista de lector omnisciente', '全知讀者視角', ...],
+  image: 'https://cdn.asurascans.com/asura-images/covers/omniscient-readers-viewpoint.c29ced.webp',
+  url: 'https://asurascans.com/comics/omniscient-readers-viewpoint-3ebcc5a9',
+  description: '‘This is a development that I know of.’The moment he thought that the world had been destroyed, ...',
+  status: 'Hiatus',
+  type: 'manhwa',
+  rating: 9.85,
+  genres: ['Action', 'Adventure', 'Fantasy'],
+  authors: ['Sing-Shong'],
+  artists: ['3B2S'],
+  recommendations: [
+    {
+      id: 'nano-machine',
+      title: 'Nano Machine',
+      image: 'https://cdn.asurascans.com/asura-images/covers/nano-machine.e31bdb.webp',
+      url: 'https://asurascans.com/comics/nano-machine-3ebcc5a9',
       status: 'Ongoing',
-      description: 'Jinhyuk, a gaming Nutuber, was the only person who saw the ending of the game [Tower of Trials].\n' +
-        "However, when the game's popularity declined, it became difficult for him to continue making a living as a gaming Nutuber.\n" +
-        `Since he already saw the ending of the game, he was about to quit playing. But that day, [Tower of Trials] became reality, and Jinhyuk, who knew about every single thing in the game, took over everything faster than anyone possibly could! "I'll show you what a true pro is like."`,
-      authors: [ 'Maslow' ],
-      artist: 'Swingbat',
-      updatedOn: 'August 7th 2024',
-      genres: [ 'Action', 'Adventure', 'Comedy', 'Fantasy', 'Game', 'Tower' ],
-      chapters: [
-        {
-          id: 'solo-max-level-newbie-d9977a85/chapter/165',
-          title: 'Chapter 165 The Most Powerful Ally (1)',
-          releaseDate: 'August 1st 2024'
-        },
-        {
-          id: 'solo-max-level-newbie-d9977a85/chapter/164',
-          title: 'Chapter 164',
-          releaseDate: 'July 25th 2024'
-        },
-        {
-          id: 'solo-max-level-newbie-d9977a85/chapter/163',
-          title: 'Chapter 163 Wailing Witch (1)',
-          releaseDate: 'July 18th 2024'
-        },
-        {
-          id: 'solo-max-level-newbie-d9977a85/chapter/162',
-          title: 'Chapter 162 Daily Life in Europe Vlog (2)',
-          releaseDate: 'July 14th 2024'
-        },
-        {...},
-    ]
-    recommendations: [
-        {
-          id: '/series/regressor-instruction-manual-1b1dc3a8',
-          title: 'Regressor Instruction Manual',
-          image: 'https://gg.asuracomic.net/storage/media/276/conversions/01J4CG9ADBTWY617STXHGNTBKP-optimized.webp',
-          latestChapter: 'Chapter 103',
-          status: 'Ongoing',
-          rating: '10'
-        },
-        {
-          id: '/series/the-s-classes-that-i-raised-424cbecc',
-          title: 'The S-Classes That I Raised',
-          image: 'https://gg.asuracomic.net/storage/media/8/conversions/9b10db26-optimized.webp',
-          latestChapter: 'Chapter 147',
-          status: 'Ongoing',
-          rating: '9.9'
-        },
-        {
-          id: '/series/return-of-the-shattered-constellation-1b655e30',
-          title: 'Return Of The Shattered Constellation',
-          image: 'https://gg.asuracomic.net/storage/media/13/conversions/5cfa2551-optimized.webp',
-          latestChapter: 'Chapter 120',
-          status: 'Ongoing',
-          rating: '9.8'
-        },
-        {
-          id: '/series/duke-pendragon-9dfcab6a',
-          title: 'Duke Pendragon',
-          image: 'https://gg.asuracomic.net/storage/media/18/conversions/44b24afa-optimized.webp',
-          latestChapter: 'Chapter 120',
-          status: 'Ongoing',
-          rating: '9.9'
-        }
-    ]
+      type: 'manhwa',
+      rating: 9.27
+    },
+    {...}
+  ],
+  chapters: [
+    {
+      id: 'omniscient-readers-viewpoint/chapter/0',
+      title: 'Prologue',
+      chapterNumber: 0,
+      releaseDate: '2022-12-21T16:35:42.000Z',
+      url: 'https://asurascans.com/comics/omniscient-readers-viewpoint-3ebcc5a9/chapter/0'
+    },
+    {
+      id: 'omniscient-readers-viewpoint/chapter/1',
+      title: 'Chapter 1',
+      chapterNumber: 1,
+      releaseDate: '2022-12-21T16:48:51.000Z',
+      url: 'https://asurascans.com/comics/omniscient-readers-viewpoint-3ebcc5a9/chapter/1'
+    },
+    {...},
+    {
+      id: 'omniscient-readers-viewpoint/chapter/311',
+      title: '“Dokja’s Fable” Part -13 {S1 END}',
+      chapterNumber: 311,
+      releaseDate: '2026-05-19T17:56:55.666Z',
+      url: 'https://asurascans.com/comics/omniscient-readers-viewpoint-3ebcc5a9/chapter/311'
+    }
+  ]
 }
 ```
 
@@ -151,91 +141,29 @@ output:
 | chapterId | `string` | chapter id (_can be found in the manga info_) |
 
 ```ts
-asuraScans
-  .fetchChapterPages('solo-max-level-newbie-d9977a85/chapter/66')
-  .then((data) => {
-    console.log(data);
-  });
+asuraScans.fetchChapterPages('omniscient-readers-viewpoint/chapter/1').then((data) => {
+  console.log(data);
+});
 ```
 
-returns an array of pages. (_[`Promise<IMangaChapterPage[]>`](../../../src/models/types.ts)_)\
+returns an array of pages, counted from 1. (_[`Promise<IMangaChapterPage[]>`](../../../src/models/types.ts)_)\
 output:
 
 ```js
 [
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/01.webp',
-        page: 1
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/02.webp',
-        page: 2
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/03.webp',
-        page: 3
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/04.webp',
-        page: 4
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/05.webp',
-        page: 5
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/06.webp',
-        page: 6
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/07.webp',
-        page: 7
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/08.webp',
-        page: 8
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/09.webp',
-        page: 9
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/10.webp',
-        page: 10
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/11.webp',
-        page: 11
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/12.webp',
-        page: 12
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/13.webp',
-        page: 13
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/14.webp',
-        page: 14
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/15.webp',
-        page: 15
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/16.webp',
-        page: 16
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/17.webp',
-        page: 17
-    },
-    {
-        img: 'https://gg.asuracomic.net/storage/comics/3/6d12ee5d-ce6f-4d3a-8074-3d977efdc422/18.webp',
-        page: 18
-    }
-    {...},
+  {
+    page: 1,
+    img: 'https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/001.webp?v=1770499638'
+  },
+  {
+    page: 2,
+    img: 'https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/002.webp?v=1770499638'
+  },
+  {
+    page: 3,
+    img: 'https://cdn.asurascans.com/asura-images/chapters/omniscient-readers-viewpoint/1/003.webp?v=1770499638'
+  },
+  {...}
 ]
 ```
 

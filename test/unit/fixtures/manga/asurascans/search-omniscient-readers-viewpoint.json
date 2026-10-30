@@ -1,0 +1,73 @@
+{
+  "request": "GET https://api.asurascans.com/api/series?search=Omniscient%20Reader%E2%80%99s%20Viewpoint&limit=20&offset=0",
+  "recordedAt": "2026-10-30T14:23:21Z",
+  "note": "alt_titles cut to 3, latest_chapters to 1",
+  "status": 200,
+  "body": {
+    "data": [
+      {
+        "id": 1998,
+        "slug": "omniscient-readers-viewpoint",
+        "title": "Omniscient Reader’s Viewpoint",
+        "alt_titles": [
+          "Lector omnisciente",
+          "Punto de vista de lector omnisciente",
+          "全知讀者視角"
+        ],
+        "description": "<p>‘This is a development that I know of.’The moment he thought that the world had been destroyed, a new universe had unfolded.The new life of an ordinary reader begins within the world of the novel, a novel that he alone had finished.</p>",
+        "cover": "https://cdn.asurascans.com/asura-images/covers/omniscient-readers-viewpoint.c29ced.webp",
+        "banner": "https://cdn.asurascans.com/asura-images/banners/omniscient-readers-viewpoint.aab6e8.webp",
+        "status": "hiatus",
+        "type": "manhwa",
+        "author": "Sing-Shong",
+        "artist": "3B2S",
+        "popularity_rank": 29,
+        "bookmark_count": 115175,
+        "rating": 9.847076788830716,
+        "chapter_count": 312,
+        "last_chapter_at": "2026-05-19T17:56:55.666Z",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-30T14:20:08.883016Z",
+        "public_url": "/comics/omniscient-readers-viewpoint-3ebcc5a9",
+        "source_url": "/s/1998",
+        "genres": [
+          {
+            "id": 1,
+            "name": "Action",
+            "slug": "action"
+          },
+          {
+            "id": 4,
+            "name": "Adventure",
+            "slug": "adventure"
+          },
+          {
+            "id": 16,
+            "name": "Fantasy",
+            "slug": "fantasy"
+          }
+        ],
+        "latest_chapters": [
+          {
+            "id": 258703,
+            "series_id": 0,
+            "number": 311,
+            "title": "“Dokja’s Fable” Part -13 {S1 END}",
+            "slug": "chapter-311",
+            "page_count": 0,
+            "is_premium": false,
+            "comments_enabled": false,
+            "early_access_until": "2026-05-19T23:56:55.666Z",
+            "published_at": "2026-05-19T17:56:55.666Z",
+            "view_count": 0,
+            "created_at": "0001-01-01T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "meta": {
+      "total": 1,
+      "per_page": 20
+    }
+  }
+}
