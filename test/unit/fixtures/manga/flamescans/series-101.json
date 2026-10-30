@@ -1,0 +1,179 @@
+{
+  "__N_SSG": true,
+  "pageProps": {
+    "series": {
+      "series_id": 101,
+      "title": "Clever Cleaning Life Of The Returned Genius Hunter",
+      "altTitles": [
+        "회귀한 천재 헌터의 슬기로운 청소생활 ",
+        " The Dungeon Cleaning Life of a Once Genius Hunter"
+      ],
+      "description": "<p class=\"mantine-focus-auto m_b6d8b162 mantine-Text-root\">Kim Jun-Woo, the world's first SSS rank genius hunter. He is an incredible user of ability, but his horrible personality leads to problems with his reputation. In the midst of his troubles, he was attacked and killed by an unidentified group. And when he opened his eyes, he had returned to the past of 10 years ago. Though he tries to become a hunter again and raise his rank, his skills were all sealed by the karma of his previous life. In order for that to be released, he needs to work as a 'Dungeon Cleaner', which is infamous for being extremely tough in this industry?! But this cleaner, he's different! Not only monsters—troublesome hunters, superiors only taking up positions after they're hired out of nepotism, and even people who will be colleagues with him. He's making a complete mess to clean everything up. The ex-hunter, who is stronger than the current hunters, and his crazy cleaning begins!</p>",
+      "language": "English",
+      "type": "Manhwa",
+      "tags": [
+        "Fantasy",
+        "Reincarnation",
+        "Monster",
+        "Dungeons",
+        "Hunter"
+      ],
+      "country": "KR",
+      "author": [
+        "Moonbeat"
+      ],
+      "artist": [
+        "Goilgoil"
+      ],
+      "publisher": [
+        "Naver",
+        "MStoryHub"
+      ],
+      "year": 2022,
+      "status": "Ongoing",
+      "schedule": "Weekly",
+      "likes": 134,
+      "cover": "thumbnail.jpg",
+      "draft": 0,
+      "official": "",
+      "novel_id": null,
+      "last_edit": 1784652307,
+      "time": 1723049257
+    },
+    "chapters": [
+      {
+        "chapter_id": 12334,
+        "series_id": 101,
+        "chapter": "156.00",
+        "title": "",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1792071083,
+        "token": "2b8d3e0cf06b47f9",
+        "edit_time": 1792071083
+      },
+      {
+        "chapter_id": 12282,
+        "series_id": 101,
+        "chapter": "155.00",
+        "title": "",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1790419642,
+        "token": "de2e595ea986aa7f",
+        "edit_time": 1790419642
+      },
+      {
+        "chapter_id": 11982,
+        "series_id": 101,
+        "chapter": "151.00",
+        "title": "Season 4 Start",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1784651849,
+        "token": "6d2f1957cc0b2fbf",
+        "edit_time": 1784651849
+      },
+      {
+        "chapter_id": 11582,
+        "series_id": 101,
+        "chapter": "150.00",
+        "title": "Season 3 End",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1776704174,
+        "token": "76366364f7469cb9",
+        "edit_time": 1784651442
+      },
+      {
+        "chapter_id": 11114,
+        "series_id": 101,
+        "chapter": "136.00",
+        "title": "",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1767017362,
+        "token": "383e8bfb8e33af5e",
+        "edit_time": 1767017362
+      },
+      {
+        "chapter_id": 11113,
+        "series_id": 101,
+        "chapter": "136.00",
+        "title": "",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1767015993,
+        "token": "57cb3b4765bdacc8",
+        "edit_time": 1767015993
+      },
+      {
+        "chapter_id": 3061,
+        "series_id": 101,
+        "chapter": "45.00",
+        "title": "Season 2 Start",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1696636800,
+        "token": "1e909a4cc7962148",
+        "edit_time": 1747932144
+      },
+      {
+        "chapter_id": 3074,
+        "series_id": 101,
+        "chapter": "44.50",
+        "title": null,
+        "cover": null,
+        "notice": 0,
+        "release_date": 1732178940,
+        "token": "03fe0196b6f5f818",
+        "edit_time": 1732178940
+      },
+      {
+        "chapter_id": 3149,
+        "series_id": 101,
+        "chapter": "44.00",
+        "title": "Season 1 End",
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1687305600,
+        "token": "cf961af062003f7d",
+        "edit_time": 1747932113
+      },
+      {
+        "chapter_id": 3142,
+        "series_id": 101,
+        "chapter": "3.00",
+        "title": null,
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1657411200,
+        "token": "725acfecf205b83f",
+        "edit_time": 1657411200
+      },
+      {
+        "chapter_id": 3108,
+        "series_id": 101,
+        "chapter": "2.00",
+        "title": null,
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1657152000,
+        "token": "ced829348c518be6",
+        "edit_time": 1657152000
+      },
+      {
+        "chapter_id": 3114,
+        "series_id": 101,
+        "chapter": "1.00",
+        "title": null,
+        "cover": 1,
+        "notice": 0,
+        "release_date": 1656460800,
+        "token": "327c2f17ef9cacd3",
+        "edit_time": 1656460800
+      }
+    ],
+    "gallery": []
+  }
+}

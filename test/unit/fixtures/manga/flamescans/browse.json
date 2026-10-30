@@ -1,0 +1,240 @@
+{
+  "__N_SSG": true,
+  "pageProps": {
+    "series": [
+      {
+        "series_id": 12,
+        "title": "A Returner's Magic Should Be Special",
+        "description": "\"Now that I'm back, I won't allow my loved ones to die again!\" The Shadow Labyrinth - the deadliest catastrophe humanity has ever known. Desir Arman, one of the six remaining survivors of mankind, is inside the…",
+        "language": "English",
+        "type": "Manhwa",
+        "categories": [
+          "Action",
+          "Adventure",
+          "Fantasy",
+          "Magic"
+        ],
+        "country": "KR",
+        "author": [
+          "Yu So Nan"
+        ],
+        "artist": [
+          "Uk Jag Ga"
+        ],
+        "publisher": [
+          "D&C Webtoon (D&C Media)",
+          "Kakao"
+        ],
+        "year": 2018,
+        "status": "Dropped",
+        "likes": 75,
+        "cover": "thumbnail.png",
+        "last_edit": 1744373084,
+        "time": 1723049200,
+        "popularityRank": 45
+      },
+      {
+        "series_id": 101,
+        "title": "Clever Cleaning Life Of The Returned Genius Hunter",
+        "description": "Kim Jun-Woo, the world's first SSS rank genius hunter. He is an incredible user of ability, but his horrible personality leads to problems with his reputation. In the midst of his troubles, he was attacked and…",
+        "language": "English",
+        "type": "Manhwa",
+        "categories": [
+          "Fantasy",
+          "Reincarnation",
+          "Monster",
+          "Dungeons",
+          "Hunter"
+        ],
+        "country": "KR",
+        "author": [
+          "Moonbeat"
+        ],
+        "artist": [
+          "Goilgoil"
+        ],
+        "publisher": [
+          "Naver",
+          "MStoryHub"
+        ],
+        "year": 2022,
+        "status": "Ongoing",
+        "likes": 134,
+        "cover": "thumbnail.jpg",
+        "last_edit": 1784652307,
+        "time": 1723049257,
+        "popularityRank": 29
+      },
+      {
+        "series_id": 54,
+        "title": "Hero Has Returned",
+        "description": "After saving one world, Hero Kim Min-Su returns to Earth only to find that he’s lost everything… so he decides to destroy the world he used to call home. In his rampage, he kills teenager Park Jung-Su and his…",
+        "language": "English",
+        "type": "Manhwa",
+        "categories": [
+          "Action",
+          "Fantasy",
+          "Shounen",
+          "Tragedy"
+        ],
+        "country": "KR",
+        "author": [
+          "Narack"
+        ],
+        "artist": [
+          "Fungback"
+        ],
+        "publisher": [
+          "Naver"
+        ],
+        "year": 2021,
+        "status": "Hiatus",
+        "likes": 110,
+        "cover": "thumbnail.png",
+        "last_edit": 1747556450,
+        "time": 1723049229,
+        "popularityRank": 36
+      },
+      {
+        "series_id": 1,
+        "title": "Solo Leveling",
+        "description": "10 years ago, after “the Gate” that connected the real world with the monster world opened, some of the ordinary, everyday people received the power to hunt monsters within the Gate. They are known as \"Hunters\"…",
+        "language": "English",
+        "type": "Manhwa",
+        "categories": [
+          "Action",
+          "Adventure",
+          "Fantasy",
+          "Shounen"
+        ],
+        "country": "KR",
+        "author": [
+          "추공 (Chugong)"
+        ],
+        "artist": [
+          "GEE So-Lyung",
+          "Redice Studio"
+        ],
+        "publisher": [
+          "D&C Webtoon (D;C Media)",
+          "KakaoPage (Kakao)"
+        ],
+        "year": 2018,
+        "status": "Completed",
+        "likes": 618,
+        "cover": "thumbnail.png",
+        "last_edit": 1771776575,
+        "time": 1723049192,
+        "popularityRank": 9
+      },
+      {
+        "series_id": 35,
+        "title": "The Little Prince in the Ossuary",
+        "description": "This series is expected to release this year, 2022! In a world plagued by Morgellons, a deadly disease that turns humans into non-human creatures, people have chosen to abandon their humanity in order to fight…",
+        "language": "English",
+        "type": "Manhwa",
+        "categories": [
+          "Action",
+          "Adventure",
+          "Fantasy",
+          "Sci-fi"
+        ],
+        "country": "KR",
+        "author": [
+          "Tunguksa"
+        ],
+        "artist": [
+          "Redice Studio"
+        ],
+        "publisher": [
+          "Kakao"
+        ],
+        "year": 2021,
+        "status": "Coming Soon",
+        "likes": 1,
+        "cover": "thumbnail.jpg",
+        "last_edit": 1781704330,
+        "time": 1723049210,
+        "popularityRank": 167
+      },
+      {
+        "novel_id": 2,
+        "title": "The Return of the Disaster-Class Hero",
+        "description": "There once was the strongest hero on Earth “But he died though. How does a guy we killed gonna come back?” “I know right. But if there was a way to come back, he would come back” But did he really come back after…",
+        "language": "English",
+        "type": "Web Novel",
+        "categories": [
+          "Action",
+          "Adventure",
+          "Fantasy",
+          "Magic",
+          "Shounen",
+          "Comedy"
+        ],
+        "country": "KR",
+        "author": [
+          "SAN.G",
+          "산지직송"
+        ],
+        "artist": [
+          "Gammon",
+          "SONNET",
+          "Todac_s",
+          "감몬",
+          "소넷",
+          "쓩늉"
+        ],
+        "publisher": [
+          "Breathe"
+        ],
+        "year": 2019,
+        "status": "Dropped",
+        "likes": 9,
+        "cover": "thumbnail.webp",
+        "last_edit": 1762279755,
+        "time": 1761591896,
+        "popularityRank": 147
+      }
+    ],
+    "initialFilters": {
+      "year": [
+        "all",
+        "2010",
+        "2014",
+        "2015",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "search": "",
+      "status": [
+        "all",
+        "cancelled",
+        "coming soon",
+        "completed",
+        "dropped",
+        "hiatus",
+        "ongoing"
+      ],
+      "types": [
+        "all",
+        "Comic",
+        "Manga",
+        "Manhua",
+        "Manhwa",
+        "Novel",
+        "Russian",
+        "Web Novel"
+      ],
+      "order": "asc",
+      "sort": "title"
+    }
+  }
+}

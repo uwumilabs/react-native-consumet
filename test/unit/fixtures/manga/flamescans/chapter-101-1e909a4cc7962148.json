@@ -1,0 +1,69 @@
+{
+  "__N_SSG": true,
+  "pageProps": {
+    "chapter": {
+      "series_id": 101,
+      "chapter_id": 3061,
+      "chapter": "45.00",
+      "chapter_title": "Season 2 Start",
+      "images": {
+        "0": {
+          "size": 765950,
+          "type": [
+            "image/jpeg"
+          ],
+          "name": "CGH45-0-1.jpg",
+          "modified": "2024-09-08T21:34:17.000Z",
+          "width": 1778,
+          "height": 999
+        },
+        "1": {
+          "size": 3782706,
+          "type": [
+            "image/jpeg"
+          ],
+          "name": "CGH45-1-1.jpg",
+          "modified": "2024-09-08T21:34:17.000Z",
+          "width": 800,
+          "height": 13322
+        },
+        "2": {
+          "size": 4545266,
+          "type": [
+            "image/jpeg"
+          ],
+          "name": "CGH45-2-1.jpg",
+          "modified": "2024-09-08T21:34:17.000Z",
+          "width": 800,
+          "height": 13791
+        }
+      },
+      "language": "English",
+      "draft": 0,
+      "hidden": 0,
+      "notice": 0,
+      "token": "1e909a4cc7962148",
+      "release_date": 1696636800,
+      "edit_time": 1747932144,
+      "unix_timestamp": 1696636800,
+      "title": "Clever Cleaning Life Of The Returned Genius Hunter",
+      "altTitles": [
+        "회귀한 천재 헌터의 슬기로운 청소생활 ",
+        " The Dungeon Cleaning Life of a Once Genius Hunter"
+      ],
+      "tags": [
+        "Fantasy",
+        "Reincarnation",
+        "Monster",
+        "Dungeons",
+        "Hunter"
+      ],
+      "description": "Kim Jun-Woo, the world's first SSS rank genius hunter. He is an incredible user of ability, but his horrible personality leads to problems with his…",
+      "cover": "thumbnail.jpg",
+      "last_edit": 1784652307
+    },
+    "token": "1e909a4cc7962148",
+    "previous": "03fe0196b6f5f818",
+    "next": "e1f44cfbc940a51a"
+  }
+}

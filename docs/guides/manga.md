@@ -67,7 +67,7 @@ package) turn a site's labels into these fields. Provider tests check the shape 
 This list is in alphabetical order.
 
 - [AsuraScans](../providers/manga/asurascans.md) (`MANGA.AsuraScans`)
-- FlameScans (`MANGA.FlameScans`)
+- [FlameScans](../providers/manga/flamescans.md) (`MANGA.FlameScans`), now Flame Comics at flamecomics.xyz
 - [MangaDex](../providers/manga/mangadex.md) (`MANGA.MangaDex`)
 - [MangaHere](../providers/manga/mangahere.md) (`MANGA.MangaHere`)
 - [MangaKakalot](../providers/manga/mangakakalot.md) (`MANGA.MangaKakalot`)
