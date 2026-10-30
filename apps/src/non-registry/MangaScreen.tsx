@@ -3,13 +3,13 @@
  *
  * Flow:
  *   Header chip (provider name) → ProviderSheet → switch provider
- *   Search bar  → 3-col cover grid
- *   Tap card    → info sheet (details + chapter list)
- *   Tap chapter → full-screen reader (pages sized to their own aspect ratio)
+ *   Search bar  → 3-col cover grid, "Load page N" while hasNextPage
+ *   Tap card    → info sheet (details + chapter list, oldest or newest first)
+ *   Tap chapter → full-screen reader (pages sized to their own aspect ratio, prev / next chapter)
  *
  * Each view has a contract strip: ./manga-contract.ts checks every response against the shape in
- * docs/guides/manga.md and the strip lists what breaks it. The screen reads only that shape, with no
- * per-provider cases, so a provider that breaks it shows up broken here.
+ * docs/guides/manga.md and the strip lists what breaks it, with how long each call took. The screen
+ * reads only that shape, with no per-provider cases, so a provider that breaks it shows up broken.
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -88,23 +88,52 @@ const chapterLabel = (c: IMangaChapter | undefined) => asText(c?.title) || '(unt
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-/** What the contract checks found in a view's latest response. */
-type Check = { ran: boolean; problems: string[] };
-const NO_CHECK: Check = { ran: false, problems: [] };
+/** One provider call: what was asked, how long it took, and whether it threw. */
+type CallLog = { label: string; ms: number; failed?: boolean };
 
-/** A check of a response, logging what breaks the shape. */
-const checked = (label: string, problems: string[]): Check => {
-  if (problems.length) console.log(`[Manga] ${label}: ${problems.length} contract problems`, problems);
-  return { ran: true, problems };
+/** The calls behind a view, and what the contract checks found in their responses. */
+type Check = { calls: CallLog[]; problems: string[] };
+const NO_CHECK: Check = { calls: [], problems: [] };
+
+type Timed<T> = { ok: true; value: T; log: CallLog } | { ok: false; error: string; log: CallLog };
+
+/** Runs a provider call and logs how long it took. */
+async function timed<T>(label: string, call: () => Promise<T>): Promise<Timed<T>> {
+  const start = Date.now();
+  try {
+    const value = await call();
+    const ms = Date.now() - start;
+    console.log(`[Manga] ${label} · ${ms} ms`);
+    return { ok: true, value, log: { label, ms } };
+  } catch (e) {
+    const ms = Date.now() - start;
+    const error = errorMessage(e);
+    console.log(`[Manga] ${label} threw after ${ms} ms: ${error}`);
+    return { ok: false, error, log: { label, ms, failed: true } };
+  }
+}
+
+/** Logs the problems the contract checks found in a call's response, and returns them. */
+const logged = (log: CallLog, problems: string[]) => {
+  if (problems.length) console.log(`[Manga] ${log.label}: ${problems.length} contract problems`, problems);
+  return problems;
 };
+
+/** A view's check with one more call and the problems found in its response. */
+const withCall = (check: Check, log: CallLog, problems: string[]): Check => ({
+  calls: [...check.calls, log],
+  problems: [...check.problems, ...problems],
+});
 
 // ── Contract strip ────────────────────────────────────────────────────────────
 
-/** The contract strip: a one-line verdict; tap it for every problem the checks found. */
+/** The contract strip: a one-line verdict and time; tap it for each call and every problem found. */
 function ContractPanel({ check, pending, idleHint }: { check: Check; pending: boolean; idleHint: string }) {
   const [open, setOpen] = useState(false);
-  const { ran, problems } = check;
+  const { calls, problems } = check;
+  const ran = calls.length > 0;
   const done = ran && !pending;
+  const last = calls[calls.length - 1];
   const bad = problems.length > 0;
   const summary = pending
     ? 'checking…'
@@ -121,10 +150,16 @@ function ContractPanel({ check, pending, idleHint }: { check: Check; pending: bo
         <Text style={[S.contractSummary, done && (bad ? S.textBad : S.textOk)]} numberOfLines={1}>
           {summary}
         </Text>
+        {done && last ? <Text style={S.contractMs}>{last.ms} ms</Text> : null}
         {done ? <Text style={S.contractCaret}>{open ? '▾' : '▸'}</Text> : null}
       </TouchableOpacity>
       {open && done ? (
         <ScrollView style={S.contractBody} nestedScrollEnabled>
+          {calls.map((c, i) => (
+            <Text key={`call${i}`} style={[S.contractLine, S.contractCall]} selectable>
+              {c.label} · {c.ms} ms{c.failed ? ' · threw' : ''}
+            </Text>
+          ))}
           {bad ? (
             problems.map((p, i) => (
               <Text key={i} style={S.contractLine} selectable>
@@ -227,6 +262,9 @@ type InfoProps = {
   error: string | null;
   check: Check;
   readingIndex: number | null;
+  /** Newest first reverses the provider's order (reading order) for display only. */
+  newestFirst: boolean;
+  onChangeOrder: (newestFirst: boolean) => void;
   onClose: () => void;
   onRetry: () => void;
   onOpenChapter: (index: number) => void;
@@ -240,11 +278,17 @@ function InfoModal({
   error,
   check,
   readingIndex,
+  newestFirst,
+  onChangeOrder,
   onClose,
   onRetry,
   onOpenChapter,
 }: InfoProps) {
-  const rows = useMemo(() => chapters.map((chapter, index) => ({ chapter, index })), [chapters]);
+  // Rows keep the chapter's index in the provider's order, which the reader's prev / next follow.
+  const rows = useMemo(() => {
+    const list = chapters.map((chapter, index) => ({ chapter, index }));
+    return newestFirst ? list.reverse() : list;
+  }, [chapters, newestFirst]);
   const cover = imageSource(info?.image, info?.headerForImage);
   const altTitles = asList(info?.altTitles);
   const genres = asList(info?.genres);
@@ -294,6 +338,14 @@ function InfoModal({
 
       <View style={S.chHeader}>
         <Text style={S.sectionTitle}>Chapters · {chapters.length}</Text>
+        <View style={S.toggleRow}>
+          <TouchableOpacity style={[S.toggleBtn, !newestFirst && S.toggleBtnOn]} onPress={() => onChangeOrder(false)}>
+            <Text style={[S.toggleText, !newestFirst && S.toggleTextOn]}>Oldest first</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[S.toggleBtn, newestFirst && S.toggleBtnOn]} onPress={() => onChangeOrder(true)}>
+            <Text style={[S.toggleText, newestFirst && S.toggleTextOn]}>Newest first</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   ) : undefined;
@@ -369,11 +421,13 @@ const ReaderPage = memo(function ReaderPageView({
   index,
   total,
   pageWidth,
+  onFailed,
 }: {
   page: IMangaChapterPage;
   index: number;
   total: number;
   pageWidth: number;
+  onFailed: (index: number, failed: boolean) => void;
 }) {
   const uri = typeof page?.img === 'string' ? page.img : '';
   const headers = page?.headerForImage;
@@ -404,6 +458,8 @@ const ReaderPage = memo(function ReaderPageView({
       live = false;
     };
   }, [uri, headers, loadable, learnRatio]);
+
+  useEffect(() => onFailed(index, error !== null), [index, error, onFailed]);
 
   const numbering = page?.page === index + 1 ? '' : ` (provider numbered it ${asText(page?.page) || 'nothing'})`;
 
@@ -451,13 +507,47 @@ type ReaderProps = {
   loading: boolean;
   error: string | null;
   check: Check;
+  failedCount: number;
+  onPageFailed: (index: number, failed: boolean) => void;
+  /** The chapters before and after this one in the provider's order, when there are any. */
+  onPrev?: () => void;
+  onNext?: () => void;
   onClose: () => void;
   onRetry: () => void;
 };
 
-function ReaderModal({ chapter, open, pages, loading, error, check, onClose, onRetry }: ReaderProps) {
+function ChapterNav({ onPrev, onNext }: { onPrev?: () => void; onNext?: () => void }) {
+  return (
+    <View style={S.navRow}>
+      <TouchableOpacity style={[S.navBtn, !onPrev && S.navBtnOff]} onPress={onPrev} disabled={!onPrev}>
+        <Text style={[S.navText, !onPrev && S.navTextOff]}>‹ Prev chapter</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[S.navBtn, !onNext && S.navBtnOff]} onPress={onNext} disabled={!onNext}>
+        <Text style={[S.navText, !onNext && S.navTextOff]}>Next chapter ›</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function ReaderModal({
+  chapter,
+  open,
+  pages,
+  loading,
+  error,
+  check,
+  failedCount,
+  onPageFailed,
+  onPrev,
+  onNext,
+  onClose,
+  onRetry,
+}: ReaderProps) {
   const { width: pageWidth } = useWindowDimensions();
-  const sub = [chapterNumbers(chapter), loading ? 'loading…' : `${pages.length} pages`].filter(Boolean).join(' · ');
+  const count = loading
+    ? 'loading…'
+    : `${pages.length} page${pages.length === 1 ? '' : 's'}${failedCount ? ` · ${failedCount} failed` : ''}`;
+  const sub = [chapterNumbers(chapter), count].filter(Boolean).join(' · ');
 
   return (
     <Modal visible={open} animationType="slide" onRequestClose={onClose}>
@@ -472,11 +562,13 @@ function ReaderModal({ chapter, open, pages, loading, error, check, onClose, onR
             <Text style={S.readerTitle} numberOfLines={1}>
               {chapterLabel(chapter)}
             </Text>
-            <Text style={S.readerSub} numberOfLines={1}>
+            <Text style={[S.readerSub, failedCount > 0 && S.textBad]} numberOfLines={1}>
               {sub}
             </Text>
           </View>
         </View>
+
+        <ChapterNav onPrev={onPrev} onNext={onNext} />
 
         <View style={S.contractWrap}>
           <ContractPanel check={check} pending={loading} idleHint="" />
@@ -505,12 +597,19 @@ function ReaderModal({ chapter, open, pages, loading, error, check, onClose, onR
             data={pages}
             keyExtractor={(p, i) => `${i}-${asText(p?.img)}`}
             renderItem={({ item, index }) => (
-              <ReaderPage page={item} index={index} total={pages.length} pageWidth={pageWidth} />
+              <ReaderPage
+                page={item}
+                index={index}
+                total={pages.length}
+                pageWidth={pageWidth}
+                onFailed={onPageFailed}
+              />
             )}
             initialNumToRender={2}
             maxToRenderPerBatch={3}
             windowSize={7}
             ItemSeparatorComponent={PageGap}
+            ListFooterComponent={<ChapterNav onPrev={onPrev} onNext={onNext} />}
             showsVerticalScrollIndicator={false}
           />
         )}
@@ -533,8 +632,12 @@ export default function MangaScreen() {
   const [query, setQuery] = useState('');
   const [searchedQuery, setSearchedQuery] = useState('');
   const [results, setResults] = useState<IMangaResult[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchErr, setSearchErr] = useState<string | null>(null);
+  const [moreErr, setMoreErr] = useState<string | null>(null);
   const [searchCheck, setSearchCheck] = useState<Check>(NO_CHECK);
 
   // Info
@@ -543,6 +646,7 @@ export default function MangaScreen() {
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoErr, setInfoErr] = useState<string | null>(null);
   const [infoCheck, setInfoCheck] = useState<Check>(NO_CHECK);
+  const [newestFirst, setNewestFirst] = useState(false);
 
   // Reader
   const [readingIndex, setReadingIndex] = useState<number | null>(null);
@@ -550,12 +654,15 @@ export default function MangaScreen() {
   const [loadingPages, setLoadingPages] = useState(false);
   const [pagesErr, setPagesErr] = useState<string | null>(null);
   const [pagesCheck, setPagesCheck] = useState<Check>(NO_CHECK);
+  const [failedPages, setFailedPages] = useState<ReadonlySet<number>>(() => new Set());
 
   // Each call takes the next number; a response whose number is no longer current (a newer call, a
   // closed view or a provider switch) is dropped, so a slow provider can't fill another's screen.
   const searchSeq = useRef(0);
   const infoSeq = useRef(0);
   const pagesSeq = useRef(0);
+  // The query page 1 was last fetched for, so the debounce doesn't repeat a search made on submit.
+  const lastQuery = useRef('');
 
   const chapters = useMemo<IMangaChapter[]>(() => (info && Array.isArray(info.chapters) ? info.chapters : []), [info]);
 
@@ -563,37 +670,65 @@ export default function MangaScreen() {
 
   const clearSearch = useCallback(() => {
     searchSeq.current++;
+    lastQuery.current = '';
     setSearchedQuery('');
     setResults([]);
+    setPage(1);
+    setHasNextPage(false);
     setSearching(false);
+    setLoadingMore(false);
     setSearchErr(null);
+    setMoreErr(null);
     setSearchCheck(NO_CHECK);
   }, []);
 
+  /** Fetches a page of results: page 1 starts a new search, later pages add to it. */
   const runSearch = useCallback(
-    async (q: string) => {
+    async (q: string, pageNo: number = 1, earlier: IMangaResult[] = []) => {
       const seq = ++searchSeq.current;
-      setSearchedQuery(q);
-      setResults([]);
-      setSearchErr(null);
-      setSearchCheck(NO_CHECK);
-      setSearching(true);
-      try {
-        const res = await provider.search(q, 1);
-        if (seq !== searchSeq.current) return;
-        setSearchCheck(checked(`search("${q}")`, searchProblems(res)));
-        setResults(Array.isArray(res?.results) ? res.results : []);
-      } catch (e) {
-        if (seq !== searchSeq.current) return;
-        const message = errorMessage(e);
-        setSearchErr(message);
-        setSearchCheck(checked(`search("${q}")`, [`threw: ${message}`]));
-      } finally {
-        if (seq === searchSeq.current) setSearching(false);
+      const first = pageNo === 1;
+      if (first) {
+        lastQuery.current = q;
+        setSearchedQuery(q);
+        setResults([]);
+        setPage(1);
+        setHasNextPage(false);
+        setSearchErr(null);
+        setSearchCheck(NO_CHECK);
+        setSearching(true);
+      } else {
+        setLoadingMore(true);
       }
+      setMoreErr(null);
+
+      const r = await timed(`search("${q}", ${pageNo})`, () => provider.search(q, pageNo));
+      if (seq !== searchSeq.current) return;
+      setSearching(false);
+      setLoadingMore(false);
+      // Later pages' problems say which page they came from.
+      const where = (problem: string) => (first ? problem : `page ${pageNo}: ${problem}`);
+
+      if (!r.ok) {
+        const threw = logged(r.log, [where(`threw: ${r.error}`)]);
+        setSearchCheck((c) => withCall(c, r.log, threw));
+        if (first) setSearchErr(r.error);
+        else setMoreErr(r.error);
+        return;
+      }
+      const earlierIds = new Set(earlier.map((item) => item?.id));
+      const problems = logged(r.log, searchProblems(r.value, pageNo, earlierIds).map(where));
+      setSearchCheck((c) => withCall(c, r.log, problems));
+      const list = Array.isArray(r.value?.results) ? r.value.results : [];
+      setResults(first ? list : [...earlier, ...list]);
+      setPage(pageNo);
+      setHasNextPage(r.value?.hasNextPage === true);
     },
     [provider]
   );
+
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasNextPage) runSearch(searchedQuery, page + 1, results);
+  }, [loadingMore, hasNextPage, runSearch, searchedQuery, page, results]);
 
   useEffect(() => {
     const q = query.trim();
@@ -601,7 +736,9 @@ export default function MangaScreen() {
       clearSearch();
       return;
     }
-    const t = setTimeout(() => runSearch(q), 650);
+    const t = setTimeout(() => {
+      if (q !== lastQuery.current) runSearch(q);
+    }, 650);
     return () => clearTimeout(t);
   }, [query, runSearch, clearSearch]);
 
@@ -615,20 +752,16 @@ export default function MangaScreen() {
       setInfoErr(null);
       setInfoCheck(NO_CHECK);
       setLoadingInfo(true);
-      const label = `fetchMangaInfo("${asText(item.id)}")`;
-      try {
-        const res = await provider.fetchMangaInfo(item.id);
-        if (seq !== infoSeq.current) return;
-        setInfoCheck(checked(label, infoProblems(res)));
-        setInfo(res !== null && typeof res === 'object' ? res : null);
-      } catch (e) {
-        if (seq !== infoSeq.current) return;
-        const message = errorMessage(e);
-        setInfoErr(message);
-        setInfoCheck(checked(label, [`threw: ${message}`]));
-      } finally {
-        if (seq === infoSeq.current) setLoadingInfo(false);
+      const r = await timed(`fetchMangaInfo("${asText(item.id)}")`, () => provider.fetchMangaInfo(item.id));
+      if (seq !== infoSeq.current) return;
+      setLoadingInfo(false);
+      if (!r.ok) {
+        setInfoErr(r.error);
+        setInfoCheck(withCall(NO_CHECK, r.log, logged(r.log, [`threw: ${r.error}`])));
+        return;
       }
+      setInfoCheck(withCall(NO_CHECK, r.log, logged(r.log, infoProblems(r.value))));
+      setInfo(r.value !== null && typeof r.value === 'object' ? r.value : null);
     },
     [provider]
   );
@@ -644,24 +777,31 @@ export default function MangaScreen() {
       setPages([]);
       setPagesErr(null);
       setPagesCheck(NO_CHECK);
+      setFailedPages(new Set());
       setLoadingPages(true);
-      const label = `fetchChapterPages("${asText(chapter.id)}")`;
-      try {
-        const res = await provider.fetchChapterPages(chapter.id);
-        if (seq !== pagesSeq.current) return;
-        setPagesCheck(checked(label, pageProblems(res)));
-        setPages(Array.isArray(res) ? res : []);
-      } catch (e) {
-        if (seq !== pagesSeq.current) return;
-        const message = errorMessage(e);
-        setPagesErr(message);
-        setPagesCheck(checked(label, [`threw: ${message}`]));
-      } finally {
-        if (seq === pagesSeq.current) setLoadingPages(false);
+      const r = await timed(`fetchChapterPages("${asText(chapter.id)}")`, () => provider.fetchChapterPages(chapter.id));
+      if (seq !== pagesSeq.current) return;
+      setLoadingPages(false);
+      if (!r.ok) {
+        setPagesErr(r.error);
+        setPagesCheck(withCall(NO_CHECK, r.log, logged(r.log, [`threw: ${r.error}`])));
+        return;
       }
+      setPagesCheck(withCall(NO_CHECK, r.log, logged(r.log, pageProblems(r.value))));
+      setPages(Array.isArray(r.value) ? r.value : []);
     },
     [provider, chapters]
   );
+
+  const onPageFailed = useCallback((index: number, failed: boolean) => {
+    setFailedPages((prev) => {
+      if (prev.has(index) === failed) return prev;
+      const next = new Set(prev);
+      if (failed) next.add(index);
+      else next.delete(index);
+      return next;
+    });
+  }, []);
 
   const closeReader = useCallback(() => {
     pagesSeq.current++;
@@ -744,7 +884,11 @@ export default function MangaScreen() {
       </View>
 
       <View style={S.contractWrap}>
-        <ContractPanel check={searchCheck} pending={searching} idleHint="search to check this provider" />
+        <ContractPanel
+          check={searchCheck}
+          pending={searching || loadingMore}
+          idleHint="search to check this provider"
+        />
       </View>
 
       {/* ── Body ─────────────────────────────────────────────────────────────── */}
@@ -779,6 +923,28 @@ export default function MangaScreen() {
           keyExtractor={(item, i) => `${i}-${asText(item?.id)}`}
           numColumns={COLS}
           renderItem={({ item }) => <CoverCard item={item} onOpen={openInfo} />}
+          ListFooterComponent={
+            <View style={S.footer}>
+              {loadingMore ? (
+                <ActivityIndicator color={colors.accent} />
+              ) : moreErr ? (
+                <>
+                  <Text style={S.errText}>{moreErr}</Text>
+                  <TouchableOpacity style={S.retryBtn} onPress={loadMore}>
+                    <Text style={S.retryText}>Retry page {page + 1}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : hasNextPage ? (
+                <TouchableOpacity style={S.retryBtn} onPress={loadMore}>
+                  <Text style={S.retryText}>Load page {page + 1}</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={S.footerText}>
+                  End of results · {results.length} titles on {page} page{page === 1 ? '' : 's'}
+                </Text>
+              )}
+            </View>
+          }
           columnWrapperStyle={S.gridRow}
           contentContainerStyle={S.grid}
           showsVerticalScrollIndicator={false}
@@ -793,6 +959,8 @@ export default function MangaScreen() {
         error={infoErr}
         check={infoCheck}
         readingIndex={readingIndex}
+        newestFirst={newestFirst}
+        onChangeOrder={setNewestFirst}
         onClose={closeInfo}
         onRetry={() => selected && openInfo(selected)}
         onOpenChapter={openChapter}
@@ -805,6 +973,12 @@ export default function MangaScreen() {
         loading={loadingPages}
         error={pagesErr}
         check={pagesCheck}
+        failedCount={failedPages.size}
+        onPageFailed={onPageFailed}
+        onPrev={readingIndex !== null && readingIndex > 0 ? () => openChapter(readingIndex - 1) : undefined}
+        onNext={
+          readingIndex !== null && readingIndex < chapters.length - 1 ? () => openChapter(readingIndex + 1) : undefined
+        }
         onClose={closeReader}
         onRetry={() => readingIndex !== null && openChapter(readingIndex)}
       />
@@ -885,6 +1059,7 @@ const S = StyleSheet.create({
   contractRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
   contractTag: { fontSize: 10, fontWeight: '800', color: colors.dim, letterSpacing: 1 },
   contractSummary: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.muted },
+  contractMs: { fontSize: 12, fontWeight: '600', color: colors.muted },
   contractCaret: { fontSize: 12, color: colors.muted },
   contractBody: { maxHeight: 220, paddingHorizontal: 12, paddingBottom: 10 },
   contractLine: {
@@ -894,12 +1069,15 @@ const S = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     marginTop: 2,
   },
+  contractCall: { color: colors.muted },
   textOk: { color: colors.success },
   textBad: { color: colors.error },
 
   // Grid
   grid: { paddingHorizontal: PAD, paddingBottom: 30, gap: GAP },
   gridRow: { gap: GAP },
+  footer: { alignItems: 'center', gap: 8, paddingVertical: 16 },
+  footerText: { fontSize: 12, color: colors.dim },
 
   // Cover card
   card: {
@@ -1031,6 +1209,19 @@ const S = StyleSheet.create({
   chTitleActive: { color: colors.accentLight },
   chMeta: { fontSize: 12, color: colors.dim },
   chNumbers: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  toggleRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: R.full,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 3,
+  },
+  toggleBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: R.full },
+  toggleBtnOn: { backgroundColor: colors.accent },
+  toggleText: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  toggleTextOn: { color: '#fff' },
   emptyChapters: { fontSize: 14, color: colors.muted, paddingHorizontal: PAD, paddingVertical: 20 },
   listEnd: { height: 50 },
 
@@ -1049,6 +1240,19 @@ const S = StyleSheet.create({
   readerTitleWrap: { flex: 1 },
   readerTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   readerSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  navRow: { flexDirection: 'row', gap: 10, paddingHorizontal: PAD, paddingVertical: 10 },
+  navBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 9,
+    borderRadius: R.full,
+    backgroundColor: colors.accentFaded,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  navBtnOff: { backgroundColor: colors.card, borderColor: colors.border },
+  navText: { fontSize: 13, fontWeight: '700', color: colors.accentLight },
+  navTextOff: { color: colors.dim },
   page: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   pageNumber: { fontSize: 28, fontWeight: '700', color: colors.border },
   pageGap: { height: 2 },

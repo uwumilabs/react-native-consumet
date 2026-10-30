@@ -41,6 +41,56 @@ yarn example gen:local-dist        # rewrite apps/src/registry/local-dist-map.ts
 If you skip `prepare-registry`, Local dist mode reports the new code as an integrity mismatch, because
 the registry still has the old hash. Use **Run unverified** while you iterate.
 
+# Manga tab
+
+The **Manga** tab runs every manga provider (`MANGA_PROVIDERS` in `src/providers.ts`) through the same
+three views, so you can see on a device which providers follow the shared result shape
+([What every manga provider returns](../docs/guides/manga.md#what-every-manga-provider-returns)). The
+screen reads only that shape and has no per-provider code, so a provider that breaks the shape shows
+up broken here instead of being patched over.
+
+- **Search:** pick a provider from the chip and type a title. The covers load with each result's
+  `headerForImage`. While `hasNextPage` is true, **Load page N** at the end of the grid fetches the
+  next page.
+- **Info:** tap a cover to see its cover, title, alt titles, status, genres, authors, artists and
+  description, then the chapter list. Each chapter shows its title, `Vol X · Ch Y` and its scanlator,
+  language and release date. **Oldest first** is the provider's order, which is reading order.
+  **Newest first** only reverses the list on screen.
+- **Reader:** tap a chapter to read it. Each page is sized to its real aspect ratio
+  (`Image.getSizeWithHeaders`, sent with the page's `headerForImage`). A page that fails to load
+  shows its number, URL and error instead of a blank; tap it to retry. The header counts the pages and
+  any that failed. **‹ Prev chapter** and **Next chapter ›** follow the provider's chapter order.
+
+## Contract panel
+
+Each view has a **CONTRACT** strip under its header. It runs the checks in
+`src/non-registry/manga-contract.ts` on every response. These are plain-function copies of
+`test/unit/helpers/manga-contract.ts`, so keep the two in step. The strip shows **✓ follows contract**
+or **✗ N problems**, and how long the call took. Tap the strip to list every call with its time, then
+every problem, for example `pages[0]: page must be 1 (got 0)`. A call that throws counts as a problem.
+
+| View | Checks |
+| --- | --- |
+| Search | At least one result. Each result has a non-empty string `id` and `title`. `image` and `url` are absolute. `altTitles` holds strings, `status` is a `MediaStatus` and `headerForImage` maps names to strings. |
+| Info | The same fields, plus `genres`, `authors` and `artists` as string arrays. `chapters` is non-empty and in reading order. Chapter `id` and `title` are strings, `chapterNumber`, `volumeNumber` and `pages` are numbers, and `url` is absolute. |
+| Pages | At least one page. `page` runs 1..n, `img` is absolute, and `headerForImage` is on every page or on none. |
+
+The strip also makes some checks that the unit helper doesn't. On search, `currentPage` must match the
+page asked for, `hasNextPage` must be a boolean, and a later page must not repeat ids from earlier
+pages (a sign that the provider ignores `page`). A description must also be plain text, with no HTML
+tags or entities.
+
+To test a provider:
+
+1. Switch to it.
+2. Search for a title the site has. An empty search counts as a problem, because the contract test
+   expects results.
+3. Open a result, then open a chapter.
+4. Check that all three strips show ✓.
+
+Each call is also logged to the Metro console, for example `[Manga] search("one piece", 1) · 412 ms`,
+along with any problems. Release builds drop console output, but the strip still shows the times.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
