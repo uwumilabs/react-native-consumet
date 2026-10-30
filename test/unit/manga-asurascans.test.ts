@@ -251,6 +251,19 @@ describe('AsuraScans fetchMangaInfo', () => {
       'AsuraScans: series not found (404)'
     );
   });
+
+  it('rejects with a clear error when the API answers without a series', async () => {
+    // A 200 page that isn't the API's JSON (a challenge or maintenance page) used to throw a TypeError.
+    const page: Fixture = { ...fixture('series-not-found'), status: 200, body: '<!doctype html><title>Just a moment</title>' };
+    const { asura } = provider({
+      [`${API}/series/omniscient-readers-viewpoint`]: page,
+      [`${API}/series/omniscient-readers-viewpoint/chapters`]: page,
+    });
+
+    await expect(asura.fetchMangaInfo('omniscient-readers-viewpoint')).rejects.toThrow(
+      'AsuraScans: the API sent no series for "omniscient-readers-viewpoint"'
+    );
+  });
 });
 
 describe('AsuraScans fetchChapterPages', () => {
@@ -303,6 +316,15 @@ describe('AsuraScans fetchChapterPages', () => {
 
     await expect(asura.fetchChapterPages('solo-farming-in-the-tower/chapter/149')).rejects.toThrow(
       'AsuraScans: chapter is in early access until 2026-10-30T17:57:25.223823Z'
+    );
+  });
+
+  it('rejects with a clear error when the API answers without a chapter', async () => {
+    const page: Fixture = { ...fixture('series-not-found'), status: 200, body: '<!doctype html><title>Just a moment</title>' };
+    const { asura } = provider({ [`${API}/series/omniscient-readers-viewpoint/chapters/1`]: page });
+
+    await expect(asura.fetchChapterPages('omniscient-readers-viewpoint/chapter/1')).rejects.toThrow(
+      'AsuraScans: the API sent no chapter for "omniscient-readers-viewpoint/chapter/1"'
     );
   });
 

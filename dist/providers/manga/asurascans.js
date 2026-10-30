@@ -53,15 +53,15 @@ class AsuraScans extends models_1.MangaParser {
   fetchMangaInfo = async mangaId => {
     const slug = encodeURIComponent(mangaId.replace(/^\/?(?:series|comics)\//, '').replace(/\/+$/, ''));
     const [detail, list] = await Promise.all([this.api(`/series/${slug}`), this.api(`/series/${slug}/chapters`)]);
-    const {
-      series
-    } = detail;
+    // A 200 without the JSON the API normally sends (a challenge or error page) has no series.
+    const series = detail?.series;
+    if (!series?.slug) throw new Error(`AsuraScans: the API sent no series for "${mangaId}"`);
     const seriesUrl = this.absolute(series.public_url);
     const genres = (series.genres ?? []).map(genre => genre.name?.trim()).filter(Boolean);
     const authors = names(series.author);
     const artists = names(series.artist);
     // The API lists newest first; early-access chapters can't be read until they unlock.
-    const chapters = (list.data ?? []).filter(chapter => Number.isFinite(chapter.number) && !isLocked(chapter)).reverse().map(chapter => {
+    const chapters = (list?.data ?? []).filter(chapter => Number.isFinite(chapter.number) && !isLocked(chapter)).reverse().map(chapter => {
       const result = {
         id: `${series.slug}/chapter/${chapter.number}`,
         title: chapter.title?.replace(/\s+/g, ' ').trim() || `Chapter ${chapter.number}`,
@@ -86,9 +86,9 @@ class AsuraScans extends models_1.MangaParser {
     const match = /^\/?(?:(?:series|comics)\/)?([^/]+)\/chapters?\/([^/?#]+)\/?$/.exec(chapterId);
     if (!match) throw new Error(`AsuraScans: invalid chapter id "${chapterId}"`);
     const [, slug, number] = match;
-    const {
-      data
-    } = await this.api(`/series/${encodeURIComponent(slug)}/chapters/${encodeURIComponent(number)}`);
+    const read = await this.api(`/series/${encodeURIComponent(slug)}/chapters/${encodeURIComponent(number)}`);
+    const data = read?.data;
+    if (!data) throw new Error(`AsuraScans: the API sent no chapter for "${chapterId}"`);
     if (data.access_gate) throw new Error(`AsuraScans: chapter needs ${data.access_gate} on the site`);
     if (data.is_locked) {
       const until = data.unlock_time ? ` until ${data.unlock_time}` : '';

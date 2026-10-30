@@ -91,14 +91,16 @@ export class AsuraScans extends MangaParser {
       this.api<{ series: ApiSeries; recommended_series?: ApiSeries[] | null }>(`/series/${slug}`),
       this.api<{ data: ApiChapter[] | null }>(`/series/${slug}/chapters`),
     ]);
-    const { series } = detail;
+    // A 200 without the JSON the API normally sends (a challenge or error page) has no series.
+    const series = detail?.series;
+    if (!series?.slug) throw new Error(`AsuraScans: the API sent no series for "${mangaId}"`);
     const seriesUrl = this.absolute(series.public_url);
     const genres = (series.genres ?? []).map((genre) => genre.name?.trim()).filter(Boolean);
     const authors = names(series.author);
     const artists = names(series.artist);
 
     // The API lists newest first; early-access chapters can't be read until they unlock.
-    const chapters = (list.data ?? [])
+    const chapters = (list?.data ?? [])
       .filter((chapter) => Number.isFinite(chapter.number) && !isLocked(chapter))
       .reverse()
       .map((chapter): IMangaChapter => {
@@ -128,9 +130,11 @@ export class AsuraScans extends MangaParser {
     const match = /^\/?(?:(?:series|comics)\/)?([^/]+)\/chapters?\/([^/?#]+)\/?$/.exec(chapterId);
     if (!match) throw new Error(`AsuraScans: invalid chapter id "${chapterId}"`);
     const [, slug, number] = match;
-    const { data } = await this.api<{ data: ApiChapterRead }>(
+    const read = await this.api<{ data?: ApiChapterRead }>(
       `/series/${encodeURIComponent(slug!)}/chapters/${encodeURIComponent(number!)}`
     );
+    const data = read?.data;
+    if (!data) throw new Error(`AsuraScans: the API sent no chapter for "${chapterId}"`);
     if (data.access_gate) throw new Error(`AsuraScans: chapter needs ${data.access_gate} on the site`);
     if (data.is_locked) {
       const until = data.unlock_time ? ` until ${data.unlock_time}` : '';
