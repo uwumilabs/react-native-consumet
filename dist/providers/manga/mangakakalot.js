@@ -7,11 +7,33 @@ exports.MangaKakalot = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
+const manga_1 = require("../../utils/manga");
+// The chapter-list API pages through a title's chapters, newest first. The site's own page asks
+// for 50 at a time; 500 keeps long series to a few requests (Cloudflare blocks `limit=1000`).
+const CHAPTERS_PER_REQUEST = 500;
+const MAX_CHAPTER_REQUESTS = 40;
+/** Titles per search page, in both the HTML and the JSON form. */
+const SEARCH_PAGE_SIZE = 20;
+/**
+ * The search word the site's own search box sends: punctuation and spaces become `_`, which the
+ * site reads as a space (`Re:Zero` → `re_zero`).
+ */
+const searchWord = query => query.toLowerCase().replace(/[\s!-/:-@[-`{-~]+/g, '_').replace(/^_+|_+$/g, '');
+/** `2024-11-03T11:37:28.000000Z` (the API's microseconds) → `2024-11-03T11:37:28.000Z`. */
+const toIsoDate = value => {
+  if (!value) return undefined;
+  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?Z$/.exec(value.trim());
+  if (match) return `${match[1]}.${(match[2] ?? '').padEnd(3, '0').slice(0, 3)}Z`;
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? value : new Date(time).toISOString();
+};
 class MangaKakalot extends models_1.MangaParser {
   ctx;
   name = 'MangaKakalot';
-  baseUrl = 'https://mangakakalot.com';
-  logo = 'https://techbigs.com/uploads/2022/1/mangakakalot-apkoptimized.jpg';
+  // mangakakalot.com is gone; mangakakalot.gg redirects here, and manganato.gg is the same site
+  // (same titles, ids and image hosts) under another name.
+  baseUrl = 'https://www.kakamanga.com';
+  logo = 'https://www.kakamanga.com/images/svg/logo-kkl.svg';
   classPath = 'MANGA.MangaKakalot';
   /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
   constructor() {
@@ -19,121 +41,188 @@ class MangaKakalot extends models_1.MangaParser {
     super();
     this.ctx = ctx;
   }
-  fetchMangaInfo = async mangaId => {
-    const mangaInfo = {
-      id: mangaId,
-      title: ''
-    };
-    const url = mangaId.includes('read') ? this.baseUrl : 'https://chapmanganato.to';
-    try {
-      const {
-        data
-      } = await this.ctx.axios.get(`${url}/${mangaId}`);
-      const $ = (0, cheerio_1.load)(data);
-      if (url.includes('mangakakalot')) {
-        mangaInfo.title = $('div.manga-info-top > ul > li:nth-child(1) > h1').text();
-        mangaInfo.altTitles = $('div.manga-info-top > ul > li:nth-child(1) > h2').text().replace('Alternative :', '').split(';');
-        mangaInfo.description = $('#noidungm').text().replace(`${mangaInfo.title} summary:`, '').replace(/\n/g, '').trim();
-        mangaInfo.headerForImage = {
-          Referer: this.baseUrl
-        };
-        mangaInfo.image = $('div.manga-info-top > div > img').attr('src');
-        mangaInfo.genres = $('div.manga-info-top > ul > li:nth-child(7) > a').map((i, el) => $(el).text()).get();
-        switch ($('div.manga-info-top > ul > li:nth-child(3)').text().replace('Status :', '').trim()) {
-          case 'Completed':
-            mangaInfo.status = models_1.MediaStatus.COMPLETED;
-            break;
-          case 'Ongoing':
-            mangaInfo.status = models_1.MediaStatus.ONGOING;
-            break;
-          default:
-            mangaInfo.status = models_1.MediaStatus.UNKNOWN;
-        }
-        mangaInfo.views = parseInt($('div.manga-info-top > ul > li:nth-child(6)').text().replace('View : ', '').replace(/,/g, '').trim());
-        mangaInfo.authors = $('div.manga-info-top > ul > li:nth-child(2) > a').map((i, el) => $(el).text()).get();
-        mangaInfo.chapters = $('div.chapter-list > div.row').map((i, el) => ({
-          id: $(el).find('span > a').attr('href')?.split('chapter/')[1],
-          title: $(el).find('span > a').text(),
-          views: parseInt($(el).find('span:nth-child(2)').text().replace(/,/g, '').trim()),
-          releasedDate: $(el).find('span:nth-child(3)').attr('title')
-        })).get();
-      } else {
-        mangaInfo.title = $(' div.panel-story-info > div.story-info-right > h1').text();
-        mangaInfo.altTitles = $('div.story-info-right > table > tbody > tr:nth-child(1) > td.table-value > h2').text().split(';');
-        mangaInfo.description = $('#panel-story-info-description').text().replace(`Description :`, '').replace(/\n/g, '').trim();
-        mangaInfo.headerForImage = {
-          Referer: 'https://readmanganato.com'
-        };
-        mangaInfo.image = $('div.story-info-left > span.info-image > img').attr('src');
-        mangaInfo.genres = $('div.story-info-right > table > tbody > tr:nth-child(4) > td.table-value > a').map((i, el) => $(el).text()).get();
-        switch ($('div.story-info-right > table > tbody > tr:nth-child(3) > td.table-value').text().trim()) {
-          case 'Completed':
-            mangaInfo.status = models_1.MediaStatus.COMPLETED;
-            break;
-          case 'Ongoing':
-            mangaInfo.status = models_1.MediaStatus.ONGOING;
-            break;
-          default:
-            mangaInfo.status = models_1.MediaStatus.UNKNOWN;
-        }
-        mangaInfo.views = parseInt($('div.story-info-right > div > p:nth-child(2) > span.stre-value').text().replace(/,/g, '').trim());
-        mangaInfo.authors = $('div.story-info-right > table > tbody > tr:nth-child(2) > td.table-value > a').map((i, el) => $(el).text()).get();
-        mangaInfo.chapters = $('div.container-main-left > div.panel-story-chapter-list > ul > li').map((i, el) => ({
-          id: $(el).find('a').attr('href')?.split(`${mangaId}/`)[1],
-          title: $(el).find('a').text(),
-          views: parseInt($(el).find('span.chapter-view.text-nowrap').text().replace(/,/g, '').trim()),
-          releasedDate: $(el).find('span.chapter-time.text-nowrap').attr('title')
-        })).get();
-      }
-      return mangaInfo;
-    } catch (err) {
-      throw new Error(err.message);
-    }
+  /**
+   * Covers and pages are on 2xstorage.com, which answers 403 unless the Referer is the site's
+   * origin (exactly `https://www.kakamanga.com/`; a page URL is refused too).
+   */
+  imageHeaders = () => ({
+    Referer: `${this.baseUrl}/`
+  });
+  absoluteUrl = url => {
+    const value = url?.trim();
+    if (!value) return undefined;
+    if (value.startsWith('//')) return `https:${value}`;
+    if (value.startsWith('/')) return `${this.baseUrl}${value}`;
+    return /^https?:\/\//.test(value) ? value : undefined;
   };
-  fetchChapterPages = async (chapterId, mangaId) => {
-    try {
-      const url = chapterId.includes('$$READMANGANATO') ? `${this.baseUrl}/chapter/${chapterId}` : `https://chapmanganato.to/${mangaId}/${chapterId}`;
+  /** The title's slug (its id) in `https://www.kakamanga.com/manga/<slug>`. */
+  slugFromUrl = url => /\/manga\/([^/?#]+)/.exec(url ?? '')?.[1];
+  /**
+   * @param query Search query
+   * @param page Page number (default: 1)
+   */
+  search = (() => {
+    var _this = this;
+    return async function (query) {
+      let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      // /search/story/<word> is behind a Cloudflare challenge. The search box's endpoint serves the
+      // same results page, and JSON to requests sent with X-Requested-With (the search box's own).
+      // Cloudflare caches whichever it answered first for a URL, so either can come back.
       const {
         data
-      } = await this.ctx.axios.get(url);
+      } = await _this.ctx.axios.get(`${_this.baseUrl}/home/search/json?searchword=${encodeURIComponent(searchWord(query))}&page=${page}`);
+      const json = typeof data === 'string' && /^\s*\[/.test(data) ? JSON.parse(data) : data;
+      if (Array.isArray(json)) return _this.searchFromJson(json, page);
       const $ = (0, cheerio_1.load)(data);
-      const pages = $('div.container-chapter-reader > img').map((i, el) => ({
-        img: $(el).attr('src'),
-        page: i,
-        title: $(el).attr('alt')?.replace(/(- Mangakakalot.com)|(- MangaNato.com)/g, ' ').trim(),
-        headerForImage: {
-          Referer: this.baseUrl
-        }
-      })).get();
-      return pages;
-    } catch (err) {
-      throw new Error(err.message);
-    }
+      const results = [];
+      $('.panel_story_list .story_item').each((_, el) => {
+        const link = $(el).find('.story_name a').first();
+        const result = _this.searchResult(link.attr('href'), link.text(), $(el).find('img').first().attr('src'));
+        if (result) results.push(result);
+      });
+      const next = $('.panel_page_number .group_page a').filter((_, el) => $(el).text().trim().toLowerCase() === 'next').first();
+      return {
+        currentPage: Number($('.panel_page_number .page_select').first().text().trim()) || page,
+        hasNextPage: next.attr('href') !== undefined && !next.hasClass('page_disabled'),
+        results
+      };
+    };
+  })();
+  /** The JSON form of a search page: `[{ name, url, thumb, slug, ... }]`, with no pagination. */
+  searchFromJson = (items, page) => {
+    const results = items.map(item => this.searchResult(typeof item?.url === 'string' ? item.url : `/manga/${item?.slug}`, (0, cheerio_1.load)(String(item?.name ?? ''), null, false).root().text(), item?.thumb)).filter(result => result !== undefined);
+    // Pages hold SEARCH_PAGE_SIZE titles, so a full page is taken to have a next one.
+    return {
+      currentPage: page,
+      hasNextPage: items.length >= SEARCH_PAGE_SIZE,
+      results
+    };
+  };
+  searchResult = (href, name, cover) => {
+    const url = this.absoluteUrl(typeof href === 'string' ? href : undefined);
+    const id = this.slugFromUrl(url);
+    const title = name.replace(/\s+/g, ' ').trim();
+    if (!url || !id || !title) return undefined;
+    const result = {
+      id,
+      title,
+      url
+    };
+    const image = this.absoluteUrl(typeof cover === 'string' ? cover : undefined);
+    if (image) Object.assign(result, {
+      image,
+      headerForImage: this.imageHeaders()
+    });
+    return result;
+  };
+  /** @param mangaId the title's slug, e.g. `tomodachi-game` (from search results) */
+  fetchMangaInfo = async mangaId => {
+    const [{
+      data
+    }, chapters] = await Promise.all([this.ctx.axios.get(`${this.baseUrl}/manga/${mangaId}`), this.fetchChapters(mangaId)]);
+    const $ = (0, cheerio_1.load)(data);
+    const title = $('.manga-info-text h1').first().text().trim();
+    const info = {
+      id: mangaId,
+      title,
+      url: `${this.baseUrl}/manga/${mangaId}`
+    };
+    // `Alternative : A; B`, which can repeat the title itself.
+    const altTitles = $('.manga-info-text h2.story-alternative').first().text().replace(/^\s*Alternative\s*:/i, '').split(';').map(alt => alt.replace(/\s+/g, ' ').trim()).filter((alt, i, all) => alt && alt !== title && all.indexOf(alt) === i);
+    if (altTitles.length) info.altTitles = altTitles;
+    const image = this.absoluteUrl($('.manga-info-pic img').first().attr('src'));
+    if (image) Object.assign(info, {
+      image,
+      headerForImage: this.imageHeaders()
+    });
+    const description = this.description($);
+    if (description) info.description = description;
+    // `Author(s) : A, B`, `Status : Ongoing`, `View : 41,148,877`, ...
+    const fields = {};
+    $('.manga-info-text > li:not(:has(h1))').each((_, el) => {
+      const match = /^([^:]+?)\s*:\s*(.*)$/.exec($(el).text().replace(/\s+/g, ' ').trim());
+      if (match) fields[match[1].toLowerCase()] = match[2].trim();
+    });
+    const authors = (fields['author(s)'] ?? '').split(',').map(author => author.trim()).filter(author => author && author.toLowerCase() !== 'unknown');
+    if (authors.length) info.authors = authors;
+    const status = (fields.status ?? '').toLowerCase();
+    if (status === 'ongoing') info.status = models_1.MediaStatus.ONGOING;else if (status === 'completed') info.status = models_1.MediaStatus.COMPLETED;
+    const genres = $('.manga-info-text li.genres a').map((_, el) => $(el).text().trim()).get().filter(Boolean);
+    if (genres.length) info.genres = genres;
+    const views = parseInt((fields.view ?? '').replace(/,/g, ''), 10);
+    if (Number.isFinite(views)) info.views = views;
+    info.chapters = chapters;
+    return info;
+  };
+  /** @param chapterId `<title slug>/<chapter slug>`, e.g. `tomodachi-game/chapter-127-5` */
+  fetchChapterPages = async chapterId => {
+    const {
+      data
+    } = await this.ctx.axios.get(`${this.baseUrl}/manga/${chapterId}`);
+    const $ = (0, cheerio_1.load)(data);
+    return $('.container-chapter-reader img').map((_, el) => this.absoluteUrl($(el).attr('src') ?? $(el).attr('data-src'))).get().filter(img => Boolean(img)).map((img, i) => ({
+      img,
+      page: i + 1,
+      headerForImage: this.imageHeaders()
+    }));
   };
   /**
-   *
-   * @param query Search query
+   * The synopsis under the `<title> summary:` heading, as plain text. Some titles store it as
+   * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more: whitespace
+   * collapses as a browser would and `<br>` breaks lines.
    */
-  search = async query => {
-    try {
+  description = $ => {
+    const box = $('#contentBox').first().clone();
+    box.find('h2').remove();
+    box.find('br').replaceWith('&lt;br&gt;');
+    const html = box.text().replace(/\s+/g, ' ').replace(/<br\s*\/?>/gi, '\n');
+    const text = (0, cheerio_1.load)(html, null, false).root().text().split('\n').map(line => line.trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    return text || undefined;
+  };
+  /** Every chapter of a title from the chapter-list API, in reading order. */
+  fetchChapters = async mangaId => {
+    const rows = [];
+    for (let request = 0; request < MAX_CHAPTER_REQUESTS; request++) {
       const {
         data
-      } = await this.ctx.axios.get(`${this.baseUrl}/search/story/${query.replace(/ /g, '_')}`);
-      const $ = (0, cheerio_1.load)(data);
-      const results = $('div.daily-update > div > div').map((i, el) => ({
-        id: $(el).find('div > h3 > a').attr('href')?.split('/')[3],
-        title: $(el).find('div > h3 > a').text(),
-        image: $(el).find('a > img').attr('src'),
-        headerForImage: {
-          Referer: this.baseUrl
-        }
-      })).get();
-      return {
-        results: results
-      };
-    } catch (err) {
-      throw new Error(err.message);
+      } = await this.ctx.axios.get(`${this.baseUrl}/api/manga/${mangaId}/chapters?limit=${CHAPTERS_PER_REQUEST}&offset=${rows.length}`);
+      const body = typeof data === 'string' ? JSON.parse(data) : data;
+      const page = body?.data?.chapters;
+      if (!body?.success || !Array.isArray(page)) {
+        throw new Error(`MangaKakalot: no chapter list for '${mangaId}' (${body?.message ?? 'unexpected response'})`);
+      }
+      rows.push(...page);
+      if (!body.data.pagination?.has_more || page.length === 0) break;
     }
+    // A chapter published while paging shifts the offsets, so a row can come twice.
+    const seen = new Set();
+    const chapters = [];
+    for (const row of rows) {
+      const chapter = this.toChapter(mangaId, row);
+      if (!chapter || seen.has(chapter.id)) continue;
+      seen.add(chapter.id);
+      chapters.push(chapter);
+    }
+    return (0, manga_1.sortChaptersForReading)(chapters.reverse());
+  };
+  toChapter = (mangaId, row) => {
+    const slug = row.chapter_slug?.trim();
+    if (!slug) return undefined;
+    const label = row.chapter_name?.replace(/\s+/g, ' ').trim() ?? '';
+    const apiNumber = row.chapter_num === null || row.chapter_num === '' ? NaN : Number(row.chapter_num);
+    const chapterNumber = (0, manga_1.parseChapterNumber)(label) ?? (Number.isFinite(apiNumber) ? apiNumber : undefined);
+    const chapter = {
+      id: `${mangaId}/${slug}`,
+      title: label || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : slug)
+    };
+    if (chapterNumber !== undefined) chapter.chapterNumber = chapterNumber;
+    const volumeNumber = (0, manga_1.parseVolumeNumber)(label);
+    if (volumeNumber !== undefined) chapter.volumeNumber = volumeNumber;
+    const releaseDate = toIsoDate(row.updated_at);
+    if (releaseDate) chapter.releaseDate = releaseDate;
+    if (typeof row.view === 'number') chapter.views = row.view;
+    chapter.url = `${this.baseUrl}/manga/${mangaId}/${slug}`;
+    return chapter;
   };
 }
 exports.MangaKakalot = MangaKakalot;
