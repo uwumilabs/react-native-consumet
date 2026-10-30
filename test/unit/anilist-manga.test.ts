@@ -53,6 +53,22 @@ describe('Anilist.Manga.fetchMangaInfo chapters (META-12)', () => {
     expect(info.chapters).toHaveLength(3);
   });
 
+  it('matches a result by its alt titles when the provider shows the English title', async () => {
+    serve();
+    const provider = fakeMangaProvider();
+    provider.search.mockResolvedValue({
+      results: [
+        { id: 'solo-leveling-ragnarok', title: 'Solo Leveling: Ragnarok' },
+        { id: 'solo-leveling', title: 'Solo Leveling', altTitles: ['Na Honjaman Level Up', '나 혼자만 레벨업'] },
+      ],
+    });
+
+    await new Anilist.Manga(provider).fetchMangaInfo('105398');
+
+    expect(provider.search.mock.calls).toEqual([['na honjaman level up']]);
+    expect(provider.fetchMangaInfo).toHaveBeenCalledWith('solo-leveling');
+  });
+
   it('returns the AniList info with no chapters when the provider has neither title', async () => {
     serve();
     const provider = fakeMangaProvider();

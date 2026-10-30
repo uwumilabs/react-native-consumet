@@ -1138,8 +1138,10 @@ class Anilist extends models_1.AnimeParser {
       results = []
     } = (await provider.search(slug)) ?? {};
     if (results.length === 0) return undefined;
-    // TODO: use much better way than this
-    const possibleManga = results.find(manga => title.toLowerCase() === (typeof manga.title === 'string' ? manga.title.toLowerCase() : ''));
+    // Providers may show an English title and keep the romaji one in altTitles, so match either.
+    const wanted = title.toLowerCase();
+    const names = manga => [...(typeof manga.title === 'string' ? [manga.title] : []), ...(manga.altTitles ?? [])];
+    const possibleManga = results.find(manga => names(manga).some(name => name.toLowerCase() === wanted));
     return await provider.fetchMangaInfo((possibleManga ?? results[0]).id);
   };
   /** The provider's chapters, looked up by the romaji title, then by the English one if that finds none. */

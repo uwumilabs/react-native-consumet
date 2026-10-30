@@ -1240,11 +1240,15 @@ class Anilist extends AnimeParser {
     const { results = [] } = ((await provider.search(slug)) ?? {}) as Partial<ISearch<IMangaResult>>;
 
     if (results.length === 0) return undefined;
-    // TODO: use much better way than this
 
-    const possibleManga = results.find(
-      (manga: IMangaResult) =>
-        title.toLowerCase() === (typeof manga.title === 'string' ? manga.title.toLowerCase() : '')
+    // Providers may show an English title and keep the romaji one in altTitles, so match either.
+    const wanted = title.toLowerCase();
+    const names = (manga: IMangaResult) => [
+      ...(typeof manga.title === 'string' ? [manga.title] : []),
+      ...(manga.altTitles ?? []),
+    ];
+    const possibleManga = results.find((manga: IMangaResult) =>
+      names(manga).some((name) => name.toLowerCase() === wanted)
     );
 
     return (await provider.fetchMangaInfo((possibleManga ?? results[0]!).id)) as IMangaInfo;

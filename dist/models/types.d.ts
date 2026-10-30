@@ -326,7 +326,7 @@ export interface IMangaChapter {
     releaseDate?: string;
     /** Scanlation group, when the site credits one. */
     scanlator?: string;
-    /** Language of the chapter (ISO 639-1, e.g. `en`) when the site lists several. */
+    /** Language of the chapter (ISO 639-1, e.g. `en`, with a region when the site has one, e.g. `pt-br`). */
     language?: string;
     /** Absolute URL of the chapter on the site. */
     url?: string;
