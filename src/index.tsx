@@ -51,6 +51,9 @@ import {
   RegistrySignatureError,
   verifyRegistrySignature,
   parseSignedRegistry,
+  parseChapterNumber,
+  parseVolumeNumber,
+  sortChaptersForReading,
 } from './utils';
 import type {
   IntegrityErrorCode,
@@ -275,6 +278,9 @@ export {
   RegistrySignatureError,
   verifyRegistrySignature,
   parseSignedRegistry,
+  parseChapterNumber,
+  parseVolumeNumber,
+  sortChaptersForReading,
   MetaError,
 };
 export type { MetaErrorSource };

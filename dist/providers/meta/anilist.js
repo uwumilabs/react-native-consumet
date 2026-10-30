@@ -11,6 +11,7 @@ const animekai_1 = require("../anime/animekai/animekai");
 const animepahe_1 = require("../anime/animepahe/animepahe");
 const anikoto_1 = require("../anime/anikoto/anikoto");
 const mangadex_1 = require("../manga/mangadex");
+const manga_1 = require("../../utils/manga");
 const utils_2 = require("../../utils/utils");
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
 const anilistError = err => {
@@ -1097,7 +1098,7 @@ class Anilist extends models_1.AnimeParser {
           const chapters = await new Anilist().findManga(_this6.provider, mapTitle(data.data.Media.title), mangaInfo.malId).catch(err => {
             throw models_1.MetaError.from('provider', err);
           });
-          mangaInfo.chapters = [...chapters].reverse();
+          mangaInfo.chapters = (0, manga_1.sortChaptersForReading)(chapters);
           return mangaInfo;
         } catch (error) {
           throw anilistError(error);

@@ -82,6 +82,7 @@ export type { RegistrySignatureErrorCode, RegistrySignatureOptions } from './reg
 export { createExtractorContext } from './create-extractor-context';
 export { defaultAxios, defaultExtractorContext, defaultExtractors } from './extension-utils';
 export { PolyURL, PolyURLSearchParams } from './url-polyfill';
+export { parseChapterNumber, parseVolumeNumber, sortChaptersForReading } from './manga';
 export type {
   AnimeProvider,
   MovieProvider,

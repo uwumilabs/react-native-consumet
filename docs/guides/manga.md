@@ -38,6 +38,30 @@ Manga classes take an optional provider context, `new MANGA.MangaDex(ctx?)`, and
 
 `languages`, `baseUrl`, `logo` and `classPath` are protected; read them through `provider.toString`.
 
+## What every manga provider returns
+
+Sites lay out their data differently; every provider maps it onto the same shape, so apps can
+switch providers without special cases. Fields a site doesn't have are left out, never filled
+with placeholders.
+
+- **`search(query, page?)`** returns `{ currentPage, hasNextPage, results }`. Each result has an
+  `id` (pass it to `fetchMangaInfo`) and a string `title`. Optional fields: `altTitles` (strings),
+  absolute `image` and `url`, `headerForImage` when the image host needs headers, a plain-text
+  `description`, `status` (a `MediaStatus`) and `releaseDate`.
+- **`fetchMangaInfo(id)`** returns the same fields, plus `genres`, `authors` and `artists` as
+  string arrays, and `chapters` **in reading order: first chapter first**.
+- **Chapters:** each has an `id` (pass it to `fetchChapterPages`) and a string `title` (`Chapter
+  12` when the site gives no name). They also have `chapterNumber` and `volumeNumber` wherever the
+  site gives them (`10.5` is fine), `releaseDate` (ISO 8601 when it parses), and `scanlator`,
+  `language` and absolute `url` when the site lists them.
+- **`fetchChapterPages(chapterId)`** returns the pages in order, with `page` counting from 1 and
+  an absolute `img`. When the image host refuses hotlinks, every page carries the same
+  `headerForImage` (for example `{ Referer }`); send it with the image request.
+
+`parseChapterNumber`, `parseVolumeNumber` and `sortChaptersForReading` (exported from the
+package) turn a site's labels into these fields. Provider tests check the shape with
+`test/unit/helpers/manga-contract.ts`.
+
 ## Manga Providers List
 
 This list is in alphabetical order.

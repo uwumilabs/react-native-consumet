@@ -43,6 +43,7 @@ import { AnimeKai } from '../anime/animekai/animekai';
 import { AnimePahe } from '../anime/animepahe/animepahe';
 import { AniKoto } from '../anime/anikoto/anikoto';
 import { MangaDex } from '../manga/mangadex';
+import { sortChaptersForReading } from '../../utils/manga';
 import { ANIFY_URL, findSimilarTitles } from '../../utils/utils';
 
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
@@ -1182,7 +1183,7 @@ class Anilist extends AnimeParser {
           .catch((err) => {
             throw MetaError.from('provider', err);
           });
-        mangaInfo.chapters = [...chapters].reverse();
+        mangaInfo.chapters = sortChaptersForReading(chapters);
 
         return mangaInfo;
       } catch (error) {

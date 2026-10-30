@@ -6,7 +6,8 @@ import { response } from './fixtures/anilist/replay';
 
 // AniList 105398: romaji "Na Honjaman Level Up", English "Solo Leveling", MAL 121496.
 const MALSYNC_URL = 'https://api.malsync.moe/mal/manga/121496';
-const chapters = () => [{ id: 'ch-3' }, { id: 'ch-2' }, { id: 'ch-1' }];
+// Listed newest first, as many sites do; Anilist.Manga returns them in reading order.
+const chapters = () => [3, 2, 1].map((n) => ({ id: `ch-${n}`, title: `Chapter ${n}`, chapterNumber: n }));
 
 /** A manga provider that knows the manga under `knownAs` (its search slug) only. */
 const fakeMangaProvider = (knownAs?: string) =>
@@ -39,7 +40,7 @@ describe('Anilist.Manga.fetchMangaInfo chapters (META-12)', () => {
 
     expect(provider.search.mock.calls).toEqual([['na honjaman level up'], ['solo leveling']]);
     expect(provider.fetchMangaInfo).toHaveBeenCalledWith('solo-leveling');
-    expect(info.chapters).toEqual([{ id: 'ch-1' }, { id: 'ch-2' }, { id: 'ch-3' }]);
+    expect(info.chapters!.map((c) => c.id)).toEqual(['ch-1', 'ch-2', 'ch-3']);
   });
 
   it('stops at the romaji title when the provider has the manga under it', async () => {

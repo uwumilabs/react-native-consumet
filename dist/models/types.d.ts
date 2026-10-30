@@ -286,38 +286,71 @@ export declare enum SubOrDub {
     DUB = "dub",
     BOTH = "both"
 }
+/**
+ * A manga search result. Sites describe titles differently, so most fields are optional; every
+ * provider fills the ones its site has, in the same shape (see docs/guides/manga.md).
+ */
 export interface IMangaResult {
+    /** Provider id of the title, passed to `fetchMangaInfo`. Stable across calls. */
     id: string;
-    title: string | [lang: string][] | ITitle;
-    altTitles?: string | string[] | [lang: string][];
+    /** Display title. Manga providers return a string; meta providers (AniList) return an `ITitle`. */
+    title: string | ITitle;
+    /** The title in other languages or spellings. */
+    altTitles?: string[];
+    /** Absolute cover image URL. */
     image?: string;
-    description?: string | [lang: string][] | {
-        [lang: string]: string;
-    };
+    /** Headers the cover image request needs (e.g. Referer) when the image host refuses hotlinks. */
+    headerForImage?: Record<string, string>;
+    /** Plain-text synopsis. */
+    description?: string;
     status?: MediaStatus;
     releaseDate?: number | string;
+    /** Absolute URL of the title's page on the site. */
+    url?: string;
     [x: string]: unknown;
 }
+/** One chapter of a title. */
 export interface IMangaChapter {
+    /** Provider id of the chapter, passed to `fetchChapterPages`. */
     id: string;
+    /** Always a string: the chapter's name, or `Chapter 12` when the site gives none. */
     title: string;
+    /** Chapter number (`12`, `10.5`) when the site gives one; chapter lists are ordered by it. */
+    chapterNumber?: number;
+    /** Volume number when the site gives one. */
+    volumeNumber?: number;
+    /** @deprecated Use `volumeNumber`. */
     volume?: number;
     pages?: number;
+    /** ISO 8601 date when it can be parsed, otherwise the site's own text. */
     releaseDate?: string;
+    /** Scanlation group, when the site credits one. */
+    scanlator?: string;
+    /** Language of the chapter (ISO 639-1, e.g. `en`) when the site lists several. */
+    language?: string;
+    /** Absolute URL of the chapter on the site. */
+    url?: string;
     [x: string]: unknown;
 }
 export interface IMangaInfo extends IMangaResult {
     malId?: number | string;
     authors?: string[];
+    artists?: string[];
     genres?: string[];
     links?: string[];
     characters?: any[];
     recommendations?: IMangaResult[];
+    /** In reading order: the first chapter first (see `sortChaptersForReading`). */
     chapters?: IMangaChapter[];
 }
+/** One page image of a chapter. */
 export interface IMangaChapterPage {
+    /** Absolute image URL. */
     img: string;
+    /** Position in the chapter, starting at 1. */
     page: number;
+    /** Headers the image request needs (e.g. Referer). Set on every page when the host needs them. */
+    headerForImage?: Record<string, string>;
     [x: string]: unknown;
 }
 export interface ILightNovelResult {
