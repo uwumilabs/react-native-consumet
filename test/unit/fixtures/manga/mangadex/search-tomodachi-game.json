@@ -1,0 +1,321 @@
+{
+  "result": "ok",
+  "response": "collection",
+  "data": [
+    {
+      "id": "b35f67b6-bfb9-4cbd-86f0-621f37e6cb41",
+      "type": "manga",
+      "attributes": {
+        "title": {
+          "ja-ro": "Tomodachi Game"
+        },
+        "altTitles": [
+          {
+            "en": "Friends Games"
+          },
+          {
+            "pl": "Przyjacielskie rozgrywki"
+          },
+          {
+            "ja": "トモダチゲーム"
+          },
+          {
+            "zh": "朋友游戏"
+          },
+          {
+            "ko": "친구 게임"
+          },
+          {
+            "id": "Game Pertemanan"
+          },
+          {
+            "uk": "Гра друзів"
+          },
+          {
+            "ru": "Игра друзей"
+          },
+          {
+            "zh-hk": "朋友遊戲"
+          },
+          {
+            "es": "Los juegos de la amistad"
+          },
+          {
+            "ar": "لعبة الأصدقاء"
+          },
+          {
+            "fr": "Le jeu de l'amitié"
+          },
+          {
+            "tr": "Arkadaş Oyunu"
+          },
+          {
+            "vi": "Trò Chơi Tình Bạn"
+          },
+          {
+            "uz": "Tomodachi O'yini"
+          },
+          {
+            "uz": "Do'stlar O'yini"
+          }
+        ],
+        "description": {
+          "en": "Katagiri Yuichi believes that friends are more important than money, but he also knows the hardships of not having enough funds. He works hard to save up in order to go on the high school trip, because he has promised his four best friends that they will all go together. However, after the class's money is all collected, it is stolen! Suspicion falls on two of Yuichi's friends, Sawaragi Shiho and Shibe Makoto.  \r\n  \r\nSoon afterward, the five of them are kidnapped, and wake up in a strange room with a character from a short-lived anime. Apparently, one of them has entered them into a \"friendship game\" in order to take care of their massive debt. But who was it, and why did they have such a debt? Could they have stolen the money from class to pay for entry into the game? Katagiri and his best friends will have to succeed in psychological games that will test or destroy their faith in one another.",
+          "pl": "Dziękujemy za wpłatę dwudziestu milionów jenów! W ten sposób dołączyliście do jedynej w swoim rodzaju gry przyjaciół! Witajcie, jestem Manabu. Pozwólcie, że wyjaśnię wam zasady. Weźmiecie udział w bardzo prostych grach, dzięki którym będziecie mogli zdobyć pieniądze. W ten sposób w mgnieniu oka pozbędziecie się swojego długu! Oczywiście możecie się wycofać, ale nie zwrócimy wam wpłaconej kwoty, a wasz dług pozostanie niezmieniony. Jest pewien sposób, aby każdy szczęśliwie ukończył grę. Wystarczy nie wątpić w przyjaciół. Proste, czyż nie?  \r\n  \r\nAle czy da się nie wątpić w przyjaciół, jeśli pośród nich znajduje się zdrajca?  \r\nCzy da się przełożyć przyjaciół nad pieniądze?  \r\nOczywiście, że nie.  \r\nA więc popatrzmy na tych młodych ludzi, którzy nawzajem będą się oszukiwać!"
+        },
+        "isLocked": false,
+        "links": {
+          "al": "85911",
+          "ap": "tomodachi-game",
+          "bl": "255832",
+          "bw": "series/15064/list",
+          "kt": "25515",
+          "mu": "cobzgtl",
+          "mal": "62795",
+          "raw": "https://pocket.shonenmagazine.com/episode/13932016480029113131"
+        },
+        "officialLinks": null,
+        "originalLanguage": "ja",
+        "lastVolume": "26",
+        "lastChapter": "127",
+        "publicationDemographic": "shounen",
+        "status": "completed",
+        "year": 2013,
+        "contentRating": "suggestive",
+        "tags": [
+          {
+            "id": "3b60b75c-a2d7-4860-ab56-05f391bb889c",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Psychological"
+              },
+              "group": "genre"
+            }
+          },
+          {
+            "id": "5fff9cde-849c-4d78-aab0-0d52b2ee1d25",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Survival"
+              },
+              "group": "theme"
+            }
+          }
+        ],
+        "state": "published",
+        "chapterNumbersResetOnNewVolume": false,
+        "createdAt": "2018-09-30T20:38:43+00:00",
+        "updatedAt": "2026-05-14T11:30:46+00:00",
+        "version": 50,
+        "availableTranslatedLanguages": [
+          "pt-br",
+          "fr",
+          "en",
+          "vi",
+          "hu",
+          "ar",
+          "tr",
+          "fa",
+          "es",
+          "id",
+          "it"
+        ],
+        "latestUploadedChapter": "2d91f2aa-91c2-42cb-96a8-bbd23185117f"
+      },
+      "relationships": [
+        {
+          "id": "4ad421c9-c9c9-4fe9-94c7-d7ad51d7d79e",
+          "type": "author"
+        },
+        {
+          "id": "5ffd5715-3b87-4266-850a-42254bad9203",
+          "type": "artist"
+        },
+        {
+          "id": "963cf891-e170-4047-85da-1fad0c28d0f6",
+          "type": "cover_art",
+          "attributes": {
+            "volume": "26",
+            "fileName": "20e9fdd6-9b70-4ba0-8202-3e24d6c72748.jpg",
+            "locale": "ja"
+          }
+        }
+      ]
+    },
+    {
+      "id": "f531d00d-f20e-41db-b46d-4294d92b3bf1",
+      "type": "manga",
+      "attributes": {
+        "title": {
+          "en": "Pocket Princess Game - Tomodachi ga Isekai no Himedattakara Maou ni Naru Koto ni Shita"
+        },
+        "altTitles": [
+          {
+            "ja": "ポケットプリンセス　ゲーム友達が異世界の姫だったから魔王になることにした"
+          }
+        ],
+        "description": {
+          "ja": "元プロゲーマー・姫守蒼織はゲーム友達のベルに会うため、異世界への片道切符を手に入れる。「オレが魔王になってやる」蒼織はベルが生成した“最強の武器”を駆使し、魔人族と獣人族、そして地球から唯一転生した勇者に戦いを挑む――。"
+        },
+        "isLocked": false,
+        "links": {
+          "bw": "series/511013/list",
+          "mu": "uznpxyt",
+          "raw": "https://zebrack-comic.shueisha.co.jp/title/84506"
+        },
+        "officialLinks": null,
+        "originalLanguage": "ja",
+        "lastVolume": "3",
+        "lastChapter": "17",
+        "publicationDemographic": "shounen",
+        "status": "completed",
+        "year": 2024,
+        "contentRating": "safe",
+        "tags": [
+          {
+            "id": "9438db5a-7e2a-4ac0-b39e-e0d95a34b8a8",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Video Games"
+              },
+              "group": "theme"
+            }
+          },
+          {
+            "id": "ace04997-f6bd-436e-b261-779182193d3d",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Isekai"
+              },
+              "group": "genre"
+            }
+          }
+        ],
+        "state": "published",
+        "chapterNumbersResetOnNewVolume": false,
+        "createdAt": "2025-02-08T21:43:22+00:00",
+        "updatedAt": "2026-03-10T16:59:33+00:00",
+        "version": 5,
+        "availableTranslatedLanguages": [],
+        "latestUploadedChapter": null
+      },
+      "relationships": [
+        {
+          "id": "b279793f-a23e-4e56-9c5d-c5e6abea2ba0",
+          "type": "author"
+        },
+        {
+          "id": "b279793f-a23e-4e56-9c5d-c5e6abea2ba0",
+          "type": "artist"
+        },
+        {
+          "id": "fca33aaf-58c3-4d03-8bcd-98e3c35039ef",
+          "type": "cover_art",
+          "attributes": {
+            "volume": "3",
+            "fileName": "a83ffaa6-567f-42af-88b0-21813fd070dd.jpg",
+            "locale": "ja"
+          }
+        },
+        {
+          "id": "6640d5cb-18a0-4264-8c0a-9dcbe39be5ef",
+          "type": "creator"
+        }
+      ]
+    },
+    {
+      "id": "b03f6a91-81ab-4930-b92c-fe1d29821f5f",
+      "type": "manga",
+      "attributes": {
+        "title": {
+          "en": "Netoge Tomodachi ga Omotteta n to Chigau"
+        },
+        "altTitles": [
+          {
+            "en": "My Online Friend Wasn't What I Expected"
+          },
+          {
+            "ja": "ネトゲ友達が思ってたんと違"
+          },
+          {
+            "ja-ro": "Net Game Tomodachi ga Omottetan to Chigau"
+          }
+        ],
+        "description": {},
+        "isLocked": false,
+        "links": {
+          "al": "141625",
+          "mu": "7uv1myi",
+          "raw": "https://twitter.com/sensiya_sensya/status/1314166725793865732"
+        },
+        "officialLinks": null,
+        "originalLanguage": "ja",
+        "lastVolume": "",
+        "lastChapter": "",
+        "publicationDemographic": null,
+        "status": "completed",
+        "year": 2020,
+        "contentRating": "safe",
+        "tags": [
+          {
+            "id": "0234a31e-a729-4e28-9d6a-3f87c4966b9e",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Oneshot"
+              },
+              "group": "format"
+            }
+          },
+          {
+            "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+            "type": "tag",
+            "attributes": {
+              "name": {
+                "en": "Romance"
+              },
+              "group": "genre"
+            }
+          }
+        ],
+        "state": "published",
+        "chapterNumbersResetOnNewVolume": false,
+        "createdAt": "2021-01-25T17:40:43+00:00",
+        "updatedAt": "2025-11-15T22:42:38+00:00",
+        "version": 12,
+        "availableTranslatedLanguages": [
+          "pl",
+          "pt-br",
+          "en"
+        ],
+        "latestUploadedChapter": "58d08a71-dbe1-4375-941d-380fe450df0a"
+      },
+      "relationships": [
+        {
+          "id": "f92eae29-fbb4-40a0-bffe-ae3be253c4df",
+          "type": "author"
+        },
+        {
+          "id": "f92eae29-fbb4-40a0-bffe-ae3be253c4df",
+          "type": "artist"
+        },
+        {
+          "id": "fdce9dce-34ed-4f0a-8ad1-323a70bdecc4",
+          "type": "cover_art",
+          "attributes": {
+            "volume": null,
+            "fileName": "3f70d79b-a5ca-4602-95d8-aa2bc84fbb8e.png",
+            "locale": "ja"
+          }
+        }
+      ]
+    }
+  ],
+  "limit": 20,
+  "offset": 0,
+  "total": 6
+}

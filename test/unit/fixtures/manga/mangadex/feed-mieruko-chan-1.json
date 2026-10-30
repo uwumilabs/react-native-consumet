@@ -1,0 +1,161 @@
+{
+  "result": "ok",
+  "response": "collection",
+  "data": [
+    {
+      "id": "9066c645-fa39-4ced-8cf8-59cb7468c378",
+      "type": "chapter",
+      "attributes": {
+        "volume": "14",
+        "chapter": "69",
+        "title": null,
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2026-03-04T13:15:00+00:00",
+        "readableAt": "2026-03-04T13:15:00+00:00",
+        "createdAt": "2026-03-04T13:14:59+00:00",
+        "updatedAt": "2026-07-22T01:41:39+00:00",
+        "version": 6,
+        "pages": 47
+      },
+      "relationships": [
+        {
+          "id": "ab8c7973-a37d-44e3-be8f-dc202c0a19d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Creeg Scans",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "ddd36d90-f26b-49a0-815f-b1f4e0a94de4",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "08a878b2-4245-4a27-947c-038811cba618",
+      "type": "chapter",
+      "attributes": {
+        "volume": "14",
+        "chapter": "69",
+        "title": null,
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2026-03-02T14:27:58+00:00",
+        "readableAt": "2026-03-02T14:27:58+00:00",
+        "createdAt": "2026-02-28T04:03:56+00:00",
+        "updatedAt": "2026-04-12T18:58:15+00:00",
+        "version": 5,
+        "pages": 47
+      },
+      "relationships": [
+        {
+          "id": "764f03b6-e5fa-44af-8017-27edec2b0049",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Pink Lion Scan",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "802fdf2b-0308-469f-b83e-40581a2ac860",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "ea534762-8978-4c36-9101-dad1d992b13f",
+      "type": "chapter",
+      "attributes": {
+        "volume": null,
+        "chapter": "71",
+        "title": null,
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2026-06-23T21:35:52+00:00",
+        "readableAt": "2026-06-23T21:35:52+00:00",
+        "createdAt": "2026-06-23T21:35:52+00:00",
+        "updatedAt": "2026-08-04T16:06:59+00:00",
+        "version": 5,
+        "pages": 47
+      },
+      "relationships": [
+        {
+          "id": "ab8c7973-a37d-44e3-be8f-dc202c0a19d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Creeg Scans",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "ddd36d90-f26b-49a0-815f-b1f4e0a94de4",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "d809ff42-6816-4149-b9a3-927f553a477f",
+      "type": "chapter",
+      "attributes": {
+        "volume": null,
+        "chapter": "73",
+        "title": null,
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2026-10-22T20:27:41+00:00",
+        "readableAt": "2026-10-22T20:27:41+00:00",
+        "createdAt": "2026-10-22T20:27:41+00:00",
+        "updatedAt": "2026-10-22T20:31:05+00:00",
+        "version": 3,
+        "pages": 48
+      },
+      "relationships": [
+        {
+          "id": "ab8c7973-a37d-44e3-be8f-dc202c0a19d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Creeg Scans",
+            "official": false
+          }
+        },
+        {
+          "id": "e7a7e93d-7913-4262-bcbd-a6e65ecf3589",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Canidae",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "ddd36d90-f26b-49a0-815f-b1f4e0a94de4",
+          "type": "user"
+        }
+      ]
+    }
+  ],
+  "limit": 500,
+  "offset": 5,
+  "total": 9
+}

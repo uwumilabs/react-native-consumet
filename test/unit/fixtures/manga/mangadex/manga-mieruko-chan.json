@@ -1,0 +1,255 @@
+{
+  "result": "ok",
+  "response": "entity",
+  "data": {
+    "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+    "type": "manga",
+    "attributes": {
+      "title": {
+        "ja-ro": "Mieruko-chan"
+      },
+      "altTitles": [
+        {
+          "ja": "見える子ちゃん"
+        },
+        {
+          "en": "Mieruko-chan"
+        },
+        {
+          "en": "Can See Them–chan"
+        },
+        {
+          "en": "The Girl Who Can See Them"
+        },
+        {
+          "ar": "مييروكو تشان"
+        },
+        {
+          "fr": "Mieruko-chan : Slice of Horror"
+        },
+        {
+          "de": "Mieruko-chan - Die Geister, die mich riefen"
+        },
+        {
+          "ne": "मिएरुको-चान"
+        },
+        {
+          "ru": "Девочка, которая видит это"
+        },
+        {
+          "th": "มิเอรุโกะจัง ใครว่าหนูเห็นผี"
+        },
+        {
+          "uk": "Дівчина, що бачить це"
+        },
+        {
+          "ko": "보이는 여고생"
+        },
+        {
+          "zh": "看得见的女孩"
+        },
+        {
+          "zh-hk": "陰陽眼見子"
+        }
+      ],
+      "description": {
+        "en": "All of a sudden, Miko is able to see grotesque monsters all around her; but no one else can. Rather than trying to run away or face them, she instead musters all of her courage and… ignores them. Join in on her day-to-day life as she keeps up her best poker face despite the supernatural goings-on.\n___\n**Alt Official Raw:** [niconico Manga](http://manga.nicovideo.jp/comic/37662)",
+        "fr": "**Officially Published:**  \n- In French by [Ototo Manga](http://www.ototo.fr/Serie-94-Mieruko-chanSliceofHorror)"
+      },
+      "isLocked": false,
+      "links": {
+        "al": "105097",
+        "ap": "mieruko-chan",
+        "bl": "610305",
+        "bw": "series/200720/list",
+        "kt": "54156",
+        "mu": "400bgix",
+        "amz": "https://www.amazon.co.jp/dp/B081ZGR3VN",
+        "cdj": "https://www.cdjapan.co.jp/product/NEOBK-2339214",
+        "ebj": "https://ebookjapan.yahoo.co.jp/books/539407/",
+        "mal": "116790",
+        "raw": "https://comic-walker.com/detail/KC_003960_S?episodeType=first",
+        "engtl": "https://yenpress.com/series/mieruko-chan"
+      },
+      "officialLinks": null,
+      "originalLanguage": "ja",
+      "lastVolume": "",
+      "lastChapter": "",
+      "publicationDemographic": "seinen",
+      "status": "ongoing",
+      "year": 2018,
+      "contentRating": "safe",
+      "tags": [
+        {
+          "id": "07251805-a27e-4d59-b488-f0bfbec15168",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Thriller"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Monsters"
+            },
+            "group": "theme"
+          }
+        },
+        {
+          "id": "3b60b75c-a2d7-4860-ab56-05f391bb889c",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Psychological"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "3bb26d85-09d5-4d2e-880c-c34b974339e9",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Ghosts"
+            },
+            "group": "theme"
+          }
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Comedy"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Drama"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "School Life"
+            },
+            "group": "theme"
+          }
+        },
+        {
+          "id": "cdad7e68-1419-41dd-bdce-27753074a640",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Horror"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Slice of Life"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "eabc5b4c-6aff-42f3-b657-3e90cbd00b75",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Supernatural"
+            },
+            "group": "theme"
+          }
+        },
+        {
+          "id": "ee968100-4191-4968-93d3-f82d72be7e46",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Mystery"
+            },
+            "group": "genre"
+          }
+        },
+        {
+          "id": "f8f62932-27da-4fe4-8ee1-6779a8c5edba",
+          "type": "tag",
+          "attributes": {
+            "name": {
+              "en": "Tragedy"
+            },
+            "group": "genre"
+          }
+        }
+      ],
+      "state": "published",
+      "chapterNumbersResetOnNewVolume": false,
+      "createdAt": "2019-08-31T13:33:40+00:00",
+      "updatedAt": "2026-08-15T16:15:25+00:00",
+      "version": 112,
+      "availableTranslatedLanguages": [
+        "ru",
+        "hu",
+        "en",
+        "id",
+        "es-la",
+        "tr",
+        "uk",
+        "pt-br",
+        "ar",
+        "it",
+        "fr"
+      ],
+      "latestUploadedChapter": "d809ff42-6816-4149-b9a3-927f553a477f"
+    },
+    "relationships": [
+      {
+        "id": "8e3594bb-820e-4e72-a478-79c509889c7b",
+        "type": "author",
+        "attributes": {
+          "name": "Izumi Tomoki"
+        }
+      },
+      {
+        "id": "8e3594bb-820e-4e72-a478-79c509889c7b",
+        "type": "artist",
+        "attributes": {
+          "name": "Izumi Tomoki"
+        }
+      },
+      {
+        "id": "0e6e2359-f3ce-4ea4-a21a-50883e360c3d",
+        "type": "cover_art",
+        "attributes": {
+          "volume": "14",
+          "fileName": "13d41432-d7ec-41cd-a265-5af700989aa6.jpg",
+          "locale": "ja"
+        }
+      },
+      {
+        "id": "42950e4b-db4e-4a52-a261-26bc2117f78f",
+        "type": "manga",
+        "related": "doujinshi"
+      }
+    ]
+  }
+}

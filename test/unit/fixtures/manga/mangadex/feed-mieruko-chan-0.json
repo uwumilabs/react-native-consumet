@@ -1,0 +1,189 @@
+{
+  "result": "ok",
+  "response": "collection",
+  "data": [
+    {
+      "id": "5ac9a412-c6f0-4461-af0b-6b80f3086c2b",
+      "type": "chapter",
+      "attributes": {
+        "volume": "1",
+        "chapter": "1",
+        "title": "",
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2018-11-27T09:06:58+00:00",
+        "readableAt": "2018-11-27T09:06:58+00:00",
+        "createdAt": "2018-11-27T09:06:58+00:00",
+        "updatedAt": "2018-11-27T09:06:58+00:00",
+        "version": 1,
+        "pages": 16
+      },
+      "relationships": [
+        {
+          "id": "6f86bad2-7198-478b-9adf-bf3e9eaa26d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Fairy Knight University",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "c4525973-42e7-4527-9a0f-47ebcf9b1ab1",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "ec558e55-e25d-4d8d-b794-49e250c46331",
+      "type": "chapter",
+      "attributes": {
+        "volume": "1",
+        "chapter": "4.5",
+        "title": "Bonus",
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2019-01-23T07:56:42+00:00",
+        "readableAt": "2019-01-23T07:56:42+00:00",
+        "createdAt": "2019-01-23T07:56:42+00:00",
+        "updatedAt": "2019-01-23T07:56:42+00:00",
+        "version": 1,
+        "pages": 3
+      },
+      "relationships": [
+        {
+          "id": "6f86bad2-7198-478b-9adf-bf3e9eaa26d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Fairy Knight University",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "c4525973-42e7-4527-9a0f-47ebcf9b1ab1",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "8bb90b0e-6782-4d22-bcac-e0d0ef935637",
+      "type": "chapter",
+      "attributes": {
+        "volume": "2",
+        "chapter": "16",
+        "title": "",
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2019-10-26T08:54:55+00:00",
+        "readableAt": "2019-10-26T08:54:55+00:00",
+        "createdAt": "2019-10-26T08:54:55+00:00",
+        "updatedAt": "2019-10-26T08:54:55+00:00",
+        "version": 1,
+        "pages": 20
+      },
+      "relationships": [
+        {
+          "id": "6f86bad2-7198-478b-9adf-bf3e9eaa26d5",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "Fairy Knight University",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "c4525973-42e7-4527-9a0f-47ebcf9b1ab1",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "887ae39f-7c13-470f-814d-b451804eb010",
+      "type": "chapter",
+      "attributes": {
+        "volume": "2",
+        "chapter": "16",
+        "title": "",
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2019-09-27T19:44:53+00:00",
+        "readableAt": "2019-09-27T19:44:53+00:00",
+        "createdAt": "2019-09-27T19:44:53+00:00",
+        "updatedAt": "2019-09-27T19:44:53+00:00",
+        "version": 1,
+        "pages": 19
+      },
+      "relationships": [
+        {
+          "id": "f19ee895-ecd8-4061-a655-3d8f5c3aa7df",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "/a/nonymous",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "f5d033a9-bb95-4be8-9edb-43b6fc0b5d70",
+          "type": "user"
+        }
+      ]
+    },
+    {
+      "id": "6a036b62-f0f3-4403-bb05-5702fc087b4d",
+      "type": "chapter",
+      "attributes": {
+        "volume": "10",
+        "chapter": "55.5",
+        "title": " Volume 10 Extras",
+        "translatedLanguage": "en",
+        "externalUrl": null,
+        "isUnavailable": false,
+        "publishAt": "2024-02-24T04:07:18+00:00",
+        "readableAt": "2024-02-24T04:07:18+00:00",
+        "createdAt": "2024-02-24T04:07:16+00:00",
+        "updatedAt": "2024-02-24T04:07:29+00:00",
+        "version": 3,
+        "pages": 15
+      },
+      "relationships": [
+        {
+          "id": "a099b4f9-7d06-443d-aec2-7134767b712e",
+          "type": "scanlation_group",
+          "attributes": {
+            "name": "The real group is the friends we made along the way",
+            "official": false
+          }
+        },
+        {
+          "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+          "type": "manga"
+        },
+        {
+          "id": "f5d033a9-bb95-4be8-9edb-43b6fc0b5d70",
+          "type": "user"
+        }
+      ]
+    }
+  ],
+  "limit": 500,
+  "offset": 0,
+  "total": 9
+}
