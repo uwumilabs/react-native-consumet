@@ -1,5 +1,60 @@
 # Changelog
 
+## [3.0.0](https://github.com/uwumilabs/react-native-consumet/compare/v2.0.0...v3.0.0) (2026-10-30)
+
+### ⚠ BREAKING CHANGES
+
+* **mangakakalot:** manga ids are the site's slugs (tomodachi-game) and chapter ids are
+<slug>/<chapter slug> (tomodachi-game/chapter-127-5); fetchChapterPages takes only the chapter
+id. Pages count from 1, and chapters have releaseDate instead of releasedDate.
+* **flamescans:** FlameScans ids follow the new site: series ids are series numbers ('12') and
+chapter ids are '<seriesId>/<token>', so slug ids from flamescans.org no longer work. The
+provider's name is now FlameComics.
+* **mangahere:** MangaHere chapters are in reading order (first chapter first) and have
+releaseDate instead of releasedDate; pages count from 1; info has headerForImage instead of
+headers; status is left out when the site gives none.
+* **mangadex:** MangaDex results have string title, altTitles and description, a MediaStatus
+status, covers on uploads.mangadex.org and numeric lastChapter and lastVolume. fetchMangaInfo
+lists English chapters first to last, with numeric chapterNumber and volumeNumber, and leaves
+out chapters hosted on other sites.
+* **asurascans:** AsuraScans title ids are the bare series slug (omniscient-readers-viewpoint)
+instead of series/<slug>-<hash>, and chapter ids are <slug>/chapter/<number>. Chapters come in
+reading order, info has artists instead of artist and no updatedOn, and rating and latestChapter
+are numbers.
+* **mangapill:** MangaPill chapters are in reading order (first chapter first) instead of newest
+first, and the string chapter field is replaced by the numeric chapterNumber. releaseDate is a
+number (1997) instead of a string.
+* **manga:** IMangaResult.title is string | ITitle, altTitles is string[] and description is
+a string. Anilist.Manga no longer reverses the provider's chapters; providers return them in
+reading order, and lists with chapter numbers are sorted by them.
+* **manga:** MANGA.ComicK, MANGA.Mangapark, MANGA.MangaReader, MANGA.MangaHost,
+MANGA.BRMangas, MANGA.Mangasee123 and MANGA.VyvyManga are removed, and new
+META.Anilist.Manga() uses MangaDex. See docs/migrations/README.md.
+
+### Features
+
+* **anilist:** add matching logic for movie and series titles based on format and numbers ([a00c498](https://github.com/uwumilabs/react-native-consumet/commit/a00c498f1c3e70cb77c3567ad2e7cd0b2702eb02))
+* **example:** add a manga tab that checks each provider against the shared shape ([dbec275](https://github.com/uwumilabs/react-native-consumet/commit/dbec2756ae564f46a57196a7defffd9f921a9a1c))
+* **example:** add paging, chapter order, prev and next, and call timings to the manga tab ([1ac95cb](https://github.com/uwumilabs/react-native-consumet/commit/1ac95cbbd0df23734edfc98a22e60ebfc3543ada))
+* **manga:** define one result shape for every manga provider ([65d5a62](https://github.com/uwumilabs/react-native-consumet/commit/65d5a62e52856bd7193d9e46cc47e7cf182be8ac))
+
+### Bug Fixes
+
+* **anilist:** match manga provider results by alt titles too ([3242b9f](https://github.com/uwumilabs/react-native-consumet/commit/3242b9fbb99e747a6bfdaa12b47b553aff95bd3b))
+* **asurascans:** read the asurascans.com api for search, info and pages ([5a76dae](https://github.com/uwumilabs/react-native-consumet/commit/5a76daea1eb121d0d6ef927e3b9502ded9bcd773))
+* **asurascans:** reject a response without a series or chapter with a clear error ([9067ab0](https://github.com/uwumilabs/react-native-consumet/commit/9067ab0b9217526169867179402948d9e7f20d57))
+* **example:** keep the tab bar and provider picker above the system navigation bar ([b82e6a6](https://github.com/uwumilabs/react-native-consumet/commit/b82e6a6ccfae883c821b25b6366f62ab03fb6cbf))
+* **example:** retry a manga cover once before showing that it failed ([956f860](https://github.com/uwumilabs/react-native-consumet/commit/956f860e7ad046b4c5762df5e75b30b7ac2f0d6b))
+* **flamescans:** read flame comics from its new site at flamecomics.xyz ([f468585](https://github.com/uwumilabs/react-native-consumet/commit/f46858501855d6794996aad39bf65e59af32dd42))
+* **mangadex:** return the shared manga shape from the mangadex api ([8c22975](https://github.com/uwumilabs/react-native-consumet/commit/8c229755cb4b92f00ef05cad1eaeb5e5a83ee30f))
+* **mangahere:** follow the manga contract and decode pages without eval ([ca4e6bd](https://github.com/uwumilabs/react-native-consumet/commit/ca4e6bdda36e80b825b8d853c68904facab2b4cd))
+* **mangakakalot:** scrape the site at kakamanga.com and follow the manga contract ([a36c909](https://github.com/uwumilabs/react-native-consumet/commit/a36c9096e6d25615deb8d400d97ff7e7d833702c))
+* **mangapill:** return manga in the shared result shape ([0072b04](https://github.com/uwumilabs/react-native-consumet/commit/0072b04c0068644b7f1a75ea06e810bbc61c524b))
+
+### Code Refactoring
+
+* **manga:** remove manga providers whose sites are gone ([591940c](https://github.com/uwumilabs/react-native-consumet/commit/591940c442b87b11875206cecdeff2353f8b0d26))
+
 ## [2.0.0](https://github.com/uwumilabs/react-native-consumet/compare/v1.6.0...v2.0.0) (2026-10-18)
 
 ### ⚠ BREAKING CHANGES
