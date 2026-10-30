@@ -1,29 +1,15 @@
 import { MangaDex } from './mangadex';
-import { ComicK } from './comick';
 import { MangaHere } from './mangahere';
 import { MangaKakalot } from './mangakakalot';
-import { Mangasee123 } from './mangasee123';
-import { Mangapark } from './mangapark';
 import { MangaPill } from './mangapill';
-import { MangaReader } from './mangareader';
 import { AsuraScans } from './asurascans';
 import { FlameScans } from './flamescans';
-import { MangaHost } from './mangahost';
-import { BRMangas } from './brmangas';
-import { VyvyManga } from './vyvymanga';
 export declare const MANGA: {
     MangaDex: typeof MangaDex;
-    ComicK: typeof ComicK;
     MangaHere: typeof MangaHere;
     MangaKakalot: typeof MangaKakalot;
-    Mangasee123: typeof Mangasee123;
-    Mangapark: typeof Mangapark;
     MangaPill: typeof MangaPill;
-    MangaReader: typeof MangaReader;
     AsuraScans: typeof AsuraScans;
     FlameScans: typeof FlameScans;
-    MangaHost: typeof MangaHost;
-    BRMangas: typeof BRMangas;
-    VyvyManga: typeof VyvyManga;
 };
 //# sourceMappingURL=index.d.ts.map

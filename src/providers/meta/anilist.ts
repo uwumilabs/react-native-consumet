@@ -42,7 +42,7 @@ import { Zoro } from '../anime/zoro/zoro';
 import { AnimeKai } from '../anime/animekai/animekai';
 import { AnimePahe } from '../anime/animepahe/animepahe';
 import { AniKoto } from '../anime/anikoto/anikoto';
-import { Mangasee123 } from '../manga/mangasee123';
+import { MangaDex } from '../manga/mangadex';
 import { ANIFY_URL, findSimilarTitles } from '../../utils/utils';
 
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
@@ -1127,11 +1127,11 @@ class Anilist extends AnimeParser {
     provider: MangaParser;
 
     /**
-     * Maps anilist manga to any manga provider (mangadex, mangasee, etc)
-     * @param provider MangaParser
+     * Maps anilist manga to any manga provider (MangaDex, MangaPill, etc)
+     * @param provider MangaParser (default: MangaDex)
      */
     constructor(provider?: MangaParser) {
-      this.provider = provider || new Mangasee123();
+      this.provider = provider || new MangaDex();
     }
 
     /**

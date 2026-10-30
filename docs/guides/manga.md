@@ -43,19 +43,12 @@ Manga classes take an optional provider context, `new MANGA.MangaDex(ctx?)`, and
 This list is in alphabetical order.
 
 - [AsuraScans](../providers/manga/asurascans.md) (`MANGA.AsuraScans`)
-- [BRMangas](../providers/manga/brmangas.md) (`MANGA.BRMangas`)
-- ComicK (`MANGA.ComicK`)
 - FlameScans (`MANGA.FlameScans`)
 - [MangaDex](../providers/manga/mangadex.md) (`MANGA.MangaDex`)
 - [MangaHere](../providers/manga/mangahere.md) (`MANGA.MangaHere`)
-- [MangaHost](../providers/manga/mangahost.md) (`MANGA.MangaHost`)
 - [MangaKakalot](../providers/manga/mangakakalot.md) (`MANGA.MangaKakalot`)
-- [Mangapark](../providers/manga/mangapark.md) (`MANGA.Mangapark`)
 - [MangaPill](../providers/manga/mangapill.md) (`MANGA.MangaPill`)
-- [MangaReader](../providers/manga/mangareader.md) (`MANGA.MangaReader`)
-- [Mangasee123](../providers/manga/mangasee123.md) (`MANGA.Mangasee123`)
-- [VyvyManga](../providers/manga/vyvymanga.md) (`MANGA.VyvyManga`)
 
-ReadManga is not working and not exported ([page kept for reference](../providers/manga/readmanga.md)).
+ComicK, MangaPark, MangaReader, MangaHost, BRMangas, Mangasee123, VyvyManga and ReadManga were removed because their sites are gone.
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

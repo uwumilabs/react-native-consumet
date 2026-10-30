@@ -1,11 +1,10 @@
 import * as Consumet from '../../src';
 import { AnimeUnity } from '../../src/providers/anime/animeunity';
-import { ReadManga } from '../../src/providers/manga/readmanga';
 
 // PROV-3: dead providers are deleted, or flagged with `isWorking = false` and no longer exported.
 const REMOVED = {
   ANIME: ['Anify', 'AnimeDrive', 'Marin', 'AnimeUnity', 'KickAssAnime', 'AnimeSuge', 'createAnimeSuge'],
-  MANGA: ['ReadManga'],
+  MANGA: ['ReadManga', 'ComicK', 'Mangapark', 'MangaReader', 'MangaHost', 'BRMangas', 'Mangasee123', 'VyvyManga'],
   MOVIES: ['DramaCool'],
 };
 
@@ -21,10 +20,7 @@ describe('dead providers (PROV-3)', () => {
     expect(Object.keys(Consumet)).not.toContain('StreamP2P');
   });
 
-  it.each([
-    ['AnimeUnity', () => new AnimeUnity()],
-    ['ReadManga', () => new ReadManga()],
-  ])('flags %s as not working', (_name, create) => {
+  it.each([['AnimeUnity', () => new AnimeUnity()]])('flags %s as not working', (_name, create) => {
     const provider = create();
     expect(provider.isWorking).toBe(false);
     expect(provider.toString.isWorking).toBe(false);

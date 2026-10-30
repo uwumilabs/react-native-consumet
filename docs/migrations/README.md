@@ -2,6 +2,13 @@
 
 Every breaking or behaviour change since 1.6.0 that an app may need to handle, with a link to the details. Items marked **Breaking** need a code or data change in most apps. The others change what an app sees but need no change unless it relied on the old behaviour.
 
+## Since 2.0.0
+
+| Change |
+| ------ |
+| **Breaking.** `MANGA.ComicK`, `MANGA.Mangapark`, `MANGA.MangaReader`, `MANGA.MangaHost`, `MANGA.BRMangas`, `MANGA.Mangasee123` and `MANGA.VyvyManga` are removed, along with the unexported ReadManga: their sites are gone (dead domains, parked or unrelated pages, or APIs that refuse every request). Use `MANGA.MangaDex`, `MANGA.MangaPill` or `MANGA.MangaHere`. |
+| **Breaking.** `new META.Anilist.Manga()` without a provider now uses `MANGA.MangaDex` instead of `MANGA.Mangasee123`. |
+
 ## Install and build
 
 | Change                                                                                                                                                                                                                                                                                                                     | What to do                                                                                         | Details                                                                                                  |

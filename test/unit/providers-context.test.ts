@@ -26,7 +26,6 @@ import { YFlix } from '../../src/providers/movies/yflix/yflix';
 import { createYFlix } from '../../src/providers/movies/yflix/create-yflix';
 import { LIGHT_NOVELS } from '../../src/providers/light-novels';
 import { MANGA } from '../../src/providers/manga';
-import { ReadManga } from '../../src/providers/manga/readmanga';
 import { createProviderContext } from '../../src/utils/create-provider-context';
 import { animeProviders, movieProviders } from '../../src/utils/provider-maps';
 import { defaultAxios, defaultExtractorContext } from '../../src/utils/extension-utils';
@@ -264,7 +263,6 @@ describe('class wrappers accept a context (PROV-2)', () => {
 describe('class-based providers use the context axios (PROV-2)', () => {
   const LEGACY_PROVIDERS = [
     ...Object.entries(MANGA).map(([name, Provider]) => [`MANGA.${name}`, Provider]),
-    ['ReadManga', ReadManga],
     ...Object.entries(LIGHT_NOVELS).map(([name, Provider]) => [`LIGHT_NOVELS.${name}`, Provider]),
   ] as [string, new (ctx?: any) => any][];
 

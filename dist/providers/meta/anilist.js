@@ -10,7 +10,7 @@ const zoro_1 = require("../anime/zoro/zoro");
 const animekai_1 = require("../anime/animekai/animekai");
 const animepahe_1 = require("../anime/animepahe/animepahe");
 const anikoto_1 = require("../anime/anikoto/anikoto");
-const mangasee123_1 = require("../manga/mangasee123");
+const mangadex_1 = require("../manga/mangadex");
 const utils_2 = require("../../utils/utils");
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
 const anilistError = err => {
@@ -1027,11 +1027,11 @@ class Anilist extends models_1.AnimeParser {
   static Manga = class Manga {
     provider;
     /**
-     * Maps anilist manga to any manga provider (mangadex, mangasee, etc)
-     * @param provider MangaParser
+     * Maps anilist manga to any manga provider (MangaDex, MangaPill, etc)
+     * @param provider MangaParser (default: MangaDex)
      */
     constructor(provider) {
-      this.provider = provider || new mangasee123_1.Mangasee123();
+      this.provider = provider || new mangadex_1.MangaDex();
     }
     /**
      *
