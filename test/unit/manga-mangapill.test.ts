@@ -33,7 +33,7 @@ function mangaPill(rewrite: (url: string, html: string) => string = (_url, html)
 describe('MangaPill search', () => {
   it('follows the manga contract', async () => {
     expectMangaSearch(await mangaPill().provider.search('one piece'));
-    expectMangaSearch(await mangaPill().provider.search('one piece', 2));
+    expectMangaSearch(await mangaPill().provider.search('one piece', 2), 2);
   });
 
   it('maps each result card, with the cover Referer and the site link', async () => {

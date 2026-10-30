@@ -14,6 +14,11 @@ const isHeaders = (value: unknown) =>
   typeof value === 'object' &&
   Object.values(value as object).every((header) => typeof header === 'string');
 const STATUSES = Object.values(MediaStatus) as string[];
+// Descriptions are plain text: no tags and no entities left to decode. Only real tags count, so a
+// title in angle brackets ("<Myst, Might, Mayhem>", "<I Am the King>") is fine.
+const HTML_TAG =
+  /<\/?(?:a|b|blockquote|br|div|em|font|h[1-6]|hr|i|img|li|ol|p|span|strong|sub|sup|u|ul)(?:\s+[a-z-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))*\s*\/?>/i;
+const HTML_ENTITY = /&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i;
 
 /** Problems with one result or info's common fields (empty when it follows the contract). */
 function resultProblems(result: IMangaResult, where: string): string[] {
@@ -33,16 +38,28 @@ function resultProblems(result: IMangaResult, where: string): string[] {
     problems.push(`${where}: altTitles must be an array of non-empty strings`);
   if (result.description !== undefined && typeof result.description !== 'string')
     problems.push(`${where}: description must be a string`);
+  else if (result.description !== undefined) {
+    const html = (HTML_TAG.exec(result.description) ?? HTML_ENTITY.exec(result.description))?.[0];
+    if (html) problems.push(`${where}: description must be plain text (found ${html})`);
+  }
   if (result.status !== undefined && !STATUSES.includes(result.status))
     problems.push(`${where}: status must be a MediaStatus (${result.status})`);
   return problems;
 }
 
-/** Search results: at least one, each with an id and a string title. */
-export function expectMangaSearch(search: ISearch<IMangaResult>): void {
+/**
+ * Search results for `page`: at least one, each with an id and a string title. When the provider
+ * pages, `currentPage` is the page asked for and `hasNextPage` a boolean.
+ */
+export function expectMangaSearch(search: ISearch<IMangaResult>, page = 1): void {
   expect(Array.isArray(search.results)).toBe(true);
   expect(search.results.length).toBeGreaterThan(0);
-  expect(search.results.flatMap((result, i) => resultProblems(result, `results[${i}]`))).toEqual([]);
+  const problems = search.results.flatMap((result, i) => resultProblems(result, `results[${i}]`));
+  if (search.currentPage !== undefined && search.currentPage !== page)
+    problems.push(`currentPage must be ${page}, the page asked for (got ${String(search.currentPage)})`);
+  if (search.hasNextPage !== undefined && typeof search.hasNextPage !== 'boolean')
+    problems.push(`hasNextPage must be a boolean (${String(search.hasNextPage)})`);
+  expect(problems).toEqual([]);
 }
 
 /** Title info: the common fields, plus chapters in reading order with string titles and numbers. */

@@ -22,8 +22,11 @@ const isHeaders = (value: unknown) =>
   Object.values(value as object).every((header) => typeof header === 'string');
 const isFiniteNumber = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
 const STATUSES = Object.values(MediaStatus) as string[];
-// App only: markup a plain-text description shouldn't carry (`<p>`, `<br/>`, `&amp;`, `&#39;`).
-const HTML_TAG = /<\/?[a-z][a-z0-9]*\b[^<>]*>/i;
+// Markup a plain-text description shouldn't carry (`<p>`, `<br/>`, `&amp;`, `&#39;`), as in
+// test/unit/helpers/manga-contract.ts. Only real tags count, so a title in angle brackets
+// ("<Myst, Might, Mayhem>", "<I Am the King>") is fine.
+const HTML_TAG =
+  /<\/?(?:a|b|blockquote|br|div|em|font|h[1-6]|hr|i|img|li|ol|p|span|strong|sub|sup|u|ul)(?:\s+[a-z-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))*\s*\/?>/i;
 const HTML_ENTITY = /&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i;
 
 /** A value as it reads in a problem or on screen: strings as they are, anything else as JSON. */
@@ -55,7 +58,6 @@ function resultProblems(result: unknown, where: string): string[] {
     problems.push(`${where}: altTitles must be an array of non-empty strings`);
   if (result.description !== undefined && typeof result.description !== 'string')
     problems.push(`${where}: description must be a string`);
-  // App only.
   const markup =
     typeof result.description === 'string' &&
     (HTML_TAG.exec(result.description) ?? HTML_ENTITY.exec(result.description))?.[0];
@@ -77,11 +79,12 @@ export function searchProblems(search: unknown, page = 1, earlierIds: ReadonlySe
   const problems: string[] = [];
   if (results.length === 0) problems.push('results must not be empty (search a title the site has)');
   results.forEach((result, i) => problems.push(...resultProblems(result, `results[${i}]`)));
-  // App only: the paging "load more" relies on.
+  // The paging "load more" relies on.
   if (currentPage !== undefined && currentPage !== page)
     problems.push(`currentPage must be ${page}, the page asked for (got ${quote(currentPage)})`);
   if (hasNextPage !== undefined && typeof hasNextPage !== 'boolean')
     problems.push(`hasNextPage must be a boolean (${quote(hasNextPage)})`);
+  // App only: needs the ids of the pages before this one.
   const repeated = results.filter((result) => isObject(result) && earlierIds.has(result.id)).length;
   if (repeated > 0)
     problems.push(`${repeated} of ${results.length} results repeat ids from earlier pages (is the page ignored?)`);

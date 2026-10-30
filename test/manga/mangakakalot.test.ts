@@ -23,7 +23,7 @@ test('search returns titles with covers that need the site as Referer', async ()
 test('search pages through results', async () => {
   const data = await mangakakalot.search('Tomodachi Game', 2);
 
-  expectMangaSearch(data);
+  expectMangaSearch(data, 2);
   expect(data.currentPage).toBe(2);
 });
 

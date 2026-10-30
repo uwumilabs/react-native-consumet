@@ -76,7 +76,7 @@ describe('AsuraScans search', () => {
 
     const search = await asura.search('the', 2);
 
-    expectMangaSearch(search);
+    expectMangaSearch(search, 2);
     expect(requested(get)).toEqual([`${API}/series?search=the&limit=20&offset=20`]);
     expect(search.currentPage).toBe(2);
     expect(search.hasNextPage).toBe(true);

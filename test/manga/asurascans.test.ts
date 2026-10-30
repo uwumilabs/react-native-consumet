@@ -18,7 +18,7 @@ test('search pages through results', async () => {
   const first = await asura.search('the');
   expect(first.hasNextPage).toBe(true);
   const second = await asura.search('the', 2);
-  expectMangaSearch(second);
+  expectMangaSearch(second, 2);
   expect(second.currentPage).toBe(2);
   expect(second.results[0]!.id).not.toBe(first.results[0]!.id);
 });

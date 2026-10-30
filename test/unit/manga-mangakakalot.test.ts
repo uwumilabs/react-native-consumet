@@ -77,7 +77,7 @@ describe('MangaKakalot search', () => {
 
     const search = await provider.search('tomodachi game', 2);
 
-    expectMangaSearch(search);
+    expectMangaSearch(search, 2);
     expect(search.results).toHaveLength(20);
     // The JSON form has no pagination; a full page of 20 is taken to have a next one.
     expect(search).toMatchObject({ currentPage: 2, hasNextPage: true });

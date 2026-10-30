@@ -44,10 +44,11 @@ Sites lay out their data differently; every provider maps it onto the same shape
 switch providers without special cases. Fields a site doesn't have are left out, never filled
 with placeholders.
 
-- **`search(query, page?)`** returns `{ currentPage, hasNextPage, results }`. Each result has an
-  `id` (pass it to `fetchMangaInfo`) and a string `title`. Optional fields: `altTitles` (strings),
-  absolute `image` and `url`, `headerForImage` when the image host needs headers, a plain-text
-  `description`, `status` (a `MediaStatus`) and `releaseDate`.
+- **`search(query, page?)`** returns `{ currentPage, hasNextPage, results }`: `currentPage` is the
+  page asked for and `hasNextPage` a boolean. Each result has an `id` (pass it to
+  `fetchMangaInfo`) and a string `title`. Optional fields: `altTitles` (strings), absolute `image`
+  and `url`, `headerForImage` when the image host needs headers, a plain-text `description` (no
+  HTML tags or entities left), `status` (a `MediaStatus`) and `releaseDate`.
 - **`fetchMangaInfo(id)`** returns the same fields, plus `genres`, `authors` and `artists` as
   string arrays, and `chapters` **in reading order: first chapter first**.
 - **Chapters:** each has an `id` (pass it to `fetchChapterPages`) and a string `title` (`Chapter
