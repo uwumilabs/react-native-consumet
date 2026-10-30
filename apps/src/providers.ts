@@ -5,7 +5,15 @@
  * Never hardcode provider instances in screens; import from here instead.
  */
 
-import { ANIME, MOVIES } from 'react-native-consumet';
+import {
+  ANIME,
+  MANGA,
+  MOVIES,
+  type IMangaChapterPage,
+  type IMangaInfo,
+  type IMangaResult,
+  type ISearch,
+} from 'react-native-consumet';
 
 // ── Anime ─────────────────────────────────────────────────────────────────────
 
@@ -116,5 +124,68 @@ export const MOVIE_PROVIDERS: MovieProviderDef[] = [
     label: 'DisneyMirror',
     emoji: '🏰',
     makeInner: () => new MOVIES.DisneyMirror() as any,
+  },
+];
+
+// ── Manga ─────────────────────────────────────────────────────────────────────
+
+/** The calls the Manga tab makes: the shape every manga provider shares (docs/guides/manga.md). */
+export type MangaProvider = {
+  search(query: string, page?: number): Promise<ISearch<IMangaResult>>;
+  fetchMangaInfo(mangaId: string): Promise<IMangaInfo>;
+  fetchChapterPages(chapterId: string): Promise<IMangaChapterPage[]>;
+};
+
+export type MangaProviderDef = {
+  key: string;
+  label: string;
+  emoji: string;
+  /** Factory — creates a fresh provider instance */
+  make: () => MangaProvider;
+};
+
+/**
+ * Types a provider by the shared shape rather than by its class, so one that drifts from the shape
+ * (say, a `fetchChapterPages` that wants a second argument) still loads and the tab's contract
+ * panel shows what it breaks, instead of the app failing to compile.
+ */
+const asMangaProvider = (provider: object) => provider as MangaProvider;
+
+export const MANGA_PROVIDERS: MangaProviderDef[] = [
+  {
+    key: 'mangadex',
+    label: 'MangaDex',
+    emoji: '📚',
+    make: () => asMangaProvider(new MANGA.MangaDex()),
+  },
+  {
+    key: 'mangahere',
+    label: 'MangaHere',
+    emoji: '📖',
+    make: () => asMangaProvider(new MANGA.MangaHere()),
+  },
+  {
+    key: 'mangakakalot',
+    label: 'MangaKakalot',
+    emoji: '🐉',
+    make: () => asMangaProvider(new MANGA.MangaKakalot()),
+  },
+  {
+    key: 'mangapill',
+    label: 'MangaPill',
+    emoji: '💊',
+    make: () => asMangaProvider(new MANGA.MangaPill()),
+  },
+  {
+    key: 'asurascans',
+    label: 'AsuraScans',
+    emoji: '🗡️',
+    make: () => asMangaProvider(new MANGA.AsuraScans()),
+  },
+  {
+    key: 'flamescans',
+    label: 'FlameScans',
+    emoji: '🔥',
+    make: () => asMangaProvider(new MANGA.FlameScans()),
   },
 ];

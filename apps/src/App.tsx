@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
 import AnimeScreen from './non-registry/AnimeScreen';
 import MoviesScreen from './non-registry/MoviesScreen';
+import MangaScreen from './non-registry/MangaScreen';
 import RegistryScreen from './registry/index';
 import { colors, R } from './theme';
 
-type Tab = 'anime' | 'movies' | 'registry';
+type Tab = 'anime' | 'movies' | 'manga' | 'registry';
 
 const TABS: { id: Tab; label: string; icon: string; activeIcon: string }[] = [
   { id: 'anime', label: 'Anime', icon: '▷', activeIcon: '▶' },
   { id: 'movies', label: 'Movies', icon: '◻', activeIcon: '▪' },
+  { id: 'manga', label: 'Manga', icon: '◇', activeIcon: '◆' },
   { id: 'registry', label: 'Registry', icon: '⬡', activeIcon: '⬢' },
 ];
 
@@ -26,6 +28,9 @@ export default function App() {
       </View>
       <View style={[S.screen, tab !== 'movies' && S.hidden]}>
         <MoviesScreen />
+      </View>
+      <View style={[S.screen, tab !== 'manga' && S.hidden]}>
+        <MangaScreen />
       </View>
       <View style={[S.screen, tab !== 'registry' && S.hidden]}>
         <RegistryScreen />
