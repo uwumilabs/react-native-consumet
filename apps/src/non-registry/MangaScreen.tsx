@@ -184,12 +184,21 @@ const CoverCard = memo(function CoverCardView({
   item: IMangaResult;
   onOpen: (item: IMangaResult) => void;
 }) {
-  const [failed, setFailed] = useState(false);
+  // A cover can fail once and load on the next request (MangaDex makes its thumbnails on demand),
+  // so the image is mounted again once before the card shows the failure.
+  const [errors, setErrors] = useState(0);
+  const failed = errors > 1;
   const source = imageSource(item.image, item.headerForImage);
   return (
     <TouchableOpacity onPress={() => onOpen(item)} style={S.card} activeOpacity={0.75}>
       {source && !failed ? (
-        <Image source={source} style={S.cardImg} resizeMode="cover" onError={() => setFailed(true)} />
+        <Image
+          key={errors}
+          source={source}
+          style={S.cardImg}
+          resizeMode="cover"
+          onError={() => setErrors((n) => n + 1)}
+        />
       ) : (
         <View style={[S.cardImg, S.cardPlaceholder]}>
           <Text style={S.cardPlaceholderText}>{source ? 'cover failed' : 'no cover'}</Text>
