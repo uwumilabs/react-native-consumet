@@ -15,10 +15,10 @@
     },
     {
       "name": "Kwik",
-      "version": "1.2.4",
+      "version": "1.2.5",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.4.js",
-      "sha256": "625158a91f9272470f9c645621133074f11f99b292680920494e14bbe9005d4c",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.2.5.js",
+      "sha256": "d4b4992d35d6e8f5e00143deaf61e0c54c5bd1f402a64f376e8550dd77dbb68a",
       "distFile": "dist/bundles/extractors/kwik.js"
     },
     {
@@ -75,14 +75,14 @@
       "id": "animepahe",
       "name": "AnimePahe",
       "description": "High-quality anime streaming from AnimePahe with multiple servers and subtitles",
-      "version": "1.2.6",
+      "version": "1.2.7",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "anime",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.6.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/animepahe/1.2.7.js",
       "factoryName": "createAnimePahe",
       "baseUrl": "https://animepahe.pw",
       "logo": "https://animepahe.pw/web-app-manifest-512x512.png",
@@ -100,7 +100,7 @@
       "dubbed": true,
       "isSourceEmbed": true,
       "haveMultiServers": false,
-      "sha256": "a2c83cc43c95f2224c599e805d9f5dfc9b89b3c36713c20c6ef063790f31013d",
+      "sha256": "63b4fbf8c7333984e518545171571d43cd983479c9b1f14b9c194beec5966811",
       "distFile": "dist/bundles/providers/anime/animepahe/create-animepahe.js"
     },
     {

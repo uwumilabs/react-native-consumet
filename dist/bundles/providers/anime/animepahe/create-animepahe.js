@@ -65,14 +65,15 @@ function createAnimePahe(ctx, customBaseURL) {
     isWorking: true,
     isDubAvailableSeparately: true
   };
-  var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36";
-  var _challengePassed = false;
-  var ensureChallengePassed = async () => {
-    if (_challengePassed) return;
-    await makeGetRequestWithWebView(config.baseUrl, {
-      "User-Agent": UA
-    });
-    _challengePassed = true;
+  var challenge;
+  var ensureChallengePassed = () => {
+    if (!challenge) {
+      challenge = makeGetRequestWithWebView(config.baseUrl, {}).then(() => void 0, err => {
+        challenge = void 0;
+        throw err;
+      });
+    }
+    return challenge;
   };
   var withRetry = async function (fn) {
     var retries = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
@@ -92,8 +93,7 @@ function createAnimePahe(ctx, customBaseURL) {
   var webViewGet = async (url, referer) => {
     return withRetry(async () => {
       var res = await makeGetRequestWithWebView(url, {
-        "User-Agent": UA,
-        "Referer": referer ?? config.baseUrl
+        Referer: referer ?? config.baseUrl
       });
       return res.html ?? "";
     });
@@ -101,13 +101,11 @@ function createAnimePahe(ctx, customBaseURL) {
   var webViewGetJson = async (url, referer) => {
     return withRetry(async () => {
       var res = await makeGetRequestWithWebView(url, {
-        "User-Agent": UA,
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
         "Referer": referer ?? config.baseUrl
       });
       var raw = (res.html ?? "").replace(/<[^>]*>/g, "").trim();
-      console.log(raw);
       if (!raw) throw new Error(`[AnimePahe] Empty response from ${url}`);
       return JSON.parse(raw);
     });

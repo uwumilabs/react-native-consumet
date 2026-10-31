@@ -38,16 +38,11 @@ function Kwik(ctx) {
   var serverName = "kwik";
   var sources = [];
   var {
-    load,
-    USER_AGENT,
     NativeConsumet
   } = ctx;
-  var ua = USER_AGENT || "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36";
-  function unpackPacked(packed) {
-    var re = /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
-    var m = packed.match(re);
-    if (!m) return null;
-    var encoded = m[1];
+  var PACKED = /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
+  function unpackPacked(m) {
+    var encoded = m[1].replace(/\\(['"\\])/g, "$1");
     var base = parseInt(m[2], 10);
     var count = parseInt(m[3], 10);
     var words = m[4].split(m[5]);
@@ -63,6 +58,16 @@ function Kwik(ctx) {
     }
     return result;
   }
+  function findSource(html) {
+    var packed = new RegExp(PACKED.source, "g");
+    var block;
+    while (block = packed.exec(html)) {
+      var code = unpackPacked(block);
+      var source = code.match(/const\s+source\s*=\s*'([^']+)'/) || code.match(/const\s+source\s*=\s*"([^"]+)"/) || code.match(/['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
+      if (source?.[1]) return source[1];
+    }
+    return null;
+  }
   var extract = async function (videoUrl) {
     var referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "https://animepahe.ru/";
     var kwikUrl = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
@@ -70,28 +75,13 @@ function Kwik(ctx) {
     var {
       html
     } = await NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
-      "Referer": referer,
-      "User-Agent": ua
+      Referer: referer
     });
-    var $ = load(html);
-    var packedScript = null;
-    $("script").each((_, el) => {
-      var text = $(el).html() ?? "";
-      if (text.includes("eval(function(p,a,c,k,e,")) {
-        packedScript = text;
-        return false;
-      }
-    });
-    if (!packedScript) {
-      var m = html.match(/eval\(function\(p,a,c,k,e,[dr]\)[\s\S]+?\.split\(['"]\|['"]\)[\s\S]+?\)/);
-      packedScript = m?.[0] ?? null;
+    var m3u8 = findSource(html);
+    if (!m3u8) {
+      var packed = html.includes("eval(function(p,a,c,k,e,");
+      throw new Error(packed ? "[Kwik] No source URL found" : "[Kwik] No packed script found");
     }
-    if (!packedScript) throw new Error("[Kwik] No packed script found");
-    var unpacked = unpackPacked(packedScript);
-    if (!unpacked) throw new Error("[Kwik] Failed to unpack script");
-    var sourceMatch = unpacked.match(/const\s+source\s*=\s*'([^']+)'/) || unpacked.match(/const\s+source\s*=\s*"([^"]+)"/) || unpacked.match(/['"]?(https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
-    if (!sourceMatch?.[1]) throw new Error("[Kwik] No source URL found");
-    var m3u8 = sourceMatch[1];
     return {
       sources: [{
         url: m3u8,

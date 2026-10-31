@@ -6,23 +6,21 @@ Object.defineProperty(exports, "__esModule", {
 exports.Kwik = Kwik;
 /**
  * Kwik extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT
+ * @param ctx ExtractorContext; the embed page is loaded through its NativeConsumet WebView
  * @returns Object with extract method implementing IVideoExtractor interface
  */
 function Kwik(ctx) {
   const serverName = 'kwik';
   const sources = [];
   const {
-    load,
-    USER_AGENT,
     NativeConsumet
   } = ctx;
-  const ua = USER_AGENT || 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36';
-  function unpackPacked(packed) {
-    const re = /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
-    const m = packed.match(re);
-    if (!m) return null;
-    const encoded = m[1];
+  // One eval(function(p,a,c,k,e,d){...}('payload',base,count,'words'.split('|'))) block.
+  const PACKED = /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
+  /** The code of one packed block. */
+  function unpackPacked(m) {
+    // The payload is the source of a single-quoted string: undo its escapes (\' and \\).
+    const encoded = m[1].replace(/\\(['"\\])/g, '$1');
     const base = parseInt(m[2], 10);
     const count = parseInt(m[3], 10);
     const words = m[4].split(m[5]);
@@ -38,36 +36,33 @@ function Kwik(ctx) {
     }
     return result;
   }
+  /** The stream URL in a Kwik embed page; the page packs several scripts, only one has it. */
+  function findSource(html) {
+    const packed = new RegExp(PACKED.source, 'g');
+    let block;
+    while (block = packed.exec(html)) {
+      const code = unpackPacked(block);
+      const source = code.match(/const\s+source\s*=\s*'([^']+)'/) || code.match(/const\s+source\s*=\s*"([^"]+)"/) || code.match(/['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
+      if (source?.[1]) return source[1];
+    }
+    return null;
+  }
   // @ts-ignore
   const extract = async function (videoUrl) {
     let referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'https://animepahe.ru/';
     const kwikUrl = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
     const kwikHost = kwikUrl.match(/^https?:\/\/([^/]+)/)?.[1] ?? 'kwik.cx';
+    // No User-Agent: the WebView's own keeps a Cloudflare clearance valid (see AnimePahe).
     const {
       html
     } = await NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
-      'Referer': referer,
-      'User-Agent': ua
+      Referer: referer
     });
-    const $ = load(html);
-    let packedScript = null;
-    $('script').each((_, el) => {
-      const text = $(el).html() ?? '';
-      if (text.includes('eval(function(p,a,c,k,e,')) {
-        packedScript = text;
-        return false;
-      }
-    });
-    if (!packedScript) {
-      const m = html.match(/eval\(function\(p,a,c,k,e,[dr]\)[\s\S]+?\.split\(['"]\|['"]\)[\s\S]+?\)/);
-      packedScript = m?.[0] ?? null;
+    const m3u8 = findSource(html);
+    if (!m3u8) {
+      const packed = html.includes('eval(function(p,a,c,k,e,');
+      throw new Error(packed ? '[Kwik] No source URL found' : '[Kwik] No packed script found');
     }
-    if (!packedScript) throw new Error('[Kwik] No packed script found');
-    const unpacked = unpackPacked(packedScript);
-    if (!unpacked) throw new Error('[Kwik] Failed to unpack script');
-    const sourceMatch = unpacked.match(/const\s+source\s*=\s*'([^']+)'/) || unpacked.match(/const\s+source\s*=\s*"([^"]+)"/) || unpacked.match(/['"]?(https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
-    if (!sourceMatch?.[1]) throw new Error('[Kwik] No source URL found');
-    const m3u8 = sourceMatch[1];
     return {
       sources: [{
         url: m3u8,

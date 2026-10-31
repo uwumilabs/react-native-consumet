@@ -34,15 +34,20 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     isDubAvailableSeparately: true,
   };
 
-  const UA =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
-
   // ── WebView helpers ────────────────────────────────────────────────────────
-  let _challengePassed = false;
-  const ensureChallengePassed = async () => {
-    if (_challengePassed) return;
-    await makeGetRequestWithWebView(config.baseUrl, { 'User-Agent': UA });
-    _challengePassed = true;
+  let challenge: Promise<void> | undefined;
+  const ensureChallengePassed = (): Promise<void> => {
+    // Searches running at once share one challenge load.
+    if (!challenge) {
+      challenge = makeGetRequestWithWebView(config.baseUrl, {}).then(
+        () => undefined,
+        (err: unknown) => {
+          challenge = undefined;
+          throw err;
+        }
+      );
+    }
+    return challenge;
   };
 
   const withRetry = async <T>(fn: () => Promise<T>, retries = 2): Promise<T> => {
@@ -64,12 +69,11 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     }
   };
 
-  // Fetches an HTML page through the WebView (bypasses DDoS-Guard JS challenge).
+  // Fetches an HTML page through the WebView, which gets past the Cloudflare challenge.
   const webViewGet = async (url: string, referer?: string): Promise<string> => {
     return withRetry(async () => {
       const res = await makeGetRequestWithWebView(url, {
-        'User-Agent': UA,
-        'Referer': referer ?? config.baseUrl,
+        Referer: referer ?? config.baseUrl,
       });
       return res.html ?? '';
     });
@@ -78,14 +82,11 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const webViewGetJson = async <T = any>(url: string, referer?: string): Promise<T> => {
     return withRetry(async () => {
       const res = await makeGetRequestWithWebView(url, {
-        'User-Agent': UA,
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'X-Requested-With': 'XMLHttpRequest',
         'Referer': referer ?? config.baseUrl,
       });
       const raw = (res.html ?? '').replace(/<[^>]*>/g, '').trim();
-      console.log(raw);
-
       if (!raw) throw new Error(`[AnimePahe] Empty response from ${url}`);
       return JSON.parse(raw) as T;
     });
