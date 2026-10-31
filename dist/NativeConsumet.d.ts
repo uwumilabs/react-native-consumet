@@ -9,7 +9,7 @@ import type { TurboModule } from 'react-native';
  * | code              | methods                        | meaning                                                         |
  * | ----------------- | ------------------------------ | --------------------------------------------------------------- |
  * | `WEBVIEW_ERROR`   | WebView requests (below)       | The main document failed to load (DNS, TLS, connection).        |
- * | `TIMEOUT`         | WebView requests (below)       | The main document did not finish loading within 30 s.           |
+ * | `TIMEOUT`         | WebView requests (below)       | No page (past any Cloudflare challenge) finished within 30 s.   |
  * | `COOKIE_ERROR`    | getDdosGuardCookiesWithWebView | The page loaded but set no `__ddg2_` cookie.                    |
  * | `ERROR`           | bypassDdosGuard                | Invalid URL, or no DDoS-Guard cookie could be obtained.         |
  * | `HTTP_ERROR`      | makePostRequest                | Invalid URL or transport failure. HTTP error statuses resolve.  |
@@ -21,7 +21,10 @@ import type { TurboModule } from 'react-native';
  * makePostRequestWithWebView) load the URL in a hidden WebView:
  * - Only the main document decides the outcome. Failed sub-resources (images, scripts, iframes)
  *   are ignored, and HTTP error statuses (403, 503, ...) still resolve with the page.
- * - The first finished page settles the request; later navigations and errors are ignored.
+ * - The first finished page settles the request; later navigations and errors are ignored. The
+ *   exception is a Cloudflare challenge page ("Just a moment..."): makeGetRequestWithWebView and
+ *   makePostRequestWithWebView wait for the page the challenge reloads into once its script has
+ *   run, within the same 30 s.
  * - `cookies` (and the getDdosGuardCookiesWithWebView result) is a Cookie header string with the
  *   cookies that apply to the loaded URL.
  * - Cookies carry over between calls. Android uses the app-wide CookieManager; iOS uses an
@@ -46,9 +49,12 @@ export interface Spec extends TurboModule {
      */
     getDdosGuardCookiesWithWebView(url: string): Promise<string>;
     /**
-     * Loads `url` in a hidden WebView and resolves 1.5 s after the main document finishes loading,
-     * with its `outerHTML`, the final URL and its cookies. User-Agent and Cookie headers are applied
-     * to the WebView; other headers are sent with the request. `status` is always `'success'`:
+     * Loads `url` in a hidden WebView and resolves 1.5 s after the main document finishes loading
+     * (the page a Cloudflare challenge reloads into, when the first page is one), with its
+     * `outerHTML`, the final URL and its cookies. User-Agent and Cookie headers are applied
+     * to the WebView; other headers are sent with the request. Without a User-Agent header the
+     * WebView keeps the engine's own (on iOS with Mobile Safari's tokens), which Cloudflare checks
+     * against what the engine reports. `status` is always `'success'`:
      * failures and timeouts reject (`WEBVIEW_ERROR`, `TIMEOUT`).
      */
     makeGetRequestWithWebView(url: string, headers: {

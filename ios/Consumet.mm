@@ -3,10 +3,20 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 #import <WebKit/WebKit.h>
 
-static NSString *const kDefaultUA =
-    @"Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
-    @"AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 "
-    @"Safari/604.1";
+// Without a User-Agent header a WebView keeps WKWebView's own user agent, with
+// the tokens Mobile Safari adds for this iOS version, so it matches the engine:
+// Cloudflare fails a challenge whose user agent claims another browser version
+// (as on Android, where the WebView keeps its own).
+static NSString *RCConsumetSafariApplicationName(void) {
+  NSArray<NSString *> *parts =
+      [UIDevice.currentDevice.systemVersion componentsSeparatedByString:@"."];
+  NSString *version =
+      parts.count > 1
+          ? [NSString stringWithFormat:@"%@.%@", parts[0], parts[1]]
+          : parts.firstObject;
+  return [NSString
+      stringWithFormat:@"Version/%@ Mobile/15E148 Safari/604.1", version];
+}
 
 // Rejection codes shared with Android (see the contract in src/NativeConsumet.ts).
 static NSString *const kWebViewErrorCode = @"WEBVIEW_ERROR";
@@ -112,6 +122,10 @@ static void RCConsumetReadCookies(
 - (void)loadRequest:(NSURLRequest *)request
           userAgent:(nullable NSString *)ua
        cookieHeader:(nullable NSString *)cookieHeader;
+/// Keeps the task open after the navigation finished, for a caller that polls
+/// the page (a challenge page that turns into the real page once solved), until
+/// it is cleaned up or the 30 s deadline from loadRequest passes.
+- (void)keepOpen;
 - (void)cleanup;
 @end
 
@@ -119,7 +133,9 @@ static void RCConsumetReadCookies(
   WKWebView *_webView;
   UIWindow *_offscreenWindow;
   NSTimer *_timer;
+  NSDate *_startedAt;
   BOOL _done;
+  BOOL _keptOpen;
 }
 
 - (void)loadRequest:(NSURLRequest *)request
@@ -130,10 +146,12 @@ static void RCConsumetReadCookies(
 
   WKWebViewConfiguration *cfg = [WKWebViewConfiguration new];
   cfg.websiteDataStore = RCConsumetDataStore();
+  cfg.applicationNameForUserAgent = RCConsumetSafariApplicationName();
 
   _webView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, 1, 1)
                                 configuration:cfg];
-  _webView.customUserAgent = ua.length ? ua : kDefaultUA;
+  if (ua.length)
+    _webView.customUserAgent = ua;
   _webView.navigationDelegate = self;
 
   // Attach to a tiny off-screen window so WKWebView loads resources properly.
@@ -142,6 +160,7 @@ static void RCConsumetReadCookies(
   _offscreenWindow.hidden = NO;
   [_offscreenWindow addSubview:_webView];
 
+  _startedAt = [NSDate date];
   _timer = [NSTimer scheduledTimerWithTimeInterval:30
                                             target:self
                                           selector:@selector(_didTimeout)
@@ -197,10 +216,25 @@ static void RCConsumetReadCookies(
   return cookies;
 }
 
+- (void)keepOpen {
+  if (!_webView || _keptOpen)
+    return;
+  _keptOpen = YES;
+  [_timer invalidate];
+  NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:_startedAt];
+  _timer = [NSTimer scheduledTimerWithTimeInterval:MAX(30 - elapsed, 0)
+                                            target:self
+                                          selector:@selector(_didTimeout)
+                                          userInfo:nil
+                                           repeats:NO];
+}
+
 - (void)_didTimeout {
-  if (_done)
+  // A task kept open has finished its navigation (_done) but still times out.
+  if (_done && !_keptOpen)
     return;
   _done = YES;
+  _keptOpen = NO;
   if (self.onError)
     self.onError(kTimeoutCode, @"WebView request timed out");
   [self cleanup];
@@ -264,6 +298,77 @@ static void RCConsumetReadCookies(
 
 #pragma mark - Consumet Module
 
+// "challenge" on a Cloudflare challenge page ("Just a moment..."), which turns
+// into the real page once its script has run; otherwise "ready" once the
+// document has loaded, else "loading" (as on Android).
+static NSString *const kPageStateScript =
+    @"(function(){try{if(window._cf_chl_opt||"
+    @"document.getElementById('challenge-form')||"
+    @"document.getElementById('challenge-running')||"
+    @"document.title==='Just a moment...')return 'challenge';"
+    @"return document.readyState==='complete'?'ready':'loading';"
+    @"}catch(e){return 'ready';}})()";
+
+/// Checks the page every second until a challenge has turned into a loaded
+/// page, then runs capture 1.5 s later (or at once when there was none).
+/// Polling the page, not waiting for navigation events, can't miss a reload
+/// that finished while a check was running.
+static void RCConsumetCaptureWhenReady(RCConsumetWebTask *task,
+                                       WKWebView *webView,
+                                       BOOL afterChallenge,
+                                       dispatch_block_t capture) {
+  __weak RCConsumetWebTask *wt = task;
+  __weak WKWebView *wv = webView;
+  [webView evaluateJavaScript:kPageStateScript
+            completionHandler:^(id result, NSError *error) {
+              if (!wv)
+                return;
+              BOOL challenge = [result isEqual:@"challenge"];
+              if (challenge || [result isEqual:@"loading"]) {
+                [wt keepOpen];
+                dispatch_after(
+                    dispatch_time(DISPATCH_TIME_NOW, (int64_t)NSEC_PER_SEC),
+                    dispatch_get_main_queue(), ^{
+                      WKWebView *view = wv;
+                      if (view)
+                        RCConsumetCaptureWhenReady(wt, view,
+                                                   afterChallenge || challenge,
+                                                   capture);
+                    });
+              } else if (afterChallenge) {
+                // The page the challenge turned into gets the same time to
+                // settle as a first page.
+                dispatch_after(
+                    dispatch_time(DISPATCH_TIME_NOW,
+                                  (int64_t)(1.5 * NSEC_PER_SEC)),
+                    dispatch_get_main_queue(), ^{
+                      if (wv)
+                        capture();
+                    });
+              } else {
+                capture();
+              }
+            }];
+}
+
+/// Runs capture 1.5 s after a navigation finished (so scripts on the page can
+/// settle), unless the page is a Cloudflare challenge: then capture waits for
+/// the page the challenge turns into, and the task times out as usual if it
+/// never does.
+static void RCConsumetCaptureUnlessChallenge(RCConsumetWebTask *task,
+                                             WKWebView *webView,
+                                             dispatch_block_t capture) {
+  __weak RCConsumetWebTask *wt = task;
+  __weak WKWebView *wv = webView;
+  dispatch_after(
+      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
+      dispatch_get_main_queue(), ^{
+        WKWebView *view = wv;
+        if (view)
+          RCConsumetCaptureWhenReady(wt, view, NO, capture);
+      });
+}
+
 @implementation Consumet {
   NSMutableSet<RCConsumetWebTask *> *_tasks;
 }
@@ -304,7 +409,7 @@ RCT_EXPORT_MODULE()
                           timeoutInterval:30];
   req.HTTPMethod = method;
 
-  __block NSString *ua = kDefaultUA;
+  __block NSString *ua = nil;
   [headers enumerateKeysAndObjectsUsingBlock:^(NSString *k, NSString *v,
                                                BOOL *stop) {
     if ([k caseInsensitiveCompare:@"User-Agent"] == NSOrderedSame) {
@@ -464,7 +569,7 @@ RCT_EXPORT_MODULE()
                            requestWithURL:[NSURL URLWithString:urlStr]
                               cachePolicy:NSURLRequestReloadIgnoringCacheData
                           timeoutInterval:30]
-            userAgent:kDefaultUA
+            userAgent:nil
          cookieHeader:nil];
   });
 }
@@ -482,40 +587,37 @@ RCT_EXPORT_MODULE()
     __weak RCConsumetWebTask *wt = task;
 
     task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
-      // Short delay so JS on the page has time to settle.
-      dispatch_after(
-          dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
-          dispatch_get_main_queue(), ^{
-            [webView
-                evaluateJavaScript:@"(function(){try{return "
-                                   @"document.documentElement.outerHTML;}catch("
-                                   @"e){return '';}})()"
-                 completionHandler:^(id html, NSError *e) {
-                   NSString *htmlStr =
-                       [html isKindOfClass:[NSString class]] ? html : @"";
-                   NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
-                   RCConsumetReadCookies(
-                       webView, finalURL,
-                       ^(NSArray<NSHTTPCookie *> *cookies,
-                         NSString *cookieStr) {
-                         resolve(@{
-                           @"url" : finalURL,
-                           @"html" : htmlStr,
-                           @"cookies" : cookieStr,
-                           @"status" : @"success"
-                         });
-                         [wt cleanup];
-                         [ws _removeTask:wt];
-                       });
-                 }];
-          });
+      RCConsumetCaptureUnlessChallenge(wt, webView, ^{
+        [webView
+            evaluateJavaScript:@"(function(){try{return "
+                               @"document.documentElement.outerHTML;}catch("
+                               @"e){return '';}})()"
+             completionHandler:^(id html, NSError *e) {
+               NSString *htmlStr =
+                   [html isKindOfClass:[NSString class]] ? html : @"";
+               NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
+               RCConsumetReadCookies(
+                   webView, finalURL,
+                   ^(NSArray<NSHTTPCookie *> *cookies,
+                     NSString *cookieStr) {
+                     resolve(@{
+                       @"url" : finalURL,
+                       @"html" : htmlStr,
+                       @"cookies" : cookieStr,
+                       @"status" : @"success"
+                     });
+                     [wt cleanup];
+                     [ws _removeTask:wt];
+                   });
+             }];
+      });
     };
     task.onError = ^(NSString *code, NSString *desc) {
       reject(code, desc, nil);
       [ws _removeTask:wt];
     };
 
-    NSString *ua = kDefaultUA;
+    NSString *ua = nil;
     NSMutableURLRequest *req = [self _requestWithURL:urlStr
                                               method:@"GET"
                                              headers:headers
@@ -554,48 +656,46 @@ RCT_EXPORT_MODULE()
         @"})()";
 
     task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
-      dispatch_after(
-          dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
-          dispatch_get_main_queue(), ^{
-            [webView
-                evaluateJavaScript:jsExtract
-                 completionHandler:^(id r, NSError *e) {
-                   NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
-                   RCConsumetReadCookies(
-                       webView, finalURL,
-                       ^(NSArray<NSHTTPCookie *> *cookies,
-                         NSString *cookieStr) {
-                         NSString *jsonStr =
-                             [r isKindOfClass:[NSString class]] ? r : @"{}";
-                         id json = [NSJSONSerialization
-                             JSONObjectWithData:
-                                 [jsonStr
-                                     dataUsingEncoding:NSUTF8StringEncoding]
-                                        options:0
-                                          error:nil];
-                         NSDictionary *parsed =
-                             [json isKindOfClass:[NSDictionary class]] ? json
-                                                                       : @{};
-                         resolve(@{
-                           @"url" : finalURL,
-                           @"response" : parsed[@"content"] ?: @"",
-                           @"cookies" : cookieStr,
-                           @"status" : @"success",
-                           @"contentType" : parsed[@"contentType"]
-                               ?: @"text/html"
-                         });
-                         [wt cleanup];
-                         [ws _removeTask:wt];
-                       });
-                 }];
-          });
+      RCConsumetCaptureUnlessChallenge(wt, webView, ^{
+        [webView
+            evaluateJavaScript:jsExtract
+             completionHandler:^(id r, NSError *e) {
+               NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
+               RCConsumetReadCookies(
+                   webView, finalURL,
+                   ^(NSArray<NSHTTPCookie *> *cookies,
+                     NSString *cookieStr) {
+                     NSString *jsonStr =
+                         [r isKindOfClass:[NSString class]] ? r : @"{}";
+                     id json = [NSJSONSerialization
+                         JSONObjectWithData:
+                             [jsonStr
+                                 dataUsingEncoding:NSUTF8StringEncoding]
+                                    options:0
+                                      error:nil];
+                     NSDictionary *parsed =
+                         [json isKindOfClass:[NSDictionary class]] ? json
+                                                                   : @{};
+                     resolve(@{
+                       @"url" : finalURL,
+                       @"response" : parsed[@"content"] ?: @"",
+                       @"cookies" : cookieStr,
+                       @"status" : @"success",
+                       @"contentType" : parsed[@"contentType"]
+                           ?: @"text/html"
+                     });
+                     [wt cleanup];
+                     [ws _removeTask:wt];
+                   });
+             }];
+      });
     };
     task.onError = ^(NSString *code, NSString *desc) {
       reject(code, desc, nil);
       [ws _removeTask:wt];
     };
 
-    NSString *ua = kDefaultUA;
+    NSString *ua = nil;
     NSMutableURLRequest *req = [self _requestWithURL:urlStr
                                               method:@"POST"
                                              headers:headers

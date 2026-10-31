@@ -7,6 +7,7 @@ import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableNativeMap
@@ -65,11 +66,28 @@ class HttpRequestModule(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
 
     companion object {
-        private const val DEFAULT_USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-
         // Time for scripts on the page to settle after it finishes loading (same as iOS).
         private const val CAPTURE_DELAY_MS = 1500L
+
+        // How often a page that isn't ready yet is checked again.
+        private const val POLL_MS = 1000L
+
+        // "challenge" on a Cloudflare challenge page ("Just a moment..."), which turns into the real
+        // page once its script has run; otherwise "ready" once the document has loaded, else
+        // "loading" (same as iOS).
+        private val PAGE_STATE_SCRIPT = """
+            (function() {
+                try {
+                    if (window._cf_chl_opt ||
+                        document.getElementById('challenge-form') ||
+                        document.getElementById('challenge-running') ||
+                        document.title === 'Just a moment...') return 'challenge';
+                    return document.readyState === 'complete' ? 'ready' : 'loading';
+                } catch(e) {
+                    return 'ready';
+                }
+            })();
+        """.trimIndent()
 
         private val HTML_SCRIPT = """
             (function() {
@@ -138,22 +156,22 @@ class HttpRequestModule(private val context: Context) {
         Log.d(TAG, "makeGetRequestWithWebView called with url: $url")
         val requestHeaders = WebViewHeaders.from(headers)
         handler.post {
-            val task = WebViewTask(context, promise, requestHeaders.userAgent ?: DEFAULT_USER_AGENT)
+            // Without a User-Agent header the WebView keeps its own: Cloudflare fails a challenge
+            // whose user agent claims another browser than the WebView's client hints report.
+            val task = WebViewTask(context, promise, requestHeaders.userAgent)
             logConsoleMessages(task)
             task.onPageFinished = { view, loadedUrl ->
                 Log.d(TAG, "onPageFinished for url: $loadedUrl")
-                handler.postDelayed({
-                    if (!task.isSettled) {
-                        view.evaluateJavascript(HTML_SCRIPT) { htmlResponse: String? ->
-                            val result = WritableNativeMap()
-                            result.putString("url", loadedUrl)
-                            result.putString("html", decodeJsString(htmlResponse) ?: "")
-                            result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
-                            result.putString("status", "success")
-                            task.resolve(result)
-                        }
+                captureUnlessChallenge(task, view) {
+                    view.evaluateJavascript(HTML_SCRIPT) { htmlResponse: String? ->
+                        val result = WritableNativeMap()
+                        result.putString("url", loadedUrl)
+                        result.putString("html", decodeJsString(htmlResponse) ?: "")
+                        result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
+                        result.putString("status", "success")
+                        task.resolve(result)
                     }
-                }, CAPTURE_DELAY_MS)
+                }
             }
             seedCookies(url, requestHeaders.cookie)
             task.start { webView ->
@@ -182,33 +200,70 @@ class HttpRequestModule(private val context: Context) {
         Log.d(TAG, "makePostRequestWithWebView called with url: $url")
         val requestHeaders = WebViewHeaders.from(headers)
         handler.post {
-            val task = WebViewTask(context, promise, requestHeaders.userAgent ?: DEFAULT_USER_AGENT)
+            // Without a User-Agent header the WebView keeps its own: Cloudflare fails a challenge
+            // whose user agent claims another browser than the WebView's client hints report.
+            val task = WebViewTask(context, promise, requestHeaders.userAgent)
             logConsoleMessages(task)
             task.onPageFinished = { view, loadedUrl ->
                 Log.d(TAG, "onPageFinished for url: $loadedUrl")
-                handler.postDelayed({
-                    if (!task.isSettled) {
-                        view.evaluateJavascript(POST_RESPONSE_SCRIPT) { responseJson: String? ->
-                            // Like iOS, an unreadable capture gives an empty text/html response.
-                            val json = try {
-                                JSONObject(decodeJsString(responseJson) ?: "{}")
-                            } catch (e: Exception) {
-                                JSONObject()
-                            }
-                            val result = WritableNativeMap()
-                            result.putString("url", loadedUrl)
-                            result.putString("response", json.optString("content", ""))
-                            result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
-                            result.putString("status", "success")
-                            result.putString("contentType", json.optString("contentType", "text/html"))
-                            task.resolve(result)
+                captureUnlessChallenge(task, view) {
+                    view.evaluateJavascript(POST_RESPONSE_SCRIPT) { responseJson: String? ->
+                        // Like iOS, an unreadable capture gives an empty text/html response.
+                        val json = try {
+                            JSONObject(decodeJsString(responseJson) ?: "{}")
+                        } catch (e: Exception) {
+                            JSONObject()
                         }
+                        val result = WritableNativeMap()
+                        result.putString("url", loadedUrl)
+                        result.putString("response", json.optString("content", ""))
+                        result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
+                        result.putString("status", "success")
+                        result.putString("contentType", json.optString("contentType", "text/html"))
+                        task.resolve(result)
                     }
-                }, CAPTURE_DELAY_MS)
+                }
             }
             seedCookies(url, requestHeaders.cookie)
             Log.d(TAG, "Making POST request to: $url with body length: ${body.length}")
             task.start { webView -> webView.postUrl(url, body.toByteArray(Charsets.UTF_8)) }
+        }
+    }
+
+    /**
+     * Runs [capture] [CAPTURE_DELAY_MS] after the page finished loading, unless the page is a
+     * Cloudflare challenge: then the page is checked every [POLL_MS] until the challenge has turned
+     * into a loaded page, which is captured [CAPTURE_DELAY_MS] later, or the task times out.
+     * Polling the page, not waiting for navigation events, can't miss a reload that finished
+     * while a check was running.
+     */
+    private fun captureUnlessChallenge(task: WebViewTask, view: WebView, capture: () -> Unit) {
+        handler.postDelayed({ captureWhenReady(task, view, false, capture) }, CAPTURE_DELAY_MS)
+    }
+
+    private fun captureWhenReady(
+        task: WebViewTask,
+        view: WebView,
+        afterChallenge: Boolean,
+        capture: () -> Unit,
+    ) {
+        if (task.isSettled) return
+        view.evaluateJavascript(PAGE_STATE_SCRIPT) { result: String? ->
+            if (task.isSettled) return@evaluateJavascript
+            val state = decodeJsString(result)
+            if (state == "challenge" || state == "loading") {
+                if (state == "challenge" && !afterChallenge) {
+                    Log.d(TAG, "Cloudflare challenge page; waiting for the page it turns into")
+                }
+                task.keepOpen()
+                val sawChallenge = afterChallenge || state == "challenge"
+                handler.postDelayed({ captureWhenReady(task, view, sawChallenge, capture) }, POLL_MS)
+            } else if (afterChallenge) {
+                // The page the challenge turned into gets the same time to settle as a first page.
+                handler.postDelayed({ if (!task.isSettled) capture() }, CAPTURE_DELAY_MS)
+            } else {
+                capture()
+            }
         }
     }
 

@@ -176,6 +176,35 @@ describe('native implementations follow the contract (NAT-1)', () => {
     }
   });
 
+  it('WebView GET and POST wait past a Cloudflare challenge on both platforms', () => {
+    // The same markers decide on both platforms.
+    for (const marker of ['window._cf_chl_opt', "'challenge-form'", "'challenge-running'", "'Just a moment...'"]) {
+      expect(kotlin['HttpRequestModule.kt']).toContain(marker);
+      expect(objc).toContain(marker);
+    }
+    // A challenge keeps the task open and the page is polled until it has turned into a loaded
+    // page (polling can't miss a reload that finished while a check ran, as navigation events can).
+    expect(kotlin['HttpRequestModule.kt']).toMatch(/state == "challenge" \|\| state == "loading"\) \{[\s\S]*?task\.keepOpen\(\)/);
+    expect(kotlin['WebViewTask.kt']).toMatch(/fun keepOpen\(\)/);
+    expect(objc).toMatch(/if \(challenge \|\| \[result isEqual:@"loading"\]\) \{\s*\[wt keepOpen\];/);
+    expect(objc).toMatch(/if \(_done && !_keptOpen\)\s*return;/);
+    // GET and POST both capture through the check.
+    for (const name of ['makeGetRequestWithWebView', 'makePostRequestWithWebView']) {
+      expect(kotlinFunction(kotlin['HttpRequestModule.kt']!, name)).toMatch(/captureUnlessChallenge\(task, view\)/);
+    }
+    expect(objc.match(/RCConsumetCaptureUnlessChallenge\(wt, webView, \^\{/g)).toHaveLength(2);
+  });
+
+  it("WebView requests keep the engine's own user agent unless one is passed", () => {
+    // A user agent claiming another browser than the engine made Cloudflare fail its challenge.
+    expect(kotlin['HttpRequestModule.kt']).not.toMatch(/DEFAULT_USER_AGENT/);
+    expect(kotlin['HttpRequestModule.kt']!.match(/WebViewTask\(context, promise, requestHeaders\.userAgent\)/g)).toHaveLength(2);
+    // iOS: WKWebView's own, with Mobile Safari's tokens for the running iOS version.
+    expect(objc).not.toMatch(/kDefaultUA/);
+    expect(objc).toMatch(/cfg\.applicationNameForUserAgent = RCConsumetSafariApplicationName\(\);/);
+    expect(objc).toMatch(/if \(ua\.length\)\s*_webView\.customUserAgent = ua;/);
+  });
+
   it('deobfuscateScript rejects instead of resolving null on both platforms', () => {
     expect(objc).not.toMatch(/resolve\(\[NSNull null\]\)/);
     expect(objc).not.toMatch(/catch\(e\)\{return null;\}/);
