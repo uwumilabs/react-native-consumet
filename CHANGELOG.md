@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/uwumilabs/react-native-consumet/compare/v3.0.0...v3.0.1) (2026-11-01)
+
+### Bug Fixes
+
+* **animepahe:** get past its cloudflare challenge and read kwik's stream again ([0a911cf](https://github.com/uwumilabs/react-native-consumet/commit/0a911cfb142d464a65f2005d8eeec37d376f912a))
+* **native:** wait past cloudflare challenges in webview requests ([794226d](https://github.com/uwumilabs/react-native-consumet/commit/794226df89f99d7584fe582d0fd9f3199f3b83dd)), closes [#challenge-form](https://github.com/uwumilabs/react-native-consumet/issues/challenge-form) [#challenge-running](https://github.com/uwumilabs/react-native-consumet/issues/challenge-running)
+
 ## [3.0.0](https://github.com/uwumilabs/react-native-consumet/compare/v2.0.0...v3.0.0) (2026-10-30)
 
 ### ⚠ BREAKING CHANGES
