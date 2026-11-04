@@ -49,7 +49,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { HubCloud } = extractors;
   const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
 
-  const baseUrl = createCustomBaseUrl('https://new1.vegamovies.lease', customBaseURL);
+  const baseUrl = createCustomBaseUrl('https://vegamovies.lease', customBaseURL);
 
   const config: ProviderConfig = {
     name: 'VegaMovies',
