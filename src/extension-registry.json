@@ -55,10 +55,10 @@
     },
     {
       "name": "HubCloud",
-      "version": "1.0.4",
+      "version": "1.1.0",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.0.4.js",
-      "sha256": "72ac5d2fc3e8f2620c8fd0f1d6f2b72156b0be96fa7574220109ddf45a6874a8",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.1.0.js",
+      "sha256": "c539dd0c10445940f311ddbb4e667bb28d9af499a691384a27e9a2ff6ada2f13",
       "distFile": "dist/bundles/extractors/hubcloud.js"
     },
     {
@@ -261,14 +261,14 @@
       "id": "vegamovies",
       "name": "VegaMovies",
       "description": "Bollywood, Hollywood and Dual Audio Movies and TV shows streaming from VegaMovies",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "minContextVersion": 1,
       "author": {
         "name": "RNConsumet Team",
         "url": "https://github.com/uwumilabs"
       },
       "category": "movies",
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/vegamovies/1.2.0.js",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extensions/vegamovies/1.3.0.js",
       "factoryName": "createVegaMovies",
       "baseUrl": "https://vegamovies.lease",
       "logo": "https://vegamovies.lease/images/favicon-32x32.png",
@@ -285,7 +285,7 @@
       "isSourceEmbed": false,
       "isSourceDirect": true,
       "haveMultiServers": true,
-      "sha256": "b9581efad4cb8020e5c7160bc1bb2f8613d207f358369a614458828d45e44268",
+      "sha256": "d1e1140c1b9a812de278fa0226dc1e5d4a39fed10bfb3600be7df3c27bca5a78",
       "distFile": "dist/bundles/providers/movies/vegamovies/create-vegamovies.js"
     },
     {

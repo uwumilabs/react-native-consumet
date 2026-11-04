@@ -11,6 +11,13 @@ import {
   type IMovieEpisode,
 } from '../../../models';
 
+// FastDL's dl.php?link=<url> is an HTML "Download Now" page; the file is the URL it wraps
+const unwrapFastDlUrl = (url: string): string => {
+  const wrapped = url.match(/\/dl\.php\?link=(.+)$/)?.[1];
+  if (!wrapped) return url;
+  return /^https?%3A/i.test(wrapped) ? decodeURIComponent(wrapped) : wrapped;
+};
+
 const cleanTitle = (raw: string): string => {
   let t = raw;
 
@@ -719,7 +726,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
             const reurlMatch = fdlRes.data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
             if (reurlMatch?.[1]) {
               extraSources.push({
-                url: reurlMatch[1],
+                url: unwrapFastDlUrl(reurlMatch[1]),
                 server: 'FastDL',
                 quality: epQuality,
                 isM3U8: false,
@@ -789,7 +796,7 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
         });
 
         const reurlMatch = data.match(/var\s+reurl\s*=\s*['"]([^'"]+)['"]/);
-        const directUrl = reurlMatch ? reurlMatch[1] : resolvedUrl;
+        const directUrl = unwrapFastDlUrl(reurlMatch ? reurlMatch[1] : resolvedUrl);
 
         return {
           headers: { Referer: 'https://fastdl.zip/' },

@@ -202,6 +202,11 @@ var extractUrlFromScript = html => {
   var plainMatch = html.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
   return hubcloudDecode(plainMatch?.[1]?.split("r=")?.[1] ?? "") || plainMatch?.[1] || "";
 };
+var unwrapFastDlUrl = url => {
+  var wrapped = url.match(/\/dl\.php\?link=(.+)$/)?.[1];
+  if (!wrapped) return url;
+  return /^https?%3A/i.test(wrapped) ? decodeURIComponent(wrapped) : wrapped;
+};
 var getPixelDrainUrl = html => {
   var match = html.match(/var\s+pxl\s*=\s*['"]([^'"]+)['"];?/i);
   return match?.[1] || "";
@@ -418,7 +423,7 @@ function HubCloud(ctx) {
             break;
           case btnUrl.includes("fastdl") || btnUrl.includes("fsl."):
             extractedSources.push({
-              url: btnUrl,
+              url: unwrapFastDlUrl(btnUrl),
               server: "FastDl",
               quality: pageQuality,
               isM3U8: btnUrl.includes(".m3u8"),
