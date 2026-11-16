@@ -31,10 +31,10 @@
     },
     {
       "name": "MegaPlay",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.3.js",
-      "sha256": "28666e6c9c4678755e268aa43c56659f23f081a76398db8e572fd24900bca96a",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megaplay/1.0.4.js",
+      "sha256": "24247a1a9b65580225fbc9e9672281122ebcf935fbb9c271d9f9c9a8abe85d78",
       "distFile": "dist/bundles/extractors/megaplay.js"
     },
     {

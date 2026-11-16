@@ -168,7 +168,8 @@ function MegaPlay(ctx) {
             "User-Agent": userAgent
           }
         });
-        if (typeof m3u8Data === "string" && m3u8Data.includes("#EXT-X-STREAM-INF")) {
+        var separateAudio = typeof m3u8Data === "string" && m3u8Data.split("\n").some(line => line.startsWith("#EXT-X-MEDIA:") && line.includes("TYPE=AUDIO") && line.includes("URI="));
+        if (typeof m3u8Data === "string" && m3u8Data.includes("#EXT-X-STREAM-INF") && !separateAudio) {
           var lines = m3u8Data.split("\n");
           var streamBasePath = cleanStreamUrl.substring(0, cleanStreamUrl.lastIndexOf("/"));
           var streamOrigin = new (ctx.PolyURL || URL)(cleanStreamUrl).origin;

@@ -180,7 +180,16 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
           headers: { 'Referer': `${origin}/`, 'User-Agent': userAgent },
         });
 
-        if (typeof m3u8Data === 'string' && m3u8Data.includes('#EXT-X-STREAM-INF')) {
+        // When the master lists the audio as separate renditions (#EXT-X-MEDIA:TYPE=AUDIO with a
+        // URI), its variants are video only: a player given one plays without sound. Then only the
+        // master is returned, and the player picks the quality and the audio language from it.
+        const separateAudio =
+          typeof m3u8Data === 'string' &&
+          m3u8Data
+            .split('\n')
+            .some((line) => line.startsWith('#EXT-X-MEDIA:') && line.includes('TYPE=AUDIO') && line.includes('URI='));
+
+        if (typeof m3u8Data === 'string' && m3u8Data.includes('#EXT-X-STREAM-INF') && !separateAudio) {
           const lines = m3u8Data.split('\n');
           const streamBasePath = cleanStreamUrl.substring(0, cleanStreamUrl.lastIndexOf('/'));
           const streamOrigin = new (ctx.PolyURL || URL)(cleanStreamUrl).origin;
