@@ -1,5 +1,44 @@
 # Changelog
 
+## [4.0.0](https://github.com/uwumilabs/react-native-consumet/compare/v3.0.1...v4.0.0) (2026-11-16)
+
+### ⚠ BREAKING CHANGES
+
+* StreamingServers.UpCloud and ProviderCapabilities.subDub are removed, and the
+MegaCloud registry aliases with them. MultiStream server and source names are <site>-<label>.
+TMDB and MultiStream search return no people. WebView requests reject with TIMEOUT 30 s after the
+call. The repo needs Node 24. See docs/migrations/README.md.
+* library versions before 2.0.0 are unsupported (their dist/ URLs stop
+resolving). NativeConsumet loses bypassDdosGuard and getDdosGuardCookiesWithWebView. The GDFlix
+extractor is removed. Movie server names follow <extractor>-<label>, Zoro's fetchGenres returns
+string[], META.Anilist.fetchAnimeInfo episode uniqueIds follow fetchEpisodesListById, and TMDB
+and AniList ids are strings. See docs/migrations/README.md.
+* the 14 extractors no provider used (AsianLoad, Filemoon, GogoCDN, MixDrop,
+Mp4Player, Mp4Upload, RapidCloud, StreamHub, StreamLare, StreamSB, StreamTape, VidMoly, VizCloud,
+Voe), ANIME.AnimeKai, MOVIES.YFlix, MegaUp, their StreamingServers members and
+Anilist.fetchRecentEpisodes are removed. executeProviderCode takes (code, metadata, options).
+Registry-loaded providers are instances of their category's base parser, not the bundled class;
+the AnimeProvider/MovieProvider/animeProviders/movieProviders types are removed. IVideoExtractor
+is { extract }. ProviderContext has no extractorManager; the parser overrides in
+ProviderContextConfig are removed. Server names are <extractor>-<label>, and AniKoto/AniNeko throw
+when no server matches. MultiMovies' fileId parameter and HiMovies' season field change.
+validateRegistry follows the publishing rules. See docs/migrations/README.md.
+
+### Features
+
+* **hubcloud:** add unwrapFastDlUrl function to decode FastDL URLs ([bc1a9de](https://github.com/uwumilabs/react-native-consumet/commit/bc1a9de6f6c81b63702e27ce946c2abbd4896d7d))
+
+### Bug Fixes
+
+* **megaplay:** return only the master when its audio is in separate renditions ([b4ff0d6](https://github.com/uwumilabs/react-native-consumet/commit/b4ff0d610058667150ac1bc1a531ce9459bd28f1))
+* **vegamovies:** update base URL for VegaMovies provider ([6e25b77](https://github.com/uwumilabs/react-native-consumet/commit/6e25b77be4ac203d6e1c51d986beb54dd569b221))
+
+### Code Refactoring
+
+* act on the final review and sign the registry without a build ([7cb06a0](https://github.com/uwumilabs/react-native-consumet/commit/7cb06a01a08ca41f0ac031a9d7fb6c51ed6fc596))
+* drop pre-2.0 support, stop committing dist and act on the review ([64f1687](https://github.com/uwumilabs/react-native-consumet/commit/64f16875a01de44aa991f8bad25406740444861a))
+* give providers, extractors and the registry one shape each ([6f61b14](https://github.com/uwumilabs/react-native-consumet/commit/6f61b14e6efcedb8a2b0dc8b742da7234ad195ed))
+
 ## [3.0.1](https://github.com/uwumilabs/react-native-consumet/compare/v3.0.0...v3.0.1) (2026-11-01)
 
 ### Bug Fixes
