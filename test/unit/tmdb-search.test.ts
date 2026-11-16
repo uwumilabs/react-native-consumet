@@ -128,7 +128,9 @@ describe('MultiStream (META-10)', () => {
     const perScrape = get.mock.calls.length;
     get.mockClear();
     // Every site fails; videasy still lists its servers, none of which has a source.
-    await expect(provider.fetchEpisodeSources('559969$movie')).rejects.toThrow('No sources found for server: neon-org');
+    await expect(provider.fetchEpisodeSources('559969$movie')).rejects.toThrow(
+      'No sources found for server: videasy-neon-org'
+    );
 
     expect(perScrape).toBeGreaterThan(0);
     expect(get).toHaveBeenCalledTimes(perScrape);

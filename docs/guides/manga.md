@@ -36,6 +36,8 @@ Manga classes take an optional provider context, `new MANGA.MangaDex(ctx?)`, and
 
 `classPath` - string, the provider's place in the library, example: `classPath: 'MANGA.MangaDex'`
 
+`capabilities` - object (optional): `malSyncSite`, the MALSync site that lists the provider's titles under its ids (`Mangadex` for MangaDex, `MangaNato` for MangaKakalot), which `META.Anilist.Manga` maps manga through before searching
+
 `languages`, `baseUrl`, `logo` and `classPath` are protected; read them through `provider.toString`.
 
 ## What every manga provider returns

@@ -8,15 +8,19 @@ import { emptySearch } from '../providers/common/search';
 export const tmdbUrl = (path: string, apiKey: string): string =>
   `https://api.themoviedb.org/3${path}${path.includes('?') ? '&' : '?'}api_key=${apiKey}`;
 
+/** TMDB's logo, for META.TMDB and MOVIES.MultiStream, whose titles are TMDB's. */
+export const TMDB_LOGO = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
+
 /** What `/movie/<id>` and `/tv/<id>` append to the details for mapTmdbInfo: cast, trailer, recommendations. */
 export const TMDB_INFO_APPEND = 'credits,videos,recommendations';
 
 /**
  * A page of TMDB's paged answer (search, trending) with `results` already mapped from its
- * `results`; an empty page when TMDB sent none.
+ * `results`; an empty page when TMDB sent none. A page whose results were all left out (people, in
+ * tmdbMultiSearch) still has the next page TMDB has.
  */
 export const tmdbPage = <T>(data: any, page: number, results: T[]): ISearch<T> =>
-  results.length
+  data?.results?.length
     ? {
         currentPage: page,
         hasNextPage: page + 1 <= data?.total_pages,
@@ -68,6 +72,25 @@ export const releaseYear = (result: any): string | undefined =>
 
 /** `movie` or `tv`, the media types TMDB's paths and results use. */
 export type TmdbMediaType = 'movie' | 'tv';
+
+/**
+ * The movies and shows TMDB's `/search/multi` finds for `query`, with TMDB's answer for its page
+ * counts (tmdbPage). The search also finds people, who have nothing to play, so they are left out.
+ * @param get sends a GET to a path of TMDB's API (tmdbUrl) and gives the answer's body
+ */
+export const tmdbMultiSearch = async (
+  get: (path: string) => Promise<any>,
+  query: string,
+  page: number
+): Promise<{ data: any; results: any[] }> => {
+  const data = await get(
+    `/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`
+  );
+  const results = (data?.results ?? []).filter(
+    (result: any) => result?.media_type === 'movie' || result?.media_type === 'tv'
+  );
+  return { data, results };
+};
 
 /** A TMDB movie or show as a list result (search, trending, recommendations, similar). */
 export const mapTmdbResult = (result: any, mediaType?: TmdbMediaType): IMovieResult => ({

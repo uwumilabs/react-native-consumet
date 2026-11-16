@@ -33,7 +33,7 @@ describe('extractor names from the registry (EXT-4)', () => {
     expect(manager.extractBaseExtractorName('kwik-pahe')).toBe('kwik');
     expect(manager.extractBaseExtractorName('megaplay-hd-1')).toBe('megaplay');
     expect(manager.extractBaseExtractorName('MegaCloud')).toBe('megacloud');
-    expect(manager.extractBaseExtractorName('upcloud')).toBe('megacloud');
+    expect(manager.extractBaseExtractorName('megacloud-upcloud')).toBe('megacloud');
     expect(manager.extractBaseExtractorName('HD-1')).toBeNull();
   });
 });

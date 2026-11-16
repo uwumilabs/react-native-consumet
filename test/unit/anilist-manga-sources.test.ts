@@ -1,5 +1,7 @@
 import Anilist from '../../src/providers/meta/anilist';
-import { MetaError } from '../../src/models';
+import { MetaError, type ProviderCapabilities } from '../../src/models';
+import { MangaDex } from '../../src/providers/manga/mangadex';
+import { MangaKakalot } from '../../src/providers/manga/mangakakalot';
 import { metaHttp } from '../../src/utils/meta-http';
 import soloLeveling from './fixtures/anilist/manga-105398.json';
 import { copy, replayAlways } from './fixtures/anilist/replay';
@@ -8,10 +10,11 @@ import { copy, replayAlways } from './fixtures/anilist/replay';
 const MALSYNC_URL = 'https://api.malsync.moe/mal/manga/121496';
 const chapters = [{ id: 'ch-1', title: 'Chapter 1', chapterNumber: 1 }];
 
-/** A manga provider named `name` whose search finds nothing. */
-const provider = (name: string) =>
+/** A manga provider named `name`, declaring `capabilities`, whose search finds nothing. */
+const provider = (name: string, capabilities?: ProviderCapabilities) =>
   ({
     name,
+    capabilities,
     search: jest.fn().mockResolvedValue({ results: [] }),
     fetchMangaInfo: jest.fn().mockResolvedValue({ id: 'mapped', chapters }),
     fetchChapterPages: jest.fn(),
@@ -46,12 +49,13 @@ afterEach(() => jest.restoreAllMocks());
 
 describe('Anilist.Manga MALSync mapping', () => {
   it.each([
-    ['MangaDex', '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0'],
-    ['MangaKakalot', 'solo-leveling'],
-  ])("opens %s's MALSync id without searching", async (name, id) => {
+    ['MangaDex', new MangaDex().capabilities, '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0'],
+    ['MangaKakalot', new MangaKakalot().capabilities, 'solo-leveling'],
+    ['a registry provider declaring the MangaNato site', { malSyncSite: 'MangaNato' }, 'solo-leveling'],
+  ])("opens %s's MALSync id without searching", async (name, capabilities, id) => {
     serveAniList();
     const get = jest.spyOn(metaHttp, 'get').mockResolvedValue({ status: 200, data: malSync } as any);
-    const manga = provider(name);
+    const manga = provider(name, capabilities);
 
     const info = await new Anilist.Manga(manga).fetchMangaInfo('105398');
 
@@ -68,7 +72,7 @@ describe('Anilist.Manga MALSync mapping', () => {
   ])('searches both titles, asking MALSync once, when MALSync %s', async (_case, failure) => {
     serveAniList();
     const get = jest.spyOn(metaHttp, 'get').mockRejectedValue(failure);
-    const manga = provider('MangaDex');
+    const manga = provider('MangaDex', { malSyncSite: 'Mangadex' });
 
     const info = await new Anilist.Manga(manga).fetchMangaInfo('105398');
 
@@ -77,10 +81,13 @@ describe('Anilist.Manga MALSync mapping', () => {
     expect(info.chapters).toEqual([]);
   });
 
-  it('does not ask MALSync for a provider it does not list', async () => {
+  it.each([
+    ['MangaPill', undefined],
+    ['MangaDex', {}],
+  ])('does not ask MALSync for a provider that declares no MALSync site (%s)', async (name, capabilities) => {
     serveAniList();
     const get = jest.spyOn(metaHttp, 'get');
-    const manga = provider('MangaPill');
+    const manga = provider(name, capabilities);
 
     await new Anilist.Manga(manga).fetchMangaInfo('105398');
 

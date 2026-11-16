@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   META,
@@ -8,10 +8,10 @@ import {
   type IAnimeProvider,
   type IAnimeResult,
 } from 'react-native-consumet';
-import { useLatestCall } from '../hooks/useLatestCall';
+import { useDetail } from '../hooks/useDetail';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSearch } from '../hooks/useSearch';
-import { errorText, titleText } from '../media';
+import { titleText } from '../media';
 import { isDubSeparate } from '../providers';
 import { colors, PAD, R } from '../theme';
 import { DetailSheet, EpisodeGrid } from './DetailSheet';
@@ -37,7 +37,10 @@ type Props = {
  * episodes from fetchEpisodesListById (ani.zip titles and uniqueId), as apps do: its fetchAnimeInfo
  * would look the episodes up on the provider a second time.
  */
-async function fetchInfoAndEpisodes(provider: IAnimeProvider, id: string): Promise<[IAnimeInfo, IAnimeEpisode[]]> {
+async function fetchInfoAndEpisodes(
+  provider: IAnimeProvider,
+  { id }: IAnimeResult
+): Promise<[IAnimeInfo, IAnimeEpisode[]]> {
   if (provider instanceof META.Anilist) {
     return Promise.all([provider.fetchAnilistInfoById(id), provider.fetchEpisodesListById(id)]);
   }
@@ -45,25 +48,19 @@ async function fetchInfoAndEpisodes(provider: IAnimeProvider, id: string): Promi
   return [info, info.episodes ?? []];
 }
 
+const NO_DETAIL: [null, IAnimeEpisode[]] = [null, []];
+
 /** Search, a detail sheet with the episodes, and the player, for one anime provider at a time. */
 export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
   const search = useSearch<IAnimeResult>(provider, 'Anime');
   const player = usePlayer('Anime');
-  const infoCalls = useLatestCall();
-  const [selected, setSelected] = useState<IAnimeResult | null>(null);
-  const [info, setInfo] = useState<IAnimeInfo | null>(null);
-  const [episodes, setEpisodes] = useState<IAnimeEpisode[]>([]);
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [infoError, setInfoError] = useState<string | null>(null);
+  const sheet = useDetail(provider, fetchInfoAndEpisodes, 'Anime', 'Failed to load episodes');
+  const [info, episodes] = sheet.detail ?? NO_DETAIL;
   const [subOrDub, setSubOrDub] = useState(SubOrDub.SUB);
   const [episode, setEpisode] = useState<IAnimeEpisode | null>(null);
 
-  const closeInfo = useCallback(() => {
-    infoCalls.cancel();
-    setSelected(null);
-  }, [infoCalls]);
-
   const { setQuery } = search;
+  const { close: closeInfo } = sheet;
   const { close: closePlayer } = player;
   // Another provider (a switch, a reload, a META layer) starts from an empty screen.
   useEffect(() => {
@@ -73,31 +70,6 @@ export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
     setEpisode(null);
     setSubOrDub(SubOrDub.SUB);
   }, [provider, setQuery, closeInfo, closePlayer]);
-
-  const openInfo = useCallback(
-    async (item: IAnimeResult) => {
-      if (!provider) return;
-      const isCurrent = infoCalls.start();
-      setSelected(item);
-      setInfo(null);
-      setEpisodes([]);
-      setInfoError(null);
-      setLoadingInfo(true);
-      try {
-        const [found, list] = await fetchInfoAndEpisodes(provider, item.id);
-        if (!isCurrent()) return;
-        console.log('[Anime] detail info', found);
-        console.log('[Anime] episodes', list);
-        setInfo(found);
-        setEpisodes(list);
-      } catch (e) {
-        if (isCurrent()) setInfoError(errorText(e, 'Failed to load episodes'));
-      } finally {
-        if (isCurrent()) setLoadingInfo(false);
-      }
-    },
-    [provider, infoCalls]
-  );
 
   const play = (ep: IAnimeEpisode) => {
     if (!provider) return;
@@ -125,7 +97,7 @@ export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
               image={item.image}
               width={CARD_WIDTH}
               badge={item.type}
-              onPress={() => openInfo(item)}
+              onPress={() => sheet.open(item)}
             />
           )}
         />
@@ -134,8 +106,8 @@ export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
       )}
 
       <DetailSheet
-        visible={selected !== null}
-        title={titleText(info?.title ?? selected?.title)}
+        visible={sheet.selected !== null}
+        title={titleText(info?.title ?? sheet.selected?.title)}
         media={
           info && {
             title: titleText(info.title),
@@ -149,10 +121,10 @@ export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
             note: episodes.length > 0 ? `${episodes.length} Episodes` : undefined,
           }
         }
-        loading={loadingInfo}
+        loading={sheet.loading}
         loadingText="Loading episodes…"
-        error={infoError}
-        onRetry={() => selected && openInfo(selected)}
+        error={sheet.error}
+        onRetry={sheet.retry}
         onClose={closeInfo}
         fetchingStream={player.loading}
         descriptionTitle="Synopsis">

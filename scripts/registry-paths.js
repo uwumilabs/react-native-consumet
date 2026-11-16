@@ -3,9 +3,9 @@
  * reads these from here.
  *
  * The entry rules (kinds, key fields, id and version patterns) come from the library's schema,
- * src/utils/registry-schema.ts, loaded from its build in dist/ (`built`), so the scripts and
- * validateRegistry accept the same entries. Built modules the scripts load have no runtime
- * imports: the Sign registry workflow runs the scripts without installing packages.
+ * src/utils/registry-schema.ts, loaded from its source (`librarySource`), so the scripts and
+ * validateRegistry accept the same entries. The library modules the scripts load have no runtime
+ * imports: the Sign registry workflow runs the scripts without installing or building anything.
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,13 +19,12 @@ const SIGNING_KEYS_FILE = 'src/registry-signing-keys.json';
 const BUNDLE_DIR = 'dist/bundles';
 
 /**
- * A module of the library built into dist/ by `yarn build`, e.g. `built('utils/registry-schema')`.
- * Throws when it hasn't been built.
+ * One of the library's import-free modules, loaded from its TypeScript source (Node strips the
+ * types), e.g. `librarySource('utils/registry-schema')`. Needs no build and no installed package,
+ * so the signing workflow can run it next to the key.
  */
-function built(name, root = repoRoot) {
-  const file = path.join(root, 'dist', `${name}.js`);
-  if (!fs.existsSync(file)) throw new Error(`dist/${name}.js not found (run yarn build)`);
-  return require(file);
+function librarySource(name, root = repoRoot) {
+  return require(path.join(root, 'src', `${name}.ts`));
 }
 
 /** The raw GitHub URL of package.json's `repository`. */
@@ -40,7 +39,7 @@ function rawRepoUrl(root) {
 const readRegistry = (root = repoRoot) => JSON.parse(fs.readFileSync(path.join(root, REGISTRY_FILE), 'utf8'));
 
 /**
- * The entry rules, from the built schema:
+ * The entry rules, from the library's schema:
  *   kinds                       the registry's lists, `extensions` and `extractors`
  *   entriesOf(registry)         every entry as { kind, entry }
  *   entryKey(kind, entry)       `<kind>/<key>` with the entry's lowercase id or name, or undefined
@@ -48,10 +47,9 @@ const readRegistry = (root = repoRoot) => JSON.parse(fs.readFileSync(path.join(r
  *                               key or version can't form one
  *   parsePublishedFile(text)    { file, kind, key, version } of a path or URL ending in one
  *   publishedUrl(file)          the `main` URL of a published file, on the main branch
- * Throws when the schema hasn't been built.
  */
 function registryLayout(root = repoRoot) {
-  const { REGISTRY_KINDS, REGISTRY_KEY_PATTERN, REGISTRY_VERSION_PATTERN, registryKey } = built(
+  const { REGISTRY_KINDS, REGISTRY_KEY_PATTERN, REGISTRY_VERSION_PATTERN, registryKey } = librarySource(
     'utils/registry-schema',
     root
   );
@@ -100,7 +98,7 @@ module.exports = {
   SIGNATURE_FILE,
   SIGNING_KEYS_FILE,
   BUNDLE_DIR,
-  built,
+  librarySource,
   readRegistry,
   registryLayout,
   isBundleFile,

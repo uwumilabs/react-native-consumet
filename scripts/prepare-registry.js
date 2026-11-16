@@ -32,7 +32,14 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { repoRoot, REGISTRY_FILE, built, readRegistry, registryLayout, isBundleFile } = require('./registry-paths');
+const {
+  repoRoot,
+  REGISTRY_FILE,
+  librarySource,
+  readRegistry,
+  registryLayout,
+  isBundleFile,
+} = require('./registry-paths');
 const { checkBase, checkReferences } = require('./registry-retention');
 const { checkSignature } = require('./registry-signing');
 const {
@@ -67,7 +74,7 @@ const checkOnly = options.check;
 let schema;
 let layout;
 try {
-  schema = built('utils/registry-schema');
+  schema = librarySource('utils/registry-schema');
   layout = registryLayout();
 } catch (error) {
   fail(error.message);

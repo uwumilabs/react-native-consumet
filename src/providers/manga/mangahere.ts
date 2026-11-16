@@ -9,6 +9,7 @@ import {
   type IMangaChapterPage,
   type ProviderContext,
 } from '../../models';
+import { unpackScripts } from '../../extractors/packer';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber, parseVolumeNumber } from '../../utils/manga';
 import { MONTHS } from '../../utils/utils';
@@ -27,36 +28,6 @@ const UNITS: Record<string, number> = {
 };
 // How many chapterfun.ashx requests run at once while collecting a chapter's page images.
 const PAGE_REQUESTS_AT_ONCE = 4;
-
-/** Undoes a JavaScript string literal's backslash escapes (`\'` → `'`). */
-const unescapeJs = (text: string) =>
-  text.replace(/\\(.)/g, (_, char: string) => (char === 'n' ? '\n' : char === 'r' ? '\r' : char === 't' ? '\t' : char));
-
-/**
- * Runs Dean Edwards' packer (`eval(function(p,a,c,k,e,d){...}('payload',a,c,'k|e|y|s'.split('|'),0,{}))`)
- * in reverse without evaluating any code: every word of the payload is looked up in the keyword list.
- * Undefined when `source` holds no packed script.
- */
-function unpackPackedScript(source: string): string | undefined {
-  const match =
-    /\}\s*\(\s*'((?:[^'\\]|\\[\s\S])*)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'((?:[^'\\]|\\[\s\S])*)'\.split\(\s*'\|'\s*\)/.exec(
-      source
-    );
-  if (!match) return undefined;
-  const radix = Number(match[2]);
-  const count = Number(match[3]);
-  const keywords = unescapeJs(match[4]!).split('|');
-  const encode = (value: number): string => {
-    const rest = value % radix;
-    return (
-      (value < radix ? '' : encode(Math.floor(value / radix))) +
-      (rest > 35 ? String.fromCharCode(rest + 29) : rest.toString(36))
-    );
-  };
-  const words = new Map<string, string>();
-  for (let index = 0; index < count; index++) words.set(encode(index), keywords[index] || encode(index));
-  return unescapeJs(match[1]!).replace(/\b\w+\b/g, (word) => words.get(word) ?? word);
-}
 
 /** The strings inside a JavaScript array literal's quotes (`'a','b'` or `"a","b"`). */
 const quotedStrings = (list: string, quote: "'" | '"') =>
@@ -176,11 +147,7 @@ export class MangaHere extends MangaParser {
     const notice = $('p.detail-block-content').text().trim();
     if (/Dear user|blocked/.test(notice)) throw new Error(notice);
 
-    const scripts = $('script')
-      .map((_, el) => $(el).html() ?? '')
-      .get()
-      .filter((script) => script.includes('eval(function(p,a,c,k,e,d)'))
-      .map((script) => unpackPackedScript(script) ?? '');
+    const scripts = unpackScripts(html);
 
     // The long-strip (webtoon) reader lists every image in one packed script.
     const strip = scripts.map((script) => /newImgs\s*=\s*\[([^\]]*)\]/.exec(script)?.[1]).find(Boolean);
@@ -263,7 +230,7 @@ export class MangaHere extends MangaParser {
         'Referer': chapterUrl,
         'X-Requested-With': 'XMLHttpRequest',
       });
-      const script = unpackPackedScript(text) ?? text;
+      const script = unpackScripts(text)[0] ?? text;
       const pix = /var\s+pix\s*=\s*"([^"]*)"/.exec(script)?.[1] ?? '';
       const list = /var\s+pvalue\s*=\s*\[([^\]]*)\]/.exec(script)?.[1];
       // The first file is joined to a literal base (the same as pix so far), the others to pix.

@@ -98,8 +98,8 @@ export const MOVIE_PROVIDERS = providerDefs(MOVIES, subclassOf<IMovieProvider>(M
 });
 
 /**
- * Whether the provider lists sub and dub as separate entries (a provider factory's
- * `isDubAvailableSeparately`), so the app offers a SUB / DUB toggle. META.Anilist passes the choice
+ * Whether the provider takes a SubOrDub argument (a provider factory's `isDubAvailableSeparately`),
+ * so the app offers a SUB / DUB toggle. META.Anilist passes the choice
  * on to the provider it wraps, so that provider decides.
  */
 export const isDubSeparate = (provider: object): boolean =>

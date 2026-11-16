@@ -119,7 +119,7 @@ const extractor = await extractorManager.loadExtractor('megacloud');
 const sources = await extractor.extract(new PolyURL(embedUrl), referer);
 ```
 
-`loadExtractor` takes an extractor or server name and always returns an extractor instance: the registry version, or, when the registry has none or its copy can't be used, the bundled one built with the manager's context. The server names of one extractor share one load (`megacloud-hd-1`, `MegaCloud` and `upcloud` all load MegaCloud once), and `invalidate(name)` forgets it.
+`loadExtractor` takes an extractor or server name and always returns an extractor instance: the registry version, or, when the registry has none or its copy can't be used, the bundled one built with the manager's context. The server names of one extractor share one load (`megacloud-hd-1` and `MegaCloud` load MegaCloud once), and `invalidate(name)` forgets it.
 
 Providers loaded through a `ProviderManager` share one `ExtractorManager`, built from the same registry. When a provider calls `ctx.extractors.MegaPlay()`, the call runs the registry version of MegaPlay, hash-checked and fetched once, then cached. If the registry code can't be fetched or fails its hash, the bundled MegaPlay runs instead. An extractor that is in neither throws `Extractor '<name>' not found in the registry or the bundled extractors`.
 
@@ -253,7 +253,7 @@ const manager = new ProviderManager((await downloadRegistry()) ?? ExtensionRegis
 | `MALFORMED_SIGNATURE` | The signature file isn't 1 to 4 lines of 128-character hex signatures                                      |
 | `SIGNATURE_MISMATCH`  | No signature verifies: the registry changed after it was signed, or a key this app doesn't trust signed it |
 
-- **No key is bundled yet.** The trusted keys are `REGISTRY_SIGNING_KEYS` (from `src/registry-signing-keys.json`), and the list is empty until a maintainer generates the first key and a release bundles it. Until then every downloaded registry fails with `NO_SIGNING_KEYS`, so keep using the bundled `ExtensionRegistry`.
+- **Trusted keys:** `REGISTRY_SIGNING_KEYS` (from `src/registry-signing-keys.json`), bundled with every release since 2.0.0.
 - **Right after a registry change**, the signature is stale until CI re-signs it, so verification fails with `SIGNATURE_MISMATCH`. Keep the previous registry and try again later.
 - **Self-hosted registries:** pass your own keys with `parseSignedRegistry(text, signature, { publicKeys: [...REGISTRY_SIGNING_KEYS, yourKey] })`. `verifyRegistrySignature(text, signature, publicKeys?)` checks a signature without parsing, and returns the key that verified it.
 
@@ -319,10 +319,10 @@ However, `ExtractorManager` is useful for:
 - When you want to use custom extractor logic for complete control over the extraction process.
 - Directly accessing and testing specific extractors.
 
-Server names map to extractors through the registry. `extractBaseExtractorName(serverName)` returns the longest registry extractor `name` or alias that the server name starts with, lowercased: `megacloud-hd-1` → `megacloud`, `upcloud` → `megacloud` (an alias), and a new extractor's `newhost-hd-1` → `newhost` as soon as its registry entry exists. Declare aliases in the extractor's registry entry:
+Server names map to extractors through the registry. `extractBaseExtractorName(serverName)` returns the longest registry extractor `name` or alias that the server name starts with, lowercased: `megacloud-hd-1` → `megacloud`, and a new extractor's `newhost-hd-1` → `newhost` as soon as its registry entry exists. An alias maps other server-name prefixes to the same extractor. Declare aliases in the extractor's registry entry:
 
 ```json
-{ "name": "MegaCloud", "aliases": ["upcloud", "akcloud"], "version": "1.3.1", "main": "…", "sha256": "…" }
+{ "name": "NewHost", "aliases": ["newhost-mirror"], "version": "1.0.0", "main": "…", "sha256": "…" }
 ```
 
 Apps hand a server's URL to an extractor only when the provider's registry entry has `haveMultiServers` set and `isSourceDirect` unset. Otherwise, call the provider's `fetchEpisodeSources` with the server name.
@@ -716,7 +716,7 @@ class ExtractorManager {
     integrityOptions?: IntegrityOptions
   );
 
-  // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1', 'upcloud').
+  // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1').
   // Always an instance: the registry version, or the bundled one built with this manager's context.
   loadExtractor(extractorId: string): Promise<IVideoExtractor>;
   // The factory behind loadExtractor, to build the extractor with another context

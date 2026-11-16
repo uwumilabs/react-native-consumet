@@ -141,8 +141,8 @@ static void RCConsumetReadCookies(
 @class RCConsumetWebTask;
 
 /// Called once, when the main document first finishes loading. Settles the
-/// task with -resolve: or -rejectWithCode:message:, or calls -keepOpen while it
-/// polls the page.
+/// task with -resolve: or -rejectWithCode:message:, at once or after polling
+/// the page.
 typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
                                         WKWebView *webView);
 
@@ -158,7 +158,9 @@ typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
  *   never reach the navigation delegate.
  * - A web content process that terminates rejects with WEBVIEW_ERROR,
  *   whenever it happens.
- * - No settled promise within kWebViewTimeout of loading rejects with TIMEOUT.
+ * - No settled promise within kWebViewTimeout of loading rejects with TIMEOUT,
+ *   whatever onFinish is still waiting for (a page script that never returns,
+ *   say).
  * A task keeps itself alive until it settles, then releases its WebView.
  */
 @interface RCConsumetWebTask : NSObject <WKNavigationDelegate>
@@ -178,10 +180,6 @@ typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
          method:(NSString *)method
         headers:(nullable NSDictionary<NSString *, NSString *> *)headers
            body:(nullable NSString *)body;
-/// Keeps the task open after the page finished loading, for a caller that
-/// polls the page (a challenge page that turns into the real page once
-/// solved), until it settles or the deadline from loading passes.
-- (void)keepOpen;
 - (void)resolve:(id)value;
 - (void)rejectWithCode:(NSString *)code message:(NSString *)message;
 @end
@@ -202,9 +200,7 @@ static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
   WKWebView *_webView;
   UIWindow *_offscreenWindow;
   NSTimer *_timer;
-  NSDate *_startedAt;
   BOOL _pageFinished;
-  BOOL _keptOpen;
 }
 
 - (instancetype)initWithResolve:(RCTPromiseResolveBlock)resolve
@@ -259,8 +255,11 @@ static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
   _offscreenWindow.hidden = NO;
   [_offscreenWindow addSubview:_webView];
 
-  _startedAt = [NSDate date];
-  [self _scheduleTimeoutIn:kWebViewTimeout];
+  _timer = [NSTimer scheduledTimerWithTimeInterval:kWebViewTimeout
+                                            target:self
+                                          selector:@selector(_didTimeout)
+                                          userInfo:nil
+                                           repeats:NO];
 
   // Load once the Cookie header's cookies are in the store.
   NSArray<NSHTTPCookie *> *seedCookies = [self _cookiesFromHeader:cookieHeader
@@ -310,23 +309,6 @@ static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
   return cookies;
 }
 
-- (void)_scheduleTimeoutIn:(NSTimeInterval)seconds {
-  [_timer invalidate];
-  _timer = [NSTimer scheduledTimerWithTimeInterval:MAX(seconds, 0)
-                                            target:self
-                                          selector:@selector(_didTimeout)
-                                          userInfo:nil
-                                           repeats:NO];
-}
-
-- (void)keepOpen {
-  if (_isSettled || _keptOpen)
-    return;
-  _keptOpen = YES;
-  [self _scheduleTimeoutIn:kWebViewTimeout -
-                           [[NSDate date] timeIntervalSinceDate:_startedAt]];
-}
-
 - (void)_didTimeout {
   [self rejectWithCode:kTimeoutCode message:@"WebView request timed out"];
 }
@@ -371,8 +353,6 @@ static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
   if (_pageFinished)
     return;
   _pageFinished = YES;
-  [_timer invalidate];
-  _timer = nil;
   RCConsumetWebTaskFinish onFinish = self.onFinish;
   if (onFinish)
     onFinish(self, webView);
@@ -443,7 +423,6 @@ static void RCConsumetCaptureWhenReady(RCConsumetWebTask *task,
                 return;
               BOOL challenge = [result isEqual:@"challenge"];
               if (challenge || [result isEqual:@"loading"]) {
-                [t keepOpen];
                 dispatch_after(RCConsumetAfter(kPollInterval),
                                dispatch_get_main_queue(), ^{
                                  WKWebView *view = wv;

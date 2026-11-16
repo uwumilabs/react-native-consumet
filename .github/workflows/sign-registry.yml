@@ -58,8 +58,9 @@ jobs:
         with:
           ref: main
 
-      # Nothing is installed: the signing scripts only use Node's built-in modules and the
-      # committed dist/ build of the signature format, so no dependency code runs next to the key.
+      # Nothing is installed or built: the signing scripts use Node's built-in modules and load the
+      # library's import-free signature format from its TypeScript source (Node 24 strips the
+      # types), so no dependency code runs next to the key.
       - name: Setup Node.js
         if: steps.key.outputs.present == 'true'
         uses: actions/setup-node@v4

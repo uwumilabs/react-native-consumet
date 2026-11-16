@@ -172,11 +172,7 @@ To publish new versions, run the following:
 yarn release
 ```
 
-CI doesn't run the live suites, so run the ones for providers whose request path changed since the last release before you publish. For the next release that includes MangaDex and MangaKakalot, whose requests now go through the library's `defaultAxios`:
-
-```sh
-LIVE_TESTS=1 npx jest test/manga/mangadex test/manga/mangakakalot
-```
+CI doesn't run the live suites, so run the ones for providers whose request path changed since the last release before you publish, e.g. `yarn build && LIVE_TESTS=1 npx jest --runInBand test/manga/mangadex`.
 
 ### Scripts
 
@@ -186,7 +182,7 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn typecheck`: type-check files with TypeScript.
 - `yarn lint`: lint files with ESLint (no fixes).
 - `yarn lint:fix`: lint files with ESLint and apply fixes.
-- `yarn build`: build `dist/` (not committed), including one bundle per registry entry.
+- `yarn build`: build one bundle per registry entry into `dist/bundles/` (not committed).
 - `yarn build:registry`: `yarn build`, then publish new registry versions, refresh the registry's hashes and regenerate the example app's local dist map (`scripts/prepare-registry.js`). The pre-commit hook and the release run it.
 - `yarn registry:check`: check the registry against `dist/` and the published files under `registry/`, check that the local dist map is current, and note whether the registry's signature is current.
 - `yarn registry:prune`: list published registry versions the retention rule allows deleting (`--delete` removes them).

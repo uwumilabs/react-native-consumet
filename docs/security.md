@@ -17,7 +17,7 @@ So the only security boundary is **which code gets to run**. Everything below is
 | Code injection through the registry                     | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below)                                           |
 | A push to `main` changing what a published version runs | Rebuilding the bundles                                                                     | Immutable versioned files (below)                                       |
 | A malformed registry                                    | A bad download, a hand-edited file, or a registry format newer than the app                | Validation that fails closed (below)                                    |
-| A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | Signed registry downloads (below), once a release bundles a signing key |
+| A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | Signed registry downloads (below)                                       |
 
 ## What the library enforces
 
@@ -35,7 +35,7 @@ Before running any code, `ProviderManager` and `ExtractorManager` compare `SHA25
 import { IntegrityError } from 'react-native-consumet';
 
 try {
-  await providerManager.executeProviderCode(code, entry.factoryName, entry);
+  await providerManager.executeProviderCode(code, entry);
 } catch (e) {
   if (e instanceof IntegrityError) {
     // e.code: 'INTEGRITY_MISMATCH' | 'INTEGRITY_MISSING' | 'INVALID_IDENTIFIER'
@@ -98,7 +98,6 @@ These are tracked in the roadmap and not solved yet:
 
 - **Library versions before 2.0.0 are not supported.** Their registries point at files under `dist/` on `main`, which is no longer committed, and versions up to 1.5.0 never verified hashes. Update the library.
 - **Immutability is enforced by the publish script and CI, not by GitHub.** Published files under `registry/` live on the `main` branch. CI's `registry` job fails a change that edits one, but a push to `main` that skips CI isn't stopped.
-- **No registry signing key is bundled yet.** `REGISTRY_SIGNING_KEYS` stays empty until a maintainer runs `yarn registry:keygen` and a release ships the key. Until then a downloaded registry can't be verified: `parseSignedRegistry` rejects every one with `NO_SIGNING_KEYS`, so use the bundled registry.
 - **Signed registries can be rolled back** to an older signed version (see [Signed registry downloads](#6-signed-registry-downloads)).
 
 ## Publishing and checking the registry
@@ -118,7 +117,7 @@ These checks also run automatically:
 
 ## Guidance for consumers
 
-1. **Prefer a bundled registry.** Accept a downloaded one only through `parseSignedRegistry`, and keep the previous registry when it throws. Until a release bundles a signing key, that means the bundled registry.
+1. **Prefer a bundled registry.** Accept a downloaded one only through `parseSignedRegistry`, and keep the previous registry when it throws.
 2. **Verify cached code** with `verifyExtensionCode` when you store it, and handle `IntegrityError` by re-downloading.
 3. **Always ship `sha256`** in custom registries; don't rely on `allowUnhashed`.
 4. **Use HTTPS URLs** for all code.

@@ -2,7 +2,11 @@ import BaseParser from './base-parser';
 import type { IAnimeInfo, IAnimeProvider, IAnimeResult, ISearch, ISource, IEpisodeServer } from './types';
 
 abstract class AnimeParser extends BaseParser implements IAnimeProvider {
-  /** `true` when the site lists sub and dub as separate entries */
+  /**
+   * `true` when fetchEpisodeServers and fetchEpisodeSources take a `SubOrDub` argument that picks
+   * the audio (sub by default), so an app can offer a sub/dub toggle. Sub and dub share the same
+   * episode ids.
+   */
   protected readonly isDubAvailableSeparately: boolean = false;
 
   abstract override search(query: string, ...args: any[]): Promise<ISearch<IAnimeResult>>;

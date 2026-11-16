@@ -278,5 +278,3 @@ export class ProviderManager {
     );
   }
 }
-
-export default ProviderManager;

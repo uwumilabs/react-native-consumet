@@ -3,7 +3,7 @@ export type ProviderType = 'anime' | 'movies' | 'manga' | 'light-novels' | 'meta
 export interface ExtractorInfo {
   /** name of the extractor like MegaCloud; server names starting with it resolve to this extractor */
   name: string;
-  /** Other server name prefixes served by this extractor, e.g. MegaCloud: ['upcloud', 'akcloud'] */
+  /** Other server name prefixes served by this extractor, e.g. ['newhost-mirror'] for NewHost */
   aliases?: string[];
   /** version of the extractor */
   version: string;

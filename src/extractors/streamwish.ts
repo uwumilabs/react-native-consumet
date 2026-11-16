@@ -35,13 +35,13 @@ export function StreamWish(ctx: ExtractorContext) {
     const link = player?.match(M3U8_URL)?.[0];
     if (!player || !link) throw new Error('[StreamWish] No m3u8 link found');
 
-    const subtitleMatches = player.match(/{file:"([^"]+)",(label:"([^"]+)",)?kind:"(thumbnails|captions)"/g) ?? [];
-    const subtitles: ISubtitle[] = subtitleMatches.map((sub) => {
-      const lang = sub.match(/label:"([^"]+)"/)?.[1] ?? '';
-      const file = sub.match(/file:"([^"]+)"/)?.[1] ?? '';
-      const kind = sub.match(/kind:"([^"]+)"/)?.[1] ?? '';
-      return kind.includes('thumbnail') ? { lang: kind, url: `https://streamwish.com${file}` } : { lang, url: file };
-    });
+    // The player's tracks also list its seek-bar thumbnails (kind:"thumbnails"), which aren't subtitles.
+    const subtitles: ISubtitle[] = (player.match(/{file:"[^"]+",(?:label:"[^"]+",)?kind:"captions"/g) ?? []).map(
+      (track) => ({
+        lang: track.match(/label:"([^"]+)"/)?.[1] ?? '',
+        url: track.match(/file:"([^"]+)"/)![1]!,
+      })
+    );
 
     const master = new PolyURL(link);
     master.searchParams.set('i', '0.4');

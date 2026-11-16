@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
@@ -22,13 +21,13 @@ import com.facebook.react.bridge.Promise
  *
  * The promise settles exactly once:
  * - [onPageFinished] runs once, when the main document first finishes loading. Load errors after
- *   that are ignored and the callback settles the promise with [resolve] or [reject], or calls
- *   [keepOpen] while it polls the page (a challenge page that turns into the real page once
- *   solved).
+ *   that are ignored, and the callback settles the promise with [resolve] or [reject], at once or
+ *   after polling the page (a challenge page that turns into the real page once solved).
  * - A main-frame load error rejects with [WEBVIEW_ERROR]. Failed sub-resources (images, scripts,
  *   iframes) are ignored, as WKWebView ignores them.
  * - A renderer process that dies rejects with [WEBVIEW_ERROR], whenever it happens.
- * - No settled promise within [TIMEOUT_MS] of [start] rejects with [TIMEOUT].
+ * - No settled promise within [TIMEOUT_MS] of [start] rejects with [TIMEOUT], whatever the
+ *   callback is still waiting for (a page script that never returns, say).
  */
 internal class WebViewTask(
     context: Context,
@@ -45,7 +44,6 @@ internal class WebViewTask(
     private val handler = Handler(Looper.getMainLooper())
     private val timeout = Runnable { reject(TIMEOUT, "WebView request timed out") }
     private var pageFinished = false
-    private var startedAt = 0L
 
     var isSettled = false
         private set
@@ -88,7 +86,6 @@ internal class WebViewTask(
                 finishedUrl = loadedUrl
                 if (pageFinished) return
                 pageFinished = true
-                handler.removeCallbacks(timeout)
                 onPageFinished?.invoke(view)
             }
 
@@ -110,19 +107,8 @@ internal class WebViewTask(
                 return true
             }
         }
-        startedAt = SystemClock.uptimeMillis()
-        handler.postAtTime(timeout, startedAt + TIMEOUT_MS)
+        handler.postDelayed(timeout, TIMEOUT_MS)
         load(webView)
-    }
-
-    /**
-     * Keeps the task open after the page finished loading, for a caller that polls the page, until
-     * it settles or the [TIMEOUT_MS] deadline from [start] passes.
-     */
-    fun keepOpen() {
-        if (isSettled) return
-        handler.removeCallbacks(timeout)
-        handler.postAtTime(timeout, startedAt + TIMEOUT_MS)
     }
 
     fun resolve(value: Any?) = settle { promise.resolve(value) }

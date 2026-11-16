@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Post-processes dist/ so provider/extractor code is safe to run through
+ * Post-processes the registry bundles (dist/bundles) so they are safe to run through
  * `new Function` on Hermes.
  *
  * Hermes bug: in runtime-compiled code, the first `await` inside an async arrow
@@ -11,18 +11,15 @@
  * Hermes also compiles runtime code without block scoping: `let` and `const` act like `var`, so
  * closures created in a loop share one binding. esbuild's CommonJS export getters are built in
  * such a loop, and on Hermes every getter of a multi-export bundle returned the last export (the
- * NetflixMirror, PrimeMirror and DisneyMirror bundle ran PrimeMirror for all three). Registry
- * bundles (dist/bundles), the code that runs through `new Function`, therefore also get block
- * scoping compiled to `var`.
+ * NetflixMirror, PrimeMirror and DisneyMirror bundle ran PrimeMirror for all three). The bundles
+ * therefore also get block scoping compiled to `var`.
  */
 const fs = require('fs');
 const path = require('path');
 const babel = require('@babel/core');
 const { repoRoot, BUNDLE_DIR } = require('./registry-paths');
 
-const distDir = path.join(repoRoot, 'dist');
 const bundlesDir = path.join(repoRoot, BUNDLE_DIR);
-const isBundle = (file) => file.startsWith(bundlesDir + path.sep);
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -32,44 +29,19 @@ function walk(dir) {
   });
 }
 
-const hasNonSimpleParams = (fn) => fn.params.some((p) => p.type !== 'Identifier');
-
 let rewritten = 0;
 
-for (const file of walk(distDir)) {
+for (const file of walk(bundlesDir)) {
   const code = fs.readFileSync(file, 'utf8');
-  const ast = babel.parseSync(code, { babelrc: false, configFile: false, sourceType: 'script' });
-  const bundle = isBundle(file);
-  let needsRewrite = bundle;
-  if (!needsRewrite)
-    babel.traverse(ast, {
-      Function(p) {
-        if (hasNonSimpleParams(p.node)) {
-          needsRewrite = true;
-          p.stop();
-        }
-      },
-    });
-  if (!needsRewrite) continue;
-
-  const mapFile = `${file}.map`;
-  const inputSourceMap = fs.existsSync(mapFile) ? JSON.parse(fs.readFileSync(mapFile, 'utf8')) : undefined;
-
-  const result = babel.transformFromAstSync(ast, code, {
+  const result = babel.transformSync(code, {
     babelrc: false,
     configFile: false,
     filename: file,
     sourceType: 'script',
-    plugins: bundle
-      ? ['@babel/plugin-transform-parameters', '@babel/plugin-transform-block-scoping']
-      : ['@babel/plugin-transform-parameters'],
-    sourceMaps: Boolean(inputSourceMap),
-    inputSourceMap,
+    plugins: ['@babel/plugin-transform-parameters', '@babel/plugin-transform-block-scoping'],
   });
-
   fs.writeFileSync(file, result.code);
-  if (inputSourceMap && result.map) fs.writeFileSync(mapFile, JSON.stringify(result.map));
   rewritten++;
 }
 
-console.log(`hermes-safe-dist: rewrote ${rewritten} file(s)`);
+console.log(`hermes-safe-dist: rewrote ${rewritten} bundle(s)`);

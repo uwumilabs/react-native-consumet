@@ -3,7 +3,7 @@ import {
   createNetflixMirror,
   createPrimeMirror,
 } from '../../src/providers/movies/netflixmirror/create-netflixmirror';
-import createProviderContext from '../../src/utils/create-provider-context';
+import { createProviderContext } from '../../src/utils/create-provider-context';
 
 // React Native attaches its native cookie jar to requests unless withCredentials is false, and on
 // Android the jar replaces the Cookie headers NetMirror sets itself (a stored session cookie then

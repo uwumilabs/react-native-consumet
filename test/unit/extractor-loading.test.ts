@@ -1,6 +1,6 @@
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
-import createProviderContext from '../../src/utils/create-provider-context';
+import { createProviderContext } from '../../src/utils/create-provider-context';
 import { defaultExtractors } from '../../src/utils/create-extractor-context';
 import {
   extensionEntry,

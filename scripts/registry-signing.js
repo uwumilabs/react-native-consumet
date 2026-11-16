@@ -11,13 +11,13 @@ const { Buffer } = require('buffer');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { repoRoot, REGISTRY_FILE, SIGNATURE_FILE, SIGNING_KEYS_FILE, built } = require('./registry-paths');
+const { repoRoot, REGISTRY_FILE, SIGNATURE_FILE, SIGNING_KEYS_FILE, librarySource } = require('./registry-paths');
 
 /** The GitHub environment holding the signing secrets, and the secrets (one private key each). */
 const SIGNING_ENVIRONMENT = 'registry-signing';
 const SIGNING_SECRETS = ['REGISTRY_SIGNING_KEY', 'REGISTRY_SIGNING_KEY_2'];
 
-const signatureFormat = (root = repoRoot) => built('utils/registry-signature-format', root);
+const signatureFormat = (root = repoRoot) => librarySource('utils/registry-signature-format', root);
 
 // DER headers that wrap a raw 32-byte ed25519 key for Node's crypto
 const SPKI_HEADER = Buffer.from('302a300506032b6570032100', 'hex');

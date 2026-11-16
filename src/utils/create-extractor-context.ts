@@ -46,5 +46,3 @@ export const defaultExtractors: typeof BundledExtractors = { ...BundledExtractor
 
 /** `createExtractorContext()`: the library's axios, cheerio and user agent. */
 export const defaultExtractorContext: ExtractorContext = createExtractorContext();
-
-export default createExtractorContext;

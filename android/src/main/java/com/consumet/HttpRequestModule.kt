@@ -11,6 +11,7 @@ import android.webkit.WebView
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableNativeMap
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -85,13 +86,21 @@ internal class HttpRequestModule(private val context: Context) {
             } catch (e: JSONException) {
                 null
             }
+
+        /**
+         * One value per header name, in the case the response first used it. A header the response
+         * repeats (Set-Cookie, say) has its values joined with ", ", as NSHTTPURLResponse joins them
+         * on iOS.
+         */
+        internal fun joinedHeaders(headers: Headers): Map<String, String> =
+            headers.names().associateWith { headers.values(it).joinToString(", ") }
     }
 
     /**
      * Loads [url] in a hidden WebView. Resolves `{ url, html, cookies, status: "success" }` once the
      * page has loaded, with the URL of the page that finished last and its cookies. Rejects with
      * WEBVIEW_ERROR when the main document fails to load, the page can't be read or the renderer
-     * dies, and with TIMEOUT after 30 seconds.
+     * dies, and with TIMEOUT when it hasn't settled 30 seconds after the call.
      */
     fun makeGetRequestWithWebView(url: String, headers: ReadableMap?, promise: Promise) {
         Log.d(TAG, "makeGetRequestWithWebView called with url: $url")
@@ -209,7 +218,6 @@ internal class HttpRequestModule(private val context: Context) {
                 if (state == "challenge" && !afterChallenge) {
                     Log.d(TAG, "Cloudflare challenge page; waiting for the page it turns into")
                 }
-                task.keepOpen()
                 val sawChallenge = afterChallenge || state == "challenge"
                 handler.postDelayed({ captureWhenReady(task, view, sawChallenge, capture) }, POLL_MS)
             } else if (afterChallenge) {
@@ -255,7 +263,7 @@ internal class HttpRequestModule(private val context: Context) {
                 val result = HttpClients.post.newCall(request.build()).execute().use { response ->
                     Log.d(TAG, "POST request completed with status: ${response.code}")
                     val responseHeaders = WritableNativeMap()
-                    response.headers.names().forEach { name -> responseHeaders.putString(name, response.header(name)) }
+                    for ((name, value) in joinedHeaders(response.headers)) responseHeaders.putString(name, value)
                     WritableNativeMap().apply {
                         putInt("statusCode", response.code)
                         putString("body", response.body?.string() ?: "")

@@ -106,7 +106,7 @@ describe('Anilist.Manga.fetchMangaInfo chapters (META-12)', () => {
         },
       },
     });
-    const provider = { ...fakeMangaProvider(), name: 'MangaDex' };
+    const provider = { ...fakeMangaProvider(), name: 'MangaDex', capabilities: { malSyncSite: 'Mangadex' } };
 
     const info = await new Anilist.Manga(provider).fetchMangaInfo('105398');
 

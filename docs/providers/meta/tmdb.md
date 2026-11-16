@@ -86,7 +86,7 @@ tmdb.search('the flash').then((data) => {
 });
 ```
 
-returns a promise which resolves into an array of movies and TV shows. (_[`Promise<ISearch<IMovieResult | IAnimeResult>>`](../../../src/models/types.ts)_) The whole query is sent, URL-encoded, so it may contain `&`, `#` or spaces. `releaseDate` is the year from TMDB's date, or unset when TMDB has none.\
+returns a promise which resolves into an array of movies and TV shows; the people TMDB's search also finds are left out. (_[`Promise<ISearch<IMovieResult | IAnimeResult>>`](../../../src/models/types.ts)_) The whole query is sent, URL-encoded, so it may contain `&`, `#` or spaces. `releaseDate` is the year from TMDB's date, or unset when TMDB has none.\
 output:
 
 ```js

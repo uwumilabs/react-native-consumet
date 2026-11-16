@@ -190,10 +190,11 @@ describe('class-based providers use the context axios (PROV-2)', () => {
     for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
   });
 
-  it('MultiStream takes (ctx, customBaseURL) and still takes (customBaseURL)', () => {
+  it('MultiStream takes (ctx, customBaseURL) and still takes (customBaseURL), and ignores the base URL', () => {
+    // It has no site of its own: titles come from TMDB, streams from several embed sites.
     const { ctx } = stubProviderContext();
-    expect(new MultiStream(ctx, 'https://mirror.test').toString.baseUrl).toBe('https://mirror.test');
-    expect(new MultiStream('mirror.test').toString.baseUrl).toBe('http://mirror.test');
-    expect(new MultiStream().toString.baseUrl).toBe('https://rivestream.org');
+    expect(new MultiStream(ctx, 'https://mirror.test').toString.baseUrl).toBe('https://www.themoviedb.org');
+    expect(new MultiStream('mirror.test').toString.baseUrl).toBe('https://www.themoviedb.org');
+    expect(new MultiStream().toString.baseUrl).toBe('https://www.themoviedb.org');
   });
 });

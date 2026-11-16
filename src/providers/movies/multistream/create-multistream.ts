@@ -9,10 +9,12 @@ import type {
 } from '../../../models';
 import {
   TMDB_INFO_APPEND,
+  TMDB_LOGO,
   mapTmdbInfo,
   mapTmdbResult,
   resolveTmdbApiKey,
   tmdbImage,
+  tmdbMultiSearch,
   tmdbPage,
   tmdbUrl,
 } from '../../../utils/tmdb';
@@ -20,13 +22,14 @@ import { getMultiServers, getMultiSources, parseId, toEpisodeId, toMediaId } fro
 
 /**
  * MultiStream: titles from TMDB, streams from several embed sites (111movies, vidsrc, videasy,
- * hexa), each of whose servers is listed.
+ * hexa), each of whose servers is listed. It has no site of its own: `baseUrl` is TMDB's.
  * @param ctx provider context; requests go through its axios
- * @param customBaseURL site URL to use instead of the default (optional)
+ * @param _customBaseURL ignored: MultiStream reads TMDB and the embed sites, none at a base URL an
+ * app could replace. Kept so the TMDB key stays the third argument.
  * @param tmdbApiKey your TMDB API key; without one a shared key is used, with a warning (see `META.TMDB`)
  */
-export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, tmdbApiKey?: string) {
-  const { axios, createCustomBaseUrl, enums } = ctx;
+export function createMultiStream(ctx: ProviderContext, _customBaseURL?: string, tmdbApiKey?: string) {
+  const { axios, enums } = ctx;
   const { TvType } = enums;
   const apiKey = resolveTmdbApiKey(tmdbApiKey, 'MOVIES.MultiStream');
 
@@ -34,24 +37,22 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
     name: 'MultiStream',
     languages: 'en',
     classPath: 'MOVIES.MultiStream',
-    logo: 'https://himovies.sx/images/group_1/theme_1/favicon.png',
-    baseUrl: createCustomBaseUrl('https://rivestream.org', customBaseURL),
+    logo: TMDB_LOGO,
+    baseUrl: 'https://www.themoviedb.org',
     isNSFW: false,
     isWorking: true,
   };
 
   const supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES]);
 
-  /** Search TMDB. Ids are `<tmdbId>$movie` or `<tmdbId>$tv`; shows carry their season count. */
+  /**
+   * Search TMDB for movies and shows (not people). Ids are `<tmdbId>$movie` or `<tmdbId>$tv`; shows
+   * carry their season count.
+   */
   const search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
-    const { data } = await axios.get(
-      tmdbUrl(
-        `/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`,
-        apiKey
-      )
-    );
+    const found = await tmdbMultiSearch(async (path) => (await axios.get(tmdbUrl(path, apiKey))).data, query, page);
     const results = await Promise.all(
-      (data?.results ?? []).map(async (result: any): Promise<IMovieResult> => {
+      found.results.map(async (result: any): Promise<IMovieResult> => {
         let seasons: number | undefined;
         if (result.media_type === 'tv') {
           try {
@@ -64,7 +65,7 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
         return { ...mapTmdbResult(result), id: toMediaId(result.id, result.media_type), seasons };
       })
     );
-    return tmdbPage(data, page, results);
+    return tmdbPage(found.data, page, results);
   };
 
   /** @param id a MultiStream media id from `search` (`1071585$movie`, `1399$tv`) */
@@ -121,7 +122,8 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
   /**
    * @param episodeId an episode id from `fetchMediaInfo`
    * @param _mediaId unused: the episode id names the title
-   * @param server a server name from `fetchEpisodeServers` (default: the first)
+   * @param server a server name from `fetchEpisodeServers` (`videasy-neon-org`), or the start of one;
+   * only the sites it can name are asked. Every site is asked when it is omitted, for the first server.
    */
   const fetchEpisodeSources = (episodeId: string, _mediaId?: string, server?: string): Promise<ISource> =>
     getMultiSources(ctx, episodeId, server);

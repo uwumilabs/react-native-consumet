@@ -31,11 +31,15 @@ is public), and say in the final message what was added.
 | `yarn test:live` | Also the live suites (`test/anime`, `test/manga`, ...), which hit real sites; in band, since jest workers crash serialising axios errors |
 | `yarn typecheck` | `tsc` over the library and `apps/src` (ts-jest type-checks the tests as they run) |
 | `yarn lint` | ESLint (it ignores `apps/`; lint those files with `npx eslint --no-ignore`) |
-| `yarn build` | `dist/` (not committed) with the registry bundles in `dist/bundles/` |
+| `yarn build` | The registry bundles in `dist/bundles/` (not committed) |
 | `yarn build:registry` | `yarn build`, then publish bumped registry versions and rewrite the local dist map (what the hook and release run) |
 | `yarn registry:check` | Checks every registry entry against its build and published file |
 | `yarn example gen:local-dist` | Regenerates `apps/src/registry/local-dist-map.ts` |
 | `cd apps && yarn android --no-packager --active-arch-only` | Builds and starts the example app (Metro already running: `yarn example start`) |
+
+Node 24 (`.nvmrc`): the registry scripts `require` the library's import-free modules (registry
+schema, signature format) straight from their `.ts` sources, which Node 20 can't, so nothing is built
+or installed before signing.
 
 ## Commits
 

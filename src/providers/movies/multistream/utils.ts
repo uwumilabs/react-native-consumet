@@ -1,6 +1,6 @@
 import type { IEpisodeServer, ISource, ISubtitle, IVideo, ProviderContext } from '../../../models';
 import { ENC_DEC_API } from '../../common/enc-dec';
-import { pickServer } from '../../common/servers';
+import { pickServer, serverName } from '../../common/servers';
 
 /**
  * MultiStream ids, built and read only here: `<tmdbId>$movie` for a movie (its media id and its one
@@ -17,18 +17,17 @@ export const parseId = (id: string) => {
   return { tmdbId, type, episode, season };
 };
 
-/** What one site gives for an episode: its servers, and the sources and subtitles they play. */
+/**
+ * What one site gives for an episode: its servers, and the sources and subtitles they play. A
+ * scraper names its servers and their sources by the site's own labels; scrapeSite prefixes them.
+ */
 type Scraped = ISource & { servers: IEpisodeServer[] };
 type Scraper = (ctx: ProviderContext, id: string) => Promise<Scraped>;
 
-const getVidsrcSourcesAndServers: Scraper = async ({ axios, load }, id) => {
+const scrapeVidsrc: Scraper = async ({ axios, load, USER_AGENT }, id) => {
   const { tmdbId, type, episode, season } = parseId(id);
   const baseURL = 'https://vidsrc-embed.ru/embed/';
-  const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
-    'Referer': 'https://vidsrc-embed.ru/',
-  };
+  const headers = { 'User-Agent': USER_AGENT, 'Referer': 'https://vidsrc-embed.ru/' };
   const servers: IEpisodeServer[] = [];
   const sources: IVideo[] = [];
   const url =
@@ -75,15 +74,10 @@ const getVidsrcSourcesAndServers: Scraper = async ({ axios, load }, id) => {
   return { servers, sources, headers: { Referer: urlRCP.split('rcp')[0] } };
 };
 
-const get111MoviesSourcesAndServers: Scraper = async ({ axios, CryptoJS }, id) => {
+const scrape111Movies: Scraper = async ({ axios, CryptoJS, USER_AGENT }, id) => {
   const { tmdbId, type, episode, season } = parseId(id);
   const baseUrl = 'https://111movies.com';
-  const headers = {
-    'Referer': `${baseUrl}/`,
-    'User-Agent':
-      'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
-    'X-Requested-With': 'XMLHttpRequest',
-  };
+  const headers = { 'Referer': `${baseUrl}/`, 'User-Agent': USER_AGENT, 'X-Requested-With': 'XMLHttpRequest' };
 
   // URL-safe base64 with the site's own alphabet.
   const customEncode = (input: string): string => {
@@ -182,7 +176,7 @@ const VIDEASY_SERVERS: IEpisodeServer[] = [
   { name: 'astra-por', url: 'https://api.videasy.net/visioncine/sources-with-title' },
 ];
 
-/** The sources and subtitles of enc-dec.app's decrypted answer, under `name` (or each source's own server). */
+/** The sources and subtitles of enc-dec.app's decrypted answer, each source under the label `name` gives it. */
 const decryptedMedia = (result: any, name: (source: any) => string) => ({
   sources: (Array.isArray(result?.sources) ? result.sources : []).map(
     (source: any): IVideo => ({
@@ -197,7 +191,7 @@ const decryptedMedia = (result: any, name: (source: any) => string) => ({
   ),
 });
 
-const getVideasySourcesAndServers: Scraper = async ({ axios }, id) => {
+const scrapeVideasy: Scraper = async ({ axios }, id) => {
   const { tmdbId, type, episode, season } = parseId(id);
   const sources: IVideo[] = [];
   const subtitles: ISubtitle[] = [];
@@ -205,10 +199,12 @@ const getVideasySourcesAndServers: Scraper = async ({ axios }, id) => {
   await Promise.all(
     VIDEASY_SERVERS.map(async (server) => {
       try {
-        const url =
+        // Some servers' URLs already have a query (`?language=german`).
+        const query =
           type === 'tv'
-            ? `${server.url}?mediaType=tv&tmdbId=${tmdbId}&seasonId=${season}&episodeId=${episode}`
-            : `${server.url}?mediaType=movie&tmdbId=${tmdbId}`;
+            ? `mediaType=tv&tmdbId=${tmdbId}&seasonId=${season}&episodeId=${episode}`
+            : `mediaType=movie&tmdbId=${tmdbId}`;
+        const url = `${server.url}${server.url.includes('?') ? '&' : '?'}${query}`;
         const { data: encData } = await axios.get(url);
         const { data: decData } = await axios.post(`${ENC_DEC_API}/dec-videasy`, { text: encData, id: tmdbId });
         const media = decryptedMedia(decData.result, () => server.name);
@@ -222,7 +218,7 @@ const getVideasySourcesAndServers: Scraper = async ({ axios }, id) => {
   return { servers: VIDEASY_SERVERS, sources, subtitles };
 };
 
-const getHexaSourcesAndServers: Scraper = async ({ axios, CryptoJS }, id) => {
+const scrapeHexa: Scraper = async ({ axios, CryptoJS, USER_AGENT }, id) => {
   const { tmdbId, type, episode, season } = parseId(id);
   // Hexa encrypts its answer with a key the client picks: 32 random bytes as hex.
   const key = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
@@ -232,45 +228,65 @@ const getHexaSourcesAndServers: Scraper = async ({ axios, CryptoJS }, id) => {
       : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
 
   const { data: encData } = await axios.get(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
-      'Accept': 'plain/text',
-      'X-Api-Key': key,
-    },
+    headers: { 'User-Agent': USER_AGENT, 'Accept': 'plain/text', 'X-Api-Key': key },
   });
   const { data: decData } = await axios.post(`${ENC_DEC_API}/dec-hexa`, { text: encData, key });
-  const media = decryptedMedia(decData.result, (source) => `hexa-${source.server}`);
+  const media = decryptedMedia(decData.result, (source) => source.server);
   return {
     servers: media.sources.map((source: IVideo) => ({ name: source.name!, url: source.url })),
     ...media,
   };
 };
 
-/** The sites MultiStream reads, in the order their servers are listed. */
-const SCRAPERS: Scraper[] = [
-  get111MoviesSourcesAndServers,
-  getVidsrcSourcesAndServers,
-  getVideasySourcesAndServers,
-  getHexaSourcesAndServers,
+/**
+ * The sites MultiStream reads, in the order their servers are listed. A server's name starts with
+ * its site's (`videasy-neon-org`), which is how getMultiSources knows the one site to ask.
+ */
+const SITES: { name: string; scrape: Scraper }[] = [
+  { name: '111movies', scrape: scrape111Movies },
+  { name: 'vidsrc', scrape: scrapeVidsrc },
+  { name: 'videasy', scrape: scrapeVideasy },
+  { name: 'hexa', scrape: scrapeHexa },
 ];
 
-/** Every site's answer for the episode; a site that fails is left out. */
-const scrapeAll = async (ctx: ProviderContext, id: string): Promise<Scraped[]> =>
-  (await Promise.allSettled(SCRAPERS.map((scrape) => scrape(ctx, id)))).flatMap((result) =>
-    result.status === 'fulfilled' ? [result.value] : []
-  );
+/** A site's answer, its servers and their sources named `<site>-<label>` (serverName). */
+const scrapeSite = async (ctx: ProviderContext, site: (typeof SITES)[number], id: string): Promise<Scraped> => {
+  const scraped = await site.scrape(ctx, id);
+  return {
+    ...scraped,
+    servers: scraped.servers.map((server) => ({ ...server, name: serverName(site.name, server.name) })),
+    sources: scraped.sources.map((source) => ({ ...source, name: serverName(site.name, source.name as string) })),
+  };
+};
+
+/** The answers of `sites` for the episode; a site that fails is left out, unless they all fail. */
+const scrape = async (ctx: ProviderContext, id: string, sites: typeof SITES): Promise<Scraped[]> => {
+  const settled = await Promise.allSettled(sites.map((site) => scrapeSite(ctx, site, id)));
+  const results = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+  const failure = settled.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+  if (!results.length && failure) throw failure.reason;
+  return results;
+};
 
 export async function getMultiServers(ctx: ProviderContext, id: string): Promise<IEpisodeServer[]> {
-  return (await scrapeAll(ctx, id)).flatMap((result) => result.servers);
+  return (await scrape(ctx, id, SITES)).flatMap((result) => result.servers);
 }
 
 /**
  * The sources of one server (`pickServer`'s rule; the first server when omitted), the headers its
- * site needs, and the subtitles every site gave.
+ * site needs, and the subtitles of the sites asked. Only the sites whose servers `server` can name
+ * are asked: those whose name starts with it, or that it starts with. Every site without one.
  */
 export async function getMultiSources(ctx: ProviderContext, id: string, server?: string): Promise<ISource> {
-  const results = await scrapeAll(ctx, id);
+  const wanted = server?.toLowerCase();
+  const sites = wanted ? SITES.filter(({ name }) => name.startsWith(wanted) || wanted.startsWith(name)) : SITES;
+  if (!sites.length) {
+    throw new Error(
+      `Server '${server}' not found; server names start with ${SITES.map(({ name }) => name).join(', ')}`
+    );
+  }
+
+  const results = await scrape(ctx, id, sites);
   const picked = pickServer(
     results.flatMap((result) => result.servers),
     server

@@ -42,7 +42,7 @@ export class ExtractorManager {
 
   /**
    * The registry entry for a server name or extractor name, case-insensitive: 'MegaCloud',
-   * 'megacloud-hd-1', or an alias like 'upcloud'.
+   * 'megacloud-hd-1', or one of the entry's registry aliases.
    */
   getExtractorMetadata(extractorId: string): ExtractorInfo | undefined {
     const lower = extractorId.toLowerCase();
@@ -55,7 +55,7 @@ export class ExtractorManager {
   /**
    * Resolve a server name to its extractor name, lowercased: the longest registry extractor name or
    * alias the server name starts with (bundled extractor names are a fallback). 'megacloud-hd-1' ->
-   * 'megacloud', 'upcloud' -> 'megacloud', 'newhost-hd-1' -> 'newhost' when the registry has NewHost.
+   * 'megacloud', and 'newhost-hd-1' -> 'newhost' (or an alias's extractor) when the registry has NewHost.
    */
   public extractBaseExtractorName(serverName: string): string | null {
     const lowerName = serverName.toLowerCase();
@@ -78,10 +78,11 @@ export class ExtractorManager {
 
   /**
    * An extractor for a server or extractor name, built with this manager's context: the registry
-   * version, or the bundled one when the registry has none or its code can't be used. Loads are
-   * shared by every name the extractor serves ('megacloud-hd-1', 'MegaCloud', 'upcloud').
+   * version, or the bundled one when the registry has none or its entry can't be used (it needs a
+   * newer extension context, or its code fails to download or verify). Loads are shared by every
+   * name the extractor serves ('megacloud-hd-1', 'MegaCloud').
    *
-   * @throws RegistryError if the registry entry needs a newer extension context
+   * @throws RegistryError when the entry needs a newer extension context and nothing is bundled
    */
   async loadExtractor(extractorId: string): Promise<IVideoExtractor> {
     return (await this.load(extractorId)).instance;
@@ -94,7 +95,7 @@ export class ExtractorManager {
 
   /**
    * Forget a loaded extractor and its compiled code, so the next load fetches and runs it again.
-   * Takes the same names as loadExtractor ('megacloud-hd-1', 'MegaCloud', 'upcloud').
+   * Takes the same names as loadExtractor ('megacloud-hd-1', 'MegaCloud').
    */
   invalidate(extractorId: string): void {
     const name = this.nameOf(extractorId);
@@ -133,13 +134,13 @@ export class ExtractorManager {
       if (!bundled) throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
       return memoiseLoad(this.loads, `${name}|bundled`, async () => this.loaded(bundled));
     }
-    // Refuse a version that needs a newer extension context before downloading it.
-    assertCompatibleEntry(metadata);
-    const registryLoad = memoiseLoad(this.loads, `${name}|${metadata.sha256 ?? ''}`, async () =>
-      this.loaded(this.compileExtractor(await fetchEntryCode('extractor', metadata.main), metadata))
-    );
-    // A failed load isn't cached (memoiseLoad forgets it), so a network blip doesn't pin the
-    // bundled version: the next load tries the registry again.
+    // A version that needs a newer extension context is refused before it's downloaded. A failed
+    // load isn't cached (memoiseLoad forgets it), so a network blip doesn't pin the bundled
+    // version: the next load tries the registry again.
+    const registryLoad = memoiseLoad(this.loads, `${name}|${metadata.sha256 ?? ''}`, async () => {
+      assertCompatibleEntry(metadata);
+      return this.loaded(this.compileExtractor(await fetchEntryCode('extractor', metadata.main), metadata));
+    });
     return registryLoad.catch((error) => {
       if (!bundled) throw error;
       console.warn(`Extractor '${metadata.name}' from the registry failed; using the bundled one:`, error);
@@ -165,5 +166,3 @@ export class ExtractorManager {
     }) as ExtractorFactory;
   }
 }
-
-export default ExtractorManager;

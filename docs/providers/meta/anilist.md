@@ -471,10 +471,11 @@ output:
 | Parameter | Type     | Description                                                                                           |
 | --------- | -------- | ----------------------------------------------------------------------------------------------------- |
 | episodeId | `string` | the provider's episode id (_the `id` of an episode from `fetchEpisodesListById` or `fetchAnimeInfo`_) |
+| ...args   | `any`    | passed to the provider's `fetchEpisodeServers`, e.g. `SubOrDub`                                       |
 
 ```ts
 const episodes = await anilist.fetchEpisodesListById('98659');
-const servers = await anilist.fetchEpisodeServers(episodes[0]!.id);
+const servers = await anilist.fetchEpisodeServers(episodes[0]!.id, SubOrDub.DUB);
 ```
 
 returns a promise which resolves into the provider's servers for the episode (_[`Promise<IEpisodeServer[]>`](../../../src/models/types.ts)_). Anilist passes the call to its anime provider.

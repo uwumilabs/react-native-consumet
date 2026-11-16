@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { IMovieEpisode, IMovieInfo, IMovieProvider, IMovieResult } from 'react-native-consumet';
-import { useLatestCall } from '../hooks/useLatestCall';
+import { useDetail } from '../hooks/useDetail';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSearch } from '../hooks/useSearch';
-import { errorText, titleText } from '../media';
+import { titleText } from '../media';
 import { colors, PAD, R } from '../theme';
 import { DetailSheet, EpisodeGrid } from './DetailSheet';
 import { PlayerModal } from './PlayerModal';
@@ -24,24 +24,20 @@ type Props = {
   placeholder?: ReactNode;
 };
 
+const fetchInfo = (provider: IMovieProvider, item: IMovieResult): Promise<IMovieInfo> =>
+  provider.fetchMediaInfo(item.id, item.type);
+
 /** Search, a detail sheet with the seasons and episodes, and the player, for one movie provider at a time. */
 export function MovieBrowser({ provider, label, header, placeholder }: Props) {
   const search = useSearch<IMovieResult>(provider, 'Movies');
   const player = usePlayer('Movies');
-  const infoCalls = useLatestCall();
-  const [selected, setSelected] = useState<IMovieResult | null>(null);
-  const [info, setInfo] = useState<IMovieInfo | null>(null);
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [infoError, setInfoError] = useState<string | null>(null);
+  const sheet = useDetail(provider, fetchInfo, 'Movies', 'Failed to load info');
+  const { selected, detail: info } = sheet;
   const [season, setSeason] = useState(0);
   const [episode, setEpisode] = useState<IMovieEpisode | null>(null);
 
-  const closeInfo = useCallback(() => {
-    infoCalls.cancel();
-    setSelected(null);
-  }, [infoCalls]);
-
   const { setQuery } = search;
+  const { close: closeInfo } = sheet;
   const { close: closePlayer } = player;
   // Another provider (a switch, a reload, a META layer) starts from an empty screen.
   useEffect(() => {
@@ -51,29 +47,10 @@ export function MovieBrowser({ provider, label, header, placeholder }: Props) {
     setEpisode(null);
   }, [provider, setQuery, closeInfo, closePlayer]);
 
-  const openInfo = useCallback(
-    async (item: IMovieResult) => {
-      if (!provider) return;
-      const isCurrent = infoCalls.start();
-      setSelected(item);
-      setInfo(null);
-      setInfoError(null);
-      setLoadingInfo(true);
-      setSeason(0);
-      try {
-        const found = await provider.fetchMediaInfo(item.id, item.type);
-        if (!isCurrent()) return;
-        console.log('[Movies] media info', found);
-        setInfo(found);
-      } catch (e) {
-        console.log('[Movies] fetchMediaInfo error', e);
-        if (isCurrent()) setInfoError(errorText(e, 'Failed to load info'));
-      } finally {
-        if (isCurrent()) setLoadingInfo(false);
-      }
-    },
-    [provider, infoCalls]
-  );
+  const openInfo = (item: IMovieResult) => {
+    setSeason(0);
+    sheet.open(item);
+  };
 
   const play = (ep: IMovieEpisode) => {
     const episodeId = ep.id;
@@ -132,10 +109,10 @@ export function MovieBrowser({ provider, label, header, placeholder }: Props) {
             description: info.description,
           }
         }
-        loading={loadingInfo}
+        loading={sheet.loading}
         loadingText="Loading…"
-        error={infoError}
-        onRetry={() => selected && openInfo(selected)}
+        error={sheet.error}
+        onRetry={sheet.retry}
         onClose={closeInfo}
         fetchingStream={player.loading}
         descriptionTitle="Overview">

@@ -202,15 +202,24 @@ describe('extension context compatibility (REG-4)', () => {
     expect(runsOf('schema')).toBe(1);
   });
 
-  it('refuses an incompatible extractor when loading it and when running cached code', async () => {
+  it('uses the bundled extractor when the registry one needs a newer context, and refuses one with none', async () => {
     const manager = new ExtractorManager(
-      registryOf([], [extractor({ minContextVersion: NEWER_CONTEXT })])
+      registryOf(
+        [],
+        [
+          extractor({ minContextVersion: NEWER_CONTEXT }),
+          extractor({ name: 'NewHost', main: 'https://registry.test/newhost.js', minContextVersion: NEWER_CONTEXT }),
+        ]
+      )
     );
-    const metadata = manager.getExtractorMetadata('MegaPlay')!;
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const loaded = await registryRejectionOf(manager.loadExtractor('megaplay-hd-1'));
-    expect(loaded.code).toBe('INCOMPATIBLE_ENTRY');
-    expect(loaded.message).toMatch(/^Extractor 'MegaPlay' needs extension context/);
+    const bundled = await manager.loadExtractor('megaplay-hd-1');
+    expect(typeof bundled.extract).toBe('function');
+    const refused = await registryRejectionOf(manager.loadExtractor('newhost-1'));
+    expect(refused.code).toBe('INCOMPATIBLE_ENTRY');
+    expect(refused.message).toMatch(/^Extractor 'NewHost' needs extension context/);
+    const metadata = manager.getExtractorMetadata('MegaPlay')!;
     expect((await registryRejectionOf(manager.executeExtractorCode(megaPlayCode, metadata))).code).toBe('INCOMPATIBLE_ENTRY');
 
     expect(fetch).not.toHaveBeenCalled();

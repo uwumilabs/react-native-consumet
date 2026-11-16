@@ -7,6 +7,7 @@ import {
   type IMangaResult,
   type ISearch,
   MangaParser,
+  type ProviderCapabilities,
   type ProviderContext,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
@@ -126,6 +127,7 @@ export class MangaDex extends MangaParser {
   protected override baseUrl = 'https://mangadex.org';
   protected override logo = 'https://pbs.twimg.com/profile_images/1391016345714757632/xbt_jW78_400x400.jpg';
   protected override classPath = 'MANGA.MangaDex';
+  override capabilities: ProviderCapabilities = { malSyncSite: 'Mangadex' };
 
   private readonly apiUrl = 'https://api.mangadex.org';
   private readonly uploadsUrl = 'https://uploads.mangadex.org';

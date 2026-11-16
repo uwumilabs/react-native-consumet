@@ -14,17 +14,17 @@
  *   - src/models               -> require('react-native-consumet/models')  (enums, base parsers)
  *   - the create-*-context files -> require('react-native-consumet/utils')
  *
- * Runs after tsc, whose dist/utils/registry-schema.js it reads the entry rules from, and before
- * hermes-safe-dist (see the `build` script).
+ * Runs before hermes-safe-dist (see the `build` script). The entry rules come from the library's
+ * schema (src/utils/registry-schema.ts).
  */
 const fs = require('fs');
 const path = require('path');
 const esbuild = require('esbuild');
-const { repoRoot, BUNDLE_DIR, built, readRegistry, registryLayout, isBundleFile } = require('./registry-paths');
+const { repoRoot, BUNDLE_DIR, librarySource, readRegistry, registryLayout, isBundleFile } = require('./registry-paths');
 
 const srcDir = path.join(repoRoot, 'src');
 
-const { MODELS_MODULE, UTILS_MODULE } = built('utils/runtime-modules');
+const { MODELS_MODULE, UTILS_MODULE } = librarySource('utils/runtime-modules');
 const PACKAGE_EXTERNALS = ['axios', 'cheerio', 'crypto-js'];
 const CONTEXT_FILES = ['create-provider-context', 'create-extractor-context'].map((name) =>
   path.join(srcDir, 'utils', name)
@@ -45,7 +45,7 @@ const runtimeExternals = {
 };
 
 function bundlesFromRegistry() {
-  const { REGISTRY_KINDS } = built('utils/registry-schema');
+  const { REGISTRY_KINDS } = librarySource('utils/registry-schema');
   const { entriesOf, entryKey } = registryLayout();
   const bundles = new Map();
   for (const { kind, entry } of entriesOf(readRegistry())) {

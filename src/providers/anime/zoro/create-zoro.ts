@@ -364,7 +364,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
 
   return {
     ...config,
-    capabilities: { aniZipEpisodes: true, subDub: 'combined' } as ProviderCapabilities,
+    capabilities: { aniZipEpisodes: true } as ProviderCapabilities,
     search,
     fetchAdvancedSearch,
     fetchTopAiring,

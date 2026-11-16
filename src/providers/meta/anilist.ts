@@ -53,6 +53,7 @@ import {
   bestTitleMatch,
   callProvider,
   fetchFillerEpisodes,
+  MIN_ANIME_TITLE_SIMILARITY,
   toEpisodeNumber,
   type FillerEpisode,
   type TitleMatch,
@@ -178,9 +179,6 @@ const animeTitle = (title: string): string =>
     .replace(/ {2,}/g, ' ')
     .trim();
 
-/** Results less similar than this to every AniList title are not the anime. */
-const MIN_TITLE_SIMILARITY = 0.6;
-
 /** Subbed episodes a provider result lists, for preferring the fuller of two equal matches. */
 const subCount = (result: IAnimeResult): number => {
   if (typeof result.episodes?.sub === 'number') return result.episodes.sub;
@@ -233,20 +231,12 @@ const matchScore = (result: IAnimeResult, similarity: number, title: ITitle, for
 };
 
 /**
- * The MALSync site (a key of its `Sites`) that lists a manga provider's titles under the ids the
- * provider uses, by provider name. MALSync calls MangaKakalot's site MangaNato (same titles and ids).
- */
-const MALSYNC_SITES = new Map([
-  ['MangaDex', 'Mangadex'],
-  ['MangaKakalot', 'MangaNato'],
-]);
-
-/**
- * The provider's id for a MAL manga, from MALSync. MALSync is optional: it answers 404 for a manga it
- * maps to no site, and that, any other failure, or a provider it doesn't list means searching instead.
+ * The provider's id for a MAL manga, from MALSync, on the site the provider declares
+ * (`capabilities.malSyncSite`). MALSync is optional: it answers 404 for a manga it maps to no site,
+ * and that, any other failure, or a provider that declares no site means searching instead.
  */
 const malSyncId = async (provider: MangaParser, malId: unknown): Promise<string | undefined> => {
-  const site = MALSYNC_SITES.get(provider.name);
+  const site = provider.capabilities?.malSyncSite;
   if (!site || !malId) return undefined;
   try {
     const { data } = await metaHttp.get(`${MALSYNC_URL}/mal/manga/${encodeURIComponent(String(malId))}`, {
@@ -398,8 +388,8 @@ class Anilist extends AnimeParser {
   override fetchEpisodeSources = (episodeId: string, ...args: any): Promise<ISource> =>
     callProvider(this.provider, 'episode sources', () => this.provider.fetchEpisodeSources(episodeId, ...args));
 
-  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> =>
-    callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId));
+  override fetchEpisodeServers = (episodeId: string, ...args: any): Promise<IEpisodeServer[]> =>
+    callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId, ...args));
 
   fetchTrendingAnime = async (page: number = 1, perPage: number = 10): Promise<ISearch<IAnimeResult>> => {
     const data = await anilistQuery(TRENDING_QUERY, { page, perPage });
@@ -485,7 +475,7 @@ class Anilist extends AnimeParser {
       const match = bestTitleMatch(
         [title.english, title.romaji],
         (search?.results ?? []).filter((result) => audioRank(result) > 0),
-        MIN_TITLE_SIMILARITY,
+        MIN_ANIME_TITLE_SIMILARITY,
         {
           normalize: animeTitle,
           compare: (a, b) =>
@@ -825,8 +815,9 @@ class Anilist extends AnimeParser {
 
     /**
      * The AniList info with the provider's chapters, in the provider's order (reading order, as every
-     * manga provider returns them): from MALSync's mapping for MangaDex and MangaKakalot, else from
-     * the provider's search result closest to the romaji or English title.
+     * manga provider returns them): from MALSync's mapping when the provider declares its MALSync
+     * site (`capabilities.malSyncSite`: MangaDex, MangaKakalot), else from the provider's search
+     * result closest to the romaji or English title.
      */
     fetchMangaInfo = async (id: string): Promise<IMangaInfo> => {
       const media = (await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) })).data.Media;

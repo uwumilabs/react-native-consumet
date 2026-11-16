@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { MediaStatus } from '../../src/models';
 import { FlameScans } from '../../src/providers/manga/flamescans';
-import createProviderContext from '../../src/utils/create-provider-context';
+import { createProviderContext } from '../../src/utils/create-provider-context';
 import { expectChapterPages, expectMangaInfo, expectMangaSearch } from './helpers/manga-contract';
 
 // Recorded (trimmed) responses from flamecomics.xyz: the home page (for the Next.js build id), and the

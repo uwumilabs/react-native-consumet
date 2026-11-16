@@ -56,7 +56,7 @@ If your changes include UI updates or visual enhancements, please provide screen
 
 Before submitting your pull request, please ensure the following:
 
-- [ ] My code follows the style guidelines of this project (run `yarn lint` and `yarn format`).
+- [ ] My code follows the style guidelines of this project (run `yarn lint` and `yarn prettier`).
 - [ ] I have performed a self-review of my own code.
 - [ ] I have commented my code, particularly in hard-to-understand areas.
 - [ ] I have updated the documentation where necessary.

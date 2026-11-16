@@ -51,9 +51,6 @@ export function extensionGlobals(
     'crypto-js': ctx.CryptoJS,
     [MODELS_MODULE]: { ...parsers, ...extensionEnums },
     [UTILS_MODULE]: utils,
-    'URL': ctx.PolyURL,
-    'URLSearchParams': ctx.PolyURLSearchParams,
-    'NativeConsumet': ctx.NativeConsumet,
   };
   const globals: ExtensionGlobals = {
     exports: {},
@@ -145,7 +142,7 @@ export async function fetchEntryCode(kind: ExtensionKind, main: string): Promise
   try {
     response = await fetchTextWithTimeout(main, {
       method: 'GET',
-      headers: { 'Accept': 'text/plain, application/javascript, */*', 'User-Agent': 'React-Native-Consumet/1.0.0' },
+      headers: { 'Accept': 'text/plain, application/javascript, */*', 'User-Agent': 'react-native-consumet' },
     });
   } catch (error) {
     throw new RegistryFetchError(kind, main, `Failed to fetch ${what}: ${(error as Error)?.message ?? error}`);

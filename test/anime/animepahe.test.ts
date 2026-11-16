@@ -3,7 +3,7 @@ import { expectMediaInfo, expectMediaSearch, expectServers, expectSources } from
 
 jest.setTimeout(120000);
 
-// AnimePahe answers through the native hidden WebView (DDoS-Guard), so this suite only passes where
+// AnimePahe answers through the native hidden WebView (Cloudflare), so this suite only passes where
 // NativeConsumet is available, not under plain jest.
 const animepahe = new ANIME.AnimePahe();
 

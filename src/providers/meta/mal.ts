@@ -11,7 +11,6 @@ import {
   SubOrDub,
   type IEpisodeServer,
   MediaFormat,
-  type ProviderCapabilities,
   type IAnimeProvider,
   MetaError,
   type FuzzyDate,
@@ -20,7 +19,7 @@ import {
 import { MONTHS, searchTerm, substringAfter, substringBefore } from '../../utils/utils';
 import { toMediaStatus } from '../common/media-status';
 import { Zoro } from '../anime/zoro/zoro';
-import { applyFiller, bestTitleMatch, callProvider, fetchFillerEpisodes } from './shared';
+import { applyFiller, bestTitleMatch, callProvider, fetchFillerEpisodes, MIN_ANIME_TITLE_SIMILARITY } from './shared';
 
 const KITSU_GRAPHQL_URL = 'https://kitsu.app/api/graphql';
 /** Kitsu's anime for a title, with their episodes. Variables: `title`. */
@@ -31,9 +30,6 @@ const MAL_HEADERS = {
   'user-agent':
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35',
 };
-
-/** Provider results less similar than this to the MAL titles are not the anime; as in META.Anilist, which searches the same providers. */
-const MIN_TITLE_SIMILARITY = 0.6;
 
 /** Links MAL lists among the theme songs that aren't songs. */
 const STREAMING_LINKS = ['Apple Music', 'Youtube Music', 'Amazon Music', 'Spotify'];
@@ -170,8 +166,8 @@ class Myanimelist extends AnimeParser {
   override fetchEpisodeSources = (episodeId: string, ...args: any): Promise<ISource> =>
     callProvider(this.provider, 'episode sources', () => this.provider.fetchEpisodeSources(episodeId, ...args));
 
-  fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> =>
-    callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId));
+  override fetchEpisodeServers = (episodeId: string, ...args: any): Promise<IEpisodeServer[]> =>
+    callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId, ...args));
 
   private findProviderEpisodes = async (
     title: ITitle,
@@ -181,7 +177,7 @@ class Myanimelist extends AnimeParser {
   ): Promise<IAnimeEpisode[]> => {
     const term = searchTerm(title?.english || title?.romaji || title?.native || title?.userPreferred || '');
     const { results = [] } = ((await this.provider.search(term)) ?? {}) as Partial<ISearch<IAnimeResult>>;
-    const match = bestTitleMatch([title?.english, title?.romaji, title?.native], results, MIN_TITLE_SIMILARITY);
+    const match = bestTitleMatch([title?.english, title?.romaji, title?.native], results, MIN_ANIME_TITLE_SIMILARITY);
     if (!match) return [];
     const anime = (await this.provider.fetchAnimeInfo(match.id)) as IAnimeInfo;
 
@@ -194,13 +190,7 @@ class Myanimelist extends AnimeParser {
       : (dub ? hasDub : hasSub) !== false;
     if (!hasAudio) return [];
 
-    // Providers with combined sub/dub entries end episode ids in `$both`; the caller picks one.
-    const capabilities = (this.provider as { capabilities?: ProviderCapabilities }).capabilities;
     const episodes = (anime.episodes ?? []) as IAnimeEpisode[];
-    if (capabilities?.subDub === 'combined' && anime.subOrDub === SubOrDub.BOTH) {
-      for (const episode of episodes) episode.id = episode.id.replace('$both', dub ? '$dub' : '$sub');
-    }
-
     const [first] = episodes;
     if (first?.image !== undefined && first?.title !== undefined && first?.description !== undefined) return episodes;
     return this.addKitsuDetails(episodes, term, season, startYear);

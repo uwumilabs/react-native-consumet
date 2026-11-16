@@ -193,7 +193,7 @@ The `ProviderContext` (`ctx`) object provides essential utilities. Prefer it ove
 - `extractors`: The extractors, e.g. `extractors.MegaCloud(ctx)` (see below).
 - `enums`: The library's enums: `StreamingServers`, `MediaFormat`, `MediaStatus`, `SubOrDub`, `WatchListType`, `TvType`, `Genres`, `Topics`.
 - `AnimeParser`, `MovieParser`, `MangaParser`: The base classes.
-- `NativeConsumet`: The native module (WebView requests, DDoS-Guard cookies, script deobfuscation); see [Native Module](#native-module).
+- `NativeConsumet`: The native module (WebView requests, a plain POST, script deobfuscation); see [Native Module](#native-module).
 
 The full type is `ProviderContext` in [`src/models/provider-context.ts`](../../src/models/provider-context.ts).
 
@@ -229,7 +229,7 @@ return {
 | Capability       | Meaning                                                                                                                                                    |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `aniZipEpisodes` | `META.Anilist` merges your episode list with ani.zip titles, images and episode keys. Set it when your episode `number`s follow the anime's own numbering. |
-| `subDub`         | `'combined'`: one entry whose episode ids end in `$both`, and the caller picks `$sub` or `$dub`. `'separate'`: sub and dub are separate entries.           |
+| `malSyncSite`    | Manga providers: the [MALSync](https://api.malsync.moe) site (a key of its `Sites`) that lists your titles under your ids. `META.Anilist.Manga` then maps a manga to your id through MALSync before searching. |
 
 With `aniZipEpisodes`, `META.Anilist` keys your episodes by AniDB number (`uniqueId`), matching them to ani.zip by `number` first; see [Migrating stored episode `uniqueId`s](../migrations/uniqueid.md). Without it, your episodes are keyed by their own `number`.
 
@@ -301,7 +301,7 @@ The comments are for this guide only; the registry is plain JSON.
 
 Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: `hubcloud-cf-storage`, `hubcloud-pixeldrain`) sets both `isSourceDirect` and `haveMultiServers`.
 
-Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook runs `yarn build:registry` on the staged files (build, `prepare-registry`, and the example app's local dist map) and stages `dist/`, the newly published file under `registry/`, the updated registry entry and the map. If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
+Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook runs `yarn build:registry` on the staged files (build, `prepare-registry`, and the example app's local dist map) and stages the newly published file under `registry/`, the updated registry entry and the map (`dist/` isn't committed). If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
 
 ```bash
 yarn build:registry
@@ -323,7 +323,7 @@ Requiring anything else throws when the extension loads. Prefer what `ctx` gives
 
 **Every change needs a new `version`.** A published version is never overwritten: if the build output changed while `version` stays the same, the script exits with an error asking you to bump it, and the pre-commit hook stops the commit. Bump `version` in the entry, stage it, and commit again. Run `yarn registry:check` to verify the registry without writing anything, and add `--base origin/main` to also run the version checks CI runs.
 
-**After the change merges,** a maintainer approves the "Sign registry" run, which signs the new registry for apps that download it. Until then `yarn registry:check` notes the signature as stale (or missing while no signing key exists); that is expected and doesn't fail the check. See [Registry signing](../../CONTRIBUTING.md#registry-signing-maintainers).
+**After the change merges,** a maintainer approves the "Sign registry" run, which signs the new registry for apps that download it. Until then `yarn registry:check` notes the signature as stale; that is expected and doesn't fail the check. See [Registry signing](../../CONTRIBUTING.md#registry-signing-maintainers).
 
 ### Compatibility: `minContextVersion` and `schemaVersion`
 
@@ -352,7 +352,7 @@ Deleting a published file breaks every app whose registry still points at it: in
 2. It isn't the newest version before the current one, which is kept so a bad release can be rolled back by changing one line.
 3. No supported release's bundled registry references it.
 
-**Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v1.7.2`, all `v1.7.*` and `v1.6.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases before `v2.0.0` predate published files, so they don't protect anything; they are not supported.
+**Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v3.0.1`, all `v3.0.*` and `v2.0.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases before `v2.0.0` predate published files, so they don't protect anything; they are not supported.
 
 Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
 

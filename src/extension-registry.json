@@ -3,22 +3,18 @@
   "extractors": [
     {
       "name": "MegaCloud",
-      "aliases": [
-        "upcloud",
-        "akcloud"
-      ],
-      "version": "1.4.1",
+      "version": "1.4.2",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.4.1.js",
-      "sha256": "4b941a18e8e90b370cac6f3f8e19caf55b7af2d336449c6f8806c60871954b02",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/megacloud/1.4.2.js",
+      "sha256": "1a04e518a01a8ef339f27edeee1f7c8084a0799ee78cf900df5ac3f4fa2f7d1c",
       "distFile": "dist/bundles/extractors/megacloud.js"
     },
     {
       "name": "Kwik",
-      "version": "1.3.1",
+      "version": "1.3.2",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.3.1.js",
-      "sha256": "cc295658a9fd3d1a240a291d083f1ab0c925c7cc24d96382cdb3b9c801c398de",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/kwik/1.3.2.js",
+      "sha256": "63ccaa2c9cded939c826a09714070bd3820e0585de2b1997f7617b5872a2ba97",
       "distFile": "dist/bundles/extractors/kwik.js"
     },
     {
@@ -39,18 +35,18 @@
     },
     {
       "name": "HubCloud",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.2.1.js",
-      "sha256": "c3dba3a92f4dcc7bf195efb92e27be94f9588ab9b330ec8da1b56bf0485362ed",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/hubcloud/1.2.2.js",
+      "sha256": "6ee743ac60f89d389b2c35d7189cdd2dd2848722eeaa704a904ff27024447a9b",
       "distFile": "dist/bundles/extractors/hubcloud.js"
     },
     {
       "name": "VidHide",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "minContextVersion": 1,
-      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.1.1.js",
-      "sha256": "c148af6f9e9d5527178700cdb3ce6bdd5a142a12b2d7a80097802c16207367fd",
+      "main": "https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main/registry/extractors/vidhide/1.1.2.js",
+      "sha256": "da29bc43f768d36c4c4ecd0b748cd7e83509e08c8072d035e65d969ec5f03f33",
       "distFile": "dist/bundles/extractors/vidhide.js"
     }
   ],

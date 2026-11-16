@@ -3,7 +3,7 @@
  * prepare-registry.js --check and prune-registry.js).
  *
  * Supported releases: every stable `vX.Y.Z` tag in the two most recent minor lines (e.g. with
- * v1.6.2 as the latest release, all v1.6.* and v1.5.* tags). Their bundled
+ * v3.0.1 as the latest release, all v3.0.* and v2.0.* tags). Their bundled
  * src/extension-registry.json files decide which published versions must stay downloadable.
  */
 const { execFileSync } = require('child_process');
@@ -60,8 +60,7 @@ function registryAt(commit) {
 
 /**
  * Every published file referenced by the current registry or a supported release, checking
- * that each still exists. Registries from before immutable versions point into dist/ and are
- * noted as legacy, since there is no published file to keep for them.
+ * that each still exists. An entry whose `main` isn't a published file is a problem.
  */
 function checkReferences(currentRegistry) {
   const { entriesOf, parsePublishedFile } = registryLayout();
@@ -86,11 +85,10 @@ function checkReferences(currentRegistry) {
       notes.push(`${label}: no bundled registry`);
       continue;
     }
-    let legacy = 0;
     for (const { entry } of entriesOf(registry)) {
       const published = parsePublishedFile(entry.main);
       if (!published) {
-        legacy++;
+        problems.push(`${label}: ${entry.id || entry.name}@${entry.version} has a main that isn't a published file`);
         continue;
       }
       referenced.add(published.file);
@@ -98,7 +96,6 @@ function checkReferences(currentRegistry) {
         problems.push(`${label}: ${entry.id || entry.name}@${entry.version} points at missing ${published.file}`);
       }
     }
-    if (legacy) notes.push(`${label}: ${legacy} entries predate immutable versions (dist URLs); nothing to keep`);
   }
 
   return { tags, referenced, problems, notes };

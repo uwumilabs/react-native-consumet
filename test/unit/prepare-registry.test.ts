@@ -12,7 +12,7 @@ const LOCAL_DIST_MAP = 'apps/src/registry/local-dist-map.ts';
 // What prepare-registry runs: the scripts, the example app's map generator, the library's registry
 // schema (loaded from the build) and package.json (the repository the URLs point at)
 const COPIED = ['scripts', 'apps/scripts/generate-local-dist.js', 'package.json'];
-const SCHEMA = 'dist/utils/registry-schema.js';
+const SCHEMA = 'src/utils/registry-schema.ts';
 
 type Entry = Record<string, unknown>;
 
@@ -189,16 +189,6 @@ describe('prepare-registry exits non-zero', () => {
     expect(result.output).toContain('name must be');
     expect(read('src/extension-registry.json')).toBe(before);
     expect(fs.existsSync(file('registry/extractors/foo-bar/1.0.0.js'))).toBe(false);
-  });
-
-  it('when the registry schema module has not been built', () => {
-    fs.rmSync(file(SCHEMA));
-    writeRegistry([foo()]);
-
-    const result = run();
-
-    expect(result.status).toBe(1);
-    expect(result.output).toContain('dist/utils/registry-schema.js not found');
   });
 });
 

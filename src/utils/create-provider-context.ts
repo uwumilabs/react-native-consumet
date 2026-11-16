@@ -28,19 +28,12 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
   const { extractorManager } = config;
   const bundled = defaultExtractors as unknown as Record<string, ExtractorFactory | undefined>;
 
+  // The manager falls back to the bundled version itself when the registry one can't be used.
   const registryBacked =
-    (name: string, fallback: ExtractorFactory | undefined): ExtractorFactory =>
+    (name: string): ExtractorFactory =>
     (callerCtx) => ({
-      extract: async (videoUrl, ...args) => {
-        let factory = fallback;
-        try {
-          factory = await extractorManager!.loadExtractorFactory(name);
-        } catch (error) {
-          // The registry entry can't be used here (e.g. it needs a newer context): run the bundled one.
-          if (!fallback) throw error;
-        }
-        return factory!(callerCtx ?? ctx).extract(videoUrl, ...args);
-      },
+      extract: async (videoUrl, ...args) =>
+        (await extractorManager!.loadExtractorFactory(name))(callerCtx ?? ctx).extract(videoUrl, ...args),
     });
 
   const missing =
@@ -57,7 +50,7 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
       const custom = config.extractors?.[prop];
       if (custom) return custom;
       const own = target[prop];
-      if (extractorManager?.getExtractorMetadata(prop)) return registryBacked(prop, own);
+      if (extractorManager?.getExtractorMetadata(prop)) return registryBacked(prop);
       if (own) return ((callerCtx) => own(callerCtx ?? ctx)) as ExtractorFactory;
       return missing(prop);
     },
@@ -74,5 +67,3 @@ export function createProviderContext(config: ProviderContextConfig = {}): Provi
   };
   return ctx;
 }
-
-export default createProviderContext;

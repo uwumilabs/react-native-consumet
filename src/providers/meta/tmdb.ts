@@ -18,6 +18,7 @@ import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import type { AxiosAdapter } from 'axios';
 import {
   TMDB_INFO_APPEND,
+  TMDB_LOGO,
   mapTmdbInfo,
   mapTmdbResult,
   mapTmdbResults,
@@ -25,6 +26,7 @@ import {
   resolveTmdbApiKey,
   tmdbImage,
   tmdbImageSizes,
+  tmdbMultiSearch,
   tmdbPage,
   tmdbUrl,
   type TmdbMediaType,
@@ -54,7 +56,7 @@ const TRENDING_PATHS = new Map([
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
   protected override baseUrl = 'https://www.themoviedb.org';
-  protected override logo = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
+  protected override logo = TMDB_LOGO;
   protected override classPath = 'META.TMDB';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES, TvType.ANIME]);
 
@@ -108,14 +110,13 @@ class TMDB extends MovieParser {
     );
   };
 
+  /** Movies and shows; TMDB's search also finds people, who are left out. */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
-    const data = await this.get(
-      `/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`
-    );
+    const { data, results } = await tmdbMultiSearch(this.get, query, page);
     return tmdbPage(
       data,
       page,
-      (data?.results ?? []).map((result: any) => mapTmdbResult(result))
+      results.map((result) => mapTmdbResult(result))
     );
   };
 

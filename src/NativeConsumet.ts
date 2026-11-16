@@ -11,7 +11,7 @@ import { TurboModuleRegistry } from 'react-native';
  * | code              | methods                  | meaning                                                                    |
  * | ----------------- | ------------------------ | -------------------------------------------------------------------------- |
  * | `WEBVIEW_ERROR`   | WebView requests (below) | The main document failed to load, the page couldn't be read, or it died.   |
- * | `TIMEOUT`         | WebView requests (below) | No page (past any Cloudflare challenge) finished within 30 s.              |
+ * | `TIMEOUT`         | WebView requests (below) | No page (past any Cloudflare challenge) was loaded and read within 30 s.   |
  * | `HTTP_ERROR`      | makePostRequest          | Invalid URL or transport failure. HTTP error statuses resolve.             |
  * | `NetworkError`    | deobfuscateScript        | Synchrony could not be downloaded or failed its SHA-256 check.             |
  * | `ParseError`      | deobfuscateScript        | The Synchrony script did not have the expected format.                     |
@@ -24,6 +24,8 @@ import { TurboModuleRegistry } from 'react-native';
  * - The first page that finishes loading settles the request; later navigations and load errors
  *   are ignored. The exception is a Cloudflare challenge page ("Just a moment..."): the request
  *   waits for the page the challenge reloads into once its script has run, within the same 30 s.
+ * - The 30 s run from the call until the request settles, whatever it is waiting for: a page that
+ *   is still loading, or still being read, when they pass rejects with `TIMEOUT`.
  * - `url` is the URL of the page that finished loading last (after a challenge, the page it
  *   reloaded into), and `cookies` is a Cookie header string with the cookies that apply to it.
  * - A page that can't be read once it has loaded rejects with `WEBVIEW_ERROR`; it never resolves
@@ -72,7 +74,8 @@ export interface Spec extends TurboModule {
   /**
    * Plain HTTP POST (OkHttp / URLSession, no WebView). Resolves for every HTTP status;
    * `Content-Type` (matched in any case) defaults to `application/json; charset=utf-8`. Rejects
-   * with `HTTP_ERROR`.
+   * with `HTTP_ERROR`. `headers` has one entry per response header name; a header the response
+   * repeats (`Set-Cookie`, say) has its values joined with `', '`.
    */
   makePostRequest(
     url: string,

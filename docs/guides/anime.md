@@ -28,7 +28,7 @@ Bundled classes take an optional provider context and base URL, `new ANIME.Zoro(
 
 `isWorking` - bool, `false` when the provider is marked as down. Most providers leave it `true`; the registry `status` is a better signal.
 
-`isDubAvailableSeparately` - bool, `true` if dubbed episodes are listed separately from the subbed ones.
+`isDubAvailableSeparately` - bool, `true` if `fetchEpisodeServers` and `fetchEpisodeSources` take a `SubOrDub` argument that picks the audio (sub by default), so an app can offer a sub/dub toggle. Sub and dub share the same episode ids.
 
 `name` - string, the name of the current provider, example: `name: 'AnimePahe'`
 
@@ -38,7 +38,7 @@ Bundled classes take an optional provider context and base URL, `new ANIME.Zoro(
 
 `classPath` - string, the provider's place in the library, example: `classPath: 'ANIME.AnimePahe'`
 
-`capabilities` - object (optional), what `META.Anilist` and `META.Myanimelist` may assume about the provider's episodes (`aniZipEpisodes`, `subDub`)
+`capabilities` - object (optional), what `META.Anilist` may assume about the provider's episodes (`aniZipEpisodes`)
 
 On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` are protected; read them through `provider.toString`.
 

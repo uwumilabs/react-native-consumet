@@ -1,5 +1,4 @@
 import { load } from 'cheerio';
-import FormData from 'form-data';
 
 import {
   LightNovelParser,
@@ -93,19 +92,18 @@ export class ReadLightNovels extends LightNovelParser {
   ): Promise<ILightNovelChapter[]> => {
     const chapters: ILightNovelChapter[] = [];
 
-    const bodyFormData = new FormData();
-    bodyFormData.append('action', 'tw_ajax');
-    bodyFormData.append('type', 'pagination');
-    bodyFormData.append('page', chapterPage);
-    bodyFormData.append('id', novelId);
-
     const page = await this.ctx.axios({
       method: 'post',
       url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
-      data: bodyFormData,
+      data: new this.ctx.PolyURLSearchParams({
+        action: 'tw_ajax',
+        type: 'pagination',
+        page: String(chapterPage),
+        id: String(novelId),
+      }).toString(),
       headers: {
         'referer': referer,
-        'content-type': 'multipart/form-data',
+        'content-type': 'application/x-www-form-urlencoded',
         'origin': this.baseUrl,
         'user-agent': this.ctx.USER_AGENT,
       },

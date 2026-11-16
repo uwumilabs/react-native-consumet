@@ -17,10 +17,11 @@ export interface ProviderCapabilities {
   /** META.Anilist merges this provider's episode list with ani.zip titles, images and keys. */
   aniZipEpisodes?: boolean;
   /**
-   * `combined`: one entry whose episode ids end in `$both`; the caller picks `$sub` or `$dub`.
-   * `separate`: sub and dub are separate entries.
+   * The MALSync site (a key of its `Sites`, e.g. `Mangadex`) that lists this manga provider's titles
+   * under the ids the provider uses. META.Anilist.Manga then finds a manga's chapters by its MALSync
+   * mapping before searching for it.
    */
-  subDub?: 'separate' | 'combined';
+  malSyncSite?: string;
 }
 
 /**
@@ -235,9 +236,8 @@ export interface IVideo {
   [x: string]: unknown; // other fields
 }
 
-/** Server names, each the name of the extractor that reads it (UpCloud is served by MegaCloud). */
+/** Server names, each the name of the extractor that reads it. */
 export enum StreamingServers {
-  UpCloud = 'upcloud',
   StreamWish = 'streamwish',
   VidHide = 'vidhide',
   MegaCloud = 'megacloud',

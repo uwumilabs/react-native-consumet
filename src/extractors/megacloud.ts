@@ -63,8 +63,8 @@ export function MegaCloud(ctx: ExtractorContext) {
           url: track.file,
           lang: track.label || track.kind,
         })) ?? [],
-      intro: data.intro ?? { start: 0, end: 0 },
-      outro: data.outro ?? { start: 0, end: 0 },
+      intro: data.intro ? { start: data.intro.start, end: data.intro.end } : undefined,
+      outro: data.outro ? { start: data.outro.start, end: data.outro.end } : undefined,
     };
   };
 

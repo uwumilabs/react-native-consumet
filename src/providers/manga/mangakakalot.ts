@@ -7,6 +7,7 @@ import {
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
+  type ProviderCapabilities,
   type ProviderContext,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
@@ -49,6 +50,8 @@ export class MangaKakalot extends MangaParser {
   protected override baseUrl = 'https://www.kakamanga.com';
   protected override logo = 'https://www.kakamanga.com/images/svg/logo-kkl.svg';
   protected override classPath = 'MANGA.MangaKakalot';
+  // MALSync calls the site MangaNato.
+  override capabilities: ProviderCapabilities = { malSyncSite: 'MangaNato' };
 
   /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
   constructor(private readonly ctx: ProviderContext = createProviderContext()) {

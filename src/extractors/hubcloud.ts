@@ -18,18 +18,17 @@ function parseSizeInBytes(text: string): number | undefined {
   return Math.round(val);
 }
 
-/** Sources are listed fastest host first. */
-function hostPriority(server: string = ''): number {
-  const s = server.toLowerCase();
-  if (s.includes('cf storage') || s.includes('storage')) return 1;
-  if (s.includes('cf worker') || s.includes('worker') || s.includes('fast cloud')) return 2;
-  if (s.includes('gofile')) return 3;
-  if (s.includes('pixeldrain')) return 4;
-  if (s.includes('fastdl') || s.includes('fsl')) return 5;
-  if (s.includes('hubcdn')) return 6;
-  if (s.includes('gdrive') || s.includes('google')) return 7;
-  return 10;
-}
+/** The hosts HubCloud names its sources by (`server`), fastest first: the order the sources are listed in. */
+const HOSTS = [
+  'CF Storage',
+  'CF Worker',
+  'Gofile',
+  'Pixeldrain',
+  'FastDl',
+  'HubCdn',
+  'GDrive (download only)',
+] as const;
+type Host = (typeof HOSTS)[number];
 
 /**
  * HubCloud, which also reads V-Cloud pages: the file's hosts, as one source each, fastest first.
@@ -91,7 +90,7 @@ export function HubCloud(ctx: ExtractorContext) {
     if (!fileSize) fileSize = parseSizeInBytes($('#size, .list-group-item:contains("Size")').text());
 
     const sources: IVideo[] = [];
-    const add = (link: string, server: string) => {
+    const add = (link: string, server: Host) => {
       if (sources.some((source) => source.url === link)) return;
       sources.push({ url: link, server, quality: pageQuality, isM3U8: link.includes('.m3u8'), size: fileSize });
     };
@@ -150,7 +149,7 @@ export function HubCloud(ctx: ExtractorContext) {
     }
 
     for (const page of gofilePages) add(page, 'Gofile');
-    sources.sort((a, b) => hostPriority(a.server) - hostPriority(b.server));
+    sources.sort((a, b) => HOSTS.indexOf(a.server as Host) - HOSTS.indexOf(b.server as Host));
 
     return { sources, headers: { 'User-Agent': USER_AGENT, 'Referer': baseUrl } };
   };

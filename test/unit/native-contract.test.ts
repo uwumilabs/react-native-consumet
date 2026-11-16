@@ -198,6 +198,30 @@ describe('native implementations follow the contract (NAT-1)', () => {
     expect(allObjc.match(/\[WKWebView alloc\]/g)).toHaveLength(1);
   });
 
+  it('WebView requests time out 30 s after the call on both platforms, whatever the page is doing', () => {
+    // One deadline, armed when the task starts and cancelled only when it settles: not when the
+    // page finishes loading, so a page whose scripts never call back still times out.
+    const task = kotlin['WebViewTask.kt']!;
+    expect(task).toMatch(/fun start\([^]*handler\.postDelayed\(timeout, TIMEOUT_MS\)/);
+    expect(task.match(/handler\.(?:post\w*|removeCallbacks)\(timeout\b/g)).toEqual(['handler.postDelayed(timeout', 'handler.removeCallbacks(timeout']);
+    expect(task).toMatch(/private inline fun settle\([^]*handler\.removeCallbacks\(timeout\)/);
+    expect(objc.match(/scheduledTimerWithTimeInterval:/g)).toHaveLength(1);
+    expect(objc).toMatch(/_timer = \[NSTimer scheduledTimerWithTimeInterval:kWebViewTimeout\b/);
+    expect(objc.match(/\[_timer invalidate\]/g)).toHaveLength(1);
+    expect(objc).toMatch(/- \(BOOL\)_settle \{[^}]*\[_timer invalidate\]/);
+    for (const source of [allKotlin, objc]) expect(source).not.toMatch(/keepOpen/);
+  });
+
+  it('makePostRequest joins the values of a repeated response header with ", " on both platforms', () => {
+    const http = kotlin['HttpRequestModule.kt']!;
+    expect(kotlinFunction(http, 'makePostRequest')).toMatch(/joinedHeaders\(response\.headers\)/);
+    expect(http).toMatch(/headers\.names\(\)\.associateWith \{ headers\.values\(it\)\.joinToString\(", "\) \}/);
+    expect(http).not.toMatch(/response\.header\(/);
+    // NSHTTPURLResponse already joins a repeated header's values with ", ".
+    const ios = objc.slice(objc.indexOf('- (void)makePostRequest:'));
+    expect(ios.slice(0, ios.indexOf('\n#pragma mark'))).toMatch(/\[resp\.allHeaderFields\s+enumerateKeysAndObjectsUsingBlock:/);
+  });
+
   it('a dead renderer or web content process rejects instead of crashing the app', () => {
     const android = /override fun onRenderProcessGone\([^)]*\): Boolean \{[^}]*/.exec(kotlin['WebViewTask.kt']!)?.[0] ?? '';
     expect(android).toMatch(/reject\(WEBVIEW_ERROR, /);
@@ -254,11 +278,6 @@ describe('native implementations follow the contract (NAT-1)', () => {
       expect(kotlin['HttpRequestModule.kt']).toContain(marker);
       expect(objc).toContain(marker);
     }
-    // A challenge keeps the task open while the page is polled.
-    expect(kotlin['WebViewTask.kt']).toMatch(/fun keepOpen\(\)/);
-    expect(kotlin['HttpRequestModule.kt']).toMatch(/task\.keepOpen\(\)/);
-    expect(objc).toMatch(/- \(void\)keepOpen/);
-    expect(objc).toMatch(/\[t keepOpen\]/);
     // GET and POST both capture through the check.
     for (const name of ['makeGetRequestWithWebView', 'makePostRequestWithWebView']) {
       expect(kotlinFunction(kotlin['HttpRequestModule.kt']!, name)).toMatch(/captureUnlessChallenge\(/);

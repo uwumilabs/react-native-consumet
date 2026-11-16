@@ -86,6 +86,12 @@ const titlesOf = (result: { title?: unknown; japaneseTitle?: unknown; altTitles?
   return [...names, japaneseTitle, ...(Array.isArray(altTitles) ? altTitles : [])];
 };
 
+/**
+ * Anime provider results less similar than this (bestTitleMatch) to the wanted titles are not the
+ * anime. META.Anilist and META.Myanimelist search the same providers, so they share it.
+ */
+export const MIN_ANIME_TITLE_SIMILARITY = 0.6;
+
 /** A search result and how similar its closest title is to the wanted ones, from 0 to 1. */
 export type TitleMatch<T> = { result: T; similarity: number };
 

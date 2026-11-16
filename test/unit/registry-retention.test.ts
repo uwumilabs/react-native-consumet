@@ -33,7 +33,7 @@ describe('supported releases', () => {
 describe('published files', () => {
   const { parsePublishedFile, publishedFile } = registryLayout();
 
-  it('are read from published URLs; older dist URLs have none', () => {
+  it('are read from published URLs; other URLs have none', () => {
     expect(parsePublishedFile(`${RAW}/registry/extractors/kwik/1.2.1.js`)).toEqual(
       published('extractors', 'kwik', '1.2.1')
     );
@@ -79,11 +79,5 @@ describe('retention rule (planPrune)', () => {
     expect(keep.get('registry/extensions/anikoto/1.0.0.js')).toEqual(['referenced by v1.6.1']);
     expect(keep.has('registry/extensions/removed/1.0.0.js')).toBe(true);
     expect(deletable.map((f: any) => f.file)).toEqual(['registry/extensions/anikoto/1.1.0.js']);
-  });
-
-  it('protects nothing for releases whose registry predates published files', () => {
-    const legacy = [{ tag: 'v1.6.0', registry: { extensions: [{ id: 'anikoto', main: `${RAW}/dist/x.js` }] } }];
-    const { deletable } = retention.planPrune(current, files, legacy);
-    expect(deletable).toHaveLength(3);
   });
 });
