@@ -83,6 +83,17 @@ is public), and say in the final message what was added.
     blocks its Private Access Token request). Not yet tried on a real iPhone.
 - **HLS sources.** Run ffprobe on them: some sites list qualities whose master playlist has no video
   stream, which ExoPlayer rejects as a malformed manifest.
+- **Segments disguised as images.** Some servers put a small PNG in front of each MPEG-TS segment
+  and serve it as `image/png` from an image CDN (MegaPlay's `?s=tcdn` server, on tiktokcdn).
+  ffprobe then sees one `png` video stream and no audio, and ExoPlayer's TS sniffing fails because
+  the packets don't line up from the start. Check the first bytes of a segment (`curl -r 0-15`;
+  plain TS starts with `0x47`) and prefer servers that serve plain TS.
+- **Audio in separate renditions.** When a master lists the audio as `#EXT-X-MEDIA:TYPE=AUDIO` with
+  a `URI`, its variant playlists are video only. Don't return them as quality sources (apps pick the
+  highest quality and play it silent); return the master, as the MegaPlay extractor does. A
+  player's `audioTracks: []` on load is the sign.
+- **No sound on the emulator** can simply be media volume 0: check `STREAM_MUSIC` in
+  `adb shell dumpsys audio` before blaming the stream.
 - **File hosts wrap files in HTML.** FastDL's `dl.php?link=<url>` is a "Download Now" page, not the
   file. Return the file URL, and check that a direct source is media (`curl -r 0-15`, or ffprobe)
   rather than HTML.
