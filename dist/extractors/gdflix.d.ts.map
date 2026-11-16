@@ -1,1 +1,0 @@
-{"version":3,"file":"gdflix.d.ts","sourceRoot":"","sources":["../../src/extractors/gdflix.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAAE,KAAK,OAAO,EAAe,MAAM,WAAW,CAAC;AAC7E,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAIrD,wBAAgB,MAAM,CAAC,GAAG,EAAE,gBAAgB;wBAGT,MAAM,GAAG,OAAO,YAAY,MAAM,KAAG,OAAO,CAAC,OAAO,CAAC;EA4FvF"}

@@ -1,23 +1,20 @@
 import { ANIME } from '../../src/providers';
+import { expectMediaInfo, expectMediaSearch, expectServers, expectSources } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
+// AnimePahe answers through the native hidden WebView (DDoS-Guard), so this suite only passes where
+// NativeConsumet is available, not under plain jest.
 const animepahe = new ANIME.AnimePahe();
 
-test('returns a filled array of anime list', async () => {
-  const data = await animepahe.search('Overlord IV');
-  expect(data.results).not.toEqual([]);
-});
+test('search, info, servers and sources play the first episode', async () => {
+  const search = await animepahe.search('Overlord IV');
+  expectMediaSearch(search);
 
-test('returns a filled object of anime data', async () => {
-  const res = await animepahe.search('Overlord IV');
-  const data = await animepahe.fetchAnimeInfo(res.results[0].id); // Overlord IV id
-  expect(data).not.toBeNull();
-});
+  const info = await animepahe.fetchAnimeInfo(search.results[0]!.id);
+  expectMediaInfo(info);
 
-test('returns a filled object of episode sources', async () => {
-  const res = await animepahe.search('Overlord IV');
-  const data1 = await animepahe.fetchAnimeInfo(res.results[0].id);
-  const data = await animepahe.fetchEpisodeSources(data1.episodes![0].id); // Episode 1 of Overlord IV
-  expect(data.sources).not.toEqual([]);
+  const episodeId = info.episodes![0]!.id;
+  expectServers(await animepahe.fetchEpisodeServers(episodeId));
+  expectSources(await animepahe.fetchEpisodeSources(episodeId));
 });

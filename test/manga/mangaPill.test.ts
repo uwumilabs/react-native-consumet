@@ -20,10 +20,9 @@ test('search: returns titles that follow the manga contract', async () => {
 test('search: pages through the results', async () => {
   const [first, second] = [await mangaPill.search('one piece'), await mangaPill.search('one piece', 2)];
 
-  expectMangaSearch(second, 2);
+  expectMangaSearch(second, 2, new Set(first.results.map((result) => result.id)));
   expect(first.hasNextPage).toBe(true);
   expect(second.currentPage).toBe(2);
-  expect(second.results.map((r) => r.id)).not.toContain(first.results[0]!.id);
 });
 
 test('fetchMangaInfo: returns details and chapters in reading order', async () => {

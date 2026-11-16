@@ -12,11 +12,10 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 import { toMediaStatus } from '../../common/media-status';
-import { pickServer } from '../../common/servers';
-import { serverName } from '../helpers';
+import { pickServer, serverName } from '../../common/servers';
 
 export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, enums, createCustomBaseUrl, USER_AGENT, PolyURL, extractors } = ctx;
+  const { axios, load, enums, createCustomBaseUrl, USER_AGENT, PolyURL, PolyURLSearchParams, extractors } = ctx;
   const { VidHide } = extractors;
   const { SubOrDub: SubOrDubEnum } = enums;
 
@@ -64,7 +63,7 @@ export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
     params: Record<string, string | number | undefined>,
     page: number = 1
   ): Promise<ISearch<IAnimeResult>> => {
-    const qs = new URLSearchParams({ page: String(page) });
+    const qs = new PolyURLSearchParams({ page: String(page) });
     for (const [key, value] of Object.entries(params)) if (value !== undefined) qs.append(key, String(value));
     const { data: html } = await axios.get<string>(`${baseUrl}/browse?${qs}`, { headers: hdrs() });
     const $ = load(html);
@@ -209,7 +208,7 @@ export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
         .text()
         .trim() || $(`[class*="info"] *:contains("${label}")`).first().text().replace(label, '').trim();
 
-    info.status = toMediaStatus(metaText('Status'), ctx.enums.MediaStatus);
+    info.status = toMediaStatus(metaText('Status'));
 
     info.type = (metaText('Type').toUpperCase() as MediaFormat) || undefined;
     info.releaseDate = metaText('Aired') || metaText('Release') || undefined;
@@ -370,7 +369,6 @@ export function createAniNeko(ctx: ProviderContext, customBaseURL?: string) {
     if (episodeId.startsWith('http')) return extractorFor(episodeId).extract(baseUrl);
 
     const picked = pickServer(await fetchEpisodeServers(episodeId, subOrDub), server);
-    if (!picked.url) throw new Error(`[AniNeko] No embed URL for server "${picked.name}"`);
     return extractorFor(picked.url).extract(`${baseUrl}/watch/${episodeId}`);
   };
 

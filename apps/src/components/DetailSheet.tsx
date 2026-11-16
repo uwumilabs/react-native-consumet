@@ -62,15 +62,7 @@ export function DetailSheet({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={S.root}>
         <StatusBar barStyle="light-content" />
-        <View style={S.bar}>
-          <TouchableOpacity onPress={onClose} style={S.close}>
-            <Text style={S.closeText}>✕</Text>
-          </TouchableOpacity>
-          <Text style={S.barTitle} numberOfLines={1}>
-            {title || '…'}
-          </Text>
-          <View style={S.barSpacer} />
-        </View>
+        <SheetBar title={title} onClose={onClose} />
 
         {loading ? (
           <LoadingView text={loadingText} />
@@ -135,6 +127,28 @@ export function DetailSheet({
         ) : null}
       </SafeAreaView>
     </Modal>
+  );
+}
+
+/** A sheet's top bar: the close button and the title, centred. */
+export function SheetBar({ title, onClose }: { title: string; onClose: () => void }) {
+  return (
+    <View style={S.bar}>
+      <CloseButton onPress={onClose} />
+      <Text style={S.barTitle} numberOfLines={1}>
+        {title || '…'}
+      </Text>
+      <View style={S.barSpacer} />
+    </View>
+  );
+}
+
+/** The round button that closes a sheet; `glyph` ← for a view that goes back. */
+export function CloseButton({ glyph = '✕', onPress }: { glyph?: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={S.close}>
+      <Text style={S.closeText}>{glyph}</Text>
+    </TouchableOpacity>
   );
 }
 

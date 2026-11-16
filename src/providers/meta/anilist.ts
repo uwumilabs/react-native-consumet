@@ -24,6 +24,7 @@ import {
   MetaError,
 } from '../../models';
 import type { IMetaAnimeEpisode } from '../../models/types';
+import { normalizeTitle, searchTerm } from '../../utils/utils';
 import { Zoro } from '../anime/zoro/zoro';
 import { MangaDex } from '../manga/mangadex';
 import {
@@ -42,19 +43,19 @@ import {
   mapAnimeDetail,
   mapBrowseResult,
   mapCharacterMedia,
-  mapMediaDetail,
+  mapMangaDetail,
   mapMediaResult,
   mapTitle,
   pickCover,
 } from './anilist-media';
 import {
   applyFiller,
+  bestTitleMatch,
   callProvider,
   fetchFillerEpisodes,
-  searchTerm,
-  stringSimilarity,
   toEpisodeNumber,
   type FillerEpisode,
+  type TitleMatch,
 } from './shared';
 
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
@@ -163,38 +164,22 @@ const romanToArabic = (roman: string): number => {
 };
 
 /**
- * An anime title in the form provider titles are compared in: letters, digits and spaces only,
- * without season words or a trailing part in parentheses, roman numerals (I to IX) as digits, and
- * common romanization variants (`yuu`, ` ou`) spelled one way.
+ * An anime title in the form provider titles are compared in: normalizeTitle without anything in
+ * parentheses (`(TV)`, `(Dub)`) or season words, roman numerals (I to IX) as digits, and common
+ * romanization variants (`yuu`, ` ou`) spelled one way.
  */
-const cleanTitle = (title: string): string =>
-  title
-    .replace(/[^A-Za-z0-9!@#$%^&*() ]/g, ' ')
-    .replace(/(th|rd|nd|st) season/gi, '')
-    .replace(/\([^(]*\)$/g, '')
+const animeTitle = (title: string): string =>
+  normalizeTitle(title.replace(/\([^)]*\)/g, ' '))
+    .replace(/(th|rd|nd|st) season/g, '')
     .replace(/season/g, '')
-    .replace(/\b(ix|iv|v?i{1,3}|v)\b/gi, (numeral) => String(romanToArabic(numeral)))
-    .replace(/[^A-Za-z0-9\-= ]/g, '')
-    .replace(/ {2,}/g, ' ')
-    .trim()
+    .replace(/\b(ix|iv|v?i{1,3}|v)\b/g, (numeral) => String(romanToArabic(numeral)))
     .replace(/yuu/g, 'yu')
-    .replace(/ ou/g, ' oh');
+    .replace(/ ou/g, ' oh')
+    .replace(/ {2,}/g, ' ')
+    .trim();
 
 /** Results less similar than this to every AniList title are not the anime. */
 const MIN_TITLE_SIMILARITY = 0.6;
-
-/** The best similarity between any of AniList's titles and any of a provider result's titles. */
-const titleSimilarity = (wanted: (string | undefined)[], result: IAnimeResult): number => {
-  const clean = (titles: unknown[]) =>
-    titles.flatMap((title) => (typeof title === 'string' && title.trim() ? [cleanTitle(title.toLowerCase())] : []));
-  const candidates = clean(
-    [result.title, result.japaneseTitle].map((t) => (typeof t === 'string' ? t.replace(/\([^)]*\)/g, '') : t))
-  );
-  return Math.max(
-    0,
-    ...clean(wanted).flatMap((input) => candidates.map((candidate) => stringSimilarity(input, candidate)))
-  );
-};
 
 /** Subbed episodes a provider result lists, for preferring the fuller of two equal matches. */
 const subCount = (result: IAnimeResult): number => {
@@ -210,6 +195,12 @@ const subCount = (result: IAnimeResult): number => {
 const audioOf = (title: unknown): string => {
   const marked = typeof title === 'string' ? /\(([^)0-9]+)\)/.exec(title.replace(/\(TV\)/g, ''))?.[1] : undefined;
   return marked ? marked.replace(/\s+/g, '-').toLowerCase() : 'sub';
+};
+
+/** 2 for a sub entry, 1 for a dub entry, 0 for other audio: the sub entry is preferred. */
+const audioRank = (result: IAnimeResult): number => {
+  const audio = audioOf(result.title);
+  return audio === 'sub' ? 2 : audio === 'dub' ? 1 : 0;
 };
 
 /** An AniList format as providers name the type: `MOVIE` → `movie`, `TV_SHORT` → `tv`. */
@@ -241,37 +232,55 @@ const matchScore = (result: IAnimeResult, similarity: number, title: ITitle, for
   return score;
 };
 
-/** The manga's info on the provider for a search, preferring an exact title match; undefined when it finds none. */
-const searchManga = async (provider: MangaParser, title: string): Promise<IMangaInfo | undefined> => {
-  const { results = [] } = ((await provider.search(searchTerm(title))) ?? {}) as Partial<ISearch<IMangaResult>>;
-  if (results.length === 0) return undefined;
+/**
+ * The MALSync site (a key of its `Sites`) that lists a manga provider's titles under the ids the
+ * provider uses, by provider name. MALSync calls MangaKakalot's site MangaNato (same titles and ids).
+ */
+const MALSYNC_SITES = new Map([
+  ['MangaDex', 'Mangadex'],
+  ['MangaKakalot', 'MangaNato'],
+]);
 
-  // Providers may show an English title and keep the romaji one in altTitles, so match either.
-  const wanted = title.toLowerCase();
-  const names = (manga: IMangaResult) => [
-    ...(typeof manga.title === 'string' ? [manga.title] : []),
-    ...(manga.altTitles ?? []),
-  ];
-  const exact = results.find((manga) => names(manga).some((name) => name.toLowerCase() === wanted));
-  return provider.fetchMangaInfo((exact ?? results[0]!).id);
+/**
+ * The provider's id for a MAL manga, from MALSync. MALSync is optional: it answers 404 for a manga it
+ * maps to no site, and that, any other failure, or a provider it doesn't list means searching instead.
+ */
+const malSyncId = async (provider: MangaParser, malId: unknown): Promise<string | undefined> => {
+  const site = MALSYNC_SITES.get(provider.name);
+  if (!site || !malId) return undefined;
+  try {
+    const { data } = await metaHttp.get(`${MALSYNC_URL}/mal/manga/${encodeURIComponent(String(malId))}`, {
+      timeout: ENRICHMENT_TIMEOUT_MS,
+    });
+    const [page] = Object.values((data?.Sites?.[site] ?? {}) as Record<string, { identifier?: unknown }>);
+    return page?.identifier ? String(page.identifier) : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
-/** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
-const findMangaChapters = async (provider: MangaParser, title: string, malId?: number): Promise<IMangaChapter[]> => {
-  if (malId) {
-    // MALSync answers 404 for a manga it maps to no site; any answer but 200 means searching instead.
-    const malSync = await metaHttp.get(`${MALSYNC_URL}/mal/manga/${encodeURIComponent(malId)}`, {
-      validateStatus: () => true,
-    });
-    if (malSync.status === 200) {
-      const sites = Object.values(
-        (malSync.data?.Sites ?? {}) as Record<string, Record<string, { url: string; page: string }>>
-      ).flatMap((pages) => Object.values(pages));
-      const mapped = sites.find((site) => site.page.toLowerCase() === provider.name.toLowerCase());
-      if (mapped) return (await provider.fetchMangaInfo(mapped.url.split('/').pop()!)).chapters ?? [];
-    }
+/** Results less similar than this to the AniList titles are not the manga. */
+const MIN_MANGA_TITLE_SIMILARITY = 0.6;
+
+/**
+ * The provider's chapters for an AniList manga: those of its MALSync mapping when there is one,
+ * else of the search result closest to its titles, searching by the romaji title and then by the
+ * English one. Empty when the provider doesn't have it.
+ */
+const findMangaChapters = async (provider: MangaParser, title: ITitle, malId: unknown): Promise<IMangaChapter[]> => {
+  const mappedId = await malSyncId(provider, malId);
+  if (mappedId) return (await provider.fetchMangaInfo(mappedId)).chapters ?? [];
+
+  // Providers may show an English title and keep the romaji one in altTitles, so both count.
+  const wanted = [title.romaji, title.english];
+  const terms = [...new Set(wanted.flatMap((name) => (name ? [name.toLowerCase()] : [])))];
+  for (const term of terms) {
+    const { results = [] } = ((await provider.search(searchTerm(term))) ?? {}) as Partial<ISearch<IMangaResult>>;
+    const match = bestTitleMatch(wanted, results, MIN_MANGA_TITLE_SIMILARITY);
+    const chapters = match ? ((await provider.fetchMangaInfo(match.id)).chapters ?? []) : [];
+    if (chapters.length > 0) return chapters;
   }
-  return (await searchManga(provider, title))?.chapters ?? [];
+  return [];
 };
 
 class Anilist extends AnimeParser {
@@ -381,23 +390,9 @@ class Anilist extends AnimeParser {
    * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
    */
   override fetchAnimeInfo = async (id: string, fetchFiller: boolean = false): Promise<IAnimeInfo> => {
-    const data = await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) });
-    const media = data.data.Media;
-    const animeInfo: IAnimeInfo = { id, ...mapAnimeDetail(media) };
-    const [episodes, fillerEpisodes] = await Promise.all([
-      this.findProviderEpisodes(mapTitle(media.title), media.format),
-      fetchFiller && animeInfo.malId ? fetchFillerEpisodes(animeInfo.malId as number) : [],
-    ]);
-
-    animeInfo.episodes = episodes.map((episode, index) => {
-      if (!episode.image) episode.image = animeInfo.image;
-      applyFiller(episode, fillerEpisodes);
-      // No ani.zip merge here, so the key comes from the provider's number, as it does in
-      // fetchEpisodesListById for episodes ani.zip doesn't match.
-      episode.uniqueId = episodeUniqueId(id, { episode }, index);
-      return episode;
-    });
-    return animeInfo;
+    const aniZipRequest = this.requestAniZip(id);
+    const media = (await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) })).data.Media;
+    return { id, ...mapAnimeDetail(media), episodes: await this.findEpisodes(id, media, fetchFiller, aniZipRequest) };
   };
 
   override fetchEpisodeSources = (episodeId: string, ...args: any): Promise<ISource> =>
@@ -461,38 +456,42 @@ class Anilist extends AnimeParser {
     return toPage<IAnimeResult>(data.data.Page, data.data.Page.media.map(mapBrowseResult));
   };
 
+  /** The info of an anime picked from a list of AniList ids kept on GitHub (5H4D0WILA/IDFetch). */
   fetchRandomAnime = async (): Promise<IAnimeInfo> => {
     let ids: string[];
     try {
       const { data } = await metaHttp.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
-      ids = data?.trim().split('\n');
+      ids = String(data ?? '')
+        .split('\n')
+        .map((id) => id.trim())
+        .filter(Boolean);
     } catch (err) {
-      throw anilistError(err);
+      throw MetaError.from('github', err);
     }
+    if (ids.length === 0) throw new MetaError('The list of random anime ids is empty', { source: 'github' });
     return this.fetchAnimeInfo(ids[Math.floor(Math.random() * ids.length)]!);
   };
 
   /**
-   * The provider's episodes for the AniList entry: the search result whose title is closest (see
-   * matchScore), the sub entry before the dub. Empty when no result is close enough.
+   * The provider's episodes for the AniList entry: those of the search result whose title is
+   * closest (see matchScore), the sub entry before the dub. Empty when no result is close enough.
    */
   private findProviderEpisodes = async (title: ITitle, format?: string): Promise<IAnimeEpisode[]> => {
     try {
       const search = (await this.provider.search(title.romaji || title.english || title.userPreferred || '')) as
         | ISearch<IAnimeResult>
         | undefined;
-      const ranked = (search?.results ?? [])
-        .map((result) => ({ result, similarity: titleSimilarity([title.english, title.romaji], result) }))
-        .filter(({ similarity }) => similarity > MIN_TITLE_SIMILARITY)
-        .sort(
-          (a, b) =>
-            matchScore(b.result, b.similarity, title, format) - matchScore(a.result, a.similarity, title, format) ||
-            subCount(b.result) - subCount(a.result)
-        )
-        .map(({ result }) => result);
-      const match =
-        ranked.find((result) => audioOf(result.title) === 'sub') ??
-        ranked.find((result) => audioOf(result.title) === 'dub');
+      const score = ({ result, similarity }: TitleMatch<IAnimeResult>) => matchScore(result, similarity, title, format);
+      const match = bestTitleMatch(
+        [title.english, title.romaji],
+        (search?.results ?? []).filter((result) => audioRank(result) > 0),
+        MIN_TITLE_SIMILARITY,
+        {
+          normalize: animeTitle,
+          compare: (a, b) =>
+            audioRank(b.result) - audioRank(a.result) || score(b) - score(a) || subCount(b.result) - subCount(a.result),
+        }
+      );
       if (!match) return [];
       return (await this.provider.fetchAnimeInfo(match.id)).episodes ?? [];
     } catch (err) {
@@ -501,43 +500,62 @@ class Anilist extends AnimeParser {
   };
 
   /**
-   * @param id AniList id
-   * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
-   * @returns the episode list without the anime info, every episode with a `uniqueId`
+   * The provider's episodes for an AniList media, merged with ani.zip when the provider declares
+   * `aniZipEpisodes`, each with the cover as its fallback image, its filler flag and its uniqueId.
+   * fetchAnimeInfo and fetchEpisodesListById both return these, so they key every episode alike.
+   * @param media the AniList media: `title`, `format`, `idMal` and `coverImage` are read
+   * @param aniZipRequest ani.zip's mappings, requested alongside the caller's AniList query
    */
-  fetchEpisodesListById = async (id: string, fetchFiller: boolean = false): Promise<IMetaAnimeEpisode[]> => {
-    // ani.zip only needs the AniList id, so request it alongside the AniList query. It is
-    // optional enrichment: if it fails or times out, the provider's episodes are still returned.
-    const aniZipRequest = this.usesAniZipEpisodes()
-      ? metaHttp
-          .get(`https://api.ani.zip/mappings?anilist_id=${encodeURIComponent(id)}`, { timeout: ENRICHMENT_TIMEOUT_MS })
-          .then((res) => res.data)
-      : undefined;
-    // Don't surface an unhandled rejection if the AniList query below fails first.
-    aniZipRequest?.catch(() => undefined);
-
-    const { Media } = (await anilistQuery(EPISODES_MEDIA_QUERY, { id: Number(id) })).data;
-
+  private findEpisodes = async (
+    id: string,
+    media: any,
+    fetchFiller: boolean,
+    aniZipRequest: Promise<unknown>
+  ): Promise<IMetaAnimeEpisode[]> => {
     const fillerRequest: Promise<FillerEpisode[]> =
-      fetchFiller && Media.idMal ? fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
+      fetchFiller && media.idMal ? fetchFillerEpisodes(media.idMal) : Promise.resolve([]);
 
-    const providerEpisodes = await this.findProviderEpisodes(mapTitle(Media.title), Media.format);
-    const aniZip = await aniZipRequest?.catch(() => undefined);
+    const providerEpisodes = await this.findProviderEpisodes(mapTitle(media.title), media.format);
+    const aniZip = await aniZipRequest;
     const episodes: MergedEpisode[] = aniZip
       ? this.mergeAniZipEpisodes(aniZip, providerEpisodes)
       : providerEpisodes.map((episode) => ({ episode }));
 
     const fillerEpisodes = await fillerRequest;
-    const cover = pickCover(Media.coverImage);
+    const cover = pickCover(media.coverImage);
 
     return episodes.map((merged, index): IMetaAnimeEpisode => {
       const { episode } = merged;
       if (!episode.image && cover) episode.image = cover;
       applyFiller(episode, fillerEpisodes);
-
       // The one place uniqueId is set, so matched, unmatched and un-enriched episodes follow one rule.
       return { ...episode, uniqueId: episodeUniqueId(id, merged, index) };
     });
+  };
+
+  /**
+   * ani.zip's mappings for an AniList id, for providers that declare `aniZipEpisodes`. They are
+   * optional enrichment: undefined when the request fails or times out.
+   */
+  private requestAniZip = (id: string): Promise<unknown> =>
+    this.usesAniZipEpisodes()
+      ? metaHttp
+          .get(`https://api.ani.zip/mappings?anilist_id=${encodeURIComponent(id)}`, { timeout: ENRICHMENT_TIMEOUT_MS })
+          .then(
+            (res) => res.data,
+            () => undefined
+          )
+      : Promise.resolve(undefined);
+
+  /**
+   * @param id AniList id
+   * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
+   * @returns the episode list without the anime info, every episode with a `uniqueId`
+   */
+  fetchEpisodesListById = async (id: string, fetchFiller: boolean = false): Promise<IMetaAnimeEpisode[]> => {
+    const aniZipRequest = this.requestAniZip(id);
+    const { Media } = (await anilistQuery(EPISODES_MEDIA_QUERY, { id: Number(id) })).data;
+    return this.findEpisodes(id, Media, fetchFiller, aniZipRequest);
   };
 
   /** Whether to merge the provider's episodes with ani.zip metadata, as the provider declares. */
@@ -807,21 +825,14 @@ class Anilist extends AnimeParser {
 
     /**
      * The AniList info with the provider's chapters, in the provider's order (reading order, as every
-     * manga provider returns them), looked up by the romaji title, then by the English one.
+     * manga provider returns them): from MALSync's mapping for MangaDex and MangaKakalot, else from
+     * the provider's search result closest to the romaji or English title.
      */
     fetchMangaInfo = async (id: string): Promise<IMangaInfo> => {
       const media = (await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) })).data.Media;
-      const mangaInfo: IMangaInfo = { id, ...mapMediaDetail(media) };
-      const title = mapTitle(media.title);
-      const romaji = (title.romaji ?? title.english ?? '').toLowerCase();
-      const english = (title.english ?? title.romaji ?? '').toLowerCase();
-
+      const mangaInfo: IMangaInfo = { id, ...mapMangaDetail(media) };
       try {
-        let chapters = await findMangaChapters(this.provider, romaji, mangaInfo.malId as number);
-        if (chapters.length === 0 && english !== romaji) {
-          chapters = await findMangaChapters(this.provider, english, mangaInfo.malId as number);
-        }
-        mangaInfo.chapters = chapters;
+        mangaInfo.chapters = await findMangaChapters(this.provider, mapTitle(media.title), media.idMal);
       } catch (err) {
         throw MetaError.from('provider', err);
       }

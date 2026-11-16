@@ -1,10 +1,11 @@
 import { type ExtractorContext, type ISource } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
-import { hlsVariants } from './hls';
+import { M3U8_URL, hlsVariants } from './hls';
+import { unpackScripts } from './packer';
 import { toUrl } from './url';
 
 export function VidHide(ctx: ExtractorContext) {
-  const { axios, USER_AGENT, NativeConsumet, PolyURL } = ctx;
+  const { axios, USER_AGENT, PolyURL } = ctx;
 
   const extract = async (videoUrl: string | PolyURL): Promise<ISource> => {
     const url = toUrl(PolyURL, videoUrl);
@@ -12,14 +13,10 @@ export function VidHide(ctx: ExtractorContext) {
       headers: { 'User-Agent': USER_AGENT, 'Referer': url.origin },
     });
 
-    // The packed `eval(function(p,a,c,k,e,d)...)` call can span lines; capture its argument up to </script>.
-    const packedScript = /eval(\(f.*?)\s*<\/script>/s.exec(data)?.[1];
-    if (!packedScript) throw new Error('No packed script found');
-
-    const unpackedData = await NativeConsumet.deobfuscateScript(packedScript);
-    if (!unpackedData) throw new Error('Failed to deobfuscate script');
-
-    const m3u8Link = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)?.[0];
+    // The player setup is packed with Dean Edwards' packer.
+    const scripts = unpackScripts(data);
+    if (!scripts.length) throw new Error('No packed script found');
+    const m3u8Link = scripts.map((code) => code.match(M3U8_URL)?.[0]).find(Boolean);
     if (!m3u8Link) throw new Error('No m3u8 link found');
 
     const { data: master } = await axios.get(m3u8Link, {

@@ -6,11 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MovieBrowser } from '../components/MovieBrowser';
 import { ProviderSheet } from '../components/ProviderSheet';
 import { HeaderChip, ScreenHeader } from '../components/ScreenHeader';
-import { MOVIE_PROVIDERS, pickProvider } from '../providers';
+import { MOVIE_PROVIDERS, useProviderChoice } from '../providers';
 import { colors } from '../theme';
 
 export default function MoviesScreen() {
-  const [{ def, provider }, setChoice] = useState(() => pickProvider(MOVIE_PROVIDERS[0]!));
+  const { def, provider, select } = useProviderChoice(MOVIE_PROVIDERS);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -29,10 +29,7 @@ export default function MoviesScreen() {
         title="Movie Provider"
         providers={MOVIE_PROVIDERS}
         selectedKey={def.key}
-        onSelect={(key) => {
-          const next = MOVIE_PROVIDERS.find((p) => p.key === key);
-          if (next && next !== def) setChoice(pickProvider(next));
-        }}
+        onSelect={select}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>

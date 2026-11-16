@@ -9,7 +9,6 @@ import {
   type ILightNovelChapterContent,
   type ILightNovelResult,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { toMediaStatus } from '../common/media-status';
@@ -65,7 +64,9 @@ export class ReadLightNovels extends LightNovelParser {
       .eq(0)
       .nextUntil('hr')
       .text();
+    // A novel whose chapters fit on one page has no pagination.
     const pages = Math.max(
+      1,
       ...$('#pagination > ul > li')
         .map((i, el) => parseInt($(el).find('a').attr('data-page')!))
         .get()
@@ -73,8 +74,7 @@ export class ReadLightNovels extends LightNovelParser {
     );
 
     lightNovelInfo.status = toMediaStatus(
-      $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text(),
-      MediaStatus
+      $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text()
     );
 
     lightNovelInfo.pages = pages;

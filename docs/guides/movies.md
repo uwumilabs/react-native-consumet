@@ -58,6 +58,6 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` may be protec
 
 `MOVIES.MultiStream` gets its titles from TMDB: pass your own TMDB API key as its third argument, `new MOVIES.MultiStream(ctx?, customBaseURL?, apiKey?)`. Without one it uses a shared key and logs a warning (see [Meta](./meta.md)). The older `new MOVIES.MultiStream(customBaseURL?)` still works, with the shared key.
 
-VegaMovies and the three mirrors return playable files from `fetchEpisodeSources` (`isSourceDirect` in the registry): pass the server name to `fetchEpisodeSources` instead of handing server URLs to an extractor.
+VegaMovies and the three mirrors return playable files from `fetchEpisodeSources` (`isSourceDirect` in the registry): pass the server name to `fetchEpisodeSources` instead of handing server URLs to an extractor. Their servers are named after the page that lists the file's host: VegaMovies' `hubcloud-cf-storage`, `hubcloud-pixeldrain`, `fastdl` or `filepress`, and the mirrors' `netmirror-netflix`, `netmirror-prime-video` or `netmirror-disney`.
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

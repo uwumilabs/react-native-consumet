@@ -50,7 +50,7 @@ output:
   hasNextPage: true,
   results: [
         {
-          id: 848326,
+          id: '848326',
           title: 'Rebel Moon - Part One: A Child of Fire',
           image: 'https://image.tmdb.org/t/p/original/ui4DrH1cKk2vkHshcUcGt2lKxCm.jpg',
           type: 'Movie',
@@ -58,7 +58,7 @@ output:
           releaseDate: '2023'
         },
         {
-          id: 572802,
+          id: '572802',
           title: 'Aquaman and the Lost Kingdom',
           image: 'https://image.tmdb.org/t/p/original/8xV47NDrjdZDpkVcCFqkdHa3T0C.jpg',
           type: 'Movie',
@@ -94,7 +94,7 @@ output:
   currentPage: 1,
   results: [
     {
-      "id": 60735,
+      "id": "60735",
       "title": "The Flash",
       "image": "https://image.tmdb.org/t/p/original/lJA2RCMfsWoskqlQhXPSLFQGXEJ.jpg",
       "type": "TV Series",
@@ -102,7 +102,7 @@ output:
       "releaseDate": "2014"
     },
     {
-      "id": 298618,
+      "id": "298618",
       "title": "The Flash",
       "image": "https://image.tmdb.org/t/p/original/oduJooXJya3u6wuA6FgljAFCEQp.jpg",
       "type": "Movie",
@@ -177,7 +177,7 @@ output:
   },
   "similar": [
     {
-      "id": 12971,
+      "id": "12971",
       "title": "Dragon Ball Z",
       "image": "https://image.tmdb.org/t/p/original/jB9l4mp0bzBgzE5y4tvBH6AMeMk.jpg",
       "type": "TV Series",
@@ -290,6 +290,6 @@ Make sure to check the `headers` property of the returned object. It contains th
 
 ### Errors
 
-When a TMDB request fails, `search`, `fetchTrending` and `fetchMediaInfo` throw a [`MetaError`](../../guides/meta.md#errors) with `source: 'tmdb'`, the HTTP `status` when there was one, and the original error as `cause`. A 429 or 5xx answer is retried once first. A failing movie provider doesn't make `fetchMediaInfo` throw, and neither does a failing season unless every season fails (see above). `fetchEpisodeServers` and `fetchEpisodeSources` pass the provider's errors through unchanged.
+When a TMDB request fails, `search`, `fetchTrending` and `fetchMediaInfo` throw a [`MetaError`](../../guides/meta.md#errors) with `source: 'tmdb'`, the HTTP `status` when there was one, and the original error as `cause`. A 429 or 5xx answer is retried once first. A failing movie provider doesn't make `fetchMediaInfo` throw, and neither does a failing season unless every season fails (see above). When the provider fails, `fetchEpisodeServers` and `fetchEpisodeSources` throw a `MetaError` with `source: 'provider'` and the provider's error as `cause`.
 
 <p align="end">(<a href="../../guides/meta.md">back to meta providers list</a>)</p>

@@ -12,6 +12,7 @@ import { useLatestCall } from '../hooks/useLatestCall';
 import { usePlayer } from '../hooks/usePlayer';
 import { useSearch } from '../hooks/useSearch';
 import { errorText, titleText } from '../media';
+import { isDubSeparate } from '../providers';
 import { colors, PAD, R } from '../theme';
 import { DetailSheet, EpisodeGrid } from './DetailSheet';
 import { PlayerModal } from './PlayerModal';
@@ -26,15 +27,26 @@ type Props = {
   provider: IAnimeProvider | null;
   /** The provider's name in the search box and messages */
   label: string;
-  /** Show the SUB / DUB toggle: the site lists sub and dub as separate entries */
-  subDubSeparate: boolean;
   /** The tab's header: title and the tab's own controls */
   header: ReactNode;
   placeholder?: ReactNode;
 };
 
+/**
+ * An anime's info and episodes. For META.Anilist, the info without episodes and, alongside it, the
+ * episodes from fetchEpisodesListById (ani.zip titles and uniqueId), as apps do: its fetchAnimeInfo
+ * would look the episodes up on the provider a second time.
+ */
+async function fetchInfoAndEpisodes(provider: IAnimeProvider, id: string): Promise<[IAnimeInfo, IAnimeEpisode[]]> {
+  if (provider instanceof META.Anilist) {
+    return Promise.all([provider.fetchAnilistInfoById(id), provider.fetchEpisodesListById(id)]);
+  }
+  const info = await provider.fetchAnimeInfo(id);
+  return [info, info.episodes ?? []];
+}
+
 /** Search, a detail sheet with the episodes, and the player, for one anime provider at a time. */
-export function AnimeBrowser({ provider, label, subDubSeparate, header, placeholder }: Props) {
+export function AnimeBrowser({ provider, label, header, placeholder }: Props) {
   const search = useSearch<IAnimeResult>(provider, 'Anime');
   const player = usePlayer('Anime');
   const infoCalls = useLatestCall();
@@ -72,10 +84,7 @@ export function AnimeBrowser({ provider, label, subDubSeparate, header, placehol
       setInfoError(null);
       setLoadingInfo(true);
       try {
-        const found = await provider.fetchAnimeInfo(item.id);
-        // META.Anilist lists episodes with fetchEpisodesListById (ani.zip titles and uniqueId), as apps do.
-        const list =
-          provider instanceof META.Anilist ? await provider.fetchEpisodesListById(item.id) : (found.episodes ?? []);
+        const [found, list] = await fetchInfoAndEpisodes(provider, item.id);
         if (!isCurrent()) return;
         console.log('[Anime] detail info', found);
         console.log('[Anime] episodes', list);
@@ -147,7 +156,7 @@ export function AnimeBrowser({ provider, label, subDubSeparate, header, placehol
         onClose={closeInfo}
         fetchingStream={player.loading}
         descriptionTitle="Synopsis">
-        {subDubSeparate ? <SubDubToggle value={subOrDub} onChange={setSubOrDub} /> : null}
+        {provider && isDubSeparate(provider) ? <SubDubToggle value={subOrDub} onChange={setSubOrDub} /> : null}
         <EpisodeGrid title="Episodes" episodes={episodes} activeId={episode?.id} onPlay={play} />
       </DetailSheet>
 

@@ -13,13 +13,8 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 import { toMediaStatus } from '../../common/media-status';
-import { pickServer } from '../../common/servers';
-import { serverName } from '../helpers';
-import { cardPage, pageUrl, siteEpisodeId, toEpisodeId } from '../hianime';
-
-// The zone the schedule's airing times come back in: UTC+5:30 (IST), as minutes behind UTC (the
-// form Date.getTimezoneOffset uses). It is fixed, not the device's zone.
-const IST_TZ_OFFSET = -330;
+import { pickServer, serverName } from '../../common/servers';
+import { IST_TZ_OFFSET, cardPage, linkedGenres, pageUrl, siteEpisodeId, toEpisodeId } from '../hianime';
 
 const FILTERS = {
   type: { movie: 1, tv: 2, ova: 3, ona: 4, special: 5, music: 6 },
@@ -79,7 +74,7 @@ const isoDate = (date: { year: number; month: number; day: number }) =>
   `${date.year}-${date.month.toString().padStart(2, '0')}-${date.day.toString().padStart(2, '0')}`;
 
 export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
+  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, PolyURLSearchParams } = ctx;
   const { MegaCloud } = extractors;
   const { SubOrDub: SubOrDubEnum, WatchListType: WatchListTypeEnum } = enums;
 
@@ -182,7 +177,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
       ['end_date', endDate && isoDate(endDate)],
       ['genres', genreIds.join(',')],
     ];
-    const params = new URLSearchParams();
+    const params = new PolyURLSearchParams();
     for (const [key, value] of filters) if (value) params.append(key, String(value));
 
     const query = params.toString();
@@ -205,7 +200,8 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
   const fetchOVA = async (page: number = 1) => scrapeCardPage('/ova', page);
   const fetchONA = async (page: number = 1) => scrapeCardPage('/ona', page);
   const fetchSpecial = async (page: number = 1) => scrapeCardPage('/special', page);
-  const fetchGenres = async (page: number = 1) => scrapeCardPage('/genre', page);
+  /** The genres the home page links to, by name; genreSearch takes their slugs. */
+  const fetchGenres = async (): Promise<string[]> => linkedGenres(load((await axios.get(`${baseUrl}/home`)).data));
   const genreSearch = async (genre: string, page: number = 1) => scrapeCardPage(`/genre/${genre}`, page);
 
   /**
@@ -279,7 +275,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
 
       if (label.includes('studio')) info.studios = [value];
       if (label.includes('duration')) info.duration = value;
-      if (label.includes('status')) info.status = toMediaStatus(value, ctx.enums.MediaStatus);
+      if (label.includes('status')) info.status = toMediaStatus(value);
       if (label.includes('type')) info.type = value as MediaFormat;
       if (label.includes('score')) info.rating = parseFloat(value);
       if (label.includes('premiered')) info.releaseDate = value;
@@ -326,14 +322,7 @@ export function createZoro(ctx: ProviderContext, customBaseURL?: string) {
     return info;
   };
 
-  /** MegaCloud's sources for an embed URL. */
-  const extractFrom = async (embedUrl: string): Promise<ISource> => {
-    const serverUrl = new PolyURL(embedUrl);
-    return {
-      headers: { Referer: serverUrl.href },
-      ...(await MegaCloud(ctx).extract(serverUrl, baseUrl)),
-    };
-  };
+  const extractFrom = (embedUrl: string): Promise<ISource> => MegaCloud(ctx).extract(new PolyURL(embedUrl), baseUrl);
 
   /**
    * @param episodeId an episode id from fetchAnimeInfo, or a server's embed URL

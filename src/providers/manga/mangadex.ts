@@ -8,7 +8,6 @@ import {
   type ISearch,
   MangaParser,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber, sortChaptersForReading } from '../../utils/manga';
@@ -328,7 +327,7 @@ export class MangaDex extends MangaParser {
     const text = description ? markdownToText(description) : '';
     if (text) result.description = text;
 
-    const status = toMediaStatus(attributes.status, MediaStatus);
+    const status = toMediaStatus(attributes.status);
     if (status) result.status = status;
     if (typeof attributes.year === 'number') result.releaseDate = attributes.year;
     result.url = `${this.baseUrl}/title/${manga.id}`;
@@ -383,13 +382,13 @@ export class MangaDex extends MangaParser {
         return name ? [name] : [];
       });
 
-  /** The API's own error message when it sent one (e.g. `Manga ... not found.`). */
-  private error = (err: unknown): Error => {
+  /**
+   * A failed request as an error naming MangaDex, with the API's own message when it sent one
+   * (`Manga ... not found.`), the HTTP `status` when there was one, and the original error as `cause`.
+   */
+  private error = (err: unknown): Error & { status?: number; cause: unknown } => {
     const response = (err as AxiosError<{ errors?: { detail?: string }[] }>)?.response;
-    const detail = response?.data?.errors?.[0]?.detail;
-    if (detail) return new Error(`${this.name}: ${detail}`);
-    if ((err as AxiosError)?.code === 'ERR_BAD_REQUEST')
-      return new Error(`${this.name}: bad request. Make sure you have entered a valid query.`);
-    return new Error(`${this.name}: ${(err as Error)?.message ?? String(err)}`);
+    const message = response?.data?.errors?.[0]?.detail ?? (err instanceof Error ? err.message : String(err));
+    return Object.assign(new Error(`${this.name}: ${message}`), { status: response?.status, cause: err });
   };
 }

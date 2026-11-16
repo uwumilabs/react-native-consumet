@@ -1,14 +1,9 @@
 import registry from '../../src/extension-registry.json';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
+import { extractorEntry as entryFor, registryOf } from './helpers/registry';
 
-const extractorEntry = (name: string, extra: Record<string, unknown> = {}) => ({
-  name,
-  version: '1.0.0',
-  main: `https://raw.githubusercontent.com/o/r/refs/heads/main/registry/extractors/${name.toLowerCase()}/1.0.0.js`,
-  sha256: 'f'.repeat(64),
-  ...extra,
-});
-const managerWith = (...extractors: object[]) => new ExtractorManager({ extensions: [], extractors } as any);
+const extractorEntry = (name: string, extra: Record<string, unknown> = {}) => entryFor(name, '', extra);
+const managerWith = (...extractors: object[]) => new ExtractorManager(registryOf([], extractors));
 
 describe('extractor names from the registry (EXT-4)', () => {
   it('resolves suffixed server names for an extractor that exists only in the registry', () => {
@@ -30,11 +25,6 @@ describe('extractor names from the registry (EXT-4)', () => {
 
     expect(manager.extractBaseExtractorName('megacloud-hd-1')).toBe('megacloud');
     expect(manager.extractBaseExtractorName('mega-1')).toBe('mega');
-  });
-
-  it('keeps the built-in aliases for registries without an aliases field', () => {
-    const manager = managerWith(extractorEntry('MegaCloud'));
-    expect(manager.extractBaseExtractorName('akcloud-x')).toBe('megacloud');
   });
 
   it('resolves the server names providers use today', () => {

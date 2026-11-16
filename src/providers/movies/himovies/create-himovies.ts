@@ -3,14 +3,13 @@ import {
   type IMovieInfo,
   type IMovieEpisode,
   type IEpisodeServer,
-  type StreamingServers,
   type ISource,
   type IMovieResult,
   type ISearch,
   type ProviderContext,
   type ProviderConfig,
 } from '../../../models';
-import { pickServer } from '../../common/servers';
+import { pickServer, serverName } from '../../common/servers';
 import { pageId, pageUrl, querySlug } from '../site-paths';
 
 const CARDS = '.film_list-wrap > div.flw-item';
@@ -33,7 +32,7 @@ const yearOrSeasons = (label: string): { releaseDate?: string; seasons?: number 
 export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaCloud } = extractors;
-  const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
+  const { TvType: TvTypeEnum } = enums;
 
   const baseUrl = createCustomBaseUrl('https://himovies.sx', customBaseURL);
 
@@ -187,8 +186,8 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
         .map(async (el) => {
           const link = $(el).find('a');
           const { data } = await axios.get(`${baseUrl}/ajax/episode/sources/${link.attr('data-id')}`);
-          // "Server UpCloud" -> "upcloud"
-          return { name: link.attr('title')!.slice(6).toLowerCase().replace('server', '').trim(), url: data.link };
+          // Every server runs the MegaCloud player: "Server UpCloud" -> "megacloud-upcloud"
+          return { name: serverName('megacloud', link.attr('title')!.replace(/^\s*server\s+/i, '')), url: data.link };
         })
     );
   };
@@ -196,20 +195,13 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
   /**
    * @param episodeId episode id, or a server's embed URL from fetchEpisodeServers
    * @param mediaId media id or page URL
-   * @param server server to play (default `MegaCloud`); every HiMovies server runs the MegaCloud player
+   * @param server a server name from fetchEpisodeServers, or the start of one; the first server when omitted
    */
-  const fetchEpisodeSources = async (
-    episodeId: string,
-    mediaId: string,
-    server: StreamingServers = StreamingServersEnum.MegaCloud
-  ): Promise<ISource> => {
-    const embedUrl = new PolyURL(
-      episodeId.startsWith('http') ? episodeId : pickServer(await fetchEpisodeServers(episodeId, mediaId), server).url
-    );
-    return {
-      headers: { Referer: embedUrl.href },
-      ...(await MegaCloud(ctx).extract(embedUrl, baseUrl)),
-    };
+  const fetchEpisodeSources = async (episodeId: string, mediaId: string, server?: string): Promise<ISource> => {
+    const embedUrl = episodeId.startsWith('http')
+      ? episodeId
+      : pickServer(await fetchEpisodeServers(episodeId, mediaId), server).url;
+    return MegaCloud(ctx).extract(new PolyURL(embedUrl), baseUrl);
   };
 
   const fetchHomeSection = async (cards: string): Promise<IMovieResult[]> => {

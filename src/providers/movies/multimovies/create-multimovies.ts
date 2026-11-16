@@ -2,19 +2,18 @@ import type { CheerioAPI } from 'cheerio';
 import {
   type IMovieInfo,
   type IEpisodeServer,
-  type StreamingServers,
   type ISource,
   type IMovieResult,
   type ISearch,
   type ProviderContext,
   type ProviderConfig,
 } from '../../../models';
-import { pickServer } from '../../common/servers';
+import { pickServer, serverName } from '../../common/servers';
 import { pageId, pageUrl, querySlug } from '../site-paths';
 
-// The site's mirror list names hosts by their brand: StreamHG runs the StreamWish player and
-// EarnVids the VidHide one, which is how extractSources tells them apart.
-const SERVER_NAMES: Record<string, string> = { StreamHG: 'StreamWish', EarnVids: 'VidHide' };
+// The site's mirror list names hosts by their brand: EarnVids runs the VidHide player, and the
+// others (StreamHG among them) the StreamWish one.
+const VIDHIDE_HOSTS = ['EarnVids'];
 
 /**
  * MultiMovies (multimovies.center), a DooPlay (WordPress) site. Media and episode ids are page
@@ -24,7 +23,7 @@ const SERVER_NAMES: Record<string, string> = { StreamHG: 'StreamWish', EarnVids:
 export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL, USER_AGENT, CryptoJS } = ctx;
   const { StreamWish, VidHide } = extractors;
-  const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
+  const { TvType: TvTypeEnum } = enums;
 
   const baseUrl = createCustomBaseUrl('https://multimovies.center', customBaseURL);
 
@@ -44,6 +43,17 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
 
   const typeOf = (id: string) => (id.startsWith('tvshows/') ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE);
 
+  /** How many seasons a series has: search results don't show it, so its page's episodes are counted. */
+  const countSeasons = async (id: string): Promise<number | undefined> => {
+    try {
+      const { episodes = [] } = await fetchMediaInfo(id);
+      return new Set(episodes.map((episode) => episode.season).filter((season) => season != null)).size;
+    } catch {
+      // A page that doesn't load leaves the result without a count rather than failing the search.
+      return undefined;
+    }
+  };
+
   const search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const $ = await getPage(`${baseUrl}/${page === 1 ? '' : `page/${page}/`}?s=${querySlug(query, '+')}`);
     const results = await Promise.all(
@@ -53,8 +63,7 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
           const card = $(el);
           const href = card.find('.thumbnail a').attr('href') ?? '';
           const id = pageId(href, baseUrl);
-          // Search results don't show a series' season count, so count its episodes' seasons.
-          const { episodes = [] } = await fetchMediaInfo(id);
+          const type = typeOf(id);
           return {
             id,
             title: card.find('.details .title a').text().trim(),
@@ -62,9 +71,9 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
             image: card.find('.thumbnail img').attr('src') ?? '',
             rating: parseFloat(card.find('.meta .rating').text().replace('IMDb ', '')) || 0,
             releaseDate: card.find('.meta .year').text().trim(),
-            seasons: new Set(episodes.map((episode) => episode.season).filter((season) => season != null)).size,
+            seasons: type === TvTypeEnum.TVSERIES ? await countSeasons(id) : undefined,
             description: card.find('.contenido p').text().trim(),
-            type: typeOf(id),
+            type,
           };
         })
     );
@@ -150,10 +159,11 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
     return info;
   };
 
-  const extractSources = async (embed: string, server: string, fileId?: string): Promise<ISource> => {
+  /** The sources of a server's embed URL, read by the extractor its name starts with. */
+  const extractSources = async (embed: string, server: string = '', fileId?: string): Promise<ISource> => {
     const embedUrl = new PolyURL(embed);
     const headers = { Referer: embedUrl.origin };
-    if (server.toLowerCase().startsWith(StreamingServersEnum.VidHide)) {
+    if (server.toLowerCase().startsWith('vidhide')) {
       return {
         headers,
         ...(await VidHide(ctx).extract(embedUrl)),
@@ -190,7 +200,8 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
     const fileId = embed.split('/').pop() ?? '';
 
     // The site's own player and dhcplay are StreamWish players.
-    if (/multimovies|dhcplay/.test(embed)) return { servers: [{ name: 'StreamWish', url: embed }], fileId };
+    const ownPlayer = /multimovies|dhcplay/.exec(embed)?.[0];
+    if (ownPlayer) return { servers: [{ name: serverName('streamwish', ownPlayer), url: embed }], fileId };
     if (!fileId) throw new Error('No player ID found');
 
     const { data: mirrors } = await axios.post(
@@ -204,23 +215,22 @@ export function createMultiMovies(ctx: ProviderContext, customBaseURL?: string) 
     );
     const servers = Object.keys(paths)
       .filter((site) => site in mirrors.siteUrls)
-      .map((site) => ({
-        name: SERVER_NAMES[mirrors.siteFriendlyNames[site]] ?? mirrors.siteFriendlyNames[site],
-        url: mirrors.siteUrls[site] + paths[site],
-      }));
+      .map((site) => {
+        const host: string = mirrors.siteFriendlyNames[site];
+        return {
+          name: serverName(VIDHIDE_HOSTS.includes(host) ? 'vidhide' : 'streamwish', host),
+          url: mirrors.siteUrls[site] + paths[site],
+        };
+      });
     return { servers, fileId };
   };
 
   /**
    * @param episodeId episode id, or a server's embed URL from fetchEpisodeServers
-   * @param server server to play (default `StreamWish`); VidHide servers are read with the VidHide
-   * extractor, every other one with StreamWish
+   * @param server a server name from fetchEpisodeServers, or the start of one; the first server when
+   * omitted. For an embed URL, `vidhide` reads it with the VidHide extractor, anything else with StreamWish.
    */
-  const fetchEpisodeSources = async (
-    episodeId: string,
-    _mediaId?: string,
-    server: StreamingServers = StreamingServersEnum.StreamWish
-  ): Promise<ISource> => {
+  const fetchEpisodeSources = async (episodeId: string, _mediaId?: string, server?: string): Promise<ISource> => {
     if (episodeId.startsWith('http')) return extractSources(episodeId, server);
     const { servers, fileId } = await loadServers(pageUrl(episodeId, baseUrl));
     const picked = pickServer(servers, server);

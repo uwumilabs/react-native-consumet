@@ -8,7 +8,6 @@ import {
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber, parseVolumeNumber } from '../../utils/manga';
@@ -45,6 +44,8 @@ export class MangaKakalot extends MangaParser {
   override readonly name = 'MangaKakalot';
   // mangakakalot.com is gone; mangakakalot.gg redirects here, and manganato.gg is the same site
   // (same titles, ids and image hosts) under another name.
+  // Covers and pages are on 2xstorage.com, which answers 403 unless the Referer is the site's origin
+  // (exactly `https://www.kakamanga.com/`, as refererHeaders sends it; a page URL is refused too).
   protected override baseUrl = 'https://www.kakamanga.com';
   protected override logo = 'https://www.kakamanga.com/images/svg/logo-kkl.svg';
   protected override classPath = 'MANGA.MangaKakalot';
@@ -53,14 +54,6 @@ export class MangaKakalot extends MangaParser {
   constructor(private readonly ctx: ProviderContext = createProviderContext()) {
     super();
   }
-
-  /**
-   * Covers and pages are on 2xstorage.com, which answers 403 unless the Referer is the site's
-   * origin (exactly `https://www.kakamanga.com/`; a page URL is refused too).
-   */
-  private imageHeaders = (): Record<string, string> => refererHeaders(this.baseUrl);
-
-  private absoluteUrl = (url: string | undefined): string | undefined => absoluteUrl(url, this.baseUrl);
 
   /** The title's slug (its id) in `https://www.kakamanga.com/manga/<slug>`. */
   private slugFromUrl = (url: string | undefined): string | undefined => /\/manga\/([^/?#]+)/.exec(url ?? '')?.[1];
@@ -87,7 +80,7 @@ export class MangaKakalot extends MangaParser {
       .filter((_, el) => $(el).text().trim().toLowerCase() === 'next')
       .first();
     return {
-      currentPage: Number($('.panel_page_number .page_select').first().text().trim()) || page,
+      currentPage: page,
       hasNextPage: next.attr('href') !== undefined && !next.hasClass('page_disabled'),
       results,
     };
@@ -111,13 +104,13 @@ export class MangaKakalot extends MangaParser {
   };
 
   private searchResult = (href: unknown, name: string, cover: unknown): IMangaResult | undefined => {
-    const url = this.absoluteUrl(typeof href === 'string' ? href : undefined);
+    const url = absoluteUrl(typeof href === 'string' ? href : undefined, this.baseUrl);
     const id = this.slugFromUrl(url);
     const title = name.replace(/\s+/g, ' ').trim();
     if (!url || !id || !title) return undefined;
     const result: IMangaResult = { id, title, url };
-    const image = this.absoluteUrl(typeof cover === 'string' ? cover : undefined);
-    if (image) Object.assign(result, { image, headerForImage: this.imageHeaders() });
+    const image = absoluteUrl(typeof cover === 'string' ? cover : undefined, this.baseUrl);
+    if (image) Object.assign(result, { image, headerForImage: refererHeaders(this.baseUrl) });
     return result;
   };
 
@@ -142,8 +135,8 @@ export class MangaKakalot extends MangaParser {
       .filter((alt, i, all) => alt && alt !== title && all.indexOf(alt) === i);
     if (altTitles.length) info.altTitles = altTitles;
 
-    const image = this.absoluteUrl($('.manga-info-pic img').first().attr('src'));
-    if (image) Object.assign(info, { image, headerForImage: this.imageHeaders() });
+    const image = absoluteUrl($('.manga-info-pic img').first().attr('src'), this.baseUrl);
+    if (image) Object.assign(info, { image, headerForImage: refererHeaders(this.baseUrl) });
 
     const description = this.description($);
     if (description) info.description = description;
@@ -161,7 +154,7 @@ export class MangaKakalot extends MangaParser {
       .filter((author) => author && author.toLowerCase() !== 'unknown');
     if (authors.length) info.authors = authors;
 
-    const status = toMediaStatus(fields.status, MediaStatus);
+    const status = toMediaStatus(fields.status);
     if (status) info.status = status;
 
     const genres = $('.manga-info-text li.genres a')
@@ -183,10 +176,10 @@ export class MangaKakalot extends MangaParser {
     const $ = load(data);
 
     return $('.container-chapter-reader img')
-      .map((_, el) => this.absoluteUrl($(el).attr('src') ?? $(el).attr('data-src')))
+      .map((_, el) => absoluteUrl($(el).attr('src') ?? $(el).attr('data-src'), this.baseUrl))
       .get()
       .filter((img): img is string => Boolean(img))
-      .map((img, i): IMangaChapterPage => ({ img, page: i + 1, headerForImage: this.imageHeaders() }));
+      .map((img, i): IMangaChapterPage => ({ img, page: i + 1, headerForImage: refererHeaders(this.baseUrl) }));
   };
 
   /**

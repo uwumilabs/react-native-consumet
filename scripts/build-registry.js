@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Rebuilds dist/ and everything made from it, in the order each step needs:
+ * Builds dist/ and the registry made from it, in the order each step needs:
  *   1. the package's `build` script: tsc, the registry bundles (build-extensions.js) and
  *      hermes-safe-dist.js
  *   2. prepare-registry.js: publishes new versions under registry/, refreshes the hashes in
  *      src/extension-registry.json and writes the example app's local dist map
  *
  * `yarn build:registry` runs it, as does release-it after a version bump. The pre-commit hook
- * (stage-dist.js) runs it on a copy of the staged files.
+ * (stage-registry.js) runs it on a copy of the staged files.
  */
 const { execFileSync, execSync } = require('child_process');
 const fs = require('fs');

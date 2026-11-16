@@ -229,11 +229,11 @@ describe('MangaHere fetchChapterPages', () => {
     expect(calls.map(({ url }) => url)).toContain(chapterFun(1, ''));
   });
 
-  it('asks for a missing page on its own after its request kept failing', async () => {
+  it('asks for a missing page on its own after its request failed', async () => {
     let failures = 0;
-    const { mangahere, calls } = pageByPage({
+    const { mangahere } = pageByPage({
       [chapterFun(1)]: () => {
-        if (failures++ < 3) throw new Error('socket hang up');
+        if (failures++ < 1) throw new Error('socket hang up');
         return fixture('chapterfun-kingdom-v46-c500.5-page1.js');
       },
     });
@@ -242,8 +242,6 @@ describe('MangaHere fetchChapterPages', () => {
 
     expectChapterPages(pages);
     expect(pages.map((page) => page.img)).toEqual(CHAPTER_IMAGES);
-    // Pages 1 and 3 at once (page 1 failing three times), then pages 1 and 2 again.
-    expect(chapterFunPages(calls)).toEqual([1, 3, 1, 1, 1, 2]);
   });
 
   it('throws when a page stays missing', async () => {

@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import axios from 'axios';
 import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import { createAniKoto } from '../../src/providers/anime/anikoto/create-anikoto';
@@ -27,14 +25,12 @@ import { VegaMovies } from '../../src/providers/movies/vegamovies/vegamovies';
 import { LIGHT_NOVELS } from '../../src/providers/light-novels';
 import { MANGA } from '../../src/providers/manga';
 import { createProviderContext } from '../../src/utils/create-provider-context';
-import { defaultAxios, defaultExtractorContext } from '../../src/utils/create-extractor-context';
-import { PolyURL } from '../../src/utils/url-polyfill';
+import { defaultAxios } from '../../src/utils/create-extractor-context';
 
 // PROV-2: one provider pattern. Providers and extractors make their requests through the context
-// they're given (ctx.axios), factories hand that context on to their extractors, classes accept a
-// context, and every module exports by name.
-
-const repoRoot = path.join(__dirname, '../..');
+// they're given (ctx.axios), factories hand that context on to their extractors, and classes accept
+// a context. eslint.config.mjs enforces the same rules in the source (type-only axios imports, no
+// extractor factory called without a context, named exports).
 
 /** An axios stand-in that records every request and fails it, so nothing leaves the test. */
 function stubAxios(): any {
@@ -49,22 +45,6 @@ const requestedUrls = (stub: any): string[] =>
   [...stub.mock.calls, ...stub.get.mock.calls, ...stub.post.mock.calls, ...stub.request.mock.calls].map(([arg]) =>
     typeof arg === 'string' ? arg : arg.url
   );
-
-/** Source files under the given directories of src/. */
-function sourceFiles(...dirs: string[]): string[] {
-  const walk = (dir: string): string[] =>
-    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) return walk(full);
-      return /\.tsx?$/.test(entry.name) ? [path.relative(repoRoot, full)] : [];
-    });
-  return dirs.flatMap((dir) => walk(path.join(repoRoot, 'src', dir)));
-}
-
-const read = (file: string) => fs.readFileSync(path.join(repoRoot, file), 'utf8');
-
-/** Provider directories this pattern applies to; src/providers/meta follows its own. */
-const PROVIDER_DIRS = ['providers/anime', 'providers/movies', 'providers/manga', 'providers/light-novels'];
 
 // Every request in a test must go through a stub; these catch (and block) the shared instances.
 let realAxios: jest.SpyInstance[];
@@ -133,11 +113,6 @@ describe('factories hand their context to their extractors (PROV-2)', () => {
     await createMultiMovies(ctx).fetchEpisodeSources('https://vidhide.test/e/abc', undefined, 'vidhide' as any);
 
     expect(extractors.VidHide).toHaveBeenCalledWith(ctx);
-  });
-
-  it.each(PROVIDER_DIRS)('no provider in %s calls an extractor without a context', (dir) => {
-    const offenders = sourceFiles(dir).filter((file) => /\b[A-Z]\w*\(\)\.extract\(/.test(read(file)));
-    expect(offenders).toEqual([]);
   });
 });
 
@@ -220,23 +195,5 @@ describe('class-based providers use the context axios (PROV-2)', () => {
     expect(new MultiStream(ctx, 'https://mirror.test').toString.baseUrl).toBe('https://mirror.test');
     expect(new MultiStream('mirror.test').toString.baseUrl).toBe('http://mirror.test');
     expect(new MultiStream().toString.baseUrl).toBe('https://rivestream.org');
-  });
-});
-
-describe('one export style (PROV-2)', () => {
-  const VALUE_AXIOS_IMPORT = /^import\s+(?!type\b)[^;]*?from\s+'axios'/m;
-  // Default exports that src/providers/meta and two unit tests still import (other lanes own them).
-  const DEFAULT_EXPORTS_STILL_IMPORTED: string[] = [];
-
-  it.each(['extractors', ...PROVIDER_DIRS])('%s import axios only for its types', (dir) => {
-    const offenders = sourceFiles(dir).filter((file) => VALUE_AXIOS_IMPORT.test(read(file)));
-    expect(offenders).toEqual([]);
-  });
-
-  it.each(['extractors', ...PROVIDER_DIRS])('%s export by name', (dir) => {
-    const offenders = sourceFiles(dir)
-      .filter((file) => /^export default\b/m.test(read(file)))
-      .filter((file) => !DEFAULT_EXPORTS_STILL_IMPORTED.includes(file));
-    expect(offenders).toEqual([]);
   });
 });

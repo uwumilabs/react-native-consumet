@@ -38,8 +38,8 @@ export const GENRES_QUERY = browseQuery('$genres: [String]', 'genre_in: $genres'
 /** Variables: `page`, `perPage`, `notYetAired`, and `airingAtGreater` / `airingAtLesser` in Unix seconds. */
 export const AIRING_SCHEDULE_QUERY = `query ($page: Int = 1, $perPage: Int = 20, $notYetAired: Boolean, $airingAtGreater: Int, $airingAtLesser: Int) { Page(page: $page, perPage: $perPage) { ${PAGE_INFO} airingSchedules(notYetAired: $notYetAired, airingAt_greater: $airingAtGreater, airingAt_lesser: $airingAtLesser) { airingAt episode media { ${RESULT_FIELDS} countryOfOrigin } } } }`;
 
-/** Variables: `id`. What mapAnimeDetail reads. */
-export const MEDIA_DETAIL_QUERY = `query ($id: Int) { Media(id: $id) { id idMal ${TITLE} synonyms countryOfOrigin isLicensed isAdult ${COVER} startDate { year month day } endDate { year month day } bannerImage season description format status(version: 2) episodes duration ${TRAILER} genres averageScore popularity ${NEXT_AIRING} characters(sort: ROLE) { edges { role node { id ${NAME} image { large medium } } voiceActors(sort: LANGUAGE) { id languageV2 ${NAME} image { large medium } } } } recommendations { edges { node { id mediaRecommendation { ${NODE_FIELDS} } } } } relations { edges { id relationType node { ${NODE_FIELDS} } } } studios(isMain: true) { edges { isMain node { id name } } } } }`;
+/** Variables: `id`. What mapAnimeDetail and mapMangaDetail read. */
+export const MEDIA_DETAIL_QUERY = `query ($id: Int) { Media(id: $id) { id idMal ${TITLE} synonyms countryOfOrigin isLicensed isAdult ${COVER} startDate { year month day } endDate { year month day } bannerImage season description format status(version: 2) episodes chapters volumes duration ${TRAILER} genres averageScore popularity ${NEXT_AIRING} characters(sort: ROLE) { edges { role node { id ${NAME} image { large medium } } voiceActors(sort: LANGUAGE) { id languageV2 ${NAME} image { large medium } } } } recommendations { edges { node { id mediaRecommendation { ${NODE_FIELDS} } } } } relations { edges { id relationType node { ${NODE_FIELDS} } } } studios(isMain: true) { edges { isMain node { id name } } } } }`;
 
 /** Variables: `id`. What fetchEpisodesListById needs to find the anime on the provider. */
 export const EPISODES_MEDIA_QUERY = `query ($id: Int) { Media(id: $id) { idMal format ${TITLE} coverImage { extraLarge large medium } } }`;
@@ -55,7 +55,7 @@ export const WEEKDAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
 
 /** AniList's `status(version: 2)` as a MediaStatus. Every media has one, so a missing status is UNKNOWN. */
 export const mapStatus = (status: unknown): MediaStatus =>
-  toMediaStatus(typeof status === 'string' ? status : undefined, MediaStatus) ?? MediaStatus.UNKNOWN;
+  toMediaStatus(typeof status === 'string' ? status : undefined) ?? MediaStatus.UNKNOWN;
 
 type CoverImage = { extraLarge?: string | null; large?: string | null; medium?: string | null } | null | undefined;
 
@@ -124,7 +124,7 @@ export const mapBrowseResult = (media: any): IAnimeResult => ({
 const mapMediaNode = (node: any): IAnimeResult | undefined =>
   node
     ? {
-        id: node.id,
+        id: String(node.id),
         malId: node.idMal,
         title: mapTitle(node.title),
         status: mapStatus(node.status),
@@ -207,9 +207,16 @@ export const mapAnimeDetail = (media: any) => ({
   duration: media.duration,
 });
 
+/** mapMediaDetail plus a manga's chapter and volume counts, as search results give them. */
+export const mapMangaDetail = (media: any) => ({
+  ...mapMediaDetail(media),
+  totalChapters: media.chapters ?? undefined,
+  volumes: media.volumes ?? undefined,
+});
+
 /** A character's media, from the character query. */
 export const mapCharacterMedia = (edge: any) => ({
-  id: edge.node.id,
+  id: String(edge.node.id),
   malId: edge.node.idMal,
   role: edge.characterRole,
   title: mapTitle(edge.node.title),

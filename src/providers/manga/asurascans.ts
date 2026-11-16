@@ -6,7 +6,6 @@ import {
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { toMediaStatus } from '../common/media-status';
@@ -90,7 +89,7 @@ export class AsuraScans extends MangaParser {
     // A 200 without the JSON the API normally sends (a challenge or error page) has no series.
     const series = detail?.series;
     if (!series?.slug) throw new Error(`AsuraScans: the API sent no series for "${mangaId}"`);
-    const seriesUrl = this.absolute(series.public_url);
+    const seriesUrl = absoluteUrl(series.public_url, this.baseUrl);
     const genres = (series.genres ?? []).map((genre) => genre.name?.trim()).filter(Boolean);
     const authors = names(series.author);
     const artists = names(series.artist);
@@ -137,7 +136,9 @@ export class AsuraScans extends MangaParser {
     }
     const pages = (data.chapter?.pages ?? []).filter((page) => page?.url);
     if (pages.length === 0) throw new Error('AsuraScans: chapter has no pages');
-    return pages.map((page, index): IMangaChapterPage => ({ page: index + 1, img: this.absolute(page.url)! }));
+    return pages.map(
+      (page, index): IMangaChapterPage => ({ page: index + 1, img: absoluteUrl(page.url, this.baseUrl)! })
+    );
   };
 
   /** GET a path of the JSON API; failures carry the API's own error message. */
@@ -157,13 +158,13 @@ export class AsuraScans extends MangaParser {
     const result: IMangaResult = { id: series.slug, title: series.title.trim() };
     const altTitles = (series.alt_titles ?? []).map((title) => title?.trim()).filter(Boolean);
     if (altTitles.length > 0) result.altTitles = altTitles;
-    const image = this.absolute(series.cover ?? series.cover_url);
+    const image = absoluteUrl(series.cover ?? series.cover_url, this.baseUrl);
     if (image) result.image = image;
-    const url = this.absolute(series.public_url);
+    const url = absoluteUrl(series.public_url, this.baseUrl);
     if (url) result.url = url;
     const description = plainText(series.description);
     if (description) result.description = description;
-    const status = toMediaStatus(series.status, MediaStatus);
+    const status = toMediaStatus(series.status);
     if (status) result.status = status;
     // Site extras: manga / manhwa / manhua, the 0-10 user rating, the newest chapter's number.
     if (series.type) result.type = series.type;
@@ -171,10 +172,6 @@ export class AsuraScans extends MangaParser {
     const latestChapter = series.latest_chapters?.[0]?.number;
     if (typeof latestChapter === 'number') result.latestChapter = latestChapter;
     return result;
-  }
-
-  private absolute(url: string | null | undefined): string | undefined {
-    return absoluteUrl(url, this.baseUrl);
   }
 }
 

@@ -23,6 +23,8 @@ const defined = <T extends object>(fields: T): T =>
 
 export class MangaPill extends MangaParser {
   override readonly name = 'MangaPill';
+  // The image CDN answers 403 to requests without a MangaPill Referer (refererHeaders), covers and
+  // pages alike. Image URLs are absolute today; site-relative ones are resolved anyway.
   protected override baseUrl = 'https://mangapill.com';
   protected override logo =
     'https://scontent-man2-1.xx.fbcdn.net/v/t39.30808-6/300819578_399903675586699_2357525969702348451_n.png?_nc_cat=100&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=Md2cQ4wRNWwAX-_U0fz&_nc_ht=scontent-man2-1.xx&oh=00_AfCJjAYDk9bsndz8uyNG-GdFIYcPvdIzbHnetHGzf1pVSw&oe=63BDD131';
@@ -56,16 +58,16 @@ export class MangaPill extends MangaParser {
           .map((__, badge) => $(badge).text().trim())
           .get();
         const status = badges
-          .map((badge) => toMediaStatus(badge, MediaStatus))
+          .map((badge) => toMediaStatus(badge))
           .find((badge) => badge && badge !== MediaStatus.UNKNOWN);
-        const image = this.absoluteUrl(card.find('a img').attr('data-src') ?? card.find('a img').attr('src'));
+        const image = absoluteUrl(card.find('a img').attr('data-src') ?? card.find('a img').attr('src'), this.baseUrl);
 
         return defined({
           id,
           title,
           altTitles: altTitle && altTitle !== title ? [altTitle] : undefined,
           image,
-          headerForImage: image ? this.imageHeaders() : undefined,
+          headerForImage: image ? refererHeaders(this.baseUrl) : undefined,
           url: `${this.baseUrl}/manga/${id}`,
           status,
           releaseDate: badges.map(toYear).find((year) => year !== undefined),
@@ -104,7 +106,7 @@ export class MangaPill extends MangaParser {
     const title = heading.text().trim();
     const altTitle = heading.nextAll('div').first().text().trim();
     const cover = header.find('img').first();
-    const image = this.absoluteUrl(cover.attr('data-src') ?? cover.attr('src'));
+    const image = absoluteUrl(cover.attr('data-src') ?? cover.attr('src'), this.baseUrl);
     // The synopsis keeps its line breaks in the markup, which the page shows.
     const description = plainText(header.find('p.text--secondary').first().html());
     const genres = header
@@ -118,9 +120,9 @@ export class MangaPill extends MangaParser {
       title,
       altTitles: altTitle && altTitle !== title ? [altTitle] : undefined,
       image,
-      headerForImage: image ? this.imageHeaders() : undefined,
+      headerForImage: image ? refererHeaders(this.baseUrl) : undefined,
       description,
-      status: toMediaStatus(detail('Status'), MediaStatus),
+      status: toMediaStatus(detail('Status')),
       releaseDate: toYear(detail('Year')),
       url: `${this.baseUrl}/manga/${mangaId}`,
       genres: genres.length ? genres : undefined,
@@ -138,11 +140,11 @@ export class MangaPill extends MangaParser {
     return $('chapter-page')
       .map((_, el) => {
         const img = $(el).find('img').first();
-        return this.absoluteUrl(img.attr('data-src') ?? img.attr('src'));
+        return absoluteUrl(img.attr('data-src') ?? img.attr('src'), this.baseUrl);
       })
       .get()
       .filter((img): img is string => Boolean(img))
-      .map((img, i): IMangaChapterPage => ({ img, page: i + 1, headerForImage: this.imageHeaders() }));
+      .map((img, i): IMangaChapterPage => ({ img, page: i + 1, headerForImage: refererHeaders(this.baseUrl) }));
   };
 
   /** The site lists chapters newest first; they are returned first chapter first. */
@@ -167,18 +169,8 @@ export class MangaPill extends MangaParser {
     return finishChapters(chapters);
   }
 
-  /** The image CDN answers 403 to requests without a MangaPill Referer, covers and pages alike. */
-  private imageHeaders(): Record<string, string> {
-    return refererHeaders(this.baseUrl);
-  }
-
   /** `/manga/2/one-piece` → `2/one-piece`. */
   private mangaId(href: string | undefined): string | undefined {
     return href?.split('/manga/')[1] || undefined;
-  }
-
-  /** Image URLs are absolute today; resolve site-relative ones anyway. */
-  private absoluteUrl(url: string | undefined): string | undefined {
-    return absoluteUrl(url, this.baseUrl);
   }
 }

@@ -7,8 +7,9 @@
  *   Tap card    → info sheet (details + chapter list, oldest or newest first)
  *   Tap chapter → full-screen reader (pages sized to their own aspect ratio, prev / next chapter)
  *
- * Each view has a contract strip: ./manga-contract.ts checks every response against the shape in
- * docs/guides/manga.md and the strip lists what breaks it, with how long each call took. The screen
+ * Each view has a contract strip: test/contracts/manga.ts, the checks the provider tests run, checks
+ * every response against the shape in docs/guides/manga.md and the strip lists what breaks it, with
+ * how long each call took. The screen
  * reads only that shape, with no per-provider cases, so a provider that breaks it shows up broken.
  */
 
@@ -23,7 +24,6 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  Dimensions,
   StatusBar,
   Platform,
   useWindowDimensions,
@@ -31,20 +31,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { IMangaChapter, IMangaChapterPage, IMangaInfo, IMangaResult } from 'react-native-consumet';
 import { colors, PAD, GAP, R } from '../theme';
-import { MANGA_PROVIDERS, type MangaProvider } from '../providers';
+import { errorText } from '../media';
+import { MANGA_PROVIDERS, useProviderChoice } from '../providers';
+import { CloseButton, SheetBar } from '../components/DetailSheet';
+import { posterWidth } from '../components/PosterCard';
 import { ProviderSheet } from '../components/ProviderSheet';
 import { HeaderChip, ScreenHeader } from '../components/ScreenHeader';
 import { SearchBox } from '../components/SearchBox';
+import { ErrorView, IdleView, LoadingView, MessageView, RetryButton } from '../components/StateViews';
 import { useLatestCall } from '../hooks/useLatestCall';
 import { useSearchBox } from '../hooks/useSearch';
-import { infoProblems, pageProblems, searchProblems, show } from './manga-contract';
+import { infoProblems, pageProblems, searchProblems } from '../../../test/contracts/manga';
 
-const { width } = Dimensions.get('window');
 const COLS = 3;
-const CARD_W = (width - PAD * 2 - GAP * (COLS - 1)) / COLS;
+const CARD_W = posterWidth(COLS);
 const CARD_H = CARD_W * 1.5;
 /** Width / height of a page until its real size is known: a typical manga page. */
 const DEFAULT_PAGE_RATIO = 0.7;
+
+/** A value as it reads on screen: strings as they are, anything else as JSON. */
+const show = (value: unknown): string => (typeof value === 'string' ? value : (JSON.stringify(value) ?? String(value)));
 
 /** Display text: strings as they are, anything else as JSON, so a field that breaks the shape shows. */
 const asText = (value: unknown): string => (value === undefined || value === null ? '' : show(value));
@@ -53,7 +59,8 @@ const asText = (value: unknown): string => (value === undefined || value === nul
 const asList = (value: unknown): string[] =>
   Array.isArray(value) ? value.map(asText) : value === undefined || value === null ? [] : [asText(value)];
 
-const errorMessage = (e: unknown) => (e instanceof Error ? e.message : show(e)) || 'Unknown error';
+/** What a call threw: an Error's message, anything else as JSON. */
+const errorMessage = (e: unknown) => errorText(e, (!(e instanceof Error) && show(e)) || 'Unknown error');
 
 /** An Image source from a provider's URL and headers, or null when there is no URL to load. */
 const imageSource = (uri: unknown, headers: unknown) =>
@@ -355,37 +362,18 @@ function InfoModal({
       <SafeAreaView style={S.modalRoot}>
         <StatusBar barStyle="light-content" />
 
-        <View style={S.modalBar}>
-          <TouchableOpacity onPress={onClose} style={S.modalClose}>
-            <Text style={S.modalCloseText}>✕</Text>
-          </TouchableOpacity>
-          <Text style={S.modalBarTitle} numberOfLines={1}>
-            {asText(info?.title ?? item?.title) || '…'}
-          </Text>
-          <View style={S.modalBarSpacer} />
-        </View>
+        <SheetBar title={asText(info?.title ?? item?.title)} onClose={onClose} />
 
         <View style={S.contractWrap}>
           <ContractPanel check={check} pending={loading} idleHint="" />
         </View>
 
         {loading ? (
-          <View style={S.center}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={S.mutedText}>Loading info…</Text>
-          </View>
+          <LoadingView text="Loading info…" />
         ) : error ? (
-          <View style={S.center}>
-            <Text style={S.errEmoji}>⚠️</Text>
-            <Text style={S.errText}>{error}</Text>
-            <TouchableOpacity style={S.retryBtn} onPress={onRetry}>
-              <Text style={S.retryText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
+          <ErrorView message={error} onRetry={onRetry} />
         ) : !info ? (
-          <View style={S.center}>
-            <Text style={S.mutedText}>fetchMangaInfo returned nothing</Text>
-          </View>
+          <MessageView text="fetchMangaInfo returned nothing" />
         ) : (
           <FlatList
             data={rows}
@@ -553,9 +541,7 @@ function ReaderModal({
         <StatusBar barStyle="light-content" />
 
         <View style={S.readerBar}>
-          <TouchableOpacity onPress={onClose} style={S.modalClose}>
-            <Text style={S.modalCloseText}>←</Text>
-          </TouchableOpacity>
+          <CloseButton glyph="←" onPress={onClose} />
           <View style={S.readerTitleWrap}>
             <Text style={S.readerTitle} numberOfLines={1}>
               {chapterLabel(chapter)}
@@ -573,22 +559,11 @@ function ReaderModal({
         </View>
 
         {loading ? (
-          <View style={S.center}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={S.mutedText}>Loading pages…</Text>
-          </View>
+          <LoadingView text="Loading pages…" />
         ) : error ? (
-          <View style={S.center}>
-            <Text style={S.errEmoji}>⚠️</Text>
-            <Text style={S.errText}>{error}</Text>
-            <TouchableOpacity style={S.retryBtn} onPress={onRetry}>
-              <Text style={S.retryText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
+          <ErrorView message={error} onRetry={onRetry} />
         ) : pages.length === 0 ? (
-          <View style={S.center}>
-            <Text style={S.mutedText}>No pages</Text>
-          </View>
+          <MessageView text="No pages" />
         ) : (
           <FlatList
             key={asText(chapter?.id)}
@@ -619,8 +594,7 @@ function ReaderModal({
 const PageGap = () => <View style={S.pageGap} />;
 
 export default function MangaScreen() {
-  const [providerDef, setProviderDef] = useState(MANGA_PROVIDERS[0]!);
-  const [provider, setProvider] = useState<MangaProvider>(() => MANGA_PROVIDERS[0]!.make());
+  const { def: providerDef, provider, select: selectProvider } = useProviderChoice(MANGA_PROVIDERS);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const [searchedQuery, setSearchedQuery] = useState('');
@@ -791,18 +765,12 @@ export default function MangaScreen() {
     setLoadingInfo(false);
   }, [closeReader, infoCalls]);
 
-  const switchProvider = useCallback(
-    (key: string) => {
-      const def = MANGA_PROVIDERS.find((p) => p.key === key);
-      if (!def || def.key === providerDef.key) return;
-      setProviderDef(def);
-      setProvider(def.make());
-      setQuery('');
-      clearSearch();
-      closeInfo();
-    },
-    [providerDef.key, setQuery, clearSearch, closeInfo]
-  );
+  // Another provider starts from an empty screen.
+  useEffect(() => {
+    setQuery('');
+    clearSearch();
+    closeInfo();
+  }, [provider, setQuery, clearSearch, closeInfo]);
 
   const isIdle = idle || (!searchedQuery && !searching);
 
@@ -832,30 +800,21 @@ export default function MangaScreen() {
       </View>
 
       {searching ? (
-        <View style={S.center}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={S.mutedText}>Searching {providerDef.label}…</Text>
-        </View>
+        <LoadingView text={`Searching ${providerDef.label}…`} />
       ) : isIdle ? (
-        <View style={S.center}>
-          <Text style={S.idleEmoji}>📚</Text>
-          <Text style={S.idleTitle}>Find something to read</Text>
-          <Text style={S.idleHint}>Search {providerDef.label}, then check its contract strip</Text>
-        </View>
+        <IdleView
+          emoji="📚"
+          title="Find something to read"
+          hint={`Search ${providerDef.label}, then check its contract strip`}
+        />
       ) : searchErr ? (
-        <View style={S.center}>
-          <Text style={S.errEmoji}>⚠️</Text>
-          <Text style={S.errText}>{searchErr}</Text>
-          <TouchableOpacity style={S.retryBtn} onPress={() => runSearch(searchedQuery)}>
-            <Text style={S.retryText}>Try again</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorView message={searchErr} onRetry={() => runSearch(searchedQuery)} retryLabel="Try again" />
       ) : results.length === 0 ? (
-        <View style={S.center}>
-          <Text style={S.idleEmoji}>🔍</Text>
-          <Text style={S.idleTitle}>No results for “{searchedQuery}”</Text>
-          <Text style={S.idleHint}>Try a title {providerDef.label} has</Text>
-        </View>
+        <IdleView
+          emoji="🔍"
+          title={`No results for “${searchedQuery}”`}
+          hint={`Try a title ${providerDef.label} has`}
+        />
       ) : (
         <FlatList
           data={results}
@@ -868,15 +827,11 @@ export default function MangaScreen() {
                 <ActivityIndicator color={colors.accent} />
               ) : moreErr ? (
                 <>
-                  <Text style={S.errText}>{moreErr}</Text>
-                  <TouchableOpacity style={S.retryBtn} onPress={loadMore}>
-                    <Text style={S.retryText}>Retry page {page + 1}</Text>
-                  </TouchableOpacity>
+                  <Text style={S.footerError}>{moreErr}</Text>
+                  <RetryButton label={`Retry page ${page + 1}`} onPress={loadMore} />
                 </>
               ) : hasNextPage ? (
-                <TouchableOpacity style={S.retryBtn} onPress={loadMore}>
-                  <Text style={S.retryText}>Load page {page + 1}</Text>
-                </TouchableOpacity>
+                <RetryButton label={`Load page ${page + 1}`} onPress={loadMore} />
               ) : (
                 <Text style={S.footerText}>
                   End of results · {results.length} titles on {page} page{page === 1 ? '' : 's'}
@@ -927,7 +882,7 @@ export default function MangaScreen() {
         title="Manga Provider"
         providers={MANGA_PROVIDERS}
         selectedKey={providerDef.key}
-        onSelect={switchProvider}
+        onSelect={selectProvider}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>
@@ -968,6 +923,7 @@ const S = StyleSheet.create({
   gridRow: { gap: GAP },
   footer: { alignItems: 'center', gap: 8, paddingVertical: 16 },
   footerText: { fontSize: 12, color: colors.dim },
+  footerError: { fontSize: 14, color: colors.error, textAlign: 'center', maxWidth: 280 },
 
   card: {
     width: CARD_W,
@@ -1003,32 +959,6 @@ const S = StyleSheet.create({
   cardBadgeText: { fontSize: 9, fontWeight: '700', color: colors.accentLight, letterSpacing: 0.4 },
 
   modalRoot: { flex: 1, backgroundColor: colors.bg },
-  modalBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: PAD,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalClose: {
-    width: 36,
-    height: 36,
-    borderRadius: R.full,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseText: { fontSize: 14, color: colors.muted, fontWeight: '600' },
-  modalBarTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginHorizontal: 8,
-  },
-  modalBarSpacer: { width: 36 },
   infoRow: { flexDirection: 'row', padding: PAD, gap: 14 },
   infoCover: {
     width: 110,
@@ -1159,22 +1089,4 @@ const S = StyleSheet.create({
   },
   pageErrorMsg: { fontSize: 12, color: colors.muted },
   pageErrorRetry: { fontSize: 13, fontWeight: '600', color: colors.accentLight, marginTop: 4 },
-
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },
-  mutedText: { fontSize: 14, color: colors.muted },
-  idleEmoji: { fontSize: 52, marginBottom: 4 },
-  idleTitle: { fontSize: 18, fontWeight: '700', color: colors.textSub, textAlign: 'center' },
-  idleHint: { fontSize: 14, color: colors.dim, textAlign: 'center' },
-  errEmoji: { fontSize: 36 },
-  errText: { fontSize: 14, color: colors.error, textAlign: 'center', maxWidth: 280 },
-  retryBtn: {
-    marginTop: 8,
-    backgroundColor: colors.accentFaded,
-    borderRadius: R.full,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  retryText: { fontSize: 14, fontWeight: '600', color: colors.accentLight },
 });

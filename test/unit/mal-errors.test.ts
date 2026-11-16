@@ -1,14 +1,7 @@
 import Myanimelist from '../../src/providers/meta/mal';
 import { MetaError } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
-
-const fakeProvider = () => ({
-  name: 'FakeProvider',
-  search: jest.fn(),
-  fetchAnimeInfo: jest.fn(),
-  fetchEpisodeSources: jest.fn(),
-  fetchEpisodeServers: jest.fn(),
-});
+import { fakeAnimeProvider as fakeProvider } from './helpers/fake-providers';
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -18,7 +11,7 @@ describe('Myanimelist errors (META-7)', () => {
     const failure = new Error('blocked by cloudflare');
     provider.fetchEpisodeSources.mockRejectedValue(failure);
 
-    const error = await new Myanimelist(provider as any).fetchEpisodeSources('ep-1').catch((e: unknown) => e);
+    const error = await new Myanimelist(provider).fetchEpisodeSources('ep-1').catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(MetaError);
     expect(error).toMatchObject({ source: 'provider', cause: failure });
@@ -29,7 +22,7 @@ describe('Myanimelist errors (META-7)', () => {
     const unavailable = Object.assign(new Error('Request failed with status code 503'), { response: { status: 503 } });
     jest.spyOn(metaHttp, 'request').mockRejectedValue(unavailable);
 
-    await expect(new Myanimelist(fakeProvider() as any).fetchAnimeInfo('21')).rejects.toMatchObject({
+    await expect(new Myanimelist(fakeProvider()).fetchAnimeInfo('21')).rejects.toMatchObject({
       name: 'MetaError',
       source: 'mal',
       status: 503,
@@ -43,7 +36,7 @@ describe('Myanimelist errors (META-7)', () => {
     const provider = fakeProvider();
     provider.search.mockRejectedValue(new Error('provider down'));
 
-    await expect(new Myanimelist(provider as any).fetchAnimeInfo('21')).rejects.toMatchObject({
+    await expect(new Myanimelist(provider).fetchAnimeInfo('21')).rejects.toMatchObject({
       name: 'MetaError',
       source: 'provider',
       message: 'provider down',

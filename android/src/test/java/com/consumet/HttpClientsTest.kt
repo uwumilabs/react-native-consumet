@@ -5,13 +5,13 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 
 class HttpClientsTest {
-    private val clients = listOf(HttpClients.post, HttpClients.ddosGuard, HttpClients.synchrony)
+    private val clients = listOf(HttpClients.post, HttpClients.synchrony)
 
     @Test
     fun shareOneConnectionPoolAndDispatcher() {
         for (client in clients) {
-            assertSame(HttpClients.ddosGuard.connectionPool, client.connectionPool)
-            assertSame(HttpClients.ddosGuard.dispatcher, client.dispatcher)
+            assertSame(HttpClients.post.connectionPool, client.connectionPool)
+            assertSame(HttpClients.post.dispatcher, client.dispatcher)
         }
     }
 
@@ -25,7 +25,6 @@ class HttpClientsTest {
         assertEquals(
             listOf(
                 listOf(30_000, 30_000, 30_000, 0),
-                listOf(10_000, 10_000, 10_000, 0),
                 listOf(10_000, 15_000, 10_000, 30_000),
             ),
             timeouts

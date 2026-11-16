@@ -8,7 +8,6 @@ import {
   type IMangaChapter,
   type IMangaChapterPage,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber, parseVolumeNumber } from '../../utils/manga';
@@ -90,6 +89,7 @@ function parseMangaHereDate(text: string | undefined, now: number = Date.now()):
 
 export class MangaHere extends MangaParser {
   override readonly name = 'MangaHere';
+  // Covers and page images are refused (403) without a MangaHere Referer (refererHeaders).
   protected override baseUrl = 'https://www.mangahere.cc';
   protected override logo = 'https://i.pinimg.com/564x/51/08/62/51086247ed16ff8abae2df0bb06448e4.jpg';
   protected override classPath = 'MANGA.MangaHere';
@@ -97,11 +97,6 @@ export class MangaHere extends MangaParser {
   /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
   constructor(private readonly ctx: ProviderContext = createProviderContext()) {
     super();
-  }
-
-  /** Covers and page images are refused (403) without a MangaHere Referer. */
-  private get imageHeaders(): Record<string, string> {
-    return refererHeaders(this.baseUrl);
   }
 
   /**
@@ -116,8 +111,6 @@ export class MangaHere extends MangaParser {
     return typeof data === 'string' ? data : String(data ?? '');
   };
 
-  private absoluteUrl = (url: string | undefined): string | undefined => absoluteUrl(url, this.baseUrl);
-
   override fetchMangaInfo = async (mangaId: string): Promise<IMangaInfo> => {
     const url = `${this.baseUrl}/manga/${mangaId}/`;
     const $ = load(await this.request(url));
@@ -129,17 +122,17 @@ export class MangaHere extends MangaParser {
     const mangaInfo: IMangaInfo = { id: mangaId, title, url };
     const description = $('div.detail-info-right > p.fullcontent').text().trim();
     if (description) mangaInfo.description = description;
-    const image = this.absoluteUrl($('div.detail-info-cover > img').attr('src'));
+    const image = absoluteUrl($('div.detail-info-cover > img').attr('src'), this.baseUrl);
     if (image) {
       mangaInfo.image = image;
-      mangaInfo.headerForImage = this.imageHeaders;
+      mangaInfo.headerForImage = refererHeaders(this.baseUrl);
     }
     const genres = $('p.detail-info-right-tag-list > a')
       .map((_, el) => ($(el).attr('title') || $(el).text()).trim())
       .get()
       .filter(Boolean);
     if (genres.length) mangaInfo.genres = genres;
-    const status = toMediaStatus($('span.detail-info-right-title-tip').text(), MediaStatus);
+    const status = toMediaStatus($('span.detail-info-right-title-tip').text());
     if (status) mangaInfo.status = status;
     const rating = parseFloat($('span.detail-info-right-title-star span.item-score').text());
     if (Number.isFinite(rating)) mangaInfo.rating = rating;
@@ -166,7 +159,7 @@ export class MangaHere extends MangaParser {
       if (volumeNumber !== undefined) chapter.volumeNumber = volumeNumber;
       const releaseDate = parseMangaHereDate($(el).find('p.title2').text());
       if (releaseDate) chapter.releaseDate = releaseDate;
-      const chapterUrl = this.absoluteUrl(href);
+      const chapterUrl = absoluteUrl(href, this.baseUrl);
       if (chapterUrl) chapter.url = chapterUrl;
       chapters.push(chapter);
     });
@@ -194,9 +187,9 @@ export class MangaHere extends MangaParser {
     const images =
       strip !== undefined ? quotedStrings(strip, "'") : await this.fetchReaderImages(url, $, html, scripts);
 
-    const pages = images.map((img) => this.absoluteUrl(img));
+    const pages = images.map((img) => absoluteUrl(img, this.baseUrl));
     if (pages.length === 0 || pages.some((img) => !img)) throw new Error(`MangaHere: no pages for '${chapterId}'`);
-    return pages.map((img, index) => ({ page: index + 1, img: img!, headerForImage: this.imageHeaders }));
+    return pages.map((img, index) => ({ page: index + 1, img: img!, headerForImage: refererHeaders(this.baseUrl) }));
   };
 
   /**
@@ -260,20 +253,16 @@ export class MangaHere extends MangaParser {
     return images as string[];
   };
 
-  /** The image URLs one chapterfun.ashx answer names, retried (with an empty key) when it is empty. */
+  /**
+   * The image URLs one chapterfun.ashx answer names. An empty answer is asked for again with an empty
+   * key, which the site also accepts. A failed request throws: fetchReaderImages asks for the page again.
+   */
   private fetchChapterFun = async (url: string, chapterUrl: string, key: string): Promise<string[]> => {
-    let sKey = key;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      let text = '';
-      try {
-        text = await this.request(`${url}&key=${sKey}`, {
-          'Referer': chapterUrl,
-          'X-Requested-With': 'XMLHttpRequest',
-        });
-      } catch (err) {
-        if (attempt === 3) throw err;
-        continue;
-      }
+    for (const sKey of key ? [key, ''] : ['']) {
+      const text = await this.request(`${url}&key=${sKey}`, {
+        'Referer': chapterUrl,
+        'X-Requested-With': 'XMLHttpRequest',
+      });
       const script = unpackPackedScript(text) ?? text;
       const pix = /var\s+pix\s*=\s*"([^"]*)"/.exec(script)?.[1] ?? '';
       const list = /var\s+pvalue\s*=\s*\[([^\]]*)\]/.exec(script)?.[1];
@@ -281,7 +270,6 @@ export class MangaHere extends MangaParser {
       const firstBase = /pvalue\[i\]\s*=\s*"([^"]*)"\s*\+\s*pvalue\[i\]/.exec(script)?.[1] ?? pix;
       const files = list ? quotedStrings(list, '"') : [];
       if (files.length) return files.map((file, index) => `${index === 0 ? firstBase : pix}${file}`);
-      sKey = '';
     }
     return [];
   };
@@ -303,10 +291,10 @@ export class MangaHere extends MangaParser {
       const title = (link.text() || link.attr('title') || '').trim();
       if (!id || !title) return;
       const result: IMangaResult = { id, title, url: `${this.baseUrl}/manga/${id}/` };
-      const image = this.absoluteUrl($(el).find('img.manga-list-4-cover').attr('src'));
+      const image = absoluteUrl($(el).find('img.manga-list-4-cover').attr('src'), this.baseUrl);
       if (image) {
         result.image = image;
-        result.headerForImage = this.imageHeaders;
+        result.headerForImage = refererHeaders(this.baseUrl);
       }
       // The tips are the author, the latest chapter and then the synopsis.
       const description = $(el)
@@ -316,7 +304,7 @@ export class MangaHere extends MangaParser {
         .text()
         .trim();
       if (description) result.description = description;
-      const status = toMediaStatus($(el).find('p.manga-list-4-show-tag-list-2 > a').text(), MediaStatus);
+      const status = toMediaStatus($(el).find('p.manga-list-4-show-tag-list-2 > a').text());
       if (status) result.status = status;
       searchRes.results.push(result);
     });

@@ -14,16 +14,11 @@ import {
   type ProviderCapabilities,
 } from '../../../models';
 import { toMediaStatus } from '../../common/media-status';
-import { pickServer } from '../../common/servers';
-import { serverName } from '../helpers';
-import { cardPage, pageUrl, siteEpisodeId, toEpisodeId } from '../hianime';
-
-// The zone the schedule's airing times come back in: UTC+5:30 (IST), as minutes behind UTC (the
-// form Date.getTimezoneOffset uses). It is fixed, not the device's zone.
-const IST_TZ_OFFSET = -330;
+import { pickServer, serverName } from '../../common/servers';
+import { IST_TZ_OFFSET, cardPage, linkedGenres, pageUrl, siteEpisodeId, toEpisodeId } from '../hianime';
 
 export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, USER_AGENT } = ctx;
+  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, PolyURLSearchParams, USER_AGENT } = ctx;
   const { MegaPlay } = extractors;
   const { SubOrDub: SubOrDubEnum } = enums;
 
@@ -103,7 +98,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     sort?: string,
     genres?: string[]
   ): Promise<ISearch<IAnimeResult>> => {
-    const params = new URLSearchParams();
+    const params = new PolyURLSearchParams();
     if (type) params.set('type', type);
     if (status) params.set('status', status);
     if (rated) params.set('rated', rated);
@@ -134,16 +129,9 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
   const fetchONA = async (page: number = 1) => scrapeCardPage('/type/ona', page);
   const fetchSpecial = async (page: number = 1) => scrapeCardPage('/type/special', page);
 
-  const fetchGenres = async (): Promise<string[]> => {
-    const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
-    const $ = load(data);
-    const genres: string[] = [];
-    $('a[href*="/genre/"]').each((_, el) => {
-      const g = $(el).text().trim();
-      if (g && !genres.includes(g)) genres.push(g);
-    });
-    return genres;
-  };
+  /** The genres the home page links to, by name; genreSearch takes them. */
+  const fetchGenres = async (): Promise<string[]> =>
+    linkedGenres(load((await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders })).data));
 
   /** @param genre a genre name or slug ("Slice of Life", "slice-of-life") */
   const genreSearch = async (genre: string, page: number = 1): Promise<ISearch<IAnimeResult>> =>
@@ -277,7 +265,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
       if (text.includes('Type:')) type = value as MediaFormat;
       else if (text.includes('Premiered:')) premiered = value;
       else if (text.includes('Aired:')) aired = value;
-      else if (text.includes('Status:')) status = toMediaStatus(value, ctx.enums.MediaStatus);
+      else if (text.includes('Status:')) status = toMediaStatus(value);
       else if (text.includes('Genres:')) linkTexts(el, genres);
       else if (text.includes('Studios:')) linkTexts(el, studios);
       else if (text.includes('Producers:')) linkTexts(el, producers, 'unknown');
@@ -345,8 +333,11 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     });
     const $ = load(res.data?.result || res.data);
 
-    let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
-    if (!serverList.length) serverList = $('.servers li[data-link-id]');
+    // The list is grouped by language; a page without groups lists every server in one.
+    const groups = $('.servers .type[data-type]');
+    const serverList = groups.length
+      ? groups.filter(`[data-type="${targetSubDub}"]`).find('li[data-link-id]')
+      : $('.servers li[data-link-id]');
 
     const servers: IEpisodeServer[] = [];
     for (const el of serverList.toArray()) {
@@ -366,14 +357,8 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     return servers;
   };
 
-  /** MegaPlay's sources for an embed URL. */
-  const extractFrom = async (embedUrl: string): Promise<ISource> => {
-    const serverUrl = new PolyURL(embedUrl);
-    return {
-      headers: { Referer: serverUrl.href },
-      ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
-    };
-  };
+  const extractFrom = (embedUrl: string): Promise<ISource> =>
+    MegaPlay(ctx).extract(new PolyURL(embedUrl), config.baseUrl);
 
   /**
    * @param episodeId an episode id from fetchAnimeInfo, or a server's embed URL

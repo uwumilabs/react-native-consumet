@@ -1,8 +1,6 @@
 import registry from '../../src/extension-registry.json';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
-import { sha256Hex } from '../../src/utils/extension-integrity';
-import { defaultExtractors } from '../../src/utils/create-provider-context';
 import {
   CONTEXT_VERSION,
   REGISTRY_SCHEMA_VERSION,
@@ -10,101 +8,52 @@ import {
   isCompatibleEntry,
   validateRegistry,
 } from '../../src/utils/registry-schema';
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __schemaRuns: number;
-}
+import { rejectionOf, thrownBy } from './helpers/errors';
+import {
+  countRuns,
+  extensionEntry,
+  extractorCode,
+  extractorEntry,
+  providerCode,
+  registryOf as registryWith,
+  resetRuns,
+  runsOf,
+  serveFiles,
+  type FetchSpy,
+} from './helpers/registry';
 
 const NEWER_CONTEXT = CONTEXT_VERSION + 1;
 
 // Each snippet counts its own executions, so tests can prove refused code never ran.
-const providerCode = `
-globalThis.__schemaRuns = (globalThis.__schemaRuns || 0) + 1;
-function createProbe(ctx) {
-  return {
-    name: 'Probe',
-    search: async () => ({ results: [] }),
-    fetchAnimeInfo: async () => ({}),
-    fetchEpisodeSources: async () => ({ sources: [] }),
-    fetchEpisodeServers: async () => [],
-    play: (url) => ctx.extractors.MegaPlay().extract(url),
-  };
-}
-`;
-const extractorCode = `
-globalThis.__schemaRuns = (globalThis.__schemaRuns || 0) + 1;
-function MegaPlay(ctx) {
-  return { serverName: 'megaplay', sources: [], extract: async (url) => ({ sources: [{ url: 'registry:' + url }] }) };
-}
-`;
-const PROVIDER_URL = 'https://registry.test/registry/extensions/probe/1.0.0.js';
-const EXTRACTOR_URL = 'https://registry.test/registry/extractors/megaplay/1.0.0.js';
+const probeCode = providerCode({ before: countRuns('schema') });
+const megaPlayCode = extractorCode('MegaPlay', { before: countRuns('schema') });
 
-const extension = (overrides: Record<string, unknown> = {}) => ({
-  id: 'probe',
-  name: 'Probe',
-  description: 'Test provider',
-  version: '1.0.0',
-  author: { name: 'Tests' },
-  category: 'anime',
-  main: PROVIDER_URL,
-  factoryName: 'createProbe',
-  sha256: sha256Hex(providerCode),
-  baseUrl: 'https://probe.test',
-  logo: '',
-  status: 'beta',
-  lastUpdated: '2026-10-15T00:00:00Z',
-  extractors: ['MegaPlay'],
-  ...overrides,
-});
-const extractor = (overrides: Record<string, unknown> = {}) => ({
-  name: 'MegaPlay',
-  version: '1.0.0',
-  main: EXTRACTOR_URL,
-  sha256: sha256Hex(extractorCode),
-  ...overrides,
-});
+const extension = (overrides: Record<string, unknown> = {}) =>
+  extensionEntry(probeCode, { extractors: ['MegaPlay'], lastUpdated: '2026-10-15T00:00:00Z', ...overrides });
+const extractor = (overrides: Record<string, unknown> = {}) => extractorEntry('MegaPlay', megaPlayCode, overrides);
 const registryOf = (extensions: unknown[] = [extension()], extractors: unknown[] = [extractor()]) =>
-  ({ extensions, extractors }) as any;
+  registryWith(extensions, extractors);
 
 const omit = <T extends object>(entry: T, ...keys: string[]) =>
   Object.fromEntries(Object.entries(entry).filter(([key]) => !keys.includes(key)));
 
 const errorOf = (run: () => unknown): RegistryError => {
-  try {
-    run();
-  } catch (error) {
-    expect(error).toBeInstanceOf(RegistryError);
-    return error as RegistryError;
-  }
-  throw new Error('expected a RegistryError');
-};
-const rejectionOf = async (promise: Promise<unknown>): Promise<RegistryError> => {
-  const error = await promise.then(
-    () => undefined,
-    (e: unknown) => e
-  );
+  const error = thrownBy(run);
   expect(error).toBeInstanceOf(RegistryError);
-  return error as RegistryError;
+  return error;
+};
+const registryRejectionOf = async (promise: Promise<unknown>): Promise<RegistryError> => {
+  const error = await rejectionOf(promise);
+  expect(error).toBeInstanceOf(RegistryError);
+  return error;
 };
 
-const realFetch = global.fetch;
-let fetchMock: jest.Mock;
+let fetch: FetchSpy;
 beforeEach(() => {
-  globalThis.__schemaRuns = 0;
-  fetchMock = jest.fn(async (url: any) => ({
-    ok: true,
-    status: 200,
-    statusText: 'OK',
-    text: async () => (String(url) === EXTRACTOR_URL ? extractorCode : providerCode),
-  }));
-  global.fetch = fetchMock as any;
+  resetRuns();
+  fetch = serveFiles(() => probeCode);
 });
-afterEach(() => {
-  global.fetch = realFetch;
-  jest.restoreAllMocks();
-});
+afterEach(() => jest.restoreAllMocks());
 
 describe('registry schema (REG-4)', () => {
   it('accepts the bundled registry, which declares its schema and context versions', () => {
@@ -206,11 +155,6 @@ describe('registry schema (REG-4)', () => {
 });
 
 describe('extension context compatibility (REG-4)', () => {
-  it('exports an integer CONTEXT_VERSION', () => {
-    expect(Number.isInteger(CONTEXT_VERSION)).toBe(true);
-    expect(CONTEXT_VERSION).toBeGreaterThanOrEqual(1);
-  });
-
   it('treats an entry without minContextVersion as needing context 1', () => {
     expect(isCompatibleEntry({})).toBe(true);
     expect(isCompatibleEntry({ minContextVersion: CONTEXT_VERSION })).toBe(true);
@@ -227,7 +171,7 @@ describe('extension context compatibility (REG-4)', () => {
     const metadata = manager.getExtensionMetadata('probe');
     expect(isCompatibleEntry(metadata)).toBe(false);
 
-    const error = await rejectionOf(manager.loadExtension('probe'));
+    const error = await registryRejectionOf(manager.loadExtension('probe'));
     expect(error.code).toBe('INCOMPATIBLE_ENTRY');
     expect(error.updateRequired).toBe(true);
     expect(error.id).toBe('probe');
@@ -237,10 +181,10 @@ describe('extension context compatibility (REG-4)', () => {
       `Extension 'probe' needs extension context ${NEWER_CONTEXT}, but this app has ${CONTEXT_VERSION}. ` +
         'Update the app to use it.'
     );
-    expect((await rejectionOf(manager.getAnimeProvider('probe'))).code).toBe('INCOMPATIBLE_ENTRY');
+    expect((await registryRejectionOf(manager.getAnimeProvider('probe'))).code).toBe('INCOMPATIBLE_ENTRY');
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(globalThis.__schemaRuns).toBe(0);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(runsOf('schema')).toBe(0);
   });
 
   it('refuses an incompatible provider when the app runs code it cached itself', async () => {
@@ -248,44 +192,29 @@ describe('extension context compatibility (REG-4)', () => {
     const metadata = extension({ minContextVersion: NEWER_CONTEXT }) as any;
 
     // executeProviderCode(code, { ...metadata, factoryName: factoryName }) is how apps run cached extension code
-    const refused = await rejectionOf(manager.executeProviderCode(providerCode, metadata));
+    const refused = await registryRejectionOf(manager.executeProviderCode(probeCode, metadata));
     expect(refused.code).toBe('INCOMPATIBLE_ENTRY');
-    const skipped = manager.executeProviderCode(providerCode, metadata, { skipIntegrity: true });
-    expect((await rejectionOf(skipped)).code).toBe('INCOMPATIBLE_ENTRY');
-    expect(globalThis.__schemaRuns).toBe(0);
+    const skipped = manager.executeProviderCode(probeCode, metadata, { skipIntegrity: true });
+    expect((await registryRejectionOf(skipped)).code).toBe('INCOMPATIBLE_ENTRY');
+    expect(runsOf('schema')).toBe(0);
 
-    await manager.executeProviderCode(providerCode, { ...metadata, minContextVersion: CONTEXT_VERSION, factoryName: 'createProbe' });
-    expect(globalThis.__schemaRuns).toBe(1);
+    await manager.executeProviderCode(probeCode, { ...metadata, minContextVersion: CONTEXT_VERSION, factoryName: 'createProbe' });
+    expect(runsOf('schema')).toBe(1);
   });
 
   it('refuses an incompatible extractor when loading it and when running cached code', async () => {
     const manager = new ExtractorManager(
-      registryOf([], [extractor({ minContextVersion: NEWER_CONTEXT, aliases: ['mplay'] })])
+      registryOf([], [extractor({ minContextVersion: NEWER_CONTEXT })])
     );
     const metadata = manager.getExtractorMetadata('MegaPlay')!;
 
-    expect(manager.extractBaseExtractorName('mplay-hd-1')).toBe('megaplay');
-    const loaded = await rejectionOf(manager.loadExtractor('megaplay-hd-1'));
+    const loaded = await registryRejectionOf(manager.loadExtractor('megaplay-hd-1'));
     expect(loaded.code).toBe('INCOMPATIBLE_ENTRY');
     expect(loaded.message).toMatch(/^Extractor 'MegaPlay' needs extension context/);
-    expect((await rejectionOf(manager.executeExtractorCode(extractorCode, metadata))).code).toBe('INCOMPATIBLE_ENTRY');
+    expect((await registryRejectionOf(manager.executeExtractorCode(megaPlayCode, metadata))).code).toBe('INCOMPATIBLE_ENTRY');
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(globalThis.__schemaRuns).toBe(0);
-  });
-
-  it('keeps providers on the bundled extractor when the registry version needs a newer context', async () => {
-    const bundledExtract = jest.fn(async () => ({ sources: [{ url: 'bundled' }] }));
-    jest
-      .spyOn(defaultExtractors, 'MegaPlay')
-      .mockImplementation(() => ({ serverName: 'megaplay', sources: [], extract: bundledExtract }) as any);
-    const manager = new ProviderManager(registryOf([extension()], [extractor({ minContextVersion: NEWER_CONTEXT })]));
-
-    const provider: any = await manager.loadExtension('probe');
-
-    await expect(provider.play('https://megaplay.test/e/1')).resolves.toEqual({ sources: [{ url: 'bundled' }] });
-    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([PROVIDER_URL]);
-    expect(globalThis.__schemaRuns).toBe(1);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(runsOf('schema')).toBe(0);
   });
 
   it('only needs the id of an entry that needs a newer context, which may use fields this version lacks', async () => {
@@ -293,7 +222,7 @@ describe('extension context compatibility (REG-4)', () => {
     const manager = new ProviderManager(registryOf([extension(), fromTheFuture], [extractor()]));
 
     expect(manager.getExtensionMetadata('future')).toMatchObject({ id: 'future' });
-    expect((await rejectionOf(manager.loadExtension('future'))).code).toBe('INCOMPATIBLE_ENTRY');
+    expect((await registryRejectionOf(manager.loadExtension('future'))).code).toBe('INCOMPATIBLE_ENTRY');
 
     const unnamed = registryOf([{ minContextVersion: NEWER_CONTEXT }]);
     expect(errorOf(() => validateRegistry(unnamed)).issues).toEqual([

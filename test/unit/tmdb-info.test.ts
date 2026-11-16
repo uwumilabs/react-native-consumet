@@ -2,6 +2,8 @@ import TMDB from '../../src/providers/meta/tmdb';
 import { MetaError, TvType } from '../../src/models';
 import type { IMovieEpisode, IMovieInfo, IMovieProvider, IMovieSeason } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
+import { rejectionOf } from './helpers/errors';
+import { fakeMovieProvider } from './helpers/fake-providers';
 import show from './fixtures/tmdb/tv-84958.json';
 import season1 from './fixtures/tmdb/tv-84958-season-1.json';
 import season2 from './fixtures/tmdb/tv-84958-season-2.json';
@@ -12,6 +14,15 @@ import movie from './fixtures/tmdb/movie-559969.json';
 const SHOW_ID = '84958';
 const MOVIE_ID = '559969';
 const API_KEY = 'test-key';
+// El Camino's poster and backdrop, in TMDB's 300 px and 780 px widths.
+const MOVIE_POSTER = {
+  mobile: 'https://image.tmdb.org/t/p/w300/ePXuKdXZuJx8hHMNr2yM4jY2L7Z.jpg',
+  hd: 'https://image.tmdb.org/t/p/w780/ePXuKdXZuJx8hHMNr2yM4jY2L7Z.jpg',
+};
+const MOVIE_BACKDROP = {
+  mobile: 'https://image.tmdb.org/t/p/w300/uLXK1LQM28XovWHPao3ViTeggXA.jpg',
+  hd: 'https://image.tmdb.org/t/p/w780/uLXK1LQM28XovWHPao3ViTeggXA.jpg',
+};
 
 const stubTmdb = (overrides: Record<string, unknown> = {}) =>
   jest.spyOn(metaHttp, 'get').mockImplementation(async (url: string) => {
@@ -27,16 +38,8 @@ const stubTmdb = (overrides: Record<string, unknown> = {}) =>
     return { data: responses[path] } as any;
   });
 
-const fakeProvider = (results: Record<string, unknown>[], info?: Record<string, unknown>) => {
-  const provider = {
-    name: 'Fake',
-    search: jest.fn().mockResolvedValue({ currentPage: 1, hasNextPage: false, results }),
-    fetchMediaInfo: jest.fn().mockResolvedValue(info),
-    fetchEpisodeSources: jest.fn(),
-    fetchEpisodeServers: jest.fn(),
-  };
-  return provider as typeof provider & IMovieProvider;
-};
+const fakeProvider = (results: Record<string, unknown>[], info?: Record<string, unknown>) =>
+  fakeMovieProvider({ results, info });
 
 const lokiEpisodes = [
   { id: 'loki-s1e1', number: 1, season: 1, url: 'https://provider.example/loki/s1e1' },
@@ -67,7 +70,7 @@ describe('TMDB.fetchMediaInfo provider matching (META-5)', () => {
     expect(info.seasons!.map((s) => s.episodes?.length)).toEqual([6, 6]);
     expect(allEpisodes(info).every((e) => e.id === undefined && e.url === undefined)).toBe(true);
     expect(info.seasons![1]!.episodes![0]).toEqual(
-      expect.objectContaining({ uniqueId: `${SHOW_ID}-tv-s2-e1`, title: season2.episodes[0]!.name, season: 2 })
+      expect.objectContaining({ uniqueId: `${SHOW_ID}-tv-s2-e1`, title: 'Ouroboros', season: 2 })
     );
     expect(provider.fetchMediaInfo).not.toHaveBeenCalled();
   });
@@ -213,19 +216,14 @@ describe('TMDB.fetchMediaInfo provider matching (META-5)', () => {
 });
 
 describe('TMDB.fetchMediaInfo episode shape (META-6)', () => {
-  const still = (path: string) => ({
-    mobile: `https://image.tmdb.org/t/p/w300${path}`,
-    hd: `https://image.tmdb.org/t/p/w780${path}`,
-  });
-
   it('sets number (and the older episode field) on every TV episode', async () => {
     stubTmdb();
     const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
 
-    const tmdbEpisodes = [...season1.episodes, ...season2.episodes];
-    expect(allEpisodes(info).map((e) => [e.season, e.number, e.episode])).toEqual(
-      tmdbEpisodes.map((e) => [e.season_number, e.episode_number, e.episode_number])
-    );
+    expect(allEpisodes(info).map((e) => [e.season, e.number, e.episode])).toEqual([
+      ...[1, 2, 3, 4, 5, 6].map((n) => [1, n, n]),
+      ...[1, 2, 3, 4, 5, 6].map((n) => [2, n, n]),
+    ]);
   });
 
   it('sets number on the single movie episode', async () => {
@@ -234,7 +232,7 @@ describe('TMDB.fetchMediaInfo episode shape (META-6)', () => {
 
     expect(info.seasons).toHaveLength(1);
     expect(info.seasons![0]!.episodes).toEqual([
-      expect.objectContaining({ number: 1, episode: 1, season: 1, title: movie.title, id: undefined }),
+      expect.objectContaining({ number: 1, episode: 1, season: 1, title: 'El Camino: A Breaking Bad Movie', id: undefined }),
     ]);
   });
 
@@ -243,8 +241,14 @@ describe('TMDB.fetchMediaInfo episode shape (META-6)', () => {
     const info = await fetchInfo(fakeProvider([]), SHOW_ID, 'tv');
 
     const [s1] = info.seasons!;
-    expect(s1!.image).toEqual(still(season1.poster_path));
-    expect(s1!.episodes[0]!.image).toEqual(still(season1.episodes[0]!.still_path));
+    expect(s1!.image).toEqual({
+      mobile: 'https://image.tmdb.org/t/p/w300/8uVqe9ThcuYVNdh4O0kuijIWMLL.jpg',
+      hd: 'https://image.tmdb.org/t/p/w780/8uVqe9ThcuYVNdh4O0kuijIWMLL.jpg',
+    });
+    expect(s1!.episodes[0]!.image).toEqual({
+      mobile: 'https://image.tmdb.org/t/p/w300/gxh0k3aADsYkt9tgkfm2kGn2qQj.jpg',
+      hd: 'https://image.tmdb.org/t/p/w780/gxh0k3aADsYkt9tgkfm2kGn2qQj.jpg',
+    });
   });
 
   it('returns an empty episode list for a season TMDB has no episodes for', async () => {
@@ -309,10 +313,7 @@ describe('TMDB errors (META-7)', () => {
     Object.assign(new Error(`Request failed with status code ${status}`), { isAxiosError: true, response: { status } });
 
   const expectMetaError = async (promise: Promise<unknown>, cause: Error, status: number) => {
-    const error = await promise.then(
-      () => undefined,
-      (e: unknown) => e
-    );
+    const error = await rejectionOf(promise);
     expect(error).toBeInstanceOf(MetaError);
     expect(error).toMatchObject({ source: 'tmdb', status, cause, message: cause.message });
   };
@@ -353,10 +354,6 @@ describe('TMDB errors (META-7)', () => {
 });
 
 describe('TMDB.fetchMediaInfo seasons and mapping (META-10)', () => {
-  const image = (path: string) => ({
-    mobile: `https://image.tmdb.org/t/p/w300${path}`,
-    hd: `https://image.tmdb.org/t/p/w780${path}`,
-  });
   const failSeasons = (...seasons: number[]) => {
     const get = metaHttp.get as jest.Mock;
     const respond = get.getMockImplementation()!;
@@ -403,7 +400,7 @@ describe('TMDB.fetchMediaInfo seasons and mapping (META-10)', () => {
     stubTmdb({ [`movie/${MOVIE_ID}`]: { ...movie, runtime: 0 } });
     const movieInfo = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
     expect(movieInfo.duration).toBeUndefined();
-    expect(movieInfo.title).toBe(movie.title);
+    expect(movieInfo.title).toBe('El Camino: A Breaking Bad Movie');
 
     jest.restoreAllMocks();
     const { episode_run_time: _, ...showWithoutRunTime } = show;
@@ -418,8 +415,8 @@ describe('TMDB.fetchMediaInfo seasons and mapping (META-10)', () => {
     const info = await fetchInfo(fakeProvider([]), MOVIE_ID, 'movie');
 
     const [season] = info.seasons!;
-    expect(season!.image).toEqual(image(movie.poster_path));
-    expect(season!.episodes[0]!.image).toEqual(image(movie.backdrop_path));
+    expect(season!.image).toEqual(MOVIE_POSTER);
+    expect(season!.episodes[0]!.image).toEqual(MOVIE_BACKDROP);
   });
 
   it('leaves the season image unset when the movie has no poster', async () => {
@@ -428,7 +425,7 @@ describe('TMDB.fetchMediaInfo seasons and mapping (META-10)', () => {
 
     const [season] = info.seasons!;
     expect(season!.image).toBeUndefined();
-    expect(season!.episodes[0]!.image).toEqual(image(movie.backdrop_path));
+    expect(season!.episodes[0]!.image).toEqual(MOVIE_BACKDROP);
   });
 
   it("matches on the first air date's year and treats a missing date as unknown", async () => {

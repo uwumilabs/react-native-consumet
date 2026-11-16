@@ -52,7 +52,6 @@ export function RegistryAnimeTab({ manager, mode, onModeChange }: TabProps) {
     <AnimeBrowser
       provider={registry.provider}
       label={registry.entry?.name ?? '…'}
-      subDubSeparate={registry.entry?.subbed === true && registry.entry.dubbed === true}
       header={<RegistryHeader logo="◈" title="Anime" mode={mode} registry={registry} layers={ANIME_META} />}
       placeholder={<RegistryLoadState registry={registry} mode={mode} onModeChange={onModeChange} />}
     />

@@ -89,7 +89,8 @@ export function registryKey(kind: RegistryKind, entry: Entry): string | undefine
 }
 
 // Factory and extractor names are interpolated into generated code (same rule as assertValidIdentifier).
-const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+/** A plain JavaScript identifier, as factory and extractor names must be (they're interpolated into code). */
+export const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 // Ids and extractor names end up in cache keys and file paths, in this library and in apps.
 const KEY_RE = new RegExp(`^${REGISTRY_KEY_PATTERN}$`);
 const VERSION_RE = new RegExp(`^${REGISTRY_VERSION_PATTERN}$`);

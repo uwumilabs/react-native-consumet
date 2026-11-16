@@ -9,12 +9,12 @@ import {
   type MediaFormat,
   type ProviderContext,
   type ProviderConfig,
-  type MediaStatus,
   type IAnimeEpisode,
   type ProviderCapabilities,
 } from '../../../models';
 import { toMediaStatus } from '../../common/media-status';
-import { serverName, webViewJson } from '../helpers';
+import { serverName, serversNamed } from '../../common/servers';
+import { webViewJson } from '../helpers';
 
 export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, createCustomBaseUrl, PolyURL, NativeConsumet } = ctx;
@@ -142,13 +142,15 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     const animeInfo: IAnimeInfo = { id, title: $('div.title-wrapper > h1 > span').first().text() };
 
     animeInfo.image = $('div.anime-poster a').attr('href');
-    animeInfo.cover = `https:${$('div.anime-cover').attr('data-src')}`;
+    // The site gives the cover as a protocol-relative URL.
+    const cover = $('div.anime-cover').attr('data-src');
+    animeInfo.cover = cover ? `https:${cover}` : undefined;
     animeInfo.description = $('div.anime-summary').text().trim();
     animeInfo.genres = $('div.anime-genre ul li')
       .map((_, el) => $(el).find('a').attr('title'))
       .get();
     animeInfo.hasSub = true;
-    animeInfo.status = toMediaStatus($('div.anime-info p:icontains("Status:") a').text(), ctx.enums.MediaStatus);
+    animeInfo.status = toMediaStatus($('div.anime-info p:icontains("Status:") a').text());
     animeInfo.type = $('div.anime-info > p:contains("Type:") > a').text().trim().toUpperCase() as MediaFormat;
     animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")')
       .text()
@@ -167,7 +169,7 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
         image: $(el).find('.col-2 > a > img').attr('src') || $(el).find('.col-2 > a > img').attr('data-src'),
         url: `${baseUrl}/anime/${animeId}`,
         releaseDate: $(el).find('div.col-9 > a').text().trim(),
-        status: $(el).find('div.col-9 > strong').text().trim() as MediaStatus,
+        status: toMediaStatus($(el).find('div.col-9 > strong').text()),
       };
     };
     animeInfo.recommendations = $('div.anime-recommendation .col-sm-6').toArray().map(relatedCard);
@@ -226,17 +228,13 @@ export function createAnimePahe(ctx: ProviderContext, customBaseURL?: string) {
     subOrDub: SubOrDub = SubOrDubEnum.SUB
   ): Promise<ISource> => {
     const { players, downloads } = await fetchPlayers(episodeId, subOrDub);
-    const wanted = server
-      ? players.filter((player) => player.name.toLowerCase().startsWith(server.toLowerCase()))
-      : players;
-    if (server && !wanted.length) {
-      throw new Error(`Server '${server}' not found; available: ${players.map((p) => p.name).join(', ')}`);
-    }
 
-    const iSource: ISource = { headers: { Referer: 'https://kwik.cx/' }, sources: [], download: downloads };
-    for (const player of wanted) {
+    const iSource: ISource = { sources: [], download: downloads };
+    for (const player of serversNamed(players, server)) {
       const res = await Kwik(ctx).extract(new PolyURL(player.url), `${baseUrl}/`);
-      for (const source of res?.sources ?? []) {
+      // Every player is on Kwik, so they all want the same headers.
+      iSource.headers = res.headers;
+      for (const source of res.sources) {
         iSource.sources.push({ ...source, quality: (player.label.match(/(\d{3,4})p/) || [])[0] });
       }
     }

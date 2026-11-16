@@ -1,7 +1,12 @@
-import { AnimeParser, MovieParser, MangaParser, type ExtractorFactory, type ProviderContext } from '../models';
-import * as BundledExtractors from '../extractors';
-import { createExtractorContext, type ExtractorContextConfig } from './create-extractor-context';
-import { extensionEnums } from './extension-modules';
+import {
+  AnimeParser,
+  MovieParser,
+  MangaParser,
+  extensionEnums,
+  type ExtractorFactory,
+  type ProviderContext,
+} from '../models';
+import { createExtractorContext, defaultExtractors, type ExtractorContextConfig } from './create-extractor-context';
 import type { ExtractorManager } from './ExtractorManager';
 
 export interface ProviderContextConfig extends ExtractorContextConfig {
@@ -13,9 +18,6 @@ export interface ProviderContextConfig extends ExtractorContextConfig {
    */
   extractorManager?: ExtractorManager;
 }
-
-/** The extractors the library bundles, by name. */
-export const defaultExtractors: typeof BundledExtractors = { ...BundledExtractors };
 
 const createCustomBaseUrl = (defaultUrl: string, customUrl?: string): string => {
   if (!customUrl) return defaultUrl;

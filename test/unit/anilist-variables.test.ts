@@ -1,29 +1,12 @@
 import Anilist from '../../src/providers/meta/anilist';
 import { metaHttp } from '../../src/utils/meta-http';
-import * as queries from '../../src/providers/meta/anilist-media';
 import type { ITitle } from '../../src/models';
 import searchFixture from './fixtures/anilist/search-fate-stay-night.json';
 import { replay, sentBodies } from './fixtures/anilist/replay';
+import { fakeAnimeProvider, fakeMangaProvider } from './helpers/fake-providers';
 
 // The search the old interpolated query turned into a 400.
 const SEARCH = '"Fate\\stay night"';
-
-const fakeProvider = () =>
-  ({
-    name: 'FakeProvider',
-    search: jest.fn().mockResolvedValue({ results: [] }),
-    fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes: [] }),
-    fetchEpisodeSources: jest.fn(),
-    fetchEpisodeServers: jest.fn(),
-  }) as any;
-
-const fakeMangaProvider = () =>
-  ({
-    name: 'FakeManga',
-    search: jest.fn().mockResolvedValue({ results: [] }),
-    fetchMangaInfo: jest.fn(),
-    fetchChapterPages: jest.fn(),
-  }) as any;
 
 const notFound = () => Object.assign(new Error('Request failed with status code 404'), { response: { status: 404 } });
 
@@ -33,13 +16,12 @@ describe('AniList GraphQL variables (META-8)', () => {
   it('sends a search containing a quote and a backslash as a variable', async () => {
     const post = replay(jest.spyOn(metaHttp, 'post'), searchFixture);
 
-    const res = await new Anilist(fakeProvider()).search(SEARCH, 1, 3);
+    const res = await new Anilist(fakeAnimeProvider()).search(SEARCH, 1, 3);
 
     expect(post).toHaveBeenCalledWith('https://graphql.anilist.co', expect.anything(), expect.anything());
-    expect(sentBodies(post)).toEqual([
-      { query: queries.SEARCH_QUERY, variables: { search: SEARCH, page: 1, perPage: 3, type: 'ANIME' } },
-    ]);
-    expect(sentBodies(post)[0]!.query).not.toContain('Fate');
+    const [body] = sentBodies(post);
+    expect(body!.variables).toEqual({ search: SEARCH, page: 1, perPage: 3, type: 'ANIME' });
+    expect(body!.query).not.toContain('Fate');
     expect(res.results.map((r) => [r.id, (r.title as ITitle).romaji])).toEqual([
       ['356', 'Fate/stay night'],
       ['6922', 'Fate/stay night Movie: UNLIMITED BLADE WORKS'],
@@ -47,74 +29,48 @@ describe('AniList GraphQL variables (META-8)', () => {
     ]);
   });
 
+  // Each call's values, and the text none of them may leave in the query.
   it.each([
-    [
-      'search',
-      (a: Anilist) => a.search(SEARCH),
-      queries.SEARCH_QUERY,
-      { search: SEARCH, page: 1, perPage: 15, type: 'ANIME' },
-    ],
+    ['search', (a: Anilist) => a.search(SEARCH), { search: SEARCH, page: 1, perPage: 15, type: 'ANIME' }, 'Fate'],
     [
       'Manga.search',
-      () => new Anilist.Manga(fakeMangaProvider()).search(SEARCH, 2, 5),
-      queries.SEARCH_QUERY,
+      () => new Anilist.Manga(fakeMangaProvider() as any).search(SEARCH, 2, 5),
       { search: SEARCH, page: 2, perPage: 5, type: 'MANGA' },
+      'Fate',
     ],
-    ['advancedSearch', (a: Anilist) => a.advancedSearch(SEARCH), queries.ADVANCED_SEARCH_QUERY, { search: SEARCH }],
-    ['fetchAnimeInfo', (a: Anilist) => a.fetchAnimeInfo('99147'), queries.MEDIA_DETAIL_QUERY, { id: 99147 }],
-    [
-      'fetchAnilistInfoById',
-      (a: Anilist) => a.fetchAnilistInfoById('99147'),
-      queries.MEDIA_DETAIL_QUERY,
-      { id: 99147 },
-    ],
+    ['advancedSearch', (a: Anilist) => a.advancedSearch(SEARCH), { search: SEARCH }, 'Fate'],
+    ['fetchAnimeInfo', (a: Anilist) => a.fetchAnimeInfo('99147'), { id: 99147 }, '99147'],
+    ['fetchAnilistInfoById', (a: Anilist) => a.fetchAnilistInfoById('99147'), { id: 99147 }, '99147'],
     [
       'Manga.fetchMangaInfo',
-      () => new Anilist.Manga(fakeMangaProvider()).fetchMangaInfo('105398'),
-      queries.MEDIA_DETAIL_QUERY,
+      () => new Anilist.Manga(fakeMangaProvider() as any).fetchMangaInfo('105398'),
       { id: 105398 },
+      '105398',
     ],
-    [
-      'fetchTrendingAnime',
-      (a: Anilist) => a.fetchTrendingAnime(2, 5),
-      queries.TRENDING_QUERY,
-      { page: 2, perPage: 5 },
-    ],
-    ['fetchPopularAnime', (a: Anilist) => a.fetchPopularAnime(2, 5), queries.POPULAR_QUERY, { page: 2, perPage: 5 }],
+    ['fetchTrendingAnime', (a: Anilist) => a.fetchTrendingAnime(2, 5), { page: 2, perPage: 5 }, undefined],
+    ['fetchPopularAnime', (a: Anilist) => a.fetchPopularAnime(2, 5), { page: 2, perPage: 5 }, undefined],
     [
       'fetchAnimeGenres',
       (a: Anilist) => a.fetchAnimeGenres(['Action', 'Slice of Life'], 2, 5),
-      queries.GENRES_QUERY,
       { genres: ['Action', 'Slice of Life'], page: 2, perPage: 5 },
+      'Slice of Life',
     ],
     [
       'fetchAiringSchedule',
       (a: Anilist) => a.fetchAiringSchedule(2, 5, 'monday', 'friday', true),
-      queries.AIRING_SCHEDULE_QUERY,
       { page: 2, perPage: 5, notYetAired: true },
+      undefined,
     ],
-    ['fetchStaffById', (a: Anilist) => a.fetchStaffById(95185), queries.STAFF_QUERY, { id: 95185 }],
-    [
-      'fetchCharacterInfoById',
-      (a: Anilist) => a.fetchCharacterInfoById('40882'),
-      queries.CHARACTER_QUERY,
-      { id: 40882 },
-    ],
-  ] as const)('%s sends a fixed query with its values as variables', async (_name, call, query, variables) => {
+    ['fetchStaffById', (a: Anilist) => a.fetchStaffById(95185), { id: 95185 }, '95185'],
+    ['fetchCharacterInfoById', (a: Anilist) => a.fetchCharacterInfoById('40882'), { id: 40882 }, '40882'],
+    ['fetchEpisodesListById', (a: Anilist) => a.fetchEpisodesListById('162670'), { id: 162670 }, '162670'],
+  ] as const)('%s sends its values as variables', async (_name, call, variables, value) => {
     const post = jest.spyOn(metaHttp, 'post').mockRejectedValue(notFound());
 
-    await (call as (a: Anilist) => Promise<unknown>)(new Anilist(fakeProvider())).catch(() => undefined);
-
-    expect(sentBodies(post)).toEqual([{ query, variables: expect.objectContaining(variables) }]);
-  });
-
-  it('sends the episode list lookup id as a variable', async () => {
-    const post = jest.spyOn(metaHttp, 'post').mockRejectedValue(notFound());
-
-    await new Anilist(fakeProvider()).fetchEpisodesListById('162670').catch(() => undefined);
+    await (call as (a: Anilist) => Promise<unknown>)(new Anilist(fakeAnimeProvider())).catch(() => undefined);
 
     const [body] = sentBodies(post);
-    expect(body!.variables).toEqual({ id: 162670 });
-    expect(body!.query).not.toContain('162670');
+    expect(body!.variables).toEqual(expect.objectContaining(variables));
+    if (value) expect(body!.query).not.toContain(value);
   });
 });

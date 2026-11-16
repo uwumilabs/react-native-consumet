@@ -1,1 +1,0 @@
-{"version":3,"file":"vidhide.d.ts","sourceRoot":"","sources":["../../src/extractors/vidhide.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAAE,KAAK,OAAO,EAAE,MAAM,WAAW,CAAC;AAChE,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAIrD,wBAAgB,OAAO,CAAC,GAAG,EAAE,gBAAgB;wBAGV,MAAM,GAAG,OAAO,KAAG,OAAO,CAAC,OAAO,CAAC;EA2BrE"}

@@ -16,7 +16,7 @@
  * Run after `yarn build`; `yarn build:registry` runs both (scripts/build-registry.js).
  *
  * Usage:
- *   node scripts/prepare-registry.js          publish new versions, update src + dist registry
+ *   node scripts/prepare-registry.js          publish new versions, update the registry
  *   node scripts/prepare-registry.js --check  verify only (no writes); exits 1 on any problem.
  *       Also checks that every published file referenced by the current registry or by a
  *       supported release's bundled registry still exists (see scripts/registry-retention.js),
@@ -32,15 +32,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const {
-  repoRoot,
-  REGISTRY_FILE,
-  DIST_REGISTRY_FILE,
-  built,
-  readRegistry,
-  registryLayout,
-  isBundleFile,
-} = require('./registry-paths');
+const { repoRoot, REGISTRY_FILE, built, readRegistry, registryLayout, isBundleFile } = require('./registry-paths');
 const { checkBase, checkReferences } = require('./registry-retention');
 const { checkSignature } = require('./registry-signing');
 const {
@@ -194,9 +186,7 @@ for (const { file, code } of writes) {
 }
 
 const content = JSON.stringify(registry, null, 2);
-fs.mkdirSync(path.dirname(path.join(repoRoot, DIST_REGISTRY_FILE)), { recursive: true });
 fs.writeFileSync(path.join(repoRoot, REGISTRY_FILE), content);
-fs.writeFileSync(path.join(repoRoot, DIST_REGISTRY_FILE), content);
 const map = writeLocalDistMap(registry);
 if (map.changed) console.log(`  + wrote ${LOCAL_DIST_MAP_FILE} (${map.bundles} bundles)`);
 console.log('\nRegistry prepared: entries point at immutable versioned files.');

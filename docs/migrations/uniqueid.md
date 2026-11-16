@@ -12,17 +12,23 @@ uniqueId = `${anilistId}$ep=${aniDbKey ?? number}`
 
 - `aniDbKey` is the numeric key of the ani.zip episode the provider episode was matched to. ani.zip keys episodes by AniDB episode: `"1"`, `"2"`… for regular episodes and `"S1"`, `"O1"`, `"C1"`… for specials and extras. Only numeric keys are ever used.
 - `number` is the provider's own episode number. It is used when ani.zip has no match for the episode, when ani.zip is down, slow, returns 404 or lists no episodes, and for providers that don't use the ani.zip merge. If the provider gives no usable number, the 1-based position in the list is used.
-- The rule is applied in one place, after merging, on every path.
+- The rule is applied in one place, after merging, on every path. `fetchAnimeInfo` and `fetchEpisodesListById` return the same episodes with the same `uniqueId`s.
 
 | | 1.6.0 | Now |
 |---|---|---|
 | Episode matched to ani.zip | `${anilistId}$ep=${episodeNumber ?? episode}`: ani.zip's **TVDB** season-relative `episodeNumber`, or the raw ani.zip key when TVDB has none (so specials gave `$ep=S1`, `$ep=O3`…) | `${anilistId}$ep=${key}`: the **AniDB** episode (numeric ani.zip key) |
 | Episode ani.zip didn't match, ani.zip unavailable, or a provider without the merge | no `uniqueId` | `${anilistId}$ep=${number}` |
-| `fetchAnimeInfo` episodes | no `uniqueId` | `${anilistId}$ep=${number}` |
+| `fetchAnimeInfo` episodes | no `uniqueId` | the same episodes and `uniqueId`s as `fetchEpisodesListById` |
 | `number` | overwritten with TVDB `episodeNumber` when matched | always the provider's number |
 | TVDB numbering | in `number` | in `tvdbNumber` (season-relative) and `absoluteNumber`, only on matched episodes |
 
 Builds from `main` after 1.6.0 already gave unmatched episodes `${anilistId}$ep=${number}`; that part is unchanged.
+
+### `fetchAnimeInfo` now merges with ani.zip
+
+Builds from `main` after 1.6.0 gave `fetchAnimeInfo` episodes `${anilistId}$ep=${number}` without the ani.zip merge, so its keys could differ from `fetchEpisodesListById`'s. It now merges the same way. Only providers that declare the `aniZipEpisodes` capability (Zoro, AnimePahe, AniKoto and AniNeko do) are affected, and only these episodes change key: those ani.zip matches by air date or by title to an AniDB episode whose number isn't the provider's. For example, a provider that numbers Dr. Stone: New World Part 2 12–22 used to get `162670$ep=12` … `162670$ep=22` from `fetchAnimeInfo`; it now gets `162670$ep=1` … `162670$ep=11`, as `fetchEpisodesListById` already gave. Episodes matched by number, unmatched episodes, and providers without the merge keep `${anilistId}$ep=${number}`. A key stored from `fetchAnimeInfo` for a changed episode is `${anilistId}$ep=${number}` with that episode's provider `number`; rename it to the episode's new `uniqueId`.
+
+`fetchAnimeInfo` episodes also gain the merge's other fields: ani.zip's title, description, image and air date, and `tvdbNumber` and `absoluteNumber`, on matched episodes.
 
 ### How an episode is matched
 

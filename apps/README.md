@@ -72,10 +72,9 @@ up broken here instead of being patched over.
 
 ## Contract panel
 
-Each view has a **CONTRACT** strip under its header. It runs the checks in
-`src/non-registry/manga-contract.ts` on every response. These are plain-function copies of
-`test/unit/helpers/manga-contract.ts`, so keep the two in step. The strip shows **✓ follows contract**
-or **✗ N problems**, and how long the call took. Tap the strip to list every call with its time, then
+Each view has a **CONTRACT** strip under its header. It runs the checks in `test/contracts/manga.ts`
+(at the repository root), the ones the provider tests run, on every response. The strip shows
+**✓ follows contract** or **✗ N problems**, and how long the call took. Tap the strip to list every call with its time, then
 every problem, for example `pages[0]: page must be 1 (got 0)`. A call that throws counts as a problem.
 
 | View | Checks |
@@ -84,10 +83,9 @@ every problem, for example `pages[0]: page must be 1 (got 0)`. A call that throw
 | Info | The same fields, plus `genres`, `authors` and `artists` as string arrays. `chapters` is non-empty and in reading order. Chapter `id` and `title` are strings, `chapterNumber`, `volumeNumber` and `pages` are numbers, and `url` is absolute. |
 | Pages | At least one page. `page` runs 1..n, `img` is absolute, and `headerForImage` is on every page or on none. |
 
-The strip also makes some checks that the unit helper doesn't. On search, `currentPage` must match the
-page asked for, `hasNextPage` must be a boolean, and a later page must not repeat ids from earlier
-pages (a sign that the provider ignores `page`). A description must also be plain text, with no HTML
-tags or entities.
+On search, `currentPage` must also match the page asked for, `hasNextPage` must be a boolean, and a
+later page must not repeat ids from earlier pages (a sign that the provider ignores `page`). A
+description must be plain text, with no HTML tags or entities.
 
 To test a provider:
 

@@ -15,18 +15,22 @@ const readDist = (main: string) => {
 describe('registry URLs are immutable (REG-1)', () => {
   const { entriesOf, entryKey, publishedFile, publishedUrl } = registryLayout();
 
-  test.each(entriesOf(registry).map(({ kind, entry }: any) => [entryKey(kind, entry), kind, entry]))(
-    '%s points at its published version',
-    (_key, kind, entry) => {
-      expect(entry.main).toBe(publishedUrl(publishedFile(kind, entry)));
-    }
-  );
+  const entries: [string, string, any][] = entriesOf(registry).map(({ kind, entry }: any) => [
+    entryKey(kind, entry),
+    kind,
+    entry,
+  ]);
+
+  test.each(entries)('%s points at its published version', (_key, kind, entry) => {
+    expect(entry.main).toBe(publishedUrl(publishedFile(kind, entry)));
+  });
 });
 
 describe('registry entries load from their published files with integrity checks', () => {
+  // The three mirrors share one file; each entry must still get its own platform.
   test.each(registry.extensions.map((e) => [e.id, e] as const))('extension %s', async (_id, entry) => {
-    const instance: any = await new ProviderManager(registry as any).executeProviderCode(
-      readDist(entry.main), { ...entry as any, factoryName: entry.factoryName });
+    const instance: any = await new ProviderManager(registry as any).executeProviderCode(readDist(entry.main), entry as any);
+    expect(instance.name).toBe(entry.name);
     expect(typeof instance.search).toBe('function');
   });
 

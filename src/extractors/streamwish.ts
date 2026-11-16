@@ -1,10 +1,8 @@
 import { type ExtractorContext, type ISource, type ISubtitle } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
-import { hlsVariants } from './hls';
+import { M3U8_URL, hlsVariants } from './hls';
 import { unpackScripts } from './packer';
 import { toUrl } from './url';
-
-const M3U8_URL = /https?:\/\/[^"]+?\.m3u8[^"]*/;
 
 export function StreamWish(ctx: ExtractorContext) {
   const { axios, USER_AGENT, PolyURL } = ctx;
@@ -21,9 +19,6 @@ export function StreamWish(ctx: ExtractorContext) {
         'Priority': 'u=0, i',
         'Origin': url.origin,
         'Referer': referer ?? url.origin,
-        'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': 'Windows',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',

@@ -7,11 +7,11 @@ import { AnimeBrowser } from '../components/AnimeBrowser';
 import { DirectUrlButton } from '../components/DirectUrlButton';
 import { ProviderSheet } from '../components/ProviderSheet';
 import { HeaderChip, ScreenHeader } from '../components/ScreenHeader';
-import { ANIME_PROVIDERS, isDubSeparate, pickProvider } from '../providers';
+import { ANIME_PROVIDERS, useProviderChoice } from '../providers';
 import { colors } from '../theme';
 
 export default function AnimeScreen() {
-  const [{ def, provider }, setChoice] = useState(() => pickProvider(ANIME_PROVIDERS[0]!));
+  const { def, provider, select } = useProviderChoice(ANIME_PROVIDERS);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -19,7 +19,6 @@ export default function AnimeScreen() {
       <AnimeBrowser
         provider={provider}
         label={def.label}
-        subDubSeparate={isDubSeparate(provider)}
         header={
           <ScreenHeader logo="◈" title="Anime">
             <DirectUrlButton />
@@ -31,10 +30,7 @@ export default function AnimeScreen() {
         visible={sheetOpen}
         providers={ANIME_PROVIDERS}
         selectedKey={def.key}
-        onSelect={(key) => {
-          const next = ANIME_PROVIDERS.find((p) => p.key === key);
-          if (next && next !== def) setChoice(pickProvider(next));
-        }}
+        onSelect={select}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>

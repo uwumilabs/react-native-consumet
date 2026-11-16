@@ -3,10 +3,12 @@
  * ANIME, MOVIES and MANGA objects, so a provider the library adds shows up here on its own.
  */
 
+import { useState } from 'react';
 import {
   ANIME,
   AnimeParser,
   MANGA,
+  META,
   MOVIES,
   MovieParser,
   type IAnimeProvider,
@@ -27,20 +29,38 @@ type ProviderDef<P> = {
 
 type ProviderClass<P> = new () => P;
 
-/** A picked provider: its entry and a new instance. */
-export const pickProvider = <P>(def: ProviderDef<P>) => ({ def, provider: def.make() });
+/** The keys of the classes in a library object, so a renamed or removed provider fails to compile. */
+type ClassKey<L> = {
+  [K in keyof L]: L[K] extends abstract new (...args: never[]) => unknown ? K : never;
+}[keyof L] &
+  string;
+
+const pickProvider = <P>(def: ProviderDef<P>) => ({ def, provider: def.make() });
+
+/**
+ * A tab's provider: the first entry's at first. `select(key)` switches to a new instance of another
+ * entry; picking the current one keeps it.
+ */
+export function useProviderChoice<P>(defs: ProviderDef<P>[]) {
+  const [{ def, provider }, setChoice] = useState(() => pickProvider(defs[0]!));
+  const select = (key: string) => {
+    const next = defs.find((d) => d.key === key);
+    if (next && next !== def) setChoice(pickProvider(next));
+  };
+  return { def, provider, select };
+}
 
 /**
  * Picker entries for the provider classes in one of the library's provider objects (ANIME and
  * MOVIES also hold the factories). Those in `emoji` come first, in its order, which makes the first
  * one the tab's default; the rest follow with 📦.
  */
-function providerDefs<P>(
-  library: Record<string, unknown>,
+function providerDefs<L extends object, P>(
+  library: L,
   isProvider: (value: unknown) => value is ProviderClass<P>,
-  emoji: Record<string, string>
+  emoji: Partial<Record<ClassKey<L>, string>>
 ): ProviderDef<P>[] {
-  const order = Object.keys(emoji);
+  const order: string[] = Object.keys(emoji);
   const rank = (key: string) => {
     const index = order.indexOf(key);
     return index === -1 ? order.length : index;
@@ -48,7 +68,12 @@ function providerDefs<P>(
   return Object.entries(library)
     .filter((entry): entry is [string, ProviderClass<P>] => isProvider(entry[1]))
     .sort(([a], [b]) => rank(a) - rank(b))
-    .map(([key, Provider]) => ({ key, label: key, emoji: emoji[key] ?? '📦', make: () => new Provider() }));
+    .map(([key, Provider]) => ({
+      key,
+      label: key,
+      emoji: (emoji as Record<string, string | undefined>)[key] ?? '📦',
+      make: () => new Provider(),
+    }));
 }
 
 const subclassOf =
@@ -72,9 +97,15 @@ export const MOVIE_PROVIDERS = providerDefs(MOVIES, subclassOf<IMovieProvider>(M
   DisneyMirror: '🏰',
 });
 
-/** Whether the provider lists sub and dub as separate entries (a provider factory's `isDubAvailableSeparately`). */
-export const isDubSeparate = (provider: IAnimeProvider): boolean =>
-  'isDubAvailableSeparately' in provider && provider.isDubAvailableSeparately === true;
+/**
+ * Whether the provider lists sub and dub as separate entries (a provider factory's
+ * `isDubAvailableSeparately`), so the app offers a SUB / DUB toggle. META.Anilist passes the choice
+ * on to the provider it wraps, so that provider decides.
+ */
+export const isDubSeparate = (provider: object): boolean =>
+  provider instanceof META.Anilist
+    ? isDubSeparate(provider.provider)
+    : 'isDubAvailableSeparately' in provider && provider.isDubAvailableSeparately === true;
 
 /** The calls the Manga tab makes: the shape every manga provider shares (docs/guides/manga.md). */
 export type MangaProvider = {

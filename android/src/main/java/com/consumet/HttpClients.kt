@@ -17,9 +17,6 @@ internal object HttpClients {
         .writeTimeout(30, SECONDS)
         .build()
 
-    /** bypassDdosGuard: OkHttp's default timeouts (10 s to connect, and for each read and write). */
-    val ddosGuard: OkHttpClient = shared
-
     /** The Synchrony download: 10 s to connect, 15 s for each read, 30 s in all. */
     val synchrony: OkHttpClient = shared.newBuilder()
         .connectTimeout(10, SECONDS)

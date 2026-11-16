@@ -21,13 +21,13 @@ describe('toMediaStatus', () => {
     ['Axed', MediaStatus.CANCELLED],
     ['Season 2 soon', MediaStatus.UNKNOWN],
   ])('reads %p as %p', (text, status) => {
-    expect(toMediaStatus(text, MediaStatus)).toBe(status);
+    expect(toMediaStatus(text)).toBe(status);
   });
 
   it('leaves the status out when the site shows none', () => {
-    expect(toMediaStatus('', MediaStatus)).toBeUndefined();
-    expect(toMediaStatus('   ', MediaStatus)).toBeUndefined();
-    expect(toMediaStatus(undefined, MediaStatus)).toBeUndefined();
+    expect(toMediaStatus('')).toBeUndefined();
+    expect(toMediaStatus('   ')).toBeUndefined();
+    expect(toMediaStatus(undefined)).toBeUndefined();
   });
 });
 

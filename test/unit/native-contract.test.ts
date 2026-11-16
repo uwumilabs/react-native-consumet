@@ -16,15 +16,13 @@ const read = (file: string) => fs.readFileSync(path.join(repoRoot, file), 'utf8'
 
 // The contract. Changing a signature here is a breaking change for extension code and uwumi.
 const SPEC: Record<string, string> = {
-  bypassDdosGuard: '(url: string) => Promise<{ cookie: string }>',
-  getDdosGuardCookiesWithWebView: '(url: string) => Promise<string>',
   makeGetRequestWithWebView:
     '(url: string, headers: { [key: string]: string }) => Promise<{ url: string; html: string; cookies: string; status: string; }>',
   makePostRequestWithWebView:
     '(url: string, headers: { [key: string]: string }, body: string) => Promise<{ url: string; response: string; cookies: string; status: string; contentType: string; }>',
   makePostRequest:
     '(url: string, headers: { [key: string]: string }, body: string) => Promise<{ statusCode: number; body: string; headers: { [key: string]: string }; }>',
-  deobfuscateScript: '(source: string) => Promise<string | null>',
+  deobfuscateScript: '(source: string) => Promise<string>',
 };
 const methods = Object.keys(SPEC).sort();
 const asyncMethods = methods.filter((name) => SPEC[name]!.includes('=> Promise<'));
@@ -32,8 +30,6 @@ const asyncMethods = methods.filter((name) => SPEC[name]!.includes('=> Promise<'
 const ERROR_CODES = [
   'WEBVIEW_ERROR',
   'TIMEOUT',
-  'COOKIE_ERROR',
-  'ERROR',
   'HTTP_ERROR',
   'NetworkError',
   'ParseError',
@@ -81,19 +77,23 @@ function kotlinFunction(source: string, name: string): string {
   return next < 0 ? source.slice(start) : source.slice(start, start + 1 + next);
 }
 
-/** The value of a Kotlin `const val` in `file`: a string, or a number (`30_000L` reads as 30000). */
+/** A number literal, or a product of them (`8L * 1024 * 1024`); `30_000L` reads as 30000. */
+const product = (expr: string) =>
+  expr.split('*').reduce((total, factor) => total * Number(factor.trim().replace(/_|L$/g, '')), 1);
+
+/** The value of a Kotlin `const val` in `file`: a string, or a number. */
 function kotlinConst(file: string, name: string): string | number {
   const value = new RegExp(`const val ${name} =\\s*(.+)$`, 'm').exec(kotlin[file] ?? '')?.[1]?.trim();
   if (value === undefined) throw new Error(`const val ${name} not found in ${file}`);
-  return value.startsWith('"') ? JSON.parse(value) : Number(value.replace(/_|L$/g, ''));
+  return value.startsWith('"') ? JSON.parse(value) : product(value);
 }
 
 /** The value of an Objective-C `static ... const` in the iOS sources: a string or a number. */
 function objcConst(name: string): string | number {
-  const decl = new RegExp(`static (?:const \\w+|NSString \\*const) ${name} =((?:\\s*@"[^"]*")+|\\s*[\\d.]+);`).exec(allObjc);
+  const decl = new RegExp(`static (?:const \\w+|NSString \\*const) ${name} =((?:\\s*@"[^"]*")+|[\\s\\d.*]+);`).exec(allObjc);
   if (!decl) throw new Error(`${name} not found in ios/`);
   const strings = [...decl[1]!.matchAll(/@"([^"]*)"/g)].map((m) => m[1]);
-  return strings.length ? strings.join('') : Number(decl[1]);
+  return strings.length ? strings.join('') : product(decl[1]!);
 }
 
 describe('NativeConsumet spec (NAT-1)', () => {
@@ -170,8 +170,8 @@ describe('native implementations follow the contract (NAT-1)', () => {
     ['WebView request timeout (ms)', kotlinConst('WebViewTask.kt', 'TIMEOUT_MS'), Number(objcConst('kWebViewTimeout')) * 1000, 30_000],
     ['time a loaded page gets to settle (ms)', kotlinConst('HttpRequestModule.kt', 'CAPTURE_DELAY_MS'), Number(objcConst('kCaptureDelay')) * 1000, 1500],
     ['challenge page poll interval (ms)', kotlinConst('HttpRequestModule.kt', 'POLL_MS'), Number(objcConst('kPollInterval')) * 1000, 1000],
-    ['DDoS-Guard check cookie', kotlinConst('DdosGuardHelper.kt', 'CHECK_COOKIE'), objcConst('kDdosGuardCheckCookie'), '__ddg2_'],
-    ['DDoS-Guard check script', kotlinConst('DdosGuardHelper.kt', 'CHECK_SCRIPT_URL'), objcConst('kDdosGuardCheckScriptURL'), 'https://check.ddos-guard.net/check.js'],
+    ['Synchrony thread stack (bytes)', kotlinConst('Synchrony.kt', 'THREAD_STACK_BYTES'), objcConst('kSynchronyThreadStackBytes'), 8 * 1024 * 1024],
+    ['message of a failed page capture', kotlinConst('HttpRequestModule.kt', 'CAPTURE_FAILED'), objcConst('kCaptureFailedMessage'), 'Could not read the loaded page'],
     ['Synchrony cache directory', kotlinConst('DeobfuscatorModule.kt', 'CACHE_DIR'), objcConst('kSynchronyDirectory'), 'consumet'],
   ])('%s is the same on Android and iOS', (_label, android, ios, pinned) => {
     expect(android).toEqual(pinned);
@@ -183,11 +183,10 @@ describe('native implementations follow the contract (NAT-1)', () => {
     expect(allObjc).toContain('@"synchrony-%@.js"');
   });
 
-  it('getDdosGuardCookiesWithWebView resolves a plain string on Android, as on iOS', () => {
-    const android = kotlinFunction(kotlin['DdosGuardHelper.kt']!, 'getDdosGuardCookiesWithWebView');
-    expect(android).toMatch(/task\.resolve\(cookie\)/);
-    expect(android).not.toMatch(/WritableNativeMap|putString\("cookie"/);
-    expect(objc).toMatch(/\[task resolve:header\]/);
+  it('runs Synchrony on a thread with the pinned stack size on both platforms', () => {
+    expect(kotlin['DeobfuscatorModule.kt']).toMatch(/Thread\(.*, Synchrony\.THREAD_STACK_BYTES\)/);
+    expect(objc).toMatch(/\[\[NSThread alloc\] initWithBlock:/);
+    expect(objc).toMatch(/thread\.stackSize = kSynchronyThreadStackBytes;/);
   });
 
   it('WebView requests reject on timeout on both platforms', () => {
@@ -197,6 +196,50 @@ describe('native implementations follow the contract (NAT-1)', () => {
     // Every WebView the module creates belongs to the task that settles its promise once.
     expect(Object.keys(kotlin).filter((file) => /(?<![.\w])WebView\(\w+\)/.test(kotlin[file]!))).toEqual(['WebViewTask.kt']);
     expect(allObjc.match(/\[WKWebView alloc\]/g)).toHaveLength(1);
+  });
+
+  it('a dead renderer or web content process rejects instead of crashing the app', () => {
+    const android = /override fun onRenderProcessGone\([^)]*\): Boolean \{[^}]*/.exec(kotlin['WebViewTask.kt']!)?.[0] ?? '';
+    expect(android).toMatch(/reject\(WEBVIEW_ERROR, /);
+    expect(android).toMatch(/return true/);
+    expect(objc).toMatch(/- \(void\)webViewWebContentProcessDidTerminate:\(WKWebView \*\)webView \{\s*\[self rejectWithCode:kWebViewErrorCode/);
+  });
+
+  it('a page that loads but cannot be read rejects instead of resolving empty', () => {
+    const http = kotlin['HttpRequestModule.kt']!;
+    // GET and POST read the page through one function, which rejects when the script gives no string.
+    for (const name of ['makeGetRequestWithWebView', 'makePostRequestWithWebView']) {
+      expect(kotlinFunction(http, name)).toMatch(/readPage\(task, view, /);
+      const method = objc.slice(objc.indexOf(`- (void)${name}:`));
+      expect(method.slice(0, method.indexOf('\n#pragma mark'))).toMatch(/RCConsumetReadPage\(/);
+    }
+    expect(http).toMatch(/if \(value == null\) captureFailed\(task\) else use\(value\)/);
+    expect(http).toMatch(/task\.reject\(WebViewTask\.WEBVIEW_ERROR, CAPTURE_FAILED\)/);
+    expect(objc).toMatch(/if \(\[result isKindOfClass:\[NSString class\]\]\) \{\s*use\(result\);\s*\} else \{\s*\[t rejectWithCode:kWebViewErrorCode/);
+    // The capture scripts don't catch their own failure and hand back an empty page.
+    for (const source of [http, objc]) {
+      expect(source).not.toMatch(/contentType: ?'unknown'/);
+      expect(source).not.toMatch(/return '';/);
+    }
+  });
+
+  it('WebView results carry the URL and cookies of the page that finished last', () => {
+    // Recorded on every finished page, before the first-page-only callback returns early.
+    expect(kotlin['WebViewTask.kt']).toMatch(/finishedUrl = loadedUrl\s+if \(pageFinished\) return/);
+    expect(objc).toMatch(/_finishedURL = \[webView\.URL\.absoluteString copy\];\s+if \(_pageFinished\)\s+return;/);
+    for (const name of ['makeGetRequestWithWebView', 'makePostRequestWithWebView']) {
+      expect(kotlinFunction(kotlin['HttpRequestModule.kt']!, name)).toMatch(/val finalUrl = task\.finishedUrl \?: url/);
+      const method = objc.slice(objc.indexOf(`- (void)${name}:`));
+      expect(method.slice(0, method.indexOf('\n#pragma mark'))).toMatch(/finalURL =\s+task\.finishedURL\.length \? task\.finishedURL : urlStr;/);
+    }
+  });
+
+  it('makePostRequest finds Content-Type in any case on both platforms', () => {
+    expect(kotlin['RequestHeaders.kt']).toMatch(/val contentType: String\? get\(\) = named\("Content-Type"\)/);
+    expect(kotlin['RequestHeaders.kt']).toMatch(/equals\(name, ignoreCase = true\)/);
+    // NSURLRequest looks header names up case-insensitively; allHTTPHeaderFields[...] doesn't.
+    expect(objc).toMatch(/\[req valueForHTTPHeaderField:@"Content-Type"\]/);
+    expect(objc).not.toMatch(/allHTTPHeaderFields\[@"Content-Type"\]/);
   });
 
   it('only main-document failures reject on Android (sub-resources are ignored, as on iOS)', () => {
@@ -246,7 +289,6 @@ describe('template leftovers are gone (NAT-3)', () => {
   const gradle = read('android/build.gradle');
 
   it('has no multiply method on either platform', () => {
-    expect(SPEC).not.toHaveProperty('multiply');
     expect(allKotlin).not.toMatch(/multiply/);
     expect(allObjc).not.toMatch(/multiply/);
   });

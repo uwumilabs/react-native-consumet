@@ -7,7 +7,15 @@ import type {
   ProviderContext,
   ProviderConfig,
 } from '../../../models';
-import { TMDB_API_URL, mapTmdbInfo, mapTmdbResult, resolveTmdbApiKey, tmdbImage } from '../../../utils/tmdb';
+import {
+  TMDB_INFO_APPEND,
+  mapTmdbInfo,
+  mapTmdbResult,
+  resolveTmdbApiKey,
+  tmdbImage,
+  tmdbPage,
+  tmdbUrl,
+} from '../../../utils/tmdb';
 import { getMultiServers, getMultiSources, parseId, toEpisodeId, toMediaId } from './utils';
 
 /**
@@ -21,7 +29,6 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
   const { axios, createCustomBaseUrl, enums } = ctx;
   const { TvType } = enums;
   const apiKey = resolveTmdbApiKey(tmdbApiKey, 'MOVIES.MultiStream');
-  const tmdb = (path: string) => `${TMDB_API_URL}${path}${path.includes('?') ? '&' : '?'}api_key=${apiKey}`;
 
   const config: ProviderConfig = {
     name: 'MultiStream',
@@ -38,16 +45,17 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
   /** Search TMDB. Ids are `<tmdbId>$movie` or `<tmdbId>$tv`; shows carry their season count. */
   const search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
     const { data } = await axios.get(
-      tmdb(`/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`)
+      tmdbUrl(
+        `/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`,
+        apiKey
+      )
     );
-    if (!data.results?.length) return { currentPage: page, hasNextPage: false, results: [] };
-
     const results = await Promise.all(
-      data.results.map(async (result: any): Promise<IMovieResult> => {
+      (data?.results ?? []).map(async (result: any): Promise<IMovieResult> => {
         let seasons: number | undefined;
         if (result.media_type === 'tv') {
           try {
-            const { data: tvData } = await axios.get(tmdb(`/tv/${result.id}?language=en-US`));
+            const { data: tvData } = await axios.get(tmdbUrl(`/tv/${result.id}?language=en-US`, apiKey));
             seasons = tvData.number_of_seasons;
           } catch {
             // The season count is extra; a show whose lookup fails is listed without it.
@@ -56,13 +64,7 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
         return { ...mapTmdbResult(result), id: toMediaId(result.id, result.media_type), seasons };
       })
     );
-    return {
-      currentPage: page,
-      hasNextPage: page + 1 <= data.total_pages,
-      totalResults: data.total_results,
-      totalPages: data.total_pages,
-      results,
-    };
+    return tmdbPage(data, page, results);
   };
 
   /** @param id a MultiStream media id from `search` (`1071585$movie`, `1399$tv`) */
@@ -70,7 +72,7 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
     const { tmdbId, type } = parseId(id);
     const mediaType = type === 'movie' ? 'movie' : 'tv';
     const { data } = await axios.get(
-      tmdb(`/${type}/${tmdbId}?language=en-US&append_to_response=release_dates,images,recommendations,credits,videos`)
+      tmdbUrl(`/${type}/${tmdbId}?language=en-US&append_to_response=${TMDB_INFO_APPEND}`, apiKey)
     );
 
     const info: IMovieInfo = {
@@ -87,7 +89,7 @@ export function createMultiStream(ctx: ProviderContext, customBaseURL?: string, 
     if (info.type === TvType.TVSERIES) {
       info.episodes = [];
       for (let season = 1; season <= data?.number_of_seasons; season++) {
-        const { data: seasonData } = await axios.get(tmdb(`/tv/${tmdbId}/season/${season}`));
+        const { data: seasonData } = await axios.get(tmdbUrl(`/tv/${tmdbId}/season/${season}`, apiKey));
         for (const item of seasonData.episodes) {
           info.episodes.push({
             id: toEpisodeId(tmdbId, item.episode_number, item.season_number, item.id),

@@ -6,6 +6,8 @@ const novelupdates = new LIGHT_NOVELS.NovelUpdates();
 
 The constructor takes an optional provider context, `new LIGHT_NOVELS.NovelUpdates(ctx?)`, whose axios makes every request (default: `createProviderContext()`). See the [light novels guide](../../guides/light-novels.md).
 
+NovelUpdates is behind Cloudflare. When Cloudflare answers with its challenge page instead of the site's, the methods reject with `NovelUpdates: Cloudflare blocked the request`.
+
 <h2>Methods</h2>
 
 - [search](#search)
@@ -37,7 +39,7 @@ output:
     {
       id: 'youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e', // the light novel id
       title: 'Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e',
-      url: 'https://www-novelupdates-com.translate.goog/series/youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/?_x_tr_sl=ja&_x_tr_tl=en&_x_tr_hl=en-US',
+      url: 'https://www.novelupdates.com/series/youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/',
       image: 'https://cdn.novelupdates.com/imgmid/series_10266.jpg'
     },
     {...}
@@ -94,27 +96,6 @@ output:
 
 ### fetchChapterContent
 
-<h4>Parameters</h4>
-
-| Parameter | Type     | Description                                                            |
-| --------- | -------- | ---------------------------------------------------------------------- |
-| chapterId | `string` | chapter id. (_chapter id can be found in the light novel info object_) |
-
-```ts
-novelupdates.fetchChapterContent('5692421').then((data) => {
-  console.log(data);
-});
-```
-
-returns a content object. (_<a href="../../../src/models/types.ts"><code>Promise\<ILightNovelChapterContent></code></a>_)\
-output:
-
-```js
-{
-  text: '\n' +
-    'It’s a bit sudden,...',
-  html: '<p></p><p>It’s a bit sudden, but listen seriously to the question I’m about to ask and think about...'
-}
-```
+Not supported. NovelUpdates lists each chapter as a link to the translator's own site (the chapter's `url`, which redirects there), and those sites' pages differ from one another, so NovelUpdates has no chapter text to return. `fetchChapterContent` always rejects with an error saying so; open the chapter's `url` instead.
 
 <p align="end">(<a href="../../guides/light-novels.md">back to light novels providers list</a>)</p>

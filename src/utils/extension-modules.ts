@@ -1,36 +1,8 @@
-import {
-  StreamingServers,
-  MediaFormat,
-  MediaStatus,
-  SubOrDub,
-  WatchListType,
-  TvType,
-  Genres,
-  Topics,
-} from '../models/types';
+import { extensionEnums } from '../models/types';
 import type { ExtractorContext, ProviderContext } from '../models';
+import { MODELS_MODULE, UTILS_MODULE } from './runtime-modules';
 import { assertValidIdentifier, verifyExtensionCode, type IntegrityOptions } from './extension-integrity';
 import { createExtensionFetch, fetchTextWithTimeout } from './fetch-with-timeout';
-
-/** Module names registry bundles import from the runtime (see scripts/build-extensions.js). */
-export const MODELS_MODULE = 'react-native-consumet/models';
-export const UTILS_MODULE = 'react-native-consumet/utils';
-
-// Paths tsc-built extensions used for the same modules, at any depth (`../models`, `../../../models/index.js`).
-const LEGACY_MODELS = /^(\.\.\/)+models(\/index)?(\.js)?$/;
-const LEGACY_UTILS = /^(\.\.\/)+utils(\/index|\/create-provider-context|\/create-extractor-context)?(\.js)?$/;
-
-/** The library's enums, handed to extensions as-is so their values always match. */
-export const extensionEnums = {
-  StreamingServers,
-  MediaFormat,
-  MediaStatus,
-  SubOrDub,
-  WatchListType,
-  TvType,
-  Genres,
-  Topics,
-};
 
 export type ExtensionKind = 'provider' | 'extractor';
 
@@ -41,8 +13,7 @@ export type ExtensionKind = 'provider' | 'extractor';
  */
 export function createExtensionRequire(extensionId: string, modules: Record<string, unknown>) {
   return (specifier: string): any => {
-    const key = LEGACY_MODELS.test(specifier) ? MODELS_MODULE : LEGACY_UTILS.test(specifier) ? UTILS_MODULE : specifier;
-    if (Object.prototype.hasOwnProperty.call(modules, key)) return modules[key];
+    if (Object.prototype.hasOwnProperty.call(modules, specifier)) return modules[specifier];
     throw new Error(
       `Extension '${extensionId}' requires '${specifier}', which the extension runtime does not provide. ` +
         'Registry code must be a single-file bundle (yarn build).'
@@ -126,25 +97,25 @@ export function evaluateExtensionCode(
         .map((key) => `const ${key} = context.${key};`)
         .join('\n      ')}
 
-      try {
-        ${code}
-      } catch (execError) {
-        console.error('Error during ${kind} code execution:', execError);
-        throw new Error('${label} code execution failed: ' + execError.message);
-      }
+      ${code}
 
       return typeof ${name} !== 'undefined' ? ${name} : undefined;
       `
     ) as typeof run;
   } catch (syntaxError: any) {
-    throw new Error(`Failed to parse ${kind} code: ${syntaxError.message}`);
+    throw new Error(`Failed to parse ${kind} code: ${syntaxError.message}`, { cause: syntaxError });
   }
 
   // The top-level declaration comes first: it always binds its own name, while bundle export
   // getters built without block scoping can point at another export on Hermes (see
   // scripts/hermes-safe-dist.js). Exports cover code without a top-level declaration, and the
   // default export (`export default`) is the last resort.
-  const declared = run(globals);
+  let declared: unknown;
+  try {
+    declared = run(globals);
+  } catch (execError: any) {
+    throw new Error(`${label} code execution failed: ${execError?.message ?? execError}`, { cause: execError });
+  }
   const { exports, module } = globals;
   return [declared, exports[name], module.exports?.[name], exports.default, module.exports?.default].find(
     (candidate): candidate is ExtensionFactory => typeof candidate === 'function'

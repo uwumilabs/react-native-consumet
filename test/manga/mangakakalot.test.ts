@@ -21,9 +21,10 @@ test('search returns titles with covers that need the site as Referer', async ()
 });
 
 test('search pages through results', async () => {
+  const first = await mangakakalot.search('Tomodachi Game');
   const data = await mangakakalot.search('Tomodachi Game', 2);
 
-  expectMangaSearch(data, 2);
+  expectMangaSearch(data, 2, new Set(first.results.map((result) => result.id)));
   expect(data.currentPage).toBe(2);
 });
 

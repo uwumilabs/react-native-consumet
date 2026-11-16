@@ -4,6 +4,7 @@ import axios, { type AxiosInstance } from 'axios';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
 import { sha256Hex } from '../../src/utils/extension-integrity';
+import { extensionEntry, providerCode, registryOf } from './helpers/registry';
 
 // The `fetch` extension code runs with, read back through a provider and an extractor.
 const report = `async (url) => {
@@ -12,30 +13,21 @@ const report = `async (url) => {
 }`;
 const parse = `async (url) => (await fetch(url)).json()`;
 
-const providerCode = `
-function createFetchProbe(ctx) {
-  return {
-    name: 'FetchProbe',
-    search: async () => ({ results: [] }),
-    fetchAnimeInfo: async () => ({}),
-    fetchEpisodeSources: async () => ({ sources: [] }),
-    fetchEpisodeServers: async () => [],
-    report: ${report},
-    parse: ${parse},
-  };
-}`;
+const probeCode = providerCode({ members: `report: ${report}, parse: ${parse},` });
 const extractorCode = `
 function FetchProbe(ctx) {
-  return { serverName: 'FetchProbe', sources: [], extract: ${report}, parse: ${parse} };
+  return { extract: ${report}, parse: ${parse} };
 }`;
 
-const emptyRegistry = { extensions: [], extractors: [] } as any;
+const emptyRegistry = registryOf();
 
 type Probe = { report(url: string): Promise<any>; parse(url: string): Promise<any> };
 
 const viaProvider = async (client: AxiosInstance): Promise<Probe> =>
   (await new ProviderManager(emptyRegistry, { axios: client }).executeProviderCode(
-    providerCode, { id: 'fetchprobe', factoryName: 'createFetchProbe', category: 'anime', sha256: sha256Hex(providerCode) } as any)) as any;
+    probeCode,
+    extensionEntry(probeCode)
+  )) as any;
 
 const viaExtractor = async (client: AxiosInstance): Promise<Probe> => {
   const extractor: any = await new ExtractorManager(emptyRegistry, { axios: client }).executeExtractorCode(

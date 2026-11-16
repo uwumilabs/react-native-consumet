@@ -6,9 +6,9 @@ import { createProviderContext } from '../../src/utils/create-provider-context';
 import { expectChapterPages, expectMangaInfo, expectMangaSearch } from './helpers/manga-contract';
 
 // Recorded www.kakamanga.com responses (mangakakalot.gg redirects there), trimmed; each file says
-// which request it answers.
+// which request it answers (HTML in a comment, JSON in `request` and `note`, with the body in `body`).
 const fixture = (name: string) => readFileSync(join(__dirname, 'fixtures/manga/mangakakalot', name), 'utf8');
-const json = (name: string) => JSON.parse(fixture(name));
+const json = (name: string) => JSON.parse(fixture(name)).body;
 
 const BASE = 'https://www.kakamanga.com';
 const REFERER = { Referer: 'https://www.kakamanga.com/' };
@@ -71,7 +71,7 @@ describe('MangaKakalot search', () => {
   // Cloudflare caches the endpoint's JSON form (the search box's own requests) under the same URL.
   it.each([
     ['parsed by axios', json('search-tomodachi-game.json')],
-    ['as text', fixture('search-tomodachi-game.json')],
+    ['as text', JSON.stringify(json('search-tomodachi-game.json'))],
   ])('reads the JSON form of the results page (%s)', async (_how, body) => {
     const { provider } = stubbed({ [searchUrl('tomodachi_game', 2)]: body });
 
@@ -96,7 +96,7 @@ describe('MangaKakalot fetchMangaInfo', () => {
     [`${BASE}/manga/noa-senpai-wa-tomodachi`]: fixture('manga-noa-senpai-wa-tomodachi.html'),
     [chaptersUrl(0)]: json('chapters-noa-senpai-wa-tomodachi-offset-0.json'),
     // The first page holds 6 chapters (trimmed) and has_more, so the next request starts at 6.
-    [chaptersUrl(6)]: json('chapters-noa-senpai-wa-tomodachi-offset-150.json'),
+    [chaptersUrl(6)]: json('chapters-noa-senpai-wa-tomodachi-last-page.json'),
   });
 
   it('reads the title page and the chapter-list API into the contract shape', async () => {
@@ -163,7 +163,7 @@ describe('MangaKakalot fetchMangaInfo', () => {
   it('keeps one copy of a chapter that two API pages both return', async () => {
     // A chapter published between two requests shifts the offsets by one.
     const first = json('chapters-noa-senpai-wa-tomodachi-offset-0.json');
-    const last = json('chapters-noa-senpai-wa-tomodachi-offset-150.json');
+    const last = json('chapters-noa-senpai-wa-tomodachi-last-page.json');
     last.data.chapters.unshift(first.data.chapters[5]);
     const { provider } = stubbed({ ...responses(), [chaptersUrl(0)]: first, [chaptersUrl(6)]: last });
 

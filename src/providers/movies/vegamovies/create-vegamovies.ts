@@ -2,7 +2,6 @@ import type { AnyNode, Cheerio, CheerioAPI } from 'cheerio';
 import {
   type IMovieInfo,
   type IEpisodeServer,
-  type StreamingServers,
   type ISource,
   type IVideo,
   type IMovieResult,
@@ -11,7 +10,8 @@ import {
   type ProviderConfig,
   type IMovieEpisode,
 } from '../../../models';
-import { unwrapFastDlUrl } from '../../../extractors/hubcloud';
+import { isFastDl, isGofilePage, isHubCloudPage, qualityIn, unwrapFastDlUrl } from '../../../extractors/file-hosts';
+import { serverName } from '../../common/servers';
 import { pageId, pageUrl } from '../site-paths';
 
 const cleanTitle = (raw: string): string => {
@@ -54,8 +54,6 @@ const SERIES_TITLE = /\b(?:season|s\d+|web series|series)\b/i;
 const DOWNLOAD_HOSTS = ['vcloud', 'hubcloud', 'nexdrive', 'fastdl'];
 const hostRank = (href: string) => DOWNLOAD_HOSTS.findIndex((host) => href.includes(host));
 
-const isFastDl = (url: string) => /fastdl\./i.test(url);
-
 // FastDL links come from the site's nexdrive pages, and FastDL wants a Referer from there.
 const NEXDRIVE_URL = 'https://nexdrive.fit/';
 
@@ -88,13 +86,14 @@ const downloadLink = ($: CheerioAPI, block: Cheerio<AnyNode>): string | undefine
 
 /**
  * VegaMovies (vegamovies.lease), a download site: an "episode" is a download link (a V-Cloud,
- * HubCloud, nexdrive or FastDL page), and each server a host that file can be fetched from.
+ * HubCloud, nexdrive or FastDL page), and each server a host that file can be fetched from, named
+ * after the page that lists it: `hubcloud-<host>` (`hubcloud-cf-storage`), `fastdl`, `filepress`.
  * @param customBaseURL site URL to use instead of the default
  */
 export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL, USER_AGENT } = ctx;
-  const { HubCloud } = extractors;
-  const { StreamingServers: StreamingServersEnum, TvType: TvTypeEnum } = enums;
+  const { HubCloud, Gofile } = extractors;
+  const { TvType: TvTypeEnum } = enums;
 
   const baseUrl = createCustomBaseUrl('https://vegamovies.lease', customBaseURL);
 
@@ -428,22 +427,53 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
     return url;
   };
 
-  /** The servers a HubCloud page lists, named by their label ("CF Storage", "10Gbps"), then the page itself. */
+  /** The sources a HubCloud (or V-Cloud) page lists, each `server` the name of its server (`hubcloud-cf-storage`). */
+  const readHubCloud = async (url: string): Promise<ISource> => {
+    const res = await HubCloud(ctx).extract(new PolyURL(url));
+    return {
+      ...res,
+      sources: res.sources.map((source) => ({ ...source, server: serverName('hubcloud', source.server) })),
+    };
+  };
+
+  /** `source`, or when it is a Gofile page, the files on it (none when Gofile can't read it). */
+  const resolveGofile = async (source: IVideo): Promise<IVideo[]> => {
+    if (!isGofilePage(source.url)) return [source];
+    try {
+      const { sources } = await Gofile(ctx).extract(new PolyURL(source.url));
+      return sources.map((file) => ({ ...file, server: source.server, quality: source.quality, size: source.size }));
+    } catch {
+      return [];
+    }
+  };
+
+  /** The servers a HubCloud page lists, then the page itself (`hubcloud`), which fetchEpisodeSources reads again. */
   const hubCloudServers = async (url: string): Promise<IEpisodeServer[]> => {
     const servers: IEpisodeServer[] = [];
     try {
-      const { sources = [] } = (await HubCloud(ctx).extract(new PolyURL(url))) ?? {};
-      for (const source of sources as IVideo[]) {
-        const name = source.server || source.quality || 'HubCloud';
-        if (!servers.some((s) => s.name === name)) servers.push({ name, url: source.url });
+      for (const source of (await readHubCloud(url)).sources) {
+        if (!servers.some((s) => s.name === source.server)) servers.push({ name: source.server!, url: source.url });
       }
     } catch {
-      // The page itself stays a server: fetchEpisodeSources reads it again.
+      // The page itself stays a server.
     }
-    if (!servers.some((s) => s.name.toLowerCase() === StreamingServersEnum.HubCloud)) {
-      servers.push({ name: 'HubCloud', url });
-    }
+    servers.push({ name: serverName('hubcloud'), url });
     return servers;
+  };
+
+  /** Where a link page (nexdrive) sends the file: its HubCloud page and its FastDL and FilePress mirrors. */
+  const linkPageHosts = (html: string) => {
+    const $ = load(html);
+    const hrefs = $('a[href]')
+      .toArray()
+      .map((a) => $(a).attr('href')!);
+    return {
+      hubCloud: hrefs.find(isHubCloudPage),
+      fastDl: hrefs.find(isFastDl) || $('a:contains("G-Direct")').attr('href'),
+      filePress:
+        $('.btn.btn-sm.btn-outline[style*="rgb(252,185,0)"]').parent().attr('href') ||
+        hrefs.find((href) => /filebee|filepress/.test(href)),
+    };
   };
 
   /**
@@ -451,18 +481,14 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
    */
   const fetchEpisodeServers = async (episodeId: string, _mediaId?: string): Promise<IEpisodeServer[]> => {
     const episodeUrl = await resolveEpisodeUrl(episodeId);
-    if (episodeUrl.includes('vcloud') || episodeUrl.includes('hubcloud')) return hubCloudServers(episodeUrl);
+    if (isHubCloudPage(episodeUrl)) return hubCloudServers(episodeUrl);
+    if (isFastDl(episodeUrl)) return [{ name: serverName('fastdl'), url: episodeUrl }];
 
-    // A link page (nexdrive) lists the file's hosts.
-    const $ = load((await request(episodeUrl)).data);
-    const servers: IEpisodeServer[] = [];
-    const hubCloudLink = $('a[href*="vcloud"], a[href*="hubcloud"]').attr('href');
-    if (hubCloudLink) servers.push(...(await hubCloudServers(hubCloudLink)));
-    const fastDlLink = $('a[href*="fastdl"], a:contains("G-Direct")').attr('href');
-    if (fastDlLink) servers.push({ name: 'FastDL', url: fastDlLink });
-    const filePressLink = $('a[href*="filebee"], a[href*="filepress"]').attr('href');
-    if (filePressLink) servers.push({ name: 'Filepress', url: filePressLink });
-    return servers.length ? servers : [{ name: 'HubCloud', url: episodeUrl }];
+    const hosts = linkPageHosts((await request(episodeUrl)).data);
+    const servers = hosts.hubCloud ? await hubCloudServers(hosts.hubCloud) : [];
+    if (hosts.fastDl) servers.push({ name: serverName('fastdl'), url: hosts.fastDl });
+    if (hosts.filePress) servers.push({ name: serverName('filepress'), url: hosts.filePress });
+    return servers.length ? servers : [{ name: serverName('hubcloud'), url: episodeUrl }];
   };
 
   /** The file behind a FastDL page, which hands it to the browser in `var reurl`. */
@@ -490,23 +516,24 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
   /**
    * @param episodeId download link from fetchMediaInfo (V-Cloud, HubCloud, nexdrive or FastDL page),
    * or a post id (its first episode is used)
-   * @param server label of the sources to list first, e.g. `FastDL` or `CF Storage` (default
-   * `HubCloud`: no preference)
+   * @param server a server name from fetchEpisodeServers, or the start of one (`hubcloud`), whose
+   * sources to list first; no preference when omitted
    */
-  const fetchEpisodeSources = async (
-    episodeId: string,
-    _mediaId?: string,
-    server: StreamingServers | string = StreamingServersEnum.HubCloud
-  ): Promise<ISource> => {
+  const fetchEpisodeSources = async (episodeId: string, _mediaId?: string, server?: string): Promise<ISource> => {
     const episodeUrl = await resolveEpisodeUrl(episodeId);
-    const episodeQuality =
-      /\b(2160p|4k|1080p|720p|480p|360p)\b/i.exec(episodeUrl)?.[1]?.toLowerCase().replace('4k', '2160p') ?? 'auto';
+    const episodeQuality = qualityIn(episodeUrl) ?? 'auto';
+    const fileSource = (url: string, host: string): IVideo => ({
+      url,
+      server: serverName(host),
+      quality: episodeQuality,
+      isM3U8: false,
+    });
 
     if (isFastDl(episodeUrl)) {
       const file = (await fastDlFile(episodeUrl, NEXDRIVE_URL)) ?? unwrapFastDlUrl(episodeUrl);
       return {
         headers: { Referer: `${new PolyURL(episodeUrl).origin}/` },
-        sources: [{ url: file, server: 'FastDL', quality: episodeQuality, isM3U8: false }],
+        sources: [fileSource(file, 'fastdl')],
         download: file,
       };
     }
@@ -514,64 +541,52 @@ export function createVegaMovies(ctx: ProviderContext, customBaseURL?: string) {
     // A link page (nexdrive) links to the HubCloud page and to mirrors on FastDL and FilePress.
     // Each mirror is optional: when one fails, the others still play.
     const mirrors: IVideo[] = [];
-    let hubCloudUrl = episodeUrl;
-    if (!episodeUrl.includes('cloud')) {
-      const { data: html } = await request(episodeUrl);
-      hubCloudUrl = /<a\s+href="([^"]*cloud\.[^"]*)"/i.exec(html)?.[1] ?? episodeUrl;
-
-      const fastDlLink = /<a\s+href="([^"]*fastdl\.[^"]*)"/i.exec(html)?.[1];
-      if (fastDlLink) {
+    let hubCloudUrl: string | undefined = episodeUrl;
+    if (!isHubCloudPage(episodeUrl)) {
+      const hosts = linkPageHosts((await request(episodeUrl)).data);
+      hubCloudUrl = hosts.hubCloud;
+      if (hosts.fastDl) {
         try {
-          const file = await fastDlFile(fastDlLink, episodeUrl);
-          if (file) mirrors.push({ url: file, server: 'FastDL', quality: episodeQuality, isM3U8: false });
+          const file = await fastDlFile(hosts.fastDl, episodeUrl);
+          if (file) mirrors.push(fileSource(file, 'fastdl'));
         } catch {}
       }
-
-      const $ = load(html);
-      const filePressLink =
-        $('.btn.btn-sm.btn-outline[style*="rgb(252,185,0)"]').parent().attr('href') ||
-        $('a[href*="filebee"], a[href*="filepress"]').attr('href');
-      if (filePressLink) {
+      if (hosts.filePress) {
         try {
-          const file = await filePressFile(filePressLink);
-          if (file) mirrors.push({ url: file, server: 'Filepress', quality: episodeQuality, isM3U8: false });
+          const file = await filePressFile(hosts.filePress);
+          if (file) mirrors.push(fileSource(file, 'filepress'));
         } catch {}
       }
     }
 
     let headers: Record<string, string> = { Referer: baseUrl };
-    let hubCloudSources: IVideo[] = [];
-    if (hubCloudUrl.includes('cloud')) {
+    const hubCloudSources: IVideo[] = [];
+    if (hubCloudUrl) {
       try {
-        const res = await HubCloud(ctx).extract(new PolyURL(hubCloudUrl));
-        if (Array.isArray(res?.sources)) {
-          hubCloudSources = (res.sources as IVideo[]).map((s) => ({
-            ...s,
-            server: s.server || s.quality || 'HubCloud',
-            // HubCloud labels some sources with their host instead of a quality
-            quality:
-              s.quality && s.quality !== 'auto' && !/\b(?:server|worker|storage|drain|bot|cloud)\b/i.test(s.quality)
-                ? s.quality
-                : episodeQuality,
-          }));
-          if (res.headers) headers = res.headers;
+        const res = await readHubCloud(hubCloudUrl);
+        for (const source of res.sources) {
+          for (const file of await resolveGofile(source)) {
+            hubCloudSources.push({
+              ...file,
+              quality: file.quality && file.quality !== 'auto' ? file.quality : episodeQuality,
+            });
+          }
         }
+        headers = res.headers ?? headers;
       } catch (err) {
         if (!mirrors.length) throw err;
       }
     }
 
     let sources = [...mirrors, ...hubCloudSources];
-
-    // `HubCloud` names the HubCloud page as a whole, not one of its sources' labels, so it asks for no order.
-    const wanted = server.toLowerCase();
-    if (wanted !== StreamingServersEnum.HubCloud) {
-      const matches = (s: IVideo) => (s.server || '').toLowerCase().includes(wanted);
-      if (sources.some(matches)) sources = [...sources.filter(matches), ...sources.filter((s) => !matches(s))];
-    }
-
     if (sources.length === 0) {
       throw new Error(`[VegaMovies] No streamable video sources found for ${episodeId}`);
+    }
+
+    if (server) {
+      const wanted = server.toLowerCase();
+      const named = (s: IVideo) => (s.server ?? '').toLowerCase().startsWith(wanted);
+      sources = [...sources.filter(named), ...sources.filter((s) => !named(s))];
     }
 
     return { headers, sources, download: sources[0]?.url };

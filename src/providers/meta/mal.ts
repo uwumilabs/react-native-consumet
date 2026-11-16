@@ -15,12 +15,12 @@ import {
   type IAnimeProvider,
   MetaError,
   type FuzzyDate,
-  MediaStatus,
+  type ITitle,
 } from '../../models';
-import { MONTHS, substringAfter, substringBefore } from '../../utils/utils';
+import { MONTHS, searchTerm, substringAfter, substringBefore } from '../../utils/utils';
 import { toMediaStatus } from '../common/media-status';
 import { Zoro } from '../anime/zoro/zoro';
-import { applyFiller, callProvider, fetchFillerEpisodes, searchTerm, stringSimilarity } from './shared';
+import { applyFiller, bestTitleMatch, callProvider, fetchFillerEpisodes } from './shared';
 
 const KITSU_GRAPHQL_URL = 'https://kitsu.app/api/graphql';
 /** Kitsu's anime for a title, with their episodes. Variables: `title`. */
@@ -31,6 +31,9 @@ const MAL_HEADERS = {
   'user-agent':
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35',
 };
+
+/** Provider results less similar than this to the MAL titles are not the anime; as in META.Anilist, which searches the same providers. */
+const MIN_TITLE_SIMILARITY = 0.6;
 
 /** Links MAL lists among the theme songs that aren't songs. */
 const STREAMING_LINKS = ['Apple Music', 'Youtube Music', 'Amazon Music', 'Spotify'];
@@ -143,16 +146,12 @@ class Myanimelist extends AnimeParser {
     try {
       const animeInfo = await this.fetchMalInfoById(animeId);
 
-      const title = animeInfo.title as { english?: string; romaji?: string; native?: string; userPreferred?: string };
       const [episodes, fillerEpisodes] = await Promise.all([
-        this.findProviderEpisodes(
-          title?.english || title?.romaji || title?.native || title?.userPreferred || '',
-          animeInfo.season!,
-          animeInfo.startDate?.year!,
-          dub
-        ).catch((err) => {
-          throw MetaError.from('provider', err);
-        }),
+        this.findProviderEpisodes(animeInfo.title as ITitle, animeInfo.season!, animeInfo.startDate?.year!, dub).catch(
+          (err) => {
+            throw MetaError.from('provider', err);
+          }
+        ),
         fetchFiller ? fetchFillerEpisodes(animeId) : [],
       ]);
 
@@ -174,32 +173,17 @@ class Myanimelist extends AnimeParser {
   fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> =>
     callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId));
 
-  /** The provider's info for the search result whose title is closest to `term`. */
-  private findProviderAnime = async (term: string): Promise<IAnimeInfo | undefined> => {
-    const { results } = (await this.provider.search(term)) as ISearch<IAnimeResult>;
-    if (results.length === 0) return undefined;
-
-    const wanted = term.toLowerCase();
-    const titleOf = (result: IAnimeResult) =>
-      (typeof result.title === 'string'
-        ? result.title
-        : (result.title.english ?? result.title.romaji ?? '')
-      ).toLowerCase();
-    const closest = [...results].sort(
-      (a, b) => stringSimilarity(wanted, titleOf(b)) - stringSimilarity(wanted, titleOf(a))
-    )[0]!;
-    return (await this.provider.fetchAnimeInfo(closest.id)) as IAnimeInfo;
-  };
-
   private findProviderEpisodes = async (
-    title: string,
+    title: ITitle,
     season: string,
     startYear: number,
     dub: boolean
   ): Promise<IAnimeEpisode[]> => {
-    const term = searchTerm(title);
-    const anime = await this.findProviderAnime(term);
-    if (!anime) return [];
+    const term = searchTerm(title?.english || title?.romaji || title?.native || title?.userPreferred || '');
+    const { results = [] } = ((await this.provider.search(term)) ?? {}) as Partial<ISearch<IAnimeResult>>;
+    const match = bestTitleMatch([title?.english, title?.romaji, title?.native], results, MIN_TITLE_SIMILARITY);
+    if (!match) return [];
+    const anime = (await this.provider.fetchAnimeInfo(match.id)) as IAnimeInfo;
 
     // To avoid a new request, check that the anime found has the requested audio. A provider that
     // doesn't say (subOrDub, or hasSub/hasDub, unset) is taken to have it.
@@ -328,7 +312,7 @@ class Myanimelist extends AnimeParser {
       const value = substringAfter(text, `${key}:`).trim();
       switch (key) {
         case 'status':
-          animeInfo.status = toMediaStatus(value, MediaStatus);
+          animeInfo.status = toMediaStatus(value);
           break;
         case 'episodes':
           animeInfo.totalEpisodes = parseInt(value);

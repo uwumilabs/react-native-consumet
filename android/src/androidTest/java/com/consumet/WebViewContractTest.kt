@@ -1,11 +1,13 @@
 package com.consumet
 
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.webkit.CookieManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
@@ -22,8 +24,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Runs the Android WebView requests against a local HTTP server and checks the contract in
- * src/NativeConsumet.ts (NAT-1): a plain-string DDoS-Guard result, ignored sub-resource failures,
- * WEBVIEW_ERROR for a failed main document and TIMEOUT rejections.
+ * src/NativeConsumet.ts (NAT-1): ignored sub-resource failures, the final URL after a challenge
+ * page, and WEBVIEW_ERROR and TIMEOUT rejections.
  */
 @RunWith(AndroidJUnit4::class)
 class WebViewContractTest {
@@ -47,8 +49,12 @@ class WebViewContractTest {
     fun setUp() {
         server = LocalHttpServer(
             mapOf(
-                "/ddg" to "<p>ddg</p>$FAILING_IMAGE<script>document.cookie = '__ddg2_=abc123; path=/';</script>",
                 "/plain" to "<p id=\"marker\">plain page</p>$FAILING_IMAGE",
+                // A stand-in for a Cloudflare challenge: its title, then the real page 2.5 s later.
+                "/challenge" to "<script>document.title = 'Just a moment...';" +
+                    "setTimeout(function() { location.replace('/plain'); }, 2500);</script>",
+                "/unreadable" to "<script>Object.defineProperty(Element.prototype, 'outerHTML', " +
+                    "{ get: function() { throw new Error('unreadable'); } });</script>",
             )
         )
         clearCookies()
@@ -61,32 +67,9 @@ class WebViewContractTest {
     }
 
     @Test
-    fun ddosGuardCookiesResolveAsPlainStringDespiteFailedSubresource() {
-        val promise = TestPromise()
-        DdosGuardHelper(context).getDdosGuardCookiesWithWebView(server.url("/ddg"), promise)
-
-        promise.await(20)
-        assertNull(promise.code)
-        assertTrue("resolved ${promise.value?.javaClass}", promise.value is String)
-        assertTrue(promise.value as String, (promise.value as String).contains("__ddg2_=abc123"))
-        // Settles once even though the page also finished loading.
-        Thread.sleep(2000)
-        assertEquals(1, promise.settleCount)
-    }
-
-    @Test
-    fun ddosGuardPageWithoutCookieRejectsWithCookieError() {
-        val promise = TestPromise()
-        DdosGuardHelper(context).getDdosGuardCookiesWithWebView(server.url("/plain"), promise)
-
-        promise.await(20)
-        assertEquals("COOKIE_ERROR", promise.code)
-    }
-
-    @Test
     fun failedMainDocumentRejectsWithWebViewError() {
         val promise = TestPromise()
-        DdosGuardHelper(context).getDdosGuardCookiesWithWebView(REFUSED, promise)
+        HttpRequestModule(context).makeGetRequestWithWebView(REFUSED, null, promise)
 
         promise.await(20)
         assertEquals("WEBVIEW_ERROR", promise.code)
@@ -103,6 +86,43 @@ class WebViewContractTest {
         assertEquals("success", result.getString("status"))
         assertEquals(server.url("/plain"), result.getString("url"))
         assertTrue(result.getString("html")!!.contains("plain page"))
+        // The promise settles once.
+        Thread.sleep(2000)
+        assertEquals(1, promise.settleCount)
+    }
+
+    @Test
+    fun getRequestResolvesWithThePageAChallengeTurnsInto() {
+        val promise = TestPromise()
+        HttpRequestModule(context).makeGetRequestWithWebView(server.url("/challenge"), null, promise)
+
+        promise.await(20)
+        assertNull(promise.message, promise.code)
+        val result = promise.value as ReadableMap
+        assertEquals(server.url("/plain"), result.getString("url"))
+        assertTrue(result.getString("html")!!.contains("plain page"))
+    }
+
+    @Test
+    fun unreadablePageRejectsWithWebViewError() {
+        val promise = TestPromise()
+        HttpRequestModule(context).makeGetRequestWithWebView(server.url("/unreadable"), null, promise)
+
+        promise.await(20)
+        assertEquals("WEBVIEW_ERROR", promise.code)
+        assertNull(promise.value)
+    }
+
+    // chrome://crash makes the WebView's renderer crash itself. Before Android 8 the renderer ran in
+    // the app's process, so the crash would end the test run.
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
+    fun deadRendererRejectsWithWebViewError() {
+        val promise = TestPromise()
+        HttpRequestModule(context).makeGetRequestWithWebView("chrome://crash", null, promise)
+
+        promise.await(20)
+        assertEquals("WEBVIEW_ERROR", promise.code)
     }
 
     @Test

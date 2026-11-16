@@ -18,6 +18,30 @@ let cachedGenerateWT: ((token: string) => string) | null = null;
 let cachedWTTime = 0;
 
 /**
+ * Globals of the app the site's script must not reach. `new Function` code sees the real global
+ * scope, so each is shadowed by a parameter left undefined. The script only does string and
+ * number work on the stand-in browser it is given.
+ */
+const HIDDEN_GLOBALS = [
+  'global',
+  'fetch',
+  'XMLHttpRequest',
+  'WebSocket',
+  'EventSource',
+  'require',
+  'module',
+  'exports',
+  'process',
+  'nativeModuleProxy',
+  '__turboModuleProxy',
+  '__fbBatchedBridge',
+  'NativeConsumet',
+  'localStorage',
+  'sessionStorage',
+  'indexedDB',
+];
+
+/**
  * The site's `generateWT`, which makes the X-Website-Token its API wants from the account token.
  * It comes from gofile.io/js/wt.obf.js, run against a stand-in browser; kept for three hours.
  */
@@ -31,10 +55,7 @@ async function getOrFetchGenerateWT(axiosClient: any, userAgent: string): Promis
     headers: { 'User-Agent': userAgent, 'Referer': 'https://gofile.io/' },
   });
   const runner = new Function(
-    'navigator',
-    'window',
-    'document',
-    'location',
+    ['navigator', 'window', 'document', 'location', 'self', 'globalThis'].concat(HIDDEN_GLOBALS).join(','),
     `${res.data}\nreturn typeof generateWT !== 'undefined' ? generateWT : (window && window.generateWT);`
   );
   const fakeNav = { userAgent, language: GOFILE_LANGUAGE };
@@ -43,7 +64,9 @@ async function getOrFetchGenerateWT(axiosClient: any, userAgent: string): Promis
     location: { href: 'https://gofile.io/', protocol: 'https:', host: 'gofile.io' },
   };
 
-  const generateWT = runner(fakeNav, fakeWin, {}, fakeWin.location);
+  // As in a browser, `self`, `globalThis` and `this` are the window too: in a plain call `this`
+  // would be the app's global object.
+  const generateWT = runner.call(fakeWin, fakeNav, fakeWin, {}, fakeWin.location, fakeWin, fakeWin);
   if (typeof generateWT !== 'function') throw new Error('[Gofile] wt.obf.js no longer defines generateWT');
   cachedGenerateWT = generateWT;
   cachedWTTime = now;

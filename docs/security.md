@@ -6,7 +6,7 @@ react-native-consumet downloads provider and extractor code at runtime and runs 
 
 There is **no sandbox**. Extension code runs in the app's own JavaScript runtime with the app's privileges:
 
-- It receives a context with `axios`, `fetch`, `cheerio`, `CryptoJS`, URL helpers and **`NativeConsumet`** (WebView-backed GET/POST requests that carry the site's cookies, a direct POST client, DDoS-Guard bypass, and a script deobfuscator).
+- It receives a context with `axios`, `fetch`, `cheerio`, `CryptoJS`, URL helpers and **`NativeConsumet`** (WebView-backed GET/POST requests that carry the site's cookies, a direct POST client, and a script deobfuscator).
 - The provided context is a convenience, not a boundary: code can reach `globalThis` and, through any function's `.constructor`, `Function` itself, and from there anything the app's JS can reach.
 
 So the only security boundary is **which code gets to run**. Everything below is about making sure the code that runs is exactly the code that was published.
@@ -15,7 +15,7 @@ So the only security boundary is **which code gets to run**. Everything below is
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | Tampered or corrupted download                          | CDN compromise, MITM, truncated response                                                   | SHA-256 check before execution (below)                                  |
 | Code injection through the registry                     | Malicious `factoryName` / extractor `name` interpolated into the `new Function()` template | Identifier validation (below)                                           |
-| A push to `main` changing what a published version runs | Rebuilding `dist/`                                                                         | Immutable versioned files (below)                                       |
+| A push to `main` changing what a published version runs | Rebuilding the bundles                                                                     | Immutable versioned files (below)                                       |
 | A malformed registry                                    | A bad download, a hand-edited file, or a registry format newer than the app                | Validation that fails closed (below)                                    |
 | A malicious registry                                    | Apps that download the registry get URLs and hashes from the same place                    | Signed registry downloads (below), once a release bundles a signing key |
 
@@ -96,16 +96,14 @@ Limits:
 
 These are tracked in the roadmap and not solved yet:
 
-- **Library versions up to 1.6.0** still carry registries whose URLs point straight at `dist/` on `main`. Rebuilding `dist/` changes what those versions download, so 1.6.0 fails integrity checks and older versions run the new code unchecked. Updating the library fixes this.
+- **Library versions before 2.0.0 are not supported.** Their registries point at files under `dist/` on `main`, which is no longer committed, and versions up to 1.5.0 never verified hashes. Update the library.
 - **Immutability is enforced by the publish script and CI, not by GitHub.** Published files under `registry/` live on the `main` branch. CI's `registry` job fails a change that edits one, but a push to `main` that skips CI isn't stopped.
 - **No registry signing key is bundled yet.** `REGISTRY_SIGNING_KEYS` stays empty until a maintainer runs `yarn registry:keygen` and a release ships the key. Until then a downloaded registry can't be verified: `parseSignedRegistry` rejects every one with `NO_SIGNING_KEYS`, so use the bundled registry.
 - **Signed registries can be rolled back** to an older signed version (see [Signed registry downloads](#6-signed-registry-downloads)).
-- **Versions up to 1.5.0** do not verify hashes at all.
-- **Native builds up to 1.6.0** enable Android WebView debugging in release builds, log cookies and headers to logcat, and on iOS return every cookie in the app's shared WebView data store. Updating the library fixes this.
 
 ## Publishing and checking the registry
 
-`scripts/prepare-registry.js` publishes each entry's single-file bundle (`distFile` under `dist/bundles/`, built by `yarn build`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. The published path, the id and version rules and the schema check are the library's own (`src/utils/registry-schema.ts`, loaded from its build), so the script publishes only entries `validateRegistry` accepts. `yarn build:registry` rebuilds `dist/` and then runs it; the release flow (`after:bump` in release-it) and the pre-commit hook run that too. Run it yourself with:
+`scripts/prepare-registry.js` publishes each entry's single-file bundle (`distFile` under `dist/bundles/`, built by `yarn build`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to `src/extension-registry.json`. The published path, the id and version rules and the schema check are the library's own (`src/utils/registry-schema.ts`, loaded from its build), so the script publishes only entries `validateRegistry` accepts. `yarn build:registry` builds `dist/` (not committed) and then runs it; the release flow (`after:bump` in release-it) and the pre-commit hook run that too. Run it yourself with:
 
 ```bash
 yarn build:registry
@@ -115,8 +113,8 @@ It exits with an error, and writes nothing, if a build file is missing, if an en
 
 These checks also run automatically:
 
-- **Pre-commit hook** (`scripts/stage-dist.js`): when a commit stages changes to what `dist/` is built from (`src/`, `scripts/`, the build config), it runs `yarn build:registry` on the staged files and stages `dist/`, the newly published files and the refreshed hashes. A bundle that changed under an already published version stops the commit.
-- **CI `registry` job:** rebuilds `dist/` from a clean checkout and fails if the committed `dist/` differs from the rebuild, if a hash doesn't match its rebuilt bundle, if a hash changed without a higher `version` (compared with the base commit), if a version went backwards, if a published file changed, or if a registry URL points at a missing file.
+- **Pre-commit hook** (`scripts/stage-registry.js`): when a commit stages changes to what the bundles are built from (`src/`, `scripts/`, the build config), it runs `yarn build:registry` on the staged files and stages the newly published files, the refreshed hashes and the example app's local dist map. A bundle that changed under an already published version stops the commit.
+- **CI `registry` job:** builds `dist/` from a clean checkout and fails if a hash doesn't match its rebuilt bundle, if a hash changed without a higher `version` (compared with the base commit), if a version went backwards, if a published file changed, or if a registry URL points at a missing file.
 
 ## Guidance for consumers
 

@@ -119,7 +119,7 @@ output:
 | ----------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | episodeId         | `string`                                                                                             | takes episode id as a parameter. (*episode id can be found in the media info object*)                                                                      |
 | mediaId           | `string`                                                                                             | takes media id as a parameter. (*media id can be found in the media info object*)                                                                          |
-| server (optional) | [`StreamingServers`](../../../src/models/types.ts) | takes server enum as a parameter. *default: [`StreamingServers.VidCloud`](../../../src/models/types.ts)* |
+| server (optional) | `string` | a server name from `fetchEpisodeServers` (`megacloud-upcloud`), or the start of one. *default: the first server* |
 
 
 ```ts
@@ -172,20 +172,12 @@ output:
 ```js
 [
   {
-    name: 'upcloud',
+    name: 'megacloud-upcloud',
     url: 'https://himovies.sx/watch-tv/watch-vincenzo-67955.4829542'
   },
   {
-    name: 'vidcloud',
+    name: 'megacloud-akcloud',
     url: 'https://himovies.sx/watch-tv/watch-vincenzo-67955.4087001'
-  },
-  {
-    name: 'streamlare',
-    url: 'https://himovies.sx/watch-tv/watch-vincenzo-67955.7041439'
-  },
-  {
-    name: 'voe',
-    url: 'https://himovies.sx/watch-tv/watch-vincenzo-67955.7823107'
   },
   {...},
    ...

@@ -1,5 +1,6 @@
-import { MetaError, type IAnimeEpisode } from '../../models';
+import { MetaError, type IAnimeEpisode, type ITitle } from '../../models';
 import { metaHttp, ENRICHMENT_TIMEOUT_MS } from '../../utils/meta-http';
+import { normalizeTitle } from '../../utils/utils';
 
 /** An episode number from a number or numeric text; undefined for anything else. */
 export const toEpisodeNumber = (value: unknown): number | undefined => {
@@ -45,14 +46,11 @@ export const callProvider = async <T>(provider: { name: string }, what: string, 
   }
 };
 
-/** A title as a provider search term: every run of characters other than letters and digits becomes a space. */
-export const searchTerm = (title: string): string => title.replace(/[^0-9a-zA-Z]+/g, ' ');
-
 /**
  * Dice's coefficient of the two strings' letter pairs, ignoring whitespace: 1 for equal strings,
  * 0 when they share no pair.
  */
-export const stringSimilarity = (first: string, second: string): number => {
+const stringSimilarity = (first: string, second: string): number => {
   first = first.replace(/\s+/g, '');
   second = second.replace(/\s+/g, '');
 
@@ -77,3 +75,49 @@ export const stringSimilarity = (first: string, second: string): number => {
 
   return (2.0 * intersectionSize) / (first.length + second.length - 2);
 };
+
+/** The titles a search result goes by: its title (each name of an ITitle), `japaneseTitle` and `altTitles`. */
+const titlesOf = (result: { title?: unknown; japaneseTitle?: unknown; altTitles?: unknown }): unknown[] => {
+  const { title, japaneseTitle, altTitles } = result;
+  const names =
+    title && typeof title === 'object'
+      ? [(title as ITitle).english, (title as ITitle).romaji, (title as ITitle).native, (title as ITitle).userPreferred]
+      : [title];
+  return [...names, japaneseTitle, ...(Array.isArray(altTitles) ? altTitles : [])];
+};
+
+/** A search result and how similar its closest title is to the wanted ones, from 0 to 1. */
+export type TitleMatch<T> = { result: T; similarity: number };
+
+/**
+ * The search result whose titles are closest to any of `wanted`, when that similarity (Dice's
+ * coefficient of the titles as `normalize` gives them, from 0 to 1) is at least `minSimilarity`.
+ * `compare` orders the results that are close enough, best first: by default the most similar,
+ * ties keeping the provider's order.
+ */
+export function bestTitleMatch<T extends { title?: unknown }>(
+  wanted: readonly (string | null | undefined)[],
+  results: readonly T[],
+  minSimilarity: number,
+  {
+    compare = (a, b) => b.similarity - a.similarity,
+    normalize = normalizeTitle,
+  }: {
+    compare?: (a: TitleMatch<T>, b: TitleMatch<T>) => number;
+    normalize?: (title: string) => string;
+  } = {}
+): T | undefined {
+  // Titles that normalize to nothing (only punctuation) would be equal to each other.
+  const normalized = (titles: readonly unknown[]) =>
+    titles.flatMap((title) => (typeof title === 'string' ? [normalize(title)] : [])).filter(Boolean);
+  const targets = normalized(wanted);
+  return results
+    .map((result): TitleMatch<T> => {
+      const similarities = normalized(titlesOf(result)).flatMap((title) =>
+        targets.map((target) => stringSimilarity(target, title))
+      );
+      return { result, similarity: Math.max(0, ...similarities) };
+    })
+    .filter(({ similarity }) => similarity >= minSimilarity)
+    .sort(compare)[0]?.result;
+}

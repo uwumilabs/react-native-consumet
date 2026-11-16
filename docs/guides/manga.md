@@ -51,6 +51,10 @@ with placeholders.
   HTML tags or entities left), `status` (a `MediaStatus`) and `releaseDate`.
 - **`fetchMangaInfo(id)`** returns the same fields, plus `genres`, `authors` and `artists` as
   string arrays, and `chapters` **in reading order: first chapter first**.
+- **Chapter counts** in results, where a site gives them, are two different facts:
+  `lastChapter` (and `lastVolume`) is the number of the series' final chapter, set once the series
+  has ended (MangaDex); `latestChapter` is the number of the newest chapter out so far (AsuraScans).
+  An ongoing series can have a `latestChapter` but no `lastChapter`.
 - **Chapters:** each has an `id` (pass it to `fetchChapterPages`) and a string `title` (`Chapter
   12` when the site gives no name). They also have `chapterNumber` and `volumeNumber` wherever the
   site gives them (`10.5` is fine), `releaseDate` (ISO 8601 when it parses), and `scanlator`,

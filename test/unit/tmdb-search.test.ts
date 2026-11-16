@@ -1,6 +1,5 @@
 import TMDB from '../../src/providers/meta/tmdb';
 import { MultiStream } from '../../src/providers/movies/multistream/multistream';
-import type { IMovieProvider } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
 import { defaultAxios } from '../../src/utils/create-extractor-context';
 import { createProviderContext } from '../../src/utils/create-provider-context';
@@ -8,18 +7,13 @@ import movie from './fixtures/tmdb/movie-559969.json';
 import search from './fixtures/tmdb/search-multi-tom-and-jerry-1.json';
 import trendingAll from './fixtures/tmdb/trending-all-week.json';
 import trendingPeople from './fixtures/tmdb/trending-person-day.json';
+import { fakeMovieProvider } from './helpers/fake-providers';
 
 // Recorded TMDB responses (trimmed): search/multi?query=Tom%20%26%20Jerry%20%231, trending/all/week
 // and trending/person/day.
 const QUERY = 'Tom & Jerry #1';
 
-const noProvider = {
-  name: 'Fake',
-  search: jest.fn(),
-  fetchMediaInfo: jest.fn(),
-  fetchEpisodeSources: jest.fn(),
-  fetchEpisodeServers: jest.fn(),
-} as unknown as IMovieProvider;
+const noProvider = fakeMovieProvider();
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -39,20 +33,11 @@ describe('TMDB search query encoding (META-8)', () => {
       include_adult: 'false',
       query: QUERY,
     });
-    expect(result.results.map((r) => r.title)).toEqual(search.results.map((r) => r.title));
-  });
-
-  it('MultiStream encodes its TMDB search query the same way', async () => {
-    // Without a context, MultiStream sends its requests through the library's defaultAxios.
-    const get = jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: search });
-
-    const result = await new MultiStream(undefined, undefined, 'test-key').search(QUERY);
-
-    const url = new URL(get.mock.calls[0]![0] as string);
-    expect(url.hash).toBe('');
-    expect(url.searchParams.get('query')).toBe(QUERY);
-    expect(url.searchParams.get('include_adult')).toBe('false');
-    expect(result.results.map((r) => r.id)).toEqual(search.results.map((r) => `${r.id}$movie`));
+    expect(result.results.map((r) => r.title)).toEqual([
+      'Tom & Jerry: Tales - Vol. 1',
+      'Tom Und Jerry Die Classic Collection 1',
+      "Tom & Jerry's 50th Birthday Classics Vol.1",
+    ]);
   });
 });
 
@@ -83,8 +68,8 @@ describe('TMDB search and trending release years (META-10)', () => {
     const result = await tmdb().fetchTrending('people');
 
     expect(result.results).toEqual([
-      expect.objectContaining({ id: 510, name: 'Tim Burton', movies: [] }),
-      expect.objectContaining({ id: 22226, name: 'Paul Rudd', movies: [] }),
+      expect.objectContaining({ id: '510', name: 'Tim Burton', movies: [] }),
+      expect.objectContaining({ id: '22226', name: 'Paul Rudd', movies: [] }),
     ]);
   });
 
@@ -104,12 +89,21 @@ describe('TMDB search and trending release years (META-10)', () => {
 describe('MultiStream (META-10)', () => {
   const multiStream = () => new MultiStream(undefined, undefined, 'test-key');
 
-  it('gives search results the TMDB release year, or none, never "NaN"', async () => {
-    jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: search });
+  it('encodes its TMDB search query as TMDB does, and gives the release year or none, never "NaN"', async () => {
+    // Without a context, MultiStream sends its requests through the library's defaultAxios.
+    const get = jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: search });
 
     const { results } = await multiStream().search(QUERY);
 
-    expect(results.map((r) => r.releaseDate)).toEqual(['2009', undefined, '1990']);
+    const url = new URL(get.mock.calls[0]![0] as string);
+    expect(url.hash).toBe('');
+    expect(url.searchParams.get('query')).toBe(QUERY);
+    expect(url.searchParams.get('include_adult')).toBe('false');
+    expect(results.map((r) => [r.id, r.releaseDate])).toEqual([
+      ['975700$movie', '2009'],
+      ['892582$movie', undefined],
+      ['1509162$movie', '1990'],
+    ]);
   });
 
   it('gives recommendations ids that fetchMediaInfo accepts', async () => {

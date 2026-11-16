@@ -30,11 +30,19 @@ static const NSTimeInterval kWebViewTimeout = 30;
 static const NSTimeInterval kCaptureDelay = 1.5;
 static const NSTimeInterval kPollInterval = 1;
 
-// DDoS-Guard (as Android's DdosGuardHelper): the cookie a passed check sets,
-// and the script that names, between single quotes, the path that sets it.
-static NSString *const kDdosGuardCheckCookie = @"__ddg2_";
-static NSString *const kDdosGuardCheckScriptURL =
-    @"https://check.ddos-guard.net/check.js";
+// The messages of the WEBVIEW_ERROR rejections that come once the page has
+// loaded: it can't be read (the same message as on Android), or its web
+// content process died.
+static NSString *const kCaptureFailedMessage =
+    @"Could not read the loaded page";
+static NSString *const kContentProcessDiedMessage =
+    @"WebView content process terminated";
+
+// Synchrony walks the syntax tree recursively, and JavaScriptCore's recursion
+// limit follows the stack of the thread it runs on: a GCD worker's 512 KB
+// stack overflows on scripts Android handles. Same as Android's
+// Synchrony.THREAD_STACK_BYTES.
+static const NSUInteger kSynchronyThreadStackBytes = 8 * 1024 * 1024;
 
 static dispatch_time_t RCConsumetAfter(NSTimeInterval seconds) {
   return dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC));
@@ -42,7 +50,7 @@ static dispatch_time_t RCConsumetAfter(NSTimeInterval seconds) {
 
 /**
  * One in-memory website data store for every request this module makes.
- * Cookies (such as a passed DDoS-Guard challenge) carry over between calls,
+ * Cookies (such as a passed Cloudflare challenge) carry over between calls,
  * as they do with Android's CookieManager, but nothing is written to disk and
  * the host app's own WKWebView data (defaultDataStore) is never read or
  * changed. Main thread only.
@@ -136,7 +144,7 @@ static void RCConsumetReadCookies(
 /// task with -resolve: or -rejectWithCode:message:, or calls -keepOpen while it
 /// polls the page.
 typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
-                                        WKWebView *webView, NSString *url);
+                                        WKWebView *webView);
 
 /**
  * One hidden WKWebView load for a promise-returning request: the iOS
@@ -144,10 +152,12 @@ typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
  * src/NativeConsumet.ts. Main thread only.
  *
  * The promise settles exactly once:
- * - onFinish runs once, when the main document first finishes loading. Errors
- *   after that are ignored.
+ * - onFinish runs once, when the main document first finishes loading. Load
+ *   errors after that are ignored.
  * - A main-frame load error rejects with WEBVIEW_ERROR. Failed sub-resources
  *   never reach the navigation delegate.
+ * - A web content process that terminates rejects with WEBVIEW_ERROR,
+ *   whenever it happens.
  * - No settled promise within kWebViewTimeout of loading rejects with TIMEOUT.
  * A task keeps itself alive until it settles, then releases its WebView.
  */
@@ -156,6 +166,10 @@ typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
                          reject:(RCTPromiseRejectBlock)reject;
 @property(nonatomic, copy, nullable) RCConsumetWebTaskFinish onFinish;
 @property(nonatomic, readonly) BOOL isSettled;
+/// The URL of the page that finished loading last: after a challenge page,
+/// the page it turned into, which onFinish (called for the first page only)
+/// doesn't see.
+@property(nonatomic, readonly, copy, nullable) NSString *finishedURL;
 /// Loads `url`. Headers are split as on Android (RequestHeaders), matching
 /// names case-insensitively: User-Agent replaces the WebView's own, Cookie
 /// values go into its cookie store before loading (WKWebView ignores a raw
@@ -351,14 +365,23 @@ static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
 
 - (void)webView:(WKWebView *)webView
     didFinishNavigation:(WKNavigation *)navigation {
-  if (_isSettled || _pageFinished)
+  if (_isSettled)
+    return;
+  _finishedURL = [webView.URL.absoluteString copy];
+  if (_pageFinished)
     return;
   _pageFinished = YES;
   [_timer invalidate];
   _timer = nil;
   RCConsumetWebTaskFinish onFinish = self.onFinish;
   if (onFinish)
-    onFinish(self, webView, webView.URL.absoluteString ?: @"");
+    onFinish(self, webView);
+}
+
+// The page is gone (the process crashed, or the system ended it to free
+// memory) and can't be read, whether or not it had finished loading.
+- (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView {
+  [self rejectWithCode:kWebViewErrorCode message:kContentProcessDiedMessage];
 }
 
 // WKWebView reports only main-frame navigation failures here; failed
@@ -443,6 +466,26 @@ static void RCConsumetCaptureWhenReady(RCConsumetWebTask *task,
             }];
 }
 
+/// Runs `script` on the page and passes on the string it returns. A script
+/// that throws or gives no string (the page has no document, say) rejects the
+/// task with WEBVIEW_ERROR.
+static void RCConsumetReadPage(RCConsumetWebTask *task, WKWebView *webView,
+                               NSString *script, void (^use)(NSString *value)) {
+  __weak RCConsumetWebTask *wt = task;
+  [webView evaluateJavaScript:script
+            completionHandler:^(id result, NSError *error) {
+              RCConsumetWebTask *t = wt;
+              if (!t || t.isSettled)
+                return;
+              if ([result isKindOfClass:[NSString class]]) {
+                use(result);
+              } else {
+                [t rejectWithCode:kWebViewErrorCode
+                          message:kCaptureFailedMessage];
+              }
+            }];
+}
+
 /// Runs capture kCaptureDelay after a navigation finished (so scripts on the
 /// page can settle), unless the page is a Cloudflare challenge: then capture
 /// waits for the page the challenge turns into, and the task times out as
@@ -468,124 +511,6 @@ RCT_EXPORT_MODULE()
   return std::make_shared<facebook::react::NativeConsumetSpecJSI>(params);
 }
 
-#pragma mark - bypassDdosGuard
-
-- (void)bypassDdosGuard:(NSString *)urlStr
-                resolve:(RCTPromiseResolveBlock)resolve
-                 reject:(RCTPromiseRejectBlock)reject {
-  NSURL *url = [NSURL URLWithString:urlStr];
-  if (!url) {
-    reject(@"ERROR", @"Invalid URL", nil);
-    return;
-  }
-
-  NSArray<NSHTTPCookie *> *existing =
-      [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:url];
-  for (NSHTTPCookie *c in existing) {
-    if ([c.name isEqualToString:kDdosGuardCheckCookie] && c.value.length > 0) {
-      resolve(@{@"cookie" : RCConsumetCookieHeader(existing)});
-      return;
-    }
-  }
-
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
-    NSURLSession *session = [NSURLSession sharedSession];
-
-    dispatch_semaphore_t sem1 = dispatch_semaphore_create(0);
-    __block NSString *wellKnown = nil;
-    __block NSError *err1 = nil;
-
-    [[session dataTaskWithURL:[NSURL URLWithString:kDdosGuardCheckScriptURL]
-            completionHandler:^(NSData *d, NSURLResponse *r, NSError *e) {
-              if (e || !d) {
-                err1 = e;
-              } else {
-                NSString *body =
-                    [[NSString alloc] initWithData:d
-                                          encoding:NSUTF8StringEncoding]
-                        ?: @"";
-                NSArray<NSString *> *parts =
-                    [body componentsSeparatedByString:@"'"];
-                if (parts.count > 1)
-                  wellKnown = parts[1];
-              }
-              dispatch_semaphore_signal(sem1);
-            }] resume];
-    dispatch_semaphore_wait(
-        sem1, dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC));
-
-    if (!wellKnown.length) {
-      reject(@"ERROR",
-             err1.localizedDescription
-                 ?: @"Could not parse well-known path from check.js",
-             err1);
-      return;
-    }
-
-    // The well-known path on the target host sets the check cookie.
-    NSString *checkStr = [NSString
-        stringWithFormat:@"%@://%@%@", url.scheme, url.host, wellKnown];
-    NSURL *checkURL = [NSURL URLWithString:checkStr];
-    if (!checkURL) {
-      reject(@"ERROR", @"Invalid check URL", nil);
-      return;
-    }
-
-    dispatch_semaphore_t sem2 = dispatch_semaphore_create(0);
-    __block NSHTTPURLResponse *checkResp = nil;
-
-    [[session dataTaskWithURL:checkURL
-            completionHandler:^(NSData *d2, NSURLResponse *r2, NSError *e2) {
-              checkResp = (NSHTTPURLResponse *)r2;
-              dispatch_semaphore_signal(sem2);
-            }] resume];
-    dispatch_semaphore_wait(
-        sem2, dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC));
-
-    NSArray<NSHTTPCookie *> *newCookies =
-        [checkResp isKindOfClass:[NSHTTPURLResponse class]]
-            ? [NSHTTPCookie
-                  cookiesWithResponseHeaderFields:checkResp.allHeaderFields
-                                           forURL:url]
-            : @[];
-    // Like Android: no cookie from the check request means the bypass failed.
-    if (newCookies.count == 0) {
-      reject(@"ERROR", @"Failed to get DDos-Guard cookie", nil);
-      return;
-    }
-    NSMutableArray<NSHTTPCookie *> *allCookies = [existing mutableCopy];
-    [allCookies addObjectsFromArray:newCookies];
-    resolve(@{@"cookie" : RCConsumetCookieHeader(allCookies)});
-  });
-}
-
-#pragma mark - getDdosGuardCookiesWithWebView
-
-- (void)getDdosGuardCookiesWithWebView:(NSString *)urlStr
-                               resolve:(RCTPromiseResolveBlock)resolve
-                                reject:(RCTPromiseRejectBlock)reject {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    RCConsumetWebTask *task =
-        [[RCConsumetWebTask alloc] initWithResolve:resolve reject:reject];
-    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
-                      NSString *loadedURL) {
-      RCConsumetReadCookies(
-          webView, loadedURL.length ? loadedURL : urlStr,
-          ^(NSArray<NSHTTPCookie *> *cookies, NSString *header) {
-            for (NSHTTPCookie *c in cookies) {
-              if ([c.name isEqualToString:kDdosGuardCheckCookie]) {
-                [task resolve:header];
-                return;
-              }
-            }
-            [task rejectWithCode:@"COOKIE_ERROR"
-                         message:@"No __ddg2_ cookie received"];
-          });
-    };
-    [task loadURL:urlStr method:@"GET" headers:nil body:nil];
-  });
-}
-
 #pragma mark - makeGetRequestWithWebView
 
 - (void)makeGetRequestWithWebView:(NSString *)urlStr
@@ -595,28 +520,24 @@ RCT_EXPORT_MODULE()
   dispatch_async(dispatch_get_main_queue(), ^{
     RCConsumetWebTask *task =
         [[RCConsumetWebTask alloc] initWithResolve:resolve reject:reject];
-    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
-                      NSString *loadedURL) {
+    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView) {
       RCConsumetCaptureUnlessChallenge(task, webView, ^{
-        [webView
-            evaluateJavaScript:@"(function(){try{return "
-                               @"document.documentElement.outerHTML;}catch("
-                               @"e){return '';}})()"
-             completionHandler:^(id html, NSError *e) {
-               NSString *htmlStr =
-                   [html isKindOfClass:[NSString class]] ? html : @"";
-               NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
-               RCConsumetReadCookies(webView, finalURL,
-                                     ^(NSArray<NSHTTPCookie *> *cookies,
-                                       NSString *cookieStr) {
-                                       [task resolve:@{
-                                         @"url" : finalURL,
-                                         @"html" : htmlStr,
-                                         @"cookies" : cookieStr,
-                                         @"status" : @"success"
-                                       }];
-                                     });
-             }];
+        RCConsumetReadPage(
+            task, webView, @"document.documentElement.outerHTML",
+            ^(NSString *html) {
+              NSString *finalURL =
+                  task.finishedURL.length ? task.finishedURL : urlStr;
+              RCConsumetReadCookies(webView, finalURL,
+                                    ^(NSArray<NSHTTPCookie *> *cookies,
+                                      NSString *cookieStr) {
+                                      [task resolve:@{
+                                        @"url" : finalURL,
+                                        @"html" : html,
+                                        @"cookies" : cookieStr,
+                                        @"status" : @"success"
+                                      }];
+                                    });
+            });
       });
     };
     [task loadURL:urlStr method:@"GET" headers:headers body:nil];
@@ -638,7 +559,6 @@ RCT_EXPORT_MODULE()
     // lone <pre>.
     NSString *jsExtract =
         @"(function(){"
-        @"try{"
         @"  var ct='text/html',content=document.documentElement.outerHTML;"
         @"  if(document.body&&document.body.children.length===1"
         @"     &&document.body.children[0].tagName==='PRE'){"
@@ -646,38 +566,39 @@ RCT_EXPORT_MODULE()
         @"    try{JSON.parse(t);ct='application/json';content=t;}catch(e){}"
         @"  }"
         @"  return JSON.stringify({content:content,contentType:ct});"
-        @"}catch(e){return JSON.stringify({content:'',contentType:'unknown'});}"
         @"})()";
 
-    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
-                      NSString *loadedURL) {
+    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView) {
       RCConsumetCaptureUnlessChallenge(task, webView, ^{
-        [webView
-            evaluateJavaScript:jsExtract
-             completionHandler:^(id r, NSError *e) {
-               NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
-               RCConsumetReadCookies(
-                   webView, finalURL,
-                   ^(NSArray<NSHTTPCookie *> *cookies, NSString *cookieStr) {
-                     NSString *jsonStr =
-                         [r isKindOfClass:[NSString class]] ? r : @"{}";
-                     id json = [NSJSONSerialization
-                         JSONObjectWithData:
-                             [jsonStr dataUsingEncoding:NSUTF8StringEncoding]
-                                    options:0
-                                      error:nil];
-                     NSDictionary *parsed =
-                         [json isKindOfClass:[NSDictionary class]] ? json
-                                                                   : @{};
-                     [task resolve:@{
-                       @"url" : finalURL,
-                       @"response" : parsed[@"content"] ?: @"",
-                       @"cookies" : cookieStr,
-                       @"status" : @"success",
-                       @"contentType" : parsed[@"contentType"] ?: @"text/html"
-                     }];
-                   });
-             }];
+        RCConsumetReadPage(task, webView, jsExtract, ^(NSString *jsonStr) {
+          // A page can replace JSON.stringify, so the capture is checked too.
+          NSData *data = [jsonStr dataUsingEncoding:NSUTF8StringEncoding];
+          id json = [NSJSONSerialization JSONObjectWithData:data
+                                                    options:0
+                                                      error:nil];
+          BOOL isObject = [json isKindOfClass:[NSDictionary class]];
+          id content = isObject ? json[@"content"] : nil;
+          id contentType = isObject ? json[@"contentType"] : nil;
+          if (![content isKindOfClass:[NSString class]] ||
+              ![contentType isKindOfClass:[NSString class]]) {
+            [task rejectWithCode:kWebViewErrorCode
+                         message:kCaptureFailedMessage];
+            return;
+          }
+          NSString *finalURL =
+              task.finishedURL.length ? task.finishedURL : urlStr;
+          RCConsumetReadCookies(
+              webView, finalURL,
+              ^(NSArray<NSHTTPCookie *> *cookies, NSString *cookieStr) {
+                [task resolve:@{
+                  @"url" : finalURL,
+                  @"response" : content,
+                  @"cookies" : cookieStr,
+                  @"status" : @"success",
+                  @"contentType" : contentType
+                }];
+              });
+        });
       });
     };
     [task loadURL:urlStr method:@"POST" headers:headers body:body];
@@ -706,7 +627,8 @@ RCT_EXPORT_MODULE()
                                                BOOL *stop) {
     [req setValue:v forHTTPHeaderField:k];
   }];
-  if (!req.allHTTPHeaderFields[@"Content-Type"]) {
+  // Header names match in any case, as on Android.
+  if (![req valueForHTTPHeaderField:@"Content-Type"]) {
     [req setValue:@"application/json; charset=utf-8"
         forHTTPHeaderField:@"Content-Type"];
   }
@@ -751,39 +673,46 @@ RCT_EXPORT_MODULE()
       reject(code, message, nil);
       return;
     }
-    // Off the cache's queue: running Synchrony takes a while.
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
-      JSContext *ctx = [[JSContext alloc] init];
-      __block NSString *jsErr = nil;
-      ctx.exceptionHandler = ^(JSContext *c, JSValue *ex) {
-        jsErr = ex.toString;
-      };
+    // Off the cache's queue (running Synchrony takes a while), on a thread
+    // with the stack Synchrony needs.
+    NSThread *thread = [[NSThread alloc] initWithBlock:^{
+      // A detached thread needs its own pool for what ARC autoreleases.
+      @autoreleasepool {
+        JSContext *ctx = [[JSContext alloc] init];
+        __block NSString *jsErr = nil;
+        ctx.exceptionHandler = ^(JSContext *c, JSValue *ex) {
+          jsErr = ex.toString;
+        };
 
-      [ctx evaluateScript:@"var "
-                          @"console={log:function(){},warn:function(){},error:"
-                          @"function(){},trace:function(){}};"];
-      [ctx evaluateScript:script];
-      if (jsErr) {
-        reject(@"EvaluationError", jsErr, nil);
-        return;
-      }
+        [ctx evaluateScript:@"var console={log:function(){},warn:function(){},"
+                            @"error:function(){},trace:function(){}};"];
+        [ctx evaluateScript:script];
+        if (jsErr) {
+          reject(@"EvaluationError", jsErr, nil);
+          return;
+        }
 
-      // A Synchrony exception reaches exceptionHandler and rejects, as on
-      // Android; the promise resolves only with a string.
-      ctx[@"__src"] = source;
-      JSValue *result =
-          [ctx evaluateScript:@"new Deobfuscator().deobfuscateSource(__src)"];
-      if (jsErr) {
-        reject(@"EvaluationError", jsErr, nil);
-        return;
+        // A Synchrony exception reaches exceptionHandler and rejects, as on
+        // Android; the promise resolves only with a string.
+        ctx[@"__src"] = source;
+        JSValue *result =
+            [ctx evaluateScript:@"new Deobfuscator().deobfuscateSource(__src)"];
+        if (jsErr) {
+          reject(@"EvaluationError", jsErr, nil);
+          return;
+        }
+        if (!result.isString) {
+          reject(@"EvaluationError", @"Deobfuscator did not return a string",
+                 nil);
+          return;
+        }
+        resolve(result.toString);
       }
-      if (!result.isString) {
-        reject(@"EvaluationError", @"Deobfuscator did not return a string",
-               nil);
-        return;
-      }
-      resolve(result.toString);
-    });
+    }];
+    thread.name = @"ConsumetDeobfuscator";
+    thread.stackSize = kSynchronyThreadStackBytes;
+    thread.qualityOfService = NSQualityOfServiceUtility;
+    [thread start];
   }];
 }
 

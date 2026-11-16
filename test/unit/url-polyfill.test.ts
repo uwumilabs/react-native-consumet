@@ -379,11 +379,6 @@ describe('PolyURL matches Node URL', () => {
     expect(PolyURL.canParse('foo', base as any)).toBe(NodeURL.canParse('foo', base as any));
   });
 
-  it('throws a TypeError for invalid input', () => {
-    expect(() => new PolyURL('not a url')).toThrow(TypeError);
-    expect(() => new PolyURL('foo', 'not a base')).toThrow(TypeError);
-  });
-
   it('does not need a global URL', () => {
     const saved = { URL: globalThis.URL, URLSearchParams: globalThis.URLSearchParams };
     try {

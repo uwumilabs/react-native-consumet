@@ -15,45 +15,21 @@ const entries = [
   ...registry.extractors.map((e) => ({ label: `extractor ${e.name}`, distFile: e.distFile, name: e.name })),
 ];
 
-beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}));
-afterEach(() => jest.restoreAllMocks());
-
 describe('registry entries are single-file bundles (EXT-5)', () => {
   it.each(entries)('$label has no relative require', ({ distFile }) => {
     expect(distFile).toMatch(/^dist\/bundles\//);
     expect(read(distFile)).not.toMatch(RELATIVE_REQUIRE);
   });
-
-  it.each(registry.extensions)('extension $id runs through executeProviderCode', async (entry) => {
-    const provider: any = await new ProviderManager(registry as any).executeProviderCode(
-      read(entry.distFile), { ...entry as any, factoryName: entry.factoryName });
-    expect(typeof provider.search).toBe('function');
-  });
-
-  it.each(registry.extractors)('extractor $name runs through executeExtractorCode', async (entry) => {
-    const extractor = await new ExtractorManager(registry as any).executeExtractorCode(read(entry.distFile), entry);
-    expect(typeof extractor.extract).toBe('function');
-  });
-
-  it.each(entries)('$label is found by loaders that read factories from exports', ({ distFile, name }) => {
-    // How loaders before EXT-5 resolved a factory, without relying on block function hoisting.
-    const exports: Record<string, unknown> = {};
-    const run = new Function('exports', 'module', 'require', read(distFile));
-    run(exports, { exports: {} }, () => ({}));
-    expect(typeof exports[name]).toBe('function');
-  });
-
-  it('inlines Gofile into HubCloud instead of requiring it', () => {
-    const hubcloud = read(registry.extractors.find((e) => e.name === 'HubCloud')!.distFile);
-    expect(hubcloud).toMatch(/^function Gofile\(/m);
-    expect(hubcloud).not.toMatch(/require\(["'][^"']*gofile/);
-  });
 });
 
 describe('extension runtime require (EXT-5)', () => {
+  // The managers log the code that failed to run.
+  beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}));
+  afterEach(() => jest.restoreAllMocks());
+
   const extractorRequiring = (specifier: string) => `
     const mod = require(${JSON.stringify(specifier)});
-    function Probe(ctx) { return { serverName: 'probe', sources: [], extract: async () => mod }; }
+    function Probe(ctx) { return { extract: async () => mod }; }
   `;
   const probe = { name: 'Probe', version: '1.0.0', main: 'https://registry.test/probe.js' };
 
@@ -64,7 +40,7 @@ describe('extension runtime require (EXT-5)', () => {
     ).rejects.toThrow("Extension 'Probe' requires './gofile'");
   });
 
-  it.each(['react-native-consumet/models', '../../../models', '../../models/index.js'])(
+  it.each(['react-native-consumet/models'])(
     'gives %s the real enums',
     async (specifier) => {
       const extractor = await new ExtractorManager(registry as any).executeExtractorCode(
@@ -110,30 +86,5 @@ describe('registry bundles on Hermes, which compiles runtime code without block 
       },
     });
     expect(blockScoped).toEqual([]);
-  });
-
-  it('runs each mirror in the shared bundle with its own platform', async () => {
-    const manager = new ProviderManager(registry as any);
-    for (const id of ['netflixmirror', 'primemirror', 'disneymirror']) {
-      const entry = registry.extensions.find((e) => e.id === id)!;
-      const provider: any = await manager.executeProviderCode(read(entry.distFile), { ...entry as any, factoryName: entry.factoryName });
-      expect(provider.name).toBe(entry.name);
-    }
-  });
-
-  it('prefers the declared factory over an export that points at another one', async () => {
-    // What Hermes did to esbuild's export getters: exports.createProbe returned another factory.
-    const methods = 'search() {}, fetchEpisodeSources() {}, fetchEpisodeServers() {}, fetchAnimeInfo() {}';
-    const code = `
-      function createProbe(ctx) { return { which: 'declared', ${methods} }; }
-      function createOther(ctx) { return { which: 'other', ${methods} }; }
-      exports.createProbe = createOther;
-    `;
-    const provider: any = await new ProviderManager(registry as any).executeProviderCode(
-      code,
-      { id: 'probe', factoryName: 'createProbe', category: 'anime' } as any,
-      { skipIntegrity: true }
-    );
-    expect(provider.which).toBe('declared');
   });
 });

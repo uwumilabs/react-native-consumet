@@ -1,38 +1,30 @@
 import Anilist from '../../src/providers/meta/anilist';
 import { MediaStatus, type IAnimeResult } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
-import * as queries from '../../src/providers/meta/anilist-media';
 import byStatus from './fixtures/anilist/advanced-search-by-status.json';
 import bungakuShoujo from './fixtures/anilist/search-bungaku-shoujo.json';
 import attackOnTitan from './fixtures/anilist/media-99147.json';
 import trending from './fixtures/anilist/trending.json';
-import { copy, replay, response } from './fixtures/anilist/replay';
+import airingSchedule from './fixtures/anilist/airing-schedule.json';
+import { copy, replay, replayAlways } from './fixtures/anilist/replay';
+import { fakeAnimeProvider, fakeMangaProvider } from './helpers/fake-providers';
 
 // Recorded AniList responses (see each fixture's `note`), replayed offline.
-const FILLER_URL = 'https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/';
 const aot = attackOnTitan.body.data.Media;
 
 const fakeProvider = (episodes: object[] = []) =>
-  ({
-    name: 'FakeProvider',
-    search: jest.fn().mockResolvedValue({ results: [{ id: 'show', title: aot.title.romaji }] }),
-    fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes }),
-    fetchEpisodeSources: jest.fn(),
-    fetchEpisodeServers: jest.fn(),
-  }) as any;
+  fakeAnimeProvider({ results: [{ id: 'show', title: aot.title.romaji }], info: { episodes } });
 
 // A manga provider that finds the title on its first search.
-const fakeMangaProvider = () =>
-  ({
-    name: 'FakeManga',
-    search: jest.fn().mockResolvedValue({ results: [{ id: 'aot', title: aot.title.romaji }] }),
-    fetchMangaInfo: jest.fn().mockResolvedValue({ chapters: [{ id: 'ch-2' }, { id: 'ch-1' }] }),
-    fetchChapterPages: jest.fn(),
+const mangaProvider = () =>
+  fakeMangaProvider({
+    results: [{ id: 'aot', title: aot.title.romaji }],
+    info: { chapters: [{ id: 'ch-2' }, { id: 'ch-1' }] },
   }) as any;
 
-/** Every AniList answer is `body`; MALSync has no mapping. */
+/** Every AniList answer comes from `body`; MALSync has no mapping. */
 const serve = (body: unknown) => {
-  jest.spyOn(metaHttp, 'post').mockResolvedValue(response({ status: 200, body }) as any);
+  replayAlways(jest.spyOn(metaHttp, 'post'), { status: 200, body });
   jest.spyOn(metaHttp, 'get').mockResolvedValue({ status: 404, data: {} } as any);
 };
 
@@ -42,7 +34,7 @@ const allDetails = async (body: unknown): Promise<any[]> => {
   return [
     await new Anilist(fakeProvider()).fetchAnimeInfo(String(aot.id)),
     await new Anilist(fakeProvider()).fetchAnilistInfoById(String(aot.id)),
-    await new Anilist.Manga(fakeMangaProvider()).fetchMangaInfo(String(aot.id)),
+    await new Anilist.Manga(mangaProvider()).fetchMangaInfo(String(aot.id)),
   ];
 };
 
@@ -98,17 +90,57 @@ describe('AniList mappers (META-11)', () => {
     }
   });
 
-  it('asks for status version 2 everywhere, so hiatus media is not reported as releasing', () => {
-    const sent = Object.values(queries).filter((value): value is string => typeof value === 'string' && value.startsWith('query'));
+  it('reports hiatus media as Hiatus in results, details, recommendations, relations and schedules', async () => {
+    // AniList answers RELEASING for these unless the query asks for status(version: 2).
+    const search = copy(bungakuShoujo.body);
+    search.data.Page.media[0].status = 'HIATUS';
+    const browse = copy(trending.body);
+    browse.data.Page.media[0].status = 'HIATUS';
+    const detail = copy(attackOnTitan.body);
+    detail.data.Media.status = 'HIATUS';
+    detail.data.Media.recommendations.edges[0].node.mediaRecommendation.status = 'HIATUS';
+    detail.data.Media.relations.edges[0].node.status = 'HIATUS';
+    const schedule = copy(airingSchedule.body);
+    schedule.data.Page.airingSchedules[0].media.status = 'HIATUS';
 
-    expect(sent.length).toBeGreaterThan(5);
-    // Every `status` field, leaving out the advanced search's `$status` filter.
-    for (const query of sent) expect(query.match(/(?<!\$)\bstatus\b(?!\(version: 2\)|:)/g)).toBeNull();
+    serve(search);
+    const [searched] = (await new Anilist(fakeProvider()).search('x')).results;
+    const [advanced] = (await new Anilist(fakeProvider()).advancedSearch('x')).results;
+    jest.restoreAllMocks();
+    serve(browse);
+    const browsed = await Promise.all([
+      new Anilist(fakeProvider()).fetchTrendingAnime(),
+      new Anilist(fakeProvider()).fetchPopularAnime(),
+      new Anilist(fakeProvider()).fetchAnimeGenres(['Action']),
+    ]);
+    jest.restoreAllMocks();
+    serve(schedule);
+    const [scheduled] = (await new Anilist(fakeProvider()).fetchAiringSchedule()).results;
+    jest.restoreAllMocks();
+    const details = await allDetails(detail);
+
+    const statuses = [
+      searched,
+      advanced,
+      ...browsed.map((page) => page.results[0]),
+      scheduled,
+      ...details.flatMap((info) => [info, info.recommendations[0], info.relations[0]]),
+    ].map((media) => media!.status);
+    expect(statuses).toEqual(Array(15).fill(MediaStatus.HIATUS));
   });
 
-  it('asks for the genres of trending, popular and by-genre results', () => {
-    for (const query of [queries.TRENDING_QUERY, queries.POPULAR_QUERY, queries.GENRES_QUERY]) {
-      expect(query).toContain(' genres ');
+  it('returns the genres of trending, popular and by-genre results', async () => {
+    serve(trending.body);
+
+    for (const page of [
+      await new Anilist(fakeProvider()).fetchTrendingAnime(),
+      await new Anilist(fakeProvider()).fetchPopularAnime(),
+      await new Anilist(fakeProvider()).fetchAnimeGenres(['Action']),
+    ]) {
+      expect(page.results.map((r) => r.genres)).toEqual([
+        ['Action', 'Fantasy'],
+        ['Comedy', 'Drama', 'Romance', 'Slice of Life'],
+      ]);
     }
   });
 
@@ -162,7 +194,7 @@ describe('AniList mappers (META-11)', () => {
     const mikasa = aot.characters.edges[0]!;
 
     expect(infoById!.recommendations![0]).toEqual({
-      id: 5114,
+      id: '5114',
       malId: 5114,
       title: fma.title,
       status: MediaStatus.COMPLETED,
@@ -175,7 +207,7 @@ describe('AniList mappers (META-11)', () => {
       type: 'TV',
     });
     expect(infoById!.relations![2]).toEqual({
-      id: 108942,
+      id: '108942',
       malId: 39477,
       relationType: 'OTHER',
       title: chibi.node.title,
@@ -220,13 +252,11 @@ describe('AniList mappers (META-11)', () => {
     expect(aot.recommendations.edges.filter((e) => e.node.mediaRecommendation === null)).toHaveLength(1);
 
     for (const info of await allDetails(attackOnTitan.body)) {
-      expect((info.recommendations as IAnimeResult[]).map((r) => r.id)).toEqual([5114, 1818, 101348]);
+      expect((info.recommendations as IAnimeResult[]).map((r) => r.id)).toEqual(['5114', '1818', '101348']);
     }
   });
 
   it('requests and returns title.userPreferred', async () => {
-    expect(queries.MEDIA_DETAIL_QUERY).toMatch(/Media\(id: \$id\) \{ id idMal title \{ userPreferred /);
-
     for (const info of await allDetails(attackOnTitan.body)) {
       expect(info.title).toEqual({
         romaji: 'Shingeki no Kyojin Season 3',
@@ -250,21 +280,4 @@ describe('AniList mappers (META-11)', () => {
     expect(json).not.toContain('"hash"');
   });
 
-  it('flags fillers the same way in fetchAnimeInfo and fetchEpisodesListById', async () => {
-    // A filler list that stops at episode 5 still flags the episodes it lists.
-    const fillers = [1, 2, 3, 4, 5].map((n) => ({ 'number': String(n), 'filler-bool': n === 3 }));
-    const episodes = () => Array.from({ length: 12 }, (_, i) => ({ id: `ep-${i + 1}`, number: i + 1 }));
-    jest.spyOn(metaHttp, 'post').mockResolvedValue(response(attackOnTitan) as any);
-    jest.spyOn(metaHttp, 'get').mockImplementation(async (url: string) => {
-      if (url === `${FILLER_URL}${aot.idMal}.json`) return { status: 200, data: { episodes: fillers } } as any;
-      throw new Error(`unexpected request ${url}`);
-    });
-
-    const info = await new Anilist(fakeProvider(episodes())).fetchAnimeInfo('99147', true);
-    const list = await new Anilist(fakeProvider(episodes())).fetchEpisodesListById('99147', true);
-
-    const expected = [false, false, true, false, false, ...Array(7).fill(undefined)];
-    expect(info.episodes!.map((e) => e.isFiller)).toEqual(expected);
-    expect(list.map((e) => e.isFiller)).toEqual(expected);
-  });
 });

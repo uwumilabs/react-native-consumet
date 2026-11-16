@@ -2,6 +2,7 @@ import axios, { type AxiosInstance } from 'axios';
 import { load, type CheerioAPI } from 'cheerio';
 import CryptoJS from 'crypto-js';
 import type { ExtractorContext } from '../models';
+import * as BundledExtractors from '../extractors';
 import { nativeMethods } from '../NativeConsumet';
 import { USER_AGENT } from './constants';
 import { PolyURL, PolyURLSearchParams } from './url-polyfill';
@@ -39,6 +40,9 @@ export function createExtractorContext(config: ExtractorContextConfig = {}): Ext
     NativeConsumet: nativeMethods,
   };
 }
+
+/** The extractors the library bundles, by name. */
+export const defaultExtractors: typeof BundledExtractors = { ...BundledExtractors };
 
 /** `createExtractorContext()`: the library's axios, cheerio and user agent. */
 export const defaultExtractorContext: ExtractorContext = createExtractorContext();

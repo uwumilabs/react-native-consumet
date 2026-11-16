@@ -9,16 +9,20 @@ import {
   type ILightNovelChapterContent,
   type ILightNovelResult,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { toMediaStatus } from '../common/media-status';
 
+/** The page Cloudflare sends (with a 403 or 503) instead of the site's to clients it doesn't trust. */
+const CLOUDFLARE_CHALLENGE = /<title>\s*(?:Just a moment\.\.\.|Attention Required! \| Cloudflare)\s*<\/title>/i;
+
+/**
+ * NovelUpdates (novelupdates.com), a directory of translated novels. It lists each chapter as a link
+ * to the translator's own site, so it has no chapter text of its own.
+ */
 export class NovelUpdates extends LightNovelParser {
   override readonly name = 'NovelUpdates';
   protected override baseUrl = 'https://www.novelupdates.com';
-
-  private proxyURL = 'http://translate.google.com/translate?sl=ja&tl=en&u=';
 
   protected override logo = 'https://www.novelupdates.com/appicon.png';
   protected override classPath = 'LIGHT_NOVELS.NovelUpdates';
@@ -28,10 +32,15 @@ export class NovelUpdates extends LightNovelParser {
     super();
   }
 
-  /** Requests a page as text through the context axios. */
+  /** A page as text, through the context axios; Cloudflare's challenge fails with an error saying so. */
   private requestText = async (url: string, config: AxiosRequestConfig = {}): Promise<string> => {
-    const { data } = await this.ctx.axios.request({ url, ...config, responseType: 'text' });
-    return data;
+    const response = await this.ctx.axios.request({ url, ...config, responseType: 'text' }).catch((err) => {
+      if (CLOUDFLARE_CHALLENGE.test(String(err?.response?.data ?? ''))) return err.response;
+      throw err;
+    });
+    const html = String(response.data ?? '');
+    if (CLOUDFLARE_CHALLENGE.test(html)) throw new Error('NovelUpdates: Cloudflare blocked the request');
+    return html;
   };
 
   /**
@@ -48,17 +57,7 @@ export class NovelUpdates extends LightNovelParser {
       url: lightNovelUrl,
     };
 
-    const page = await this.requestText(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
-      headers: {
-        Referer: lightNovelUrl,
-      },
-    });
-
-    const $ = load(page);
-
-    if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
-      throw new Error('NovelUpdates: Cloudflare blocked the request');
-    }
+    const $ = load(await this.requestText(lightNovelUrl));
 
     lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
 
@@ -69,12 +68,12 @@ export class NovelUpdates extends LightNovelParser {
       .get();
     lightNovelInfo.description = $('div#editdescription').text()?.trim();
 
-    lightNovelInfo.status = toMediaStatus($('div#editstatus').text(), MediaStatus);
+    lightNovelInfo.status = toMediaStatus($('div#editstatus').text());
 
     const postId = $('input#mypostid').attr('value');
 
     lightNovelInfo.chapters = await this.fetchChapters(postId!);
-    // The average vote out of 5, doubled to a 10-point scale.
+    // `(4.3 / 5.0, 1234 votes)`: the average vote out of 5, doubled to a 10-point scale.
     lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
 
     return lightNovelInfo;
@@ -82,16 +81,11 @@ export class NovelUpdates extends LightNovelParser {
   private fetchChapters = async (postId: string): Promise<ILightNovelChapter[]> => {
     const chapters: ILightNovelChapter[] = [];
 
-    const chapterData = (
-      await this.requestText(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'Cookie': '_ga=;',
-        },
-        data: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`,
-      })
-    ).substring(1);
+    const chapterData = await this.requestText(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      data: `action=nd_getchapters&mypostid=${postId}&mypostid2=0`,
+    });
 
     const $ = load(chapterData);
     $('li.sp_li_chp a[data-id]').each((index, el) => {
@@ -108,40 +102,21 @@ export class NovelUpdates extends LightNovelParser {
     return chapters;
   };
 
-  /** @param chapterId chapter id or URL */
+  /**
+   * Not supported: a NovelUpdates chapter is a link (the chapter's `url`, which redirects) to the
+   * translator's own site, whose pages differ from site to site. Always rejects; open the chapter's
+   * `url` instead.
+   */
   override fetchChapterContent = async (chapterId: string): Promise<ILightNovelChapterContent> => {
-    if (!chapterId.startsWith(this.baseUrl)) {
-      chapterId = `${this.baseUrl}/extnu/${chapterId}`;
-    }
-    const contents: ILightNovelChapterContent = {
-      novelTitle: '',
-      chapterTitle: '',
-      text: '',
-    };
-
-    const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
-
-    const $ = load(data);
-
-    contents.novelTitle = $('title').text();
-    contents.chapterTitle = $('title').text();
-
-    contents.text = data;
-
-    return contents;
+    throw new Error(
+      `NovelUpdates: chapter ${chapterId} is on the translator's own site, so NovelUpdates has no text for it. Open its url instead.`
+    );
   };
 
   override search = async (query: string): Promise<ISearch<ILightNovelResult>> => {
     const result: ISearch<ILightNovelResult> = { results: [] };
 
-    const res = await this.requestText(
-      `${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`,
-      {
-        headers: {
-          Referer: this.baseUrl,
-        },
-      }
-    );
+    const res = await this.requestText(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`);
 
     const $ = load(res);
 

@@ -49,8 +49,8 @@
     "build": "tsc -p tsconfig.dist.json && node scripts/build-extensions.js && node scripts/hermes-safe-dist.js",
     "build:clean": "del-cli dist && yarn build",
     "build:registry": "node scripts/build-registry.js",
-    "test": "jest",
-    "test:live": "LIVE_TESTS=1 jest --runInBand",
+    "test": "yarn build && jest",
+    "test:live": "yarn build && LIVE_TESTS=1 jest --runInBand",
     "registry:check": "node scripts/prepare-registry.js --check",
     "registry:prune": "node scripts/prune-registry.js",
     "registry:keygen": "node scripts/registry-keygen.js",
@@ -60,7 +60,6 @@
     "lint:fix": "eslint . --fix",
     "clean": "del-cli android/build lib dist \"apps/*/android/.gradle\" \"apps/*/android/build\" \"apps/*/android/app/build\" \"apps/*/ios/build\" \"apps/*/ios/Pods\"",
     "prepare": "bob build && yarn build",
-    "prepublishOnly": "yarn build",
     "release": "release-it",
     "prettier": "prettier --write ."
   },

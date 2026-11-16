@@ -1,5 +1,8 @@
 import type { IVideo } from '../models';
 
+/** The first absolute HLS playlist URL in a player script, up to the double quote that ends it. */
+export const M3U8_URL = /https?:\/\/[^"]+?\.m3u8[^"]*/;
+
 /** `uri` from a playlist, resolved against the URL of the playlist that lists it. */
 function resolveUri(uri: string, playlistUrl: string): string {
   if (/^https?:\/\//i.test(uri)) return uri;

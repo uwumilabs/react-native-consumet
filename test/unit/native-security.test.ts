@@ -38,8 +38,8 @@ describe('Android logging (SEC-2)', () => {
   // logged; review the value before adding it here.
   const allowed = new Set([
     'url',
-    'loadedUrl',
-    'wellKnown',
+    // "crashed" or "was killed to free memory"
+    'cause',
     'e.message',
     'error.message',
     'error.description',

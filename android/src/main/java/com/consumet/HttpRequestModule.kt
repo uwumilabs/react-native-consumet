@@ -14,6 +14,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
 
@@ -46,62 +47,51 @@ internal class HttpRequestModule(private val context: Context) {
             })();
         """.trimIndent()
 
-        private val HTML_SCRIPT = """
-            (function() {
-                try {
-                    return document.documentElement.outerHTML;
-                } catch(e) {
-                    return '';
-                }
-            })();
-        """.trimIndent()
+        // The page capture scripts. One that throws gives no string, and the request rejects.
+        private const val HTML_SCRIPT = "document.documentElement.outerHTML"
 
         private val POST_RESPONSE_SCRIPT = """
             (function() {
-                try {
-                    var contentType = 'text/html';
-                    var content = document.documentElement.outerHTML;
+                var contentType = 'text/html';
+                var content = document.documentElement.outerHTML;
 
-                    // A JSON response is shown as a lone <pre>
-                    if (document.body && document.body.children.length === 1 &&
-                        document.body.children[0].tagName === 'PRE') {
-                        var text = document.body.children[0].textContent;
-                        try {
-                            JSON.parse(text);
-                            contentType = 'application/json';
-                            content = text;
-                        } catch(e) {}
-                    }
-
-                    return JSON.stringify({
-                        content: content,
-                        contentType: contentType
-                    });
-                } catch(e) {
-                    return JSON.stringify({
-                        content: '',
-                        contentType: 'unknown',
-                        error: e.message
-                    });
+                // A JSON response is shown as a lone <pre>
+                if (document.body && document.body.children.length === 1 &&
+                    document.body.children[0].tagName === 'PRE') {
+                    var text = document.body.children[0].textContent;
+                    try {
+                        JSON.parse(text);
+                        contentType = 'application/json';
+                        content = text;
+                    } catch(e) {}
                 }
+
+                return JSON.stringify({
+                    content: content,
+                    contentType: contentType
+                });
             })();
         """.trimIndent()
 
-        /** evaluateJavascript hands back a JSON-encoded value; returns the string it encodes. */
-        private fun decodeJsString(value: String?): String? {
-            if (value == null || value == "null") return null
-            return try {
-                JSONTokener(value).nextValue() as? String ?: value
-            } catch (e: Exception) {
-                value
+        private const val CAPTURE_FAILED = "Could not read the loaded page"
+
+        /**
+         * evaluateJavascript hands back a JSON-encoded value; returns the string it encodes, or null
+         * when the script threw or gave something else.
+         */
+        private fun decodeJsString(value: String?): String? =
+            try {
+                JSONTokener(value ?: "null").nextValue() as? String
+            } catch (e: JSONException) {
+                null
             }
-        }
     }
 
     /**
      * Loads [url] in a hidden WebView. Resolves `{ url, html, cookies, status: "success" }` once the
-     * page has loaded; rejects with WEBVIEW_ERROR when the main document fails to load or TIMEOUT
-     * after 30 seconds.
+     * page has loaded, with the URL of the page that finished last and its cookies. Rejects with
+     * WEBVIEW_ERROR when the main document fails to load, the page can't be read or the renderer
+     * dies, and with TIMEOUT after 30 seconds.
      */
     fun makeGetRequestWithWebView(url: String, headers: ReadableMap?, promise: Promise) {
         Log.d(TAG, "makeGetRequestWithWebView called with url: $url")
@@ -111,14 +101,14 @@ internal class HttpRequestModule(private val context: Context) {
             // whose user agent claims another browser than the WebView's client hints report.
             val task = WebViewTask(context, promise, requestHeaders.userAgent)
             logConsoleMessages(task)
-            task.onPageFinished = { view, loadedUrl ->
-                Log.d(TAG, "onPageFinished for url: $loadedUrl")
+            task.onPageFinished = { view ->
                 captureUnlessChallenge(task, view) {
-                    view.evaluateJavascript(HTML_SCRIPT) { htmlResponse: String? ->
+                    readPage(task, view, HTML_SCRIPT) { html ->
+                        val finalUrl = task.finishedUrl ?: url
                         val result = WritableNativeMap()
-                        result.putString("url", loadedUrl)
-                        result.putString("html", decodeJsString(htmlResponse) ?: "")
-                        result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
+                        result.putString("url", finalUrl)
+                        result.putString("html", html)
+                        result.putString("cookies", CookieManager.getInstance().getCookie(finalUrl) ?: "")
                         result.putString("status", "success")
                         task.resolve(result)
                     }
@@ -150,22 +140,23 @@ internal class HttpRequestModule(private val context: Context) {
             // whose user agent claims another browser than the WebView's client hints report.
             val task = WebViewTask(context, promise, requestHeaders.userAgent)
             logConsoleMessages(task)
-            task.onPageFinished = { view, loadedUrl ->
-                Log.d(TAG, "onPageFinished for url: $loadedUrl")
+            task.onPageFinished = { view ->
                 captureUnlessChallenge(task, view) {
-                    view.evaluateJavascript(POST_RESPONSE_SCRIPT) { responseJson: String? ->
-                        // Like iOS, an unreadable capture gives an empty text/html response.
-                        val json = try {
-                            JSONObject(decodeJsString(responseJson) ?: "{}")
-                        } catch (e: Exception) {
-                            JSONObject()
+                    readPage(task, view, POST_RESPONSE_SCRIPT) { json ->
+                        // A page can replace JSON.stringify, so the capture is checked too.
+                        val page = try {
+                            JSONObject(json).let { it.getString("content") to it.getString("contentType") }
+                        } catch (e: JSONException) {
+                            null
                         }
+                        if (page == null) return@readPage captureFailed(task)
+                        val finalUrl = task.finishedUrl ?: url
                         val result = WritableNativeMap()
-                        result.putString("url", loadedUrl)
-                        result.putString("response", json.optString("content", ""))
-                        result.putString("cookies", CookieManager.getInstance().getCookie(loadedUrl) ?: "")
+                        result.putString("url", finalUrl)
+                        result.putString("response", page.first)
+                        result.putString("cookies", CookieManager.getInstance().getCookie(finalUrl) ?: "")
                         result.putString("status", "success")
-                        result.putString("contentType", json.optString("contentType", "text/html"))
+                        result.putString("contentType", page.second)
                         task.resolve(result)
                     }
                 }
@@ -174,6 +165,23 @@ internal class HttpRequestModule(private val context: Context) {
             Log.d(TAG, "Making POST request to: $url with body length: ${body.length}")
             task.start { webView -> webView.postUrl(url, body.toByteArray(Charsets.UTF_8)) }
         }
+    }
+
+    /**
+     * Runs [script] on the page and passes on the string it returns. A script that throws or gives
+     * no string (the page has no document, say) rejects the task with WEBVIEW_ERROR.
+     */
+    private fun readPage(task: WebViewTask, view: WebView, script: String, use: (String) -> Unit) {
+        view.evaluateJavascript(script) { result: String? ->
+            if (task.isSettled) return@evaluateJavascript
+            val value = decodeJsString(result)
+            if (value == null) captureFailed(task) else use(value)
+        }
+    }
+
+    private fun captureFailed(task: WebViewTask) {
+        Log.e(TAG, CAPTURE_FAILED)
+        task.reject(WebViewTask.WEBVIEW_ERROR, CAPTURE_FAILED)
     }
 
     /**

@@ -1,18 +1,21 @@
 import { LIGHT_NOVELS } from '../../src/providers';
+import { expectMediaSearch } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
-const novelupdates = new LIGHT_NOVELS.NovelUpdates();
+const provider = new LIGHT_NOVELS.NovelUpdates();
 
-test('returns a filled array of light novels', async () => {
-  const data = await novelupdates.search('slime');
-  expect(data.results).not.toEqual([]);
+test('search returns light novels', async () => {
+  expectMediaSearch(await provider.search('slime'));
 });
 
-test('returns a filled object of light novel info', async () => {
-  const data = await novelupdates.fetchLightNovelInfo(
-    'you-are-the-daughter-of-my-first-love'
-  );
-  expect(data.chapters).not.toEqual([]);
-  expect(data.description).not.toEqual('');
+test('fetchLightNovelInfo returns the description and chapters, and fetchChapterContent the first chapter', async () => {
+  const info = await provider.fetchLightNovelInfo('you-are-the-daughter-of-my-first-love');
+
+  expect(info.description).toMatch(/\S/);
+  expect(info.chapters!.length).toBeGreaterThan(0);
+  expect(info.chapters!.filter((chapter) => !chapter.id?.trim() || !chapter.title?.trim())).toEqual([]);
+
+  const content = await provider.fetchChapterContent(info.chapters![0]!.id);
+  expect(content.text).toMatch(/\S/);
 });

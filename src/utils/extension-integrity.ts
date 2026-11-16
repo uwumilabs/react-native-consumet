@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import { IDENTIFIER_RE } from './registry-schema';
 
 export type IntegrityErrorCode = 'INTEGRITY_MISMATCH' | 'INTEGRITY_MISSING' | 'INVALID_IDENTIFIER';
 
@@ -38,8 +39,6 @@ export interface ExecuteCodeOptions {
   /** Run the code without checking it against the registry `sha256`. Only for code you already trust. */
   skipIntegrity?: boolean;
 }
-
-const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 export const sha256Hex = (code: string): string => CryptoJS.SHA256(code).toString(CryptoJS.enc.Hex);
 

@@ -2628,15 +2628,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/create-cache-key-function@npm:^29.7.0":
-  version: 29.7.0
-  resolution: "@jest/create-cache-key-function@npm:29.7.0"
-  dependencies:
-    "@jest/types": ^29.6.3
-  checksum: 681bc761fa1d6fa3dd77578d444f97f28296ea80755e90e46d1c8fa68661b9e67f54dd38b988742db636d26cf160450dc6011892cec98b3a7ceb58cad8ff3aae
-  languageName: node
-  linkType: hard
-
 "@jest/diff-sequences@npm:30.5.0":
   version: 30.5.0
   resolution: "@jest/diff-sequences@npm:30.5.0"
@@ -3535,21 +3526,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native/jest-preset@npm:0.87.1":
-  version: 0.87.1
-  resolution: "@react-native/jest-preset@npm:0.87.1"
-  dependencies:
-    "@jest/create-cache-key-function": ^29.7.0
-    "@react-native/js-polyfills": 0.87.1
-    babel-jest: ^29.7.0
-    jest-environment-node: ^29.7.0
-    regenerator-runtime: ^0.13.2
-  peerDependencies:
-    react: ^19.2.3
-  checksum: 6c69fcd6659fad633d5ed46636bcb5530d4833221c5e7c243ab7cd2fb633b497f8c8b88883494c36e278e1ec91aa950c29dab4ffb5e39518bead71781aa86394
-  languageName: node
-  linkType: hard
-
 "@react-native/js-polyfills@npm:0.87.1":
   version: 0.87.1
   resolution: "@react-native/js-polyfills@npm:0.87.1"
@@ -3587,13 +3563,6 @@ __metadata:
   version: 0.87.1
   resolution: "@react-native/normalize-colors@npm:0.87.1"
   checksum: 17cbcd2b37452d3f8d45853b3f5f3a4754e009ee52cde8d10a3e3dc69ed19d1a17067f259be7af5080a9ef3cd9d6fb2172a355371d79cf892a1a7ff510c4049c
-  languageName: node
-  linkType: hard
-
-"@react-native/typescript-config@npm:0.87.1":
-  version: 0.87.1
-  resolution: "@react-native/typescript-config@npm:0.87.1"
-  checksum: 7641dbc89e0ea3ab37026eb221a2be98088f7f9b1e56f82714ab8f7e7be57e35ed5d9eb576d990dbd9f90a2f39ca8fd6fb5ebfe1137983752e6d764d83293df0
   languageName: node
   linkType: hard
 
@@ -11821,9 +11790,7 @@ __metadata:
     "@react-native-community/cli-platform-android": 20.2.0
     "@react-native-community/cli-platform-ios": 20.2.0
     "@react-native/babel-preset": 0.87.1
-    "@react-native/jest-preset": 0.87.1
     "@react-native/metro-config": 0.87.1
-    "@react-native/typescript-config": 0.87.1
     "@types/react": ^19.2.0
     react: 19.2.3
     react-native: 0.87.1

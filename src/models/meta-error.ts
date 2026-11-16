@@ -1,5 +1,8 @@
-/** Where a meta provider failure came from. */
-export type MetaErrorSource = 'anilist' | 'mal' | 'tmdb' | 'provider';
+/**
+ * Where a meta provider failure came from: a metadata service, the wrapped provider, or GitHub,
+ * which hosts the id list `Anilist.fetchRandomAnime` picks from.
+ */
+export type MetaErrorSource = 'anilist' | 'mal' | 'tmdb' | 'provider' | 'github';
 
 /**
  * Error thrown by meta providers (Anilist, MAL, TMDB). Keeps the failing service, its HTTP status

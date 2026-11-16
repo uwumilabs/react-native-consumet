@@ -1,18 +1,21 @@
 import { LIGHT_NOVELS } from '../../src/providers';
+import { expectMediaSearch } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
-const readlightnovels = new LIGHT_NOVELS.ReadLightNovels();
+const provider = new LIGHT_NOVELS.ReadLightNovels();
 
-test('returns a filled array of light novels', async () => {
-  const data = await readlightnovels.search('slime');
-  expect(data.results).not.toEqual([]);
+test('search returns light novels', async () => {
+  expectMediaSearch(await provider.search('slime'));
 });
 
-test('returns a filled object of light novel info', async () => {
-  const data = await readlightnovels.fetchLightNovelInfo(
-    'tensei-shitara-slime-datta-ken'
-  );
-  expect(data.chapters).not.toEqual([]);
-  expect(data.description).not.toEqual('');
+test('fetchLightNovelInfo returns the description and chapters, and fetchChapterContent the first chapter', async () => {
+  const info = await provider.fetchLightNovelInfo('tensei-shitara-slime-datta-ken');
+
+  expect(info.description).toMatch(/\S/);
+  expect(info.chapters!.length).toBeGreaterThan(0);
+  expect(info.chapters!.filter((chapter) => !chapter.id?.trim() || !chapter.title?.trim())).toEqual([]);
+
+  const content = await provider.fetchChapterContent(info.chapters![0]!.id);
+  expect(content.text).toMatch(/\S/);
 });

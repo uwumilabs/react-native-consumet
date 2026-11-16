@@ -1,177 +1,81 @@
 import { ANIME } from '../../src/providers';
+import { MediaStatus } from '../../src/models';
+import { expectMediaInfo, expectMediaSearch, expectServers, expectSources } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
+// fetchContinueWatching and fetchWatchList need a signed-in user's cookie, so no suite covers them.
 const zoro = new ANIME.Zoro();
+const ONE_PIECE = 'one-piece-100';
 
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.search('Overlord IV');
-  expect(data.results).not.toEqual([]);
+test('search finds the title and pages through results', async () => {
+  const first = await zoro.search('One Piece');
+  expectMediaSearch(first);
+  expect(first.results.map((result) => result.id)).toContain(ONE_PIECE);
+  expect(first.hasNextPage).toBe(true);
+
+  expectMediaSearch(await zoro.search('One Piece', 2), 2, new Set(first.results.map((result) => result.id)));
 });
 
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchAdvancedSearch(1, 'tv', 'finished_airing');
-  expect(data.results).not.toEqual([]);
+test.each([
+  ['fetchAdvancedSearch', () => zoro.fetchAdvancedSearch(1, 'tv', 'finished_airing')],
+  ['fetchTopAiring', () => zoro.fetchTopAiring()],
+  ['fetchMostPopular', () => zoro.fetchMostPopular()],
+  ['fetchMostFavorite', () => zoro.fetchMostFavorite()],
+  ['fetchLatestCompleted', () => zoro.fetchLatestCompleted()],
+  ['fetchRecentlyUpdated', () => zoro.fetchRecentlyUpdated()],
+  ['fetchRecentlyAdded', () => zoro.fetchRecentlyAdded()],
+  ['fetchTopUpcoming', () => zoro.fetchTopUpcoming()],
+  ['fetchStudio', () => zoro.fetchStudio('studio-pierrot')],
+  ['fetchSubbedAnime', () => zoro.fetchSubbedAnime()],
+  ['fetchDubbedAnime', () => zoro.fetchDubbedAnime()],
+  ['fetchMovie', () => zoro.fetchMovie()],
+  ['fetchTV', () => zoro.fetchTV()],
+  ['fetchOVA', () => zoro.fetchOVA()],
+  ['fetchONA', () => zoro.fetchONA()],
+  ['fetchSpecial', () => zoro.fetchSpecial()],
+  ['genreSearch', () => zoro.genreSearch('action')],
+])('%s returns a page of titles', async (_name, list) => {
+  expectMediaSearch(await list());
 });
 
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchTopAiring();
-  expect(data.results).not.toEqual([]);
+test.each([
+  ['fetchSpotlight', () => zoro.fetchSpotlight()],
+  ['fetchSearchSuggestions', () => zoro.fetchSearchSuggestions('one piece')],
+  ['fetchSchedule', () => zoro.fetchSchedule(new Date().toISOString().slice(0, 10))],
+])('%s returns titles', async (_name, list) => {
+  expectMediaSearch({ results: await list() });
 });
 
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchMostPopular();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchMostFavorite();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchLatestCompleted();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchRecentlyUpdated();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchRecentlyAdded();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchTopUpcoming();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchStudio('studio-pierrot');
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchSubbedAnime();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchDubbedAnime();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchMovie();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchTV();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchOVA();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchONA();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchSpecial();
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of genres', async () => {
-  const data = await zoro.fetchGenres();
-  expect(data).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.genreSearch('action');
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const date = new Date();
-  //date in YYYY-MM-DD format
-  const formattedDate = date.toISOString().split('T')[0];
-  const data = await zoro.fetchSchedule(formattedDate);
-  expect(data).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchSpotlight();
-  expect(data).not.toEqual([]);
-});
-
-test('returns a filled array of anime list', async () => {
-  const data = await zoro.fetchSearchSuggestions('one piece');
-  expect(data).not.toEqual([]);
-});
-
-// test('returns a filled array of episode list for continue watching', async () => {
-//   const connectSid = 'users_connect_sid';
-//   const data = await zoro.fetchContinueWatching(`${connectSid}`);
-//   console.log(data);
-//   expect(data).not.toEqual([]);
-// });
-
-// test('returns a filled array of animes from watch list', async () => {
-//   const connectSid = 'users_connect_sid';
-//   const data = await zoro.fetchWatchList(`${connectSid}`);
-//   console.log(data);
-//   expect(data).not.toEqual([]);
-// });
-
-test('returns a filled object of anime data', async () => {
-  const data = await zoro.fetchAnimeInfo('one-piece-100');
-  expect(data).not.toBeNull();
-  expect(data.description).not.toBeNull();
-  expect(data.episodes).not.toEqual([]);
-});
-
-test('returns a filled object of episode sources', async () => {
-  const res = await zoro.search('Overlord IV');
-  const info = await zoro.fetchAnimeInfo(res.results[3].id);
-  const data = await zoro.fetchEpisodeSources(info.episodes![0].id); // Overlord IV episode 1 id
-  expect(data.sources).not.toEqual([]);
-  expect(data.headers).not.toBeNull();
-});
-test('returns a filled object of episode sources of multiple episodes', async () => {
-  const data1 = await zoro.fetchEpisodeSources(
-    'rezero-starting-life-in-another-world-season-3-19301$episode$128356$both'
-  );
-  const data2 = await zoro.fetchEpisodeSources(
-    'rezero-starting-life-in-another-world-season-3-19301$episode$128536$both'
-  );
-  expect(data1.sources).not.toEqual([]);
-  expect(data2.sources).not.toEqual([]);
-});
-
-test('returns a filled object of anime data with: status, genres, season and japaneseTitle', async () => {
+test('fetchAnimeInfo reads the details and the episodes', async () => {
   const info = await zoro.fetchAnimeInfo('ranma-1-2-19335');
 
-  expect(info.status).not.toBeNull();
-  expect(info.status).toBeDefined();
-  expect(info.status).not.toBe('');
+  expectMediaInfo(info);
+  expect(Object.values(MediaStatus)).toContain(info.status);
+  expect(info).toMatchObject({
+    description: expect.stringMatching(/\S/),
+    season: expect.stringMatching(/\S/),
+    japaneseTitle: expect.stringMatching(/\S/),
+  });
+  expect(info.genres!.length).toBeGreaterThan(0);
+});
 
-  expect(info.season).not.toBeNull();
-  expect(info.season).toBeDefined();
-  expect(info.season).not.toBe('');
+test('servers and sources play an episode', async () => {
+  const info = await zoro.fetchAnimeInfo(ONE_PIECE);
+  const episodeId = info.episodes![0]!.id;
 
-  expect(info.japaneseTitle).not.toBeNull();
-  expect(info.japaneseTitle).toBeDefined();
-  expect(info.japaneseTitle).not.toBe('');
+  expectServers(await zoro.fetchEpisodeServers(episodeId));
+  expectSources(await zoro.fetchEpisodeSources(episodeId));
+});
 
-  expect(info.genres).not.toBeNull();
-  expect(info.genres).toBeDefined();
-  expect(info.genres).not.toEqual([]);
+test('two episodes of a show each get their own sources', async () => {
+  const show = 'rezero-starting-life-in-another-world-season-3-19301';
+  const [first, second] = [
+    await zoro.fetchEpisodeSources(`${show}$episode$128356$both`),
+    await zoro.fetchEpisodeSources(`${show}$episode$128536$both`),
+  ];
+
+  expectSources(first);
+  expectSources(second);
+  expect(first.sources[0]!.url).not.toBe(second.sources[0]!.url);
 });

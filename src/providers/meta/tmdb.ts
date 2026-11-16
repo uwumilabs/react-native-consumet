@@ -17,7 +17,7 @@ import {
 import type { IMovieProvider, IPeopleResult } from '../../models/types';
 import type { AxiosAdapter } from 'axios';
 import {
-  TMDB_API_URL,
+  TMDB_INFO_APPEND,
   mapTmdbInfo,
   mapTmdbResult,
   mapTmdbResults,
@@ -25,10 +25,13 @@ import {
   resolveTmdbApiKey,
   tmdbImage,
   tmdbImageSizes,
+  tmdbPage,
+  tmdbUrl,
   type TmdbMediaType,
 } from '../../utils/tmdb';
+import { searchTerm } from '../../utils/utils';
 import { HiMovies } from '../movies/himovies/himovies';
-import { callProvider, searchTerm, stringSimilarity } from './shared';
+import { bestTitleMatch, callProvider } from './shared';
 
 /** What TMDB knows about a title, used to pick the matching provider result. */
 type TitleHints = {
@@ -36,8 +39,10 @@ type TitleHints = {
   year?: number;
   totalSeasons?: number;
   totalEpisodes?: number;
-  [key: string]: any;
 };
+
+/** Provider results less similar than this to TMDB's title are not the title. */
+const MIN_TITLE_SIMILARITY = 0.5;
 
 /** TMDB's trending list for each TvType; anything else is `all`. */
 const TRENDING_PATHS = new Map([
@@ -49,7 +54,6 @@ const TRENDING_PATHS = new Map([
 class TMDB extends MovieParser {
   override readonly name = 'TMDB';
   protected override baseUrl = 'https://www.themoviedb.org';
-  protected apiUrl = TMDB_API_URL;
   protected override logo = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
   protected override classPath = 'META.TMDB';
   override supportedTypes = new Set([TvType.MOVIE, TvType.TVSERIES, TvType.ANIME]);
@@ -86,17 +90,21 @@ class TMDB extends MovieParser {
   ): Promise<ISearch<IMovieResult | IAnimeResult | IPeopleResult>> => {
     const path = TRENDING_PATHS.get(type.toLowerCase()) ?? 'all';
     const data = await this.get(`/trending/${path}/${timePeriod}?page=${page}&language=en-US`);
-    return this.toPage(data, page, (result) =>
-      result.media_type === 'person'
-        ? ({
-            id: result.id,
-            name: result.name,
-            rating: result.popularity,
-            image: tmdbImage(result.profile_path),
-            // TMDB's trending people no longer come with known_for
-            movies: (result.known_for ?? []).map((movie: any) => mapTmdbResult(movie)),
-          } as IPeopleResult)
-        : mapTmdbResult(result)
+    return tmdbPage(
+      data,
+      page,
+      (data?.results ?? []).map((result: any) =>
+        result.media_type === 'person'
+          ? ({
+              id: String(result.id),
+              name: result.name,
+              rating: result.popularity,
+              image: tmdbImage(result.profile_path),
+              // TMDB's trending people no longer come with known_for
+              movies: (result.known_for ?? []).map((movie: any) => mapTmdbResult(movie)),
+            } as IPeopleResult)
+          : mapTmdbResult(result)
+      )
     );
   };
 
@@ -104,7 +112,11 @@ class TMDB extends MovieParser {
     const data = await this.get(
       `/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`
     );
-    return this.toPage(data, page, (result) => mapTmdbResult(result));
+    return tmdbPage(
+      data,
+      page,
+      (data?.results ?? []).map((result: any) => mapTmdbResult(result))
+    );
   };
 
   /**
@@ -118,8 +130,9 @@ class TMDB extends MovieParser {
     const mediaType: TmdbMediaType = type.toLowerCase() === 'movie' ? 'movie' : 'tv';
     try {
       const { data } = await metaHttp.get(
-        this.url(
-          `/${mediaType}/${mediaId}?language=en-US&append_to_response=release_dates,watch/providers,alternative_titles,credits,external_ids,images,keywords,recommendations,reviews,similar,translations,videos&include_image_language=en`
+        tmdbUrl(
+          `/${mediaType}/${mediaId}?language=en-US&append_to_response=${TMDB_INFO_APPEND},external_ids,similar`,
+          this.apiKey
         )
       );
 
@@ -202,7 +215,7 @@ class TMDB extends MovieParser {
   ): Promise<IMovieSeason[]> => {
     const seasonNumbers = Array.from({ length: totalSeasons }, (_, index) => index + 1);
     const responses = await Promise.allSettled(
-      seasonNumbers.map((season) => metaHttp.get(this.url(`/tv/${mediaId}/season/${season}`)))
+      seasonNumbers.map((season) => metaHttp.get(tmdbUrl(`/tv/${mediaId}/season/${season}`, this.apiKey)))
     );
     const failure = responses.find((response): response is PromiseRejectedResult => response.status === 'rejected');
     if (failure && responses.every((response) => response.status === 'rejected')) throw failure.reason;
@@ -256,39 +269,34 @@ class TMDB extends MovieParser {
 
   /** The id of the provider's search result for the title, checked against TMDB's year and season count. */
   private findIdFromTitle = async (title: string, extraData: TitleHints): Promise<string | undefined> => {
-    const term = searchTerm(title).toLowerCase();
-    const findMedia = (await this.provider.search(term)) as ISearch<IAnimeResult>;
+    const findMedia = (await this.provider.search(searchTerm(title).toLowerCase())) as ISearch<IAnimeResult>;
 
-    // Drop results whose title isn't close, or whose type, year (±1) or season count (±2) contradicts
-    // TMDB. Results that don't report a type, year or season count stay as candidates.
+    // Drop results whose type, year (±1) or season count (±2) contradicts TMDB. Results that don't
+    // report a type, year or season count stay as candidates.
     const yearOf = (result: IAnimeResult) => Number(/\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1]);
+    const yearGap = (result: IAnimeResult) => {
+      const year = yearOf(result);
+      return year && extraData.year ? Math.abs(year - extraData.year) : undefined;
+    };
     const checkType = extraData.type === TvType.MOVIE || extraData.type === TvType.TVSERIES;
     const checkSeasons = extraData.type === TvType.TVSERIES && Boolean(extraData.totalSeasons);
-    const candidates = findMedia.results
-      .map((result) => {
-        const resultTitle = typeof result.title === 'string' ? result.title : '';
-        const year = yearOf(result);
-        return {
-          result,
-          similarity: stringSimilarity(term, resultTitle.toLowerCase()),
-          yearGap: year && extraData.year ? Math.abs(year - extraData.year) : undefined,
-        };
-      })
-      .filter(({ result, similarity, yearGap }) => {
-        if (similarity < 0.5) return false;
-        if (checkType && result.type && (result.type as string) !== extraData.type) return false;
-        if (yearGap !== undefined && yearGap > 1) return false;
+    const candidates = (findMedia?.results ?? []).filter((result) => {
+      if (checkType && result.type && (result.type as string) !== extraData.type) return false;
+      const gap = yearGap(result);
+      if (gap !== undefined && gap > 1) return false;
 
-        const seasons = result.seasons;
-        if (checkSeasons && typeof seasons === 'number') {
-          return seasons >= extraData.totalSeasons! - 2 && seasons <= extraData.totalSeasons! + 2;
-        }
-        return true;
-      })
-      // Closest title first; between equally close titles, the exact year, then ±1, then unknown.
-      .sort((a, b) => b.similarity - a.similarity || (a.yearGap ?? 2) - (b.yearGap ?? 2));
+      const seasons = result.seasons;
+      if (checkSeasons && typeof seasons === 'number') {
+        return seasons >= extraData.totalSeasons! - 2 && seasons <= extraData.totalSeasons! + 2;
+      }
+      return true;
+    });
 
-    return candidates[0]?.result.id || undefined;
+    // Closest title first; between equally close titles, the exact year, then ±1, then unknown.
+    const match = bestTitleMatch([title], candidates, MIN_TITLE_SIMILARITY, {
+      compare: (a, b) => b.similarity - a.similarity || (yearGap(a.result) ?? 2) - (yearGap(b.result) ?? 2),
+    });
+    return match?.id || undefined;
   };
 
   override fetchEpisodeSources = (id: string, ...args: any): Promise<ISource> =>
@@ -297,28 +305,13 @@ class TMDB extends MovieParser {
   override fetchEpisodeServers = (episodeId: string, ...args: any): Promise<IEpisodeServer[]> =>
     callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId, ...args));
 
-  /** A TMDB API URL with the API key. */
-  private url = (path: string) => `${this.apiUrl}${path}${path.includes('?') ? '&' : '?'}api_key=${this.apiKey}`;
-
   /** GET a TMDB list; failures as a TMDB MetaError. */
   private get = async (path: string) => {
     try {
-      return (await metaHttp.get(this.url(path))).data;
+      return (await metaHttp.get(tmdbUrl(path, this.apiKey))).data;
     } catch (err) {
       throw MetaError.from('tmdb', err);
     }
-  };
-
-  /** A page of TMDB results; `hasNextPage` and the totals come from TMDB's paging. */
-  private toPage = <T>(data: any, page: number, map: (result: any) => T): ISearch<T> => {
-    if (!data?.results?.length) return { currentPage: page, hasNextPage: false, results: [] };
-    return {
-      currentPage: page,
-      hasNextPage: page + 1 <= data.total_pages,
-      totalResults: data.total_results,
-      totalPages: data.total_pages,
-      results: data.results.map(map),
-    };
   };
 }
 

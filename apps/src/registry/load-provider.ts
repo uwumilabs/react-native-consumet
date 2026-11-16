@@ -60,7 +60,7 @@ export interface LoadOptions {
   skipIntegrity?: boolean;
 }
 
-/** The local dist map has no code for this id (run `yarn example gen:local-dist`). */
+/** The local dist map has no code for this id (run `yarn build:registry`). */
 class LocalBundleMissingError extends Error {
   constructor(id: string) {
     super(`No local dist bundle for '${id}' in ${LOCAL_DIST_FILE}`);
@@ -171,7 +171,7 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
         ...base,
         kind: 'integrity',
         title: 'No integrity hash',
-        hint: `${label} has no sha256 in the registry, so its code is refused. Run node scripts/prepare-registry.js.`,
+        hint: `${label} has no sha256 in the registry, so its code is refused. Run yarn build:registry from the repo root.`,
         canSkipIntegrity: mode === 'local',
       };
     }
@@ -182,8 +182,9 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
         title: "Local bundle doesn't match the registry",
         hint:
           `The code in local-dist-map.ts isn't the code registered for ${label}. ` +
-          'Rebuild (yarn build), publish the entry (node scripts/prepare-registry.js), then regenerate ' +
-          'the map (yarn example gen:local-dist). While developing, you can run it unverified.',
+          "Bump the entry's version in src/extension-registry.json, then run yarn build:registry from the " +
+          'repo root: it rebuilds, publishes the new version and rewrites the map. While developing, you ' +
+          'can run it unverified.',
         details: hashes,
         canSkipIntegrity: true,
       };
@@ -220,7 +221,7 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
       ...base,
       kind: 'local-missing',
       title: 'No local bundle',
-      hint: 'Build the provider (yarn build), then regenerate the map (yarn example gen:local-dist).',
+      hint: 'Run yarn build:registry from the repo root: it rebuilds the bundles and rewrites the map.',
       suggestMode: 'registry',
     };
   }

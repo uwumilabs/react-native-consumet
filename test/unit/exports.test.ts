@@ -27,7 +27,6 @@ const VALUES = [
   'MetaError',
   'ExtensionRegistry',
   'PolyURL',
-  'FlixCloud',
   'AnimeParser',
   'MovieParser',
   'WatchListType',
@@ -70,18 +69,17 @@ describe('public exports', () => {
     expect((Consumet as Record<string, unknown>)[name]).toBeDefined();
   });
 
-  it('exports FlixCloud as an extractor factory', () => {
-    const extractor = Consumet.FlixCloud(Consumet.defaultExtractorContext);
-    expect(typeof extractor.extract).toBe('function');
-  });
+  it.each(['FlixCloud', 'Gofile', 'HubCloud', 'Kwik', 'MegaCloud', 'MegaPlay', 'StreamWish', 'VidHide'])(
+    'exports the extractor factory %s',
+    (name) => {
+      const factory = (Consumet as Record<string, any>)[name];
+      expect(typeof factory(Consumet.defaultExtractorContext).extract).toBe('function');
+    }
+  );
 
   it('exports the parser base classes that bundled providers extend', () => {
     expect(new Consumet.MOVIES.HiMovies()).toBeInstanceOf(Consumet.MovieParser);
     expect(typeof Consumet.AnimeParser).toBe('function');
-  });
-
-  it('exports WatchListType values', () => {
-    expect(Consumet.WatchListType.WATCHING).toBe('watching');
   });
 
   describe('types', () => {

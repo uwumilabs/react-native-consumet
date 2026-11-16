@@ -156,7 +156,7 @@ export type MyAnimeWebsiteProviderInstance = ReturnType<typeof createMyAnimeWebs
 
 Export the factory by name (`export function createMyAnimeWebsite`); the registry's `factoryName` must match it. Provider and extractor modules use named exports only.
 
-Helpers several providers share live in `src/providers/common/`: `emptySearch(page)`, `toMediaStatus(text, ctx.enums.MediaStatus)` (a site's status text as a `MediaStatus`), `pickServer(servers, server?)` (the server whose name starts with `server`, or the first), and `ENC_DEC_API`. Import them, or any other module, by relative path: the build inlines it into your bundle.
+Helpers several providers share live in `src/providers/common/`: `emptySearch(page)`, `toMediaStatus(text)` (a site's status text as a `MediaStatus`), `pickServer(servers, server?)` (the server whose name starts with `server`, or the first), and `ENC_DEC_API`. Import them, or any other module, by relative path: the build inlines it into your bundle.
 
 ## Step 3: Implement the Provider Logic
 
@@ -236,22 +236,16 @@ With `aniZipEpisodes`, `META.Anilist` keys your episodes by AniDB number (`uniqu
 
 ### Native Module
 
-`ctx.NativeConsumet` gives extension code the library's native module: `makeGetRequestWithWebView` and `makePostRequestWithWebView` (load a page in a hidden WebView, with its cookies), `getDdosGuardCookiesWithWebView` and `bypassDdosGuard`, a plain `makePostRequest`, and `deobfuscateScript` (runs the Synchrony deobfuscator). What each method resolves, the `code` of each rejection, and how WebView requests treat sub-resources, HTTP errors and cookies are documented in [`src/NativeConsumet.ts`](../../src/NativeConsumet.ts). Android and iOS follow that contract. In short:
+`ctx.NativeConsumet` gives extension code the library's native module: `makeGetRequestWithWebView` and `makePostRequestWithWebView` (load a page in a hidden WebView, with its cookies), a plain `makePostRequest`, and `deobfuscateScript` (runs the Synchrony deobfuscator). What each method resolves, the `code` of each rejection, and how WebView requests treat sub-resources, HTTP errors and cookies are documented in [`src/NativeConsumet.ts`](../../src/NativeConsumet.ts). Android and iOS follow that contract. In short:
 
-- Rejections are Errors with a `code`: `WEBVIEW_ERROR` (the page failed to load), `TIMEOUT` (it didn't finish within 30 s), `COOKIE_ERROR`, `ERROR`, `HTTP_ERROR`, and `NetworkError` / `ParseError` / `EvaluationError` from `deobfuscateScript`.
-- In WebView requests only the main document decides the outcome. Failed images, scripts and iframes are ignored, and HTTP error statuses (403, 503…) resolve with the page.
+- Rejections are Errors with a `code`: `WEBVIEW_ERROR` (the page failed to load, couldn't be read, or the WebView's renderer died), `TIMEOUT` (it didn't finish within 30 s), `HTTP_ERROR`, and `NetworkError` / `ParseError` / `EvaluationError` from `deobfuscateScript`.
+- In WebView requests only the main document decides the outcome. Failed images, scripts and iframes are ignored, and HTTP error statuses (403, 503…) resolve with the page. After a Cloudflare challenge, `url` and `cookies` are those of the page the challenge reloaded into.
 - `deobfuscateScript` downloads Synchrony (about 400 KB) on its first call, checks it against a pinned SHA-256, and keeps it in memory and in the app's cache directory, so later calls and launches work offline. A download that doesn't match the pin rejects with `NetworkError`.
 
 Two platform differences remain:
 
 - **Android WebView POSTs** can't carry custom headers. `makePostRequestWithWebView` sends only `User-Agent` and `Cookie` there, and the body as `application/x-www-form-urlencoded`.
 - **iOS WebView cookies** live in an in-memory store shared by this module's WebViews only. They carry over between calls but are separate from the app's own WebViews and are cleared when the app restarts. Android uses the app-wide `CookieManager`.
-
-Registry code also runs in apps built with older native code (1.6.0 and earlier), which behaved differently. Code that must work there should:
-
-- keep a null check on `deobfuscateScript`'s result (older iOS resolved `null` on failure);
-- accept `{ cookie }` as well as a string from `getDdosGuardCookiesWithWebView` (older Android resolved an object);
-- check `status === 'success'` on WebView request results (older Android resolved timeouts with `status: 'timeout'` and no `html` or `response`).
 
 ```typescript
 // src/providers/anime/myanimewebsite/load-protected-page.ts
@@ -260,17 +254,11 @@ import type { ProviderContext } from '../../../models';
 export async function loadProtectedPage(ctx: ProviderContext, url: string, packedScript: string) {
   const { NativeConsumet } = ctx;
 
-  // Current builds resolve the Cookie header string; older Android builds resolved { cookie }
-  const raw: unknown = await NativeConsumet.getDdosGuardCookiesWithWebView(url);
-  const cookie = typeof raw === 'string' ? raw : ((raw as { cookie?: string } | null)?.cookie ?? '');
-
-  const page = await NativeConsumet.makeGetRequestWithWebView(url, { Cookie: cookie });
-  if (page.status !== 'success') throw new Error(`WebView request for ${url} failed: ${page.status}`);
-
+  // Waits past a Cloudflare challenge; rejects with WEBVIEW_ERROR or TIMEOUT
+  const page = await NativeConsumet.makeGetRequestWithWebView(url, {});
   const script = await NativeConsumet.deobfuscateScript(packedScript);
-  if (!script) throw new Error('Could not deobfuscate the player script');
 
-  return { html: page.html, script };
+  return { html: page.html, cookies: page.cookies, script };
 }
 ```
 
@@ -311,7 +299,7 @@ Add a new entry to the `extensions` array:
 
 The comments are for this guide only; the registry is plain JSON.
 
-Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
+Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: `hubcloud-cf-storage`, `hubcloud-pixeldrain`) sets both `isSourceDirect` and `haveMultiServers`.
 
 Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook runs `yarn build:registry` on the staged files (build, `prepare-registry`, and the example app's local dist map) and stages `dist/`, the newly published file under `registry/`, the updated registry entry and the map. If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
 
@@ -326,10 +314,10 @@ yarn build:registry
 | Import                                               | What extension code gets                                                 |
 | ---------------------------------------------------- | ------------------------------------------------------------------------ |
 | `axios`, `cheerio`, `crypto-js`                      | The context's axios instance, `{ load }`, and CryptoJS                   |
-| anything under `src/models`                          | The base parsers and the library's enums (loaders before 2.0.0 give `{}`) |
-| `src/utils` (index) and the `create-*-context` files | `createProviderContext` / `createExtractorContext` returning the context |
+| anything under `src/models`                          | The base parsers and the library's enums                                 |
+| the `create-*-context` files                         | `createProviderContext` / `createExtractorContext` returning the context |
 
-Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports, and take enum values from `ctx.enums`: apps on library versions before 2.0.0 also download the current registry, and their loader answers `require('react-native-consumet/models')` with an empty object. Shared helpers that need an enum take it as an argument, e.g. `toMediaStatus(text, ctx.enums.MediaStatus)`.
+Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports.
 
 `prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match, and refuse entries without a `sha256`.
 
@@ -348,14 +336,13 @@ The registry's top-level `schemaVersion` (`REGISTRY_SCHEMA_VERSION`, currently 1
 
 ### What CI checks
 
-The `registry` job in CI rebuilds `dist/` from a clean checkout with `yarn build:clean`, then fails if:
+The `registry` job in CI builds `dist/` (which isn't committed) from a clean checkout with `yarn build:clean`, then fails if:
 
-- the committed `dist/` differs from the rebuild (a hand-edited or stale `dist/`)
 - an entry's `sha256` differs from its rebuilt bundle, or the bundle changed under a version that's already published
 - compared with the commit the change is based on, an entry's `sha256` changed without a higher `version`, a `version` went backwards, or a file already published under `registry/` changed
 - a URL in the current registry, or in a supported release's registry, points at a published file that no longer exists (see below)
 
-The build is deterministic, so a `dist/` committed through the pre-commit hook matches the rebuild.
+The build is deterministic, so what the pre-commit hook published matches the rebuild.
 
 ### Removing old published versions
 
@@ -365,7 +352,7 @@ Deleting a published file breaks every app whose registry still points at it: in
 2. It isn't the newest version before the current one, which is kept so a bad release can be rolled back by changing one line.
 3. No supported release's bundled registry references it.
 
-**Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v1.7.2`, all `v1.7.*` and `v1.6.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases up to `v1.6.0` predate published files (their URLs point into `dist/`), so they don't protect anything.
+**Supported releases** are every stable `vX.Y.Z` tag in the two most recent minor lines. For example, if the latest release is `v1.7.2`, all `v1.7.*` and `v1.6.*` tags are supported. The rule reads each one's registry with `git show <tag>:src/extension-registry.json`. Releases before `v2.0.0` predate published files, so they don't protect anything; they are not supported.
 
 Don't delete files by hand. `yarn registry:prune` lists what the rule allows deleting, and `yarn registry:prune --delete` removes it. Both need release tags locally (`git fetch --tags`). CI fails if any URL in the current registry or in a supported release's registry points at a file that no longer exists.
 

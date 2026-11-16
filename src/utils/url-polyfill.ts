@@ -9,6 +9,8 @@
  * so exotic internationalised domain names can differ from a browser.
  */
 
+import { fromCodePoints, toCodePoints, utf8Encode, utf8EncodeCodePoint } from './utf8';
+
 type Nullable<T> = T | null;
 
 const EOF = -1;
@@ -16,48 +18,6 @@ const EOF = -1;
 /* -----------------------------
    Code points, UTF-8 and percent-encoding
    ----------------------------- */
-
-// The code points of a string, with lone surrogates replaced by U+FFFD (USVString conversion).
-function toCodePoints(input: string): number[] {
-  const out: number[] = [];
-  for (let i = 0; i < input.length; i++) {
-    const c = input.charCodeAt(i);
-    if (c >= 0xd800 && c <= 0xdbff && i + 1 < input.length) {
-      const d = input.charCodeAt(i + 1);
-      if (d >= 0xdc00 && d <= 0xdfff) {
-        out.push(0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00));
-        i++;
-        continue;
-      }
-    }
-    out.push(c >= 0xd800 && c <= 0xdfff ? 0xfffd : c);
-  }
-  return out;
-}
-
-function fromCodePoints(codePoints: number[]): string {
-  let out = '';
-  for (const cp of codePoints) out += String.fromCodePoint(cp);
-  return out;
-}
-
-function utf8EncodeCodePoint(cp: number, bytes: number[]) {
-  if (cp < 0x80) {
-    bytes.push(cp);
-  } else if (cp < 0x800) {
-    bytes.push(0xc0 | (cp >> 6), 0x80 | (cp & 0x3f));
-  } else if (cp < 0x10000) {
-    bytes.push(0xe0 | (cp >> 12), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
-  } else {
-    bytes.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3f), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
-  }
-}
-
-function utf8Encode(input: string): number[] {
-  const bytes: number[] = [];
-  for (const cp of toCodePoints(input)) utf8EncodeCodePoint(cp, bytes);
-  return bytes;
-}
 
 // UTF-8 decode without BOM, replacing invalid sequences with U+FFFD (WHATWG Encoding).
 function utf8Decode(bytes: number[]): string {

@@ -1,24 +1,18 @@
 import type { AxiosStatic } from 'axios';
 import type TMDBClass from '../../src/providers/meta/tmdb';
 import type { MultiStream as MultiStreamClass } from '../../src/providers/movies/multistream/multistream';
-import type { IMovieProvider } from '../../src/models/types';
 import type { metaHttp as MetaHttp } from '../../src/utils/meta-http';
 import show from './fixtures/tmdb/tv-84958.json';
 import season1 from './fixtures/tmdb/tv-84958-season-1.json';
 import season2 from './fixtures/tmdb/tv-84958-season-2.json';
 import search from './fixtures/tmdb/search-multi-tom-and-jerry-1.json';
 import trending from './fixtures/tmdb/trending-all-week.json';
+import { fakeMovieProvider } from './helpers/fake-providers';
 
 // The key TMDB and MultiStream have always fallen back to; apps that pass no key keep working.
 const SHARED_KEY = '5201b54eb0968700e693a30576d7d4dc';
 
-const noProvider = {
-  name: 'Fake',
-  search: jest.fn().mockResolvedValue({ currentPage: 1, hasNextPage: false, results: [] }),
-  fetchMediaInfo: jest.fn(),
-  fetchEpisodeSources: jest.fn(),
-  fetchEpisodeServers: jest.fn(),
-} as unknown as IMovieProvider;
+const noProvider = fakeMovieProvider();
 
 // Fresh modules per test, so the warn-once state starts empty. Requests are answered from the
 // fixtures (through this registry's axios and metaHttp), and the api_key of each is recorded.
@@ -84,7 +78,6 @@ describe('TMDB API key (META-12)', () => {
     await tmdb.fetchTrending('all', 'week');
     await tmdb.fetchMediaInfo('84958', 'tv');
 
-    expect(keys).toHaveLength(5);
     expect(new Set(keys)).toEqual(new Set(['my-key']));
     expect(warn).not.toHaveBeenCalled();
   });

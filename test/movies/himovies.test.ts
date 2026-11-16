@@ -1,31 +1,31 @@
 import { MOVIES } from '../../src/providers';
+import { expectMediaInfo, expectMediaSearch, expectServers, expectSources } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
 const himovies = new MOVIES.HiMovies();
+const VINCENZO = 'tv/watch-vincenzo-67955';
 
-test('search: returns movies and series', async () => {
+test('search finds the series', async () => {
   const data = await himovies.search('vincenzo');
-  expect(data.results.length).toBeGreaterThan(0);
+
+  expectMediaSearch(data);
+  expect(data.results.map((result) => result.id)).toContain(VINCENZO);
 });
 
-test('fetchMediaInfo: returns the series with episodes', async () => {
-  const data = await himovies.fetchMediaInfo('tv/watch-vincenzo-67955');
-  expect(data.description).toBeTruthy();
-  expect(data.episodes!.length).toBeGreaterThan(0);
+test('fetchMediaInfo, servers and sources play the first episode', async () => {
+  const info = await himovies.fetchMediaInfo(VINCENZO);
+  expectMediaInfo(info);
+  expect(info.description).toMatch(/\S/);
+
+  const episodeId = info.episodes![0]!.id!;
+  expectServers(await himovies.fetchEpisodeServers(episodeId, VINCENZO));
+  expectSources(await himovies.fetchEpisodeSources(episodeId, VINCENZO));
 });
 
-test('fetchEpisodeSources: returns sources', async () => {
-  const episodeSources = await himovies.fetchEpisodeSources('1167571', 'tv/watch-vincenzo-67955');
-  expect(episodeSources.sources.length).toBeGreaterThan(0);
-});
-
-test('fetchByCountry: returns titles from that country', async () => {
-  const data = await himovies.fetchByCountry('KR');
-  expect(data.results.length).toBeGreaterThan(0);
-});
-
-test('fetchByGenre: returns titles of that genre', async () => {
-  const data = await himovies.fetchByGenre('drama');
-  expect(data.results.length).toBeGreaterThan(0);
+test.each([
+  ['fetchByCountry', () => himovies.fetchByCountry('KR')],
+  ['fetchByGenre', () => himovies.fetchByGenre('drama')],
+])('%s returns a page of titles', async (_name, list) => {
+  expectMediaSearch(await list());
 });

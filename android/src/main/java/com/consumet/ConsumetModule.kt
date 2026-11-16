@@ -10,22 +10,11 @@ import com.facebook.react.turbomodule.core.interfaces.TurboModule
 @ReactModule(name = ConsumetModule.NAME)
 class ConsumetModule(private val reactContext: ReactApplicationContext) :
         NativeConsumetSpec(reactContext), TurboModule {
-    private val ddosGuardHelper by lazy { DdosGuardHelper(reactContext) }
     private val deobfuscator by lazy { DeobfuscatorModule(reactContext) }
     private val httpRequestModule by lazy { HttpRequestModule(reactContext) }
 
     companion object {
         const val NAME = "Consumet"
-    }
-
-    @ReactMethod
-    override fun bypassDdosGuard(url: String, promise: Promise) {
-        ddosGuardHelper.bypassDdosGuard(url, promise)
-    }
-
-    @ReactMethod
-    override fun getDdosGuardCookiesWithWebView(url: String, promise: Promise) {
-        ddosGuardHelper.getDdosGuardCookiesWithWebView(url, promise)
     }
 
     @ReactMethod

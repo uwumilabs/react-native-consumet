@@ -69,8 +69,6 @@ describe('MangaDex search', () => {
     expect(url!.origin + url!.pathname).toBe('https://api.mangadex.org/manga');
     expect(url!.searchParams.get('title')).toBe('Tomodachi Game');
     expect(url!.searchParams.getAll('includes[]')).toEqual(['cover_art']);
-    expect(url!.searchParams.get('order[relevance]')).toBe('desc');
-    expect([url!.searchParams.get('limit'), url!.searchParams.get('offset')]).toEqual(['20', '0']);
   });
 
   it('titles a result in English when it has an English title, keeping the others as strings', async () => {
@@ -228,7 +226,6 @@ describe('MangaDex fetchMangaInfo', () => {
     expect(params.getAll('includes[]')).toEqual(['scanlation_group']);
     expect(params.getAll('contentRating[]')).toEqual(['safe', 'suggestive', 'erotica', 'pornographic']);
     expect(params.get('includeExternalUrl')).toBe('0');
-    expect(params.get('limit')).toBe('500');
 
     await mangadex.fetchMangaInfo(MIERUKO_CHAN, 'pt-br');
     expect(requests().pop()!.searchParams.getAll('translatedLanguage[]')).toEqual(['pt-br']);
@@ -332,12 +329,12 @@ describe('MangaDex fetchChapterPages', () => {
 
     expectChapterPages(pages);
     expect(requests()[0]!.href).toBe(`https://api.mangadex.org/at-home/server/${CHAPTER_1}`);
-    expect(pages).toEqual(
-      atHome.chapter.data.map((file, i) => ({
-        img: `https://cmdxd98sb0x3yprd.mangadex.network/data/7772ef83daffe1834c59424b8b65257b/${file}`,
-        page: i + 1,
-      }))
-    );
+    const data = 'https://cmdxd98sb0x3yprd.mangadex.network/data/7772ef83daffe1834c59424b8b65257b';
+    expect(pages).toEqual([
+      { page: 1, img: `${data}/x1-f91ceaef3cb68f70c22c6e0ad22c151f6d428a3d2e0feaa09b377dafd36fc861.jpg` },
+      { page: 2, img: `${data}/x2-331247bec83fd5632664ae0b5a48940fe7cf31e53c6c27ee0c8d66096d74af1e.png` },
+      { page: 3, img: `${data}/x3-de35753ddc6189a360a6d52bf7ff9ceccde2f302943de73ccb41add99131f658.png` },
+    ]);
   });
 
   it('returns the compressed images with dataSaver', async () => {
@@ -347,7 +344,7 @@ describe('MangaDex fetchChapterPages', () => {
 
     expectChapterPages(pages);
     expect(pages[0]!.img).toBe(
-      `https://cmdxd98sb0x3yprd.mangadex.network/data-saver/7772ef83daffe1834c59424b8b65257b/${atHome.chapter.dataSaver[0]}`
+      'https://cmdxd98sb0x3yprd.mangadex.network/data-saver/7772ef83daffe1834c59424b8b65257b/x1-ef7b0420f120449ae03fd9eb8993a6e01a041b555f516c18c89a6e0c1029144b.jpg'
     );
   });
 

@@ -1,67 +1,60 @@
 import { META } from '../../src/providers';
+import { expectMediaInfo, expectMediaSearch, expectServers, expectSources } from '../unit/helpers/media-contract';
 
 jest.setTimeout(120000);
 
+// Episodes, servers and sources come from the default provider (Zoro).
 const anilist = new META.Anilist();
+const SPY_X_FAMILY = '140960';
 
-test('returns a filled array of anime list', async () => {
+/** Episodes that lack an id or a number, or whose uniqueId isn't keyed by the AniList id. */
+const badEpisodes = (anilistId: string, episodes: { id: string; uniqueId: string; number: number }[]) =>
+  episodes.filter(
+    (e) => !e.id || typeof e.number !== 'number' || !new RegExp(`^${anilistId}\\$ep=\\d+$`).test(e.uniqueId)
+  );
+
+test('search finds the title', async () => {
   const data = await anilist.search('spy x family');
-  expect(data.results).not.toEqual([]);
+
+  expectMediaSearch(data);
+  expect(data.results.map((result) => result.id)).toContain(SPY_X_FAMILY);
 });
 
-test('returns a filled object of anime data', async () => {
-  const data = await anilist.fetchAnimeInfo('140960');
-  expect(data).not.toBeNull();
-  expect(data.episodes).not.toEqual([]);
-  expect(data.description).not.toBeNull();
+test('fetchAnimeInfo returns the AniList details with the provider episodes', async () => {
+  const info = await anilist.fetchAnimeInfo(SPY_X_FAMILY);
+
+  expectMediaInfo(info);
+  expect(info.description).toMatch(/\S/);
 });
 
-test('returns episodes for sub and dub not available', async () => {
-  const subData = await anilist.fetchEpisodesListById('949', false);
-  expect(subData).not.toBeNull();
-  expect(subData[0]).toHaveProperty('id');
-  expect(subData[0]).toHaveProperty('uniqueId');
-  expect(subData[0]).toHaveProperty('number');
-  expect(subData[0]).toHaveProperty('title');
-  expect(subData).not.toEqual([]);
+test('fetchEpisodesListById keys every episode by the AniList id, subbed and dubbed', async () => {
+  const sub = await anilist.fetchEpisodesListById(SPY_X_FAMILY, false);
+  expect(sub.length).toBeGreaterThan(0);
+  expect(badEpisodes(SPY_X_FAMILY, sub)).toEqual([]);
 
-  const dubData = await anilist.fetchEpisodesListById('949', true);
-  expect(dubData).not.toBeNull();
-  expect(subData[0]).toHaveProperty('id');
-  expect(subData[0]).toHaveProperty('uniqueId');
-  expect(subData[0]).toHaveProperty('number');
-  expect(subData[0]).toHaveProperty('title');
-  expect(dubData).not.toEqual([]);
+  // A provider may have no dub; what it has follows the same keys.
+  expect(badEpisodes(SPY_X_FAMILY, await anilist.fetchEpisodesListById(SPY_X_FAMILY, true))).toEqual([]);
 });
 
-test('returns a filled array of servers', async () => {
-  const data = await anilist.fetchEpisodeServers('spy-x-family-episode-9');
-  expect(data).not.toEqual([]);
+test('servers and sources play an episode', async () => {
+  const [episode] = await anilist.fetchEpisodesListById(SPY_X_FAMILY);
+
+  expectServers(await anilist.fetchEpisodeServers(episode!.id));
+  expectSources(await anilist.fetchEpisodeSources(episode!.id));
 });
 
-test('returns a filled object of episode sources', async () => {
-  const data = await anilist.fetchEpisodeSources('spy-x-family-episode-9');
-  expect(data.sources).not.toEqual([]);
-});
-
-test('returns a filled array of trending anime', async () => {
-  const data = await anilist.fetchTrendingAnime(1, 10);
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of popular anime', async () => {
-  const data = await anilist.fetchPopularAnime(1, 10);
-  expect(data.results).not.toEqual([]);
-});
-
-test('returns a filled array of airing schedule', async () => {
+test.each([
+  ['fetchTrendingAnime', () => anilist.fetchTrendingAnime(1, 10)],
+  ['fetchPopularAnime', () => anilist.fetchPopularAnime(1, 10)],
   // weekStart and weekEnd are weekdays; the defaults are the week from today.
-  const data = await anilist.fetchAiringSchedule(1, 20, undefined, undefined, true);
-  expect(data.results.length).toBeGreaterThan(0);
+  ['fetchAiringSchedule', () => anilist.fetchAiringSchedule(1, 20, undefined, undefined, true)],
+])('%s returns a page of titles', async (_name, list) => {
+  expectMediaSearch(await list());
 });
 
-test('returns object of staff information', async () => {
-  const data = await anilist.fetchStaffById(97410);
-  expect(data.id).not.toBeUndefined();
+test('fetchStaffById returns the staff member with their roles', async () => {
+  const staff = await anilist.fetchStaffById(97410);
+
+  expect(staff.id).toBe(97410);
+  expect(staff.roles!.length).toBeGreaterThan(0);
 });
-('');

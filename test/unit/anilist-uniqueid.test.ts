@@ -1,5 +1,10 @@
 import Anilist from '../../src/providers/meta/anilist';
 import { metaHttp } from '../../src/utils/meta-http';
+import { ProviderManager } from '../../src/utils/ProviderManager';
+import { extensionEntry, registryOf } from './helpers/registry';
+import { fakeAnimeProvider } from './helpers/fake-providers';
+import attackOnTitan from './fixtures/anilist/media-99147.json';
+import { replayAlways } from './fixtures/anilist/replay';
 import drStoneFixture from './fixtures/anizip/162670.json';
 import reZeroFixture from './fixtures/anizip/21355.json';
 import notInAniZipFixture from './fixtures/anizip/216895.json';
@@ -34,16 +39,15 @@ const stub = (fixture: Fixture, anilistMedia: object, fillers?: { 'number': stri
   });
 };
 
-// A provider shipped through the registry that opts into the ani.zip merge.
+// A provider that opts into the ani.zip merge, as the bundled anime providers do.
 const provider = (episodes: object[]) =>
-  ({
-    name: 'Fake',
+  fakeAnimeProvider({
     capabilities: { aniZipEpisodes: true },
     search: jest.fn(async (query: string) => ({ results: [{ id: 'show', title: query }] })),
-    fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes }),
-    fetchEpisodeSources: jest.fn(),
-    fetchEpisodeServers: jest.fn(),
-  }) as any;
+    info: { episodes },
+  });
+
+const timeoutError = () => Object.assign(new Error('timeout of 5000ms exceeded'), { code: 'ECONNABORTED' });
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 const providerEpisodes = (numbers: number[], extra: (n: number) => object = () => ({})) =>
@@ -60,7 +64,7 @@ const reZero = reZeroFixture as Fixture;
 
 afterEach(() => jest.restoreAllMocks());
 
-describe('Anilist episode identity (META-1, META-2, META-3)', () => {
+describe('Anilist episode identity (META-1, META-2, META-3, META-4)', () => {
   it('keys Dr. Stone New World Part 2 by AniDB episode 1-11, not TVDB 12-22, and keeps the provider numbers', async () => {
     stub(drStone, media('Dr. Stone: New World Part 2', 11));
 
@@ -199,6 +203,60 @@ describe('Anilist episode identity (META-1, META-2, META-3)', () => {
     expect(result.every((e) => typeof e.uniqueId === 'string')).toBe(true);
   });
 
+  it('returns provider episodes with a uniqueId when ani.zip and the filler list time out', async () => {
+    jest.spyOn(metaHttp, 'post').mockResolvedValue({ data: { data: { Media: media('Dr. Stone: New World Part 2', 3) } } } as any);
+    jest.spyOn(metaHttp, 'get').mockRejectedValue(timeoutError());
+    const fake = provider(providerEpisodes(range(1, 3)));
+
+    const episodes = await new Anilist(fake).fetchEpisodesListById('162670', true);
+
+    expect(episodes.map((e) => [e.id, e.uniqueId, e.image])).toEqual([
+      ['ep-1', '162670$ep=1', COVER],
+      ['ep-2', '162670$ep=2', COVER],
+      ['ep-3', '162670$ep=3', COVER],
+    ]);
+    // Provider episodes fetched alongside ani.zip are reused, not fetched again.
+    expect(fake.fetchAnimeInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['declares no capabilities', undefined],
+    ['turns aniZipEpisodes off', { aniZipEpisodes: false }],
+  ])('keys by provider number, without asking ani.zip, for a provider that %s', async (_label, capabilities) => {
+    jest.spyOn(metaHttp, 'post').mockResolvedValue({ data: { data: { Media: media('Dr. Stone: New World Part 2', 3) } } } as any);
+    const get = jest.spyOn(metaHttp, 'get');
+    const fake = { ...provider(providerEpisodes(range(1, 3))), capabilities };
+
+    const episodes = await new Anilist(fake).fetchEpisodesListById('162670');
+
+    expect(episodes.map((e) => e.uniqueId)).toEqual(['162670$ep=1', '162670$ep=2', '162670$ep=3']);
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('merges ani.zip metadata for a registry-only provider that declares aniZipEpisodes (EXT-1)', async () => {
+    stub(drStone, media('Dr. Stone: New World Part 2', 11));
+    // No bundled class: exactly what a provider shipped only through the registry looks like.
+    const code = `
+      function createProbe(ctx) {
+        return {
+          name: 'RegistryOnly',
+          capabilities: { aniZipEpisodes: true },
+          search: async (query) => ({ results: [{ id: 'show', title: query }] }),
+          fetchAnimeInfo: async () => ({ episodes: [{ id: 'r-1', number: 1 }, { id: 'r-2', number: 2 }] }),
+          fetchEpisodeSources: async () => ({ sources: [] }),
+          fetchEpisodeServers: async () => [],
+        };
+      }`;
+    const registryOnly: any = await new ProviderManager(registryOf()).executeProviderCode(code, extensionEntry(code));
+
+    const episodes = await new Anilist(registryOnly).fetchEpisodesListById('162670');
+
+    expect(episodes.map((e) => [e.id, e.title, e.uniqueId])).toEqual([
+      ['r-1', 'The Kingdom of Science`s Counterattack', '162670$ep=1'],
+      ['r-2', 'The Medusa`s True Face', '162670$ep=2'],
+    ]);
+  });
+
   it('looks up filler flags by the provider number', async () => {
     const fillers = range(1, 11).map((n) => ({ 'number': String(n), 'filler-bool': n === 1 }));
     stub(drStone, media('Dr. Stone: New World Part 2', 11), fillers);
@@ -206,6 +264,24 @@ describe('Anilist episode identity (META-1, META-2, META-3)', () => {
     const result = await new Anilist(provider(providerEpisodes(range(1, 11)))).fetchEpisodesListById('162670', true);
 
     expect(result.map((e) => e.isFiller)).toEqual(range(1, 11).map((n) => n === 1));
+  });
+
+  it('flags fillers in fetchAnimeInfo too, from a filler list that stops early', async () => {
+    // A filler list for MAL 35760, the recorded media, that stops at episode 5.
+    const fillers = range(1, 5).map((n) => ({ 'number': String(n), 'filler-bool': n === 3 }));
+    replayAlways(jest.spyOn(metaHttp, 'post'), attackOnTitan);
+    jest.spyOn(metaHttp, 'get').mockImplementation(async (url: string) => {
+      if (url === `${FILLER_URL}35760.json`) return { status: 200, data: { episodes: fillers } } as any;
+      throw new Error(`unexpected request ${url}`);
+    });
+    const fake = fakeAnimeProvider({
+      results: [{ id: 'show', title: attackOnTitan.body.data.Media.title.romaji }],
+      info: { episodes: providerEpisodes(range(1, 12)) },
+    });
+
+    const info = await new Anilist(fake).fetchAnimeInfo('99147', true);
+
+    expect(info.episodes!.map((e) => e.isFiller)).toEqual([false, false, true, false, false, ...Array(7).fill(undefined)]);
   });
 
   it('falls back to the list position only for an episode the provider gives no number', async () => {
@@ -220,23 +296,17 @@ describe('Anilist episode identity (META-1, META-2, META-3)', () => {
     expect(result.map((e) => e.uniqueId)).toEqual(['198727$ep=1', '198727$ep=2']);
   });
 
-  it('gives fetchAnimeInfo episodes a uniqueId from the provider number', async () => {
-    jest.spyOn(metaHttp, 'post').mockResolvedValue({
-      data: {
-        data: {
-          Media: {
-            ...media('Dr. Stone: New World Part 2', 11),
-            startDate: { year: 2023, month: 10, day: 12 },
-            endDate: { year: 2023, month: 12, day: 21 },
-            studios: { edges: [] },
-            externalLinks: [],
-          },
-        },
-      },
-    } as any);
+  it('gives fetchAnimeInfo the episodes and keys fetchEpisodesListById gives', async () => {
+    stub(drStone, media('Dr. Stone: New World Part 2', 11));
+    // Numbered 12-22 and dated a few hours after each episode aired, so ani.zip matches them by date.
+    const airTimes = Object.values(drStone.body.episodes).map((e: any) => Date.parse(e.airDateUtc));
+    const list = () =>
+      providerEpisodes(range(12, 22), (n) => ({ releaseDate: new Date(airTimes[n - 12]! + 3 * 3600_000).toISOString() }));
 
-    const info = await new Anilist(provider(providerEpisodes([1, 2]))).fetchAnimeInfo('162670');
+    const info = await new Anilist(provider(list())).fetchAnimeInfo('162670');
+    const episodes = await new Anilist(provider(list())).fetchEpisodesListById('162670');
 
-    expect(info.episodes?.map((e) => e.uniqueId)).toEqual(['162670$ep=1', '162670$ep=2']);
+    expect(info.episodes?.map((e) => e.uniqueId)).toEqual(range(1, 11).map((n) => `162670$ep=${n}`));
+    expect(info.episodes).toEqual(episodes);
   });
 });

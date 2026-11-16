@@ -137,11 +137,11 @@ The pre-commit hook:
 
 1. Runs ESLint (with `--fix`) and Prettier on the staged files only, through [lint-staged](https://github.com/lint-staged/lint-staged). Their fixes are staged; ESLint errors stop the commit.
 2. Type-checks the project (`yarn typecheck`).
-3. When the commit stages changes to what `dist/` is built from (`src/`, `scripts/`, the build config, `yarn.lock`), runs `yarn build:registry` on the staged files: it rebuilds `dist/`, publishes changed registry entries with `scripts/prepare-registry.js` and regenerates the example app's local dist map. It stages `dist/`, the new files under `registry/`, `src/extension-registry.json` and `apps/src/registry/local-dist-map.ts`. Unstaged edits are left out of the build. If a registry bundle changed without a `version` bump, the commit stops; see [Adding a New Provider](./docs/guides/adding-new-provider.md#step-4-add-to-extension-registryjson).
+3. When the commit stages changes to what the bundles are built from (`src/`, `scripts/`, the build config, `yarn.lock`), runs `yarn build:registry` on the staged files: it builds `dist/` (which isn't committed), publishes changed registry entries with `scripts/prepare-registry.js` and regenerates the example app's local dist map. It stages the new files under `registry/`, `src/extension-registry.json` and `apps/src/registry/local-dist-map.ts`. Unstaged edits are left out of the build. If a registry bundle changed without a `version` bump, the commit stops; see [Adding a New Provider](./docs/guides/adding-new-provider.md#step-4-add-to-extension-registryjson).
 
 The hook doesn't run the tests; run `yarn test` yourself.
 
-CI runs `yarn lint` (plain `eslint .`), `yarn typecheck` and `yarn test`, rebuilds `dist/` and checks it, the registry and the local dist map against the rebuild (`yarn registry:check`), builds the package, builds the example app for Android and iOS, and runs the Android module's JVM tests. When the registry or the signing keys change on `main`, the Sign registry workflow signs the registry, after a maintainer approves the run (see below).
+CI runs `yarn lint` (plain `eslint .`), `yarn typecheck` and `yarn test`, builds `dist/` and checks the registry and the local dist map against it (`yarn registry:check`), builds the package, builds the example app for Android and iOS, and runs the Android module's JVM tests. When the registry or the signing keys change on `main`, the Sign registry workflow signs the registry, after a maintainer approves the run (see below).
 
 ### Registry signing (maintainers)
 
@@ -186,13 +186,13 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn typecheck`: type-check files with TypeScript.
 - `yarn lint`: lint files with ESLint (no fixes).
 - `yarn lint:fix`: lint files with ESLint and apply fixes.
-- `yarn build`: build `dist/`, including one bundle per registry entry.
+- `yarn build`: build `dist/` (not committed), including one bundle per registry entry.
 - `yarn build:registry`: `yarn build`, then publish new registry versions, refresh the registry's hashes and regenerate the example app's local dist map (`scripts/prepare-registry.js`). The pre-commit hook and the release run it.
 - `yarn registry:check`: check the registry against `dist/` and the published files under `registry/`, check that the local dist map is current, and note whether the registry's signature is current.
 - `yarn registry:prune`: list published registry versions the retention rule allows deleting (`--delete` removes them).
 - `yarn registry:keygen`: generate a registry signing key (maintainers, see above).
 - `yarn registry:sign`: sign the registry with the keys in `REGISTRY_SIGNING_KEY` (CI runs it).
-- `yarn test`: run the offline unit tests with Jest; `yarn test:live` also runs the live suites.
+- `yarn test`: build, then run the offline unit tests with Jest; `yarn test:live` also runs the live suites.
 - `yarn example start`: start the Metro server for the example app.
 - `yarn example android`: run the example app on Android.
 - `yarn example ios`: run the example app on iOS.

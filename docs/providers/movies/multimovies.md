@@ -136,7 +136,7 @@ output:
 | Parameter         | Type                                                                                                   | Description                                                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | episodeId         | `string`                                                                                               | takes episode id as a parameter. (_episode id can be found in the media info object_)                                                                     |
-| server (optional) | [`StreamingServers`](../../../src/models/types.ts) | takes server enum as a parameter. _default: [`StreamingServers.StreamWish`](../../../src/models/types.ts)_ |
+| server (optional) | `string` | a server name from `fetchEpisodeServers` (`vidhide-earnvids`), or the start of one. _default: the first server_ |
 
 ```ts
 multimovies.fetchEpisodeSources('episodes/jujutsu-kaisen-1x1/').then((data) => {
@@ -195,13 +195,10 @@ output:
 
 ```js
 [
-  { name: 'VidHide', url: 'https://vidhidehub.com/v/52x28ai7sy75' },
-  { name: 'StreamWish', url: 'https://hlswish.com/e/v8k4m560gcra' },
-  { name: 'OneUpload', url: 'https://oneupload.to/embed-x4ehvd3l0fm2' },
-  { name: 'Vid-guard', url: 'https://listeamed.net/e/NMRLEprjYAY5XaG' },
-  { name: 'MixDrop', url: 'https://mixdrop.ag/e/z19wdvwztv3ew0' },
-  { name: 'Playerx', url: 'https://boosterx.stream/v/fOSJdaFYrqKG' },
-  { name: 'Streamtape', url: 'https://streamtape.site/e/eg36VZgKoqI2kj' },
+  { name: 'vidhide-earnvids', url: 'https://vidhidehub.com/v/52x28ai7sy75' },
+  { name: 'streamwish-streamhg', url: 'https://hlswish.com/e/v8k4m560gcra' },
+  { name: 'streamwish-oneupload', url: 'https://oneupload.to/embed-x4ehvd3l0fm2' },
+  { name: 'streamwish-vid-guard', url: 'https://listeamed.net/e/NMRLEprjYAY5XaG' },
 ];
 ```
 

@@ -27,11 +27,11 @@ is public), and say in the final message what was added.
 
 | Command | What it does |
 | --- | --- |
-| `yarn test` | Offline unit tests (`test/unit/`, recorded fixtures) |
+| `yarn test` | Builds, then the offline unit tests (`test/unit/`, recorded fixtures) |
 | `yarn test:live` | Also the live suites (`test/anime`, `test/manga`, ...), which hit real sites; in band, since jest workers crash serialising axios errors |
 | `yarn typecheck` | `tsc` over the library and `apps/src` (ts-jest type-checks the tests as they run) |
 | `yarn lint` | ESLint (it ignores `apps/`; lint those files with `npx eslint --no-ignore`) |
-| `yarn build` | `dist/` plus the registry bundles in `dist/bundles/` |
+| `yarn build` | `dist/` (not committed) with the registry bundles in `dist/bundles/` |
 | `yarn build:registry` | `yarn build`, then publish bumped registry versions and rewrite the local dist map (what the hook and release run) |
 | `yarn registry:check` | Checks every registry entry against its build and published file |
 | `yarn example gen:local-dist` | Regenerates `apps/src/registry/local-dist-map.ts` |
@@ -46,15 +46,16 @@ is public), and say in the final message what was added.
 - Never add attribution: no `Co-Authored-By`, no "Generated with ...", no mention of Claude.
 - A breaking change to public behaviour (ids, return shapes, signatures) gets a `BREAKING CHANGE:`
   footer; release-it then bumps the major version.
-- The pre-commit hook runs lint-staged, `yarn typecheck` and `scripts/stage-dist.js`, which runs
-  `yarn build:registry` on the staged files and stages dist/, registry/ and the local dist map. It does not run the tests:
+- The pre-commit hook runs lint-staged, `yarn typecheck` and `scripts/stage-registry.js`, which runs
+  `yarn build:registry` on the staged files and stages new registry/ files, the registry and the
+  local dist map. It does not run the tests:
   run `yarn test` first.
 - Commit only when asked. Pushing, tagging and releasing are the user's.
 
 ## Registry bundles
 
-- `dist/` and `registry/` are committed and generated. Never edit files under `registry/` by hand:
-  their bytes are hashed (the folder is in `.prettierignore` for that reason).
+- `registry/` is committed and generated; `dist/` is built, not committed. Never edit files under
+  `registry/` by hand: their bytes are hashed (the folder is in `.prettierignore` for that reason).
 - If a change alters a registry bundle, bump that entry's `version` in `src/extension-registry.json`
   before committing, or the hook stops. To find the changed entries, run `yarn build` and compare the
   sha256 of each entry's `distFile` with its `sha256`. The three NetMirror entries share one bundle,
@@ -67,14 +68,6 @@ is public), and say in the final message what was added.
   registry workflow re-signs on `main`. That is expected.
 
 ## Why it works in jest but not on the device
-
-- **Old loaders run new bundles.** Apps on library versions before 2.0.0 also download the current
-  registry, and their loader answers `require('react-native-consumet/models')` with `{}`. Registry
-  code takes enum values from `ctx.enums` (helpers that need one take it as an argument, like
-  `toMediaStatus(text, ctx.enums.MediaStatus)`); importing types from `src/models` is fine.
-  `test/unit/extension-bundles.test.ts` loads every bundle the old way. Apps on 1.6.0 and older also
-  load the tsc output of a few files straight from `main` (see docs/security.md), so keep the paths of
-  the `create-*.ts` and extractor files registry entries point at.
 
 - **Hermes has no block scoping in runtime-compiled code.** Registry bundles run through
   `new Function` on Hermes, where `let`/`const` act like `var`. `scripts/hermes-safe-dist.js`
@@ -134,19 +127,29 @@ is public), and say in the final message what was added.
 
 ## Providers
 
+- **Supported versions:** library 2.0.0 and later. Older apps' registries point at the old committed
+  dist/ on main; nothing keeps them working.
 - **Shape:** every anime and movie provider is a factory `createX(ctx, customBaseURL?)`; bundled
   classes are generated from it with `providerClass(Base, createX)` (`src/providers/provider-class.ts`),
   so a new method needs no wrapper change. Every extractor is a function `X(ctx)` returning `{ extract }`,
   listed once in `src/extractors/index.ts` (which types `ctx.extractors`). Helpers several providers
-  share live in `src/providers/common/` (`emptySearch`, `toMediaStatus`, `pickServer`, `ENC_DEC_API`);
-  server names are `<extractor>-<label>`.
+  share live in `src/providers/common/` (`emptySearch`, `toMediaStatus`, `serverName`, `pickServer`,
+  `ENC_DEC_API`); server names are `<extractor>-<label>`, built with `serverName`.
 
 - **Manga:** every provider returns one shape (see "What every manga provider returns" in
   [docs/guides/manga.md](docs/guides/manga.md)).
-  - Unit tests run trimmed, recorded responses from `test/unit/fixtures/manga/<provider>/` through
-    `test/unit/helpers/manga-contract.ts`; live suites live in `test/manga/`.
-  - The example app's Manga tab runs the same checks on the device.
+  - The checks are plain functions in `test/contracts/manga.ts` (no jest, so Metro bundles it):
+    `test/unit/helpers/manga-contract.ts` wraps them for unit tests (recorded responses from
+    `test/unit/fixtures/manga/<provider>/`) and live suites (`test/manga/`), and the example app's
+    Manga tab runs them on the device.
+- **Anime and movie live suites** check results with `test/unit/helpers/media-contract.ts` (search
+  page, info with episodes, servers, sources).
 - **Fixtures:** trimmed real responses, each noting the request URL and when it was recorded.
+- **Tests:** `test/` is outside ESLint (it reads `.prettierignore`); rules about the source, such as
+  providers importing axios only for types, are ESLint rules, not tests. TypeScript 6 adds no
+  `@types` globals, so helpers outside `*.test.ts` (checked by `yarn typecheck`) import `jest` and
+  `expect` from `@jest/globals`. Shared helpers: `test/unit/helpers/` (registry entries and a
+  `fetch` that serves them, fake providers for the meta tests, `rejectionOf`).
 - **Site etiquette:**
   - Fetch only the pages a fix and its tests need. Don't bulk-download a site to study it.
   - If a site's robots.txt blocks AI agents, don't disguise the requests: report it to the user.

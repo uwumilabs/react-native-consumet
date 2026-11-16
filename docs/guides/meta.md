@@ -28,11 +28,11 @@ Get a TMDB API key at [themoviedb.org](https://www.themoviedb.org/settings/api) 
 
 ## Errors
 
-Meta providers throw `MetaError` (exported from the package) instead of plain errors. `META.TMDB` is the exception for `fetchEpisodeServers` and `fetchEpisodeSources`, which pass the movie provider's errors through unchanged.
+Meta providers throw `MetaError` (exported from the package) instead of plain errors.
 
 | Field    | Meaning                                                                                                                             |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `source` | Where it failed: `'anilist'`, `'mal'`, `'tmdb'`, `'anizip'`, `'filler'` or `'provider'` (the anime or movie provider you passed in) |
+| `source` | Where it failed: `'anilist'`, `'mal'`, `'tmdb'`, `'provider'` (the anime or movie provider you passed in), or `'github'` (the id list `Anilist.fetchRandomAnime` picks from) |
 | `status` | The HTTP status, when there was one                                                                                                 |
 | `cause`  | The original error                                                                                                                  |
 

@@ -8,11 +8,9 @@ jest.mock('react-native', () => ({
       const unavailable = (method) =>
         jest.fn(() => Promise.reject(new Error(`NativeConsumet.${method} is not available in tests`)));
       return {
-        getDdosGuardCookiesWithWebView: unavailable('getDdosGuardCookiesWithWebView'),
         makeGetRequestWithWebView: unavailable('makeGetRequestWithWebView'),
         makePostRequestWithWebView: unavailable('makePostRequestWithWebView'),
         makePostRequest: unavailable('makePostRequest'),
-        bypassDdosGuard: unavailable('bypassDdosGuard'),
         deobfuscateScript: unavailable('deobfuscateScript'),
       };
     }),

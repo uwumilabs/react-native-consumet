@@ -73,9 +73,10 @@ export {
   createExtractorContext,
   defaultAxios,
   defaultExtractorContext,
+  defaultExtractors,
   type ExtractorContextConfig,
 } from './utils/create-extractor-context';
-export { createProviderContext, defaultExtractors, type ProviderContextConfig } from './utils/create-provider-context';
+export { createProviderContext, type ProviderContextConfig } from './utils/create-provider-context';
 export {
   ProviderManager,
   REQUIRED_PROVIDER_METHODS,

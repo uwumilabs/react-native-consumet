@@ -1,32 +1,7 @@
 import { type ExtractorContext, type ISource, type IVideo } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
-import { finalUrl, qualityIn } from './file-hosts';
-import { Gofile } from './gofile';
+import { finalUrl, isFastDl, isGofilePage, qualityIn, unwrapFastDlUrl } from './file-hosts';
 import { toUrl } from './url';
-
-/** `value` decoded from base64, or '' when it isn't base64 (or `atob` is missing, on older React Native). */
-function decodeBase64(value: string): string {
-  try {
-    return atob(value);
-  } catch {
-    return '';
-  }
-}
-
-/** The next page's URL, which the page's script holds as `atob(atob('…'))` or as `var url = '…r=<base64>'`. */
-function extractUrlFromScript(html: string): string {
-  const doubleEncoded = html.match(/(?:var|let|const)\s+\w+\s*=\s*atob\(atob\(['"]([^'"]+)['"]\)\)/)?.[1];
-  if (doubleEncoded) return decodeBase64(decodeBase64(doubleEncoded));
-  const plain = html.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/)?.[1];
-  return decodeBase64(plain?.split('r=')?.[1] ?? '') || plain || '';
-}
-
-/** FastDL's dl.php?link=<url> is an HTML "Download Now" page; the file is the URL it wraps. */
-export const unwrapFastDlUrl = (url: string): string => {
-  const wrapped = url.match(/\/dl\.php\?link=(.+)$/)?.[1];
-  if (!wrapped) return url;
-  return /^https?%3A/i.test(wrapped) ? decodeURIComponent(wrapped) : wrapped;
-};
 
 /** The PixelDrain URL a page's script sends the browser to (`var pxl = '…'`), from the first page that has one. */
 const pixelDrainRedirect = (...pages: string[]): string =>
@@ -44,8 +19,8 @@ function parseSizeInBytes(text: string): number | undefined {
 }
 
 /** Sources are listed fastest host first. */
-function hostPriority(serverName: string = ''): number {
-  const s = serverName.toLowerCase();
+function hostPriority(server: string = ''): number {
+  const s = server.toLowerCase();
   if (s.includes('cf storage') || s.includes('storage')) return 1;
   if (s.includes('cf worker') || s.includes('worker') || s.includes('fast cloud')) return 2;
   if (s.includes('gofile')) return 3;
@@ -56,8 +31,32 @@ function hostPriority(serverName: string = ''): number {
   return 10;
 }
 
+/**
+ * HubCloud, which also reads V-Cloud pages: the file's hosts, as one source each, fastest first.
+ * A Gofile host is listed as its Gofile page (server `Gofile`): run the Gofile extractor on it for
+ * the file.
+ */
 export function HubCloud(ctx: ExtractorContext) {
-  const { axios, load, USER_AGENT, PolyURL } = ctx;
+  const { axios, load, CryptoJS, USER_AGENT, PolyURL } = ctx;
+
+  /**
+   * `value` decoded from base64 (as `atob` would), or '' when it isn't base64. Not `atob` itself,
+   * which older React Native versions lack.
+   */
+  function decodeBase64(value: string): string {
+    let base64 = value.replace(/\s+/g, '');
+    if (base64.length % 4 === 0) base64 = base64.replace(/[=]{1,2}$/, '');
+    if (base64.length % 4 === 1 || !/^[A-Za-z0-9+/]*$/.test(base64)) return '';
+    return CryptoJS.enc.Base64.parse(base64).toString(CryptoJS.enc.Latin1);
+  }
+
+  /** The next page's URL, which the page's script holds as `atob(atob('…'))` or as `var url = '…r=<base64>'`. */
+  function extractUrlFromScript(html: string): string {
+    const doubleEncoded = html.match(/(?:var|let|const)\s+\w+\s*=\s*atob\(atob\(['"]([^'"]+)['"]\)\)/)?.[1];
+    if (doubleEncoded) return decodeBase64(decodeBase64(doubleEncoded));
+    const plain = html.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/)?.[1];
+    return decodeBase64(plain?.split('r=')?.[1] ?? '') || plain || '';
+  }
 
   const extract = async (videoUrl: string | PolyURL, referer?: string): Promise<ISource> => {
     const url = toUrl(PolyURL, videoUrl);
@@ -71,40 +70,18 @@ export function HubCloud(ctx: ExtractorContext) {
       qualityIn($first('title').text()) || qualityIn($first('.card-header').text()) || qualityIn(url.href) || 'auto';
     let fileSize = parseSizeInBytes($first('#size, .list-group-item:contains("Size")').text());
 
-    const sources: IVideo[] = [];
-    const addGofileSources = (res: ISource) => {
-      for (const s of res.sources) {
-        if (sources.some((item) => item.url === s.url)) continue;
-        sources.push({
-          ...s,
-          server: 'Gofile',
-          quality: pageQuality !== 'auto' ? pageQuality : s.quality || 'auto',
-          size: s.size || fileSize,
-        });
-      }
-    };
-    const tryGofile = async (link: string) => {
-      try {
-        addGofileSources(await Gofile(ctx).extract(link));
-      } catch {
-        // A Gofile link that fails leaves the other hosts' sources.
-      }
-    };
-
-    for (const el of $first("a[href*='gofile.io']").toArray()) {
-      const href = $first(el).attr('href');
-      if (href) await tryGofile(href);
-    }
+    const gofilePages = $first("a[href*='gofile.io']")
+      .toArray()
+      .map((el) => $first(el).attr('href'))
+      .filter((href): href is string => Boolean(href));
 
     let vcloudLink =
       extractUrlFromScript(firstPage) || $first('.fa-file-download.fa-lg').parent().attr('href') || url.href;
     if (vcloudLink.startsWith('/')) vcloudLink = `${baseUrl}${vcloudLink}`;
-    if (vcloudLink.includes('gofile.io')) await tryGofile(vcloudLink);
 
     let vcloudPage = '';
-    if (!vcloudLink.includes('gofile.io') && vcloudLink !== url.href) {
-      vcloudPage = (await axios.get(vcloudLink, { headers: pageHeaders })).data;
-    }
+    if (isGofilePage(vcloudLink)) gofilePages.push(vcloudLink);
+    else if (vcloudLink !== url.href) vcloudPage = (await axios.get(vcloudLink, { headers: pageHeaders })).data;
 
     const $ = load(vcloudPage || firstPage);
     if (pageQuality === 'auto') {
@@ -113,8 +90,11 @@ export function HubCloud(ctx: ExtractorContext) {
     }
     if (!fileSize) fileSize = parseSizeInBytes($('#size, .list-group-item:contains("Size")').text());
 
-    const add = (link: string, server: string) =>
+    const sources: IVideo[] = [];
+    const add = (link: string, server: string) => {
+      if (sources.some((source) => source.url === link)) return;
       sources.push({ url: link, server, quality: pageQuality, isM3U8: link.includes('.m3u8'), size: fileSize });
+    };
 
     for (const element of $('.btn-success.btn-lg.h6, .btn-danger, .btn-secondary').toArray()) {
       let btnUrl = $(element).attr('href') || '';
@@ -144,22 +124,16 @@ export function HubCloud(ctx: ExtractorContext) {
             break;
           }
 
-          case btnUrl.includes('gofile.io'):
-            addGofileSources(await Gofile(ctx).extract(btnUrl));
+          case isGofilePage(btnUrl):
+            gofilePages.push(btnUrl);
             break;
 
           case btnUrl.includes('cloudflarestorage'):
             add(btnUrl, 'CF Storage');
             break;
 
-          case btnUrl.includes('fastdl') || btnUrl.includes('fsl.'):
-            sources.push({
-              url: unwrapFastDlUrl(btnUrl),
-              server: 'FastDl',
-              quality: pageQuality,
-              isM3U8: btnUrl.includes('.m3u8'),
-              size: fileSize,
-            });
+          case isFastDl(btnUrl):
+            add(unwrapFastDlUrl(btnUrl), 'FastDl');
             break;
 
           case btnUrl.includes('hubcdn') && !btnUrl.includes('/?id='):
@@ -175,7 +149,8 @@ export function HubCloud(ctx: ExtractorContext) {
       }
     }
 
-    sources.sort((a, b) => hostPriority(a.server || a.quality) - hostPriority(b.server || b.quality));
+    for (const page of gofilePages) add(page, 'Gofile');
+    sources.sort((a, b) => hostPriority(a.server) - hostPriority(b.server));
 
     return { sources, headers: { 'User-Agent': USER_AGENT, 'Referer': baseUrl } };
   };

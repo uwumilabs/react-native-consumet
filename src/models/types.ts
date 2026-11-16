@@ -144,23 +144,6 @@ export interface IAnimeInfo extends IAnimeResult {
   relations?: IAnimeResult[];
 }
 
-export interface IAnimeEpisodeV2 {
-  [x: string]: {
-    id: string;
-    season_number: number;
-    title: string;
-    image: string;
-    imageHash: string;
-    description: string;
-    releaseDate: string;
-    isHD: boolean;
-    isAdult: boolean;
-    isDubbed: boolean;
-    isSubbed: boolean;
-    duration: number;
-  }[];
-}
-
 export interface IAnimeEpisode {
   id: string;
   uniqueId?: string;
@@ -260,7 +243,6 @@ export enum StreamingServers {
   MegaCloud = 'megacloud',
   Kwik = 'kwik',
   MegaPlay = 'megaplay',
-  GDFlix = 'gdflix',
   Gofile = 'gofile',
   HubCloud = 'hubcloud',
   FlixCloud = 'flixcloud',
@@ -661,3 +643,15 @@ export interface IStaff {
   siteUrl?: string;
   roles?: IRoles[];
 }
+
+/** The library's enums, handed to registry code as `ctx.enums` so their values always match the app's. */
+export const extensionEnums = {
+  StreamingServers,
+  MediaFormat,
+  MediaStatus,
+  SubOrDub,
+  WatchListType,
+  TvType,
+  Genres,
+  Topics,
+};

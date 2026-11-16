@@ -24,7 +24,7 @@ Light novel classes take an optional provider context, `new LIGHT_NOVELS.NovelUp
 
 This list is in alphabetical order.
 
-- [NovelUpdates](../providers/light-novels/novelupdates.md) (`LIGHT_NOVELS.NovelUpdates`)
+- [NovelUpdates](../providers/light-novels/novelupdates.md) (`LIGHT_NOVELS.NovelUpdates`): search and novel info with chapter links; it has no chapter text, since its chapters are on the translators' own sites
 - [ReadLightNovels](../providers/light-novels/readlightnovels.md) (`LIGHT_NOVELS.ReadLightNovels`)
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

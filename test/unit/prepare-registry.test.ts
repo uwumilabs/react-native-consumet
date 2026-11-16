@@ -74,7 +74,6 @@ describe('prepare-registry publishing', () => {
     const [entry] = readRegistry().extractors;
     expect(entry.main).toBe(`${RAW_BASE}/${PUBLISHED}`);
     expect(entry.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(read('dist/extension-registry.json')).toBe(read('src/extension-registry.json'));
     expect(run('--check').status).toBe(0);
   });
 

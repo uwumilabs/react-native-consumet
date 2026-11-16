@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { hlsVariants } from '../../src/extractors/hls';
 import { unpackScripts } from '../../src/extractors/packer';
-import { serverName } from '../../src/providers/anime/helpers';
+import { serverName } from '../../src/providers/common/servers';
 import { cardPage, pageUrl, siteEpisodeId, toEpisodeId } from '../../src/providers/anime/hianime';
 
 describe('hlsVariants', () => {

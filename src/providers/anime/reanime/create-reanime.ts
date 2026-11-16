@@ -11,8 +11,8 @@ import {
   type MediaFormat,
 } from '../../../models';
 import { toMediaStatus } from '../../common/media-status';
-import { pickServer } from '../../common/servers';
-import { serverName, webViewJson } from '../helpers';
+import { pickServer, serverName } from '../../common/servers';
+import { webViewJson } from '../helpers';
 
 export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, enums, createCustomBaseUrl, extractors, NativeConsumet, PolyURL, USER_AGENT } = ctx;
@@ -112,7 +112,7 @@ export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
         url: `${baseUrl}/anime/${item.anime_id}`,
         image: pickCover(item.cover_image),
         type: item.format as MediaFormat,
-        status: toMediaStatus(item.status, ctx.enums.MediaStatus),
+        status: toMediaStatus(item.status),
         genres: item.genres ?? [],
         sub: item.subbed ?? 0,
         dub: item.dubbed ?? 0,
@@ -172,7 +172,7 @@ export function createReanime(ctx: ProviderContext, customBaseURL?: string) {
       image: pickCover(anime.cover_image),
       cover: anime.banner_image || undefined,
       description: anime.description?.replace(/<[^>]*>/g, '').trim(),
-      status: toMediaStatus(anime.status, ctx.enums.MediaStatus),
+      status: toMediaStatus(anime.status),
       type: anime.format as MediaFormat,
       releaseDate: anime.season_year ? String(anime.season_year) : undefined,
       genres: anime.genres ?? [],

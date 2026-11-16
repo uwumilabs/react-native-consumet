@@ -3,21 +3,17 @@ import { join } from 'path';
 import Myanimelist from '../../src/providers/meta/mal';
 import { MediaStatus, SubOrDub, type IAnimeInfo } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
+import { fakeAnimeProvider } from './helpers/fake-providers';
 
 // Recorded MAL anime pages (trimmed): Fullmetal Alchemist: Brotherhood (5114, a finished series),
 // One Piece (21, still airing) and Kimi no Na wa. (32281, a movie with a single air date).
 const page = (id: number) => readFileSync(join(__dirname, `fixtures/mal/anime-${id}.html`), 'utf8');
 const stubMal = (html: string) => jest.spyOn(metaHttp, 'request').mockResolvedValue({ data: html });
 
-const fakeProvider = (results: { id: string; title: string }[] = [], info?: Partial<IAnimeInfo>) => ({
-  name: 'FakeProvider',
-  search: jest.fn().mockResolvedValue({ currentPage: 1, hasNextPage: false, results }),
-  fetchAnimeInfo: jest.fn().mockResolvedValue(info),
-  fetchEpisodeSources: jest.fn(),
-  fetchEpisodeServers: jest.fn(),
-});
+const fakeProvider = (results: { id: string; title: string }[] = [], info?: Partial<IAnimeInfo>) =>
+  fakeAnimeProvider({ results, info });
 
-const fetchMalInfo = (id: number) => new Myanimelist(fakeProvider() as any).fetchMalInfoById(String(id));
+const fetchMalInfo = (id: number) => new Myanimelist(fakeProvider()).fetchMalInfoById(String(id));
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -110,7 +106,7 @@ describe('Myanimelist.fetchAnimeInfo provider episodes (META-9)', () => {
   }));
   const fetchAnimeInfo = (provider: ReturnType<typeof fakeProvider>, dub = false) => {
     stubMal(page(5114));
-    return new Myanimelist(provider as any).fetchAnimeInfo('5114', dub);
+    return new Myanimelist(provider).fetchAnimeInfo('5114', dub);
   };
 
   it("returns the provider's episodes when the provider doesn't report sub or dub", async () => {

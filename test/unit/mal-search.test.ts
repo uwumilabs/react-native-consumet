@@ -3,18 +3,11 @@ import { join } from 'path';
 import Myanimelist from '../../src/providers/meta/mal';
 import { MediaFormat } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
+import { fakeAnimeProvider as fakeProvider } from './helpers/fake-providers';
 
 // Recorded MAL search page (trimmed) for anime.php?q=Tom%20%26%20Jerry%20%231.
 const QUERY = 'Tom & Jerry #1';
 const page = readFileSync(join(__dirname, 'fixtures/mal/search-tom-and-jerry-1.html'), 'utf8');
-
-const fakeProvider = () => ({
-  name: 'FakeProvider',
-  search: jest.fn(),
-  fetchAnimeInfo: jest.fn(),
-  fetchEpisodeSources: jest.fn(),
-  fetchEpisodeServers: jest.fn(),
-});
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -22,7 +15,7 @@ describe('Myanimelist search query encoding (META-8)', () => {
   it('sends a query with &, # and spaces as one query parameter', async () => {
     const request = jest.spyOn(metaHttp, 'request').mockResolvedValue({ data: page });
 
-    const result = await new Myanimelist(fakeProvider() as any).search(QUERY, 2);
+    const result = await new Myanimelist(fakeProvider()).search(QUERY, 2);
 
     const url = new URL(request.mock.calls[0]![0].url!);
     expect(url.pathname).toBe('/anime.php');

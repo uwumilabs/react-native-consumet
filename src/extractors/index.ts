@@ -1,5 +1,4 @@
 export { FlixCloud } from './flixcloud';
-export { GDFlix } from './gdflix';
 export { Gofile } from './gofile';
 export { HubCloud } from './hubcloud';
 export { Kwik } from './kwik';

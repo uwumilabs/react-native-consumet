@@ -2,62 +2,35 @@ import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
 import { IntegrityError, sha256Hex, verifyExtensionCode } from '../../src/utils/extension-integrity';
 import registry from '../../src/extension-registry.json';
+import { rejectionOf, thrownBy } from './helpers/errors';
+import {
+  countRuns,
+  extensionEntry,
+  extractorCode as extractorSource,
+  extractorEntry,
+  providerCode as providerSource,
+  registryOf,
+  resetRuns,
+  runsOf,
+} from './helpers/registry';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __extensionRuns: number;
-}
-
-const emptyRegistry = { extensions: [], extractors: [] } as any;
+const emptyRegistry = registryOf();
 
 // Each snippet counts its own executions, so tests can prove rejected code never ran.
-const providerCode = `
-globalThis.__extensionRuns = (globalThis.__extensionRuns || 0) + 1;
-function createTestProvider(ctx) {
-  return {
-    name: 'TestProvider',
-    search: async () => ({ results: [] }),
-    fetchAnimeInfo: async () => ({}),
-    fetchEpisodeSources: async () => ({ sources: [] }),
-    fetchEpisodeServers: async () => [],
-  };
-}
-exports.createTestProvider = createTestProvider;
-`;
+const providerCode = providerSource({ before: countRuns('code') });
+const extractorCode = extractorSource('TestExtractor', { before: countRuns('code') });
 
-const extractorCode = `
-globalThis.__extensionRuns = (globalThis.__extensionRuns || 0) + 1;
-function TestExtractor(ctx) {
-  return { serverName: 'TestExtractor', sources: [], extract: async () => ({ sources: [] }) };
-}
-exports.TestExtractor = TestExtractor;
-`;
-
-const providerManifest = (overrides: Record<string, unknown> = {}) =>
-  ({
-    id: 'testprovider',
-    name: 'TestProvider',
-    category: 'anime',
-    factoryName: 'createTestProvider',
-    sha256: sha256Hex(providerCode),
-    ...overrides,
-  }) as any;
-
+const providerManifest = (overrides: Record<string, unknown> = {}) => extensionEntry(providerCode, overrides);
 const extractorManifest = (overrides: Record<string, unknown> = {}) =>
-  ({ name: 'TestExtractor', version: '1.0.0', main: 'local', sha256: sha256Hex(extractorCode), ...overrides }) as any;
+  extractorEntry('TestExtractor', extractorCode, overrides);
 
 const expectIntegrityError = async (promise: Promise<unknown>, code: IntegrityError['code']) => {
-  const error = await promise.then(
-    () => undefined,
-    (e: unknown) => e
-  );
+  const error = await rejectionOf(promise);
   expect(error).toBeInstanceOf(IntegrityError);
   expect((error as IntegrityError).code).toBe(code);
 };
 
-beforeEach(() => {
-  globalThis.__extensionRuns = 0;
-});
+beforeEach(resetRuns);
 
 describe('verifyExtensionCode', () => {
   it('accepts code matching the manifest hash', () => {
@@ -65,14 +38,10 @@ describe('verifyExtensionCode', () => {
   });
 
   it('rejects a mismatching hash with the expected and actual values', () => {
-    try {
-      verifyExtensionCode(providerCode + '\n// tampered', providerManifest());
-      throw new Error('expected IntegrityError');
-    } catch (e) {
-      expect(e).toBeInstanceOf(IntegrityError);
-      expect((e as IntegrityError).code).toBe('INTEGRITY_MISMATCH');
-      expect((e as IntegrityError).expected).toBe(sha256Hex(providerCode));
-    }
+    const error = thrownBy(() => verifyExtensionCode(providerCode + '\n// tampered', providerManifest()));
+
+    expect(error).toBeInstanceOf(IntegrityError);
+    expect(error).toMatchObject({ code: 'INTEGRITY_MISMATCH', expected: sha256Hex(providerCode) });
   });
 
   it('rejects a missing hash unless allowUnhashed is set', () => {
@@ -88,8 +57,8 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
 
   it('runs code whose hash matches', async () => {
     const instance: any = await manager.executeProviderCode(providerCode, providerManifest());
-    expect(instance.name).toBe('TestProvider');
-    expect(globalThis.__extensionRuns).toBe(1);
+    expect(instance.name).toBe('Probe');
+    expect(runsOf('code')).toBe(1);
   });
 
   it('rejects a mismatching hash before running the code', async () => {
@@ -97,7 +66,7 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
       manager.executeProviderCode(providerCode, providerManifest({ sha256: 'f'.repeat(64) })),
       'INTEGRITY_MISMATCH'
     );
-    expect(globalThis.__extensionRuns).toBe(0);
+    expect(runsOf('code')).toBe(0);
   });
 
   it('rejects an unhashed entry unless the manager allows it', async () => {
@@ -108,22 +77,22 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
 
     const permissive = new ProviderManager(emptyRegistry, {}, { allowUnhashed: true });
     await permissive.executeProviderCode(providerCode, providerManifest({ sha256: undefined }));
-    expect(globalThis.__extensionRuns).toBe(1);
+    expect(runsOf('code')).toBe(1);
   });
 
   it('runs unverified code only with an explicit skipIntegrity', async () => {
     await manager.executeProviderCode(providerCode, providerManifest({ sha256: 'f'.repeat(64) }), {
       skipIntegrity: true,
     });
-    expect(globalThis.__extensionRuns).toBe(1);
+    expect(runsOf('code')).toBe(1);
   });
 
   it('rejects a factory name that is not a plain identifier', async () => {
     await expectIntegrityError(
-      manager.executeProviderCode(providerCode, { ...providerManifest(), factoryName: 'x; globalThis.__extensionRuns = 99; //' }),
+      manager.executeProviderCode(providerCode, { ...providerManifest(), factoryName: 'x; globalThis.__runs.code = 99; //' }),
       'INVALID_IDENTIFIER'
     );
-    expect(globalThis.__extensionRuns).toBe(0);
+    expect(runsOf('code')).toBe(0);
   });
 });
 
@@ -138,7 +107,7 @@ describe('ExtractorManager (REG-3)', () => {
   it('runs extractor code whose hash matches', async () => {
     const extractor = await new ExtractorManager(emptyRegistry).executeExtractorCode(extractorCode, extractorManifest());
     expect(typeof extractor.extract).toBe('function');
-    expect(globalThis.__extensionRuns).toBe(1);
+    expect(runsOf('code')).toBe(1);
   });
 
   it('rejects mismatched and unhashed extractor code before running it', async () => {
@@ -151,17 +120,17 @@ describe('ExtractorManager (REG-3)', () => {
       manager.executeExtractorCode(extractorCode, extractorManifest({ sha256: undefined })),
       'INTEGRITY_MISSING'
     );
-    expect(globalThis.__extensionRuns).toBe(0);
+    expect(runsOf('code')).toBe(0);
   });
 
   it('rejects an extractor name that is not a plain identifier', async () => {
     await expectIntegrityError(
       new ExtractorManager(emptyRegistry).executeExtractorCode(
         extractorCode,
-        extractorManifest({ name: 'TestExtractor; globalThis.__extensionRuns = 99' })
+        extractorManifest({ name: 'TestExtractor; globalThis.__runs.code = 99' })
       ),
       'INVALID_IDENTIFIER'
     );
-    expect(globalThis.__extensionRuns).toBe(0);
+    expect(runsOf('code')).toBe(0);
   });
 });

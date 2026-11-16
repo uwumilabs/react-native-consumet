@@ -9,6 +9,7 @@ import {
   type ProviderConfig,
 } from '../../../models';
 import type { AxiosRequestConfig } from 'axios';
+import { serverName } from '../../common/servers';
 
 type NetMirrorOtt = 'nf' | 'pv' | 'hs';
 
@@ -151,27 +152,7 @@ interface NetMirrorPlaylist {
   tracks?: Array<{ kind: string; file: string; label?: string; language?: string }>;
 }
 
-export type NetflixMirrorProviderInstance = {
-  name: string;
-  logo: string;
-  baseUrl: string;
-  classPath: string;
-  supportedTypes: Set<any>;
-  isNSFW: boolean;
-  isWorking?: boolean;
-  search: (query: string, page?: number) => Promise<ISearch<IMovieResult>>;
-  fetchMediaInfo: (mediaId: string) => Promise<IMovieInfo>;
-  fetchEpisodeServers: (episodeId: string, mediaId?: string) => Promise<IEpisodeServer[]>;
-  fetchEpisodeSources: (episodeId: string, mediaId?: string) => Promise<ISource>;
-  /** The episode's master playlist (its `auto` source) as text, fetched with the headers the CDN needs. */
-  fetchHlsPlaylist: (episodeId: string) => Promise<string>;
-};
-
-function createNetMirror(
-  ctx: ProviderContext,
-  platform: NetMirrorPlatform,
-  customBaseURL?: string
-): NetflixMirrorProviderInstance {
+function createNetMirror(ctx: ProviderContext, platform: NetMirrorPlatform, customBaseURL?: string) {
   const { enums, axios: ctxAxios, createCustomBaseUrl } = ctx;
   // React Native sends its native cookie jar with every request unless withCredentials is false,
   // and on Android the jar replaces the Cookie headers set here. With a stored session cookie the
@@ -256,6 +237,7 @@ function createNetMirror(
       })
       .catch(() => undefined);
 
+    // As the app does: ext_name is the id of the site's browser extension, which the poll reports.
     const pollCookie = [
       'ext_name=ojplmecpdpgccookcobabopnaifgidhf',
       `addhash=${encodeURIComponent(addhash)}`,
@@ -578,7 +560,7 @@ function createNetMirror(
   const playlistPath = (episodeId: string) => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
 
   const fetchEpisodeServers = async (episodeId: string, _mediaId?: string): Promise<IEpisodeServer[]> => {
-    return [{ name: platform.label, url: `${baseUrl}${playlistPath(episodeId)}` }];
+    return [{ name: serverName('netmirror', platform.label), url: `${baseUrl}${playlistPath(episodeId)}` }];
   };
 
   const qualityFromLabel = (label: string): string => {
@@ -647,6 +629,7 @@ function createNetMirror(
     }
   };
 
+  /** The episode's master playlist (its `auto` source) as text, fetched with the headers the CDN needs. */
   const fetchHlsPlaylist = async (episodeId: string): Promise<string> => {
     try {
       const { sources, headers } = await fetchEpisodeSources(episodeId);
@@ -668,6 +651,8 @@ function createNetMirror(
     fetchHlsPlaylist,
   };
 }
+
+export type NetflixMirrorProviderInstance = ReturnType<typeof createNetMirror>;
 
 /**
  * NetflixMirror (net52.cc): the site's Netflix catalog.

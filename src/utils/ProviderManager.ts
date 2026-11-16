@@ -27,17 +27,32 @@ export interface ProviderLoadOptions {
   baseUrl?: string;
 }
 
+type MethodsOf<T> = { [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never }[keyof T];
+type MethodList<T> = readonly MethodsOf<T>[];
+
 /**
- * Methods a provider must have, by category; loading a provider without one of them throws.
- * They match the base parsers (AnimeParser, MovieParser, MangaParser, LightNovelParser); meta
- * lists what anime and movie meta providers share.
+ * Methods a provider must have, by category; loading a provider without one of them throws. Each
+ * list names methods of the category's base parser (or, for meta, what anime and movie meta
+ * providers share), so a renamed method fails to compile here.
  */
 export const REQUIRED_PROVIDER_METHODS = {
-  'anime': ['search', 'fetchAnimeInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
-  'movies': ['search', 'fetchMediaInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
-  'manga': ['search', 'fetchMangaInfo', 'fetchChapterPages'],
-  'light-novels': ['search', 'fetchLightNovelInfo', 'fetchChapterContent'],
-  'meta': ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+  'anime': [
+    'search',
+    'fetchAnimeInfo',
+    'fetchEpisodeSources',
+    'fetchEpisodeServers',
+  ] satisfies MethodList<IAnimeProvider>,
+  'movies': [
+    'search',
+    'fetchMediaInfo',
+    'fetchEpisodeSources',
+    'fetchEpisodeServers',
+  ] satisfies MethodList<IMovieProvider>,
+  'manga': ['search', 'fetchMangaInfo', 'fetchChapterPages'] satisfies MethodList<MangaParser>,
+  'light-novels': ['search', 'fetchLightNovelInfo', 'fetchChapterContent'] satisfies MethodList<LightNovelParser>,
+  'meta': ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'] satisfies MethodList<
+    IAnimeProvider & IMovieProvider
+  >,
 } as const satisfies Record<ProviderType, readonly string[]>;
 
 /** How errors name a category ("is not an anime provider"), and the base parser its providers are instances of. */
@@ -96,12 +111,7 @@ export class ProviderManager {
     // One extractor manager for every provider this manager loads, built from the same registry,
     // so providers run the registry (hash-verified) versions of their extractors.
     this.extractorManager =
-      providerConfig.extractorManager ??
-      new ExtractorManager(
-        validRegistry,
-        { axios: providerConfig.axios, load: providerConfig.load, userAgent: providerConfig.userAgent },
-        integrityOptions
-      );
+      providerConfig.extractorManager ?? new ExtractorManager(validRegistry, providerConfig, integrityOptions);
     this.providerContext = createProviderContext({ ...providerConfig, extractorManager: this.extractorManager });
     this.extensions = validRegistry.extensions.map((extension) => ({ ...extension }));
     for (const extension of this.extensions) this.byKey.set(extension.id.toLowerCase(), extension);

@@ -1,5 +1,5 @@
-import axios, { type AxiosAdapter } from 'axios';
-import { withRetry } from '../../src/utils/meta-http';
+import type { AxiosAdapter } from 'axios';
+import { metaHttp } from '../../src/utils/meta-http';
 import { fetchTextWithTimeout } from '../../src/utils/fetch-with-timeout';
 
 // An adapter that answers with the given statuses in order, failing like axios does for non-2xx.
@@ -21,12 +21,10 @@ const scriptedAdapter = (statuses: number[]) => {
   return { adapter, calls };
 };
 
-describe('withRetry (META-4)', () => {
+describe('metaHttp retries (META-4)', () => {
   it.each([429, 503])('retries once after %i', async (status) => {
     const { adapter, calls } = scriptedAdapter([status, 200]);
-    const client = withRetry(axios.create({ adapter }), { baseDelayMs: 1 });
-
-    const { data } = await client.get('https://api.example/x');
+    const { data } = await metaHttp.get('https://api.example/x', { adapter });
 
     expect(data.status).toBe(200);
     expect(calls).toEqual([status, 200]);
@@ -34,17 +32,13 @@ describe('withRetry (META-4)', () => {
 
   it('does not retry client errors', async () => {
     const { adapter, calls } = scriptedAdapter([404]);
-    const client = withRetry(axios.create({ adapter }), { baseDelayMs: 1 });
-
-    await expect(client.get('https://api.example/x')).rejects.toThrow('404');
+    await expect(metaHttp.get('https://api.example/x', { adapter })).rejects.toThrow('404');
     expect(calls).toEqual([404]);
   });
 
   it('gives up after one retry', async () => {
     const { adapter, calls } = scriptedAdapter([500, 500, 200]);
-    const client = withRetry(axios.create({ adapter }), { baseDelayMs: 1 });
-
-    await expect(client.get('https://api.example/x')).rejects.toThrow('500');
+    await expect(metaHttp.get('https://api.example/x', { adapter })).rejects.toThrow('500');
     expect(calls).toEqual([500, 500]);
   });
 });

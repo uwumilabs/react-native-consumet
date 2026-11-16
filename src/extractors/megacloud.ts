@@ -56,6 +56,8 @@ export function MegaCloud(ctx: ExtractorContext) {
 
     return {
       sources,
+      // The stream plays inside the embed page, so a player sends that page as the Referer.
+      headers: { Referer: embedUrl.href },
       subtitles:
         data.tracks?.map((track: { file: string; label?: string; kind: string }) => ({
           url: track.file,

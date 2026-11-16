@@ -23,8 +23,9 @@ function bestStream({ sources, headers }: ISource): Stream {
 
 /**
  * The full-screen player. `play` loads an episode's servers, then the sources of the first one (or
- * of the one picked with `selectServer`), and plays the best source; `show` plays a stream as it is.
- * A load that finishes after a newer one, or after `close`, is dropped.
+ * of the one picked with `selectServer`), and plays the best source; `retry` loads the same server
+ * again; `show` plays a stream as it is. A load that finishes after a newer one, or after `close`,
+ * is dropped.
  */
 export function usePlayer(logTag: string) {
   const [open, setOpen] = useState(false);
@@ -46,6 +47,8 @@ export function usePlayer(logTag: string) {
       try {
         let name = pick;
         if (name === undefined) {
+          setServers([]);
+          setServer(null);
           const list = await from.servers();
           if (!isCurrent()) return;
           console.log(`[${logTag}] episode servers`, list);
@@ -81,9 +84,10 @@ export function usePlayer(logTag: string) {
     [load, server]
   );
 
+  // Without a server (listing the servers failed), the servers are listed again.
   const retry = useCallback(() => {
-    if (loader.current) load(loader.current);
-  }, [load]);
+    if (loader.current) load(loader.current, server ?? undefined);
+  }, [load, server]);
 
   const show = useCallback(
     (direct: Stream) => {

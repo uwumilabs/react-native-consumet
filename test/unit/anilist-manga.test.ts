@@ -2,7 +2,8 @@ import Anilist from '../../src/providers/meta/anilist';
 import { MetaError } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
 import soloLeveling from './fixtures/anilist/manga-105398.json';
-import { response } from './fixtures/anilist/replay';
+import { replayAlways } from './fixtures/anilist/replay';
+import { fakeMangaProvider as fakeProvider } from './helpers/fake-providers';
 
 // AniList 105398: romaji "Na Honjaman Level Up", English "Solo Leveling", MAL 121496.
 const MALSYNC_URL = 'https://api.malsync.moe/mal/manga/121496';
@@ -11,18 +12,16 @@ const chapters = () => [1, 2, 3].map((n) => ({ id: `ch-${n}`, title: `Chapter ${
 
 /** A manga provider that knows the manga under `knownAs` (its search slug) only. */
 const fakeMangaProvider = (knownAs?: string) =>
-  ({
-    name: 'FakeManga',
+  fakeProvider({
     search: jest.fn(async (slug: string) => ({
       results: slug === knownAs ? [{ id: 'solo-leveling', title: 'Solo Leveling' }] : [],
     })),
-    fetchMangaInfo: jest.fn().mockResolvedValue({ id: 'solo-leveling', chapters: chapters() }),
-    fetchChapterPages: jest.fn(),
+    info: { id: 'solo-leveling', chapters: chapters() },
   }) as any;
 
 /** AniList answers with the recorded manga; MALSync answers `malSync`. */
 const serve = (malSync: { status: number; data?: unknown } = { status: 404 }) => {
-  jest.spyOn(metaHttp, 'post').mockResolvedValue(response(soloLeveling) as any);
+  replayAlways(jest.spyOn(metaHttp, 'post'), soloLeveling);
   return jest.spyOn(metaHttp, 'get').mockImplementation(async (url: string) => {
     if (url !== MALSYNC_URL) throw new Error(`unexpected request ${url}`);
     return { data: {}, ...malSync } as any;
@@ -92,11 +91,22 @@ describe('Anilist.Manga.fetchMangaInfo chapters (META-12)', () => {
   });
 
   it('uses the MALSync mapping for the provider before searching', async () => {
+    // The shape MALSync answered with for MAL 121496 on 2026-11-16, trimmed to one site.
     const get = serve({
       status: 200,
-      data: { Sites: { FakeManga: { 'solo-leveling': { page: 'FakeManga', url: 'https://fake/manga/solo-leveling' } } } },
+      data: {
+        Sites: {
+          Mangadex: {
+            'solo-leveling': {
+              identifier: 'solo-leveling',
+              page: 'Mangadex',
+              url: 'https://mangadex.org/title/solo-leveling',
+            },
+          },
+        },
+      },
     });
-    const provider = fakeMangaProvider();
+    const provider = { ...fakeMangaProvider(), name: 'MangaDex' };
 
     const info = await new Anilist.Manga(provider).fetchMangaInfo('105398');
 

@@ -221,7 +221,7 @@ anilist.fetchAnimeInfo('98659').then((data) => {
 ```
 
 returns a promise which resolves into an anime info object (including the episodes). (_[`Promise<IAnimeInfo>`](../../../src/models/types.ts)_)\
-The episodes come from the provider without the ani.zip merge, and each gets `uniqueId` `${anilistId}$ep=${number}`. Use [fetchEpisodesListById](#fetchepisodeslistbyid) for the merged list. Recommendations and relations share one shape (recommendations AniList hides are left out), and `title.userPreferred` is set.\
+The episodes are the ones [fetchEpisodesListById](#fetchepisodeslistbyid) returns: merged with ani.zip, with the same `uniqueId`s. Recommendations and relations share one shape (recommendations AniList hides are left out), and `title.userPreferred` is set.\
 output:
 
 ```js
@@ -256,7 +256,7 @@ output:
   subOrDub: 'sub',
   recommendations: [
       {
-        id: 101921,
+        id: '101921',
         malId: 37999,
         title: {
           romaji: 'Kaguya-sama wa Kokurasetai: Tensaitachi no Renai Zunousen',
@@ -523,6 +523,7 @@ Every method throws a [`MetaError`](../../guides/meta.md#errors) on failure:
 
 - `source: 'anilist'` when the AniList request failed, with its HTTP `status`. A 429 or 5xx answer is retried once first. 404 and 429 keep readable messages (`Media not found…`, `You have been ratelimited by anilist…`).
 - `source: 'provider'` when the anime provider failed, while finding the anime, listing episodes or fetching servers or sources. The provider's error is the `cause`.
+- `source: 'github'` when `fetchRandomAnime` can't fetch the list of AniList ids it picks from (5H4D0WILA/IDFetch on GitHub).
 
 ani.zip and filler lists are optional: when they fail or time out (5 s), the episodes are returned without them. The filler list `fetchFiller` reads (saikou-app's `mal-id-filler-list` on GitHub) is currently offline, so `isFiller` is never set.
 

@@ -1,7 +1,30 @@
-import { TvType, type IMovieInfo, type IMovieResult } from '../models';
+import { TvType, type IMovieInfo, type IMovieResult, type ISearch } from '../models';
+import { emptySearch } from '../providers/common/search';
 
-/** TMDB's API, which META.TMDB and MOVIES.MultiStream read titles from. */
-export const TMDB_API_URL = 'https://api.themoviedb.org/3';
+/**
+ * The URL of a path (`/search/multi?query=...`) of TMDB's API, which META.TMDB and MOVIES.MultiStream
+ * read titles from, with the API key.
+ */
+export const tmdbUrl = (path: string, apiKey: string): string =>
+  `https://api.themoviedb.org/3${path}${path.includes('?') ? '&' : '?'}api_key=${apiKey}`;
+
+/** What `/movie/<id>` and `/tv/<id>` append to the details for mapTmdbInfo: cast, trailer, recommendations. */
+export const TMDB_INFO_APPEND = 'credits,videos,recommendations';
+
+/**
+ * A page of TMDB's paged answer (search, trending) with `results` already mapped from its
+ * `results`; an empty page when TMDB sent none.
+ */
+export const tmdbPage = <T>(data: any, page: number, results: T[]): ISearch<T> =>
+  results.length
+    ? {
+        currentPage: page,
+        hasNextPage: page + 1 <= data?.total_pages,
+        totalResults: data?.total_results,
+        totalPages: data?.total_pages,
+        results,
+      }
+    : emptySearch(page);
 
 /**
  * The TMDB API key used when the caller passes none. Every app that doesn't pass its own key shares
@@ -48,7 +71,7 @@ export type TmdbMediaType = 'movie' | 'tv';
 
 /** A TMDB movie or show as a list result (search, trending, recommendations, similar). */
 export const mapTmdbResult = (result: any, mediaType?: TmdbMediaType): IMovieResult => ({
-  id: result.id,
+  id: String(result.id),
   title: result.title || result.name,
   image: tmdbImage(result.poster_path),
   // Recommendations carry media_type; similar titles don't, and are of the requested type.
@@ -63,7 +86,7 @@ export const mapTmdbResults = (list: any, mediaType: TmdbMediaType): IMovieResul
 
 /**
  * The details of `/movie/<id>` or `/tv/<id>` that META.TMDB and MOVIES.MultiStream both return.
- * The request appends `credits`, `videos` and `recommendations` for the fields that use them.
+ * The request appends TMDB_INFO_APPEND for the fields that use them.
  */
 export const mapTmdbInfo = (data: any, mediaType: TmdbMediaType) => {
   const video = data?.videos?.results?.[0];

@@ -1,6 +1,15 @@
-import { ProviderManager, REQUIRED_PROVIDER_METHODS } from '../../src/utils/ProviderManager';
-import { sha256Hex } from '../../src/utils/extension-integrity';
+import { ProviderManager } from '../../src/utils/ProviderManager';
 import type { ProviderType } from '../../src/models/extension-manifest';
+import { extensionEntry, registryOf, serveFiles, type FetchSpy } from './helpers/registry';
+
+// The methods a registry provider of each category must have (the table in docs/extension-integration.md).
+const REQUIRED: Record<ProviderType, string[]> = {
+  'anime': ['search', 'fetchAnimeInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+  'movies': ['search', 'fetchMediaInfo', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+  'manga': ['search', 'fetchMangaInfo', 'fetchChapterPages'],
+  'light-novels': ['search', 'fetchLightNovelInfo', 'fetchChapterContent'],
+  'meta': ['search', 'fetchEpisodeSources', 'fetchEpisodeServers'],
+};
 
 // A provider factory with exactly the given methods; each returns the method's name.
 const providerWith = (methods: readonly string[]) => `
@@ -11,53 +20,23 @@ function createProbe(ctx) {
   };
 }`;
 
-const entry = (id: string, category: ProviderType, code: string) =>
-  ({
-    id,
-    name: id,
-    description: 'Test provider',
-    version: '1.0.0',
-    author: { name: 'Tests' },
-    category,
-    main: `https://registry.test/registry/extensions/${id}/1.0.0.js`,
-    factoryName: 'createProbe',
-    sha256: sha256Hex(code),
-    baseUrl: `https://${id}.test`,
-    logo: '',
-    status: 'beta',
-    lastUpdated: '2026-10-16T00:00:00Z',
-    extractors: [],
-  }) as any;
+const codeById: Record<string, string> = {
+  mangaprobe: providerWith(REQUIRED.manga),
+  novelprobe: providerWith(REQUIRED['light-novels']),
+  animeprobe: providerWith(REQUIRED.anime),
+};
+const registry = registryOf([
+  extensionEntry(codeById.mangaprobe!, { id: 'mangaprobe', category: 'manga' }),
+  extensionEntry(codeById.novelprobe!, { id: 'novelprobe', category: 'light-novels' }),
+  extensionEntry(codeById.animeprobe!, { id: 'animeprobe', category: 'anime' }),
+]);
 
-const mangaCode = providerWith(['search', 'fetchMangaInfo', 'fetchChapterPages']);
-const novelCode = providerWith(['search', 'fetchLightNovelInfo', 'fetchChapterContent']);
-const animeCode = providerWith(REQUIRED_PROVIDER_METHODS.anime);
-const codeById: Record<string, string> = { mangaprobe: mangaCode, novelprobe: novelCode, animeprobe: animeCode };
-const registry = {
-  extensions: [
-    entry('mangaprobe', 'manga', mangaCode),
-    entry('novelprobe', 'light-novels', novelCode),
-    entry('animeprobe', 'anime', animeCode),
-  ],
-  extractors: [],
-} as any;
-
-const realFetch = global.fetch;
-let fetchMock: jest.Mock;
+let fetch: FetchSpy;
 beforeEach(() => {
-  fetchMock = jest.fn(async (url: any) => ({
-    ok: true,
-    status: 200,
-    statusText: 'OK',
-    text: async () => codeById[String(url).split('/').at(-2)!],
-  }));
-  global.fetch = fetchMock as any;
+  fetch = serveFiles((url) => codeById[url.split('/').at(-2)!]);
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
-afterEach(() => {
-  global.fetch = realFetch;
-  jest.restoreAllMocks();
-});
+afterEach(() => jest.restoreAllMocks());
 
 describe('getProvider(category, id) (EXT-7)', () => {
   it('loads a manga provider, which has no episode methods', async () => {
@@ -73,16 +52,6 @@ describe('getProvider(category, id) (EXT-7)', () => {
     await expect(novel.fetchChapterContent('chapter-1')).resolves.toBe('fetchChapterContent');
   });
 
-  it('shares the loaded provider with getAnimeProvider and loadExtension', async () => {
-    const manager = new ProviderManager(registry);
-
-    const anime = await manager.getProvider('anime', 'animeprobe');
-
-    expect(await manager.getAnimeProvider('animeprobe')).toBe(anime);
-    expect(await manager.loadExtension('animeprobe')).toBe(anime);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
   it('refuses an extension of another category without loading it', async () => {
     const manager = new ProviderManager(registry);
 
@@ -95,24 +64,20 @@ describe('getProvider(category, id) (EXT-7)', () => {
     await expect(manager.getMovieProvider('novelprobe')).rejects.toThrow(
       "Extension 'novelprobe' is not a movie provider"
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
 
 describe('required methods by category (EXT-7)', () => {
   const run = (code: string, category: ProviderType) =>
-    new ProviderManager({ extensions: [], extractors: [] } as any).executeProviderCode(
-      code, entry('probe', category, code));
+    new ProviderManager(registryOf()).executeProviderCode(code, extensionEntry(code, { category }));
 
-  it.each(Object.entries(REQUIRED_PROVIDER_METHODS))(
-    'accepts %s providers with exactly their required methods',
-    async (category, methods) => {
-      await expect(run(providerWith(methods), category as ProviderType)).resolves.toMatchObject({ name: 'Probe' });
-    }
-  );
+  it.each(Object.entries(REQUIRED))('accepts %s providers with exactly their required methods', async (category, methods) => {
+    await expect(run(providerWith(methods), category as ProviderType)).resolves.toMatchObject({ name: 'Probe' });
+  });
 
   it.each(
-    Object.entries(REQUIRED_PROVIDER_METHODS).flatMap(([category, methods]) =>
+    Object.entries(REQUIRED).flatMap(([category, methods]) =>
       methods.map((method) => [category, method, methods.filter((m) => m !== method)] as const)
     )
   )('rejects %s providers without %s', async (category, method, others) => {
@@ -128,6 +93,8 @@ describe('required methods by category (EXT-7)', () => {
   });
 
   it('rejects an entry whose category it does not know', async () => {
-    await expect(run(animeCode, 'music' as ProviderType)).rejects.toThrow("Unknown provider category 'music'");
+    await expect(run(codeById.animeprobe!, 'music' as ProviderType)).rejects.toThrow(
+      "Unknown provider category 'music'"
+    );
   });
 });

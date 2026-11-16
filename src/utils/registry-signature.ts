@@ -3,6 +3,7 @@ import type { ExtensionRegistryData } from '../models/extension-manifest';
 import signingKeys from '../registry-signing-keys.json';
 import { RegistryError, validateRegistry } from './registry-schema';
 import { parseSignatureLines, publicKeyHex } from './registry-signature-format';
+import { utf8Encode } from './utf8';
 
 /**
  * Signatures for a downloaded extension registry (REG-6).
@@ -75,44 +76,6 @@ function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-/**
- * UTF-8 bytes of `text`, the bytes Node writes for it: a lone surrogate becomes U+FFFD, as with
- * TextEncoder. Written out so verification doesn't depend on the runtime providing TextEncoder.
- */
-function utf8Bytes(text: string): Uint8Array {
-  // At most 3 bytes per UTF-16 code unit (a surrogate pair is 2 units and 4 bytes).
-  const bytes = new Uint8Array(text.length * 3);
-  let length = 0;
-  for (let i = 0; i < text.length; i++) {
-    let code = text.charCodeAt(i);
-    if (code >= 0xd800 && code <= 0xdbff && i + 1 < text.length) {
-      const low = text.charCodeAt(i + 1);
-      if (low >= 0xdc00 && low <= 0xdfff) {
-        code = 0x10000 + ((code - 0xd800) << 10) + (low - 0xdc00);
-        i++;
-      }
-    }
-    if (code >= 0xd800 && code <= 0xdfff) code = 0xfffd;
-
-    if (code < 0x80) {
-      bytes[length++] = code;
-    } else if (code < 0x800) {
-      bytes[length++] = 0xc0 | (code >> 6);
-      bytes[length++] = 0x80 | (code & 0x3f);
-    } else if (code < 0x10000) {
-      bytes[length++] = 0xe0 | (code >> 12);
-      bytes[length++] = 0x80 | ((code >> 6) & 0x3f);
-      bytes[length++] = 0x80 | (code & 0x3f);
-    } else {
-      bytes[length++] = 0xf0 | (code >> 18);
-      bytes[length++] = 0x80 | ((code >> 12) & 0x3f);
-      bytes[length++] = 0x80 | ((code >> 6) & 0x3f);
-      bytes[length++] = 0x80 | (code & 0x3f);
-    }
-  }
-  return bytes.subarray(0, length);
-}
-
 function trustedKeys(publicKeys: readonly string[]): { hex: string; bytes: Uint8Array }[] {
   if (!Array.isArray(publicKeys) || publicKeys.length === 0) {
     throw new RegistrySignatureError(
@@ -161,7 +124,7 @@ export function verifyRegistrySignature(
   const keys = trustedKeys(publicKeys);
   const signatures = parseSignatures(signature);
   let message: Uint8Array;
-  if (typeof registryText === 'string') message = utf8Bytes(registryText);
+  if (typeof registryText === 'string') message = Uint8Array.from(utf8Encode(registryText));
   else if (registryText instanceof Uint8Array) message = registryText;
   else throw new TypeError('verifyRegistrySignature: registryText must be a string or a Uint8Array');
 

@@ -20,7 +20,8 @@ export function PlayerModal({ player, label }: { player: Player; label?: string 
             source={{
               uri: stream.url,
               headers: stream.headers,
-              ...(stream.isM3U8 && Platform.OS === 'ios' ? { type: 'hls' } : {}),
+              // ExoPlayer picks HLS from the URL's extension unless told; AVPlayer ignores `type`.
+              ...(stream.isM3U8 ? { type: 'm3u8' } : {}),
             }}
             style={StyleSheet.absoluteFill}
             controls

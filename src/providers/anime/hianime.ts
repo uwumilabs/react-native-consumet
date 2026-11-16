@@ -6,13 +6,19 @@ import { emptySearch } from '../common/search';
 // Bootstrap `.pagination` whose links end in `page=N`, and episode ids of the form
 // `<anime id>$episode$<the site's episode id>`.
 
+/**
+ * The zone the sites' schedules give airing times in: UTC+5:30 (IST), as minutes behind UTC (the
+ * form Date.getTimezoneOffset uses). It is fixed, not the device's zone.
+ */
+export const IST_TZ_OFFSET = -330;
+
 /** `url` asking for listing page `page`; page numbers below 1 ask for the first page. */
 export function pageUrl(url: string, page: number): string {
   return `${url}${url.includes('?') ? '&' : '?'}page=${clampPage(page)}`;
 }
 
 /** Page numbers below 1 ask for the first page. */
-export function clampPage(page: number): number {
+function clampPage(page: number): number {
   return page < 1 ? 1 : page;
 }
 
@@ -32,6 +38,16 @@ export function cardPage($: CheerioAPI, results: IAnimeResult[], page: number): 
     .filter((linked) => linked > 0);
   const totalPages = Math.max(currentPage, ...linkedPages);
   return { currentPage, hasNextPage: totalPages > currentPage, totalPages, results };
+}
+
+/** The genres a page links to (`/genre/<slug>`), by name, each once, in page order. */
+export function linkedGenres($: CheerioAPI): string[] {
+  const genres: string[] = [];
+  $('a[href*="/genre/"]').each((_, link) => {
+    const genre = $(link).text().trim();
+    if (genre && !genres.includes(genre)) genres.push(genre);
+  });
+  return genres;
 }
 
 const EPISODE = '$episode$';

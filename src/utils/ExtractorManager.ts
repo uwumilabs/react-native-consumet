@@ -1,7 +1,6 @@
 import type { ExtractorContext, ExtractorFactory, IVideoExtractor } from '../models';
 import type { BundledRegistry, ExtensionRegistryData, ExtractorInfo } from '../models/extension-manifest';
-import { createExtractorContext, type ExtractorContextConfig } from './create-extractor-context';
-import { defaultExtractors } from './create-provider-context';
+import { createExtractorContext, defaultExtractors, type ExtractorContextConfig } from './create-extractor-context';
 import type { ExecuteCodeOptions, IntegrityOptions } from './extension-integrity';
 import { CompiledCodeCache, deleteEntriesOf, extensionGlobals, fetchEntryCode, memoiseLoad } from './extension-modules';
 import { assertCompatibleEntry, validateRegistry } from './registry-schema';
@@ -17,12 +16,8 @@ export class ExtractorManager {
   private bundled = new Map<string, ExtractorFactory>();
   private context: ExtractorContext;
 
-  // Server name alias -> extractor name, from registry `aliases`. The defaults cover registries apps
-  // stored before entries carried aliases.
-  private aliases: Map<string, string> = new Map([
-    ['upcloud', 'megacloud'],
-    ['akcloud', 'megacloud'],
-  ]);
+  // Server name alias -> extractor name, from registry `aliases`
+  private aliases = new Map<string, string>();
 
   /**
    * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
@@ -132,32 +127,28 @@ export class ExtractorManager {
 
   private load(extractorId: string): Promise<LoadedExtractor> {
     const metadata = this.getExtractorMetadata(extractorId);
+    const name = this.nameOf(extractorId);
+    const bundled = this.bundled.get(name);
     if (!metadata) {
-      const name = this.nameOf(extractorId);
-      const factory = this.bundled.get(name);
-      if (!factory) throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
-      return memoiseLoad(this.loads, `${name}|bundled`, async () => this.loaded(factory));
+      if (!bundled) throw new Error(`Extractor '${extractorId}' not found in registry or static extractors`);
+      return memoiseLoad(this.loads, `${name}|bundled`, async () => this.loaded(bundled));
     }
     // Refuse a version that needs a newer extension context before downloading it.
     assertCompatibleEntry(metadata);
-    const key = `${metadata.name.toLowerCase()}|${metadata.sha256 ?? ''}`;
-    return memoiseLoad(this.loads, key, async () => this.loaded(await this.fetchFactory(metadata)));
+    const registryLoad = memoiseLoad(this.loads, `${name}|${metadata.sha256 ?? ''}`, async () =>
+      this.loaded(this.compileExtractor(await fetchEntryCode('extractor', metadata.main), metadata))
+    );
+    // A failed load isn't cached (memoiseLoad forgets it), so a network blip doesn't pin the
+    // bundled version: the next load tries the registry again.
+    return registryLoad.catch((error) => {
+      if (!bundled) throw error;
+      console.warn(`Extractor '${metadata.name}' from the registry failed; using the bundled one:`, error);
+      return this.loaded(bundled);
+    });
   }
 
   private loaded(factory: ExtractorFactory): LoadedExtractor {
     return { factory, instance: factory(this.context) };
-  }
-
-  /** The registry version of an extractor, falling back to the bundled one when it can't be used. */
-  private async fetchFactory(metadata: ExtractorInfo): Promise<ExtractorFactory> {
-    try {
-      return this.compileExtractor(await fetchEntryCode('extractor', metadata.main), metadata);
-    } catch (error) {
-      const bundled = this.bundled.get(metadata.name.toLowerCase());
-      if (!bundled) throw error;
-      console.warn(`Extractor '${metadata.name}' from the registry failed; using the bundled one:`, error);
-      return bundled;
-    }
   }
 
   private compileExtractor(code: string, metadata: ExtractorInfo, options: ExecuteCodeOptions = {}): ExtractorFactory {

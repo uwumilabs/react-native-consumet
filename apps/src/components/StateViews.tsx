@@ -21,6 +21,15 @@ export function IdleView({ emoji, title, hint }: { emoji: string; title: string;
   );
 }
 
+/** One line of muted text in the middle, e.g. a call that returned nothing. */
+export function MessageView({ text }: { text: string }) {
+  return (
+    <View style={S.center}>
+      <Text style={S.mutedText}>{text}</Text>
+    </View>
+  );
+}
+
 export function ErrorView({
   message,
   onRetry,
@@ -34,12 +43,17 @@ export function ErrorView({
     <View style={S.center}>
       <Text style={S.errEmoji}>⚠️</Text>
       <Text style={S.errText}>{message}</Text>
-      {onRetry ? (
-        <TouchableOpacity style={S.retryBtn} onPress={onRetry}>
-          <Text style={S.retryText}>{retryLabel}</Text>
-        </TouchableOpacity>
-      ) : null}
+      {onRetry ? <RetryButton label={retryLabel} onPress={onRetry} /> : null}
     </View>
+  );
+}
+
+/** The accent pill under an error, or anywhere a list offers to load more. */
+export function RetryButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={S.retryBtn} onPress={onPress}>
+      <Text style={S.retryText}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -48,8 +62,8 @@ const S = StyleSheet.create({
   loadingTitle: { fontSize: 16, fontWeight: '700', color: colors.textSub },
   mutedText: { fontSize: 14, color: colors.muted },
   idleEmoji: { fontSize: 52, marginBottom: 4 },
-  idleTitle: { fontSize: 18, fontWeight: '700', color: colors.textSub },
-  idleHint: { fontSize: 14, color: colors.dim },
+  idleTitle: { fontSize: 18, fontWeight: '700', color: colors.textSub, textAlign: 'center' },
+  idleHint: { fontSize: 14, color: colors.dim, textAlign: 'center' },
   errEmoji: { fontSize: 36 },
   errText: { fontSize: 14, color: colors.error, textAlign: 'center', maxWidth: 280 },
   retryBtn: {

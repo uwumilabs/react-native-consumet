@@ -23,6 +23,8 @@ export async function fetchTextWithTimeout(
   }
 }
 
+const EXTENSION_FETCH_TIMEOUT_MS = 30000;
+
 /** What the `fetch` extension code runs with resolves to. */
 export interface ExtensionFetchResponse {
   /** Whether the status is 2xx; HTTP errors resolve with `ok: false` instead of throwing */
@@ -43,7 +45,7 @@ const bodyText = (data: unknown): string =>
  * interceptors apply). Like `fetch`, it rejects only when no response arrives (network error,
  * timeout); an HTTP error status resolves with `ok: false`.
  */
-export function createExtensionFetch(axios: AxiosInstance, timeoutMs = 30000) {
+export function createExtensionFetch(axios: AxiosInstance) {
   return async (url: string, options: any = {}): Promise<ExtensionFetchResponse> => {
     let response: AxiosResponse;
     try {
@@ -52,7 +54,7 @@ export function createExtensionFetch(axios: AxiosInstance, timeoutMs = 30000) {
         method: options.method || 'GET',
         headers: options.headers || {},
         data: options.body,
-        timeout: timeoutMs,
+        timeout: EXTENSION_FETCH_TIMEOUT_MS,
         // Keep the body as text (axios parses JSON by default) and resolve for every status.
         responseType: 'text',
         validateStatus: () => true,

@@ -2,17 +2,16 @@ import Anilist from '../../src/providers/meta/anilist';
 import { metaHttp } from '../../src/utils/meta-http';
 import airingSchedule from './fixtures/anilist/airing-schedule.json';
 import { replay, sentBodies } from './fixtures/anilist/replay';
+import { fakeAnimeProvider } from './helpers/fake-providers';
 
 // Friday 16 October 2026, 15:30 local time. Days are built in local time, like the library does.
 const NOW = new Date(2026, 9, 16, 15, 30);
 const midnight = (day: number) => new Date(2026, 9, day).getTime() / 1000;
 
-const fakeProvider = () => ({ name: 'FakeProvider', search: jest.fn(), fetchAnimeInfo: jest.fn() }) as any;
-
 /** The `airingAt` bounds fetchAiringSchedule sends to AniList. */
 const windowFor = async (...args: Parameters<Anilist['fetchAiringSchedule']>) => {
   const post = replay(jest.spyOn(metaHttp, 'post'), airingSchedule);
-  await new Anilist(fakeProvider()).fetchAiringSchedule(...args);
+  await new Anilist(fakeAnimeProvider()).fetchAiringSchedule(...args);
   const { airingAtGreater, airingAtLesser } = sentBodies(post)[0]!.variables!;
   jest.restoreAllMocks();
   return [airingAtGreater, airingAtLesser];
@@ -47,7 +46,7 @@ describe('Anilist.fetchAiringSchedule (META-12)', () => {
   it.each([7, -1, 2.5, 'funday'])('rejects the weekday %p without calling AniList', async (day) => {
     const post = jest.spyOn(metaHttp, 'post');
 
-    await expect(new Anilist(fakeProvider()).fetchAiringSchedule(1, 20, day, 'friday')).rejects.toThrow(
+    await expect(new Anilist(fakeAnimeProvider()).fetchAiringSchedule(1, 20, day, 'friday')).rejects.toThrow(
       'Invalid weekStart or weekEnd'
     );
     expect(post).not.toHaveBeenCalled();
@@ -55,19 +54,25 @@ describe('Anilist.fetchAiringSchedule (META-12)', () => {
 
   it('maps the recorded schedule', async () => {
     replay(jest.spyOn(metaHttp, 'post'), airingSchedule);
-    const recorded = airingSchedule.body.data.Page.airingSchedules;
 
-    const { results, hasNextPage } = await new Anilist(fakeProvider()).fetchAiringSchedule(1, 3);
+    const { results, hasNextPage } = await new Anilist(fakeAnimeProvider()).fetchAiringSchedule(1, 3);
 
     expect(hasNextPage).toBe(true);
-    expect(results.map((r) => [r.id, r.episode, r.airingAt, r.country])).toEqual(
-      recorded.map((s) => [String(s.media.id), s.episode, s.airingAt, s.media.countryOfOrigin])
-    );
+    expect(results.map((r) => [r.id, r.episode, r.airingAt, r.country])).toEqual([
+      ['199340', 1, 1792076400, 'JP'],
+      ['180136', 16, 1792077960, 'JP'],
+      ['178868', 2, 1791989160, 'JP'],
+    ]);
     expect(results[1]).toEqual(
       expect.objectContaining({
-        title: recorded[1]!.media.title,
+        title: {
+          romaji: 'Tsuihou Sareta Tensei Juukishi wa Game Chishiki de Musou Suru',
+          english: 'The Exiled Heavy Knight Knows How to Game the System',
+          userPreferred: 'Tsuihou Sareta Tensei Juukishi wa Game Chishiki de Musou Suru',
+          native: '追放された転生重騎士はゲーム知識で無双する',
+        },
         status: 'Ongoing',
-        image: recorded[1]!.media.coverImage.extraLarge,
+        image: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx180136-gtMTCRlOD4OE.jpg',
       })
     );
   });

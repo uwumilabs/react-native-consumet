@@ -6,10 +6,10 @@ import {
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
-  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber } from '../../utils/manga';
+import { normalizeTitle } from '../../utils/utils';
 import { toMediaStatus } from '../common/media-status';
 import { finishChapters, plainText } from './shared';
 
@@ -49,14 +49,6 @@ interface FlameReaderChapter {
   images?: Record<string, { name?: string }> | { name?: string }[];
 }
 
-/** Lower-case words without punctuation, so `returners magic` finds "A Returner's Magic". */
-const searchable = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/['`\u2018\u2019]/g, '')
-    .replace(/[^a-z0-9\u00c0-\u1fff\u2070-\uffff]+/g, ' ')
-    .trim();
-
 /** The non-empty strings of a list, trimmed and without repeats. */
 const strings = (values: unknown): string[] =>
   Array.isArray(values)
@@ -94,17 +86,18 @@ export class FlameScans extends MangaParser {
 
   /**
    * The site has no search endpoint: its browse page lists every series, and this keeps the ones
-   * whose title has every word of the query. All matches come on page 1.
+   * whose title has every word of the query (compared as normalizeTitle, so `returners magic` finds
+   * "A Returner's Magic"). All matches come on page 1.
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     const { series = [] } = await this.nextData<{ series?: FlameSeries[] }>('browse');
-    const words = searchable(query).split(' ').filter(Boolean);
+    const words = normalizeTitle(query).split(' ').filter(Boolean);
     const results =
       page > 1
         ? []
         : series
             .filter((entry) => typeof entry.series_id === 'number' && entry.title?.trim())
-            .filter((entry) => words.every((word) => searchable(entry.title!).includes(word)))
+            .filter((entry) => words.every((word) => normalizeTitle(entry.title!).includes(word)))
             .map((entry) => this.toResult(entry));
     return { currentPage: page, hasNextPage: false, results };
   };
@@ -169,7 +162,7 @@ export class FlameScans extends MangaParser {
     }
     const description = plainText(series.description);
     if (description) result.description = description;
-    const status = toMediaStatus(series.status, MediaStatus);
+    const status = toMediaStatus(series.status);
     if (status) result.status = status;
     if (typeof series.year === 'number' && series.year > 0) result.releaseDate = series.year;
     return result;

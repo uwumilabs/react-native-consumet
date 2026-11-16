@@ -13,7 +13,6 @@ const path = require('path');
 const repoRoot = path.join(__dirname, '..');
 
 const REGISTRY_FILE = 'src/extension-registry.json';
-const DIST_REGISTRY_FILE = 'dist/extension-registry.json';
 const SIGNATURE_FILE = `${REGISTRY_FILE}.sig`;
 const SIGNING_KEYS_FILE = 'src/registry-signing-keys.json';
 /** Registry bundles: one self-contained file per distFile, run with `new Function` on Hermes. */
@@ -98,7 +97,6 @@ function isBundleFile(file) {
 module.exports = {
   repoRoot,
   REGISTRY_FILE,
-  DIST_REGISTRY_FILE,
   SIGNATURE_FILE,
   SIGNING_KEYS_FILE,
   BUNDLE_DIR,

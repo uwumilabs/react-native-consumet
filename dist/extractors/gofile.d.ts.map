@@ -1,1 +1,0 @@
-{"version":3,"file":"gofile.d.ts","sourceRoot":"","sources":["../../src/extractors/gofile.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,gBAAgB,EAAE,KAAK,OAAO,EAAe,MAAM,WAAW,CAAC;AAC7E,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AA6ErD,wBAAgB,MAAM,CAAC,GAAG,EAAE,gBAAgB;wBAGT,MAAM,GAAG,OAAO,KAAG,OAAO,CAAC,OAAO,CAAC;EA8CrE"}

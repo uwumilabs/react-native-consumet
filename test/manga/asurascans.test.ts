@@ -18,9 +18,8 @@ test('search pages through results', async () => {
   const first = await asura.search('the');
   expect(first.hasNextPage).toBe(true);
   const second = await asura.search('the', 2);
-  expectMangaSearch(second, 2);
+  expectMangaSearch(second, 2, new Set(first.results.map((result) => result.id)));
   expect(second.currentPage).toBe(2);
-  expect(second.results[0]!.id).not.toBe(first.results[0]!.id);
 });
 
 test('info lists chapters first to last and follows the contract', async () => {
