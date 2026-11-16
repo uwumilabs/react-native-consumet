@@ -6,36 +6,48 @@
  *
  * A published file is never overwritten: if an entry's build output (`distFile`) changed but its
  * `version` is already published with different content, this exits with an error asking for a
- * version bump. That keeps what every published registry entry serves stable (REG-1).
+ * version bump. That keeps what every published registry entry serves stable (REG-1). Then it
+ * writes the example app's local dist map (apps/scripts/generate-local-dist.js) from the bundles.
  *
  * Every problem exits 1 before anything is written: a missing build output, a malformed id,
  * version or distFile, and a `main` URL in an unknown format. `main` is generated, so a new entry
- * leaves it out; otherwise it must be this repo's published URL for the same entry, or an older
- * dist URL from before versioned paths.
+ * leaves it out; otherwise it must be this repo's published URL for the same entry.
+ *
+ * Run after `yarn build`; `yarn build:registry` runs both (scripts/build-registry.js).
  *
  * Usage:
  *   node scripts/prepare-registry.js          publish new versions, update src + dist registry
  *   node scripts/prepare-registry.js --check  verify only (no writes); exits 1 on any problem.
  *       Also checks that every published file referenced by the current registry or by a
- *       supported release's bundled registry still exists (see scripts/registry-support.js).
+ *       supported release's bundled registry still exists (see scripts/registry-retention.js),
+ *       and that the local dist map is current.
  *   node scripts/prepare-registry.js --check --base <commit>
  *       Also compares with the registry at <commit>: an entry whose sha256 changed needs a higher
  *       version, versions never go backwards, and files published at <commit> are unchanged.
  *       CI passes the commit the change is based on.
  *   --check also reports whether src/extension-registry.json.sig is valid for the registry under the
- *   keys in src/registry-signing-keys.ts (REG-6). A stale signature is only a note: CI re-signs the
+ *   keys in src/registry-signing-keys.json (REG-6). A stale signature is only a note: CI re-signs the
  *   registry after it reaches main (.github/workflows/sign-registry.yml).
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { checkBase, checkReferences, checkSignature } = require('./registry-support');
-
-const repoRoot = path.join(__dirname, '..');
-const registryPath = path.join(repoRoot, 'src', 'extension-registry.json');
-const distRegistryPath = path.join(repoRoot, 'dist', 'extension-registry.json');
-const RAW_REPO = 'https://raw.githubusercontent.com/uwumilabs/react-native-consumet';
-const RAW_BASE = `${RAW_REPO}/refs/heads/main`;
+const {
+  repoRoot,
+  REGISTRY_FILE,
+  DIST_REGISTRY_FILE,
+  built,
+  readRegistry,
+  registryLayout,
+  isBundleFile,
+} = require('./registry-paths');
+const { checkBase, checkReferences } = require('./registry-retention');
+const { checkSignature } = require('./registry-signing');
+const {
+  LOCAL_DIST_MAP_FILE,
+  isLocalDistMapCurrent,
+  writeLocalDistMap,
+} = require('../apps/scripts/generate-local-dist');
 
 const USAGE = 'usage: node scripts/prepare-registry.js [--check [--base <commit>]]';
 
@@ -60,61 +72,50 @@ function fail(message) {
 const options = parseArgs(process.argv.slice(2));
 const checkOnly = options.check;
 
+let schema;
+let layout;
+try {
+  schema = built('utils/registry-schema');
+  layout = registryLayout();
+} catch (error) {
+  fail(error.message);
+}
+
 const sha256 = (content) => crypto.createHash('sha256').update(content, 'utf8').digest('hex');
-const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const problems = [];
 const writes = [];
 
-// Entries created before versioned paths pointed `main` straight at their dist file.
-const LEGACY_DIST_URL = new RegExp(`^${escape(RAW_REPO)}/refs/heads/[^/]+/(dist/.+\\.js)$`);
-const legacyDistFile = (main) => LEGACY_DIST_URL.exec(main || '')?.[1];
-
-/** A repo-relative .js file under dist/, with no empty, `.` or `..` segments. */
-function isDistFile(file) {
-  const segments = typeof file === 'string' ? file.split('/') : [];
+/** Whether `main` is unset (a new entry) or this repo's URL of a published version of the same entry. */
+function isOwnUrl(kind, entry) {
+  if (entry.main === undefined || entry.main === '') return true;
+  const published = layout.parsePublishedFile(entry.main);
   return (
-    segments.length > 1 &&
-    segments[0] === 'dist' &&
-    file.endsWith('.js') &&
-    segments.every((segment) => /^[A-Za-z0-9_.-]+$/.test(segment) && segment !== '.' && segment !== '..')
+    published !== undefined &&
+    `${published.kind}/${published.key}` === layout.entryKey(kind, entry) &&
+    entry.main === layout.publishedUrl(published.file)
   );
 }
 
-/** Why `main` isn't a URL this script wrote (or a legacy dist URL), or undefined if it is. */
-function unknownMain(main, kind, key) {
-  if (main === undefined || main === '') return undefined;
-  if (typeof main !== 'string') return 'main must be a string';
-  if (legacyDistFile(main)) return undefined;
-  if (new RegExp(`^${escape(`${RAW_BASE}/registry/${kind}/${key}/`)}\\d+\\.\\d+\\.\\d+\\.js$`).test(main)) {
-    return undefined;
-  }
-  return `unknown main URL format (${main}); expected ${RAW_BASE}/registry/${kind}/${key}/<version>.js, or leave it out for a new entry`;
-}
+function publish(kind, entry) {
+  const label = `${layout.entryKey(kind, entry)}@${entry.version}`;
 
-function publish(entry, kind, key) {
-  const label = `${kind}/${key}@${entry.version}`;
-
-  if (!/^[a-z0-9-]+$/.test(key)) {
-    problems.push(`${label}: id/name must be lowercase letters, digits or dashes to form a path`);
+  const file = layout.publishedFile(kind, entry);
+  if (!file) {
+    problems.push(`${label}: id/name and version must form a published path (registry/${kind}/<key>/<x.y.z>.js)`);
     return entry;
   }
-  if (!/^\d+\.\d+\.\d+$/.test(entry.version || '')) {
-    problems.push(`${label}: version must be semver (x.y.z)`);
-    return entry;
-  }
-  const mainProblem = unknownMain(entry.main, kind, key);
-  if (mainProblem) {
-    problems.push(`${label}: ${mainProblem}`);
+  const main = layout.publishedUrl(file);
+  if (!isOwnUrl(kind, entry)) {
+    const expected = main.replace(/[^/]+\.js$/, '<version>.js');
+    problems.push(
+      `${label}: unknown main URL format (${entry.main}); expected ${expected}, or leave it out for a new entry`
+    );
     return entry;
   }
 
-  const distFile = entry.distFile || legacyDistFile(entry.main);
-  if (!distFile) {
-    problems.push(`${label}: no distFile, and main is not a dist URL (${entry.main})`);
-    return entry;
-  }
-  if (!isDistFile(distFile)) {
-    problems.push(`${label}: distFile must be a .js file under dist/ (got ${distFile})`);
+  const { distFile } = entry;
+  if (!isBundleFile(distFile)) {
+    problems.push(`${label}: distFile must be a .js bundle under dist/bundles/ (got ${distFile})`);
     return entry;
   }
   const distAbs = path.join(repoRoot, distFile);
@@ -125,43 +126,35 @@ function publish(entry, kind, key) {
 
   const code = fs.readFileSync(distAbs, 'utf8');
   const hash = sha256(code);
-  const versionedRel = `registry/${kind}/${key}/${entry.version}.js`;
-  const versionedAbs = path.join(repoRoot, versionedRel);
+  const fileAbs = path.join(repoRoot, file);
 
-  if (fs.existsSync(versionedAbs)) {
-    if (sha256(fs.readFileSync(versionedAbs, 'utf8')) !== hash) {
+  if (fs.existsSync(fileAbs)) {
+    if (sha256(fs.readFileSync(fileAbs, 'utf8')) !== hash) {
       problems.push(`${label}: ${distFile} changed but ${entry.version} is already published; bump the version`);
       return entry;
     }
   } else if (checkOnly) {
-    problems.push(`${label}: ${versionedRel} is not published (run node scripts/prepare-registry.js)`);
+    problems.push(`${label}: ${file} is not published (run node scripts/prepare-registry.js)`);
     return entry;
   } else {
-    writes.push({ file: versionedRel, code });
+    writes.push({ file, code });
   }
 
-  const updated = { ...entry, main: `${RAW_BASE}/${versionedRel}`, sha256: hash, distFile };
-  if (checkOnly && (entry.main !== updated.main || entry.sha256 !== updated.sha256 || entry.distFile !== distFile)) {
+  if (checkOnly && (entry.main !== main || entry.sha256 !== hash)) {
     problems.push(`${label}: registry entry is out of date (run node scripts/prepare-registry.js)`);
   }
-  return updated;
+  return { ...entry, main, sha256: hash };
 }
 
-const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-registry.extensions = registry.extensions.map((e) => publish(e, 'extensions', String(e.id).toLowerCase()));
-registry.extractors = registry.extractors.map((e) => publish(e, 'extractors', String(e.name).toLowerCase()));
+const registry = readRegistry();
+for (const kind of layout.kinds) registry[kind] = registry[kind].map((entry) => publish(kind, entry));
 
 // Check the result against the library's own registry schema (REG-4), after publishing filled in
-// main and sha256. The built module has no runtime requires, so it loads without an install.
-const schemaModule = path.join(repoRoot, 'dist', 'utils', 'registry-schema.js');
-if (fs.existsSync(schemaModule)) {
-  try {
-    require(schemaModule).validateRegistry(registry);
-  } catch (error) {
-    problems.push(...(error.issues || [error.message]));
-  }
-} else {
-  problems.push('dist/utils/registry-schema.js not found (run yarn build)');
+// main and sha256.
+try {
+  schema.validateRegistry(registry);
+} catch (error) {
+  problems.push(...(error.issues || [error.message]));
 }
 
 if (checkOnly) {
@@ -178,6 +171,10 @@ if (checkOnly) {
   const signature = checkSignature();
   problems.push(...signature.problems);
   signature.notes.forEach((note) => console.log(`  · ${note}`));
+
+  if (!problems.length && !isLocalDistMapCurrent(registry)) {
+    problems.push(`${LOCAL_DIST_MAP_FILE} is out of date (run node scripts/prepare-registry.js)`);
+  }
 }
 
 if (problems.length) {
@@ -197,7 +194,9 @@ for (const { file, code } of writes) {
 }
 
 const content = JSON.stringify(registry, null, 2);
-fs.mkdirSync(path.dirname(distRegistryPath), { recursive: true });
-fs.writeFileSync(registryPath, content);
-fs.writeFileSync(distRegistryPath, content);
+fs.mkdirSync(path.dirname(path.join(repoRoot, DIST_REGISTRY_FILE)), { recursive: true });
+fs.writeFileSync(path.join(repoRoot, REGISTRY_FILE), content);
+fs.writeFileSync(path.join(repoRoot, DIST_REGISTRY_FILE), content);
+const map = writeLocalDistMap(registry);
+if (map.changed) console.log(`  + wrote ${LOCAL_DIST_MAP_FILE} (${map.bundles} bundles)`);
 console.log('\nRegistry prepared: entries point at immutable versioned files.');

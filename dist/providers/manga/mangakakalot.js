@@ -8,6 +8,8 @@ const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
 const manga_1 = require("../../utils/manga");
+const media_status_1 = require("../common/media-status");
+const shared_1 = require("./shared");
 // The chapter-list API pages through a title's chapters, newest first. The site's own page asks
 // for 50 at a time; 500 keeps long series to a few requests (Cloudflare blocks `limit=1000`).
 const CHAPTERS_PER_REQUEST = 500;
@@ -19,14 +21,6 @@ const SEARCH_PAGE_SIZE = 20;
  * site reads as a space (`Re:Zero` → `re_zero`).
  */
 const searchWord = query => query.toLowerCase().replace(/[\s!-/:-@[-`{-~]+/g, '_').replace(/^_+|_+$/g, '');
-/** `2024-11-03T11:37:28.000000Z` (the API's microseconds) → `2024-11-03T11:37:28.000Z`. */
-const toIsoDate = value => {
-  if (!value) return undefined;
-  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?Z$/.exec(value.trim());
-  if (match) return `${match[1]}.${(match[2] ?? '').padEnd(3, '0').slice(0, 3)}Z`;
-  const time = Date.parse(value);
-  return Number.isNaN(time) ? value : new Date(time).toISOString();
-};
 class MangaKakalot extends models_1.MangaParser {
   ctx;
   name = 'MangaKakalot';
@@ -45,22 +39,10 @@ class MangaKakalot extends models_1.MangaParser {
    * Covers and pages are on 2xstorage.com, which answers 403 unless the Referer is the site's
    * origin (exactly `https://www.kakamanga.com/`; a page URL is refused too).
    */
-  imageHeaders = () => ({
-    Referer: `${this.baseUrl}/`
-  });
-  absoluteUrl = url => {
-    const value = url?.trim();
-    if (!value) return undefined;
-    if (value.startsWith('//')) return `https:${value}`;
-    if (value.startsWith('/')) return `${this.baseUrl}${value}`;
-    return /^https?:\/\//.test(value) ? value : undefined;
-  };
+  imageHeaders = () => (0, shared_1.refererHeaders)(this.baseUrl);
+  absoluteUrl = url => (0, shared_1.absoluteUrl)(url, this.baseUrl);
   /** The title's slug (its id) in `https://www.kakamanga.com/manga/<slug>`. */
   slugFromUrl = url => /\/manga\/([^/?#]+)/.exec(url ?? '')?.[1];
-  /**
-   * @param query Search query
-   * @param page Page number (default: 1)
-   */
   search = (() => {
     var _this = this;
     return async function (query) {
@@ -145,8 +127,8 @@ class MangaKakalot extends models_1.MangaParser {
     });
     const authors = (fields['author(s)'] ?? '').split(',').map(author => author.trim()).filter(author => author && author.toLowerCase() !== 'unknown');
     if (authors.length) info.authors = authors;
-    const status = (fields.status ?? '').toLowerCase();
-    if (status === 'ongoing') info.status = models_1.MediaStatus.ONGOING;else if (status === 'completed') info.status = models_1.MediaStatus.COMPLETED;
+    const status = (0, media_status_1.toMediaStatus)(fields.status, models_1.MediaStatus);
+    if (status) info.status = status;
     const genres = $('.manga-info-text li.genres a').map((_, el) => $(el).text().trim()).get().filter(Boolean);
     if (genres.length) info.genres = genres;
     const views = parseInt((fields.view ?? '').replace(/,/g, ''), 10);
@@ -168,16 +150,14 @@ class MangaKakalot extends models_1.MangaParser {
   };
   /**
    * The synopsis under the `<title> summary:` heading, as plain text. Some titles store it as
-   * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more: whitespace
-   * collapses as a browser would and `<br>` breaks lines.
+   * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more, its
+   * whitespace collapsed first as a browser would.
    */
   description = $ => {
     const box = $('#contentBox').first().clone();
     box.find('h2').remove();
     box.find('br').replaceWith('&lt;br&gt;');
-    const html = box.text().replace(/\s+/g, ' ').replace(/<br\s*\/?>/gi, '\n');
-    const text = (0, cheerio_1.load)(html, null, false).root().text().split('\n').map(line => line.trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    return text || undefined;
+    return (0, shared_1.plainText)(box.text().replace(/\s+/g, ' '));
   };
   /** Every chapter of a title from the chapter-list API, in reading order. */
   fetchChapters = async mangaId => {
@@ -194,16 +174,9 @@ class MangaKakalot extends models_1.MangaParser {
       rows.push(...page);
       if (!body.data.pagination?.has_more || page.length === 0) break;
     }
-    // A chapter published while paging shifts the offsets, so a row can come twice.
-    const seen = new Set();
-    const chapters = [];
-    for (const row of rows) {
-      const chapter = this.toChapter(mangaId, row);
-      if (!chapter || seen.has(chapter.id)) continue;
-      seen.add(chapter.id);
-      chapters.push(chapter);
-    }
-    return (0, manga_1.sortChaptersForReading)(chapters.reverse());
+    // A chapter published while paging shifts the offsets, so a row can come twice (finishChapters
+    // keeps one).
+    return (0, shared_1.finishChapters)(rows.flatMap(row => this.toChapter(mangaId, row) ?? []));
   };
   toChapter = (mangaId, row) => {
     const slug = row.chapter_slug?.trim();
@@ -213,12 +186,12 @@ class MangaKakalot extends models_1.MangaParser {
     const chapterNumber = (0, manga_1.parseChapterNumber)(label) ?? (Number.isFinite(apiNumber) ? apiNumber : undefined);
     const chapter = {
       id: `${mangaId}/${slug}`,
-      title: label || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : slug)
+      title: (0, shared_1.chapterTitle)(label, chapterNumber, slug)
     };
     if (chapterNumber !== undefined) chapter.chapterNumber = chapterNumber;
     const volumeNumber = (0, manga_1.parseVolumeNumber)(label);
     if (volumeNumber !== undefined) chapter.volumeNumber = volumeNumber;
-    const releaseDate = toIsoDate(row.updated_at);
+    const releaseDate = (0, shared_1.toIsoDate)(row.updated_at);
     if (releaseDate) chapter.releaseDate = releaseDate;
     if (typeof row.view === 'number') chapter.views = row.view;
     chapter.url = `${this.baseUrl}/manga/${mangaId}/${slug}`;

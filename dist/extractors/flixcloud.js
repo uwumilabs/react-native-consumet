@@ -1,47 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FlixCloud = FlixCloud;
+const enc_dec_1 = require("../providers/common/enc-dec");
+const url_1 = require("./url");
 /**
- * FlixCloud extractor — uses enc-dec.app as the decryption relay.
- *
- * Pipeline:
+ * FlixCloud, ReAnime's player. enc-dec.app decrypts its tokens and streams:
  *  1. Fetch the embed page; extract the inline SSR data object.
  *  2. POST data to enc-dec.app/api/dec-flixcloud?type=token  → {token, context}
  *  3. GET  flixcloud.cc/api/m3u8/{token}                     → encrypted blob
  *  4. POST {context, stream_response} to enc-dec.app/api/dec-flixcloud?type=stream
  *          → {stream: encryptedM3u8Url, context: {w_payload, …}}
- *  5. GET  enc-dec.app/api/parse-flixcloud?url=…&w_payload=… → decrypted m3u8 text
- *     Return this URL as the HLS source — the player fetches it; enc-dec.app serves
- *     the plain manifest and the player's native HLS handles segment decryption via
- *     the #EXT-X-KEY lines embedded in the manifest.
+ *  5. Return enc-dec.app/api/parse-flixcloud?url=…&w_payload=… as the HLS source: enc-dec.app
+ *     fetches and decrypts the manifest and serves it plain, and the player's native HLS
+ *     decrypts the segments through the #EXT-X-KEY lines in it.
  */
 function FlixCloud(ctx) {
-    const serverName = 'FlixCloud';
-    const sources = [];
-    const { axios } = ctx;
-    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36';
-    const ENC_DEC_API = 'https://enc-dec.app/api';
-    // ── JS-object → JSON ───────────────────────────────────────────────────────
-    // The SSR page embeds a JS object literal (unquoted keys, single-quoted strings).
-    // Convert it to valid JSON so we can JSON.parse without eval/json5.
+    const { axios, USER_AGENT, PolyURL } = ctx;
+    // The SSR page embeds a JS object literal (unquoted keys, single-quoted strings), converted to
+    // JSON so it parses without eval or json5.
     const js2json = (raw) => raw
-        // Quote unquoted identifier keys  {foo: → {"foo":
         .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
-        // Single-quoted string values → double-quoted
         .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"')
-        // Trailing commas before } or ]
         .replace(/,(\s*[}\]])/g, '$1');
-    // ── extract ────────────────────────────────────────────────────────────────
-    // @ts-ignore – PolyURL accepted as-is
     const extract = async (videoUrl, referer) => {
-        const embedUrl = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
-        const origin = embedUrl.match(/^https?:\/\/[^/]+/)?.[0] ?? 'https://flixcloud.cc';
-        // ── Step 1: fetch embed page ───────────────────────────────────────────
+        const url = (0, url_1.toUrl)(PolyURL, videoUrl);
+        const embedUrl = url.href;
+        const origin = url.origin;
         const { data: html } = await axios.get(embedUrl, {
-            headers: { 'User-Agent': UA, 'Referer': referer ?? `${origin}/`, 'Accept': 'text/html' },
+            headers: { 'User-Agent': USER_AGENT, 'Referer': referer ?? `${origin}/`, 'Accept': 'text/html' },
         });
-        // ── Step 2: extract inline data object ────────────────────────────────
-        // Pattern: type: "data", data: { … }, uses:
         const objMatch = html.match(/type:\s*"data",\s*data:\s*(\{[\s\S]*?\})\s*,\s*uses:/);
         if (!objMatch)
             throw new Error('[FlixCloud] Inline data object not found in embed page');
@@ -52,35 +39,27 @@ function FlixCloud(ctx) {
         catch (e) {
             throw new Error(`[FlixCloud] Failed to parse inline data object: ${e}`);
         }
-        // Separate subtitles so we don't send them to the token API
+        // The token API is sent the data without its subtitles.
         const { subtitles: rawSubs, ...payloadData } = dataObj;
-        // ── Step 3: resolve stream token via enc-dec.app ───────────────────────
-        const tokenResp = await axios.post(`${ENC_DEC_API}/dec-flixcloud?type=token`, { data: payloadData }, { headers: { 'Content-Type': 'application/json', 'User-Agent': UA } });
+        const tokenResp = await axios.post(`${enc_dec_1.ENC_DEC_API}/dec-flixcloud?type=token`, { data: payloadData }, { headers: { 'Content-Type': 'application/json', 'User-Agent': USER_AGENT } });
         if (tokenResp.data.status !== 200 || !tokenResp.data.result) {
             throw new Error(`[FlixCloud] Token API error: ${tokenResp.data.error ?? 'unknown'}`);
         }
         const { token, context } = tokenResp.data.result;
-        // ── Step 4: fetch encrypted stream from FlixCloud ─────────────────────
         const { data: streamData } = await axios.get(`${origin}/api/m3u8/${token}`, {
-            headers: { 'Referer': embedUrl, 'User-Agent': UA },
+            headers: { 'Referer': embedUrl, 'User-Agent': USER_AGENT },
         });
-        // ── Step 5: decrypt via enc-dec.app ───────────────────────────────────
-        const decResp = await axios.post(`${ENC_DEC_API}/dec-flixcloud?type=stream`, { data: { context, stream_response: streamData } }, { headers: { 'Content-Type': 'application/json', 'User-Agent': UA } });
+        const decResp = await axios.post(`${enc_dec_1.ENC_DEC_API}/dec-flixcloud?type=stream`, { data: { context, stream_response: streamData } }, { headers: { 'Content-Type': 'application/json', 'User-Agent': USER_AGENT } });
         if (decResp.data.status !== 200 || !decResp.data.result?.stream) {
             throw new Error(`[FlixCloud] Stream API error: ${decResp.data.error ?? 'unknown'}`);
         }
         const { stream: encryptedM3u8Url, context: streamContext } = decResp.data.result;
         const wPayload = streamContext?.w_payload;
-        if (!wPayload) {
+        if (!wPayload)
             throw new Error('[FlixCloud] w_payload missing from stream context — cannot build parse URL');
-        }
-        // ── Step 6: build parse-flixcloud URL ─────────────────────────────────
-        // enc-dec.app fetches + decrypts the manifest and returns a plain m3u8.
-        // The player hits this URL directly; enc-dec.app acts as a transparent proxy.
-        const parseUrl = `${ENC_DEC_API}/parse-flixcloud` +
+        const parseUrl = `${enc_dec_1.ENC_DEC_API}/parse-flixcloud` +
             `?url=${encodeURIComponent(encryptedM3u8Url)}` +
             `&w_payload=${encodeURIComponent(wPayload)}`;
-        // ── Subtitles ──────────────────────────────────────────────────────────
         const subtitles = [];
         if (Array.isArray(rawSubs)) {
             for (const s of rawSubs) {
@@ -88,7 +67,7 @@ function FlixCloud(ctx) {
                     subtitles.push({ url: s.url, lang: s.language });
             }
         }
-        // ── Intro / outro chapters (still in the raw HTML) ────────────────────
+        // The intro and outro chapters are only in the raw HTML.
         const introM = html.match(/intro_chapter:\{start:(\d+),end:(\d+)/);
         const outroM = html.match(/outro_chapter:\{start:(\d+),end:(\d+)/);
         return {
@@ -99,6 +78,6 @@ function FlixCloud(ctx) {
             ...(outroM ? { outro: { start: +outroM[1], end: +outroM[2] } } : {}),
         };
     };
-    return { serverName, sources, extract };
+    return { extract };
 }
 //# sourceMappingURL=flixcloud.js.map

@@ -2,8 +2,7 @@ import axios from 'axios';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
 import { IntegrityError, sha256Hex } from '../../src/utils/extension-integrity';
-import { defaultExtractors } from '../../src/utils/extension-utils';
-import { AsianLoad } from '../../src/extractors/asianload';
+import { defaultExtractors } from '../../src/utils/create-provider-context';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -174,8 +173,8 @@ describe('compiled code is memoised by id and sha256 (UTIL-2)', () => {
   it('compiles the same verified provider code once, and builds a new instance per call', async () => {
     const manager = new ProviderManager(emptyRegistry);
 
-    const first = await manager.executeProviderCode(v1, 'createProbe', v1Meta);
-    const second = await manager.executeProviderCode(v1, 'createProbe', v1Meta, { baseUrl: 'https://mirror.test' });
+    const first = await manager.executeProviderCode(v1, v1Meta);
+    const second = await manager.executeProviderCode(v1, v1Meta, { baseUrl: 'https://mirror.test' });
 
     expect(globalThis.__managerRuns.probe).toBe(1);
     expect(second).not.toBe(first);
@@ -185,8 +184,8 @@ describe('compiled code is memoised by id and sha256 (UTIL-2)', () => {
   it('runs the new provider code when the sha256 changes', async () => {
     const manager = new ProviderManager(emptyRegistry);
 
-    expect(await manager.executeProviderCode(v1, 'createProbe', v1Meta)).toMatchObject({ version: '1' });
-    expect(await manager.executeProviderCode(v2, 'createProbe', v2Meta)).toMatchObject({ version: '2' });
+    expect(await manager.executeProviderCode(v1, v1Meta)).toMatchObject({ version: '1' });
+    expect(await manager.executeProviderCode(v2, v2Meta)).toMatchObject({ version: '2' });
     expect(globalThis.__managerRuns.probe).toBe(2);
   });
 
@@ -206,9 +205,9 @@ describe('compiled code is memoised by id and sha256 (UTIL-2)', () => {
 
   it('still rejects tampered code that claims a hash it verified before', async () => {
     const manager = new ProviderManager(emptyRegistry);
-    await manager.executeProviderCode(v1, 'createProbe', v1Meta);
+    await manager.executeProviderCode(v1, v1Meta);
 
-    const error = await rejectionOf(manager.executeProviderCode(v2, 'createProbe', v1Meta));
+    const error = await rejectionOf(manager.executeProviderCode(v2, v1Meta));
     expect(error).toBeInstanceOf(IntegrityError);
     expect((error as IntegrityError).code).toBe('INTEGRITY_MISMATCH');
     expect(globalThis.__managerRuns.probe).toBe(1);
@@ -217,9 +216,9 @@ describe('compiled code is memoised by id and sha256 (UTIL-2)', () => {
   it('never reuses code that ran with skipIntegrity for a verified call', async () => {
     const manager = new ProviderManager(emptyRegistry);
     const unverified = extension({ sha256: 'f'.repeat(64) });
-    await manager.executeProviderCode(v1, 'createProbe', unverified, { skipIntegrity: true });
+    await manager.executeProviderCode(v1, unverified, { skipIntegrity: true });
 
-    const error = await rejectionOf(manager.executeProviderCode(v1, 'createProbe', unverified));
+    const error = await rejectionOf(manager.executeProviderCode(v1, unverified));
     expect((error as IntegrityError).code).toBe('INTEGRITY_MISMATCH');
   });
 });
@@ -272,33 +271,17 @@ describe('bundled extractor fallback returns an instance (UTIL-2)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('creates class-based bundled extractors with new', async () => {
-    const extractor = await new ExtractorManager(emptyRegistry).loadExtractor('asianload');
-
-    expect(extractor).toBeInstanceOf(AsianLoad);
-    expect(typeof extractor.extract).toBe('function');
-  });
-
   it('falls back to the bundled extractor of the base name when the registry code fails its hash', async () => {
     const bundledExtract = jest.fn(async () => ({ sources: [{ url: 'bundled' }] }));
     jest
       .spyOn(defaultExtractors, 'MegaCloud')
-      .mockImplementation(() => ({ serverName: 'MegaCloud', sources: [], extract: bundledExtract }) as any);
+      .mockImplementation(() => ({ extract: bundledExtract }));
     const manager = new ExtractorManager(registryOf([], [megaCloud({ sha256: '0'.repeat(64) })]));
 
     const extractor = await manager.loadExtractor('megacloud-hd-1');
 
     await expect(extractor.extract(undefined as any)).resolves.toEqual({ sources: [{ url: 'bundled' }] });
     expect(globalThis.__managerRuns.megacloud).toBeUndefined();
-  });
-
-  it('builds legacy static:// registry entries', async () => {
-    const manager = new ExtractorManager(registryOf([], [{ name: 'Kwik', version: '1.0.0', main: 'static://Kwik' }]));
-
-    const extractor = await manager.loadExtractor('kwik-pahe');
-
-    expect(typeof extractor.extract).toBe('function');
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
@@ -307,7 +290,7 @@ describe('factory lookup (UTIL-2)', () => {
     `(ctx, baseUrl) => ({ name: 'Probe', version: '${version}', search() {}, fetchAnimeInfo() {}, ` +
     'fetchEpisodeSources() {}, fetchEpisodeServers() {} })';
   const run = (code: string) =>
-    new ProviderManager(emptyRegistry).executeProviderCode(code, 'createProbe', extension({ sha256: sha256Hex(code) }));
+    new ProviderManager(emptyRegistry).executeProviderCode(code, extension({ sha256: sha256Hex(code) }));
 
   it('finds a provider factory that is only the default export', async () => {
     // What a strict-mode bundle of `export default` looks like: nothing named createProbe is in scope.

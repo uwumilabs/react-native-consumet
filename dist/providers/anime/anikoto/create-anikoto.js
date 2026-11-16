@@ -4,6 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createAniKoto = createAniKoto;
+const media_status_1 = require("../../common/media-status");
+const servers_1 = require("../../common/servers");
+const helpers_1 = require("../helpers");
+const hianime_1 = require("../hianime");
+// The zone the schedule's airing times come back in: UTC+5:30 (IST), as minutes behind UTC (the
+// form Date.getTimezoneOffset uses). It is fixed, not the device's zone.
+const IST_TZ_OFFSET = -330;
 function createAniKoto(ctx, customBaseURL) {
   const {
     axios,
@@ -11,17 +18,15 @@ function createAniKoto(ctx, customBaseURL) {
     extractors,
     enums,
     createCustomBaseUrl,
-    PolyURL
+    PolyURL,
+    USER_AGENT
   } = ctx;
   const {
     MegaPlay
   } = extractors;
   const {
-    StreamingServers: StreamingServersEnum,
-    SubOrDub: SubOrDubEnum,
-    MediaStatus: MediaStatusEnum
+    SubOrDub: SubOrDubEnum
   } = enums;
-  // Provider configuration
   const baseUrl = createCustomBaseUrl('https://anikototv.to', customBaseURL);
   const config = {
     name: 'AniKoto',
@@ -34,77 +39,57 @@ function createAniKoto(ctx, customBaseURL) {
     isDubAvailableSeparately: true
   };
   const defaultHeaders = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    'User-Agent': USER_AGENT
   };
   const ajaxHeaders = referer => ({
     ...defaultHeaders,
     'X-Requested-With': 'XMLHttpRequest',
     'Referer': referer || config.baseUrl
   });
-  const normalizePageNumber = page => {
-    return page <= 0 ? 1 : page;
+  const scrapeCard = $ => {
+    const results = [];
+    $('.item').each((_, el) => {
+      const item = $(el);
+      const nameEl = item.find('.name.d-title, .name').first();
+      const title = nameEl.text().trim();
+      const href = item.find('a.name, .poster a').first().attr('href') || '';
+      const match = href.match(/\/watch\/([^/?#]+)/);
+      const id = match ? match[1] : href.replace(/^.*\/watch\//, '').replace(/\/.*$/, '');
+      const ratingStr = item.find('.m-item.rated span').first().text().trim();
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          japaneseTitle: nameEl.attr('data-jp') || undefined,
+          image: item.find('.poster img, img').attr('src') || '',
+          url: href.startsWith('http') ? href : `${config.baseUrl}${href.startsWith('/') ? '' : '/'}${href}`,
+          type: item.find('.meta .right').first().text().trim() || 'TV',
+          sub: parseInt(item.find('.ep-status.sub').first().text().trim(), 10) || 0,
+          dub: parseInt(item.find('.ep-status.dub').first().text().trim(), 10) || 0,
+          rating: ratingStr ? parseFloat(ratingStr) : undefined
+        });
+      }
+    });
+    return results;
   };
-  // Helper to scrape card lists across search, types, genres, statuses
-  const scrapeCardPage = async function (url) {
-    let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    try {
-      const {
-        data
-      } = await axios.get(url, {
-        headers: defaultHeaders
-      });
-      const $ = load(data);
-      const results = [];
-      $('.item').each((_, el) => {
-        const item = $(el);
-        const nameEl = item.find('.name.d-title, .name').first();
-        const title = nameEl.text().trim();
-        const japaneseTitle = nameEl.attr('data-jp') || undefined;
-        const href = item.find('a.name, .poster a').first().attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1] : href.replace(/^.*\/watch\//, '').replace(/\/.*$/, '');
-        const image = item.find('.poster img, img').attr('src') || '';
-        const subText = item.find('.ep-status.sub').first().text().trim();
-        const sub = parseInt(subText, 10) || 0;
-        const dubText = item.find('.ep-status.dub').first().text().trim();
-        const dub = parseInt(dubText, 10) || 0;
-        const type = item.find('.meta .right').first().text().trim() || 'TV';
-        const ratingStr = item.find('.m-item.rated span').first().text().trim();
-        const rating = ratingStr ? parseFloat(ratingStr) : undefined;
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            japaneseTitle,
-            image,
-            url: href.startsWith('http') ? href : `${config.baseUrl}${href.startsWith('/') ? '' : '/'}${href}`,
-            type,
-            sub,
-            dub,
-            rating
-          });
-        }
-      });
-      const hasNextPage = $('.pagination .page-item .page-link[rel="next"]').length > 0 || $('.pagination .page-item.active').next('.page-item').find('.page-link').length > 0;
-      const lastPageHref = $('.pagination .page-item a[title="Last"]').attr('href') || '';
-      const lastPageMatch = lastPageHref.match(/page=(\d+)/);
-      const totalPages = lastPageMatch ? parseInt(lastPageMatch[1], 10) : undefined;
-      return {
-        currentPage: page,
-        hasNextPage,
-        totalPages,
-        results
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to scrape card page: ${err.message}`);
-    }
+  /** Page `page` of the listing at `path` (`/most-viewed`, `/search?keyword=…`). */
+  const scrapeCardPage = async (path, page) => {
+    const {
+      data
+    } = await axios.get((0, hianime_1.pageUrl)(`${config.baseUrl}${path}`, page), {
+      headers: defaultHeaders
+    });
+    const $ = load(data);
+    return (0, hianime_1.cardPage)($, scrapeCard($), page);
   };
-  // Main provider functions
   const search = async function (query) {
     let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage(`/search?keyword=${encodeURIComponent(query)}`, page);
   };
+  /**
+   * Search with filters; each is optional. The site has no date filters: `_startDate` and
+   * `_endDate` are only there so the parameters line up with Zoro's.
+   */
   const fetchAdvancedSearch = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     let type = arguments.length > 1 ? arguments[1] : undefined;
@@ -117,9 +102,7 @@ function createAniKoto(ctx, customBaseURL) {
     let _endDate = arguments.length > 8 ? arguments[8] : undefined;
     let sort = arguments.length > 9 ? arguments[9] : undefined;
     let genres = arguments.length > 10 ? arguments[10] : undefined;
-    const normalizedPage = normalizePageNumber(page);
     const params = new URLSearchParams();
-    params.set('page', String(normalizedPage));
     if (type) params.set('type', type);
     if (status) params.set('status', status);
     if (rated) params.set('rated', rated);
@@ -127,410 +110,295 @@ function createAniKoto(ctx, customBaseURL) {
     if (season) params.set('season', season);
     if (language) params.set('language', language);
     if (sort) params.set('sort', sort);
-    if (genres && genres.length > 0) {
-      for (const g of genres) {
-        params.append('genres[]', g);
-      }
-    }
-    return scrapeCardPage(`${config.baseUrl}/filter?${params.toString()}`, normalizedPage);
+    for (const genre of genres ?? []) params.append('genres[]', genre);
+    const query = params.toString();
+    return scrapeCardPage(query ? `/filter?${query}` : '/filter', page);
   };
   const fetchTopAiring = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/currently-airing?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/status/currently-airing', page);
   };
   const fetchMostPopular = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/most-viewed?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/most-viewed', page);
   };
   const fetchMostFavorite = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?sort=most_favorite&page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/filter?sort=most_favorite', page);
   };
   const fetchLatestCompleted = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/finished-airing?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/status/finished-airing', page);
   };
   const fetchRecentlyUpdated = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/latest-updated?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/latest-updated', page);
   };
   const fetchRecentlyAdded = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/new-release?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/new-release', page);
   };
   const fetchTopUpcoming = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/not-yet-aired?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/status/not-yet-aired', page);
   };
+  /** @param studioId the studio's slug */
   const fetchStudio = async function (studioId) {
     let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/studio/${studioId}?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage(`/studio/${studioId}`, page);
   };
   const fetchSubbedAnime = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?language=1&page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/filter?language=1', page);
   };
   const fetchDubbedAnime = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?language=2&page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/filter?language=2', page);
   };
   const fetchMovie = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/movie?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/type/movie', page);
   };
   const fetchTV = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/tv?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/type/tv', page);
   };
   const fetchOVA = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/ova?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/type/ova', page);
   };
   const fetchONA = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/ona?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/type/ona', page);
   };
   const fetchSpecial = async function () {
     let page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/special?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage('/type/special', page);
   };
   const fetchGenres = async () => {
-    try {
-      const {
-        data
-      } = await axios.get(`${config.baseUrl}/home`, {
-        headers: defaultHeaders
-      });
-      const $ = load(data);
-      const genres = [];
-      $('a[href*="/genre/"]').each((_, el) => {
-        const g = $(el).text().trim();
-        if (g && !genres.includes(g)) {
-          genres.push(g);
-        }
-      });
-      return genres.length > 0 ? genres : ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Supernatural'];
-    } catch {
-      return ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Supernatural'];
-    }
+    const {
+      data
+    } = await axios.get(`${config.baseUrl}/home`, {
+      headers: defaultHeaders
+    });
+    const $ = load(data);
+    const genres = [];
+    $('a[href*="/genre/"]').each((_, el) => {
+      const g = $(el).text().trim();
+      if (g && !genres.includes(g)) genres.push(g);
+    });
+    return genres;
   };
+  /** @param genre a genre name or slug ("Slice of Life", "slice-of-life") */
   const genreSearch = async function (genre) {
     let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    const normalizedPage = normalizePageNumber(page);
-    const cleanGenre = genre.toLowerCase().replace(/\s+/g, '-');
-    return scrapeCardPage(`${config.baseUrl}/genre/${cleanGenre}?page=${normalizedPage}`, normalizedPage);
+    return scrapeCardPage(`/genre/${genre.toLowerCase().replace(/\s+/g, '-')}`, page);
   };
+  /**
+   * The anime airing on a day.
+   * @param date `YYYY-MM-DD`; airing times are in IST (UTC+5:30)
+   */
   const fetchSchedule = async date => {
-    try {
-      const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
-        headers: ajaxHeaders()
-      });
-      const html = res.data?.result || res.data;
-      const $ = load(html);
-      const results = [];
-      $('a.item').each((_, el) => {
-        const item = $(el);
-        const href = item.attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1] : href;
-        const title = item.find('.title.d-title, .title').text().trim();
-        const time = item.find('.time').text().trim();
-        const episodeText = item.find('.ep span').text().trim();
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            url: href,
-            time,
-            episodeText
-          });
-        }
-      });
-      return results;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch schedule: ${err.message}`);
-    }
+    const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=${IST_TZ_OFFSET}`, {
+      headers: ajaxHeaders()
+    });
+    const $ = load(res.data?.result || res.data);
+    const results = [];
+    $('a.item').each((_, el) => {
+      const item = $(el);
+      const href = item.attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? href;
+      const title = item.find('.title.d-title, .title').text().trim();
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          url: href,
+          time: item.find('.time').text().trim(),
+          episodeText: item.find('.ep span').text().trim()
+        });
+      }
+    });
+    return results;
   };
   const fetchSpotlight = async () => {
-    try {
-      const {
-        data
-      } = await axios.get(`${config.baseUrl}/home`, {
-        headers: defaultHeaders
-      });
-      const $ = load(data);
-      const results = [];
-      $('.swiper-slide.item').each((_, el) => {
-        const slide = $(el);
-        const title = slide.find('.title.d-title, .title').text().trim();
-        const japaneseTitle = slide.find('.title.d-title').attr('data-jp') || undefined;
-        const href = slide.find('a[href*="/watch/"]').first().attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1] : '';
-        const description = slide.find('.synopsis').text().trim() || undefined;
-        const image = slide.find('img').attr('src') || '';
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            japaneseTitle,
-            description,
-            image,
-            url: href.startsWith('http') ? href : `${config.baseUrl}${href}`
-          });
-        }
-      });
-      return results;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch spotlight: ${err.message}`);
-    }
+    const {
+      data
+    } = await axios.get(`${config.baseUrl}/home`, {
+      headers: defaultHeaders
+    });
+    const $ = load(data);
+    const results = [];
+    $('.swiper-slide.item').each((_, el) => {
+      const slide = $(el);
+      const title = slide.find('.title.d-title, .title').text().trim();
+      const href = slide.find('a[href*="/watch/"]').first().attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? '';
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          japaneseTitle: slide.find('.title.d-title').attr('data-jp') || undefined,
+          description: slide.find('.synopsis').text().trim() || undefined,
+          image: slide.find('img').attr('src') || '',
+          url: href.startsWith('http') ? href : `${config.baseUrl}${href}`
+        });
+      }
+    });
+    return results;
   };
   const fetchSearchSuggestions = async query => {
-    try {
-      const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
-        headers: ajaxHeaders()
-      });
-      const html = res.data?.result?.html || res.data?.result || res.data;
-      const $ = load(html);
-      const suggestions = [];
-      $('a.item').each((_, el) => {
-        const item = $(el);
-        const href = item.attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1] : '';
-        const title = item.find('.name.d-title, .name').text().trim();
-        const japaneseTitle = item.find('.name.d-title').attr('data-jp') || undefined;
-        const image = item.find('.poster img, img').attr('src') || '';
-        if (id && title) {
-          suggestions.push({
-            id,
-            title,
-            japaneseTitle,
-            image,
-            url: href
-          });
-        }
-      });
-      return suggestions;
-    } catch {
-      return [];
-    }
-  };
-  const fetchAnimeInfo = async id => {
-    try {
-      const animeSlug = id.replace(/^\/watch\//, '').replace(/\/.*$/, '');
-      const watchUrl = `${config.baseUrl}/watch/${animeSlug}`;
-      const {
-        data: pageHtml
-      } = await axios.get(watchUrl, {
-        headers: defaultHeaders
-      });
-      const $ = load(pageHtml);
-      const title = $('#w-info .title.d-title, h1.title').first().text().trim();
-      const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
-      const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
-      const description = $('#w-info .synopsis .content, .synopsis').text().replace(/\[more\]/g, '').trim();
-      // Extract anime ID (data-id e.g. 7174)
-      const dataId = $('#watch-main').attr('data-id') || $('.layout-page-watchtv').attr('data-id') || $('#w-rating').attr('data-id') || $('[data-id]').first().attr('data-id');
-      // Extract metadata
-      let type = 'TV';
-      let premiered;
-      let aired;
-      let status = MediaStatusEnum.UNKNOWN;
-      const genres = [];
-      const studios = [];
-      const producers = [];
-      let duration;
-      let rating;
-      $('#w-info .bmeta .meta div').each((_, el) => {
-        const text = $(el).text();
-        if (text.includes('Type:')) {
-          type = $(el).find('span').text().trim();
-        } else if (text.includes('Premiered:')) {
-          premiered = $(el).find('span').text().trim();
-        } else if (text.includes('Aired:')) {
-          aired = $(el).find('span').text().trim();
-        } else if (text.includes('Status:')) {
-          const s = $(el).find('span').text().trim().toLowerCase();
-          if (s.includes('finished')) status = MediaStatusEnum.COMPLETED;else if (s.includes('airing') || s.includes('ongoing')) status = MediaStatusEnum.ONGOING;else if (s.includes('not yet')) status = MediaStatusEnum.NOT_YET_AIRED;
-        } else if (text.includes('Genres:')) {
-          $(el).find('a').each((_, a) => {
-            const g = $(a).text().trim();
-            if (g && !genres.includes(g)) genres.push(g);
-          });
-        } else if (text.includes('Studios:')) {
-          $(el).find('a').each((_, a) => {
-            const st = $(a).text().trim();
-            if (st && !studios.includes(st)) studios.push(st);
-          });
-        } else if (text.includes('Producers:')) {
-          $(el).find('a').each((_, a) => {
-            const pr = $(a).text().trim();
-            if (pr && pr !== 'unknown' && !producers.includes(pr)) producers.push(pr);
-          });
-        } else if (text.includes('Duration:')) {
-          duration = $(el).find('span').text().trim();
-        } else if (text.includes('MAL:')) {
-          const r = $(el).find('span').text().trim();
-          rating = r ? parseFloat(r) : undefined;
-        }
-      });
-      // Fetch episodes from /ajax/episode/list/${dataId}
-      const episodes = [];
-      if (dataId) {
-        try {
-          const epRes = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
-            headers: ajaxHeaders(watchUrl)
-          });
-          const epHtml = epRes.data?.result || epRes.data;
-          const $ep = load(epHtml);
-          $ep('li').each((_, li) => {
-            const listItem = $ep(li);
-            const anchor = listItem.find('a').first();
-            const dataIds = anchor.attr('data-ids') || anchor.attr('data-id') || '';
-            const numAttr = anchor.attr('data-num') || anchor.attr('data-slug') || anchor.find('b').text().trim();
-            const num = parseInt(numAttr, 10) || 1;
-            const epTitle = listItem.attr('title') || anchor.find('.d-title').text().trim() || `Episode ${num}`;
-            const isFiller = anchor.hasClass('filler');
-            const isSubbed = anchor.attr('data-sub') === '1';
-            const isDubbed = anchor.attr('data-dub') === '1';
-            if (dataIds) {
-              episodes.push({
-                id: `${animeSlug}$episode$${dataIds}`,
-                number: num,
-                title: epTitle,
-                url: `${config.baseUrl}/watch/${animeSlug}/ep-${num}`,
-                isFiller,
-                isSubbed,
-                isDubbed
-              });
-            }
-          });
-        } catch {
-          // Keep empty episodes if request fails
-        }
+    const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
+      headers: ajaxHeaders()
+    });
+    const $ = load(res.data?.result?.html || res.data?.result || res.data);
+    const suggestions = [];
+    $('a.item').each((_, el) => {
+      const item = $(el);
+      const href = item.attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? '';
+      const title = item.find('.name.d-title, .name').text().trim();
+      if (id && title) {
+        suggestions.push({
+          id,
+          title,
+          japaneseTitle: item.find('.name.d-title').attr('data-jp') || undefined,
+          image: item.find('.poster img, img').attr('src') || '',
+          url: href
+        });
       }
-      return {
-        id: animeSlug,
-        title,
-        japaneseTitle,
-        image,
-        description,
-        type,
-        status,
-        genres,
-        studios,
-        producers,
-        duration,
-        rating,
-        aired,
-        season: premiered,
-        totalEpisodes: episodes.length > 0 ? episodes.length : undefined,
-        episodes
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch anime info: ${err.message}`);
-    }
+    });
+    return suggestions;
   };
+  /** @param id the anime's slug, as in its /watch/ URL */
+  const fetchAnimeInfo = async id => {
+    const animeSlug = id.replace(/^\/watch\//, '').replace(/\/.*$/, '');
+    const watchUrl = `${config.baseUrl}/watch/${animeSlug}`;
+    const {
+      data: pageHtml
+    } = await axios.get(watchUrl, {
+      headers: defaultHeaders
+    });
+    const $ = load(pageHtml);
+    const title = $('#w-info .title.d-title, h1.title').first().text().trim();
+    const japaneseTitle = $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
+    const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
+    const description = $('#w-info .synopsis .content, .synopsis').text().replace(/\[more\]/g, '').trim();
+    // The site's numeric anime id (e.g. 7174), which the episode list is fetched by.
+    const dataId = $('#watch-main').attr('data-id') || $('.layout-page-watchtv').attr('data-id') || $('#w-rating').attr('data-id') || $('[data-id]').first().attr('data-id');
+    let type = 'TV';
+    let premiered;
+    let aired;
+    let status;
+    const genres = [];
+    const studios = [];
+    const producers = [];
+    let duration;
+    let rating;
+    const linkTexts = (el, list, skip) => $(el).find('a').each((_, a) => {
+      const text = $(a).text().trim();
+      if (text && text !== skip && !list.includes(text)) list.push(text);
+    });
+    $('#w-info .bmeta .meta div').each((_, el) => {
+      const text = $(el).text();
+      const value = $(el).find('span').text().trim();
+      if (text.includes('Type:')) type = value;else if (text.includes('Premiered:')) premiered = value;else if (text.includes('Aired:')) aired = value;else if (text.includes('Status:')) status = (0, media_status_1.toMediaStatus)(value, ctx.enums.MediaStatus);else if (text.includes('Genres:')) linkTexts(el, genres);else if (text.includes('Studios:')) linkTexts(el, studios);else if (text.includes('Producers:')) linkTexts(el, producers, 'unknown');else if (text.includes('Duration:')) duration = value;else if (text.includes('MAL:')) rating = value ? parseFloat(value) : undefined;
+    });
+    const episodes = [];
+    if (dataId) {
+      const epRes = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
+        headers: ajaxHeaders(watchUrl)
+      });
+      const $ep = load(epRes.data?.result || epRes.data);
+      $ep('li').each((_, li) => {
+        const listItem = $ep(li);
+        const anchor = listItem.find('a').first();
+        const dataIds = anchor.attr('data-ids') || anchor.attr('data-id') || '';
+        const numAttr = anchor.attr('data-num') || anchor.attr('data-slug') || anchor.find('b').text().trim();
+        const num = parseInt(numAttr, 10) || 1;
+        if (dataIds) {
+          episodes.push({
+            id: (0, hianime_1.toEpisodeId)(animeSlug, dataIds),
+            number: num,
+            title: listItem.attr('title') || anchor.find('.d-title').text().trim() || `Episode ${num}`,
+            url: `${config.baseUrl}/watch/${animeSlug}/ep-${num}`,
+            isFiller: anchor.hasClass('filler'),
+            isSubbed: anchor.attr('data-sub') === '1',
+            isDubbed: anchor.attr('data-dub') === '1'
+          });
+        }
+      });
+    }
+    return {
+      id: animeSlug,
+      title,
+      japaneseTitle,
+      image,
+      description,
+      type,
+      status,
+      genres,
+      studios,
+      producers,
+      duration,
+      rating,
+      aired,
+      season: premiered,
+      totalEpisodes: episodes.length > 0 ? episodes.length : undefined,
+      episodes
+    };
+  };
+  /** @param episodeId an episode id from fetchAnimeInfo, or the site's own episode id */
   const fetchEpisodeServers = async function (episodeId) {
     let subOrDub = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SubOrDubEnum.SUB;
-    try {
-      const dataIds = episodeId.includes('$episode$') ? episodeId.split('$episode$')[1] : episodeId;
-      const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
-      const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
-        headers: ajaxHeaders()
-      });
-      const html = res.data?.result || res.data;
-      const $ = load(html);
-      const rawServers = [];
-      let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
-      if (!serverList.length) {
-        // Fallback to any available type
-        serverList = $('.servers li[data-link-id]');
+    const dataIds = (0, hianime_1.siteEpisodeId)(episodeId) ?? episodeId;
+    const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
+    const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
+      headers: ajaxHeaders()
+    });
+    const $ = load(res.data?.result || res.data);
+    let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
+    if (!serverList.length) serverList = $('.servers li[data-link-id]');
+    const servers = [];
+    for (const el of serverList.toArray()) {
+      const linkId = $(el).attr('data-link-id');
+      if (!linkId) continue;
+      try {
+        const {
+          data: linkData
+        } = await axios.get(`${config.baseUrl}/ajax/server?get=${encodeURIComponent(linkId)}`, {
+          headers: ajaxHeaders()
+        });
+        const embedUrl = linkData?.result?.url;
+        if (embedUrl) servers.push({
+          name: (0, helpers_1.serverName)('megaplay', $(el).text()),
+          url: embedUrl
+        });
+      } catch {
+        // A server whose link doesn't resolve is left out; the others still play.
       }
-      serverList.each((_, el) => {
-        const item = $(el);
-        const name = item.text().trim();
-        const linkId = item.attr('data-link-id');
-        if (linkId) {
-          rawServers.push({
-            name,
-            linkId
-          });
-        }
-      });
-      // Resolve each server link to its embed URL via /ajax/server?get=
-      const servers = [];
-      for (const s of rawServers) {
-        try {
-          const {
-            data: linkData
-          } = await axios.get(`${config.baseUrl}/ajax/server?get=${encodeURIComponent(s.linkId)}`, {
-            headers: ajaxHeaders()
-          });
-          const embedUrl = linkData?.result?.url;
-          if (embedUrl) {
-            servers.push({
-              name: `megaplay-${s.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`,
-              url: embedUrl
-            });
-          }
-        } catch {
-          // Continue to next server
-        }
-      }
-      return servers;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch episode servers: ${err.message}`);
     }
+    return servers;
   };
-  const fetchEpisodeSources = async function (episodeId) {
-    let server = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : StreamingServersEnum.MegaPlay;
+  /** MegaPlay's sources for an embed URL. */
+  const extractFrom = async embedUrl => {
+    const serverUrl = new PolyURL(embedUrl);
+    return {
+      headers: {
+        Referer: serverUrl.href
+      },
+      ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
+    };
+  };
+  /**
+   * @param episodeId an episode id from fetchAnimeInfo, or a server's embed URL
+   * @param server a server name from fetchEpisodeServers, or the start of one; the first server when omitted
+   * @param subOrDub default `SubOrDub.SUB`
+   */
+  const fetchEpisodeSources = async function (episodeId, server) {
     let subOrDub = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : SubOrDubEnum.SUB;
-    if (episodeId.startsWith('http')) {
-      const serverUrl = new PolyURL(episodeId);
-      switch (server) {
-        case StreamingServersEnum.MegaPlay:
-        default:
-          return {
-            headers: {
-              Referer: serverUrl.href
-            },
-            ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
-          };
-      }
-    }
-    try {
-      const servers = await fetchEpisodeServers(episodeId, subOrDub);
-      if (!servers.length) {
-        throw new Error(`[AniKoto] No servers available for episode: ${episodeId}`);
-      }
-      const matchedServer = servers.find(s => s.name.toLowerCase().includes(String(server).toLowerCase())) || servers[0];
-      const serverUrl = new PolyURL(matchedServer.url);
-      return {
-        headers: {
-          Referer: serverUrl.href
-        },
-        ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl))
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch episode sources: ${err.message}`);
-    }
+    if (episodeId.startsWith('http')) return extractFrom(episodeId);
+    return extractFrom((0, servers_1.pickServer)(await fetchEpisodeServers(episodeId, subOrDub), server).url);
   };
   return {
     ...config,

@@ -1,17 +1,16 @@
-import { load } from 'cheerio';
-
 import {
   MangaParser,
   type ISearch,
   type IMangaInfo,
   type IMangaResult,
-  MediaStatus,
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
+  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
-import { sortChaptersForReading } from '../../utils/manga';
+import { toMediaStatus } from '../common/media-status';
+import { absoluteUrl, chapterTitle, finishChapters, plainText, toIsoDate } from './shared';
 
 /** The JSON API behind asurascans.com (the site's own pages call it). */
 const API_URL = 'https://api.asurascans.com/api';
@@ -65,10 +64,7 @@ export class AsuraScans extends MangaParser {
     super();
   }
 
-  /**
-   * @param query Search query
-   * @param page Page number (default: 1), 20 results per page
-   */
+  /** @param page page number (default: 1), 20 results per page */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     const currentPage = Math.max(1, Math.floor(page) || 1);
     const offset = (currentPage - 1) * PAGE_SIZE;
@@ -102,11 +98,10 @@ export class AsuraScans extends MangaParser {
     // The API lists newest first; early-access chapters can't be read until they unlock.
     const chapters = (list?.data ?? [])
       .filter((chapter) => Number.isFinite(chapter.number) && !isLocked(chapter))
-      .reverse()
       .map((chapter): IMangaChapter => {
         const result: IMangaChapter = {
           id: `${series.slug}/chapter/${chapter.number}`,
-          title: chapter.title?.replace(/\s+/g, ' ').trim() || `Chapter ${chapter.number}`,
+          title: chapterTitle(chapter.title, chapter.number, ''),
           chapterNumber: chapter.number,
         };
         const releaseDate = isoDate(chapter.published_at);
@@ -121,7 +116,7 @@ export class AsuraScans extends MangaParser {
     if (artists) info.artists = artists;
     const recommendations = (detail.recommended_series ?? []).map((item) => this.toResult(item));
     if (recommendations.length > 0) info.recommendations = recommendations;
-    info.chapters = sortChaptersForReading(chapters);
+    info.chapters = finishChapters(chapters);
     return info;
   };
 
@@ -168,7 +163,7 @@ export class AsuraScans extends MangaParser {
     if (url) result.url = url;
     const description = plainText(series.description);
     if (description) result.description = description;
-    const status = mediaStatus(series.status);
+    const status = toMediaStatus(series.status, MediaStatus);
     if (status) result.status = status;
     // Site extras: manga / manhwa / manhua, the 0-10 user rating, the newest chapter's number.
     if (series.type) result.type = series.type;
@@ -179,31 +174,13 @@ export class AsuraScans extends MangaParser {
   }
 
   private absolute(url: string | null | undefined): string | undefined {
-    if (!url) return undefined;
-    if (url.startsWith('//')) return `https:${url}`;
-    return url.startsWith('/') ? `${this.baseUrl}${url}` : url;
+    return absoluteUrl(url, this.baseUrl);
   }
 }
 
 /** Early-access chapters stay locked until `early_access_until`, as the site's chapter list shows. */
 const isLocked = (chapter: ApiChapter): boolean =>
   chapter.early_access_until ? Date.parse(chapter.early_access_until) > Date.now() : chapter.is_premium === true;
-
-const mediaStatus = (status: string | null | undefined): MediaStatus | undefined => {
-  switch (status?.toLowerCase().trim()) {
-    case 'ongoing':
-      return MediaStatus.ONGOING;
-    case 'completed':
-      return MediaStatus.COMPLETED;
-    case 'hiatus':
-      return MediaStatus.HIATUS;
-    case 'dropped':
-    case 'axed':
-      return MediaStatus.CANCELLED;
-    default:
-      return undefined;
-  }
-};
 
 /** `Ahn Soseol/ Sunghyun` or `Fit, Geonjin` → separate names; undefined when there are none. */
 const names = (value: string | null | undefined): string[] | undefined => {
@@ -214,22 +191,6 @@ const names = (value: string | null | undefined): string[] | undefined => {
   return list.length > 0 ? list : undefined;
 };
 
-/** The API's ISO timestamps, normalized; its zero date (`0001-01-01`) means none. */
-const isoDate = (value: string | null | undefined): string | undefined => {
-  if (!value || value.startsWith('0001-')) return undefined;
-  const time = Date.parse(value);
-  return Number.isNaN(time) ? value : new Date(time).toISOString();
-};
-
-/** The API's HTML synopsis as plain text, one paragraph per line. */
-const plainText = (html: string | null | undefined): string | undefined => {
-  if (!html) return undefined;
-  const $ = load(html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n'));
-  const text = $.root()
-    .text()
-    .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-    .join('\n');
-  return text || undefined;
-};
+/** The API's timestamps; its zero date (`0001-01-01`) means none. */
+const isoDate = (value: string | null | undefined): string | undefined =>
+  value?.startsWith('0001-') ? undefined : toIsoDate(value);

@@ -1,170 +1,64 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.MegaCloud = MegaCloud;
+const hls_1 = require("./hls");
+const url_1 = require("./url");
 /**
- * MegaCloud extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT
- * @returns Object with extract method implementing IVideoExtractor interface
+ * MegaCloud, the player of HiAnime and HiMovies.
+ * Thanks to https://github.com/yogesh-hacker for the original implementation.
  */
 function MegaCloud(ctx) {
-  const serverName = 'MegaCloud';
-  const sources = [];
-  const {
-    axios,
-    load,
-    USER_AGENT,
-    PolyURL
-  } = ctx;
-  /**
-   * Thanks to https://github.com/yogesh-hacker for the original implementation.
-   */
-  async function getSources(embed_url, site) {
-    const regex = /\/([^/?]+)(?=\?)/;
-    const xrax = embed_url.toString().match(regex)?.[1];
-    const basePath = embed_url.pathname.split('/').slice(0, 4).join('/');
-    const url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
-    // console.log(`🔗 Fetching sources from: ${url}`);
-    const headers = {
-      'Accept': '*/*',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Referer': site,
-      'User-Agent': USER_AGENT
-    };
-    let videoTag;
-    let embedRes;
-    try {
-      embedRes = await axios?.get(embed_url.href, {
-        headers
-      });
-      const $ = load(embedRes.data);
-      videoTag = $('[id$="-player"]');
-    } catch (error) {
-      console.error('❌ Error fetching embed URL:', error);
-      return;
+    const { axios, load, USER_AGENT, PolyURL } = ctx;
+    /** The key getSources wants: one 48-character token in the embed page, or three 16-character ones joined. */
+    function findNonce(embedPage) {
+        const whole = embedPage.match(/\b[a-zA-Z0-9]{48}\b/)?.[0];
+        if (whole)
+            return whole;
+        const parts = embedPage.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
+        return parts?.slice(1).join('');
     }
-    if (!videoTag.length) {
-      console.error('❌ Looks like URL expired!');
-      return;
-    }
-    const rawText = embedRes.data;
-    let nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
-    if (!nonceMatch) {
-      const altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
-      if (altMatch) nonceMatch = [altMatch.slice(1).join('')];
-    }
-    const nonce = nonceMatch?.[0];
-    if (!nonce) return console.error('❌ Nonce not found!');
-    const fileId = videoTag.attr('data-id');
-    const {
-      data: encryptedResData
-    } = await axios.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
-      headers
-    });
-    const sources = encryptedResData.sources;
-    let videoSrc = [];
-    if (encryptedResData.encrypted) {
-      console.warn('❌ API returned encrypted sources which we are no longer decrypting. Returning empty array.');
-    } else {
-      videoSrc = sources;
-    }
-    return {
-      sources: videoSrc,
-      tracks: encryptedResData.tracks,
-      intro: encryptedResData?.intro,
-      outro: encryptedResData?.outro
-    };
-  }
-  // @ts-ignore
-  const extract = async function (embedIframeURL) {
-    let referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'https://himovies.sx';
-    const extractedData = {
-      subtitles: [],
-      intro: {
-        start: 0,
-        end: 0
-      },
-      outro: {
-        start: 0,
-        end: 0
-      },
-      sources: []
-    };
-    try {
-      const resp = await getSources(embedIframeURL, referer);
-      if (!resp) return extractedData;
-      if (Array.isArray(resp.sources)) {
-        // Process each source to extract quality information
-        for (const s of resp.sources) {
-          const isM3U8 = s.type === 'hls';
-          // Add the main source with "auto" quality
-          extractedData.sources.push({
-            url: s.file,
-            isM3U8,
-            quality: 'auto'
-          });
-          // If it's an M3U8 file, fetch and parse quality variants
-          if (isM3U8) {
-            try {
-              const m3u8Response = await fetch(s.file, {
-                headers: {
-                  'Referer': referer,
-                  'User-Agent': USER_AGENT || 'Mozilla/5.0'
-                }
-              });
-              const m3u8Content = await m3u8Response.text();
-              if (m3u8Content.includes('EXTM3U')) {
-                const pathWithoutMaster = s.file.split('/master.m3u8')[0] || s.file.split('/index.m3u8')[0];
-                const videoList = m3u8Content.split('#EXT-X-STREAM-INF:');
-                for (const video of videoList ?? []) {
-                  if (!video.includes('m3u8')) continue;
-                  const url = video.split('\n')[1].trim();
-                  // Extract quality from RESOLUTION=WIDTHxHEIGHT
-                  const resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
-                  const quality = resolutionMatch ? resolutionMatch[2] : null;
-                  // Check if URL is absolute or relative
-                  const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
-                  const finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
-                  extractedData.sources.push({
-                    url: finalUrl,
-                    quality: quality ? `${quality}p` : 'auto',
-                    isM3U8: url.includes('.m3u8')
-                  });
-                }
-              }
-            } catch (error) {
-              // If fetching M3U8 fails, just use the auto quality
-              console.warn('[MegaCloud] Failed to fetch M3U8 variants:', error);
+    /** @param referer the site that embeds the player */
+    const extract = async (videoUrl, referer) => {
+        const embedUrl = (0, url_1.toUrl)(PolyURL, videoUrl);
+        const headers = {
+            'Accept': '*/*',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': referer,
+            'User-Agent': USER_AGENT,
+        };
+        const { data: embedPage } = await axios.get(embedUrl.href, { headers });
+        const player = load(embedPage)('[id$="-player"]');
+        if (!player.length)
+            throw new Error('[MegaCloud] The embed page has no player; the URL may have expired');
+        const nonce = findNonce(embedPage);
+        if (!nonce)
+            throw new Error('[MegaCloud] Nonce not found');
+        const basePath = embedUrl.pathname.split('/').slice(0, 4).join('/');
+        const { data } = await axios.get(`${embedUrl.origin}${basePath}/getSources?id=${player.attr('data-id')}&_k=${nonce}`, { headers });
+        if (data.encrypted)
+            throw new Error('[MegaCloud] The sources are encrypted, which this extractor does not decrypt');
+        const sources = [];
+        for (const source of Array.isArray(data.sources) ? data.sources : []) {
+            if (source.type !== 'hls') {
+                sources.push({ url: source.file, isM3U8: false, quality: 'default' });
+                continue;
             }
-          } else {
-            // For non-M3U8 sources, keep as is
-            extractedData.sources[extractedData.sources.length - 1] = {
-              url: s.file,
-              isM3U8: false,
-              quality: 'default'
-            };
-          }
+            sources.push({ url: source.file, isM3U8: true, quality: 'auto' });
+            const { data: master } = await axios.get(source.file, {
+                headers: { 'Referer': referer, 'User-Agent': USER_AGENT },
+            });
+            sources.push(...(0, hls_1.hlsVariants)(master, source.file));
         }
-      }
-      extractedData.intro = resp.intro ?? extractedData.intro;
-      extractedData.outro = resp.outro ?? extractedData.outro;
-      extractedData.subtitles = resp.tracks?.map(track => ({
-        url: track.file,
-        lang: track.label || track.kind
-      })) ?? [];
-      // console.log(`[MegaCloud] Extracted ${extractedData.sources.length} source(s)`);
-      return extractedData;
-    } catch (err) {
-      // console.error('[MegaCloud] Extraction error', err);
-      throw err;
-    }
-  };
-  return {
-    serverName,
-    sources,
-    extract
-  };
+        return {
+            sources,
+            subtitles: data.tracks?.map((track) => ({
+                url: track.file,
+                lang: track.label || track.kind,
+            })) ?? [],
+            intro: data.intro ?? { start: 0, end: 0 },
+            outro: data.outro ?? { start: 0, end: 0 },
+        };
+    };
+    return { extract };
 }
 //# sourceMappingURL=megacloud.js.map

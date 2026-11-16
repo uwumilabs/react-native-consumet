@@ -1,8 +1,6 @@
-import { type ExtractorContext, type IVideoExtractor } from '../models';
-/**
- * VidHide extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT
- * @returns Object with extract method implementing IVideoExtractor interface
- */
-export declare function VidHide(ctx: ExtractorContext): IVideoExtractor;
+import { type ExtractorContext, type ISource } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
+export declare function VidHide(ctx: ExtractorContext): {
+    extract: (videoUrl: string | PolyURL) => Promise<ISource>;
+};
 //# sourceMappingURL=vidhide.d.ts.map

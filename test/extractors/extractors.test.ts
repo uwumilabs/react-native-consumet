@@ -7,7 +7,6 @@ import {
   ExtensionRegistry,
   defaultExtractors,
   createExtractorContext,
-  PolyURL,
 } from '../../src';
 
 describe('New Extractors: GDFlix, Gofile, HubCloud', () => {
@@ -26,17 +25,9 @@ describe('New Extractors: GDFlix, Gofile, HubCloud', () => {
   it('should instantiate extractors via factory and have extract method', () => {
     const ctx = createExtractorContext();
 
-    const gdflix = GDFlix(ctx);
-    expect(gdflix.serverName).toBe('GDFlix');
-    expect(typeof gdflix.extract).toBe('function');
-
-    const gofile = Gofile(ctx);
-    expect(gofile.serverName).toBe('Gofile');
-    expect(typeof gofile.extract).toBe('function');
-
-    const hubcloud = HubCloud(ctx);
-    expect(hubcloud.serverName).toBe('HubCloud');
-    expect(typeof hubcloud.extract).toBe('function');
+    expect(typeof GDFlix(ctx).extract).toBe('function');
+    expect(typeof Gofile(ctx).extract).toBe('function');
+    expect(typeof HubCloud(ctx).extract).toBe('function');
   });
 
   it('should be present in defaultExtractors', () => {
@@ -44,14 +35,9 @@ describe('New Extractors: GDFlix, Gofile, HubCloud', () => {
     expect(typeof defaultExtractors.Gofile).toBe('function');
     expect(typeof defaultExtractors.HubCloud).toBe('function');
 
-    const gd = defaultExtractors.GDFlix();
-    expect(gd.serverName).toBe('GDFlix');
-
-    const gf = defaultExtractors.Gofile();
-    expect(gf.serverName).toBe('Gofile');
-
-    const hc = defaultExtractors.HubCloud();
-    expect(hc.serverName).toBe('HubCloud');
+    expect(typeof defaultExtractors.GDFlix().extract).toBe('function');
+    expect(typeof defaultExtractors.Gofile().extract).toBe('function');
+    expect(typeof defaultExtractors.HubCloud().extract).toBe('function');
   });
 
   it('should be registered in ExtractorManager', () => {

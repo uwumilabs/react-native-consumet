@@ -39,7 +39,7 @@ const provider = (episodes: object[]) =>
   ({
     name: 'Fake',
     capabilities: { aniZipEpisodes: true },
-    search: jest.fn().mockResolvedValue({ results: [{ id: 'show', title: 'Show' }] }),
+    search: jest.fn(async (query: string) => ({ results: [{ id: 'show', title: query }] })),
     fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes }),
     fetchEpisodeSources: jest.fn(),
     fetchEpisodeServers: jest.fn(),

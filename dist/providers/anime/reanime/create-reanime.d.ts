@@ -1,9 +1,9 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type SubOrDub, type ProviderContext, StreamingServers } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type SubOrDub, type ProviderContext } from '../../../models';
 export declare function createReanime(ctx: ProviderContext, customBaseURL?: string): {
     search: (query: string, page?: number, limit?: number) => Promise<ISearch<IAnimeResult>>;
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
     fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrDub) => Promise<IEpisodeServer[]>;
-    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, server?: string, subOrDub?: SubOrDub) => Promise<ISource>;
     name: string;
     languages: string[] | string;
     classPath: string;

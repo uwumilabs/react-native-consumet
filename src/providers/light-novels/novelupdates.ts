@@ -8,10 +8,11 @@ import {
   type ILightNovelChapter,
   type ILightNovelChapterContent,
   type ILightNovelResult,
-  MediaStatus,
   type ProviderContext,
+  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
+import { toMediaStatus } from '../common/media-status';
 
 export class NovelUpdates extends LightNovelParser {
   override readonly name = 'NovelUpdates';
@@ -27,23 +28,17 @@ export class NovelUpdates extends LightNovelParser {
     super();
   }
 
-  /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+  /** Requests a page as text through the context axios. */
   private requestText = async (url: string, config: AxiosRequestConfig = {}): Promise<string> => {
-    const { data } = await this.ctx.axios.request({
-      url,
-      ...config,
-      responseType: 'text',
-      validateStatus: () => true,
-    });
+    const { data } = await this.ctx.axios.request({ url, ...config, responseType: 'text' });
     return data;
   };
 
   /**
-   *
-   * @param lightNovelUrl light novel link or id
-   * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
+   * @param lightNovelUrl light novel URL or id
+   * @param _chapterPage ignored: NovelUpdates lists every chapter in one request. Kept so existing calls compile.
    */
-  override fetchLightNovelInfo = async (lightNovelUrl: string, chapterPage: number = -1): Promise<ILightNovelInfo> => {
+  override fetchLightNovelInfo = async (lightNovelUrl: string, _chapterPage?: number): Promise<ILightNovelInfo> => {
     if (!lightNovelUrl.startsWith(this.baseUrl)) {
       lightNovelUrl = `${this.baseUrl}/series/${lightNovelUrl}`;
     }
@@ -53,55 +48,36 @@ export class NovelUpdates extends LightNovelParser {
       url: lightNovelUrl,
     };
 
-    try {
-      const page = await this.requestText(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
-        headers: {
-          Referer: lightNovelUrl,
-        },
-      });
+    const page = await this.requestText(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
+      headers: {
+        Referer: lightNovelUrl,
+      },
+    });
 
-      const $ = load(page);
+    const $ = load(page);
 
-      if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
-        throw new Error('Client is blocked from accessing the site.');
-      }
-
-      lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
-
-      lightNovelInfo.image = $('div.seriesimg img').attr('src');
-      lightNovelInfo.author = $('div#showauthors a').text();
-      lightNovelInfo.genres = $('div#seriesgenre a')
-        .map((i, el) => $(el).text())
-        .get();
-
-      lightNovelInfo.rating = parseFloat(
-        $('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text()
-      );
-      lightNovelInfo.views = parseInt(
-        $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text()
-      );
-      lightNovelInfo.description = $('div#editdescription').text()?.trim();
-
-      const status = $('div#editstatus').text()?.trim();
-
-      if (status.includes('Complete')) {
-        lightNovelInfo.status = MediaStatus.COMPLETED;
-      } else if (status.includes('Ongoing')) {
-        lightNovelInfo.status = MediaStatus.ONGOING;
-      } else {
-        lightNovelInfo.status = MediaStatus.UNKNOWN;
-      }
-
-      const postId = $('input#mypostid').attr('value');
-
-      lightNovelInfo.chapters = await this.fetchChapters(postId!);
-      lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
-
-      return lightNovelInfo;
-    } catch (err) {
-      console.error(err);
-      throw new Error((err as Error).message);
+    if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
+      throw new Error('NovelUpdates: Cloudflare blocked the request');
     }
+
+    lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
+
+    lightNovelInfo.image = $('div.seriesimg img').attr('src');
+    lightNovelInfo.author = $('div#showauthors a').text();
+    lightNovelInfo.genres = $('div#seriesgenre a')
+      .map((i, el) => $(el).text())
+      .get();
+    lightNovelInfo.description = $('div#editdescription').text()?.trim();
+
+    lightNovelInfo.status = toMediaStatus($('div#editstatus').text(), MediaStatus);
+
+    const postId = $('input#mypostid').attr('value');
+
+    lightNovelInfo.chapters = await this.fetchChapters(postId!);
+    // The average vote out of 5, doubled to a 10-point scale.
+    lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
+
+    return lightNovelInfo;
   };
   private fetchChapters = async (postId: string): Promise<ILightNovelChapter[]> => {
     const chapters: ILightNovelChapter[] = [];
@@ -132,10 +108,7 @@ export class NovelUpdates extends LightNovelParser {
     return chapters;
   };
 
-  /**
-   *
-   * @param chapterId chapter id or url
-   */
+  /** @param chapterId chapter id or URL */
   override fetchChapterContent = async (chapterId: string): Promise<ILightNovelChapterContent> => {
     if (!chapterId.startsWith(this.baseUrl)) {
       chapterId = `${this.baseUrl}/extnu/${chapterId}`;
@@ -146,59 +119,41 @@ export class NovelUpdates extends LightNovelParser {
       text: '',
     };
 
-    try {
-      const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
+    const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
 
-      const $ = load(data);
+    const $ = load(data);
 
-      contents.novelTitle = $('title').text();
-      contents.chapterTitle = $('title').text();
+    contents.novelTitle = $('title').text();
+    contents.chapterTitle = $('title').text();
 
-      contents.text = data;
+    contents.text = data;
 
-      return contents;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
+    return contents;
   };
 
-  /**
-   *
-   * @param query search query string
-   */
   override search = async (query: string): Promise<ISearch<ILightNovelResult>> => {
     const result: ISearch<ILightNovelResult> = { results: [] };
 
-    try {
-      const res = await this.requestText(
-        `${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`,
-        {
-          headers: {
-            Referer: this.baseUrl,
-          },
-        }
-      );
+    const res = await this.requestText(
+      `${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`,
+      {
+        headers: {
+          Referer: this.baseUrl,
+        },
+      }
+    );
 
-      const $ = load(res);
+    const $ = load(res);
 
-      $('div.search_main_box_nu').each((i, el) => {
-        result.results.push({
-          id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1]!.split('/')[0]!,
-          title: $(el).find('div.search_body_nu div.search_title a').text(),
-          url: $(el).find('div.search_body_nu div.search_title a').attr('href')!,
-          image: $(el).find('div.search_img_nu img').attr('src'),
-        });
+    $('div.search_main_box_nu').each((i, el) => {
+      result.results.push({
+        id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1]!.split('/')[0]!,
+        title: $(el).find('div.search_body_nu div.search_title a').text(),
+        url: $(el).find('div.search_body_nu div.search_title a').attr('href')!,
+        image: $(el).find('div.search_img_nu img').attr('src'),
       });
+    });
 
-      return result;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
+    return result;
   };
 }
-
-// (async () => {
-//   const ln = new ReadLightNovels();
-//   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');
-//   console.log(chap);
-// })();

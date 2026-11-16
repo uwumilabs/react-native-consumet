@@ -2,7 +2,7 @@ name: Sign registry
 
 # Signs src/extension-registry.json, the registry apps download, and commits its signature
 # (src/extension-registry.json.sig) to main (REG-6). Apps verify it with the public keys in
-# src/registry-signing-keys.ts. The private key never leaves the REGISTRY_SIGNING_KEY secret
+# src/registry-signing-keys.json. The private key never leaves the REGISTRY_SIGNING_KEY secret
 # (yarn registry:keygen prints it once).
 #
 # Store the secret in the "registry-signing" environment and give that environment a required
@@ -18,7 +18,7 @@ on:
       - main
     paths:
       - src/extension-registry.json
-      - src/registry-signing-keys.ts
+      - src/registry-signing-keys.json
   # Re-sign by hand, e.g. after storing the secret for the first time.
   workflow_dispatch:
 
@@ -45,7 +45,7 @@ jobs:
           SIGNING_KEYS: ${{ secrets.REGISTRY_SIGNING_KEY }}${{ secrets.REGISTRY_SIGNING_KEY_2 }}
         run: |
           if [ -z "$SIGNING_KEYS" ]; then
-            echo "::notice title=Registry not signed::No REGISTRY_SIGNING_KEY secret yet. Run yarn registry:keygen, store the private key it prints as REGISTRY_SIGNING_KEY in the registry-signing environment, and commit src/registry-signing-keys.ts."
+            echo "::notice title=Registry not signed::No REGISTRY_SIGNING_KEY secret yet. Run yarn registry:keygen, store the private key it prints as REGISTRY_SIGNING_KEY in the registry-signing environment, and commit src/registry-signing-keys.json."
             echo "present=false" >> "$GITHUB_OUTPUT"
           else
             echo "present=true" >> "$GITHUB_OUTPUT"
@@ -58,8 +58,8 @@ jobs:
         with:
           ref: main
 
-      # Nothing is installed: the signing scripts only use Node's built-in modules, so no
-      # dependency code runs next to the key.
+      # Nothing is installed: the signing scripts only use Node's built-in modules and the
+      # committed dist/ build of the signature format, so no dependency code runs next to the key.
       - name: Setup Node.js
         if: steps.key.outputs.present == 'true'
         uses: actions/setup-node@v4

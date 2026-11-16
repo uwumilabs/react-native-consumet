@@ -35,7 +35,7 @@ function Tabs() {
     <View style={S.root}>
       <StatusBar barStyle="light-content" />
 
-      {/* Screen area — keep all mounted so state survives tab switches */}
+      {/* Keep all mounted so state survives tab switches */}
       <View style={[S.screen, tab !== 'anime' && S.hidden]}>
         <AnimeScreen />
       </View>
@@ -49,7 +49,6 @@ function Tabs() {
         <RegistryScreen />
       </View>
 
-      {/* Bottom tab bar */}
       <View style={[S.tabBar, { height: BAR_H + barBottom, paddingBottom: barBottom }]}>
         {TABS.map((t) => {
           const active = tab === t.id;

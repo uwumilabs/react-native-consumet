@@ -1,12 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NetflixMirror = void 0;
-const netmirror_parser_1 = require("./netmirror-parser");
+exports.DisneyMirror = exports.PrimeMirror = exports.NetflixMirror = void 0;
+const models_1 = require("../../../models");
+const provider_class_1 = require("../../provider-class");
 const create_netflixmirror_1 = require("./create-netflixmirror");
-class NetflixMirror extends netmirror_parser_1.NetMirrorParser {
-    constructor(ctxOrBaseURL, customBaseURL) {
-        super(create_netflixmirror_1.createNetflixMirror, ctxOrBaseURL, customBaseURL);
-    }
-}
-exports.NetflixMirror = NetflixMirror;
+exports.NetflixMirror = (0, provider_class_1.providerClass)(models_1.MovieParser, create_netflixmirror_1.createNetflixMirror);
+exports.PrimeMirror = (0, provider_class_1.providerClass)(models_1.MovieParser, create_netflixmirror_1.createPrimeMirror);
+exports.DisneyMirror = (0, provider_class_1.providerClass)(models_1.MovieParser, create_netflixmirror_1.createDisneyMirror);
 //# sourceMappingURL=netflixmirror.js.map

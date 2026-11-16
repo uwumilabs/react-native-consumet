@@ -7,6 +7,7 @@ exports.NovelUpdates = void 0;
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
+const media_status_1 = require("../common/media-status");
 class NovelUpdates extends models_1.LightNovelParser {
   ctx;
   name = 'NovelUpdates';
@@ -20,7 +21,7 @@ class NovelUpdates extends models_1.LightNovelParser {
     super();
     this.ctx = ctx;
   }
-  /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+  /** Requests a page as text through the context axios. */
   requestText = (() => {
     var _this = this;
     return async function (url) {
@@ -30,64 +31,45 @@ class NovelUpdates extends models_1.LightNovelParser {
       } = await _this.ctx.axios.request({
         url,
         ...config,
-        responseType: 'text',
-        validateStatus: () => true
+        responseType: 'text'
       });
       return data;
     };
   })();
   /**
-   *
-   * @param lightNovelUrl light novel link or id
-   * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
+   * @param lightNovelUrl light novel URL or id
+   * @param _chapterPage ignored: NovelUpdates lists every chapter in one request. Kept so existing calls compile.
    */
-  fetchLightNovelInfo = (() => {
-    var _this2 = this;
-    return async function (lightNovelUrl) {
-      let chapterPage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -1;
-      if (!lightNovelUrl.startsWith(_this2.baseUrl)) {
-        lightNovelUrl = `${_this2.baseUrl}/series/${lightNovelUrl}`;
-      }
-      const lightNovelInfo = {
-        id: lightNovelUrl.split('/')?.pop(),
-        title: '',
-        url: lightNovelUrl
-      };
-      try {
-        const page = await _this2.requestText(`${_this2.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
-          headers: {
-            Referer: lightNovelUrl
-          }
-        });
-        const $ = (0, cheerio_1.load)(page);
-        if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
-          throw new Error('Client is blocked from accessing the site.');
-        }
-        lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
-        lightNovelInfo.image = $('div.seriesimg img').attr('src');
-        lightNovelInfo.author = $('div#showauthors a').text();
-        lightNovelInfo.genres = $('div#seriesgenre a').map((i, el) => $(el).text()).get();
-        lightNovelInfo.rating = parseFloat($('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text());
-        lightNovelInfo.views = parseInt($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text());
-        lightNovelInfo.description = $('div#editdescription').text()?.trim();
-        const status = $('div#editstatus').text()?.trim();
-        if (status.includes('Complete')) {
-          lightNovelInfo.status = models_1.MediaStatus.COMPLETED;
-        } else if (status.includes('Ongoing')) {
-          lightNovelInfo.status = models_1.MediaStatus.ONGOING;
-        } else {
-          lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
-        }
-        const postId = $('input#mypostid').attr('value');
-        lightNovelInfo.chapters = await _this2.fetchChapters(postId);
-        lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
-        return lightNovelInfo;
-      } catch (err) {
-        console.error(err);
-        throw new Error(err.message);
-      }
+  fetchLightNovelInfo = async (lightNovelUrl, _chapterPage) => {
+    if (!lightNovelUrl.startsWith(this.baseUrl)) {
+      lightNovelUrl = `${this.baseUrl}/series/${lightNovelUrl}`;
+    }
+    const lightNovelInfo = {
+      id: lightNovelUrl.split('/')?.pop(),
+      title: '',
+      url: lightNovelUrl
     };
-  })();
+    const page = await this.requestText(`${this.proxyURL}${encodeURIComponent(lightNovelUrl)}`, {
+      headers: {
+        Referer: lightNovelUrl
+      }
+    });
+    const $ = (0, cheerio_1.load)(page);
+    if ($('title').html() === 'Just a moment...' || $('title').html() === 'Attention Required! | Cloudflare') {
+      throw new Error('NovelUpdates: Cloudflare blocked the request');
+    }
+    lightNovelInfo.title = $('div.seriestitlenu').text()?.trim();
+    lightNovelInfo.image = $('div.seriesimg img').attr('src');
+    lightNovelInfo.author = $('div#showauthors a').text();
+    lightNovelInfo.genres = $('div#seriesgenre a').map((i, el) => $(el).text()).get();
+    lightNovelInfo.description = $('div#editdescription').text()?.trim();
+    lightNovelInfo.status = (0, media_status_1.toMediaStatus)($('div#editstatus').text(), models_1.MediaStatus);
+    const postId = $('input#mypostid').attr('value');
+    lightNovelInfo.chapters = await this.fetchChapters(postId);
+    // The average vote out of 5, doubled to a 10-point scale.
+    lightNovelInfo.rating = Number($('h5.seriesother span.uvotes').text()?.split(' /')[0]?.substring(1) ?? 0) * 2;
+    return lightNovelInfo;
+  };
   fetchChapters = async postId => {
     const chapters = [];
     const chapterData = (await this.requestText(`${this.baseUrl}/wp-admin/admin-ajax.php`, {
@@ -110,10 +92,7 @@ class NovelUpdates extends models_1.LightNovelParser {
     });
     return chapters;
   };
-  /**
-   *
-   * @param chapterId chapter id or url
-   */
+  /** @param chapterId chapter id or URL */
   fetchChapterContent = async chapterId => {
     if (!chapterId.startsWith(this.baseUrl)) {
       chapterId = `${this.baseUrl}/extnu/${chapterId}`;
@@ -123,50 +102,33 @@ class NovelUpdates extends models_1.LightNovelParser {
       chapterTitle: '',
       text: ''
     };
-    try {
-      const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
-      const $ = (0, cheerio_1.load)(data);
-      contents.novelTitle = $('title').text();
-      contents.chapterTitle = $('title').text();
-      contents.text = data;
-      return contents;
-    } catch (err) {
-      throw new Error(err.message);
-    }
+    const data = await this.requestText(`${this.proxyURL}${encodeURIComponent(chapterId)}`);
+    const $ = (0, cheerio_1.load)(data);
+    contents.novelTitle = $('title').text();
+    contents.chapterTitle = $('title').text();
+    contents.text = data;
+    return contents;
   };
-  /**
-   *
-   * @param query search query string
-   */
   search = async query => {
     const result = {
       results: []
     };
-    try {
-      const res = await this.requestText(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
-        headers: {
-          Referer: this.baseUrl
-        }
+    const res = await this.requestText(`${this.proxyURL}${encodeURIComponent(`${this.baseUrl}/series-finder/?sf=1&sh=${encodeURIComponent(query)}`)}`, {
+      headers: {
+        Referer: this.baseUrl
+      }
+    });
+    const $ = (0, cheerio_1.load)(res);
+    $('div.search_main_box_nu').each((i, el) => {
+      result.results.push({
+        id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1].split('/')[0],
+        title: $(el).find('div.search_body_nu div.search_title a').text(),
+        url: $(el).find('div.search_body_nu div.search_title a').attr('href'),
+        image: $(el).find('div.search_img_nu img').attr('src')
       });
-      const $ = (0, cheerio_1.load)(res);
-      $('div.search_main_box_nu').each((i, el) => {
-        result.results.push({
-          id: $(el).find('div.search_body_nu div.search_title a').attr('href')?.split('/series/')[1].split('/')[0],
-          title: $(el).find('div.search_body_nu div.search_title a').text(),
-          url: $(el).find('div.search_body_nu div.search_title a').attr('href'),
-          image: $(el).find('div.search_img_nu img').attr('src')
-        });
-      });
-      return result;
-    } catch (err) {
-      throw new Error(err.message);
-    }
+    });
+    return result;
   };
 }
 exports.NovelUpdates = NovelUpdates;
-// (async () => {
-//   const ln = new ReadLightNovels();
-//   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');
-//   console.log(chap);
-// })();
 //# sourceMappingURL=novelupdates.js.map

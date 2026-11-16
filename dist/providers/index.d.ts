@@ -1,7 +1,6 @@
-import { ANIME } from './anime';
-import { MANGA } from './manga';
-import { LIGHT_NOVELS } from './light-novels';
-import { MOVIES } from './movies';
-import META from './meta';
-export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
+export { ANIME } from './anime';
+export { MANGA } from './manga';
+export { LIGHT_NOVELS } from './light-novels';
+export { MOVIES } from './movies';
+export { META } from './meta';
 //# sourceMappingURL=index.d.ts.map

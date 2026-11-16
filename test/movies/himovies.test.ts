@@ -1,31 +1,31 @@
-import { MOVIES } from '../../lib/module/providers';
+import { MOVIES } from '../../src/providers';
 
 jest.setTimeout(120000);
 
 const himovies = new MOVIES.HiMovies();
 
-test('returns a filled array of movies/tv', async () => {
+test('search: returns movies and series', async () => {
   const data = await himovies.search('vincenzo');
-  expect(data.results).not.toEqual([]);
+  expect(data.results.length).toBeGreaterThan(0);
 });
 
-test('returns a filled object of movies/tv data', async () => {
+test('fetchMediaInfo: returns the series with episodes', async () => {
   const data = await himovies.fetchMediaInfo('tv/watch-vincenzo-67955');
-  expect(data.description).not.toEqual('');
-  expect(data.episodes).not.toEqual([]);
+  expect(data.description).toBeTruthy();
+  expect(data.episodes!.length).toBeGreaterThan(0);
 });
 
-test('returns a filled object of streaming sources', async () => {
+test('fetchEpisodeSources: returns sources', async () => {
   const episodeSources = await himovies.fetchEpisodeSources('1167571', 'tv/watch-vincenzo-67955');
-  expect(episodeSources.sources).not.toEqual([]);
+  expect(episodeSources.sources.length).toBeGreaterThan(0);
 });
 
-test('returns a filled object of movies/tv data by country', async () => {
+test('fetchByCountry: returns titles from that country', async () => {
   const data = await himovies.fetchByCountry('KR');
-  expect(data.results).not.toEqual([]);
+  expect(data.results.length).toBeGreaterThan(0);
 });
 
-test('returns a filled object of movies/tv data by genre', async () => {
+test('fetchByGenre: returns titles of that genre', async () => {
   const data = await himovies.fetchByGenre('drama');
-  expect(data.results).not.toEqual([]);
+  expect(data.results.length).toBeGreaterThan(0);
 });

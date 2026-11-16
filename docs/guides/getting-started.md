@@ -221,13 +221,11 @@ The bundled registry lists these providers (registry id, then status). `manager.
 - **AnimePahe** (`animepahe`, stable)
 - **AniKoto** (`anikoto`, stable)
 - **AniNeko** (`anineko`, stable)
-- **AnimeKai** (`animekai`, deprecated)
 
 ### 🎥 Movie Providers
 
 - **NetflixMirror**, **PrimeMirror**, **DisneyMirror** (`netflixmirror`, `primemirror`, `disneymirror`, beta)
 - **VegaMovies** (`vegamovies`, alpha)
-- **MultiMovies**, **YFlix** (`multimovies`, `yflix`, deprecated)
 
 ### 📚 Manga and 📖 Light Novel Providers
 

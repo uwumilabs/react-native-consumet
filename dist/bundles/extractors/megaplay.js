@@ -34,26 +34,59 @@ __export(megaplay_exports, {
   MegaPlay: () => MegaPlay
 });
 module.exports = __toCommonJS(megaplay_exports);
+
+// src/extractors/hls.ts
+function resolveUri(uri, playlistUrl) {
+  if (/^https?:\/\//i.test(uri)) return uri;
+  if (uri.startsWith("//")) return `${playlistUrl.split("//")[0]}${uri}`;
+  if (uri.startsWith("/")) return `${playlistUrl.match(/^https?:\/\/[^/?#]+/i)?.[0] ?? ""}${uri}`;
+  return `${playlistUrl.split(/[?#]/)[0].replace(/[^/]*$/, "")}${uri}`;
+}
+function hlsVariants(playlist, masterUrl) {
+  if (typeof playlist !== "string") return [];
+  var lines = playlist.split("\n").map(line => line.trim());
+  var separateAudio = lines.some(line => line.startsWith("#EXT-X-MEDIA:") && line.includes("TYPE=AUDIO") && line.includes("URI="));
+  if (separateAudio) return [];
+  var variants = [];
+  lines.forEach((line, i) => {
+    var uri = lines[i + 1];
+    if (!line.startsWith("#EXT-X-STREAM-INF") || !uri || uri.startsWith("#")) return;
+    var height = line.match(/RESOLUTION=\d+x(\d+)/)?.[1];
+    variants.push({
+      url: resolveUri(uri, masterUrl),
+      isM3U8: true,
+      quality: height ? `${height}p` : `quality_${variants.length + 1}`
+    });
+  });
+  return variants;
+}
+
+// src/extractors/url.ts
+function toUrl(URLClass, url) {
+  return typeof url === "string" ? new URLClass(url) : url;
+}
+
+// src/extractors/megaplay.ts
 var MEGA_KEY_STR = "i?LMTAx0Q6,:}50U";
 var MEGA_IV_STR = "W0;27ToaUpl_P%'c";
 var SEGMENT_RE = /\/segment\/([A-Za-z0-9_-]+)/;
 function MegaPlay(ctx) {
-  var serverName = "MegaPlay";
-  var sources = [];
-  var client = ctx.axios;
-  var load = ctx.load;
-  var CryptoJS = ctx.CryptoJS;
-  var userAgent = ctx.USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+  var {
+    axios,
+    load,
+    CryptoJS,
+    USER_AGENT,
+    PolyURL
+  } = ctx;
   function megaPlayDecrypt(encB64Url) {
     var b64 = encB64Url.replace(/-/g, "+").replace(/_/g, "/");
     var padded = b64 + "=".repeat((4 - b64.length % 4) % 4);
     var key = CryptoJS.enc.Latin1.parse(MEGA_KEY_STR + "\0".repeat(16));
     var iv = CryptoJS.enc.Latin1.parse(MEGA_IV_STR);
     var ciphertext = CryptoJS.enc.Base64.parse(padded);
-    var cipherParams = CryptoJS.lib.CipherParams.create({
+    var decrypted = CryptoJS.AES.decrypt(CryptoJS.lib.CipherParams.create({
       ciphertext
-    });
-    var decrypted = CryptoJS.AES.decrypt(cipherParams, key, {
+    }), key, {
       iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7
@@ -61,138 +94,96 @@ function MegaPlay(ctx) {
     return decrypted.toString(CryptoJS.enc.Utf8);
   }
   function resolveSegmentUrl(raw) {
-    var m = raw.match(SEGMENT_RE);
-    if (!m || !m[1]) return raw;
+    var token = raw.match(SEGMENT_RE)?.[1];
+    if (!token) return raw;
     try {
-      var decrypted = megaPlayDecrypt(m[1]);
-      return decrypted || raw;
+      return megaPlayDecrypt(token) || raw;
     } catch {
       return raw;
     }
   }
+  var fileOf = sources => (typeof sources?.file === "string" ? sources.file : null) || (Array.isArray(sources) && sources[0]?.file ? String(sources[0].file) : null);
   function extractStreamUrl(data) {
     if (!data || typeof data !== "object") return null;
     if (typeof data.enc === "string" && data.enc.length > 0) {
+      var plain = "";
       try {
-        var plain = megaPlayDecrypt(data.enc);
-        if (plain) {
-          try {
-            var parsed = JSON.parse(plain);
-            var url = (typeof parsed?.sources?.file === "string" ? parsed.sources.file : null) || (Array.isArray(parsed?.sources) && parsed.sources[0]?.file ? String(parsed.sources[0].file) : null) || (typeof parsed?.file === "string" ? parsed.file : null);
-            if (url) return resolveSegmentUrl(url);
-          } catch {}
-          if (/^https?:\/\//i.test(plain) || plain.includes(".m3u8")) {
-            return plain.trim();
-          }
-        }
+        plain = megaPlayDecrypt(data.enc);
       } catch {}
+      if (plain) {
+        var parsed;
+        try {
+          parsed = JSON.parse(plain);
+        } catch {}
+        var url = fileOf(parsed?.sources) || (typeof parsed?.file === "string" ? parsed.file : null);
+        if (url) return resolveSegmentUrl(url);
+        if (/^https?:\/\//i.test(plain) || plain.includes(".m3u8")) return plain.trim();
+      }
     }
-    var rawUrl = (typeof data?.sources?.file === "string" ? data.sources.file : null) || (Array.isArray(data?.sources) && data.sources[0]?.file ? String(data.sources[0].file) : null);
-    if (rawUrl) return resolveSegmentUrl(rawUrl);
-    return null;
+    var rawUrl = fileOf(data.sources);
+    return rawUrl ? resolveSegmentUrl(rawUrl) : null;
   }
   var extract = async (videoUrl, referer) => {
-    var embedHref = typeof videoUrl === "string" ? videoUrl : videoUrl.href;
-    var urlObj = typeof videoUrl === "object" && videoUrl.origin ? videoUrl : new (ctx.PolyURL || URL)(embedHref);
-    var origin = urlObj.origin || "https://megaplay.buzz";
-    var pageReferer = referer || embedHref;
+    var embedUrl = toUrl(PolyURL, videoUrl);
+    var embedHref = embedUrl.href;
+    var origin = embedUrl.origin;
     var cookieJar = [];
     var parseCookies = headers => {
       var raw = headers?.["set-cookie"];
       if (!raw) return [];
-      var arr = Array.isArray(raw) ? raw : [raw];
-      return arr.map(c => c.split(";")[0] ?? "").filter(Boolean);
+      return (Array.isArray(raw) ? raw : [raw]).map(c => c.split(";")[0] ?? "").filter(Boolean);
     };
-    var pageRes = await client.get(embedHref, {
+    var pageRes = await axios.get(embedHref, {
       headers: {
-        "User-Agent": userAgent,
-        "Referer": pageReferer,
+        "User-Agent": USER_AGENT,
+        "Referer": referer || embedHref,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
       }
     });
     cookieJar.push(...parseCookies(pageRes.headers));
-    var $ = load(pageRes.data);
-    var playerDiv = $("#megaplay-player");
-    if (!playerDiv.length) {
-      throw new Error("[MegaPlay] Could not find player element (#megaplay-player)");
-    }
+    var playerDiv = load(pageRes.data)("#megaplay-player");
+    if (!playerDiv.length) throw new Error("[MegaPlay] Could not find player element (#megaplay-player)");
     var mediaId = playerDiv.attr("data-id");
-    if (!mediaId) {
-      throw new Error("[MegaPlay] Could not find data-id on player element");
-    }
-    var sParam = urlObj.searchParams?.get("s");
+    if (!mediaId) throw new Error("[MegaPlay] Could not find data-id on player element");
+    var sParam = embedUrl.searchParams.get("s");
     var sQuery = sParam ? `&s=${encodeURIComponent(sParam)}` : "";
     var cookieHeader = () => cookieJar.join("; ");
-    var ajaxHeaders = () => ({
-      "X-Requested-With": "XMLHttpRequest",
-      "Referer": `${origin}/`,
-      "Origin": origin,
-      "User-Agent": userAgent,
-      "Accept": "application/json, text/javascript, */*; q=0.01",
-      ...(cookieJar.length ? {
-        Cookie: cookieHeader()
-      } : {})
-    });
     var fetchJson = async url => {
       try {
-        var res = await client.get(url, {
-          headers: ajaxHeaders()
+        var res = await axios.get(url, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": `${origin}/`,
+            "Origin": origin,
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            ...(cookieJar.length ? {
+              Cookie: cookieHeader()
+            } : {})
+          }
         });
         cookieJar.push(...parseCookies(res.headers));
-        var data = res.data;
-        return typeof data === "string" ? JSON.parse(data) : data;
+        return typeof res.data === "string" ? JSON.parse(res.data) : res.data;
       } catch {
         return null;
       }
     };
     var [defSourcesJson, newSourcesJson] = await Promise.all([fetchJson(`${origin}/stream/getSources?id=${mediaId}${sQuery}`), fetchJson(`${origin}/stream/getSourcesNew?id=${mediaId}${sQuery}`)]);
     var streamUrl = extractStreamUrl(defSourcesJson) || extractStreamUrl(newSourcesJson);
-    if (!streamUrl) {
-      throw new Error("[MegaPlay] No video stream URL found from /getSources or /getSourcesNew");
-    }
+    if (!streamUrl) throw new Error("[MegaPlay] No video stream URL found from /getSources or /getSourcesNew");
     var cleanStreamUrl = streamUrl.replace(/\\/g, "").trim();
     var isM3U8 = cleanStreamUrl.includes(".m3u8");
-    var extractedSources = [];
-    var defaultSource = {
+    var master = {
       url: cleanStreamUrl,
       isM3U8,
       quality: "auto"
     };
-    if (isM3U8) {
-      try {
-        var {
-          data: m3u8Data
-        } = await client.get(cleanStreamUrl, {
-          headers: {
-            "Referer": `${origin}/`,
-            "User-Agent": userAgent
-          }
-        });
-        var separateAudio = typeof m3u8Data === "string" && m3u8Data.split("\n").some(line => line.startsWith("#EXT-X-MEDIA:") && line.includes("TYPE=AUDIO") && line.includes("URI="));
-        if (typeof m3u8Data === "string" && m3u8Data.includes("#EXT-X-STREAM-INF") && !separateAudio) {
-          var lines = m3u8Data.split("\n");
-          var streamBasePath = cleanStreamUrl.substring(0, cleanStreamUrl.lastIndexOf("/"));
-          var streamOrigin = new (ctx.PolyURL || URL)(cleanStreamUrl).origin;
-          for (var i = 0; i < lines.length; i++) {
-            var line = lines[i]?.trim();
-            if (line?.startsWith("#EXT-X-STREAM-INF")) {
-              var resMatch = line.match(/RESOLUTION=\d+x(\d+)/);
-              var quality = resMatch ? `${resMatch[1]}p` : `quality_${extractedSources.length + 1}`;
-              var next = lines[i + 1]?.trim();
-              if (next && !next.startsWith("#")) {
-                var variantUrl = next.startsWith("http://") || next.startsWith("https://") ? next : next.startsWith("/") ? `${streamOrigin}${next}` : `${streamBasePath}/${next}`;
-                extractedSources.push({
-                  url: variantUrl,
-                  isM3U8: true,
-                  quality
-                });
-              }
-            }
-          }
-        }
-      } catch {}
-    }
-    var finalSources = extractedSources.length > 0 ? [...extractedSources, defaultSource] : [defaultSource];
+    var variants = isM3U8 ? hlsVariants((await axios.get(cleanStreamUrl, {
+      headers: {
+        "Referer": `${origin}/`,
+        "User-Agent": USER_AGENT
+      }
+    })).data, cleanStreamUrl) : [];
     var tracks = defSourcesJson?.tracks ?? newSourcesJson?.tracks ?? [];
     var subtitles = [];
     if (Array.isArray(tracks)) {
@@ -210,13 +201,11 @@ function MegaPlay(ctx) {
     var playerHeaders = {
       "Referer": `${origin}/`,
       "Origin": origin,
-      "User-Agent": userAgent
+      "User-Agent": USER_AGENT
     };
-    if (cookieJar.length) {
-      playerHeaders.Cookie = cookieHeader();
-    }
+    if (cookieJar.length) playerHeaders.Cookie = cookieHeader();
     return {
-      sources: finalSources,
+      sources: [...variants, master],
       subtitles,
       headers: playerHeaders,
       intro: intro ? {
@@ -231,8 +220,6 @@ function MegaPlay(ctx) {
     };
   };
   return {
-    serverName,
-    sources,
     extract
   };
 }

@@ -1,58 +1,43 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getDummySourcesAndServers = getDummySourcesAndServers;
-exports.getVidsrcSourcesAndServers = getVidsrcSourcesAndServers;
-exports.get111MoviesSourcesAndServers = get111MoviesSourcesAndServers;
-exports.getVideasySourcesAndServers = getVideasySourcesAndServers;
-exports.getHexaSourcesAndServers = getHexaSourcesAndServers;
+exports.parseId = exports.toEpisodeId = exports.toMediaId = void 0;
 exports.getMultiServers = getMultiServers;
 exports.getMultiSources = getMultiSources;
-const cheerio_1 = require("cheerio");
-const url_polyfill_1 = require("../../../utils/url-polyfill");
-const crypto_js_1 = __importDefault(require("crypto-js"));
-async function getDummySourcesAndServers(id) {
-  // Simulate some async work
-  await new Promise(resolve => setTimeout(resolve, 100));
+const enc_dec_1 = require("../../common/enc-dec");
+const servers_1 = require("../../common/servers");
+/**
+ * MultiStream ids, built and read only here: `<tmdbId>$movie` for a movie (its media id and its one
+ * episode id), `<tmdbId>$tv` for a show, and `<tmdbId>$tv$<episode>$<season>$<tmdbEpisodeId>` for a
+ * show's episode (the TMDB episode id keeps ids unique).
+ */
+const toMediaId = (tmdbId, type) => `${tmdbId}$${type}`;
+exports.toMediaId = toMediaId;
+const toEpisodeId = (tmdbId, episode, season, tmdbEpisodeId) => `${tmdbId}$tv$${episode}$${season}$${tmdbEpisodeId}`;
+exports.toEpisodeId = toEpisodeId;
+const parseId = id => {
+  const [tmdbId = '', type = '', episode, season] = id.split('$');
   return {
-    servers: [{
-      name: 'DummyServer1',
-      url: 'https://dummy.com/server1/stream.m3u8'
-    }, {
-      name: 'DummyServer2',
-      url: 'https://dummy.com/server2/stream.m3u8'
-    }],
-    sources: [{
-      url: 'https://dummy.com/server1/stream.m3u8',
-      isM3U8: true,
-      quality: 'default',
-      name: 'DummyServer1'
-    }, {
-      url: 'https://dummy.com/server2/stream.m3u8',
-      isM3U8: true,
-      quality: 'default',
-      name: 'DummyServer2'
-    }],
-    subtitles: [{
-      url: 'https://dummy.com/subs/en.vtt',
-      lang: 'English'
-    }]
+    tmdbId,
+    type,
+    episode,
+    season
   };
-}
-function getParts(id) {
-  const parts = id.split('$');
-  const [tmdbId, type, episode, season] = parts;
-  return [tmdbId, type, episode, season];
-}
-async function getVidsrcSourcesAndServers(axios, id) {
-  const [tmdbId, type, episode, season] = getParts(id);
+};
+exports.parseId = parseId;
+const getVidsrcSourcesAndServers = async (_ref, id) => {
+  let {
+    axios,
+    load
+  } = _ref;
+  const {
+    tmdbId,
+    type,
+    episode,
+    season
+  } = (0, exports.parseId)(id);
   const baseURL = 'https://vidsrc-embed.ru/embed/';
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
@@ -61,175 +46,131 @@ async function getVidsrcSourcesAndServers(axios, id) {
   const servers = [];
   const sources = [];
   const url = type === 'tv' ? `${baseURL}tv?tmdb=${tmdbId}&season=${season}&episode=${episode}` : `${baseURL}movie?tmdb=${tmdbId}`;
-  try {
-    // Step 1: Fetch embed iframe
-    const {
-      data: html1
-    } = await axios.get(url, {
-      headers
-    });
-    const match1 = html1.match(/src="(.*?)"/)?.[1];
-    if (!match1) throw new Error('No source iframe found');
-    const allUrlRCP = [];
-    // Construct the RCP URL
-    const urlRCP = match1.startsWith('http') ? match1 : match1.startsWith('/embed') ? baseURL.split('/embed')[0] + match1 : 'https:' + match1;
-    const $ = (0, cheerio_1.load)(html1);
-    $('.serversList .server').each((i, el) => {
-      const name = $(el).text().trim();
-      const hash = $(el).attr('data-hash');
-      allUrlRCP.push({
-        name,
-        url: `${urlRCP.split('rcp')[0]}rcp/${hash}`
-      });
-    });
-    // Step 2: Fetch all URLs from allUrlRCP and process them
-    await Promise.all(allUrlRCP.map(async _ref => {
-      let {
-        name,
-        url: rcpUrl
-      } = _ref;
-      try {
-        // console.log(`Fetching RCP for ${name} from ${rcpUrl}`);
-        const {
-          data: html2
-        } = await axios.get(rcpUrl, {
-          headers: {
-            ...headers,
-            Referer: url
-          }
-        });
-        // console.log(`Found RCP for ${name}: ${html2}`);
-        const match2 = html2.match(/src.*['"](\/(?:src|pro)rcp.*?)['"]/)?.[1];
-        if (!match2) return;
-        const urlPRORCP = rcpUrl.split('rcp')[0] + match2;
-        // Step 3: Fetch M3U8 file URL
-        // console.log(`Fetching M3U8 for ${name} from ${urlPRORCP}`);
-        const {
-          data: html3
-        } = await axios.get(urlPRORCP, {
-          headers: {
-            ...headers,
-            Referer: rcpUrl
-          }
-        });
-        const match3 = html3.match(/file:\s*['"]([^'"]+\.m3u8)['"]/)?.[1];
-        // console.log(`Found M3U8 for ${name}: ${match3}`);
-        if (match3) {
-          servers.push({
-            name: name,
-            url: match3
-          });
-          sources.push({
-            url: match3,
-            isM3U8: match3.includes('.m3u8'),
-            quality: 'default',
-            name: name
-          });
+  // The embed page links an RCP player page per server; each RCP page loads a PRORCP page whose
+  // script names the m3u8.
+  const {
+    data: html1
+  } = await axios.get(url, {
+    headers
+  });
+  const match1 = html1.match(/src="(.*?)"/)?.[1];
+  if (!match1) throw new Error('No source iframe found');
+  const urlRCP = match1.startsWith('http') ? match1 : match1.startsWith('/embed') ? baseURL.split('/embed')[0] + match1 : 'https:' + match1;
+  const $ = load(html1);
+  const rcpPages = $('.serversList .server').get().map(el => ({
+    name: $(el).text().trim(),
+    url: `${urlRCP.split('rcp')[0]}rcp/${$(el).attr('data-hash')}`
+  }));
+  await Promise.all(rcpPages.map(async _ref2 => {
+    let {
+      name,
+      url: rcpUrl
+    } = _ref2;
+    try {
+      const {
+        data: html2
+      } = await axios.get(rcpUrl, {
+        headers: {
+          ...headers,
+          Referer: url
         }
-      } catch (error) {
-        // Silently continue on error for individual servers
-        return;
+      });
+      const match2 = html2.match(/src.*['"](\/(?:src|pro)rcp.*?)['"]/)?.[1];
+      if (!match2) return;
+      const {
+        data: html3
+      } = await axios.get(rcpUrl.split('rcp')[0] + match2, {
+        headers: {
+          ...headers,
+          Referer: rcpUrl
+        }
+      });
+      const m3u8 = html3.match(/file:\s*['"]([^'"]+\.m3u8)['"]/)?.[1];
+      if (m3u8) {
+        servers.push({
+          name,
+          url: m3u8
+        });
+        sources.push({
+          url: m3u8,
+          isM3U8: true,
+          quality: 'default',
+          name
+        });
       }
-    }));
-    return {
-      servers,
-      sources,
-      headers: {
-        Referer: urlRCP.split('rcp')[0]
-      }
-    };
-  } catch (error) {
-    throw new Error(`Failed to fetch Vidsrc stream: ${error.message}`);
-  }
-}
-async function get111MoviesSourcesAndServers(axios, id) {
-  const [tmdbId, type, episode, season] = getParts(id);
+    } catch {
+      // A server whose pages fail is left out; the others still play.
+    }
+  }));
+  return {
+    servers,
+    sources,
+    headers: {
+      Referer: urlRCP.split('rcp')[0]
+    }
+  };
+};
+const get111MoviesSourcesAndServers = async (_ref3, id) => {
+  let {
+    axios,
+    CryptoJS
+  } = _ref3;
+  const {
+    tmdbId,
+    type,
+    episode,
+    season
+  } = (0, exports.parseId)(id);
   const baseUrl = 'https://111movies.com';
-  const userAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
-  const defaultDomain = (() => {
-    const u = new url_polyfill_1.URL(baseUrl);
-    return `${u.protocol}//${u.host}/`;
-  })();
   const headers = {
-    'Referer': defaultDomain,
-    'User-Agent': userAgent,
-    // 'Content-Type': 'image/gif',
+    'Referer': `${baseUrl}/`,
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
     'X-Requested-With': 'XMLHttpRequest'
   };
-  function customEncode(input) {
+  // URL-safe base64 with the site's own alphabet.
+  const customEncode = input => {
     const src = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
     const dst = 'BdNqfj2X1RalybZHxP50e8UGz4Tv6mg3QS-7JnAWIsiKrCpFktVM9D_chuYOoEwL';
-    // Normal base64 url-safe
-    let b64 = crypto_js_1.default.enc.Base64.stringify(crypto_js_1.default.enc.Utf8.parse(input));
-    b64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
-    // Translate characters
+    const b64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(input)).replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
     let result = '';
     for (const ch of b64) {
       const idx = src.indexOf(ch);
       result += idx >= 0 ? dst[idx] : ch;
     }
     return result;
-  }
-  let url;
-  if (type === 'tv') {
-    url = `${baseUrl}/tv/${tmdbId}/${season}/${episode}`;
-  } else {
-    url = `${baseUrl}/movie/${tmdbId}`;
-  }
-  const res = await axios.get(url, {
+  };
+  const url = type === 'tv' ? `${baseUrl}/tv/${tmdbId}/${season}/${episode}` : `${baseUrl}/movie/${tmdbId}`;
+  const html = (await axios.get(url, {
     headers
+  })).data;
+  const rawData = html.match(/\{"data":"(.*?)"/)?.[1];
+  if (!rawData) throw new Error('No data found in the response');
+  // The page's data, AES-CBC encrypted with the site's key, hex-encoded, XORed and re-encoded,
+  // names the episode's server list.
+  const encrypted = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(rawData), CryptoJS.enc.Hex.parse('912660f3d9f3f35cee36396d31ed73366ab53c22c70710ce029697d17762997e'), {
+    iv: CryptoJS.enc.Hex.parse('f91f2863783814f51c56f341d6ce1677'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
   });
-  const html = res.data;
-  // Extract raw data
-  const match = html.match(/\{\"data\":\"(.*?)\"/);
-  if (!match) {
-    console.error('No data found!');
-    throw new Error('No data found in the response');
-  }
-  const rawData = match[1];
-  // AES CBC encrypt
-  const keyHex = '912660f3d9f3f35cee36396d31ed73366ab53c22c70710ce029697d17762997e';
-  const ivHex = 'f91f2863783814f51c56f341d6ce1677';
-  const aesKey = crypto_js_1.default.enc.Hex.parse(keyHex);
-  const aesIv = crypto_js_1.default.enc.Hex.parse(ivHex);
-  const padded = crypto_js_1.default.enc.Utf8.parse(rawData);
-  const encrypted = crypto_js_1.default.AES.encrypt(padded, aesKey, {
-    iv: aesIv,
-    mode: crypto_js_1.default.mode.CBC,
-    padding: crypto_js_1.default.pad.Pkcs7
-  });
-  // Python used .hex(), CryptoJS AES output is base64 → convert to hex
-  // AES ciphertext in hex (same as Python's .hex())
-  const aesEncryptedHex = encrypted.ciphertext.toString(crypto_js_1.default.enc.Hex);
-  // XOR key as a Uint8Array instead of Buffer
-  const xorKey = new Uint8Array([0xbe, 0x43, 0x0a]);
+  const aesEncryptedHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+  const xorKey = [0xbe, 0x43, 0x0a];
   let xorResult = '';
   for (let i = 0; i < aesEncryptedHex.length; i++) {
-    const charCode = aesEncryptedHex.charCodeAt(i);
-    xorResult += String.fromCharCode(charCode ^ xorKey[i % xorKey.length]);
+    xorResult += String.fromCharCode(aesEncryptedHex.charCodeAt(i) ^ xorKey[i % xorKey.length]);
   }
-  // Encode final
-  const encodedFinal = customEncode(xorResult);
-  // API call
   const staticPath = 'to/1000003134441812/c945be05/2f30b6e198562e7015537bb71a738ff8245942a7/y/2c20617150078ad280239d1cc3a8b6ee9331acef9b0bdc6b742435597c38edb4/c8ddbffe-3efb-53e1-b883-3b6ce90ba310';
-  const apiServers = `https://111movies.com/${staticPath}/${encodedFinal}/sr`;
   const {
     data: serversData
-  } = await axios.post(apiServers, {}, {
+  } = await axios.post(`${baseUrl}/${staticPath}/${customEncode(xorResult)}/sr`, {}, {
     headers
   });
-  // const servers = serverRes.data;
-  if (!Array.isArray(serversData) || serversData.length === 0) {
-    console.error('No servers found!');
-    throw new Error('No servers found in the response');
-  }
+  if (!Array.isArray(serversData) || serversData.length === 0) throw new Error('No servers found in the response');
   const servers = serversData.map(s => ({
     name: s.name,
-    url: `https://111movies.com/${staticPath}/${s.data}`
+    url: `${baseUrl}/${staticPath}/${s.data}`
   }));
   const sources = [];
   let subtitles = [];
-  // console.log(subtitles);
   for (const server of servers) {
     try {
       const {
@@ -237,14 +178,12 @@ async function get111MoviesSourcesAndServers(axios, id) {
       } = await axios.post(server.url, {}, {
         headers
       });
-      if (streamData.tracks && streamData.tracks.length > 0) {
-        const newSubs = streamData.tracks.map(sub => ({
+      if (streamData.tracks?.length > 0) {
+        const allSubs = [...subtitles, ...streamData.tracks.map(sub => ({
           url: sub.file,
           lang: sub.label
-        }));
-        const allSubs = [...subtitles, ...newSubs];
-        const uniqueSubs = allSubs.filter((sub, index, self) => index === self.findIndex(s => s.lang === sub.lang));
-        subtitles = uniqueSubs;
+        }))];
+        subtitles = allSubs.filter((sub, index) => index === allSubs.findIndex(s => s.lang === sub.lang));
       }
       sources.push({
         url: streamData.url,
@@ -252,8 +191,8 @@ async function get111MoviesSourcesAndServers(axios, id) {
         quality: 'default',
         name: server.name
       });
-    } catch (err) {
-      // ignore bad ones
+    } catch {
+      // A server that fails to answer is left out of the sources; the others still play.
     }
   }
   return {
@@ -261,232 +200,170 @@ async function get111MoviesSourcesAndServers(axios, id) {
     sources,
     subtitles
   };
-}
-async function getVideasySourcesAndServers(axios, id) {
-  const servers = [{
-    name: 'neon-org',
-    url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title'
-  }, {
-    name: 'sage-org',
-    url: 'https://api.videasy.net/1movies/sources-with-title'
-  }, {
-    name: 'cypher-org',
-    url: 'https://api.videasy.net/moviebox/sources-with-title'
-  }, {
-    name: 'yoru-org',
-    url: 'https://api.videasy.net/cdn/sources-with-title'
-  }, {
-    name: 'reyna-org',
-    url: 'https://api.videasy.net/primewire/sources-with-title'
-  }, {
-    name: 'omen-org',
-    url: 'https://api.videasy.net/onionplay/sources-with-title'
-  }, {
-    name: 'breach-org',
-    url: 'https://api.videasy.net/m4uhd/sources-with-title'
-  }, {
-    name: 'vyse-org',
-    url: 'https://api.videasy.net/hdmovie/sources-with-title'
-  }, {
-    name: 'killjoy-ger',
-    url: 'https://api.videasy.net/meine/sources-with-title?language=german'
-  }, {
-    name: 'harbor-ita',
-    url: 'https://api.videasy.net/meine/sources-with-title?language=italian'
-  }, {
-    name: 'chamber-fr',
-    url: 'https://api.videasy.net/meine/sources-with-title?language=french'
-  }, {
-    name: 'fade-hin',
-    url: 'https://api.videasy.net/hdmovie/sources-with-title'
-  }, {
-    name: 'gekko-lat',
-    url: 'https://api.videasy.net/cuevana-latino/sources-with-title'
-  }, {
-    name: 'kayo-spa',
-    url: 'https://api.videasy.net/cuevana-spanish/sources-with-title'
-  }, {
-    name: 'raze-por',
-    url: 'https://api.videasy.net/superflix/sources-with-title'
-  }, {
-    name: 'phoenix-por',
-    url: 'https://api.videasy.net/overflix/sources-with-title'
-  }, {
-    name: 'astra-por',
-    url: 'https://api.videasy.net/visioncine/sources-with-title'
-  }];
+};
+const VIDEASY_SERVERS = [{
+  name: 'neon-org',
+  url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title'
+}, {
+  name: 'sage-org',
+  url: 'https://api.videasy.net/1movies/sources-with-title'
+}, {
+  name: 'cypher-org',
+  url: 'https://api.videasy.net/moviebox/sources-with-title'
+}, {
+  name: 'yoru-org',
+  url: 'https://api.videasy.net/cdn/sources-with-title'
+}, {
+  name: 'reyna-org',
+  url: 'https://api.videasy.net/primewire/sources-with-title'
+}, {
+  name: 'omen-org',
+  url: 'https://api.videasy.net/onionplay/sources-with-title'
+}, {
+  name: 'breach-org',
+  url: 'https://api.videasy.net/m4uhd/sources-with-title'
+}, {
+  name: 'vyse-org',
+  url: 'https://api.videasy.net/hdmovie/sources-with-title'
+}, {
+  name: 'killjoy-ger',
+  url: 'https://api.videasy.net/meine/sources-with-title?language=german'
+}, {
+  name: 'harbor-ita',
+  url: 'https://api.videasy.net/meine/sources-with-title?language=italian'
+}, {
+  name: 'chamber-fr',
+  url: 'https://api.videasy.net/meine/sources-with-title?language=french'
+}, {
+  name: 'fade-hin',
+  url: 'https://api.videasy.net/hdmovie/sources-with-title'
+}, {
+  name: 'gekko-lat',
+  url: 'https://api.videasy.net/cuevana-latino/sources-with-title'
+}, {
+  name: 'kayo-spa',
+  url: 'https://api.videasy.net/cuevana-spanish/sources-with-title'
+}, {
+  name: 'raze-por',
+  url: 'https://api.videasy.net/superflix/sources-with-title'
+}, {
+  name: 'phoenix-por',
+  url: 'https://api.videasy.net/overflix/sources-with-title'
+}, {
+  name: 'astra-por',
+  url: 'https://api.videasy.net/visioncine/sources-with-title'
+}];
+/** The sources and subtitles of enc-dec.app's decrypted answer, under `name` (or each source's own server). */
+const decryptedMedia = (result, name) => ({
+  sources: (Array.isArray(result?.sources) ? result.sources : []).map(source => ({
+    url: source.url,
+    isM3U8: source.url?.includes('.m3u8') || false,
+    quality: source.quality || 'default',
+    name: name(source)
+  })),
+  subtitles: (Array.isArray(result?.subtitles) ? result.subtitles : []).map(subtitle => ({
+    url: subtitle.url,
+    lang: subtitle.lang || subtitle.language || 'Unknown'
+  }))
+});
+const getVideasySourcesAndServers = async (_ref4, id) => {
+  let {
+    axios
+  } = _ref4;
+  const {
+    tmdbId,
+    type,
+    episode,
+    season
+  } = (0, exports.parseId)(id);
   const sources = [];
   const subtitles = [];
-  const [tmdbId, type, episode, season] = getParts(id);
-  await Promise.all(servers.map(async server => {
+  await Promise.all(VIDEASY_SERVERS.map(async server => {
     try {
-      console.log('step 1');
       const url = type === 'tv' ? `${server.url}?mediaType=tv&tmdbId=${tmdbId}&seasonId=${season}&episodeId=${episode}` : `${server.url}?mediaType=movie&tmdbId=${tmdbId}`;
-      console.log('step 2');
       const {
         data: encData
       } = await axios.get(url);
-      console.log('step 3');
       const {
         data: decData
-      } = await axios.post('https://enc-dec.app/api/dec-videasy', {
+      } = await axios.post(`${enc_dec_1.ENC_DEC_API}/dec-videasy`, {
         text: encData,
         id: tmdbId
       });
-      console.log('step 3');
-      const result = decData.result;
-      console.log(result);
-      if (result && typeof result === 'object') {
-        // Add sources from the decrypted data
-        if (result.sources && Array.isArray(result.sources)) {
-          result.sources.forEach(source => {
-            sources.push({
-              url: source.url,
-              isM3U8: source.url?.includes('.m3u8') || false,
-              quality: source.quality || 'default',
-              name: server.name
-            });
-          });
-        }
-        // Add subtitles if available
-        if (result.subtitles && Array.isArray(result.subtitles)) {
-          result.subtitles.forEach(subtitle => {
-            subtitles.push({
-              url: subtitle.url,
-              lang: subtitle.lang || subtitle.language || 'Unknown'
-            });
-          });
-        }
-      }
-    } catch (err) {
-      // ignore bad ones
-      console.log(server.name, 'this failed');
+      const media = decryptedMedia(decData.result, () => server.name);
+      sources.push(...media.sources);
+      subtitles.push(...media.subtitles);
+    } catch {
+      // A server that fails is left out of the sources; the others still play.
     }
   }));
   return {
-    servers,
+    servers: VIDEASY_SERVERS,
     sources,
     subtitles
   };
-}
-async function getHexaSourcesAndServers(axios, id) {
-  const sources = [];
-  const subtitles = [];
-  const servers = [];
-  const [tmdbId, type, episode, season] = getParts(id);
-  try {
-    // Generate 32-byte hex key (64 hex characters)
-    const key = crypto_js_1.default.lib.WordArray.random(32).toString(crypto_js_1.default.enc.Hex);
-    const url = type === 'tv' ? `https://themoviedb.hexa.watch/api/tmdb/tv/${tmdbId}/season/${season}/episode/${episode}/images` : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
-    // Get encrypted text with API key in header
-    const {
-      data: encData
-    } = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
-        'Accept': 'plain/text',
-        'X-Api-Key': key
-      }
-    });
-    // Decrypt using the API
-    const {
-      data: decData
-    } = await axios.post('https://enc-dec.app/api/dec-hexa', {
-      text: encData,
-      key: key
-    });
-    const result = decData.result;
-    if (result && typeof result === 'object') {
-      // Add sources from the decrypted data
-      if (result.sources && Array.isArray(result.sources)) {
-        result.sources.forEach(source => {
-          sources.push({
-            url: source.url,
-            isM3U8: source.url?.includes('.m3u8') || false,
-            quality: source.quality || 'default',
-            name: `hexa-${source.server}`
-          });
-          servers.push({
-            name: `hexa-${source.server}`,
-            url: source.url
-          });
-        });
-      }
-      // Add subtitles if available
-      if (result.subtitles && Array.isArray(result.subtitles)) {
-        result.subtitles.forEach(subtitle => {
-          subtitles.push({
-            url: subtitle.url,
-            lang: subtitle.lang || subtitle.language || 'Unknown'
-          });
-        });
-      }
+};
+const getHexaSourcesAndServers = async (_ref5, id) => {
+  let {
+    axios,
+    CryptoJS
+  } = _ref5;
+  const {
+    tmdbId,
+    type,
+    episode,
+    season
+  } = (0, exports.parseId)(id);
+  // Hexa encrypts its answer with a key the client picks: 32 random bytes as hex.
+  const key = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+  const url = type === 'tv' ? `https://themoviedb.hexa.watch/api/tmdb/tv/${tmdbId}/season/${season}/episode/${episode}/images` : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
+  const {
+    data: encData
+  } = await axios.get(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+      'Accept': 'plain/text',
+      'X-Api-Key': key
     }
-  } catch (err) {
-    // ignore errors
-    console.log(err);
-  }
+  });
+  const {
+    data: decData
+  } = await axios.post(`${enc_dec_1.ENC_DEC_API}/dec-hexa`, {
+    text: encData,
+    key
+  });
+  const media = decryptedMedia(decData.result, source => `hexa-${source.server}`);
   return {
-    servers,
-    sources,
-    subtitles
+    servers: media.sources.map(source => ({
+      name: source.name,
+      url: source.url
+    })),
+    ...media
   };
+};
+/** The sites MultiStream reads, in the order their servers are listed. */
+const SCRAPERS = [get111MoviesSourcesAndServers, getVidsrcSourcesAndServers, getVideasySourcesAndServers, getHexaSourcesAndServers];
+/** Every site's answer for the episode; a site that fails is left out. */
+const scrapeAll = async (ctx, id) => (await Promise.allSettled(SCRAPERS.map(scrape => scrape(ctx, id)))).flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+async function getMultiServers(ctx, id) {
+  return (await scrapeAll(ctx, id)).flatMap(result => result.servers);
 }
-async function getMultiServers(axios, id) {
-  try {
-    const servers = [];
-    // Fetch from all sources, handle errors individually
-    const results = await Promise.allSettled([
-    // getDummySourcesAndServers(id),
-    get111MoviesSourcesAndServers(axios, id), getVidsrcSourcesAndServers(axios, id), getVideasySourcesAndServers(axios, id), getHexaSourcesAndServers(axios, id)]);
-    // Add servers from successful results only
-    results.forEach(result => {
-      if (result.status === 'fulfilled') {
-        servers.push(...result.value.servers);
-      }
-    });
-    return servers;
-  } catch (error) {
-    throw new Error(`Failed to fetch Multistream servers: ${error.message}`);
-  }
-}
-async function getMultiSources(axios, id, server) {
-  try {
-    // Fetch from all sources, handle errors individually
-    const results = await Promise.allSettled([
-    // getDummySourcesAndServers(id),
-    get111MoviesSourcesAndServers(axios, id), getVidsrcSourcesAndServers(axios, id), getVideasySourcesAndServers(axios, id), getHexaSourcesAndServers(axios, id)]);
-    const allSources = [];
-    const allSubtitles = [];
-    // Collect sources and subtitles from successful results only
-    results.forEach(result => {
-      if (result.status === 'fulfilled') {
-        const {
-          servers: _,
-          ...sourceData
-        } = result.value;
-        if (sourceData.sources) {
-          allSources.push(...sourceData.sources);
-        }
-        if (sourceData.subtitles) {
-          allSubtitles.push(...sourceData.subtitles);
-        }
-      }
-    });
-    console.log({
-      allSources,
-      allSubtitles
-    });
-    const matchedSources = allSources.filter(source => source.name === server);
-    if (matchedSources.length === 0) {
-      throw new Error(`No sources found for server: ${server}`);
-    }
-    return {
-      sources: matchedSources,
-      subtitles: allSubtitles
-    };
-  } catch (error) {
-    throw new Error(`Failed to fetch MultiSources: ${error.message}`);
-  }
+/**
+ * The sources of one server (`pickServer`'s rule; the first server when omitted), the headers its
+ * site needs, and the subtitles every site gave.
+ */
+async function getMultiSources(ctx, id, server) {
+  const results = await scrapeAll(ctx, id);
+  const picked = (0, servers_1.pickServer)(results.flatMap(result => result.servers), server);
+  const site = results.find(result => result.servers.includes(picked));
+  const sources = site.sources.filter(source => source.name === picked.name);
+  if (sources.length === 0) throw new Error(`No sources found for server: ${picked.name}`);
+  return {
+    ...(site.headers ? {
+      headers: site.headers
+    } : {}),
+    sources,
+    subtitles: results.flatMap(result => result.subtitles ?? [])
+  };
 }
 //# sourceMappingURL=utils.js.map

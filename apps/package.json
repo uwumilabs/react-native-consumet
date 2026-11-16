@@ -11,8 +11,6 @@
     "gen:local-dist": "node scripts/generate-local-dist.js"
   },
   "dependencies": {
-    "axios": "1.13.1",
-    "cheerio": "1.1.2",
     "react": "19.2.3",
     "react-native": "0.87.1",
     "react-native-consumet": "workspace:^",
@@ -23,7 +21,6 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/plugin-transform-export-namespace-from": "^7.27.1",
-    "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.28.3",
     "@react-native-community/cli": "20.2.0",
     "@react-native-community/cli-platform-android": "20.2.0",
@@ -33,7 +30,6 @@
     "@react-native/metro-config": "0.87.1",
     "@react-native/typescript-config": "0.87.1",
     "@types/react": "^19.2.0",
-    "babel-plugin-react-native-web": "0.21.2",
     "react-native-builder-bob": "0.38.3"
   },
   "engines": {

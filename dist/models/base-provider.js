@@ -1,31 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class BaseProvider {
-    /**
-     * What the provider supports (see `ProviderCapabilities`); copied from the provider's factory output.
-     */
+    /** What the provider supports; meta providers read it instead of the provider's class. */
     capabilities;
-    /**
-     * Most providers are english based, but if the provider is not english based override this value.
-     * must be in [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) format
-     */
+    /** [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) code(s) of the site's language */
     languages = 'en';
-    /**
-     * override as `true` if the provider **only** supports NSFW content
-     */
+    /** `true` when the site has **only** NSFW content */
     isNSFW = false;
-    /**
-     * Logo of the provider (used in the website) or `undefined` if not available. ***128x128px is preferred***\
-     * Must be a valid URL (not a data URL)
-     */
+    /** URL (not a data URL) of the site's logo, 128x128px preferred */
     logo = 'https://png.pngtree.com/png-vector/20210221/ourmid/pngtree-error-404-not-found-neon-effect-png-image_2928214.jpg';
-    /**
-     * override as `false` if the provider is **down** or **not working**
-     */
+    /** `false` when the site is down or the provider no longer works */
     isWorking = true;
-    /**
-     * returns provider stats
-     */
     get toString() {
         return {
             name: this.name,

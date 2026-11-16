@@ -259,8 +259,8 @@ function createNetMirror(ctx, platform, customBaseURL) {
         ...result,
         type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
         seasons: isSeries ? post.season?.length || 1 : void 0,
-        // TMDB requires an exact year match whenever any result has one, so omit years
-        // entirely for catalogs that report a series' latest-season year.
+        // TMDB drops a result whose year is more than a year off the first-air year, and some
+        // catalogs (Disney+) give a series' latest-season year, so leave the year out for those.
         releaseDate: platform.seriesYearIsFirstAired ? post.year || void 0 : void 0
       };
     } catch {
@@ -432,7 +432,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     }
   };
   var playlistPath = episodeId => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
-  var fetchEpisodeServers = async (episodeId, mediaId) => {
+  var fetchEpisodeServers = async (episodeId, _mediaId) => {
     return [{
       name: platform.label,
       url: `${baseUrl}${playlistPath(episodeId)}`
@@ -464,7 +464,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     var playable = sources.filter((_, i) => checks[i]);
     return playable.length ? playable : sources;
   };
-  var fetchEpisodeSources = async (episodeId, mediaId) => {
+  var fetchEpisodeSources = async (episodeId, _mediaId) => {
     try {
       var data = await getVerified(playlistPath(episodeId), res => {
         var playlist2 = Array.isArray(res) ? res[0] : res;

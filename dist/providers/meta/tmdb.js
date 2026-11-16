@@ -5,15 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 const meta_http_1 = require("../../utils/meta-http");
 const models_1 = require("../../models");
-const utils_1 = require("../../utils");
+const tmdb_1 = require("../../utils/tmdb");
 const himovies_1 = require("../movies/himovies/himovies");
-const tmdb_api_key_1 = require("./tmdb-api-key");
-/** The year of a TMDB result's release or first air date, or undefined when TMDB has no date. */
-const releaseYear = result => /^\d{4}/.exec(result?.release_date || result?.first_air_date || '')?.[0];
+const shared_1 = require("./shared");
+/** TMDB's trending list for each TvType; anything else is `all`. */
+const TRENDING_PATHS = new Map([[models_1.TvType.MOVIE.toLowerCase(), 'movie'], [models_1.TvType.TVSERIES.toLowerCase(), 'tv'], [models_1.TvType.PEOPLE.toLowerCase(), 'person']]);
 class TMDB extends models_1.MovieParser {
   name = 'TMDB';
   baseUrl = 'https://www.themoviedb.org';
-  apiUrl = 'https://api.themoviedb.org/3';
+  apiUrl = tmdb_1.TMDB_API_URL;
   logo = 'https://pbs.twimg.com/profile_images/1243623122089041920/gVZIvphd_400x400.jpg';
   classPath = 'META.TMDB';
   supportedTypes = new Set([models_1.TvType.MOVIE, models_1.TvType.TVSERIES, models_1.TvType.ANIME]);
@@ -23,204 +23,84 @@ class TMDB extends models_1.MovieParser {
    * @param apiKey your TMDB API key. Without one, a key shared by every app that passes none is
    * used, and a warning is logged once; TMDB can rate-limit or revoke that key at any time.
    * @param provider movie provider to find the title on (default HiMovies)
+   * @param _proxyConfig ignored: requests go through the library's own client. Kept so existing calls compile.
+   * @param _adapter ignored, for the same reason
    */
-  constructor(apiKey, provider, proxyConfig, adapter) {
+  constructor(apiKey, provider, _proxyConfig, _adapter) {
     super();
-    this.apiKey = (0, tmdb_api_key_1.resolveTmdbApiKey)(apiKey, 'META.TMDB');
+    this.apiKey = (0, tmdb_1.resolveTmdbApiKey)(apiKey, 'META.TMDB');
     this.provider = provider || new himovies_1.HiMovies();
   }
   /**
-   * @param type trending type: tv series, movie, people or all
-   * @param timePeriod trending time period day or week
-   * @param page page number
+   * @param type `movie`, `tv series`, `people` or `all` (a TvType value, or anything else for all)
+   * @param timePeriod `day` or `week`
    */
   fetchTrending = (() => {
     var _this = this;
     return async function (type) {
       let timePeriod = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'day';
       let page = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
-      const trendingUrl = `${_this.apiUrl}/trending/${type.toLowerCase() === models_1.TvType.MOVIE.toLowerCase() ? 'movie' : type.toLowerCase() === models_1.TvType.TVSERIES.toLowerCase() ? 'tv' : type.toLowerCase() === models_1.TvType.PEOPLE.toLowerCase() ? 'person' : 'all'}/${timePeriod}?page=${page}&api_key=${_this.apiKey}&language=en-US`;
-      const result = {
-        currentPage: page,
-        hasNextPage: false,
-        results: []
-      };
-      try {
-        const {
-          data
-        } = await meta_http_1.metaHttp.get(trendingUrl);
-        if (data.results.length < 1) return result;
-        result.hasNextPage = page + 1 <= data.total_pages;
-        result.currentPage = page;
-        result.totalResults = data.total_results;
-        result.totalPages = data.total_pages;
-        result.results = data.results.map(result => {
-          if (result.media_type !== 'person') {
-            const movie = {
-              id: result.id,
-              title: result?.title || result?.name,
-              image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
-              type: result.media_type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
-              rating: result?.vote_average || 0,
-              releaseDate: releaseYear(result)
-            };
-            return movie;
-          } else {
-            const user = {
-              id: result.id,
-              name: result.name,
-              rating: result.popularity,
-              image: `https://image.tmdb.org/t/p/original${result?.profile_path}`,
-              movies: []
-            };
-            // TMDB's trending people no longer come with known_for
-            user.movies = (result.known_for ?? []).map(movie => {
-              const xmovie = {
-                id: movie.id,
-                title: movie?.title || movie?.name,
-                image: `https://image.tmdb.org/t/p/original${movie?.poster_path}`,
-                type: movie.media_type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
-                rating: movie?.vote_average || 0,
-                releaseDate: releaseYear(movie)
-              };
-              return xmovie;
-            });
-            return user;
-          }
-        });
-        return result;
-      } catch (err) {
-        throw models_1.MetaError.from('tmdb', err);
-      }
+      const path = TRENDING_PATHS.get(type.toLowerCase()) ?? 'all';
+      const data = await _this.get(`/trending/${path}/${timePeriod}?page=${page}&language=en-US`);
+      return _this.toPage(data, page, result => result.media_type === 'person' ? {
+        id: result.id,
+        name: result.name,
+        rating: result.popularity,
+        image: (0, tmdb_1.tmdbImage)(result.profile_path),
+        // TMDB's trending people no longer come with known_for
+        movies: (result.known_for ?? []).map(movie => (0, tmdb_1.mapTmdbResult)(movie))
+      } : (0, tmdb_1.mapTmdbResult)(result));
     };
   })();
-  /**
-   * @param query search query
-   * @param page page number
-   */
   search = (() => {
     var _this2 = this;
     return async function (query) {
       let page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-      const searchUrl = `${_this2.apiUrl}/search/multi?api_key=${_this2.apiKey}&language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`;
-      const search = {
-        currentPage: page,
-        hasNextPage: false,
-        results: []
-      };
-      try {
-        const {
-          data
-        } = await meta_http_1.metaHttp.get(searchUrl);
-        if (data.results.length < 1) return search;
-        search.hasNextPage = page + 1 <= data.total_pages;
-        search.currentPage = page;
-        search.totalResults = data.total_results;
-        search.totalPages = data.total_pages;
-        data.results.forEach(result => {
-          const movie = {
-            id: result.id,
-            title: result?.title || result?.name,
-            image: `https://image.tmdb.org/t/p/original${result?.poster_path}`,
-            type: result.media_type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
-            rating: result?.vote_average || 0,
-            releaseDate: releaseYear(result)
-          };
-          return search.results.push(movie);
-        });
-        return search;
-      } catch (err) {
-        throw models_1.MetaError.from('tmdb', err);
-      }
+      const data = await _this2.get(`/search/multi?language=en-US&page=${page}&include_adult=false&query=${encodeURIComponent(query)}`);
+      return _this2.toPage(data, page, result => (0, tmdb_1.mapTmdbResult)(result));
     };
   })();
   /**
    * TMDB info with every season and episode. `id` is always the TMDB id. When the title is found on
    * the provider, `providerId` is the provider's media id and episodes carry provider episode ids;
    * with no match (or a failing provider) both are unset and the TMDB metadata is still returned.
-   * @param id media id (anime or movie/tv)
-   * @param type movie or tv
+   * @param mediaId TMDB id
+   * @param type `movie`, or anything else for a show
    */
   fetchMediaInfo = async (mediaId, type) => {
-    type = type.toLowerCase() === 'movie' ? 'movie' : 'tv';
-    const infoUrl = `${this.apiUrl}/${type}/${mediaId}?api_key=${this.apiKey}&language=en-US&append_to_response=release_dates,watch/providers,alternative_titles,credits,external_ids,images,keywords,recommendations,reviews,similar,translations,videos&include_image_language=en`;
-    const info = {
-      id: mediaId,
-      title: ''
-    };
+    const mediaType = type.toLowerCase() === 'movie' ? 'movie' : 'tv';
     try {
-      //request api to get media info from tmdb
       const {
         data
-      } = await meta_http_1.metaHttp.get(infoUrl);
-      //find the movie/tv series on the provider (e.g. flixhq) by title, year and season count
+      } = await meta_http_1.metaHttp.get(this.url(`/${mediaType}/${mediaId}?language=en-US&append_to_response=release_dates,watch/providers,alternative_titles,credits,external_ids,images,keywords,recommendations,reviews,similar,translations,videos&include_image_language=en`));
       const match = await this.matchProvider(data?.title || data?.name, {
-        type: type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
+        type: mediaType === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
         totalSeasons: data?.number_of_seasons,
         totalEpisodes: data?.number_of_episodes,
-        year: Number(releaseYear(data)) || undefined
+        year: Number((0, tmdb_1.releaseYear)(data)) || undefined
       });
-      // with no match there is nothing playable to map; the TMDB info and seasons are still returned
-      const InfoFromProvider = match?.info;
-      if (match) info.providerId = match.id;
-      //check if the movie so episode id does not show on tv shows
-      if (type === 'movie') info.episodeId = InfoFromProvider?.episodes?.[0]?.id;
-      info.title = data?.title || data?.name;
-      //images
-      info.image = `https://image.tmdb.org/t/p/original${data?.poster_path}`;
-      info.cover = `https://image.tmdb.org/t/p/original${data?.backdrop_path}`;
-      info.type = type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES;
-      info.rating = data?.vote_average || 0;
-      info.releaseDate = data?.release_date || data?.first_air_date;
-      info.description = data?.overview;
-      info.genres = data?.genres.map(genre => genre.name);
-      info.duration = data?.runtime || data?.episode_run_time?.[0];
-      info.totalEpisodes = data?.number_of_episodes;
-      info.totalSeasons = data?.number_of_seasons;
-      info.directors = data?.credits?.crew.filter(crew => crew.job === 'Director').map(crew => crew.name);
-      info.writers = data?.credits?.crew.filter(crew => crew.job === 'Screenplay').map(crew => crew.name);
-      info.actors = data?.credits?.cast.map(cast => cast.name);
-      info.characters = data?.credits?.cast.map(cast => ({
-        id: cast.id,
-        name: cast.name,
-        url: `https://www.themoviedb.org/person/${cast.id}`,
-        character: cast.character,
-        image: `https://image.tmdb.org/t/p/original${cast.profile_path}`
-      }));
-      const video = data?.videos?.results?.[0];
-      info.trailer = video?.key ? {
-        id: video.key,
-        site: video.site,
-        url: `https://www.youtube.com/watch?v=${video.key}`
-      } : undefined;
-      info.mappings = {
-        imdb: data?.external_ids?.imdb_id || undefined,
-        tmdb: data?.id || undefined
+      // With no match there is nothing playable to map; the TMDB info and seasons are still returned.
+      const providerEpisodes = match?.info?.episodes;
+      const info = {
+        id: mediaId,
+        ...(0, tmdb_1.mapTmdbInfo)(data, mediaType),
+        ...(match ? {
+          providerId: match.id
+        } : {}),
+        ...(mediaType === 'movie' ? {
+          episodeId: providerEpisodes?.[0]?.id
+        } : {}),
+        directors: data?.credits?.crew?.filter(crew => crew.job === 'Director').map(crew => crew.name),
+        writers: data?.credits?.crew?.filter(crew => crew.job === 'Screenplay').map(crew => crew.name),
+        actors: data?.credits?.cast?.map(cast => cast.name),
+        mappings: {
+          imdb: data?.external_ids?.imdb_id || undefined,
+          tmdb: data?.id || undefined
+        },
+        similar: (0, tmdb_1.mapTmdbResults)(data?.similar, mediaType)
       };
-      info.similar = data?.similar?.results?.length <= 0 ? undefined : data?.similar?.results.map(result => {
-        return {
-          id: result.id,
-          title: result.title || result.name,
-          image: `https://image.tmdb.org/t/p/original${result.poster_path}`,
-          type: type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
-          rating: result.vote_average || 0,
-          releaseDate: result.release_date || result.first_air_date
-        };
-      });
-      info.recommendations = data?.recommendations?.results?.length <= 0 ? undefined : data?.recommendations?.results.map(result => {
-        return {
-          id: result.id,
-          title: result.title || result.name,
-          image: `https://image.tmdb.org/t/p/original${result.poster_path}`,
-          type: type === 'movie' ? models_1.TvType.MOVIE : models_1.TvType.TVSERIES,
-          rating: result.vote_average || 0,
-          releaseDate: result.release_date || result.first_air_date
-        };
-      });
-      const totalSeasons = info?.totalSeasons || 0;
-      if (type === 'tv' && totalSeasons > 0) {
-        const seasonUrl = season => `${this.apiUrl}/tv/${mediaId}/season/${season}?api_key=${this.apiKey}`;
-        const providerEpisodes = InfoFromProvider?.episodes;
+      const totalSeasons = info.totalSeasons || 0;
+      if (mediaType === 'tv' && totalSeasons > 0) {
         info.nextAiringEpisode = data?.next_episode_to_air ? {
           season: data.next_episode_to_air?.season_number || undefined,
           episode: data.next_episode_to_air?.episode_number || undefined,
@@ -229,84 +109,74 @@ class TMDB extends models_1.MovieParser {
           description: data.next_episode_to_air?.overview || undefined,
           runtime: data.next_episode_to_air?.runtime || undefined
         } : undefined;
-        // Fetch the seasons together. A season whose request fails keeps its place, with no episodes
-        // and `failed` set, so the other seasons (and the season indexes apps store) survive it.
-        const seasonNumbers = Array.from({
-          length: totalSeasons
-        }, (_, index) => index + 1);
-        const responses = await Promise.allSettled(seasonNumbers.map(i => meta_http_1.metaHttp.get(seasonUrl(i))));
-        const failure = responses.find(response => response.status === 'rejected');
-        if (failure && responses.every(response => response.status === 'rejected')) throw failure.reason;
-        info.seasons = responses.map((response, index) => {
-          const i = index + 1;
-          if (response.status === 'rejected') return {
-            season: i,
-            episodes: [],
-            failed: true
-          };
-          const seasonData = response.value.data;
-          //find season in each episode (providerEpisodes)
-          const seasonEpisodes = providerEpisodes?.filter(episode => episode.season === i);
-          const tmdbEpisodes = seasonData?.episodes ?? [];
-          const episodes = tmdbEpisodes.map(episode => {
-            //find episode in each season (seasonEpisodes)
-            const episodeFromProvider = seasonEpisodes?.find(ep => ep.number === episode.episode_number);
-            return {
-              id: episodeFromProvider?.id,
-              uniqueId: `${mediaId}-${type}-s${episode.season_number}-e${episode.episode_number}`,
-              title: episode.name,
-              number: episode.episode_number,
-              episode: episode.episode_number,
-              season: episode.season_number,
-              releaseDate: episode.air_date,
-              description: episode.overview,
-              url: episodeFromProvider?.url || undefined,
-              image: !episode?.still_path ? undefined : {
-                mobile: `https://image.tmdb.org/t/p/w300${episode.still_path}`,
-                hd: `https://image.tmdb.org/t/p/w780${episode.still_path}`
-              }
-            };
-          });
-          return {
-            season: i,
-            image: !seasonData?.poster_path ? undefined : {
-              mobile: `https://image.tmdb.org/t/p/w300${seasonData.poster_path}`,
-              hd: `https://image.tmdb.org/t/p/w780${seasonData.poster_path}`
-            },
-            episodes,
-            isReleased: tmdbEpisodes[0]?.air_date > new Date().toISOString() ? false : true
-          };
-        });
+        info.seasons = await this.fetchSeasons(mediaId, totalSeasons, providerEpisodes);
       } else {
-        info.seasons = [];
-        info.seasons.push({
+        info.seasons = [{
           season: 1,
-          image: !data?.poster_path ? undefined : {
-            mobile: `https://image.tmdb.org/t/p/w300${data.poster_path}`,
-            hd: `https://image.tmdb.org/t/p/w780${data.poster_path}`
-          },
+          image: (0, tmdb_1.tmdbImageSizes)(data?.poster_path),
           episodes: [{
-            id: InfoFromProvider?.episodes?.[0]?.id,
-            uniqueId: `${mediaId}-${type}-s1-e1`,
+            id: providerEpisodes?.[0]?.id,
+            uniqueId: `${mediaId}-${mediaType}-s1-e1`,
             title: data.title || data.original_title,
             number: 1,
             episode: 1,
             season: 1,
             releaseDate: data.release_date,
             description: data.overview,
-            url: InfoFromProvider?.episodes?.[0]?.url,
-            image: !data?.backdrop_path ? undefined : {
-              mobile: `https://image.tmdb.org/t/p/w300${data.backdrop_path}`,
-              hd: `https://image.tmdb.org/t/p/w780${data.backdrop_path}`
-            }
+            url: providerEpisodes?.[0]?.url,
+            image: (0, tmdb_1.tmdbImageSizes)(data?.backdrop_path)
           }]
-        });
+        }];
       }
+      return info;
     } catch (err) {
       // matchProvider absorbs provider failures, so anything here comes from TMDB's requests or data
       throw models_1.MetaError.from('tmdb', err);
     }
-    return info;
+  };
+  /**
+   * Every season of a show, fetched together, with the provider's episode ids where the provider
+   * has the episode. A season whose request fails keeps its place, with no episodes and `failed`
+   * set, so the other seasons (and the season indexes apps store) survive it.
+   */
+  fetchSeasons = async (mediaId, totalSeasons, providerEpisodes) => {
+    const seasonNumbers = Array.from({
+      length: totalSeasons
+    }, (_, index) => index + 1);
+    const responses = await Promise.allSettled(seasonNumbers.map(season => meta_http_1.metaHttp.get(this.url(`/tv/${mediaId}/season/${season}`))));
+    const failure = responses.find(response => response.status === 'rejected');
+    if (failure && responses.every(response => response.status === 'rejected')) throw failure.reason;
+    return responses.map((response, index) => {
+      const season = index + 1;
+      if (response.status === 'rejected') return {
+        season,
+        episodes: [],
+        failed: true
+      };
+      const seasonData = response.value.data;
+      const seasonEpisodes = providerEpisodes?.filter(episode => episode.season === season);
+      const tmdbEpisodes = seasonData?.episodes ?? [];
+      return {
+        season,
+        image: (0, tmdb_1.tmdbImageSizes)(seasonData?.poster_path),
+        episodes: tmdbEpisodes.map(episode => {
+          const episodeFromProvider = seasonEpisodes?.find(ep => ep.number === episode.episode_number);
+          return {
+            id: episodeFromProvider?.id,
+            uniqueId: `${mediaId}-tv-s${episode.season_number}-e${episode.episode_number}`,
+            title: episode.name,
+            number: episode.episode_number,
+            episode: episode.episode_number,
+            season: episode.season_number,
+            releaseDate: episode.air_date,
+            description: episode.overview,
+            url: episodeFromProvider?.url || undefined,
+            image: (0, tmdb_1.tmdbImageSizes)(episode?.still_path)
+          };
+        }),
+        isReleased: !(tmdbEpisodes[0]?.air_date > new Date().toISOString())
+      };
+    });
   };
   /**
    * Find the title on the provider and fetch the provider's info for it. Returns nothing when no
@@ -324,16 +194,10 @@ class TMDB extends models_1.MovieParser {
       return undefined;
     }
   };
-  /**
-   * Find the id of a media from its title. and extra data. (year, totalSeasons, totalEpisodes)
-   * @param title
-   * @param extraData
-   * @returns id of the media
-   */
+  /** The id of the provider's search result for the title, checked against TMDB's year and season count. */
   findIdFromTitle = async (title, extraData) => {
-    //clean title
-    title = title.replace(/[^a-zA-Z0-9 ]/g, '').toLowerCase();
-    const findMedia = await this.provider.search(title);
+    const term = (0, shared_1.searchTerm)(title).toLowerCase();
+    const findMedia = await this.provider.search(term);
     // Drop results whose title isn't close, or whose type, year (±1) or season count (±2) contradicts
     // TMDB. Results that don't report a type, year or season count stay as candidates.
     const yearOf = result => Number(/\b(\d{4})\b/.exec(String(result.releaseDate ?? ''))?.[1]);
@@ -344,7 +208,7 @@ class TMDB extends models_1.MovieParser {
       const year = yearOf(result);
       return {
         result,
-        similarity: (0, utils_1.calculateStringSimilarity)(title, resultTitle.toLowerCase()),
+        similarity: (0, shared_1.stringSimilarity)(term, resultTitle.toLowerCase()),
         yearGap: year && extraData.year ? Math.abs(year - extraData.year) : undefined
       };
     }).filter(_ref => {
@@ -366,38 +230,49 @@ class TMDB extends models_1.MovieParser {
     .sort((a, b) => b.similarity - a.similarity || (a.yearGap ?? 2) - (b.yearGap ?? 2));
     return candidates[0]?.result.id || undefined;
   };
-  /**
-   * @param id media id (anime or movie/tv)
-   * @param args optional arguments
-   */
   fetchEpisodeSources = (() => {
     var _this3 = this;
-    return async function (id) {
+    return function (id) {
       for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
         args[_key - 1] = arguments[_key];
       }
-      return _this3.provider.fetchEpisodeSources(id, ...args);
+      return (0, shared_1.callProvider)(_this3.provider, 'episode sources', () => _this3.provider.fetchEpisodeSources(id, ...args));
     };
   })();
-  /**
-   * @param episodeId episode id
-   * @param args optional arguments
-   **/
   fetchEpisodeServers = (() => {
     var _this4 = this;
-    return async function (episodeId) {
+    return function (episodeId) {
       for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
         args[_key2 - 1] = arguments[_key2];
       }
-      return _this4.provider.fetchEpisodeServers(episodeId, ...args);
+      return (0, shared_1.callProvider)(_this4.provider, 'episode servers', () => _this4.provider.fetchEpisodeServers(episodeId, ...args));
     };
   })();
+  /** A TMDB API URL with the API key. */
+  url = path => `${this.apiUrl}${path}${path.includes('?') ? '&' : '?'}api_key=${this.apiKey}`;
+  /** GET a TMDB list; failures as a TMDB MetaError. */
+  get = async path => {
+    try {
+      return (await meta_http_1.metaHttp.get(this.url(path))).data;
+    } catch (err) {
+      throw models_1.MetaError.from('tmdb', err);
+    }
+  };
+  /** A page of TMDB results; `hasNextPage` and the totals come from TMDB's paging. */
+  toPage = (data, page, map) => {
+    if (!data?.results?.length) return {
+      currentPage: page,
+      hasNextPage: false,
+      results: []
+    };
+    return {
+      currentPage: page,
+      hasNextPage: page + 1 <= data.total_pages,
+      totalResults: data.total_results,
+      totalPages: data.total_pages,
+      results: data.results.map(map)
+    };
+  };
 }
-// (async () => {
-//   const tmdb = new TMDB();
-//   const search = await tmdb.search('the flash');
-//   const info = await tmdb.fetchMediaInfo(search.results[0].id, search.results![0].type as string);
-//   // console.log(info);
-// })();
 exports.default = TMDB;
 //# sourceMappingURL=tmdb.js.map

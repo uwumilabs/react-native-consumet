@@ -16,11 +16,11 @@ import {
   IntegrityError,
   ProviderManager,
   RegistryError,
+  RegistryFetchError,
   type ExtensionManifest,
-  type IAnimeProvider,
-  type IMovieProvider,
+  type ProviderOfCategory,
 } from 'react-native-consumet';
-import LOCAL_DIST_MAP from './local-dist-map';
+import LOCAL_DIST_MAP, { LOCAL_DIST_FILE } from './local-dist-map';
 
 export type LoadMode = 'registry' | 'local';
 
@@ -39,9 +39,8 @@ export const LOAD_MODES: { id: LoadMode; label: string; description: string }[] 
   },
 ];
 
-const LOCAL_SOURCE = 'apps/src/registry/local-dist-map.ts';
-
-export type LoadedProvider = IAnimeProvider | IMovieProvider;
+/** The categories the Registry tab browses. */
+export type BrowsedCategory = 'anime' | 'movies';
 
 /** What was loaded, from where, and whether it was verified. Shown under the screen header. */
 export interface LoadReport {
@@ -62,13 +61,10 @@ export interface LoadOptions {
 }
 
 /** The local dist map has no code for this id (run `yarn example gen:local-dist`). */
-export class LocalBundleMissingError extends Error {
-  readonly id: string;
-
+class LocalBundleMissingError extends Error {
   constructor(id: string) {
-    super(`No local dist bundle for '${id}' in ${LOCAL_SOURCE}`);
+    super(`No local dist bundle for '${id}' in ${LOCAL_DIST_FILE}`);
     this.name = 'LocalBundleMissingError';
-    this.id = id;
     Object.setPrototypeOf(this, LocalBundleMissingError.prototype);
   }
 }
@@ -86,38 +82,37 @@ export function createProviderManager(): { manager: ProviderManager } | { failur
 }
 
 /**
- * Load a provider in the given mode.
+ * Load an entry's provider in the given mode.
  *
  * @throws IntegrityError when the code doesn't match the entry's `sha256`
  * @throws RegistryError when the entry needs a newer extension context (`updateRequired`)
- * @throws Error `Failed to fetch extension: <status>` when `main` can't be downloaded (registry mode)
+ * @throws RegistryFetchError when `main` can't be downloaded (registry mode)
  * @throws LocalBundleMissingError when the local dist map has no code for the entry (local mode)
  */
-export async function loadProvider(
+export async function loadProvider<C extends BrowsedCategory>(
   manager: ProviderManager,
-  ext: ExtensionManifest,
+  category: C,
+  entry: ExtensionManifest,
   mode: LoadMode,
   options: LoadOptions = {}
-): Promise<{ provider: LoadedProvider; report: LoadReport }> {
-  const metadata = manager.getExtensionMetadata(ext.id);
-  const base = { mode, id: metadata.id, name: metadata.name, version: metadata.version, sha256: metadata.sha256 };
+): Promise<{ provider: ProviderOfCategory<C>; report: LoadReport }> {
+  if (entry.category !== category) throw new Error(`'${entry.id}' is a ${entry.category} extension, not ${category}`);
+  const base = { mode, id: entry.id, name: entry.name, version: entry.version, sha256: entry.sha256 };
 
   if (mode === 'registry') {
     // The calls an app makes: fetch `main`, verify it, then run it. The hash check can't be skipped here.
-    let provider: LoadedProvider;
-    if (metadata.category === 'anime') provider = await manager.getAnimeProvider(metadata.id);
-    else if (metadata.category === 'movies') provider = await manager.getMovieProvider(metadata.id);
-    else throw new Error(`'${metadata.id}' is a ${metadata.category} extension; this screen loads anime and movies`);
-    return { provider, report: { ...base, source: metadata.main, integrity: 'verified' } };
+    const provider = await manager.getProvider(category, entry.id);
+    return { provider, report: { ...base, source: entry.main, integrity: 'verified' } };
   }
 
-  const code = LOCAL_DIST_MAP[metadata.id];
-  if (!code) throw new LocalBundleMissingError(metadata.id);
+  const code = entry.distFile ? LOCAL_DIST_MAP[entry.distFile] : undefined;
+  if (!code) throw new LocalBundleMissingError(entry.id);
   const skipIntegrity = options.skipIntegrity === true;
-  const provider = await manager.executeProviderCode(code, metadata.factoryName, metadata, { skipIntegrity });
+  // The entry's category is C (checked above), and executeProviderCode checks the code has its methods.
+  const provider = (await manager.executeProviderCode(code, entry, { skipIntegrity })) as ProviderOfCategory<C>;
   return {
     provider,
-    report: { ...base, source: LOCAL_SOURCE, integrity: skipIntegrity ? 'skipped' : 'verified' },
+    report: { ...base, source: LOCAL_DIST_FILE, integrity: skipIntegrity ? 'skipped' : 'verified' },
   };
 }
 
@@ -127,9 +122,7 @@ export function loadingMessage(mode: LoadMode, ext?: ExtensionManifest | null): 
   return `Fetching ${ext?.version ? `v${ext.version} ` : ''}from GitHub main and verifying its sha256…`;
 }
 
-// ── Errors ────────────────────────────────────────────────────────────────────
-
-export type LoadFailureKind =
+type LoadFailureKind =
   | 'integrity'
   | 'update-required'
   | 'invalid-registry'
@@ -154,13 +147,6 @@ export interface LoadFailure {
   suggestMode?: LoadMode;
 }
 
-// `instanceof` is the real check; the name covers a second copy of the library in the bundle.
-const isError = (error: unknown, ctor: new (...args: any[]) => Error, name: string): boolean =>
-  error instanceof ctor || (error instanceof Error && error.name === name);
-
-const FETCH_STATUS_RE = /Failed to fetch (?:extension|extractor): (\d{3})/;
-const NETWORK_RE = /Network request failed|Timed out after \d+ms|fetch failed|aborted/i;
-
 /**
  * Describe an error from `loadProvider` (or `createProviderManager`) for the screen: integrity
  * errors, registry errors (with `updateRequired`), versions not yet on main (404), network errors,
@@ -171,8 +157,8 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
   const label = ext ? `${ext.name} ${ext.version}` : 'This entry';
   const base = { message, details: [] as string[], canSkipIntegrity: false };
 
-  if (isError(error, IntegrityError, 'IntegrityError')) {
-    const { code, expected, actual } = error as IntegrityError;
+  if (error instanceof IntegrityError) {
+    const { code, expected, actual } = error;
     const hashes = [expected && `expected ${expected}`, actual && `actual   ${actual}`].filter(
       (line): line is string => !!line
     );
@@ -213,8 +199,8 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
     };
   }
 
-  if (isError(error, RegistryError, 'RegistryError')) {
-    const { updateRequired, required, supported, issues } = error as RegistryError;
+  if (error instanceof RegistryError) {
+    const { updateRequired, required, supported, issues } = error;
     if (updateRequired) {
       return {
         ...base,
@@ -239,37 +225,37 @@ export function describeLoadError(error: unknown, ext?: ExtensionManifest | null
     };
   }
 
-  const status = FETCH_STATUS_RE.exec(message)?.[1];
-  if (status === '404') {
-    return {
-      ...base,
-      kind: 'not-published',
-      title: 'Not published on main yet',
-      hint:
-        `${label} is fetched from the registry/ folder of GitHub's main branch. A version committed ` +
-        'but not pushed to main (or one pruned from it) returns 404. Push it to main, or switch to ' +
-        'Local dist to try unpublished code.',
-      details: ext ? [ext.main] : [],
-      suggestMode: 'local',
-    };
-  }
-  if (status) {
-    return {
-      ...base,
-      kind: 'network',
-      title: `Registry download failed (HTTP ${status})`,
-      hint: "GitHub didn't serve the file. Retry in a moment.",
-      details: ext ? [ext.main] : [],
-    };
-  }
-  if (error instanceof TypeError || NETWORK_RE.test(message)) {
+  if (error instanceof RegistryFetchError) {
+    const details = [error.url];
+    if (error.status === 404) {
+      return {
+        ...base,
+        kind: 'not-published',
+        title: 'Not published on main yet',
+        hint:
+          `${label} is fetched from the registry/ folder of GitHub's main branch. A version committed ` +
+          'but not pushed to main (or one pruned from it) returns 404. Push it to main, or switch to ' +
+          'Local dist to try unpublished code.',
+        details,
+        suggestMode: 'local',
+      };
+    }
+    if (error.status !== undefined) {
+      return {
+        ...base,
+        kind: 'network',
+        title: `Registry download failed (HTTP ${error.status})`,
+        hint: "GitHub didn't serve the file. Retry in a moment.",
+        details,
+      };
+    }
     return {
       ...base,
       kind: 'network',
       title: 'Network error',
       hint: "Couldn't reach raw.githubusercontent.com. Check the device's connection, then retry.",
-      details: ext && mode === 'registry' ? [ext.main] : [],
-      suggestMode: mode === 'registry' ? 'local' : undefined,
+      details,
+      suggestMode: 'local',
     };
   }
 

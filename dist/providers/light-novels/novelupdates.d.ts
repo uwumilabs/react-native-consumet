@@ -8,24 +8,16 @@ export declare class NovelUpdates extends LightNovelParser {
     protected classPath: string;
     /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
     constructor(ctx?: ProviderContext);
-    /** Requests a page as text through the context axios. Like fetch, any status returns the body. */
+    /** Requests a page as text through the context axios. */
     private requestText;
     /**
-     *
-     * @param lightNovelUrl light novel link or id
-     * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
+     * @param lightNovelUrl light novel URL or id
+     * @param _chapterPage ignored: NovelUpdates lists every chapter in one request. Kept so existing calls compile.
      */
-    fetchLightNovelInfo: (lightNovelUrl: string, chapterPage?: number) => Promise<ILightNovelInfo>;
+    fetchLightNovelInfo: (lightNovelUrl: string, _chapterPage?: number) => Promise<ILightNovelInfo>;
     private fetchChapters;
-    /**
-     *
-     * @param chapterId chapter id or url
-     */
+    /** @param chapterId chapter id or URL */
     fetchChapterContent: (chapterId: string) => Promise<ILightNovelChapterContent>;
-    /**
-     *
-     * @param query search query string
-     */
     search: (query: string) => Promise<ISearch<ILightNovelResult>>;
 }
 //# sourceMappingURL=novelupdates.d.ts.map

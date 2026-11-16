@@ -1,27 +1,18 @@
-import { AnimePahe } from './animepahe/animepahe';
 import { createAnimePahe } from './animepahe/create-animepahe';
-import { Zoro } from './zoro/zoro';
 import { createZoro } from './zoro/create-zoro';
-import { AnimeKai } from './animekai/animekai';
-import { createAnimeKai } from './animekai/create-animekai';
-import { AniKoto } from './anikoto/anikoto';
 import { createAniKoto } from './anikoto/create-anikoto';
-import { ReAnime } from './reanime/reanime';
 import { createReanime } from './reanime/create-reanime';
-import { AniNeko } from './anineko/anineko';
 import { createAniNeko } from './anineko/create-anineko';
 export declare const ANIME: {
-    AnimePahe: typeof AnimePahe;
+    AnimePahe: import("../provider-class").ProviderClass<typeof createAnimePahe, typeof import("../..").AnimeParser>;
     createAnimePahe: typeof createAnimePahe;
-    Zoro: typeof Zoro;
+    Zoro: import("../provider-class").ProviderClass<typeof createZoro, typeof import("../..").AnimeParser>;
     createZoro: typeof createZoro;
-    AnimeKai: typeof AnimeKai;
-    createAnimeKai: typeof createAnimeKai;
-    AniKoto: typeof AniKoto;
+    AniKoto: import("../provider-class").ProviderClass<typeof createAniKoto, typeof import("../..").AnimeParser>;
     createAniKoto: typeof createAniKoto;
-    ReAnime: typeof ReAnime;
+    ReAnime: import("../provider-class").ProviderClass<typeof createReanime, typeof import("../..").AnimeParser>;
     createReanime: typeof createReanime;
-    AniNeko: typeof AniNeko;
+    AniNeko: import("../provider-class").ProviderClass<typeof createAniNeko, typeof import("../..").AnimeParser>;
     createAniNeko: typeof createAniNeko;
 };
 //# sourceMappingURL=index.d.ts.map

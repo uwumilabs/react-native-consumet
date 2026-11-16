@@ -182,7 +182,7 @@ const runnable = providerManager.getAvailableExtensions().filter((entry) => isCo
 
 // Cached code is refused the same way
 try {
-  await providerManager.executeProviderCode(cachedCode, metadata.factoryName, metadata);
+  await providerManager.executeProviderCode(cachedCode, metadata);
 } catch (error) {
   if (error instanceof RegistryError && error.code === 'INCOMPATIBLE_ENTRY') {
     showUpdatePrompt(`${metadata.name} needs a newer version of the app`);
@@ -253,7 +253,7 @@ const manager = new ProviderManager((await downloadRegistry()) ?? ExtensionRegis
 | `MALFORMED_SIGNATURE` | The signature file isn't 1 to 4 lines of 128-character hex signatures                                      |
 | `SIGNATURE_MISMATCH`  | No signature verifies: the registry changed after it was signed, or a key this app doesn't trust signed it |
 
-- **No key is bundled yet.** The trusted keys are `REGISTRY_SIGNING_KEYS` (from `src/registry-signing-keys.ts`), and the list is empty until a maintainer generates the first key and a release bundles it. Until then every downloaded registry fails with `NO_SIGNING_KEYS`, so keep using the bundled `ExtensionRegistry`.
+- **No key is bundled yet.** The trusted keys are `REGISTRY_SIGNING_KEYS` (from `src/registry-signing-keys.json`), and the list is empty until a maintainer generates the first key and a release bundles it. Until then every downloaded registry fails with `NO_SIGNING_KEYS`, so keep using the bundled `ExtensionRegistry`.
 - **Right after a registry change**, the signature is stale until CI re-signs it, so verification fails with `SIGNATURE_MISMATCH`. Keep the previous registry and try again later.
 - **Self-hosted registries:** pass your own keys with `parseSignedRegistry(text, signature, { publicKeys: [...REGISTRY_SIGNING_KEYS, yourKey] })`. `verifyRegistrySignature(text, signature, publicKeys?)` checks a signature without parsing, and returns the key that verified it.
 
@@ -394,9 +394,8 @@ const extractorManager = new ExtractorManager(ExtensionRegistry, {
 });
 ```
 
-[for more details go through `extension-utils` to see which default axios properties are passed](../src/utils/extension-utils.ts)\
-[`ProviderContextConfig`](../src/models/provider-context.ts)\
-[`ExtractorContextConfig`](../src/models/extractor-context.ts)
+[`defaultAxios` and `ExtractorContextConfig`](../src/utils/create-extractor-context.ts)\
+[`ProviderContextConfig`](../src/utils/create-provider-context.ts)
 
 ## React Integration
 
@@ -688,7 +687,8 @@ class ProviderManager {
     category: ProviderType,
     query: string,
     page?: number
-  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult> }>>;
+  ): Promise<Array<{ extensionId: string; results: ISearch<IAnimeResult | IMovieResult>; error?: unknown }>>;
+  // A provider that fails to load or search gives an empty page and its error.
 
   // Context and metadata
   getProviderContext(): ProviderContext;
@@ -699,7 +699,6 @@ class ProviderManager {
   // Verified code is compiled once per id and sha256; each call returns a new instance.
   executeProviderCode<T extends string>(
     code: string,
-    factoryName: string,
     metadata: ExtensionManifest & { id: T },
     options?: ExecuteCodeOptions & ProviderLoadOptions
   ): Promise<ProviderInstanceOf<T>>;
@@ -720,6 +719,8 @@ class ExtractorManager {
   // Extractor loading, by extractor name or server name ('megacloud', 'megacloud-hd-1', 'upcloud').
   // Always an instance: the registry version, or the bundled one built with this manager's context.
   loadExtractor(extractorId: string): Promise<IVideoExtractor>;
+  // The factory behind loadExtractor, to build the extractor with another context
+  loadExtractorFactory(extractorId: string): Promise<ExtractorFactory>;
 
   // Forget a loaded extractor and its compiled code (takes the same names as loadExtractor)
   invalidate(extractorId: string): void;
@@ -760,6 +761,7 @@ import {
   defaultExtractorContext,
   defaultExtractors,
   RegistryError, // invalid or incompatible registry / entry
+  RegistryFetchError, // a registry entry's code couldn't be downloaded (`status`, `url`)
   IntegrityError, // code that doesn't match its registry hash
   parseSignedRegistry, // verify, parse and validate a downloaded registry
   RegistrySignatureError, // a downloaded registry whose signature doesn't verify

@@ -8,11 +8,11 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.metaHttp = exports.ENRICHMENT_TIMEOUT_MS = exports.META_TIMEOUT_MS = void 0;
+exports.metaHttp = exports.ENRICHMENT_TIMEOUT_MS = void 0;
 exports.withRetry = withRetry;
 const axios_1 = __importDefault(require("axios"));
 /** Default timeout for metadata APIs (AniList, TMDB, MAL). */
-exports.META_TIMEOUT_MS = 15000;
+const META_TIMEOUT_MS = 15000;
 /** Timeout for optional enrichment (ani.zip, filler lists); the call still succeeds without it. */
 exports.ENRICHMENT_TIMEOUT_MS = 5000;
 const MAX_RETRY_DELAY_MS = 5000;
@@ -40,6 +40,6 @@ function withRetry(instance) {
 }
 /** Shared client for meta providers: bounded by a timeout, with one retry on 429/5xx. */
 exports.metaHttp = withRetry(axios_1.default.create({
-  timeout: exports.META_TIMEOUT_MS
+  timeout: META_TIMEOUT_MS
 }));
 //# sourceMappingURL=meta-http.js.map

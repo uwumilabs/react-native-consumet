@@ -21,8 +21,6 @@ export declare class MangaDex extends MangaParser {
      */
     fetchChapterPages: (chapterId: string, dataSaver?: boolean) => Promise<IMangaChapterPage[]>;
     /**
-     * @param query search query
-     * @param page page number (default: 1)
      * @param limit limit of results to return (default: 20) (max: 100) (min: 1)
      */
     search: (query: string, page?: number, limit?: number) => Promise<ISearch<IMangaResult>>;

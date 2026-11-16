@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.META = void 0;
 const anilist_1 = __importDefault(require("./anilist"));
 const mal_1 = __importDefault(require("./mal"));
 const tmdb_1 = __importDefault(require("./tmdb"));
-exports.default = {
+exports.META = {
     Anilist: anilist_1.default,
     /** @deprecated Use `META.Anilist`. See the Myanimelist class for why. */
     Myanimelist: mal_1.default,

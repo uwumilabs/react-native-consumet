@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 
 /** Default timeout for metadata APIs (AniList, TMDB, MAL). */
-export const META_TIMEOUT_MS = 15000;
+const META_TIMEOUT_MS = 15000;
 /** Timeout for optional enrichment (ani.zip, filler lists); the call still succeeds without it. */
 export const ENRICHMENT_TIMEOUT_MS = 5000;
 

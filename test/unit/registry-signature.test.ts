@@ -5,14 +5,16 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { RegistryError } from '../../src/utils/registry-schema';
 import {
   MAX_REGISTRY_SIGNATURES,
+  REGISTRY_SIGNING_KEYS,
   RegistrySignatureError,
   parseSignedRegistry,
   verifyRegistrySignature,
 } from '../../src/utils/registry-signature';
 
-// The bundled key list, emptied before each test. Every key in these tests is a throwaway made here.
-jest.mock('../../src/registry-signing-keys', () => ({ REGISTRY_SIGNING_KEYS: [] }));
-const bundledKeys: string[] = jest.requireMock('../../src/registry-signing-keys').REGISTRY_SIGNING_KEYS;
+// The bundled key list starts empty and is emptied before each test. Every key in these tests is a
+// throwaway made here.
+jest.mock('../../src/registry-signing-keys.json', () => []);
+const bundledKeys = REGISTRY_SIGNING_KEYS as string[];
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex');
 function keyPair() {
@@ -243,13 +245,15 @@ describe('parseSignedRegistry', () => {
 });
 
 describe('bundled registry signing keys', () => {
-  const { REGISTRY_SIGNING_KEYS } = jest.requireActual('../../src/registry-signing-keys');
+  const entries: { publicKey: string; added: string }[] = jest.requireActual('../../src/registry-signing-keys.json');
+  const keys = entries.map((entry) => entry.publicKey);
 
-  it('are lowercase hex ed25519 public keys, without duplicates', () => {
-    for (const key of REGISTRY_SIGNING_KEYS) {
-      expect(key).toMatch(/^[0-9a-f]{64}$/);
-      expect(ed25519.utils.isValidPublicKey(Buffer.from(key, 'hex'), false)).toBe(true);
+  it('are lowercase hex ed25519 public keys with the date they were added, without duplicates', () => {
+    for (const { publicKey, added } of entries) {
+      expect(publicKey).toMatch(/^[0-9a-f]{64}$/);
+      expect(ed25519.utils.isValidPublicKey(Buffer.from(publicKey, 'hex'), false)).toBe(true);
+      expect(added).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
-    expect(new Set(REGISTRY_SIGNING_KEYS).size).toBe(REGISTRY_SIGNING_KEYS.length);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

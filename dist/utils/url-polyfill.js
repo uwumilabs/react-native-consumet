@@ -491,7 +491,6 @@ function shortenPath(url) {
   if (url.scheme === 'file' && path.length === 1 && isNormalizedWindowsDriveLetter(path[0])) return;
   path.pop();
 }
-// Parser states
 const SCHEME_START = 1;
 const SCHEME = 2;
 const NO_SCHEME = 3;
@@ -1042,7 +1041,6 @@ class URLSearchParams {
   clone() {
     return new URLSearchParams(this);
   }
-  // Additional utility methods
   get size() {
     return this._list.length;
   }
@@ -1096,7 +1094,6 @@ class URL {
   _resetSearchParams() {
     internals(this.searchParams)._list = this._r.query !== null ? parseFormUrlencoded(this._r.query) : [];
   }
-  // Static helper methods
   static canParse(url, base) {
     let baseRecord = null;
     if (base !== undefined) {

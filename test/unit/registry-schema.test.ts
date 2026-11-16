@@ -2,7 +2,7 @@ import registry from '../../src/extension-registry.json';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { ExtractorManager } from '../../src/utils/ExtractorManager';
 import { sha256Hex } from '../../src/utils/extension-integrity';
-import { defaultExtractors } from '../../src/utils/extension-utils';
+import { defaultExtractors } from '../../src/utils/create-provider-context';
 import {
   CONTEXT_VERSION,
   REGISTRY_SCHEMA_VERSION,
@@ -178,26 +178,30 @@ describe('registry schema (REG-4)', () => {
         extension({ id: 'unnamed', name: undefined }),
         extension({ id: 'PROBE' }),
         extension({ id: 'fraction', minContextVersion: 1.5 }),
+        extension({ id: 'snake_case', version: '1.0.0-beta.1' }),
       ],
-      [extractor({ name: 'Mega Play' }), 'MegaCloud']
+      [extractor({ name: 'Mega Play' }), 'MegaCloud', extractor({ name: 'Mega_Play' })]
     );
 
     const error = errorOf(() => new ProviderManager(invalid));
     expect(error.code).toBe('INVALID_REGISTRY');
     expect(error.issues).toEqual([
       'extensions[0] (probe): factoryName must be a JavaScript identifier (got "create-probe")',
-      'extensions[1] (../escape): id must be letters, digits, "-" or "_" (got "../escape")',
-      'extensions[2] (next): version must be a semver version like 1.2.3 (got "latest")',
+      'extensions[1] (../escape): id must be letters, digits or "-", starting with a letter or digit (got "../escape")',
+      'extensions[2] (next): version must be a version like 1.2.3 (got "latest")',
       'extensions[2] (next): category must be one of anime, movies, manga, light-novels, meta (got "music")',
       'extensions[2] (next): sha256 must be a lowercase hex SHA-256 digest (got "ABC")',
       'extensions[2] (next): extractors must be an array of strings (got "MegaPlay")',
       'extensions[3] (unnamed): name must be a non-empty string (missing)',
       "extensions[4] (PROBE): duplicate id 'PROBE'",
       'extensions[5] (fraction): minContextVersion must be a positive integer (got 1.5)',
-      'extractors[0] (Mega Play): name must be a JavaScript identifier (got "Mega Play")',
+      'extensions[6] (snake_case): id must be letters, digits or "-", starting with a letter or digit (got "snake_case")',
+      'extensions[6] (snake_case): version must be a version like 1.2.3 (got "1.0.0-beta.1")',
+      'extractors[0] (Mega Play): name must be a JavaScript identifier of letters and digits (got "Mega Play")',
       'extractors[1]: must be an object (got "MegaCloud")',
+      'extractors[2] (Mega_Play): name must be a JavaScript identifier of letters and digits (got "Mega_Play")',
     ]);
-    expect(error.message).toContain('Invalid extension registry (11 problems)');
+    expect(error.message).toContain('Invalid extension registry (14 problems)');
   });
 });
 
@@ -243,14 +247,14 @@ describe('extension context compatibility (REG-4)', () => {
     const manager = new ProviderManager(registryOf([]));
     const metadata = extension({ minContextVersion: NEWER_CONTEXT }) as any;
 
-    // executeProviderCode(code, factoryName, metadata) is how apps run cached extension code
-    const refused = await rejectionOf(manager.executeProviderCode(providerCode, 'createProbe', metadata));
+    // executeProviderCode(code, { ...metadata, factoryName: factoryName }) is how apps run cached extension code
+    const refused = await rejectionOf(manager.executeProviderCode(providerCode, metadata));
     expect(refused.code).toBe('INCOMPATIBLE_ENTRY');
-    const skipped = manager.executeProviderCode(providerCode, 'createProbe', metadata, { skipIntegrity: true });
+    const skipped = manager.executeProviderCode(providerCode, metadata, { skipIntegrity: true });
     expect((await rejectionOf(skipped)).code).toBe('INCOMPATIBLE_ENTRY');
     expect(globalThis.__schemaRuns).toBe(0);
 
-    await manager.executeProviderCode(providerCode, 'createProbe', { ...metadata, minContextVersion: CONTEXT_VERSION });
+    await manager.executeProviderCode(providerCode, { ...metadata, minContextVersion: CONTEXT_VERSION, factoryName: 'createProbe' });
     expect(globalThis.__schemaRuns).toBe(1);
   });
 
@@ -293,7 +297,7 @@ describe('extension context compatibility (REG-4)', () => {
 
     const unnamed = registryOf([{ minContextVersion: NEWER_CONTEXT }]);
     expect(errorOf(() => validateRegistry(unnamed)).issues).toEqual([
-      'extensions[0]: id must be letters, digits, "-" or "_" (missing)',
+      'extensions[0]: id must be letters, digits or "-", starting with a letter or digit (missing)',
     ]);
   });
 });

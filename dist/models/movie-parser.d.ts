@@ -1,28 +1,11 @@
 import BaseParser from './base-parser';
-import { TvType } from './types';
-import type { ISource, IEpisodeServer, IMovieInfo, IAnimeInfo } from './types';
+import type { TvType, ISource, IEpisodeServer, IMovieInfo, IAnimeInfo } from './types';
 declare abstract class MovieParser extends BaseParser {
-    /**
-     * The supported types of the provider (e.g. `TV`, `Movie`)
-     */
+    /** What the site has: movies, TV series, or both */
     abstract supportedTypes: Set<TvType>;
-    /**
-     * takes media id
-     *
-     * returns media info (including episodes)
-     */
+    /** The movie or series with its episodes */
     abstract fetchMediaInfo(mediaId: string, type?: string): Promise<IMovieInfo | IAnimeInfo>;
-    /**
-     * takes episode id
-     *
-     * returns episode sources (video links)
-     */
     abstract fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
-    /**
-     * takes episode id
-     *
-     * returns episode servers (video links) available
-     */
     abstract fetchEpisodeServers(episodeId: string, ...args: any): Promise<IEpisodeServer[]>;
 }
 export default MovieParser;

@@ -14,18 +14,26 @@
  *   - src/models            -> require('react-native-consumet/models')  (enums, base parsers)
  *   - src/utils/index and the create-*-context files -> require('react-native-consumet/utils')
  *
- * Runs after tsc and before hermes-safe-dist (see the `build` script). Also replaces tsc's re-printed
+ * Runs after tsc, whose dist/utils/registry-schema.js it reads the entry rules from, and before
+ * hermes-safe-dist (see the `build` script). Also replaces tsc's re-printed
  * dist/extension-registry.json with a byte copy of src/extension-registry.json.
  */
 const fs = require('fs');
 const path = require('path');
 const esbuild = require('esbuild');
+const {
+  repoRoot,
+  REGISTRY_FILE,
+  DIST_REGISTRY_FILE,
+  BUNDLE_DIR,
+  built,
+  readRegistry,
+  registryLayout,
+  isBundleFile,
+} = require('./registry-paths');
 
-const repoRoot = path.join(__dirname, '..');
 const srcDir = path.join(repoRoot, 'src');
-const registry = require(path.join(srcDir, 'extension-registry.json'));
 
-const BUNDLE_DIR = 'dist/bundles/';
 const MODELS_MODULE = 'react-native-consumet/models';
 const UTILS_MODULE = 'react-native-consumet/utils';
 const PACKAGE_EXTERNALS = ['axios', 'cheerio', 'crypto-js'];
@@ -52,20 +60,21 @@ const runtimeExternals = {
 };
 
 function bundlesFromRegistry() {
+  const { REGISTRY_KINDS } = built('utils/registry-schema');
+  const { entriesOf, entryKey } = registryLayout();
   const bundles = new Map();
-  const add = (entry, label, exportName) => {
-    const distFile = entry.distFile;
-    if (!distFile || !distFile.startsWith(BUNDLE_DIR) || !distFile.endsWith('.js')) {
-      throw new Error(`${label}: distFile must be a bundle under ${BUNDLE_DIR} (got ${distFile})`);
+  for (const { kind, entry } of entriesOf(readRegistry())) {
+    const label = entryKey(kind, entry);
+    const { distFile } = entry;
+    if (!isBundleFile(distFile)) {
+      throw new Error(`${label}: distFile must be a .js bundle under ${BUNDLE_DIR}/ (got ${distFile})`);
     }
-    const source = path.join(srcDir, distFile.slice(BUNDLE_DIR.length).replace(/\.js$/, '.ts'));
+    const source = path.join(srcDir, path.relative(BUNDLE_DIR, distFile).replace(/\.js$/, '.ts'));
     if (!fs.existsSync(source)) throw new Error(`${label}: no source at ${path.relative(repoRoot, source)}`);
     const bundle = bundles.get(distFile) || { distFile, source, exportNames: new Set() };
-    bundle.exportNames.add(exportName);
+    bundle.exportNames.add(entry[REGISTRY_KINDS[kind].factory]);
     bundles.set(distFile, bundle);
-  };
-  registry.extensions.forEach((e) => add(e, `extensions/${e.id}`, e.factoryName));
-  registry.extractors.forEach((e) => add(e, `extractors/${e.name}`, e.name));
+  }
   return [...bundles.values()];
 }
 
@@ -109,7 +118,7 @@ async function buildBundle({ distFile, source, exportNames }) {
   // tsc re-prints the imported registry JSON with its own indentation. prepare-registry writes the
   // same bytes to src/ and dist/, so copy src/'s file to keep `yarn build` and prepare-registry
   // producing the same dist/ (CI compares dist/ with a rebuild).
-  fs.copyFileSync(path.join(srcDir, 'extension-registry.json'), path.join(repoRoot, 'dist', 'extension-registry.json'));
+  fs.copyFileSync(path.join(repoRoot, REGISTRY_FILE), path.join(repoRoot, DIST_REGISTRY_FILE));
   console.log(`build-extensions: bundled ${bundles.length} registry entr${bundles.length === 1 ? 'y' : 'ies'}`);
 })().catch((error) => {
   console.error(`build-extensions: ${error.message}`);

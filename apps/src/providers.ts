@@ -1,133 +1,80 @@
 /**
- * Provider registry — single source of truth for all available providers.
- *
- * Add / remove entries here and the UI picker updates automatically.
- * Never hardcode provider instances in screens; import from here instead.
+ * The providers the Anime, Movies and Manga tabs offer: every provider class in the library's
+ * ANIME, MOVIES and MANGA objects, so a provider the library adds shows up here on its own.
  */
 
 import {
   ANIME,
+  AnimeParser,
   MANGA,
   MOVIES,
+  MovieParser,
+  type IAnimeProvider,
   type IMangaChapterPage,
   type IMangaInfo,
   type IMangaResult,
+  type IMovieProvider,
   type ISearch,
 } from 'react-native-consumet';
 
-// ── Anime ─────────────────────────────────────────────────────────────────────
-
-export type AnimeProviderDef = {
-  key: string;
-  label: string;
-  /** Short emoji shown in the picker and header chip */
-  emoji: string;
-  /** true → show SUB / DUB toggle in the detail sheet */
-  isDubSeparate: boolean;
-  /** Factory — creates a fresh provider instance */
-  make: () => InstanceType<typeof ANIME.AniNeko>; // structural; all parsers share the same API
-};
-
-export const ANIME_PROVIDERS: AnimeProviderDef[] = [
-  {
-    key: 'anineko',
-    label: 'AniNeko',
-    emoji: '🐱',
-    isDubSeparate: true,
-    make: () => new ANIME.AniNeko() as any,
-  },
-  {
-    key: 'animekai',
-    label: 'AnimeKai',
-    emoji: '⚡',
-    isDubSeparate: true,
-    make: () => new ANIME.AnimeKai() as any,
-  },
-  {
-    key: 'anikoto',
-    label: 'AniKoto',
-    emoji: '🌸',
-    isDubSeparate: true,
-    make: () => new ANIME.AniKoto() as any,
-  },
-  {
-    key: 'zoro',
-    label: 'Zoro',
-    emoji: '⚔️',
-    isDubSeparate: true,
-    make: () => new ANIME.Zoro() as any,
-  },
-  {
-    key: 'animepahe',
-    label: 'AnimePahe',
-    emoji: '🦋',
-    isDubSeparate: true,
-    make: () => new ANIME.AnimePahe() as any,
-  },
-  {
-    key: 'reanime',
-    label: 'ReAnime',
-    emoji: '🔁',
-    isDubSeparate: false,
-    make: () => new ANIME.ReAnime() as any,
-  },
-];
-
-// ── Movies / TV ───────────────────────────────────────────────────────────────
-
-export type MovieProviderDef = {
+type ProviderDef<P> = {
+  /** The provider's key in the library object, e.g. 'AnimePahe' */
   key: string;
   label: string;
   emoji: string;
-  makeInner: () => InstanceType<typeof MOVIES.VegaMovies>;
+  make: () => P;
 };
 
-export const MOVIE_PROVIDERS: MovieProviderDef[] = [
-  {
-    key: 'vegamovies',
-    label: 'VegaMovies',
-    emoji: '🎬',
-    makeInner: () => new MOVIES.VegaMovies() as any,
-  },
-  {
-    key: 'himovies',
-    label: 'HiMovies',
-    emoji: '🍿',
-    makeInner: () => new MOVIES.HiMovies() as any,
-  },
-  {
-    key: 'yflix',
-    label: 'YFlix',
-    emoji: '📺',
-    makeInner: () => new MOVIES.YFlix() as any,
-  },
-  {
-    key: 'multimovies',
-    label: 'MultiMovies',
-    emoji: '🎞️',
-    makeInner: () => new MOVIES.MultiMovies() as any,
-  },
-  {
-    key: 'netflixmirror',
-    label: 'NetflixMirror',
-    emoji: '🎭',
-    makeInner: () => new MOVIES.NetflixMirror() as any,
-  },
-  {
-    key: 'primemirror',
-    label: 'PrimeMirror',
-    emoji: '📦',
-    makeInner: () => new MOVIES.PrimeMirror() as any,
-  },
-  {
-    key: 'disneymirror',
-    label: 'DisneyMirror',
-    emoji: '🏰',
-    makeInner: () => new MOVIES.DisneyMirror() as any,
-  },
-];
+type ProviderClass<P> = new () => P;
 
-// ── Manga ─────────────────────────────────────────────────────────────────────
+/** A picked provider: its entry and a new instance. */
+export const pickProvider = <P>(def: ProviderDef<P>) => ({ def, provider: def.make() });
+
+/**
+ * Picker entries for the provider classes in one of the library's provider objects (ANIME and
+ * MOVIES also hold the factories). Those in `emoji` come first, in its order, which makes the first
+ * one the tab's default; the rest follow with 📦.
+ */
+function providerDefs<P>(
+  library: Record<string, unknown>,
+  isProvider: (value: unknown) => value is ProviderClass<P>,
+  emoji: Record<string, string>
+): ProviderDef<P>[] {
+  const order = Object.keys(emoji);
+  const rank = (key: string) => {
+    const index = order.indexOf(key);
+    return index === -1 ? order.length : index;
+  };
+  return Object.entries(library)
+    .filter((entry): entry is [string, ProviderClass<P>] => isProvider(entry[1]))
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([key, Provider]) => ({ key, label: key, emoji: emoji[key] ?? '📦', make: () => new Provider() }));
+}
+
+const subclassOf =
+  <P>(Base: abstract new () => object) =>
+  (value: unknown): value is ProviderClass<P> =>
+    typeof value === 'function' && value.prototype instanceof Base;
+
+export const ANIME_PROVIDERS = providerDefs(ANIME, subclassOf<IAnimeProvider>(AnimeParser), {
+  AniNeko: '🐱',
+  AniKoto: '🌸',
+  Zoro: '⚔️',
+  AnimePahe: '🦋',
+  ReAnime: '🔁',
+});
+
+export const MOVIE_PROVIDERS = providerDefs(MOVIES, subclassOf<IMovieProvider>(MovieParser), {
+  VegaMovies: '🎬',
+  HiMovies: '🍿',
+  NetflixMirror: '🎭',
+  PrimeMirror: '📦',
+  DisneyMirror: '🏰',
+});
+
+/** Whether the provider lists sub and dub as separate entries (a provider factory's `isDubAvailableSeparately`). */
+export const isDubSeparate = (provider: IAnimeProvider): boolean =>
+  'isDubAvailableSeparately' in provider && provider.isDubAvailableSeparately === true;
 
 /** The calls the Manga tab makes: the shape every manga provider shares (docs/guides/manga.md). */
 export type MangaProvider = {
@@ -136,56 +83,18 @@ export type MangaProvider = {
   fetchChapterPages(chapterId: string): Promise<IMangaChapterPage[]>;
 };
 
-export type MangaProviderDef = {
-  key: string;
-  label: string;
-  emoji: string;
-  /** Factory — creates a fresh provider instance */
-  make: () => MangaProvider;
-};
-
 /**
- * Types a provider by the shared shape rather than by its class, so one that drifts from the shape
- * (say, a `fetchChapterPages` that wants a second argument) still loads and the tab's contract
- * panel shows what it breaks, instead of the app failing to compile.
+ * MANGA holds only classes. They are typed by the shared shape rather than by their own class, so
+ * one that drifts from the shape (say, a `fetchChapterPages` that wants a second argument) still
+ * loads and the tab's contract panel shows what it breaks, instead of the app failing to compile.
  */
-const asMangaProvider = (provider: object) => provider as MangaProvider;
+const isMangaProvider = (value: unknown): value is ProviderClass<MangaProvider> => typeof value === 'function';
 
-export const MANGA_PROVIDERS: MangaProviderDef[] = [
-  {
-    key: 'mangadex',
-    label: 'MangaDex',
-    emoji: '📚',
-    make: () => asMangaProvider(new MANGA.MangaDex()),
-  },
-  {
-    key: 'mangahere',
-    label: 'MangaHere',
-    emoji: '📖',
-    make: () => asMangaProvider(new MANGA.MangaHere()),
-  },
-  {
-    key: 'mangakakalot',
-    label: 'MangaKakalot',
-    emoji: '🐉',
-    make: () => asMangaProvider(new MANGA.MangaKakalot()),
-  },
-  {
-    key: 'mangapill',
-    label: 'MangaPill',
-    emoji: '💊',
-    make: () => asMangaProvider(new MANGA.MangaPill()),
-  },
-  {
-    key: 'asurascans',
-    label: 'AsuraScans',
-    emoji: '🗡️',
-    make: () => asMangaProvider(new MANGA.AsuraScans()),
-  },
-  {
-    key: 'flamescans',
-    label: 'FlameScans',
-    emoji: '🔥',
-    make: () => asMangaProvider(new MANGA.FlameScans()),
-  },
-];
+export const MANGA_PROVIDERS = providerDefs(MANGA, isMangaProvider, {
+  MangaDex: '📚',
+  MangaHere: '📖',
+  MangaKakalot: '🐉',
+  MangaPill: '💊',
+  AsuraScans: '🗡️',
+  FlameScans: '🔥',
+});

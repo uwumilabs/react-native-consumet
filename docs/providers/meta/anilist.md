@@ -23,7 +23,7 @@ const anilist = new META.Anilist(await manager.getAnimeProvider('animepahe'));
 - [fetchEpisodeSources](#fetchepisodesources)
 - [Errors](#errors)
 
-`fetchRecentEpisodes` is deprecated: it reads from Anify, which is offline, so it always fails.
+`fetchRecentEpisodes` was removed: it read from Anify, which is offline, so it always failed.
 
 ### search
 
@@ -120,7 +120,7 @@ output:
       cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx153288-INFE21hHhAUD.jpg',
       rating: null,
       releaseDate: null,
-      totalEpisodes: 0,
+      totalEpisodes: undefined, // AniList has no count and nothing has aired yet
       duration: null,
       type: null
     },
@@ -183,7 +183,7 @@ output:
       cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx153288-INFE21hHhAUD.jpg',
       rating: null,
       releaseDate: null,
-      totalEpisodes: 0,
+      totalEpisodes: undefined, // AniList has no count and nothing has aired yet
       duration: null,
       type: null
     },

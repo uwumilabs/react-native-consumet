@@ -1,27 +1,11 @@
 import BaseParser from './base-parser';
 import type { IAnimeInfo, ISource, IEpisodeServer } from './types';
 declare abstract class AnimeParser extends BaseParser {
-    /**
-     * if the provider has dub and it's avialable seperatly from sub set this to `true`
-     */
+    /** `true` when the site lists sub and dub as separate entries */
     protected readonly isDubAvailableSeparately: boolean;
-    /**
-     * takes anime id
-     *
-     * returns anime info (including episodes)
-     */
+    /** The anime with its episodes */
     abstract fetchAnimeInfo(animeId: string, ...args: any): Promise<IAnimeInfo>;
-    /**
-     * takes episode id
-     *
-     * returns episode sources (video links)
-     */
     abstract fetchEpisodeSources(episodeId: string, ...args: any): Promise<ISource>;
-    /**
-     * takes episode id
-     *
-     * returns episode servers (video links) available
-     */
     abstract fetchEpisodeServers(episodeId: string, ...args: any): Promise<IEpisodeServer[]>;
 }
 export default AnimeParser;

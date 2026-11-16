@@ -1,22 +1,10 @@
-/**
- * ProviderSheet — reusable bottom-sheet for picking a provider.
- *
- * Usage:
- *   <ProviderSheet
- *     visible={sheetOpen}
- *     providers={ANIME_PROVIDERS}
- *     selectedKey={activeDef.key}
- *     onSelect={key => setActiveDef(ANIME_PROVIDERS.find(p => p.key === key)!)}
- *     onClose={() => setSheetOpen(false)}
- *   />
- */
+/** A bottom sheet for picking one item (a provider, a META layer); picking one closes it. */
 
-import React from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, PAD, R } from '../theme';
 
-export type ProviderItem = {
+type ProviderItem = {
   key: string;
   label: string;
   emoji: string;
@@ -43,12 +31,9 @@ export function ProviderSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      {/* Dim backdrop — tap to dismiss */}
       <TouchableOpacity style={S.backdrop} onPress={onClose} activeOpacity={1} />
 
-      {/* Sheet */}
       <View style={S.sheet}>
-        {/* Drag handle */}
         <View style={S.handle} />
 
         <Text style={S.title}>{title}</Text>

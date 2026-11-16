@@ -1,6 +1,6 @@
 import Anilist from '../../src/providers/meta/anilist';
 import { metaHttp } from '../../src/utils/meta-http';
-import * as queries from '../../src/utils/queries';
+import * as queries from '../../src/providers/meta/anilist-media';
 import type { ITitle } from '../../src/models';
 import searchFixture from './fixtures/anilist/search-fate-stay-night.json';
 import { replay, sentBodies } from './fixtures/anilist/replay';
@@ -37,7 +37,7 @@ describe('AniList GraphQL variables (META-8)', () => {
 
     expect(post).toHaveBeenCalledWith('https://graphql.anilist.co', expect.anything(), expect.anything());
     expect(sentBodies(post)).toEqual([
-      { query: queries.anilistSearchQuery(), variables: { search: SEARCH, page: 1, perPage: 3, type: 'ANIME' } },
+      { query: queries.SEARCH_QUERY, variables: { search: SEARCH, page: 1, perPage: 3, type: 'ANIME' } },
     ]);
     expect(sentBodies(post)[0]!.query).not.toContain('Fate');
     expect(res.results.map((r) => [r.id, (r.title as ITitle).romaji])).toEqual([
@@ -51,53 +51,53 @@ describe('AniList GraphQL variables (META-8)', () => {
     [
       'search',
       (a: Anilist) => a.search(SEARCH),
-      queries.anilistSearchQuery(),
+      queries.SEARCH_QUERY,
       { search: SEARCH, page: 1, perPage: 15, type: 'ANIME' },
     ],
     [
       'Manga.search',
       () => new Anilist.Manga(fakeMangaProvider()).search(SEARCH, 2, 5),
-      queries.anilistSearchQuery(),
+      queries.SEARCH_QUERY,
       { search: SEARCH, page: 2, perPage: 5, type: 'MANGA' },
     ],
-    ['advancedSearch', (a: Anilist) => a.advancedSearch(SEARCH), queries.anilistAdvancedQuery(), { search: SEARCH }],
-    ['fetchAnimeInfo', (a: Anilist) => a.fetchAnimeInfo('99147'), queries.anilistMediaDetailQuery(), { id: 99147 }],
+    ['advancedSearch', (a: Anilist) => a.advancedSearch(SEARCH), queries.ADVANCED_SEARCH_QUERY, { search: SEARCH }],
+    ['fetchAnimeInfo', (a: Anilist) => a.fetchAnimeInfo('99147'), queries.MEDIA_DETAIL_QUERY, { id: 99147 }],
     [
       'fetchAnilistInfoById',
       (a: Anilist) => a.fetchAnilistInfoById('99147'),
-      queries.anilistMediaDetailQuery(),
+      queries.MEDIA_DETAIL_QUERY,
       { id: 99147 },
     ],
     [
       'Manga.fetchMangaInfo',
       () => new Anilist.Manga(fakeMangaProvider()).fetchMangaInfo('105398'),
-      queries.anilistMediaDetailQuery(),
+      queries.MEDIA_DETAIL_QUERY,
       { id: 105398 },
     ],
     [
       'fetchTrendingAnime',
       (a: Anilist) => a.fetchTrendingAnime(2, 5),
-      queries.anilistTrendingQuery(),
+      queries.TRENDING_QUERY,
       { page: 2, perPage: 5 },
     ],
-    ['fetchPopularAnime', (a: Anilist) => a.fetchPopularAnime(2, 5), queries.anilistPopularQuery(), { page: 2, perPage: 5 }],
+    ['fetchPopularAnime', (a: Anilist) => a.fetchPopularAnime(2, 5), queries.POPULAR_QUERY, { page: 2, perPage: 5 }],
     [
       'fetchAnimeGenres',
       (a: Anilist) => a.fetchAnimeGenres(['Action', 'Slice of Life'], 2, 5),
-      queries.anilistGenresQuery(),
+      queries.GENRES_QUERY,
       { genres: ['Action', 'Slice of Life'], page: 2, perPage: 5 },
     ],
     [
       'fetchAiringSchedule',
       (a: Anilist) => a.fetchAiringSchedule(2, 5, 'monday', 'friday', true),
-      queries.anilistAiringScheduleQuery(),
+      queries.AIRING_SCHEDULE_QUERY,
       { page: 2, perPage: 5, notYetAired: true },
     ],
-    ['fetchStaffById', (a: Anilist) => a.fetchStaffById(95185), queries.anilistStaffInfoQuery(), { id: 95185 }],
+    ['fetchStaffById', (a: Anilist) => a.fetchStaffById(95185), queries.STAFF_QUERY, { id: 95185 }],
     [
       'fetchCharacterInfoById',
       (a: Anilist) => a.fetchCharacterInfoById('40882'),
-      queries.anilistCharacterQuery(),
+      queries.CHARACTER_QUERY,
       { id: 40882 },
     ],
   ] as const)('%s sends a fixed query with its values as variables', async (_name, call, query, variables) => {
@@ -116,17 +116,5 @@ describe('AniList GraphQL variables (META-8)', () => {
     const [body] = sentBodies(post);
     expect(body!.variables).toEqual({ id: 162670 });
     expect(body!.query).not.toContain('162670');
-  });
-
-  it('builds every AniList query without taking values', () => {
-    const builders = Object.entries(queries).filter(([name]) => name.startsWith('anilist'));
-
-    expect(builders.length).toBeGreaterThan(5);
-    for (const [, build] of builders) expect((build as () => string).length).toBe(0);
-  });
-
-  it('builds the Kitsu title search without taking values', () => {
-    expect(queries.kitsuTitleSearchQuery.length).toBe(0);
-    expect(queries.kitsuTitleSearchQuery()).toContain('title: $title');
   });
 });

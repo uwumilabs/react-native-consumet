@@ -1,9 +1,8 @@
 /**
- * LoadStatus — the load-mode toggle, and what the Registry tab shows about each load:
- * where the code came from, whether it was verified, and why a load failed.
+ * The load-mode toggle, and what the Registry tab shows about each load: where the code came from,
+ * whether it was verified, and why a load failed.
  */
 
-import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 import { colors, PAD, R } from '../theme';
 import { LOAD_MODES, type LoadFailure, type LoadMode, type LoadReport } from './load-provider';
@@ -11,8 +10,6 @@ import { LOAD_MODES, type LoadFailure, type LoadMode, type LoadReport } from './
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
 const modeLabel = (mode: LoadMode) => LOAD_MODES.find((m) => m.id === mode)?.label ?? mode;
-
-// ── Mode toggle ───────────────────────────────────────────────────────────────
 
 export function ModeToggle({ mode, onChange }: { mode: LoadMode; onChange: (mode: LoadMode) => void }) {
   const active = LOAD_MODES.find((m) => m.id === mode);
@@ -42,8 +39,6 @@ export function ModeToggle({ mode, onChange }: { mode: LoadMode; onChange: (mode
   );
 }
 
-// ── Header badge ──────────────────────────────────────────────────────────────
-
 export function ModeBadge({ mode }: { mode: LoadMode }) {
   const local = mode === 'local';
   return (
@@ -52,8 +47,6 @@ export function ModeBadge({ mode }: { mode: LoadMode }) {
     </View>
   );
 }
-
-// ── Loaded: source + integrity ────────────────────────────────────────────────
 
 export function LoadReportBar({ report }: { report: LoadReport }) {
   const verified = report.integrity === 'verified';
@@ -70,8 +63,6 @@ export function LoadReportBar({ report }: { report: LoadReport }) {
     </View>
   );
 }
-
-// ── Failed ────────────────────────────────────────────────────────────────────
 
 type ErrorProps = {
   failure: LoadFailure;
@@ -130,8 +121,6 @@ const KIND_LABEL: Record<LoadFailure['kind'], string> = {
   'local-missing': 'LOCAL DIST',
   'other': 'LOAD ERROR',
 };
-
-// ── Styles ────────────────────────────────────────────────────────────────────
 
 const S = StyleSheet.create({
   toggleWrap: {

@@ -12,13 +12,13 @@ const manager = new ProviderManager(ExtensionRegistry);
 const animepahe = await manager.getAnimeProvider('animepahe');
 
 // Or a bundled class from the list below. Without a context it uses createProviderContext()
-const animekai = new ANIME.AnimeKai();
+const zoro = new ANIME.Zoro();
 
 // With a context, its requests and extractors use that context's axios, proxy and user agent
 const anikoto = new ANIME.AniKoto(manager.getProviderContext());
 ```
 
-Bundled classes take an optional provider context and base URL, `new ANIME.AnimeKai(ctx?, customBaseURL?)`, in the order of the factories they wrap. The older `new ANIME.AnimeKai(customBaseURL?)` still works.
+Bundled classes take an optional provider context and base URL, `new ANIME.Zoro(ctx?, customBaseURL?)`, in the order of the factories they are built from. The older `new ANIME.Zoro(customBaseURL?)` still works.
 
 ## Common Methods
 
@@ -49,10 +49,9 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` are protected
 | AniKoto   | `ANIME.AniKoto`   | `anikoto` (stable)      |                                              |
 | AniNeko   | `ANIME.AniNeko`   | `anineko` (stable)      |                                              |
 | AnimePahe | `ANIME.AnimePahe` | `animepahe` (stable)    | [AnimePahe](../providers/anime/animepahe.md) |
-| AnimeKai  | `ANIME.AnimeKai`  | `animekai` (deprecated) | [AnimeKai](../providers/anime/animekai.md)   |
 | Zoro      | `ANIME.Zoro`      | not in the registry     | [Zoro](../providers/anime/zoro.md)           |
 | ReAnime   | `ANIME.ReAnime`   | not in the registry     |                                              |
 
-AnimeUnity is not working and not exported ([page kept for reference](../providers/anime/animeunity.md)). Anify, AnimeDrive, Marin, KickAssAnime and AnimeSuge were removed: their sites or APIs are gone.
+AnimeKai, AnimeUnity, Anify, AnimeDrive, Marin, KickAssAnime and AnimeSuge were removed: their sites or APIs are gone.
 
 <p align="end">(<a href="../README.md">back to table of contents</a>)</p>

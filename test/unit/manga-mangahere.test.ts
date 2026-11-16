@@ -184,7 +184,7 @@ describe('MangaHere fetchMangaInfo', () => {
   it('throws for an id the site does not have', async () => {
     const { mangahere } = stub(routes);
 
-    await expect(mangahere.fetchMangaInfo('no_such_manga')).rejects.toThrow("MangaHere has no manga 'no_such_manga'");
+    await expect(mangahere.fetchMangaInfo('no_such_manga')).rejects.toThrow("MangaHere: no manga 'no_such_manga'");
   });
 });
 

@@ -1,7 +1,7 @@
 import Anilist from '../../src/providers/meta/anilist';
 import { MediaStatus, type IAnimeResult } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
-import { anilistMediaDetailQuery } from '../../src/utils/queries';
+import * as queries from '../../src/providers/meta/anilist-media';
 import byStatus from './fixtures/anilist/advanced-search-by-status.json';
 import bungakuShoujo from './fixtures/anilist/search-bungaku-shoujo.json';
 import attackOnTitan from './fixtures/anilist/media-99147.json';
@@ -99,10 +99,17 @@ describe('AniList mappers (META-11)', () => {
   });
 
   it('asks for status version 2 everywhere, so hiatus media is not reported as releasing', () => {
-    const query = anilistMediaDetailQuery();
+    const sent = Object.values(queries).filter((value): value is string => typeof value === 'string' && value.startsWith('query'));
 
-    expect(query.match(/\bstatus\b(?!\(version: 2\))/g)).toBeNull();
-    expect(query.match(/status\(version: 2\)/g)).toHaveLength(3);
+    expect(sent.length).toBeGreaterThan(5);
+    // Every `status` field, leaving out the advanced search's `$status` filter.
+    for (const query of sent) expect(query.match(/(?<!\$)\bstatus\b(?!\(version: 2\)|:)/g)).toBeNull();
+  });
+
+  it('asks for the genres of trending, popular and by-genre results', () => {
+    for (const query of [queries.TRENDING_QUERY, queries.POPULAR_QUERY, queries.GENRES_QUERY]) {
+      expect(query).toContain(' genres ');
+    }
   });
 
   it('uses the banner as the cover, or the largest cover image when there is none', async () => {
@@ -218,7 +225,7 @@ describe('AniList mappers (META-11)', () => {
   });
 
   it('requests and returns title.userPreferred', async () => {
-    expect(anilistMediaDetailQuery()).toMatch(/Media\(id: \$id\) \{ id idMal title \{ userPreferred /);
+    expect(queries.MEDIA_DETAIL_QUERY).toMatch(/Media\(id: \$id\) \{ id idMal title \{ userPreferred /);
 
     for (const info of await allDetails(attackOnTitan.body)) {
       expect(info.title).toEqual({

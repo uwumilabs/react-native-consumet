@@ -38,13 +38,13 @@ const megaPlay = (master: string) => {
 describe('MegaPlay', () => {
   it('returns only the master when the audio is in separate renditions', async () => {
     // Its variants are video only (checked with ffprobe), so an app that picks "1080p" got no sound.
-    const { sources } = await megaPlay(SEPARATE_AUDIO_MASTER).extract(EMBED as any);
+    const { sources } = await megaPlay(SEPARATE_AUDIO_MASTER).extract(EMBED);
 
     expect(sources).toEqual([{ url: MASTER, isM3U8: true, quality: 'auto' }]);
   });
 
   it('lists each variant when the audio is muxed into it', async () => {
-    const { sources } = await megaPlay(MUXED_MASTER).extract(EMBED as any);
+    const { sources } = await megaPlay(MUXED_MASTER).extract(EMBED);
 
     expect(sources).toEqual([
       { url: 'https://megap.example/anime/abc/index-f1-v1-a1.m3u8', isM3U8: true, quality: '1080p' },

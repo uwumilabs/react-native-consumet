@@ -102,10 +102,7 @@ describe('getProvider(category, id) (EXT-7)', () => {
 describe('required methods by category (EXT-7)', () => {
   const run = (code: string, category: ProviderType) =>
     new ProviderManager({ extensions: [], extractors: [] } as any).executeProviderCode(
-      code,
-      'createProbe',
-      entry('probe', category, code)
-    );
+      code, entry('probe', category, code));
 
   it.each(Object.entries(REQUIRED_PROVIDER_METHODS))(
     'accepts %s providers with exactly their required methods',

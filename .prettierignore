@@ -1,45 +1,39 @@
-# Development Dependencies
+# ESLint reads this list too (eslint.config.mjs).
 node_modules/
-.expo/
-.expo-shared/
+.claude/
+.yarn/
 .vscode/
+.idea/
 .android/
+.ios/
 android/**/*
 ios/**/*
-.ios/
 .github/
 
-# Build and Output
 lib/
 dist/
+build/
+coverage/
 # Published copies of dist bundles: their bytes are hashed (scripts/prepare-registry.js)
 registry/
-build/
-web-build/
+# Signed byte for byte (scripts/sign-registry.js), as prepare-registry writes it
+src/extension-registry.json
+# Written by apps/scripts/generate-local-dist.js
+apps/src/registry/local-dist-map.ts
 *.jsbundle
 *.bundle
 
-# Testing and Coverage
 __tests__/
 test/
 jest.setup.*
-coverage/
 jest.config.*
 
-# Configuration Files
 *.config.js
-metro.config.js
-babel.config.js
-tscconfig.json
 app.json
-expo-env.d.ts
 .env*
 
-# Documentation and Info
-README.md
 *.md
 
-# Media and Assets
 assets/
 *.svg
 *.png
@@ -48,24 +42,19 @@ assets/
 *.gif
 *.ico
 
-# Cache and System Files
 .cache/
 *.log
 .DS_Store
 temp/
 *.tmp
 
-# Package Management
 package.json
 package-lock.json
 yarn.lock
 
-# Auto-generated
 *.generated.*
 *.auto.*
 *.d.ts
 
-# IDE specific
-.idea/
 *.sublime-*
 *.swp

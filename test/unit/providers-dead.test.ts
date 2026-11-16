@@ -1,7 +1,6 @@
 import * as Consumet from '../../src';
-import { AnimeUnity } from '../../src/providers/anime/animeunity';
 
-// PROV-3: dead providers are deleted, or flagged with `isWorking = false` and no longer exported.
+// PROV-3: dead providers are not exported.
 const REMOVED = {
   ANIME: ['Anify', 'AnimeDrive', 'Marin', 'AnimeUnity', 'KickAssAnime', 'AnimeSuge', 'createAnimeSuge'],
   MANGA: ['ReadManga', 'ComicK', 'Mangapark', 'MangaReader', 'MangaHost', 'BRMangas', 'Mangasee123', 'VyvyManga'],
@@ -18,12 +17,6 @@ describe('dead providers (PROV-3)', () => {
 
   it('does not export the dead StreamP2P extractor', () => {
     expect(Object.keys(Consumet)).not.toContain('StreamP2P');
-  });
-
-  it.each([['AnimeUnity', () => new AnimeUnity()]])('flags %s as not working', (_name, create) => {
-    const provider = create();
-    expect(provider.isWorking).toBe(false);
-    expect(provider.toString.isWorking).toBe(false);
   });
 
   it('exports only providers that are working', () => {

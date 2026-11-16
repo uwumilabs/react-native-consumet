@@ -86,15 +86,15 @@ describe('AsuraScans search', () => {
     ]);
   });
 
-  it('turns the HTML synopsis into plain text, one paragraph per line', async () => {
+  it('turns the HTML synopsis into plain text, paragraphs apart', async () => {
     const { asura } = provider();
 
     const { results } = await asura.search('the', 2);
 
     expect(results[1]!.description).toBe(
       'By Redice Studio that brought you <Myst, Might, Mayhem> and <Nano Machine>, <Reaper of the Drifting ' +
-        'Moon>, and many more!]\n' +
-        '"My revenge won’t end until every Demon in this world has been wiped out.”\n' +
+        'Moon>, and many more!]\n\n' +
+        '"My revenge won’t end until every Demon in this world has been wiped out.”\n\n' +
         'After brutally displaying the head of the Demon that murdered his parents, the boy Yise was shunned by ' +
         'his village as a monster.'
     );

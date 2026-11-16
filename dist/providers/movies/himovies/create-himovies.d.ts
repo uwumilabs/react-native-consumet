@@ -1,4 +1,8 @@
 import { type IMovieInfo, type IEpisodeServer, type StreamingServers, type ISource, type IMovieResult, type ISearch, type ProviderContext } from '../../../models';
+/**
+ * HiMovies (himovies.sx). Media ids are page paths such as `tv/watch-vincenzo-67955`.
+ * @param customBaseURL site URL to use instead of the default
+ */
 export declare function createHiMovies(ctx: ProviderContext, customBaseURL?: string): {
     supportedTypes: Set<import("../../..").TvType>;
     search: (query: string, page?: number) => Promise<ISearch<IMovieResult>>;

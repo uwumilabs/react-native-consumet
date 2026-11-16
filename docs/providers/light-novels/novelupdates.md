@@ -53,7 +53,7 @@ output:
 | Parameter              | Type     | Description                                                                                            |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
 | lightNovelUrl          | `string` | id or url of the light novel. (_light novel id or url can be found in the light novel search results_) |
-| chapterPage (optional) | `number` | chapter page number (_default: -1 meaning will fetch all chapters_)                                    |
+| chapterPage (optional) | `number` | ignored: NovelUpdates lists every chapter in one request                                               |
 
 ```ts
 novelupdates

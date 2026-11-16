@@ -1,5 +1,5 @@
 /** Where a meta provider failure came from. */
-export type MetaErrorSource = 'anilist' | 'mal' | 'tmdb' | 'anizip' | 'filler' | 'provider';
+export type MetaErrorSource = 'anilist' | 'mal' | 'tmdb' | 'provider';
 
 /**
  * Error thrown by meta providers (Anilist, MAL, TMDB). Keeps the failing service, its HTTP status

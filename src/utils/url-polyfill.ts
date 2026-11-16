@@ -552,7 +552,6 @@ function shortenPath(url: URLRecord) {
   path.pop();
 }
 
-// Parser states
 const SCHEME_START = 1;
 const SCHEME = 2;
 const NO_SCHEME = 3;
@@ -1132,7 +1131,6 @@ export class URLSearchParams implements Iterable<[string, string]> {
     return new URLSearchParams(this);
   }
 
-  // Additional utility methods
   get size(): number {
     return this._list.length;
   }
@@ -1195,7 +1193,6 @@ export class URL {
     internals(this.searchParams)._list = this._r.query !== null ? parseFormUrlencoded(this._r.query) : [];
   }
 
-  // Static helper methods
   static canParse(url: string, base?: string | URL): boolean {
     let baseRecord: URLRecord | null = null;
     if (base !== undefined) {
@@ -1324,5 +1321,4 @@ export class URL {
   }
 }
 
-// Export for Node.js environments that might not have these globals
 export { URL as PolyURL, URLSearchParams as PolyURLSearchParams };

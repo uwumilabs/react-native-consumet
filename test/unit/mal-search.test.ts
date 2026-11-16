@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import Myanimelist from '../../src/providers/meta/mal';
+import { MediaFormat } from '../../src/models';
 import { metaHttp } from '../../src/utils/meta-http';
 
 // Recorded MAL search page (trimmed) for anime.php?q=Tom%20%26%20Jerry%20%231.
@@ -27,9 +28,9 @@ describe('Myanimelist search query encoding (META-8)', () => {
     expect(url.pathname).toBe('/anime.php');
     expect(url.hash).toBe('');
     expect(Object.fromEntries(url.searchParams)).toEqual({ q: QUERY, cat: 'anime', show: '50' });
-    expect(result.results.map((r) => [r.id, r.title, r.totalEpisodes])).toEqual([
-      ['53907', 'Tom to Jerry Gokko', 30],
-      ['50001', 'Tom to Jerry', 1],
+    expect(result.results.map((r) => [r.id, r.title, r.totalEpisodes, r.type])).toEqual([
+      ['53907', 'Tom to Jerry Gokko', 30, MediaFormat.TV],
+      ['50001', 'Tom to Jerry', 1, MediaFormat.MOVIE],
     ]);
   });
 });

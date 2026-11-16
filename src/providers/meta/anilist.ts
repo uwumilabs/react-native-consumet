@@ -5,7 +5,6 @@ import {
   AnimeParser,
   type ISearch,
   type IAnimeInfo,
-  MediaStatus,
   type IAnimeResult,
   type ISource,
   type IAnimeEpisode,
@@ -18,7 +17,6 @@ import {
   type IMangaChapter,
   type ProxyConfig,
   type ITitle,
-  type FuzzyDate,
   type IStaff,
   type AniZipEpisode,
   type ProviderCapabilities,
@@ -26,25 +24,38 @@ import {
   MetaError,
 } from '../../models';
 import type { IMetaAnimeEpisode } from '../../models/types';
-import {
-  anilistSearchQuery,
-  anilistMediaDetailQuery,
-  anilistTrendingQuery,
-  anilistPopularQuery,
-  anilistAiringScheduleQuery,
-  anilistGenresQuery,
-  anilistAdvancedQuery,
-  anilistCharacterQuery,
-  anilistStaffInfoQuery,
-  days,
-} from '../../utils';
 import { Zoro } from '../anime/zoro/zoro';
-import { AnimeKai } from '../anime/animekai/animekai';
-import { AnimePahe } from '../anime/animepahe/animepahe';
-import { AniKoto } from '../anime/anikoto/anikoto';
 import { MangaDex } from '../manga/mangadex';
-import { sortChaptersForReading } from '../../utils/manga';
-import { ANIFY_URL, findSimilarTitles } from '../../utils/utils';
+import {
+  ADVANCED_SEARCH_QUERY,
+  AIRING_SCHEDULE_QUERY,
+  CHARACTER_QUERY,
+  EPISODES_MEDIA_QUERY,
+  GENRES_QUERY,
+  MEDIA_DETAIL_QUERY,
+  POPULAR_QUERY,
+  SEARCH_QUERY,
+  STAFF_QUERY,
+  TRENDING_QUERY,
+  WEEKDAYS,
+  episodeCounts,
+  mapAnimeDetail,
+  mapBrowseResult,
+  mapCharacterMedia,
+  mapMediaDetail,
+  mapMediaResult,
+  mapTitle,
+  pickCover,
+} from './anilist-media';
+import {
+  applyFiller,
+  callProvider,
+  fetchFillerEpisodes,
+  searchTerm,
+  stringSimilarity,
+  toEpisodeNumber,
+  type FillerEpisode,
+} from './shared';
 
 /** A failed AniList request as a MetaError, keeping its status, with a readable message for 404 and 429. */
 const anilistError = (err: unknown): MetaError => {
@@ -57,183 +68,35 @@ const anilistError = (err: unknown): MetaError => {
 };
 
 const ANILIST_GRAPHQL_URL = 'https://graphql.anilist.co';
+const MALSYNC_URL = 'https://api.malsync.moe';
 
-/**
- * POST a query to AniList. Values always go in `variables`, never into the query text, so a search
- * containing `"` or `\` can't break the query (it used to fail with a 400).
- */
-const anilistQuery = (query: string, variables?: Record<string, unknown>) =>
-  metaHttp.post(
-    ANILIST_GRAPHQL_URL,
-    { query, variables },
-    { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } }
-  );
+/** POST a query to AniList, its values in `variables`, failing with an anilistError. */
+const anilistQuery = async (query: string, variables?: Record<string, unknown>) => {
+  try {
+    const { data } = await metaHttp.post(
+      ANILIST_GRAPHQL_URL,
+      { query, variables },
+      { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } }
+    );
+    return data;
+  } catch (err) {
+    throw anilistError(err);
+  }
+};
 
-// One mapping per AniList shape. Every method used to carry its own copy, and the copies drifted
-// (a missing `?.` that crashed on a hidden recommendation, a URL in `coverHash`).
-
-const STATUS = new Map<unknown, MediaStatus>([
-  ['RELEASING', MediaStatus.ONGOING],
-  ['FINISHED', MediaStatus.COMPLETED],
-  ['NOT_YET_RELEASED', MediaStatus.NOT_YET_AIRED],
-  ['CANCELLED', MediaStatus.CANCELLED],
-  ['HIATUS', MediaStatus.HIATUS],
-]);
-
-/** AniList's `status(version: 2)` as a MediaStatus; anything else is UNKNOWN. */
-const mapStatus = (status: unknown): MediaStatus => STATUS.get(status) ?? MediaStatus.UNKNOWN;
-
-type CoverImage = { extraLarge?: string | null; large?: string | null; medium?: string | null } | null | undefined;
-
-/** The largest of AniList's cover (poster) images. */
-const pickCover = (coverImage: CoverImage): string | undefined =>
-  coverImage?.extraLarge ?? coverImage?.large ?? coverImage?.medium ?? undefined;
-
-/** The value of `cover`: the banner, or the cover image for media without one. */
-const bannerOrCover = (media: { bannerImage?: string | null; coverImage?: CoverImage }): string | undefined =>
-  media.bannerImage ?? pickCover(media.coverImage);
-
-const mapTitle = (title: any): ITitle => ({
-  romaji: title?.romaji,
-  english: title?.english,
-  native: title?.native,
-  userPreferred: title?.userPreferred,
+/** A page of AniList's `Page` answer, with `results` mapped from its `items`. */
+const toPage = <T>(page: any, results: T[]): ISearch<T> => ({
+  currentPage: page?.pageInfo?.currentPage,
+  hasNextPage: page?.pageInfo?.hasNextPage,
+  results,
 });
 
-const mapName = (name: any) => ({
-  first: name?.first,
-  last: name?.last,
-  full: name?.full,
-  native: name?.native,
-  userPreferred: name?.userPreferred,
-});
-
-const mapFuzzyDate = (date: any): FuzzyDate => ({ year: date?.year, month: date?.month, day: date?.day });
-
-/** The fields every list result (search, trending, the airing schedule…) shares. */
-const mapMediaResult = (media: any) => ({
-  id: String(media.id),
-  malId: media.idMal,
-  title: mapTitle(media.title),
-  status: mapStatus(media.status),
-  image: pickCover(media.coverImage),
-  cover: bannerOrCover(media),
-  color: media.coverImage?.color,
-  description: media.description,
-  genres: media.genres,
-  rating: media.averageScore,
-  type: media.format,
-  releaseDate: media.seasonYear,
-});
-
-/** A trending, popular or by-genre result. */
-const mapBrowseResult = (media: any): IAnimeResult => ({
-  ...mapMediaResult(media),
-  trailer: { id: media.trailer?.id, site: media.trailer?.site, thumbnail: media.trailer?.thumbnail },
-  totalEpisodes: isNaN(media.episodes)
-    ? 0
-    : (media.episodes ?? (media.nextAiringEpisode?.episode ? media.nextAiringEpisode.episode - 1 : 0)),
-  duration: media.duration,
-});
-
-/**
- * Media inside another media's details (a recommendation or a relation), in one shape for anime
- * and manga. AniList sends `null` for media it hides, which maps to `undefined`.
- */
-const mapMediaNode = (node: any): IAnimeResult | undefined =>
-  node
-    ? {
-        id: node.id,
-        malId: node.idMal,
-        title: mapTitle(node.title),
-        status: mapStatus(node.status),
-        episodes: node.episodes,
-        chapters: node.chapters,
-        image: pickCover(node.coverImage),
-        cover: bannerOrCover(node),
-        color: node.coverImage?.color,
-        rating: node.meanScore,
-        type: node.format,
-      }
-    : undefined;
-
-const mapRecommendations = (media: any): IAnimeResult[] | undefined =>
-  media.recommendations?.edges?.flatMap((edge: any) => mapMediaNode(edge?.node?.mediaRecommendation) ?? []);
-
-const mapRelations = (media: any): IAnimeResult[] | undefined =>
-  media.relations?.edges?.flatMap((edge: any) => {
-    const node = mapMediaNode(edge?.node);
-    return node ? [{ ...node, relationType: edge.relationType }] : [];
-  });
-
-const mapCharacters = (media: any) =>
-  media.characters?.edges?.map((edge: any) => ({
-    id: edge.node?.id,
-    role: edge.role,
-    name: mapName(edge.node?.name),
-    image: edge.node?.image?.large ?? edge.node?.image?.medium,
-    voiceActors: (edge.voiceActors ?? []).map((voiceActor: any) => ({
-      id: voiceActor.id,
-      language: voiceActor.languageV2,
-      name: mapName(voiceActor.name),
-      image: voiceActor.image?.large ?? voiceActor.image?.medium,
-    })),
-  }));
-
-/** The details fetchAnimeInfo, fetchAnilistInfoById and Manga.fetchMangaInfo share. */
-const mapMediaDetail = (media: any) => ({
-  malId: media.idMal,
-  title: mapTitle(media.title),
-  synonyms: media.synonyms,
-  isLicensed: media.isLicensed ?? undefined,
-  isAdult: media.isAdult ?? undefined,
-  countryOfOrigin: media.countryOfOrigin ?? undefined,
-  ...(media.trailer?.id
-    ? { trailer: { id: media.trailer.id, site: media.trailer.site, thumbnail: media.trailer.thumbnail } }
-    : {}),
-  image: pickCover(media.coverImage),
-  popularity: media.popularity,
-  color: media.coverImage?.color,
-  cover: bannerOrCover(media),
-  description: media.description,
-  status: mapStatus(media.status),
-  releaseDate: media.startDate?.year,
-  startDate: mapFuzzyDate(media.startDate),
-  endDate: mapFuzzyDate(media.endDate),
-  rating: media.averageScore,
-  genres: media.genres,
-  season: media.season,
-  studios: media.studios?.edges?.map((edge: any) => edge.node.name),
-  type: media.format,
-  recommendations: mapRecommendations(media),
-  characters: mapCharacters(media),
-  relations: mapRelations(media),
-});
-
-/** mapMediaDetail plus the airing and episode fields of an anime. */
-const mapAnimeDetail = (media: any) => ({
-  ...mapMediaDetail(media),
-  ...(media.nextAiringEpisode?.airingAt
-    ? {
-        nextAiringEpisode: {
-          airingTime: media.nextAiringEpisode.airingAt,
-          timeUntilAiring: media.nextAiringEpisode.timeUntilAiring,
-          episode: media.nextAiringEpisode.episode,
-        },
-      }
-    : {}),
-  totalEpisodes: media.episodes ?? media.nextAiringEpisode?.episode - 1,
-  currentEpisode: media.nextAiringEpisode?.episode
-    ? media.nextAiringEpisode.episode - 1
-    : (media.episodes ?? undefined),
-  duration: media.duration,
-});
-
-/** A weekday as an index into `days` (0 = Saturday … 6 = Friday), from that index or the day's name. */
+/** A weekday as an index into WEEKDAYS, from that index or the day's name. */
 const weekdayIndex = (day: number | string): number => {
   const index =
-    typeof day === 'string' ? days.findIndex((name) => name.toLowerCase() === day.trim().toLowerCase()) : day;
-  if (!Number.isInteger(index) || index < 0 || index >= days.length) throw new Error('Invalid weekStart or weekEnd');
+    typeof day === 'string' ? WEEKDAYS.findIndex((name) => name.toLowerCase() === day.trim().toLowerCase()) : day;
+  if (!Number.isInteger(index) || index < 0 || index >= WEEKDAYS.length)
+    throw new Error('Invalid weekStart or weekEnd');
   return index;
 };
 
@@ -244,7 +107,7 @@ const weekdayIndex = (day: number | string): number => {
 const airingWindow = (weekStart: number | string, weekEnd: number | string, now: Date = new Date()) => {
   const start = weekdayIndex(weekStart);
   const end = weekdayIndex(weekEnd);
-  const today = (now.getDay() + 1) % 7; // as a `days` index, which starts on Saturday
+  const today = (now.getDay() + 1) % 7; // as a WEEKDAYS index, which starts on Saturday
   const firstDay = (start - today + 7) % 7;
   const dayCount = ((end - start + 7) % 7) + 1;
   const midnight = (offset: number) =>
@@ -269,11 +132,6 @@ type AniZipEntry = {
 /** A provider episode, with the AniDB episode number when ani.zip matched it. */
 type MergedEpisode = { episode: IAnimeEpisode; aniDbKey?: number };
 
-const toEpisodeNumber = (value: unknown): number | undefined => {
-  const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
-  return typeof n === 'number' && Number.isFinite(n) ? n : undefined;
-};
-
 const timeOf = (date: unknown): number | undefined => {
   if (typeof date !== 'string' || !date) return undefined;
   const time = new Date(date).getTime();
@@ -287,6 +145,73 @@ const timeOf = (date: unknown): number | undefined => {
 const episodeUniqueId = (anilistId: string, { episode, aniDbKey }: MergedEpisode, index: number) =>
   `${anilistId}$ep=${aniDbKey ?? toEpisodeNumber(episode.number) ?? index + 1}`;
 
+const romanToArabic = (roman: string): number => {
+  const values: Record<string, number> = { i: 1, v: 5, x: 10 };
+  const digits = roman.toLowerCase();
+  let result = 0;
+  for (let i = 0; i < digits.length; i++) {
+    const current = values[digits[i]!]!;
+    const next = values[digits[i + 1]!];
+    if (next && current < next) {
+      result += next - current;
+      i++;
+    } else {
+      result += current;
+    }
+  }
+  return result;
+};
+
+/**
+ * An anime title in the form provider titles are compared in: letters, digits and spaces only,
+ * without season words or a trailing part in parentheses, roman numerals (I to IX) as digits, and
+ * common romanization variants (`yuu`, ` ou`) spelled one way.
+ */
+const cleanTitle = (title: string): string =>
+  title
+    .replace(/[^A-Za-z0-9!@#$%^&*() ]/g, ' ')
+    .replace(/(th|rd|nd|st) season/gi, '')
+    .replace(/\([^(]*\)$/g, '')
+    .replace(/season/g, '')
+    .replace(/\b(ix|iv|v?i{1,3}|v)\b/gi, (numeral) => String(romanToArabic(numeral)))
+    .replace(/[^A-Za-z0-9\-= ]/g, '')
+    .replace(/ {2,}/g, ' ')
+    .trim()
+    .replace(/yuu/g, 'yu')
+    .replace(/ ou/g, ' oh');
+
+/** Results less similar than this to every AniList title are not the anime. */
+const MIN_TITLE_SIMILARITY = 0.6;
+
+/** The best similarity between any of AniList's titles and any of a provider result's titles. */
+const titleSimilarity = (wanted: (string | undefined)[], result: IAnimeResult): number => {
+  const clean = (titles: unknown[]) =>
+    titles.flatMap((title) => (typeof title === 'string' && title.trim() ? [cleanTitle(title.toLowerCase())] : []));
+  const candidates = clean(
+    [result.title, result.japaneseTitle].map((t) => (typeof t === 'string' ? t.replace(/\([^)]*\)/g, '') : t))
+  );
+  return Math.max(
+    0,
+    ...clean(wanted).flatMap((input) => candidates.map((candidate) => stringSimilarity(input, candidate)))
+  );
+};
+
+/** Subbed episodes a provider result lists, for preferring the fuller of two equal matches. */
+const subCount = (result: IAnimeResult): number => {
+  if (typeof result.episodes?.sub === 'number') return result.episodes.sub;
+  if (typeof result.sub === 'number') return result.sub;
+  return 0;
+};
+
+/**
+ * Providers that list the dub as its own entry mark it in the title: "Naruto (Dub)". Anything in
+ * parentheses other than `(TV)` and numbers names the audio; a title without is the sub.
+ */
+const audioOf = (title: unknown): string => {
+  const marked = typeof title === 'string' ? /\(([^)0-9]+)\)/.exec(title.replace(/\(TV\)/g, ''))?.[1] : undefined;
+  return marked ? marked.replace(/\s+/g, '-').toLowerCase() : 'sub';
+};
+
 /** An AniList format as providers name the type: `MOVIE` → `movie`, `TV_SHORT` → `tv`. */
 const providerType = (format?: string) => (format === 'TV_SHORT' ? 'tv' : format?.toLowerCase());
 
@@ -299,8 +224,8 @@ const titleNumbers = (title?: string) => new Set((title ?? '').replace(/\([^)]*\
  * gains when its type is the AniList format, loses when only one of the two is a movie, and loses when its numbers
  * don't match the title's.
  */
-const matchScore = (result: { title?: string; type?: string; similarity?: number }, title: ITitle, format?: string) => {
-  let score = result.similarity ?? 0;
+const matchScore = (result: IAnimeResult, similarity: number, title: ITitle, format?: string) => {
+  let score = similarity;
 
   const wanted = providerType(format);
   const type = result.type?.toLowerCase();
@@ -310,22 +235,43 @@ const matchScore = (result: { title?: string; type?: string; similarity?: number
   }
 
   const expected = titleNumbers(title.english || title.romaji);
-  const found = titleNumbers(result.title);
+  const found = titleNumbers(typeof result.title === 'string' ? result.title : undefined);
   if ([...expected].some((n) => !found.has(n)) || (!expected.size && found.size)) score -= 0.2;
 
   return score;
 };
 
-type FillerEpisode = { 'number': string; 'filler-bool': boolean };
+/** The manga's info on the provider for a search, preferring an exact title match; undefined when it finds none. */
+const searchManga = async (provider: MangaParser, title: string): Promise<IMangaInfo | undefined> => {
+  const { results = [] } = ((await provider.search(searchTerm(title))) ?? {}) as Partial<ISearch<IMangaResult>>;
+  if (results.length === 0) return undefined;
 
-/**
- * Sets `isFiller` from a MAL filler list, which lists episodes in order, by the provider's episode
- * number. Episodes the list doesn't reach keep `isFiller` unset.
- */
-const applyFiller = (episode: IAnimeEpisode, fillers: FillerEpisode[]) => {
-  const number = toEpisodeNumber(episode.number);
-  const filler = number === undefined ? undefined : fillers[number - 1];
-  if (filler) episode.isFiller = Boolean(filler['filler-bool']);
+  // Providers may show an English title and keep the romaji one in altTitles, so match either.
+  const wanted = title.toLowerCase();
+  const names = (manga: IMangaResult) => [
+    ...(typeof manga.title === 'string' ? [manga.title] : []),
+    ...(manga.altTitles ?? []),
+  ];
+  const exact = results.find((manga) => names(manga).some((name) => name.toLowerCase() === wanted));
+  return provider.fetchMangaInfo((exact ?? results[0]!).id);
+};
+
+/** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
+const findMangaChapters = async (provider: MangaParser, title: string, malId?: number): Promise<IMangaChapter[]> => {
+  if (malId) {
+    // MALSync answers 404 for a manga it maps to no site; any answer but 200 means searching instead.
+    const malSync = await metaHttp.get(`${MALSYNC_URL}/mal/manga/${encodeURIComponent(malId)}`, {
+      validateStatus: () => true,
+    });
+    if (malSync.status === 200) {
+      const sites = Object.values(
+        (malSync.data?.Sites ?? {}) as Record<string, Record<string, { url: string; page: string }>>
+      ).flatMap((pages) => Object.values(pages));
+      const mapped = sites.find((site) => site.page.toLowerCase() === provider.name.toLowerCase());
+      if (mapped) return (await provider.fetchMangaInfo(mapped.url.split('/').pop()!)).chapters ?? [];
+    }
+  }
+  return (await searchManga(provider, title))?.chapters ?? [];
 };
 
 class Anilist extends AnimeParser {
@@ -334,22 +280,20 @@ class Anilist extends AnimeParser {
   protected override logo = 'https://upload.wikimedia.org/wikipedia/commons/6/61/AniList_logo.svg';
   protected override classPath = 'META.Anilist';
 
-  private readonly kitsuGraphqlUrl = 'https://kitsu.io/api/graphql';
-  private readonly malSyncUrl = 'https://api.malsync.moe';
-  private readonly anifyUrl = ANIFY_URL;
   provider: AnimeParser | IAnimeProvider;
 
   /**
-   * This class maps anilist to kitsu with any other anime provider.
-   * kitsu is used for episode images, titles and description.
-   * @param provider anime provider (optional) default: Gogoanime
-   * @param proxyConfig proxy config (optional)
-   * @param adapter axios adapter (optional)
+   * Maps AniList anime to an anime provider's episodes, with ani.zip episode metadata for providers
+   * that declare `capabilities.aniZipEpisodes`.
+   * @param provider anime provider to find the episodes on (default: Zoro, HiAnime)
+   * @param _proxyConfig ignored: requests go through the library's own client. Kept so existing calls compile.
+   * @param _adapter ignored, for the same reason
+   * @param customBaseURL site URL for the default Zoro provider; ignored when `provider` is given
    */
   constructor(
     provider?: AnimeParser | IAnimeProvider,
-    public proxyConfig?: ProxyConfig,
-    adapter?: AxiosAdapter,
+    _proxyConfig?: ProxyConfig,
+    _adapter?: AxiosAdapter,
     customBaseURL?: string
   ) {
     super();
@@ -357,45 +301,34 @@ class Anilist extends AnimeParser {
   }
 
   /**
-   * @param query Search query
-   * @param page Page number (optional)
-   * @param perPage Number of results per page (optional) (default: 15) (max: 50)
+   * @param perPage results per page (default: 15, max: 50)
    */
   override search = async (query: string, page: number = 1, perPage: number = 15): Promise<ISearch<IAnimeResult>> => {
-    try {
-      const { data } = await anilistQuery(anilistSearchQuery(), { search: query, page, perPage, type: 'ANIME' });
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data?.Page?.pageInfo?.currentPage,
-        hasNextPage: data.data?.Page?.pageInfo?.hasNextPage,
-        results:
-          data.data?.Page?.media?.map((item: any) => ({
-            ...mapMediaResult(item),
-            popularity: item.popularity,
-            totalEpisodes: item.episodes ?? item.nextAiringEpisode?.episode - 1,
-            currentEpisodeCount: item?.nextAiringEpisode ? item?.nextAiringEpisode?.episode - 1 : item.episodes,
-          })) ?? [],
-      };
-
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    const data = await anilistQuery(SEARCH_QUERY, { search: query, page, perPage, type: 'ANIME' });
+    return toPage(
+      data.data?.Page,
+      data.data?.Page?.media?.map((item: any) => {
+        const { totalEpisodes, currentEpisode } = episodeCounts(item);
+        return {
+          ...mapMediaResult(item),
+          popularity: item.popularity,
+          totalEpisodes,
+          currentEpisodeCount: currentEpisode,
+        };
+      }) ?? []
+    );
   };
 
   /**
-   *
-   * @param query Search query (optional)
-   * @param type Media type (optional) (default: `ANIME`) (options: `ANIME`, `MANGA`)
-   * @param page Page number (optional)
-   * @param perPage Number of results per page (optional) (default: `20`) (max: `50`)
-   * @param format Format (optional) (options: `TV`, `TV_SHORT`, `MOVIE`, `SPECIAL`, `OVA`, `ONA`, `MUSIC`)
-   * @param sort Sort (optional) (Default: `[POPULARITY_DESC, SCORE_DESC]`) (options: `POPULARITY_DESC`, `POPULARITY`, `TRENDING_DESC`, `TRENDING`, `UPDATED_AT_DESC`, `UPDATED_AT`, `START_DATE_DESC`, `START_DATE`, `END_DATE_DESC`, `END_DATE`, `FAVOURITES_DESC`, `FAVOURITES`, `SCORE_DESC`, `SCORE`, `TITLE_ROMAJI_DESC`, `TITLE_ROMAJI`, `TITLE_ENGLISH_DESC`, `TITLE_ENGLISH`, `TITLE_NATIVE_DESC`, `TITLE_NATIVE`, `EPISODES_DESC`, `EPISODES`, `ID`, `ID_DESC`)
-   * @param genres Genres (optional) (options: `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`)
-   * @param id anilist Id (optional)
-   * @param year Year (optional) e.g. `2022`
-   * @param status Status (optional) (options: `RELEASING`, `FINISHED`, `NOT_YET_RELEASED`, `CANCELLED`, `HIATUS`)
-   * @param season Season (optional) (options: `WINTER`, `SPRING`, `SUMMER`, `FALL`)
+   * @param type `ANIME` (default) or `MANGA`
+   * @param perPage results per page (default: 20, max: 50)
+   * @param format `TV`, `TV_SHORT`, `MOVIE`, `SPECIAL`, `OVA`, `ONA` or `MUSIC`
+   * @param sort default `[POPULARITY_DESC, SCORE_DESC]`; any of `POPULARITY_DESC`, `POPULARITY`, `TRENDING_DESC`, `TRENDING`, `UPDATED_AT_DESC`, `UPDATED_AT`, `START_DATE_DESC`, `START_DATE`, `END_DATE_DESC`, `END_DATE`, `FAVOURITES_DESC`, `FAVOURITES`, `SCORE_DESC`, `SCORE`, `TITLE_ROMAJI_DESC`, `TITLE_ROMAJI`, `TITLE_ENGLISH_DESC`, `TITLE_ENGLISH`, `TITLE_NATIVE_DESC`, `TITLE_NATIVE`, `EPISODES_DESC`, `EPISODES`, `ID`, `ID_DESC`
+   * @param genres any of `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`
+   * @param id AniList id
+   * @param year e.g. `2022`
+   * @param status `RELEASING`, `FINISHED`, `NOT_YET_RELEASED`, `CANCELLED` or `HIATUS`
+   * @param season `WINTER`, `SPRING`, `SUMMER` or `FALL`
    */
   advancedSearch = async (
     query?: string,
@@ -410,168 +343,84 @@ class Anilist extends AnimeParser {
     status?: string,
     season?: string
   ): Promise<ISearch<IAnimeResult>> => {
-    const variables = {
-      search: query,
-      type: type,
-      page: page,
-      size: perPage,
-      format: format,
-      sort: sort,
-      genres: genres,
-      id: id,
-      year: year ? `${year}%` : undefined,
-      status: status,
-      season: season,
-    };
-
-    if (genres) {
-      genres.forEach((genre) => {
-        if (!Object.values(Genres).includes(genre as Genres)) {
-          throw new Error(`genre ${genre} is not valid`);
-        }
-      });
+    for (const genre of genres ?? []) {
+      if (!Object.values(Genres).includes(genre as Genres)) throw new Error(`genre ${genre} is not valid`);
     }
 
-    try {
-      const { data } = await anilistQuery(anilistAdvancedQuery(), variables);
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data?.Page?.pageInfo?.currentPage,
-        hasNextPage: data.data?.Page?.pageInfo?.hasNextPage,
-        totalPages: data.data?.Page?.pageInfo?.lastPage,
-        totalResults: data.data?.Page?.pageInfo?.total,
-        results: [],
-      };
-
-      res.results.push(
-        ...(data.data?.Page?.media?.map((item: any) => ({
+    const data = await anilistQuery(ADVANCED_SEARCH_QUERY, {
+      search: query,
+      type,
+      page,
+      size: perPage,
+      format,
+      sort,
+      genres,
+      id,
+      year: year ? `${year}%` : undefined,
+      status,
+      season,
+    });
+    const pageInfo = data.data?.Page?.pageInfo;
+    return {
+      ...toPage(
+        data.data?.Page,
+        data.data?.Page?.media?.map((item: any) => ({
           ...mapMediaResult(item),
           popularity: item.popularity,
-          totalEpisodes: item.episodes ?? item.nextAiringEpisode?.episode - 1,
-          currentEpisode: item.nextAiringEpisode?.episode - 1 || item.episodes,
+          ...episodeCounts(item),
           countryOfOrigin: item.countryOfOrigin,
-        })) ?? [])
-      );
-
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+        })) ?? []
+      ),
+      totalPages: pageInfo?.lastPage,
+      totalResults: pageInfo?.total,
+    };
   };
 
   /**
-   *
-   * @param id Anime id
-   * @param dub to get dubbed episodes (optional) set to `true` to get dubbed episodes. **ONLY WORKS FOR GOGOANIME**
-   * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
+   * @param id AniList id
+   * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
    */
   override fetchAnimeInfo = async (id: string, fetchFiller: boolean = false): Promise<IAnimeInfo> => {
-    try {
-      const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
-      const animeInfo: IAnimeInfo = { id, ...mapAnimeDetail(data.data.Media) };
-      const title = mapTitle(data.data.Media.title);
-      animeInfo.episodes = await this.fetchDefaultEpisodeList({
-        idMal: animeInfo.malId! as number,
-        format: data.data.Media.format,
-        season: data.data.Media.season,
-        startDate: { year: parseInt(animeInfo.releaseDate!) },
-        title: {
-          english: title.english!,
-          romaji: title.romaji!,
-        },
-        externalLinks: data.data.Media.externalLinks?.filter((link: any) => link.type === 'STREAMING'),
-      });
+    const data = await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) });
+    const media = data.data.Media;
+    const animeInfo: IAnimeInfo = { id, ...mapAnimeDetail(media) };
+    const [episodes, fillerEpisodes] = await Promise.all([
+      this.findProviderEpisodes(mapTitle(media.title), media.format),
+      fetchFiller && animeInfo.malId ? fetchFillerEpisodes(animeInfo.malId as number) : [],
+    ]);
 
-      const fillerEpisodes =
-        fetchFiller && animeInfo.malId ? await this.fetchFillerEpisodes(animeInfo.malId as number) : [];
-
-      animeInfo.episodes = animeInfo.episodes?.map((episode: IAnimeEpisode, index) => {
-        if (!episode.image) episode.image = animeInfo.image;
-        applyFiller(episode, fillerEpisodes);
-
-        // No ani.zip merge here, so the key comes from the provider's number, as it does in
-        // fetchEpisodesListById for episodes ani.zip doesn't match.
-        episode.uniqueId = episodeUniqueId(id, { episode }, index);
-        return episode;
-      });
-
-      return animeInfo;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    animeInfo.episodes = episodes.map((episode, index) => {
+      if (!episode.image) episode.image = animeInfo.image;
+      applyFiller(episode, fillerEpisodes);
+      // No ani.zip merge here, so the key comes from the provider's number, as it does in
+      // fetchEpisodesListById for episodes ani.zip doesn't match.
+      episode.uniqueId = episodeUniqueId(id, { episode }, index);
+      return episode;
+    });
+    return animeInfo;
   };
 
-  /**
-   *
-   * @param episodeId Episode id
-   */
-  override fetchEpisodeSources = async (episodeId: string, ...args: any): Promise<ISource> => {
-    try {
-      return await this.provider.fetchEpisodeSources(episodeId, ...args);
-    } catch (err) {
-      throw MetaError.from('provider', err, `Failed to fetch episode sources from ${this.provider.name}: ${err}`);
-    }
-  };
+  override fetchEpisodeSources = (episodeId: string, ...args: any): Promise<ISource> =>
+    callProvider(this.provider, 'episode sources', () => this.provider.fetchEpisodeSources(episodeId, ...args));
 
-  /**
-   *
-   * @param episodeId Episode id
-   */
-  override fetchEpisodeServers = async (episodeId: string): Promise<IEpisodeServer[]> => {
-    try {
-      return await this.provider.fetchEpisodeServers(episodeId);
-    } catch (err) {
-      throw MetaError.from('provider', err, `Failed to fetch episode servers from ${this.provider.name}: ${err}`);
-    }
-  };
+  override fetchEpisodeServers = (episodeId: string): Promise<IEpisodeServer[]> =>
+    callProvider(this.provider, 'episode servers', () => this.provider.fetchEpisodeServers(episodeId));
 
-  /**
-   * @param page page number to search for (optional)
-   * @param perPage number of results per page (optional)
-   */
   fetchTrendingAnime = async (page: number = 1, perPage: number = 10): Promise<ISearch<IAnimeResult>> => {
-    try {
-      const { data } = await anilistQuery(anilistTrendingQuery(), { page, perPage });
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data.Page.pageInfo.currentPage,
-        hasNextPage: data.data.Page.pageInfo.hasNextPage,
-        results: data.data.Page.media.map(mapBrowseResult),
-      };
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    const data = await anilistQuery(TRENDING_QUERY, { page, perPage });
+    return toPage(data.data.Page, data.data.Page.media.map(mapBrowseResult));
   };
 
-  /**
-   *
-   * @param page page number to search for (optional)
-   * @param perPage number of results per page (optional)
-   */
   fetchPopularAnime = async (page: number = 1, perPage: number = 10): Promise<ISearch<IAnimeResult>> => {
-    try {
-      const { data } = await anilistQuery(anilistPopularQuery(), { page, perPage });
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data.Page.pageInfo.currentPage,
-        hasNextPage: data.data.Page.pageInfo.hasNextPage,
-        results: data.data.Page.media.map(mapBrowseResult),
-      };
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    const data = await anilistQuery(POPULAR_QUERY, { page, perPage });
+    return toPage(data.data.Page, data.data.Page.media.map(mapBrowseResult));
   };
 
   /**
-   *
-   * @param page page number (optional)
-   * @param perPage number of results per page (optional)
-   * @param weekStart First day of the schedule, its next occurrence counting today (optional) (default: today) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the day's name
-   * @param weekEnd Last day of the schedule, included, on or after weekStart (optional) (default: the day before today, so a full week) similar to weekStart
-   * @param notYetAired if true will return anime that have not yet aired (optional)
-   * @returns the next airing episodes
+   * The episodes airing in a window of days.
+   * @param weekStart first day of the window, its next occurrence counting today (default: today): `2` = Monday, `3` = Tuesday, `4` = Wednesday, `5` = Thursday, `6` = Friday, `0` = Saturday, `1` = Sunday, or the day's name
+   * @param weekEnd last day of the window, included, on or after weekStart (default: the day before today, so a full week); like weekStart
+   * @param notYetAired only episodes that haven't aired yet
    */
   fetchAiringSchedule = async (
     page: number = 1,
@@ -582,187 +431,79 @@ class Anilist extends AnimeParser {
   ): Promise<ISearch<IAnimeResult>> => {
     const { from, to } = airingWindow(weekStart, weekEnd);
 
-    try {
-      // AniList's bounds are exclusive, so one second earlier keeps an episode airing at midnight.
-      const { data } = await anilistQuery(anilistAiringScheduleQuery(), {
-        page,
-        perPage,
-        notYetAired,
-        airingAtGreater: from - 1,
-        airingAtLesser: to,
-      });
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data.Page.pageInfo.currentPage,
-        hasNextPage: data.data.Page.pageInfo.hasNextPage,
-        results: data.data.Page.airingSchedules.map((item: any) => ({
-          ...mapMediaResult(item.media),
-          episode: item.episode,
-          airingAt: item.airingAt,
-          country: item.media.countryOfOrigin,
-        })),
-      };
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    // AniList's bounds are exclusive, so one second earlier keeps an episode airing at midnight.
+    const data = await anilistQuery(AIRING_SCHEDULE_QUERY, {
+      page,
+      perPage,
+      notYetAired,
+      airingAtGreater: from - 1,
+      airingAtLesser: to,
+    });
+    return toPage(
+      data.data.Page,
+      data.data.Page.airingSchedules.map((item: any) => ({
+        ...mapMediaResult(item.media),
+        episode: item.episode,
+        airingAt: item.airingAt,
+        country: item.media.countryOfOrigin,
+      }))
+    );
   };
 
   /**
-   *
-   * @param genres An array of genres to filter by (optional) genres: [`Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`]
-   * @param page page number (optional)
-   * @param perPage number of results per page (optional)
+   * @param genres any of `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`
    */
   fetchAnimeGenres = async (genres: string[] | Genres[], page: number = 1, perPage: number = 20) => {
     if (genres.length === 0) throw new Error('No genres specified');
-
     for (const genre of genres) if (!Object.values(Genres).includes(genre as Genres)) throw new Error('Invalid genre');
 
-    try {
-      const { data } = await anilistQuery(anilistGenresQuery(), { genres, page, perPage });
-
-      const res: ISearch<IAnimeResult> = {
-        currentPage: data.data.Page.pageInfo.currentPage,
-        hasNextPage: data.data.Page.pageInfo.hasNextPage,
-        results: data.data.Page.media.map(mapBrowseResult),
-      };
-      return res;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    const data = await anilistQuery(GENRES_QUERY, { genres, page, perPage });
+    return toPage<IAnimeResult>(data.data.Page, data.data.Page.media.map(mapBrowseResult));
   };
 
-  private findAnimeRaw = async (title: ITitle, format?: string) => {
-    const searchTerm = title?.romaji || title?.english || title?.userPreferred || '';
-    const findAnime = (await this.provider.search(searchTerm)) as ISearch<IAnimeResult>;
-
-    if (!findAnime?.results) {
-      return {} as IAnimeEpisode[];
-    }
-
-    // Run similar title searches in parallel
-    const [mappedEng, mappedRom] = await Promise.all([
-      Promise.resolve(findSimilarTitles(title?.english || '', findAnime.results)),
-      Promise.resolve(findSimilarTitles(title?.romaji || '', findAnime.results)),
-    ]);
-    // console.log({ mappedEng, mappedRom });
-    // Use Set for efficient deduplication
-    const uniqueResults = Array.from(new Set([...mappedEng, ...mappedRom].map((item) => JSON.stringify(item)))).map(
-      (str) => JSON.parse(str)
-    );
-
-    // Best match first: title similarity, corrected by the format and the numbers in the title
-    uniqueResults.sort((a, b) => matchScore(b, title, format) - matchScore(a, title, format));
-    const mappings: any = {};
-    for (const obj of uniqueResults) {
-      const match = obj.title.replace(/\(TV\)/g, '').match(/\(([^)0-9]+)\)/);
-      const key = match ? match[1].replace(/\s+/g, '-').toLowerCase() : 'sub';
-
-      if (!mappings[key]) {
-        mappings[key] = obj.id;
-      }
-
-      // Early return if we have both sub and dub
-      if (mappings.sub && mappings.dub) break;
-    }
-    // console.log('mappings', mappings);
-    // console.time('animeinfo');
-    const animeInfo = await this.provider.fetchAnimeInfo(mappings.sub || mappings.dub);
-    // console.timeEnd('animeinfo');
-    return animeInfo.episodes as IAnimeEpisode[];
-  };
-  /**
-   * @returns a random anime
-   */
   fetchRandomAnime = async (): Promise<IAnimeInfo> => {
+    let ids: string[];
     try {
-      const { data: data } = await metaHttp.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
-
-      const ids = data?.trim().split('\n');
-      const selectedAnime = Math.floor(Math.random() * ids.length);
-      return await this.fetchAnimeInfo(ids[selectedAnime]);
+      const { data } = await metaHttp.get('https://raw.githubusercontent.com/5H4D0WILA/IDFetch/main/ids.txt');
+      ids = data?.trim().split('\n');
     } catch (err) {
       throw anilistError(err);
     }
+    return this.fetchAnimeInfo(ids[Math.floor(Math.random() * ids.length)]!);
   };
 
   /**
-   * @deprecated Reads from Anify, which is offline, so this always fails.
-   * @param provider The provider to get the episode Ids from (optional) default: `gogoanime` (options: `gogoanime`, `zoro`)
-   * @param page page number (optional)
-   * @param perPage number of results per page (optional)
+   * The provider's episodes for the AniList entry: the search result whose title is closest (see
+   * matchScore), the sub entry before the dub. Empty when no result is close enough.
    */
-  fetchRecentEpisodes = async (
-    provider: 'gogoanime' | 'zoro' = 'gogoanime',
-    page: number = 1,
-    perPage: number = 25
-  ): Promise<ISearch<IAnimeResult>> => {
+  private findProviderEpisodes = async (title: ITitle, format?: string): Promise<IAnimeEpisode[]> => {
     try {
-      const { data } = await metaHttp.get(
-        `${this.anifyUrl}/recent?page=${encodeURIComponent(page)}&perPage=${encodeURIComponent(perPage)}&type=anime`
-      );
-
-      const results: IAnimeInfo[] = data?.map((item: any) => {
-        return {
-          id: item.id.toString(),
-          malId: item.mappings.find((item: any) => item.providerType === 'META' && item.providerId === 'mal')?.id,
-          title: {
-            romaji: item.title?.romaji,
-            english: item.title?.english,
-            native: item.title?.native,
-            // userPreferred: (_f = item.title) === null || _f === void 0 ? void 0 : _f.userPreferred,
-          },
-          image: item.coverImage ?? item.bannerImage,
-          rating: item.averageScore,
-          color: item.anime?.color,
-          episodeId: `${
-            provider === 'gogoanime'
-              ? item.episodes.data
-                  .find((source: any) => source.providerId.toLowerCase() === 'gogoanime')
-                  ?.episodes.pop()?.id
-              : item.episodes.data.find((source: any) => source.providerId.toLowerCase() === 'zoro')?.episodes.pop()?.id
-          }`,
-          episodeTitle: item.episodes.latest.latestTitle ?? `Episode ${item.currentEpisode}`,
-          episodeNumber: item.currentEpisode,
-          genres: item.genre,
-          type: item.format,
-        };
-      });
-      // results = results.filter((item) => item.episodeNumber !== 0 &&
-      //     item.episodeId.replace('-enime', '').length > 0 &&
-      //     item.episodeId.replace('-enime', '') !== 'undefined');
-      return {
-        currentPage: page,
-        // hasNextPage: meta.lastPage !== page,
-        // totalPages: meta.lastPage,
-        totalResults: results?.length,
-        results: results,
-      };
-    } catch (err) {
-      throw MetaError.from('provider', err);
-    }
-  };
-
-  private fetchDefaultEpisodeList = async (Media: {
-    idMal: number;
-    format?: string;
-    title: { english: string; romaji: string };
-    season: string;
-    startDate: { year: number };
-    externalLinks?: any;
-  }) => {
-    try {
-      return await this.findAnimeRaw({ english: Media.title?.english!, romaji: Media.title?.romaji! }, Media.format);
+      const search = (await this.provider.search(title.romaji || title.english || title.userPreferred || '')) as
+        | ISearch<IAnimeResult>
+        | undefined;
+      const ranked = (search?.results ?? [])
+        .map((result) => ({ result, similarity: titleSimilarity([title.english, title.romaji], result) }))
+        .filter(({ similarity }) => similarity > MIN_TITLE_SIMILARITY)
+        .sort(
+          (a, b) =>
+            matchScore(b.result, b.similarity, title, format) - matchScore(a.result, a.similarity, title, format) ||
+            subCount(b.result) - subCount(a.result)
+        )
+        .map(({ result }) => result);
+      const match =
+        ranked.find((result) => audioOf(result.title) === 'sub') ??
+        ranked.find((result) => audioOf(result.title) === 'dub');
+      if (!match) return [];
+      return (await this.provider.fetchAnimeInfo(match.id)).episodes ?? [];
     } catch (err) {
       throw MetaError.from('provider', err);
     }
   };
 
   /**
-   * @param id anilist id
-   * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
-   * @returns episode list **(without anime info)**, every episode with a `uniqueId`
+   * @param id AniList id
+   * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
+   * @returns the episode list without the anime info, every episode with a `uniqueId`
    */
   fetchEpisodesListById = async (id: string, fetchFiller: boolean = false): Promise<IMetaAnimeEpisode[]> => {
     // ani.zip only needs the AniList id, so request it alongside the AniList query. It is
@@ -775,33 +516,16 @@ class Anilist extends AnimeParser {
     // Don't surface an unhandled rejection if the AniList query below fails first.
     aniZipRequest?.catch(() => undefined);
 
-    const {
-      data: {
-        data: { Media },
-      },
-    } = await anilistQuery(
-      `query($id: Int){ Media(id: $id){ idMal format externalLinks { site url } title { romaji english } status season episodes startDate { year month day } endDate { year month day }  coverImage {extraLarge large medium} } }`,
-      { id: Number(id) }
-    ).catch((err) => {
-      throw anilistError(err);
-    });
+    const { Media } = (await anilistQuery(EPISODES_MEDIA_QUERY, { id: Number(id) })).data;
 
-    const fillerRequest = fetchFiller && Media.idMal ? this.fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
+    const fillerRequest: Promise<FillerEpisode[]> =
+      fetchFiller && Media.idMal ? fetchFillerEpisodes(Media.idMal) : Promise.resolve([]);
 
-    let episodes: MergedEpisode[];
-    if (aniZipRequest) {
-      const [aniZip, provider] = await Promise.allSettled([aniZipRequest, this.fetchDefaultEpisodeList(Media)]);
-      if (provider.status === 'rejected') throw provider.reason;
-
-      const providerEpisodes = Array.isArray(provider.value) ? provider.value : [];
-      episodes =
-        aniZip.status === 'fulfilled'
-          ? this.mergeAniZipEpisodes(aniZip.value, providerEpisodes)
-          : providerEpisodes.map((episode) => ({ episode }));
-    } else {
-      const providerEpisodes = await this.fetchDefaultEpisodeList(Media);
-      episodes = (Array.isArray(providerEpisodes) ? providerEpisodes : []).map((episode) => ({ episode }));
-    }
+    const providerEpisodes = await this.findProviderEpisodes(mapTitle(Media.title), Media.format);
+    const aniZip = await aniZipRequest?.catch(() => undefined);
+    const episodes: MergedEpisode[] = aniZip
+      ? this.mergeAniZipEpisodes(aniZip, providerEpisodes)
+      : providerEpisodes.map((episode) => ({ episode }));
 
     const fillerEpisodes = await fillerRequest;
     const cover = pickCover(Media.coverImage);
@@ -816,34 +540,9 @@ class Anilist extends AnimeParser {
     });
   };
 
-  /**
-   * Whether to merge the provider's episodes with ani.zip metadata. Providers declare this in
-   * `capabilities`, so registry-only providers (no class) can opt in. Code that predates
-   * capabilities falls back to the built-in provider classes.
-   */
-  private usesAniZipEpisodes = () => {
-    const capabilities = (this.provider as { capabilities?: ProviderCapabilities }).capabilities;
-    if (capabilities) return Boolean(capabilities.aniZipEpisodes);
-    return (
-      this.provider instanceof Zoro ||
-      this.provider instanceof AnimeKai ||
-      this.provider instanceof AnimePahe ||
-      this.provider instanceof AniKoto
-    );
-  };
-
-  /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
-  private fetchFillerEpisodes = async (malId: number): Promise<FillerEpisode[]> => {
-    try {
-      const { data } = await metaHttp.get(
-        `https://raw.githubusercontent.com/saikou-app/mal-id-filler-list/main/fillers/${encodeURIComponent(malId)}.json`,
-        { timeout: ENRICHMENT_TIMEOUT_MS }
-      );
-      return Array.isArray(data?.episodes) ? data.episodes : [];
-    } catch {
-      return [];
-    }
-  };
+  /** Whether to merge the provider's episodes with ani.zip metadata, as the provider declares. */
+  private usesAniZipEpisodes = () =>
+    Boolean((this.provider as { capabilities?: ProviderCapabilities }).capabilities?.aniZipEpisodes);
 
   /**
    * Overlay ani.zip titles, descriptions, images and TVDB numbers onto the provider's episodes. Only
@@ -956,41 +655,26 @@ class Anilist extends AnimeParser {
   };
 
   /**
-   * @param id anilist id
-   * @returns anilist data for the anime **(without episodes)** (use `fetchEpisodesListById` to get the episodes) (use `fetchAnimeInfo` to get both)
+   * @param id AniList id
+   * @returns the AniList info without episodes (`fetchEpisodesListById` gives them, `fetchAnimeInfo` both)
    */
-  fetchAnilistInfoById = async (id: string) => {
-    try {
-      const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
-      const animeInfo: IAnimeInfo = { id, ...mapAnimeDetail(data.data.Media) };
-      return animeInfo;
-    } catch (err) {
-      throw anilistError(err);
-    }
+  fetchAnilistInfoById = async (id: string): Promise<IAnimeInfo> => {
+    const data = await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) });
+    return { id, ...mapAnimeDetail(data.data.Media) };
   };
 
-  /**
-   * To get Staff details by anilistId
-   * @param id staff id from anilist
-   *
-   */
+  /** @param id AniList staff id */
   fetchStaffById = async (id: number) => {
+    const data = await anilistQuery(STAFF_QUERY, { id: Number(id) });
+    const staff = data.data.Staff;
+
     const staffInfo: IStaff = {
-      id: String(id),
-      name: { first: '', last: '', native: '', full: '' },
-    };
-
-    try {
-      const { data } = await anilistQuery(anilistStaffInfoQuery(), { id: Number(id) });
-      const staff = data.data.Staff;
-
-      staffInfo.id = staff?.id;
-      staffInfo.name = staff?.name;
-      staffInfo.image = staff?.image;
-      staffInfo.description = staff?.description;
-      staffInfo.siteUrl = staff?.siteUrl;
-
-      staffInfo.roles = staff?.staffMedia.edges.map((media: any) => ({
+      id: staff?.id,
+      name: staff?.name,
+      image: staff?.image,
+      description: staff?.description,
+      siteUrl: staff?.siteUrl,
+      roles: staff?.staffMedia.edges.map((media: any) => ({
         id: media?.node?.id,
         title: media?.node?.title,
         type: media?.node?.type,
@@ -1000,278 +684,150 @@ class Anilist extends AnimeParser {
           medium: media?.node?.coverImage?.medium,
         },
         color: media?.node?.coverImage?.color,
-      }));
-
-      return staffInfo;
-    } catch (err) {
-      throw anilistError(err);
-    }
+      })),
+    };
+    return staffInfo;
   };
 
-  /**
-   *
-   * @param id character id from anilist
-   */
+  /** @param id AniList character id */
   fetchCharacterInfoById = async (id: string) => {
-    try {
-      const {
-        data: {
-          data: { Character },
-        },
-      } = await anilistQuery(anilistCharacterQuery(), { id: Number(id) });
+    const { Character } = (await anilistQuery(CHARACTER_QUERY, { id: Number(id) })).data;
+    // The description holds the character's details as `__Label:__ value` lines, removed below.
+    const details: string = Character.description ?? '';
 
-      const height = Character.description.match(/__Height:__(.*)/)?.[1].trim();
-      const weight = Character.description.match(/__Weight:__(.*)/)?.[1].trim();
-      const hairColor = Character.description.match(/__Hair Color:__(.*)/)?.[1].trim();
-      const eyeColor = Character.description.match(/__Eye Color:__(.*)/)?.[1].trim();
-      const relatives = Character.description
-        .match(/__Relatives:__(.*)/)?.[1]
-        .trim()
-        .split(/(, \[)/g)
-        .filter((g: string) => !g.includes(', ['))
-        .map((r: string) => ({
-          id: r.match(/\/(\d+)/)?.[1],
-          name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
-          relationship: r.match(/\(([^)]+)\).*?(\(([^)]+)\))/)?.[3],
-        }));
-      const race = Character.description
-        .match(/__Race:__(.*)/)?.[1]
-        .split(', ')
-        .map((r: string) => r.trim());
-      const rank = Character.description.match(/__Rank:__(.*)/)?.[1];
-      const occupation = Character.description.match(/__Occupation:__(.*)/)?.[1];
-      const previousPosition = Character.description.match(/__Previous Position:__(.*)/)?.[1]?.trim();
-      const partner = Character.description
-        .match(/__Partner:__(.*)/)?.[1]
-        .split(/(, \[)/g)
-        .filter((g: string) => !g.includes(', ['))
-        .map((r: string) => ({
-          id: r.match(/\/(\d+)/)?.[1],
-          name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
-        }));
-      const dislikes = Character.description.match(/__Dislikes:__(.*)/)?.[1];
-      const sign = Character.description.match(/__Sign:__(.*)/)?.[1];
-      const zodicSign = Character.description.match(/__Zodiac sign:__(.*)/)?.[1]?.trim();
-      const zodicAnimal = Character.description.match(/__Zodiac Animal:__(.*)/)?.[1]?.trim();
-      const themeSong = Character.description.match(/__Theme Song:__(.*)/)?.[1]?.trim();
-      Character.description = Character.description.replace(
-        /__Theme Song:__(.*)\n|__Race:__(.*)\n|__Height:__(.*)\n|__Relatives:__(.*)\n|__Rank:__(.*)\n|__Zodiac sign:__(.*)\n|__Zodiac Animal:__(.*)\n|__Weight:__(.*)\n|__Eye Color:__(.*)\n|__Hair Color:__(.*)\n|__Dislikes:__(.*)\n|__Sign:__(.*)\n|__Partner:__(.*)\n|__Previous Position:__(.*)\n|__Occupation:__(.*)\n/gm,
-        ''
-      );
+    const height = details.match(/__Height:__(.*)/)?.[1]?.trim();
+    const weight = details.match(/__Weight:__(.*)/)?.[1]?.trim();
+    const hairColor = details.match(/__Hair Color:__(.*)/)?.[1]?.trim();
+    const eyeColor = details.match(/__Eye Color:__(.*)/)?.[1]?.trim();
+    const relatives = details
+      .match(/__Relatives:__(.*)/)?.[1]
+      ?.trim()
+      .split(/(, \[)/g)
+      .filter((g: string) => !g.includes(', ['))
+      .map((r: string) => ({
+        id: r.match(/\/(\d+)/)?.[1],
+        name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
+        relationship: r.match(/\(([^)]+)\).*?(\(([^)]+)\))/)?.[3],
+      }));
+    const race = details
+      .match(/__Race:__(.*)/)?.[1]
+      ?.split(', ')
+      .map((r: string) => r.trim());
+    const rank = details.match(/__Rank:__(.*)/)?.[1];
+    const occupation = details.match(/__Occupation:__(.*)/)?.[1];
+    const previousPosition = details.match(/__Previous Position:__(.*)/)?.[1]?.trim();
+    const partner = details
+      .match(/__Partner:__(.*)/)?.[1]
+      ?.split(/(, \[)/g)
+      .filter((g: string) => !g.includes(', ['))
+      .map((r: string) => ({
+        id: r.match(/\/(\d+)/)?.[1],
+        name: r.match(/([^)]+)\]/)?.[1]!.replace(/\[/g, ''),
+      }));
+    const dislikes = details.match(/__Dislikes:__(.*)/)?.[1];
+    const sign = details.match(/__Sign:__(.*)/)?.[1];
+    const zodicSign = details.match(/__Zodiac sign:__(.*)/)?.[1]?.trim();
+    const zodicAnimal = details.match(/__Zodiac Animal:__(.*)/)?.[1]?.trim();
+    const themeSong = details.match(/__Theme Song:__(.*)/)?.[1]?.trim();
+    const description = details.replace(
+      /__Theme Song:__(.*)\n|__Race:__(.*)\n|__Height:__(.*)\n|__Relatives:__(.*)\n|__Rank:__(.*)\n|__Zodiac sign:__(.*)\n|__Zodiac Animal:__(.*)\n|__Weight:__(.*)\n|__Eye Color:__(.*)\n|__Hair Color:__(.*)\n|__Dislikes:__(.*)\n|__Sign:__(.*)\n|__Partner:__(.*)\n|__Previous Position:__(.*)\n|__Occupation:__(.*)\n/gm,
+      ''
+    );
 
-      const characterInfo = {
-        id: Character.id,
-        name: {
-          first: Character.name?.first,
-          last: Character.name?.last,
-          full: Character.name?.full,
-          native: Character.name?.native,
-          userPreferred: Character.name?.userPreferred,
-          alternative: Character.name?.alternative,
-          alternativeSpoiler: Character.name?.alternativeSpoiler,
-        },
-        image: Character.image?.large ?? Character.image?.medium,
-        description: Character.description,
-        gender: Character.gender,
-        dateOfBirth: {
-          year: Character.dateOfBirth?.year,
-          month: Character.dateOfBirth?.month,
-          day: Character.dateOfBirth?.day,
-        },
-        bloodType: Character.bloodType,
-        age: Character.age,
-        hairColor: hairColor,
-        eyeColor: eyeColor,
-        height: height,
-        weight: weight,
-        occupation: occupation,
-        partner: partner,
-        relatives: relatives,
-        race: race,
-        rank: rank,
-        previousPosition: previousPosition,
-        dislikes: dislikes,
-        sign: sign,
-        zodicSign: zodicSign,
-        zodicAnimal: zodicAnimal,
-        themeSong: themeSong,
-        relations: Character.media.edges?.map((v: any) => ({
-          id: v.node.id,
-          malId: v.node.idMal,
-          role: v.characterRole,
-          title: mapTitle(v.node.title),
-          status: mapStatus(v.node.status),
-          episodes: v.node.episodes,
-          image: pickCover(v.node.coverImage),
-          rating: v.node.averageScore,
-          releaseDate: v.node.startDate?.year,
-          type: v.node.format,
-          color: v.node.coverImage?.color,
-        })),
-      };
+    const characterInfo = {
+      id: Character.id,
+      name: {
+        first: Character.name?.first,
+        last: Character.name?.last,
+        full: Character.name?.full,
+        native: Character.name?.native,
+        userPreferred: Character.name?.userPreferred,
+        alternative: Character.name?.alternative,
+        alternativeSpoiler: Character.name?.alternativeSpoiler,
+      },
+      image: Character.image?.large ?? Character.image?.medium,
+      description,
+      gender: Character.gender,
+      dateOfBirth: {
+        year: Character.dateOfBirth?.year,
+        month: Character.dateOfBirth?.month,
+        day: Character.dateOfBirth?.day,
+      },
+      bloodType: Character.bloodType,
+      age: Character.age,
+      hairColor: hairColor,
+      eyeColor: eyeColor,
+      height: height,
+      weight: weight,
+      occupation: occupation,
+      partner: partner,
+      relatives: relatives,
+      race: race,
+      rank: rank,
+      previousPosition: previousPosition,
+      dislikes: dislikes,
+      sign: sign,
+      zodicSign: zodicSign,
+      zodicAnimal: zodicAnimal,
+      themeSong: themeSong,
+      relations: Character.media.edges?.map(mapCharacterMedia),
+    };
 
-      return characterInfo;
-    } catch (err) {
-      throw anilistError(err);
-    }
+    return characterInfo;
   };
 
-  /**
-   * Anilist Anime class
-   */
-  static Anime = this;
-
-  /**
-   * Anilist Manga Class
-   */
+  /** Maps AniList manga to a manga provider's chapters. */
   static Manga = class Manga {
     provider: MangaParser;
 
-    /**
-     * Maps anilist manga to any manga provider (MangaDex, MangaPill, etc)
-     * @param provider MangaParser (default: MangaDex)
-     */
+    /** @param provider manga provider to find the chapters on (default: MangaDex) */
     constructor(provider?: MangaParser) {
       this.provider = provider || new MangaDex();
     }
 
-    /**
-     *
-     * @param query query to search for
-     * @param page (optional) page number (default: `1`)
-     * @param perPage (optional) number of results per page (default: `20`)
-     */
+    /** @param perPage results per page (default: 20) */
     search = async (query: string, page: number = 1, perPage: number = 20): Promise<ISearch<IMangaResult>> => {
-      try {
-        const { data } = await anilistQuery(anilistSearchQuery(), { search: query, page, perPage, type: 'MANGA' });
-
-        const res: ISearch<IMangaResult> = {
-          currentPage: data.data.Page.pageInfo.currentPage,
-          hasNextPage: data.data.Page.pageInfo.hasNextPage,
-          results: data.data.Page.media.map(
-            (item: any): IMangaResult => ({
-              ...mapMediaResult(item),
-              popularity: item.popularity,
-              totalChapters: item.chapters,
-              volumes: item.volumes,
-            })
-          ),
-        };
-
-        return res;
-      } catch (err) {
-        throw anilistError(err);
-      }
+      const data = await anilistQuery(SEARCH_QUERY, { search: query, page, perPage, type: 'MANGA' });
+      return toPage(
+        data.data.Page,
+        data.data.Page.media.map(
+          (item: any): IMangaResult => ({
+            ...mapMediaResult(item),
+            popularity: item.popularity,
+            totalChapters: item.chapters,
+            volumes: item.volumes,
+          })
+        )
+      );
     };
+
+    /** @param args passed on to the provider's fetchChapterPages */
+    fetchChapterPages = (chapterId: string, ...args: any): Promise<IMangaChapterPage[]> =>
+      this.provider.fetchChapterPages(chapterId, ...args);
 
     /**
-     *
-     * @param chapterId chapter id
-     * @param args args to pass to the provider (if any)
-     * @returns
+     * The AniList info with the provider's chapters, in the provider's order (reading order, as every
+     * manga provider returns them), looked up by the romaji title, then by the English one.
      */
-    fetchChapterPages = (chapterId: string, ...args: any): Promise<IMangaChapterPage[]> => {
-      return this.provider.fetchChapterPages(chapterId, ...args);
-    };
+    fetchMangaInfo = async (id: string): Promise<IMangaInfo> => {
+      const media = (await anilistQuery(MEDIA_DETAIL_QUERY, { id: Number(id) })).data.Media;
+      const mangaInfo: IMangaInfo = { id, ...mapMediaDetail(media) };
+      const title = mapTitle(media.title);
+      const romaji = (title.romaji ?? title.english ?? '').toLowerCase();
+      const english = (title.english ?? title.romaji ?? '').toLowerCase();
 
-    fetchMangaInfo = async (id: string, ...args: any): Promise<IMangaInfo> => {
       try {
-        const { data } = await anilistQuery(anilistMediaDetailQuery(), { id: Number(id) });
-        const mangaInfo: IMangaInfo = { id, ...mapMediaDetail(data.data.Media) };
-        const chapters = await new Anilist()
-          .findManga(this.provider, mapTitle(data.data.Media.title), mangaInfo.malId as number)
-          .catch((err) => {
-            throw MetaError.from('provider', err);
-          });
-        mangaInfo.chapters = sortChaptersForReading(chapters);
-
-        return mangaInfo;
-      } catch (error) {
-        throw anilistError(error);
+        let chapters = await findMangaChapters(this.provider, romaji, mangaInfo.malId as number);
+        if (chapters.length === 0 && english !== romaji) {
+          chapters = await findMangaChapters(this.provider, english, mangaInfo.malId as number);
+        }
+        mangaInfo.chapters = chapters;
+      } catch (err) {
+        throw MetaError.from('provider', err);
       }
+      return mangaInfo;
     };
-  };
-
-  /** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
-  private findMangaSlug = async (provider: MangaParser, title: string, malId?: number): Promise<IMangaChapter[]> => {
-    const slug = title.replace(/[^0-9a-zA-Z]+/g, ' ');
-
-    let possibleManga: IMangaInfo | undefined;
-
-    if (malId) {
-      const malAsyncReq = await metaHttp.get(`${this.malSyncUrl}/mal/manga/${encodeURIComponent(malId)}`, {
-        validateStatus: () => true,
-      });
-
-      if (malAsyncReq.status === 200) {
-        const sitesT = malAsyncReq.data.Sites as {
-          [k: string]: {
-            [k: string]: { url: string; page: string; title: string };
-          };
-        };
-        let sites = Object.values(sitesT).map((v, i) => {
-          const obj: any = [...Object.values(Object.values(sitesT)[i]!)];
-          const pages: any = obj.map((v: any) => ({
-            page: v.page,
-            url: v.url,
-            title: v.title,
-          }));
-          return pages;
-        }) as any[];
-
-        sites = sites.flat();
-
-        const possibleSource = sites.find((s) => s.page.toLowerCase() === provider.name.toLowerCase());
-
-        if (possibleSource) possibleManga = await provider.fetchMangaInfo(possibleSource.url.split('/').pop()!);
-        else possibleManga = await this.findMangaRaw(provider, slug, title);
-      } else possibleManga = await this.findMangaRaw(provider, slug, title);
-    } else possibleManga = await this.findMangaRaw(provider, slug, title);
-
-    return possibleManga?.chapters ?? [];
-  };
-
-  /** The provider's manga for a search, preferring an exact title match; `undefined` when it finds none. */
-  private findMangaRaw = async (
-    provider: MangaParser,
-    slug: string,
-    title: string
-  ): Promise<IMangaInfo | undefined> => {
-    const { results = [] } = ((await provider.search(slug)) ?? {}) as Partial<ISearch<IMangaResult>>;
-
-    if (results.length === 0) return undefined;
-
-    // Providers may show an English title and keep the romaji one in altTitles, so match either.
-    const wanted = title.toLowerCase();
-    const names = (manga: IMangaResult) => [
-      ...(typeof manga.title === 'string' ? [manga.title] : []),
-      ...(manga.altTitles ?? []),
-    ];
-    const possibleManga = results.find((manga: IMangaResult) =>
-      names(manga).some((name) => name.toLowerCase() === wanted)
-    );
-
-    return (await provider.fetchMangaInfo((possibleManga ?? results[0]!).id)) as IMangaInfo;
-  };
-
-  /** The provider's chapters, looked up by the romaji title, then by the English one if that finds none. */
-  private findManga = async (provider: MangaParser, title: ITitle, malId?: number): Promise<IMangaChapter[]> => {
-    const romaji = (title.romaji ?? title.english ?? '').toLowerCase();
-    const english = (title.english ?? title.romaji ?? '').toLowerCase();
-
-    const romajiChapters = await this.findMangaSlug(provider, romaji, malId);
-    if (romajiChapters.length > 0 || english === romaji) return romajiChapters;
-
-    return this.findMangaSlug(provider, english, malId);
   };
 }
-
-// (async () => {
-//   const ani = new Anilist(new Zoro());
-//   const anime = await ani.fetchAnimeInfo('21');
-//   console.log(anime.episodes);
-//   const sources = await ani.fetchEpisodeSources(anime.episodes![0]!.id, anime.episodes![0]!.number, anime.id);
-//   console.log(sources);
-// })();
 
 export default Anilist;

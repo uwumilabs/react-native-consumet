@@ -87,14 +87,14 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
   const manager = new ProviderManager(emptyRegistry);
 
   it('runs code whose hash matches', async () => {
-    const instance: any = await manager.executeProviderCode(providerCode, 'createTestProvider', providerManifest());
+    const instance: any = await manager.executeProviderCode(providerCode, providerManifest());
     expect(instance.name).toBe('TestProvider');
     expect(globalThis.__extensionRuns).toBe(1);
   });
 
   it('rejects a mismatching hash before running the code', async () => {
     await expectIntegrityError(
-      manager.executeProviderCode(providerCode, 'createTestProvider', providerManifest({ sha256: 'f'.repeat(64) })),
+      manager.executeProviderCode(providerCode, providerManifest({ sha256: 'f'.repeat(64) })),
       'INTEGRITY_MISMATCH'
     );
     expect(globalThis.__extensionRuns).toBe(0);
@@ -102,17 +102,17 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
 
   it('rejects an unhashed entry unless the manager allows it', async () => {
     await expectIntegrityError(
-      manager.executeProviderCode(providerCode, 'createTestProvider', providerManifest({ sha256: undefined })),
+      manager.executeProviderCode(providerCode, providerManifest({ sha256: undefined })),
       'INTEGRITY_MISSING'
     );
 
     const permissive = new ProviderManager(emptyRegistry, {}, { allowUnhashed: true });
-    await permissive.executeProviderCode(providerCode, 'createTestProvider', providerManifest({ sha256: undefined }));
+    await permissive.executeProviderCode(providerCode, providerManifest({ sha256: undefined }));
     expect(globalThis.__extensionRuns).toBe(1);
   });
 
   it('runs unverified code only with an explicit skipIntegrity', async () => {
-    await manager.executeProviderCode(providerCode, 'createTestProvider', providerManifest({ sha256: 'f'.repeat(64) }), {
+    await manager.executeProviderCode(providerCode, providerManifest({ sha256: 'f'.repeat(64) }), {
       skipIntegrity: true,
     });
     expect(globalThis.__extensionRuns).toBe(1);
@@ -120,7 +120,7 @@ describe('ProviderManager.executeProviderCode (REG-2)', () => {
 
   it('rejects a factory name that is not a plain identifier', async () => {
     await expectIntegrityError(
-      manager.executeProviderCode(providerCode, 'x; globalThis.__extensionRuns = 99; //', providerManifest()),
+      manager.executeProviderCode(providerCode, { ...providerManifest(), factoryName: 'x; globalThis.__extensionRuns = 99; //' }),
       'INVALID_IDENTIFIER'
     );
     expect(globalThis.__extensionRuns).toBe(0);

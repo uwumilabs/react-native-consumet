@@ -1,49 +1,15 @@
-import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
+import { type ExtractorContext, type ISource } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
+import { unpackScripts } from './packer';
+import { toUrl } from './url';
 
-/**
- * Kwik extractor function
- * @param ctx ExtractorContext; the embed page is loaded through its NativeConsumet WebView
- * @returns Object with extract method implementing IVideoExtractor interface
- */
-export function Kwik(ctx: ExtractorContext): IVideoExtractor {
-  const serverName = 'kwik';
-  const sources: IVideo[] = [];
-  const { NativeConsumet } = ctx;
-
-  // One eval(function(p,a,c,k,e,d){...}('payload',base,count,'words'.split('|'))) block.
-  const PACKED =
-    /\beval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)\s*\{[\s\S]+?\}\s*\(\s*'([\s\S]+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\s*\.split\s*\(\s*'(.+?)'\s*\)/;
-
-  /** The code of one packed block. */
-  function unpackPacked(m: RegExpMatchArray): string {
-    // The payload is the source of a single-quoted string: undo its escapes (\' and \\).
-    const encoded = m[1]!.replace(/\\(['"\\])/g, '$1');
-    const base = parseInt(m[2]!, 10);
-    const count = parseInt(m[3]!, 10);
-    const words = m[4]!.split(m[5]!);
-
-    function decode(n: number): string {
-      const prefix = n < base ? '' : decode(Math.floor(n / base));
-      const rem = n % base;
-      return prefix + (rem > 35 ? String.fromCharCode(rem + 29) : rem.toString(36));
-    }
-
-    let result = encoded;
-    for (let i = count - 1; i >= 0; i--) {
-      const word = words[i];
-      if (word) result = result.replace(new RegExp(`\\b${decode(i)}\\b`, 'g'), word);
-    }
-
-    return result;
-  }
+/** Kwik, AnimePahe's player. Its embed page is loaded through the NativeConsumet WebView. */
+export function Kwik(ctx: ExtractorContext) {
+  const { NativeConsumet, PolyURL } = ctx;
 
   /** The stream URL in a Kwik embed page; the page packs several scripts, only one has it. */
-  function findSource(html: string): string | null {
-    const packed = new RegExp(PACKED.source, 'g');
-    let block: RegExpExecArray | null;
-    while ((block = packed.exec(html))) {
-      const code = unpackPacked(block);
+  function findSource(scripts: string[]): string | null {
+    for (const code of scripts) {
       const source =
         code.match(/const\s+source\s*=\s*'([^']+)'/) ||
         code.match(/const\s+source\s*=\s*"([^"]+)"/) ||
@@ -53,27 +19,22 @@ export function Kwik(ctx: ExtractorContext): IVideoExtractor {
     return null;
   }
 
-  // @ts-ignore
-  const extract = async (videoUrl: PolyURL, referer = 'https://animepahe.ru/'): Promise<ISource> => {
-    const kwikUrl = typeof videoUrl === 'string' ? videoUrl : (videoUrl as any).href;
-    const kwikHost = kwikUrl.match(/^https?:\/\/([^/]+)/)?.[1] ?? 'kwik.cx';
+  /** @param referer the page the player is embedded in (the AnimePahe site) */
+  const extract = async (videoUrl: string | PolyURL, referer: string): Promise<ISource> => {
+    const url = toUrl(PolyURL, videoUrl);
 
     // No User-Agent: the WebView's own keeps a Cloudflare clearance valid (see AnimePahe).
-    const { html } = await NativeConsumet.makeGetRequestWithWebView(kwikUrl, {
-      Referer: referer,
-    });
+    const { html } = await NativeConsumet.makeGetRequestWithWebView(url.href, { Referer: referer });
 
-    const m3u8 = findSource(html);
-    if (!m3u8) {
-      const packed = html.includes('eval(function(p,a,c,k,e,');
-      throw new Error(packed ? '[Kwik] No source URL found' : '[Kwik] No packed script found');
-    }
+    const scripts = unpackScripts(html);
+    const m3u8 = findSource(scripts);
+    if (!m3u8) throw new Error(scripts.length ? '[Kwik] No source URL found' : '[Kwik] No packed script found');
 
     return {
       sources: [{ url: m3u8, isM3U8: m3u8.includes('.m3u8') }],
-      headers: { Referer: `https://${kwikHost}/` },
+      headers: { Referer: `${url.origin}/` },
     };
   };
 
-  return { serverName, sources, extract };
+  return { extract };
 }

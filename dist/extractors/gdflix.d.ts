@@ -1,7 +1,6 @@
-import { type ExtractorContext, type IVideoExtractor } from '../models';
-/**
- * GDFlix extractor function / factory relying on ExtractorContext
- * Follows react-native-consumet conventions (Kwik, MegaUp, MegaPlay)
- */
-export declare function GDFlix(ctx: ExtractorContext): IVideoExtractor;
+import { type ExtractorContext, type ISource } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
+export declare function GDFlix(ctx: ExtractorContext): {
+    extract: (videoUrl: string | PolyURL, referer?: string) => Promise<ISource>;
+};
 //# sourceMappingURL=gdflix.d.ts.map

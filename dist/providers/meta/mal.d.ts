@@ -10,34 +10,30 @@ declare class Myanimelist extends AnimeParser {
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
-    private readonly anilistGraphqlUrl;
-    private readonly kitsuGraphqlUrl;
-    private readonly malSyncUrl;
     provider: AnimeParser | IAnimeProvider;
     /**
-     * This class maps myanimelist to kitsu with any other anime provider.
-     * kitsu is used for episode images, titles and description.
-     * @param provider anime provider (optional) default: Gogoanime
+     * Maps MyAnimeList anime to an anime provider's episodes, filling missing episode titles, images
+     * and descriptions from Kitsu.
+     * @param provider anime provider to find the episodes on (default: Zoro, HiAnime)
      */
     constructor(provider?: AnimeParser | IAnimeProvider);
-    private malStatusToMediaStatus;
-    private populateEpisodeList;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
     /**
-     *
-     * @param animeId anime id
-     * @param fetchFiller fetch filler episodes
+     * @param animeId MAL id
+     * @param dub look for the dubbed episodes (default: `false`)
+     * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
      */
     fetchAnimeInfo: (animeId: string, dub?: boolean, fetchFiller?: boolean) => Promise<IAnimeInfo>;
     fetchEpisodeSources: (episodeId: string, ...args: any) => Promise<ISource>;
-    fetchEpisodeServers(episodeId: string): Promise<IEpisodeServer[]>;
-    private findAnimeRaw;
-    private findAnimeSlug;
-    private findKitsuAnime;
+    fetchEpisodeServers: (episodeId: string) => Promise<IEpisodeServer[]>;
+    /** The provider's info for the search result whose title is closest to `term`. */
+    private findProviderAnime;
+    private findProviderEpisodes;
+    /** Fills the episodes' missing titles, images and descriptions from the Kitsu anime of the same season and year. */
+    private addKitsuDetails;
     /**
-     *
-     * @param id anime id
-     * @returns anime info without streamable episodes
+     * @param id MAL id
+     * @returns the MAL info without episodes
      */
     fetchMalInfoById: (id: string) => Promise<IAnimeInfo>;
 }

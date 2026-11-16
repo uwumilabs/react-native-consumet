@@ -17,31 +17,13 @@ var MediaFormat;
     MediaFormat["PV"] = "PV";
     MediaFormat["COMIC"] = "COMIC";
 })(MediaFormat || (exports.MediaFormat = MediaFormat = {}));
+/** Server names, each the name of the extractor that reads it (UpCloud is served by MegaCloud). */
 var StreamingServers;
 (function (StreamingServers) {
-    StreamingServers["AsianLoad"] = "asianload";
-    StreamingServers["GogoCDN"] = "gogocdn";
-    StreamingServers["StreamSB"] = "streamsb";
-    StreamingServers["MixDrop"] = "mixdrop";
-    StreamingServers["Mp4Upload"] = "mp4upload";
     StreamingServers["UpCloud"] = "upcloud";
-    StreamingServers["StreamTape"] = "streamtape";
-    StreamingServers["VizCloud"] = "vizcloud";
-    // same as vizcloud
-    StreamingServers["MyCloud"] = "mycloud";
-    StreamingServers["Filemoon"] = "filemoon";
-    StreamingServers["VidStreaming"] = "vidstreaming";
-    StreamingServers["BuiltIn"] = "builtin";
-    StreamingServers["SmashyStream"] = "smashystream";
-    StreamingServers["StreamHub"] = "streamhub";
     StreamingServers["StreamWish"] = "streamwish";
     StreamingServers["VidHide"] = "vidhide";
-    StreamingServers["VidMoly"] = "vidmoly";
-    StreamingServers["Voe"] = "voe";
-    StreamingServers["MegaUp"] = "megaup";
     StreamingServers["MegaCloud"] = "megacloud";
-    StreamingServers["Luffy"] = "luffy";
-    StreamingServers["Multi"] = "multi";
     StreamingServers["Kwik"] = "kwik";
     StreamingServers["MegaPlay"] = "megaplay";
     StreamingServers["GDFlix"] = "gdflix";

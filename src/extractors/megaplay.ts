@@ -1,5 +1,7 @@
-import { type ExtractorContext, type ISource, type IVideo, type IVideoExtractor, type ISubtitle } from '../models';
+import { type ExtractorContext, type ISource, type ISubtitle } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
+import { hlsVariants } from './hls';
+import { toUrl } from './url';
 
 const MEGA_KEY_STR = 'i?LMTAx0Q6,:}50U';
 const MEGA_IV_STR = "W0;27ToaUpl_P%'c";
@@ -7,152 +9,121 @@ const MEGA_IV_STR = "W0;27ToaUpl_P%'c";
 /** Matches the encrypted segment token inside a URL: `/segment/<base64url-token>` */
 const SEGMENT_RE = /\/segment\/([A-Za-z0-9_-]+)/;
 
-/**
- * MegaPlay extractor factory that relies on the shared extractor context
- * @param ctx ExtractorContext containing axios, load, CryptoJS, USER_AGENT, PolyURL
- * @returns Object with extract method implementing IVideoExtractor interface
- */
-export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
-  const serverName = 'MegaPlay';
-  const sources: IVideo[] = [];
-  const client = ctx.axios;
-  const load = ctx.load;
-  const CryptoJS = ctx.CryptoJS;
-  const userAgent =
-    ctx.USER_AGENT ||
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36';
+/** MegaPlay, AniKoto's player. */
+export function MegaPlay(ctx: ExtractorContext) {
+  const { axios, load, CryptoJS, USER_AGENT, PolyURL } = ctx;
 
   function megaPlayDecrypt(encB64Url: string): string {
-    // base64url → base64 (with padding)
     const b64 = encB64Url.replace(/-/g, '+').replace(/_/g, '/');
     const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
 
-    // AES-256 key: 16-char string + 16 null bytes (Latin1 = 1 byte per char for ASCII)
+    // AES-256 key: the 16-character string and 16 null bytes (Latin1 = 1 byte per char for ASCII)
     const key = CryptoJS.enc.Latin1.parse(MEGA_KEY_STR + '\0'.repeat(16));
-
-    // IV: raw bytes of the 16-char IV string
     const iv = CryptoJS.enc.Latin1.parse(MEGA_IV_STR);
 
     const ciphertext = CryptoJS.enc.Base64.parse(padded);
-    const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext });
-
-    const decrypted = CryptoJS.AES.decrypt(cipherParams, key, {
+    const decrypted = CryptoJS.AES.decrypt(CryptoJS.lib.CipherParams.create({ ciphertext }), key, {
       iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     });
-
     return decrypted.toString(CryptoJS.enc.Utf8);
   }
 
+  /** `raw` with its segment token decrypted into the URL it stands for; tokens that don't decrypt are left as they are. */
   function resolveSegmentUrl(raw: string): string {
-    const m = raw.match(SEGMENT_RE);
-    if (!m || !m[1]) return raw;
+    const token = raw.match(SEGMENT_RE)?.[1];
+    if (!token) return raw;
     try {
-      const decrypted = megaPlayDecrypt(m[1]);
-      return decrypted || raw;
+      return megaPlayDecrypt(token) || raw;
     } catch {
       return raw;
     }
   }
 
+  const fileOf = (sources: any): string | null =>
+    (typeof sources?.file === 'string' ? sources.file : null) ||
+    (Array.isArray(sources) && sources[0]?.file ? String(sources[0].file) : null);
+
+  /**
+   * The stream URL in a getSources answer, which comes in one of two forms: `{ enc }`, encrypted
+   * JSON (`{ sources }`) or an encrypted bare URL, or a plain `{ sources: { file } }` /
+   * `{ sources: [{ file }] }`.
+   */
   function extractStreamUrl(data: any): string | null {
     if (!data || typeof data !== 'object') return null;
 
-    // ── Case 1: encrypted payload  { enc: "base64url…" } ──────────────────
     if (typeof data.enc === 'string' && data.enc.length > 0) {
+      let plain = '';
       try {
-        const plain = megaPlayDecrypt(data.enc);
-        if (plain) {
-          // Decrypted value might be JSON: { sources: [{ file: "..." }] }
-          try {
-            const parsed = JSON.parse(plain);
-            const url =
-              (typeof parsed?.sources?.file === 'string' ? parsed.sources.file : null) ||
-              (Array.isArray(parsed?.sources) && parsed.sources[0]?.file ? String(parsed.sources[0].file) : null) ||
-              (typeof parsed?.file === 'string' ? parsed.file : null);
-            if (url) return resolveSegmentUrl(url);
-          } catch {
-            // not JSON — fall through and treat as raw URL
-          }
-          if (/^https?:\/\//i.test(plain) || plain.includes('.m3u8')) {
-            return plain.trim();
-          }
-        }
+        plain = megaPlayDecrypt(data.enc);
       } catch {
-        // decrypt failed — fall through to plain sources
+        // Not encrypted with this key: the answer's plain sources are tried below.
+      }
+      if (plain) {
+        let parsed: any;
+        try {
+          parsed = JSON.parse(plain);
+        } catch {
+          // A bare URL rather than JSON.
+        }
+        const url = fileOf(parsed?.sources) || (typeof parsed?.file === 'string' ? parsed.file : null);
+        if (url) return resolveSegmentUrl(url);
+        if (/^https?:\/\//i.test(plain) || plain.includes('.m3u8')) return plain.trim();
       }
     }
 
-    // ── Case 2: plain / segment-token sources ──────────────────────────────
-    const rawUrl: string | null =
-      (typeof data?.sources?.file === 'string' ? data.sources.file : null) ||
-      (Array.isArray(data?.sources) && data.sources[0]?.file ? String(data.sources[0].file) : null);
-
-    if (rawUrl) return resolveSegmentUrl(rawUrl);
-
-    return null;
+    const rawUrl = fileOf(data.sources);
+    return rawUrl ? resolveSegmentUrl(rawUrl) : null;
   }
 
-  const extract = async (videoUrl: PolyURL, referer?: string): Promise<ISource> => {
-    const embedHref = typeof videoUrl === 'string' ? videoUrl : videoUrl.href;
-    const urlObj = typeof videoUrl === 'object' && videoUrl.origin ? videoUrl : new (ctx.PolyURL || URL)(embedHref);
-    const origin = urlObj.origin || 'https://megaplay.buzz';
-    const pageReferer = referer || embedHref;
+  const extract = async (videoUrl: string | PolyURL, referer?: string): Promise<ISource> => {
+    const embedUrl = toUrl(PolyURL, videoUrl);
+    const embedHref = embedUrl.href;
+    const origin = embedUrl.origin;
 
-    // ── Collect cookies across requests so the video player can send them ────
+    // Cookies set along the way; the player has to send them too.
     const cookieJar: string[] = [];
-
     const parseCookies = (headers: any): string[] => {
       const raw = headers?.['set-cookie'];
       if (!raw) return [];
-      const arr = Array.isArray(raw) ? raw : [raw];
-      // Keep only the name=value part (strip path/domain/etc.)
-      return arr.map((c: string) => c.split(';')[0] ?? '').filter(Boolean);
+      return (Array.isArray(raw) ? raw : [raw]).map((c: string) => c.split(';')[0] ?? '').filter(Boolean);
     };
 
-    const pageRes = await client.get(embedHref, {
+    const pageRes = await axios.get(embedHref, {
       headers: {
-        'User-Agent': userAgent,
-        'Referer': pageReferer,
+        'User-Agent': USER_AGENT,
+        'Referer': referer || embedHref,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
     });
     cookieJar.push(...parseCookies(pageRes.headers));
 
-    const $ = load(pageRes.data);
-    const playerDiv = $('#megaplay-player');
-
-    if (!playerDiv.length) {
-      throw new Error('[MegaPlay] Could not find player element (#megaplay-player)');
-    }
-
+    const playerDiv = load(pageRes.data)('#megaplay-player');
+    if (!playerDiv.length) throw new Error('[MegaPlay] Could not find player element (#megaplay-player)');
     const mediaId = playerDiv.attr('data-id');
-    if (!mediaId) {
-      throw new Error('[MegaPlay] Could not find data-id on player element');
-    }
+    if (!mediaId) throw new Error('[MegaPlay] Could not find data-id on player element');
 
-    const sParam = urlObj.searchParams?.get('s');
+    const sParam = embedUrl.searchParams.get('s');
     const sQuery = sParam ? `&s=${encodeURIComponent(sParam)}` : '';
-
     const cookieHeader = () => cookieJar.join('; ');
-
-    const ajaxHeaders = (): Record<string, string> => ({
-      'X-Requested-With': 'XMLHttpRequest',
-      'Referer': `${origin}/`,
-      'Origin': origin,
-      'User-Agent': userAgent,
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      ...(cookieJar.length ? { Cookie: cookieHeader() } : {}),
-    });
 
     const fetchJson = async (url: string): Promise<any | null> => {
       try {
-        const res = await client.get(url, { headers: ajaxHeaders() });
+        const res = await axios.get(url, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': `${origin}/`,
+            'Origin': origin,
+            'User-Agent': USER_AGENT,
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            ...(cookieJar.length ? { Cookie: cookieHeader() } : {}),
+          },
+        });
         cookieJar.push(...parseCookies(res.headers));
-        const data = res.data;
-        return typeof data === 'string' ? JSON.parse(data) : data;
+        return typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
       } catch {
+        // A stream answers on one of the two endpoints; the other one is tried too.
         return null;
       }
     };
@@ -163,71 +134,24 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
     ]);
 
     const streamUrl = extractStreamUrl(defSourcesJson) || extractStreamUrl(newSourcesJson);
-
-    if (!streamUrl) {
-      throw new Error('[MegaPlay] No video stream URL found from /getSources or /getSourcesNew');
-    }
+    if (!streamUrl) throw new Error('[MegaPlay] No video stream URL found from /getSources or /getSourcesNew');
 
     const cleanStreamUrl = streamUrl.replace(/\\/g, '').trim();
     const isM3U8 = cleanStreamUrl.includes('.m3u8');
-
-    const extractedSources: IVideo[] = [];
-    const defaultSource: IVideo = { url: cleanStreamUrl, isM3U8, quality: 'auto' };
-
-    if (isM3U8) {
-      try {
-        const { data: m3u8Data } = await client.get(cleanStreamUrl, {
-          headers: { 'Referer': `${origin}/`, 'User-Agent': userAgent },
-        });
-
-        // When the master lists the audio as separate renditions (#EXT-X-MEDIA:TYPE=AUDIO with a
-        // URI), its variants are video only: a player given one plays without sound. Then only the
-        // master is returned, and the player picks the quality and the audio language from it.
-        const separateAudio =
-          typeof m3u8Data === 'string' &&
-          m3u8Data
-            .split('\n')
-            .some((line) => line.startsWith('#EXT-X-MEDIA:') && line.includes('TYPE=AUDIO') && line.includes('URI='));
-
-        if (typeof m3u8Data === 'string' && m3u8Data.includes('#EXT-X-STREAM-INF') && !separateAudio) {
-          const lines = m3u8Data.split('\n');
-          const streamBasePath = cleanStreamUrl.substring(0, cleanStreamUrl.lastIndexOf('/'));
-          const streamOrigin = new (ctx.PolyURL || URL)(cleanStreamUrl).origin;
-
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i]?.trim();
-            if (line?.startsWith('#EXT-X-STREAM-INF')) {
-              const resMatch = line.match(/RESOLUTION=\d+x(\d+)/);
-              const quality = resMatch ? `${resMatch[1]}p` : `quality_${extractedSources.length + 1}`;
-              const next = lines[i + 1]?.trim();
-              if (next && !next.startsWith('#')) {
-                const variantUrl =
-                  next.startsWith('http://') || next.startsWith('https://')
-                    ? next
-                    : next.startsWith('/')
-                      ? `${streamOrigin}${next}`
-                      : `${streamBasePath}/${next}`;
-                extractedSources.push({ url: variantUrl, isM3U8: true, quality });
-              }
-            }
-          }
-        }
-      } catch {
-        // variants fetch failed — defaultSource will be used
-      }
-    }
-
-    const finalSources = extractedSources.length > 0 ? [...extractedSources, defaultSource] : [defaultSource];
+    const master = { url: cleanStreamUrl, isM3U8, quality: 'auto' };
+    const variants = isM3U8
+      ? hlsVariants(
+          (await axios.get(cleanStreamUrl, { headers: { 'Referer': `${origin}/`, 'User-Agent': USER_AGENT } })).data,
+          cleanStreamUrl
+        )
+      : [];
 
     const tracks = defSourcesJson?.tracks ?? newSourcesJson?.tracks ?? [];
     const subtitles: ISubtitle[] = [];
     if (Array.isArray(tracks)) {
       for (const track of tracks) {
         if (track?.file) {
-          subtitles.push({
-            url: String(track.file).replace(/\\/g, ''),
-            lang: track.label || track.kind || 'English',
-          });
+          subtitles.push({ url: String(track.file).replace(/\\/g, ''), lang: track.label || track.kind || 'English' });
         }
       }
     }
@@ -235,20 +159,17 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
     const intro = defSourcesJson?.intro ?? newSourcesJson?.intro;
     const outro = defSourcesJson?.outro ?? newSourcesJson?.outro;
 
-    // Build player headers — these must be sent with every HLS request.
-    // The CDN (fetch.nexabloom.top) is IP-bound: the URL is generated for the
-    // requesting IP, so extraction and playback must share the same IP.
+    // The player sends these with every HLS request. The CDN (fetch.nexabloom.top) is IP-bound: the
+    // URL is generated for the requesting IP, so extraction and playback must share the same IP.
     const playerHeaders: Record<string, string> = {
       'Referer': `${origin}/`,
       'Origin': origin,
-      'User-Agent': userAgent,
+      'User-Agent': USER_AGENT,
     };
-    if (cookieJar.length) {
-      playerHeaders.Cookie = cookieHeader();
-    }
+    if (cookieJar.length) playerHeaders.Cookie = cookieHeader();
 
     return {
-      sources: finalSources,
+      sources: [...variants, master],
       subtitles,
       headers: playerHeaders,
       intro: intro ? { start: intro.start, end: intro.end } : undefined,
@@ -257,5 +178,5 @@ export function MegaPlay(ctx: ExtractorContext): IVideoExtractor {
     };
   };
 
-  return { serverName, sources, extract };
+  return { extract };
 }

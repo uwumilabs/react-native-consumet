@@ -1,41 +1,5 @@
-import { AnimeParser, type ProviderContext } from '../../../models';
-import { type AnimePaheProviderInstance } from './create-animepahe';
-export declare class AnimePahe extends AnimeParser {
-    private instance;
-    logo: string;
-    name: string;
-    baseUrl: string;
-    classPath: string;
-    isNSFW: boolean;
-    isWorking: boolean;
-    isDubAvailableSeparately: boolean;
-    /**
-     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
-     * @param customBaseURL site URL to use instead of the default (optional)
-     */
-    constructor(ctx?: ProviderContext, customBaseURL?: string);
-    /** The older form, without a context. */
-    constructor(customBaseURL?: string);
-    /**
-     * @param query Search query
-     */
-    search: AnimePaheProviderInstance['search'];
-    /**
-     * @param id id format id/session
-     * @param episodePage Episode page number (optional) default: -1 to get all episodes. number of episode pages can be found in the anime info object
-     */
-    fetchAnimeInfo: AnimePaheProviderInstance['fetchAnimeInfo'];
-    /**
-     *
-     * @param episodeId Episode id
-     * @param server server type (default `Kwik`) (optional)
-     * @param subOrDub sub or dub (default `SubOrDub.SUB`) (optional)
-     */
-    fetchEpisodeSources: AnimePaheProviderInstance['fetchEpisodeSources'];
-    /**
-     * Method not implemented in AnimePahe provider.
-     * @param episodeId Episode id
-     */
-    fetchEpisodeServers: AnimePaheProviderInstance['fetchEpisodeServers'];
-}
+import { AnimeParser } from '../../../models';
+import { createAnimePahe } from './create-animepahe';
+export declare const AnimePahe: import("../../provider-class").ProviderClass<typeof createAnimePahe, typeof AnimeParser>;
+export type AnimePahe = InstanceType<typeof AnimePahe>;
 //# sourceMappingURL=animepahe.d.ts.map

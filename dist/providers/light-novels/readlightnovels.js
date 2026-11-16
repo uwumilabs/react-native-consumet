@@ -13,7 +13,7 @@ const cheerio_1 = require("cheerio");
 const form_data_1 = __importDefault(require("form-data"));
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
-const utils_1 = require("../../utils");
+const media_status_1 = require("../common/media-status");
 class ReadLightNovels extends models_1.LightNovelParser {
   ctx;
   name = 'Read Light Novels';
@@ -27,62 +27,39 @@ class ReadLightNovels extends models_1.LightNovelParser {
     this.ctx = ctx;
   }
   /**
-   *
-   * @param lightNovelUrl light novel link or id
-   * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
+   * @param lightNovelUrl light novel URL or id
+   * @param chapterPage one page of the chapter list, counting from 1 (default: every page)
    */
-  fetchLightNovelInfo = (() => {
-    var _this = this;
-    return async function (lightNovelUrl) {
-      let chapterPage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -1;
-      if (!lightNovelUrl.startsWith(_this.baseUrl)) {
-        lightNovelUrl = `${_this.baseUrl}/${lightNovelUrl}.html`;
-      }
-      const lightNovelInfo = {
-        id: lightNovelUrl.split('/')?.pop()?.replace('.html', ''),
-        title: '',
-        url: lightNovelUrl
-      };
-      try {
-        const page = await _this.ctx.axios.get(lightNovelUrl, {
-          headers: {
-            Referer: lightNovelUrl
-          }
-        });
-        const $ = (0, cheerio_1.load)(page.data);
-        const novelId = parseInt($('#id_post').val());
-        lightNovelInfo.title = $('div.col-xs-12.col-sm-8.col-md-8.desc > h3').text();
-        lightNovelInfo.image = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.books > div > img').attr('src');
-        lightNovelInfo.author = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(1) > a').text();
-        lightNovelInfo.genres = $(' div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(2) > a').map((i, el) => $(el).text()).get();
-        lightNovelInfo.rating = parseFloat($('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text());
-        lightNovelInfo.views = parseInt($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text());
-        lightNovelInfo.description = $('div.col-xs-12.col-sm-8.col-md-8.desc > div.desc-text > hr').eq(0).nextUntil('hr').text();
-        const pages = Math.max(...$('#pagination > ul > li').map((i, el) => parseInt($(el).find('a').attr('data-page'))).get().filter(x => !isNaN(x)));
-        switch ($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text()) {
-          case 'Completed':
-            lightNovelInfo.status = models_1.MediaStatus.COMPLETED;
-            break;
-          case 'On Going':
-            lightNovelInfo.status = models_1.MediaStatus.ONGOING;
-            break;
-          default:
-            lightNovelInfo.status = models_1.MediaStatus.UNKNOWN;
-            break;
-        }
-        lightNovelInfo.pages = pages;
-        lightNovelInfo.chapters = [];
-        if (chapterPage === -1) {
-          lightNovelInfo.chapters = await _this.fetchAllChapters(novelId, pages, lightNovelUrl);
-        } else {
-          lightNovelInfo.chapters = await _this.fetchChapters(novelId, chapterPage, lightNovelUrl);
-        }
-        return lightNovelInfo;
-      } catch (err) {
-        throw new Error(err.message);
-      }
+  fetchLightNovelInfo = async (lightNovelUrl, chapterPage) => {
+    if (!lightNovelUrl.startsWith(this.baseUrl)) {
+      lightNovelUrl = `${this.baseUrl}/${lightNovelUrl}.html`;
+    }
+    const lightNovelInfo = {
+      id: lightNovelUrl.split('/')?.pop()?.replace('.html', ''),
+      title: '',
+      url: lightNovelUrl
     };
-  })();
+    const page = await this.ctx.axios.get(lightNovelUrl, {
+      headers: {
+        Referer: lightNovelUrl
+      }
+    });
+    const $ = (0, cheerio_1.load)(page.data);
+    const novelId = parseInt($('#id_post').val());
+    lightNovelInfo.title = $('div.col-xs-12.col-sm-8.col-md-8.desc > h3').text();
+    lightNovelInfo.image = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.books > div > img').attr('src');
+    lightNovelInfo.author = $('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(1) > a').text();
+    lightNovelInfo.genres = $(' div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(2) > a').map((i, el) => $(el).text()).get();
+    lightNovelInfo.rating = parseFloat($('div.col-xs-12.col-sm-8.col-md-8.desc > div.rate > div.small > em > strong:nth-child(1) > span').text());
+    lightNovelInfo.views = parseInt($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(4) > span').text());
+    lightNovelInfo.description = $('div.col-xs-12.col-sm-8.col-md-8.desc > div.desc-text > hr').eq(0).nextUntil('hr').text();
+    const pages = Math.max(...$('#pagination > ul > li').map((i, el) => parseInt($(el).find('a').attr('data-page'))).get().filter(x => !isNaN(x)));
+    lightNovelInfo.status = (0, media_status_1.toMediaStatus)($('div.col-xs-12.col-sm-4.col-md-4.info-holder > div.info > div:nth-child(3) > span').text(), models_1.MediaStatus);
+    lightNovelInfo.pages = pages;
+    // Pages count from 1; anything else (the -1 this once took for "every page" too) lists them all.
+    lightNovelInfo.chapters = chapterPage !== undefined && chapterPage >= 1 ? await this.fetchChapters(novelId, chapterPage, lightNovelUrl) : await this.fetchAllChapters(novelId, pages, lightNovelUrl);
+    return lightNovelInfo;
+  };
   fetchChapters = async (novelId, chapterPage, referer) => {
     const chapters = [];
     const bodyFormData = new form_data_1.default();
@@ -98,7 +75,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
         'referer': referer,
         'content-type': 'multipart/form-data',
         'origin': this.baseUrl,
-        'user-agent': utils_1.USER_AGENT
+        'user-agent': this.ctx.USER_AGENT
       }
     });
     const $ = (0, cheerio_1.load)(page.data.list_chap);
@@ -123,10 +100,7 @@ class ReadLightNovels extends models_1.LightNovelParser {
     }
     return chapters;
   };
-  /**
-   *
-   * @param chapterId chapter id or url
-   */
+  /** @param chapterId chapter id or URL */
   fetchChapterContent = async chapterId => {
     if (!chapterId.startsWith(this.baseUrl)) {
       chapterId = `${this.baseUrl}/${chapterId}.html`;
@@ -136,50 +110,33 @@ class ReadLightNovels extends models_1.LightNovelParser {
       chapterTitle: '',
       text: ''
     };
-    try {
-      const page = await this.ctx.axios.get(chapterId);
-      const $ = (0, cheerio_1.load)(page.data);
-      contents.novelTitle = $('.truyen-title').text();
-      contents.chapterTitle = $('.chapter-title').text();
-      for (const line of $('div.chapter-content > p')) {
-        if ($(line).text() !== '﻿') {
-          contents.text += `${$(line).text()}\n`;
-        }
+    const page = await this.ctx.axios.get(chapterId);
+    const $ = (0, cheerio_1.load)(page.data);
+    contents.novelTitle = $('.truyen-title').text();
+    contents.chapterTitle = $('.chapter-title').text();
+    for (const line of $('div.chapter-content > p')) {
+      if ($(line).text() !== '﻿') {
+        contents.text += `${$(line).text()}\n`;
       }
-      return contents;
-    } catch (err) {
-      throw new Error(err.message);
     }
+    return contents;
   };
-  /**
-   *
-   * @param query search query string
-   */
   search = async query => {
     const result = {
       results: []
     };
-    try {
-      const res = await this.ctx.axios.post(`${this.baseUrl}/?s=${query}`);
-      const $ = (0, cheerio_1.load)(res.data);
-      $('div.col-xs-12.col-sm-12.col-md-9.col-truyen-main > div:nth-child(1) > div > div:nth-child(2) > div.col-md-3.col-sm-6.col-xs-6.home-truyendecu').each((i, el) => {
-        result.results.push({
-          id: $(el).find('a').attr('href')?.split('/')[3].replace('.html', ''),
-          title: $(el).find('a > div > h3').text(),
-          url: $(el).find('a').attr('href'),
-          image: $(el).find('a > img').attr('src')
-        });
+    const res = await this.ctx.axios.post(`${this.baseUrl}/?s=${encodeURIComponent(query)}`);
+    const $ = (0, cheerio_1.load)(res.data);
+    $('div.col-xs-12.col-sm-12.col-md-9.col-truyen-main > div:nth-child(1) > div > div:nth-child(2) > div.col-md-3.col-sm-6.col-xs-6.home-truyendecu').each((i, el) => {
+      result.results.push({
+        id: $(el).find('a').attr('href')?.split('/')[3].replace('.html', ''),
+        title: $(el).find('a > div > h3').text(),
+        url: $(el).find('a').attr('href'),
+        image: $(el).find('a > img').attr('src')
       });
-      return result;
-    } catch (err) {
-      throw new Error(err.message);
-    }
+    });
+    return result;
   };
 }
 exports.ReadLightNovels = ReadLightNovels;
-// (async () => {
-//   const ln = new ReadLightNovels();
-//   const chap = await ln.fetchChapterContent('youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e/volume-1-prologue-the-structure-of-japanese-society');
-//   console.log(chap);
-// })();
 //# sourceMappingURL=readlightnovels.js.map

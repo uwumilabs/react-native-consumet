@@ -1,6 +1,6 @@
 import type { AxiosStatic } from 'axios';
 import type TMDBClass from '../../src/providers/meta/tmdb';
-import type { MultiStream as MultiStreamClass } from '../../src/providers/movies/multistream';
+import type { MultiStream as MultiStreamClass } from '../../src/providers/movies/multistream/multistream';
 import type { IMovieProvider } from '../../src/models/types';
 import type { metaHttp as MetaHttp } from '../../src/utils/meta-http';
 import show from './fixtures/tmdb/tv-84958.json';
@@ -33,10 +33,10 @@ const load = () => {
   jest.isolateModules(() => {
     modules = {
       TMDB: require('../../src/providers/meta/tmdb').default,
-      MultiStream: require('../../src/providers/movies/multistream').MultiStream,
+      MultiStream: require('../../src/providers/movies/multistream/multistream').MultiStream,
       axios: require('axios').default,
       // MultiStream without a context sends its requests through this instance
-      defaultAxios: require('../../src/utils/extension-utils').defaultAxios,
+      defaultAxios: require('../../src/utils/create-extractor-context').defaultAxios,
       metaHttp: require('../../src/utils/meta-http').metaHttp,
     };
   });

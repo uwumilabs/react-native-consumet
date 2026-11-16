@@ -8,6 +8,9 @@ import {
   Genres,
   Topics,
 } from '../models/types';
+import type { ExtractorContext, ProviderContext } from '../models';
+import { assertValidIdentifier, verifyExtensionCode, type IntegrityOptions } from './extension-integrity';
+import { createExtensionFetch, fetchTextWithTimeout } from './fetch-with-timeout';
 
 /** Module names registry bundles import from the runtime (see scripts/build-extensions.js). */
 export const MODELS_MODULE = 'react-native-consumet/models';
@@ -28,6 +31,8 @@ export const extensionEnums = {
   Genres,
   Topics,
 };
+
+export type ExtensionKind = 'provider' | 'extractor';
 
 /**
  * Builds the `require` extension code runs with. Only the modules passed in resolve; anything
@@ -50,6 +55,56 @@ export type ExtensionFactory = (...args: any[]) => any;
 /** The globals extension code runs with; each key becomes a local constant of that name. */
 export type ExtensionGlobals = { exports: Record<string, any>; module: { exports: any } } & Record<string, unknown>;
 
+const isProviderContext = (ctx: ExtractorContext | ProviderContext): ctx is ProviderContext => 'enums' in ctx;
+
+/**
+ * The globals and `require`-able modules registry code of `kind` runs with, built from the context it
+ * gets. Extractor code also sees axios, cheerio's load, CryptoJS and the URL classes as globals;
+ * provider code reaches them through `require` or its context.
+ */
+export function extensionGlobals(
+  kind: ExtensionKind,
+  id: string,
+  ctx: ExtractorContext | ProviderContext
+): ExtensionGlobals {
+  const parsers = isProviderContext(ctx)
+    ? { AnimeParser: ctx.AnimeParser, MovieParser: ctx.MovieParser, MangaParser: ctx.MangaParser }
+    : {};
+  const utils = isProviderContext(ctx)
+    ? { createProviderContext: () => ctx, createExtractorContext: () => ctx }
+    : { createExtractorContext: () => ctx };
+  // The only modules registry code can require; anything else throws (EXT-5).
+  const modules: Record<string, unknown> = {
+    'cheerio': { load: ctx.load },
+    'axios': ctx.axios,
+    'crypto-js': ctx.CryptoJS,
+    [MODELS_MODULE]: { ...parsers, ...extensionEnums },
+    [UTILS_MODULE]: utils,
+    'URL': ctx.PolyURL,
+    'URLSearchParams': ctx.PolyURLSearchParams,
+    'NativeConsumet': ctx.NativeConsumet,
+  };
+  const globals: ExtensionGlobals = {
+    exports: {},
+    module: { exports: {} },
+    require: createExtensionRequire(id, modules),
+    console,
+    Promise,
+    Object,
+    fetch: createExtensionFetch(ctx.axios),
+  };
+  if (kind === 'extractor') {
+    Object.assign(globals, {
+      axios: ctx.axios,
+      load: ctx.load,
+      CryptoJS: ctx.CryptoJS,
+      URL: ctx.PolyURL,
+      URLSearchParams: ctx.PolyURLSearchParams,
+    });
+  }
+  return globals;
+}
+
 /**
  * Run single-file extension code and return the function it provides as `name`: `exports[name]`,
  * `module.exports[name]`, a top-level `function name` (code without exports), or its default
@@ -59,7 +114,7 @@ export function evaluateExtensionCode(
   code: string,
   name: string,
   globals: ExtensionGlobals,
-  kind: 'provider' | 'extractor'
+  kind: ExtensionKind
 ): ExtensionFactory | undefined {
   const label = kind === 'provider' ? 'Provider' : 'Extractor';
   let run: (context: ExtensionGlobals) => unknown;
@@ -82,7 +137,6 @@ export function evaluateExtensionCode(
       `
     ) as typeof run;
   } catch (syntaxError: any) {
-    console.error(`Syntax error in ${kind} code:`, syntaxError);
     throw new Error(`Failed to parse ${kind} code: ${syntaxError.message}`);
   }
 
@@ -97,8 +151,93 @@ export function evaluateExtensionCode(
   );
 }
 
+/** Thrown when a registry entry's code can't be downloaded; `status` is the HTTP status, if any. */
+export class RegistryFetchError extends Error {
+  readonly kind: ExtensionKind;
+  readonly url: string;
+  readonly status?: number;
+
+  constructor(kind: ExtensionKind, url: string, message: string, status?: number) {
+    super(message);
+    this.name = 'RegistryFetchError';
+    this.kind = kind;
+    this.url = url;
+    this.status = status;
+    Object.setPrototypeOf(this, RegistryFetchError.prototype);
+  }
+}
+
+/** Download the code a registry entry's `main` points at. */
+export async function fetchEntryCode(kind: ExtensionKind, main: string): Promise<string> {
+  const what = kind === 'provider' ? 'extension' : 'extractor';
+  let response: Awaited<ReturnType<typeof fetchTextWithTimeout>>;
+  try {
+    response = await fetchTextWithTimeout(main, {
+      method: 'GET',
+      headers: { 'Accept': 'text/plain, application/javascript, */*', 'User-Agent': 'React-Native-Consumet/1.0.0' },
+    });
+  } catch (error) {
+    throw new RegistryFetchError(kind, main, `Failed to fetch ${what}: ${(error as Error)?.message ?? error}`);
+  }
+  if (!response.ok) {
+    throw new RegistryFetchError(
+      kind,
+      main,
+      `Failed to fetch ${what}: ${response.status} ${response.statusText}`,
+      response.status
+    );
+  }
+  return response.text;
+}
+
 /** Compiled extension code, reused only for the same code and sha256 (one entry per key). */
-export type CompiledCode = { sha256: string; code: string; factory: ExtensionFactory };
+type CompiledCode = { sha256: string; code: string; factory: ExtensionFactory };
+
+export interface CompileRequest {
+  kind: ExtensionKind;
+  /** Registry id of the entry, for errors */
+  id: string;
+  /** The function the code must provide; must be a plain identifier, as it's interpolated into the code */
+  name: unknown;
+  code: string;
+  entry: { id?: string; name?: string; sha256?: string };
+  globals: () => ExtensionGlobals;
+  /** Run the code without checking it against `entry.sha256`; such code is never cached. */
+  skipIntegrity?: boolean;
+}
+
+/**
+ * Turns verified registry code into the function it provides. The same code verified against the
+ * same hash runs from its compiled copy; unverified code is checked again on every call.
+ */
+export class CompiledCodeCache {
+  private compiled = new Map<string, CompiledCode>();
+
+  constructor(private integrityOptions: IntegrityOptions = {}) {}
+
+  compile(key: string, request: CompileRequest): ExtensionFactory {
+    const { kind, id, name, code, entry, skipIntegrity } = request;
+    assertValidIdentifier(name, kind === 'provider' ? 'factoryName' : 'extractor name', id);
+    const label = kind === 'provider' ? 'extension' : 'extractor code';
+
+    const sha256 = entry.sha256 ?? '';
+    const cached = this.compiled.get(key);
+    if (cached?.sha256 === sha256 && cached.code === code) return cached.factory;
+    if (!skipIntegrity) verifyExtensionCode(code, entry, this.integrityOptions);
+
+    const factory = evaluateExtensionCode(code, name, request.globals(), kind);
+    if (!factory) {
+      throw new Error(`Factory function '${name}' not found in ${label}`);
+    }
+    if (!skipIntegrity) this.compiled.set(key, { sha256, code, factory });
+    return factory;
+  }
+
+  /** Forget the compiled code of one extension or extractor: keys `${id}` and `${id}|…`. */
+  forget(id: string): void {
+    deleteEntriesOf(this.compiled, id);
+  }
+}
 
 /**
  * Share one load per key: concurrent callers get the same promise, later callers the result.

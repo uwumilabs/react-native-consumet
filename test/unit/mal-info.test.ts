@@ -138,6 +138,36 @@ describe('Myanimelist.fetchAnimeInfo provider episodes (META-9)', () => {
     expect(noDub.episodes).toEqual([]);
   });
 
+  it('asks Kitsu for the details the provider lacks, sending the title as a variable', async () => {
+    const bare = episodes.map(({ id, number }) => ({ id, number }));
+    const post = jest.spyOn(metaHttp, 'post').mockResolvedValue({
+      data: {
+        data: {
+          searchAnimeByTitle: {
+            nodes: [
+              {
+                season: 'SPRING',
+                startDate: '2009-04-05',
+                episodes: { nodes: [{ number: 1, titles: { canonical: 'Fullmetal Alchemist' }, description: { en: 'One' } }] },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const info = await fetchAnimeInfo(fakeProvider(results, { id: 'fmab', title: 'FMA:B', episodes: bare }));
+
+    const [url, body, config] = post.mock.calls[0]!;
+    expect(url).toBe('https://kitsu.app/api/graphql');
+    expect(body).toEqual({ query: expect.stringContaining('$title'), variables: { title: 'Fullmetal Alchemist Brotherhood' } });
+    expect(config).toEqual({ headers: { 'Content-Type': 'application/json' } });
+    expect(info.episodes!.map((e) => [e.id, e.title, e.description])).toEqual([
+      ['fmab-1', 'Fullmetal Alchemist', 'One'],
+      ['fmab-2', null, null],
+    ]);
+  });
+
   it('returns no episodes when the provider search finds nothing', async () => {
     const provider = fakeProvider([]);
 

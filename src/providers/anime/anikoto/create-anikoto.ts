@@ -1,3 +1,4 @@
+import type { CheerioAPI } from 'cheerio';
 import {
   type ISearch,
   type IAnimeInfo,
@@ -5,20 +6,27 @@ import {
   type IAnimeEpisode,
   type ISource,
   type IEpisodeServer,
-  type StreamingServers,
   type MediaFormat,
+  type MediaStatus,
   type SubOrDub,
   type ProviderContext,
   type ProviderConfig,
   type ProviderCapabilities,
 } from '../../../models';
+import { toMediaStatus } from '../../common/media-status';
+import { pickServer } from '../../common/servers';
+import { serverName } from '../helpers';
+import { cardPage, pageUrl, siteEpisodeId, toEpisodeId } from '../hianime';
+
+// The zone the schedule's airing times come back in: UTC+5:30 (IST), as minutes behind UTC (the
+// form Date.getTimezoneOffset uses). It is fixed, not the device's zone.
+const IST_TZ_OFFSET = -330;
 
 export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
-  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL } = ctx;
+  const { axios, load, extractors, enums, createCustomBaseUrl, PolyURL, USER_AGENT } = ctx;
   const { MegaPlay } = extractors;
-  const { StreamingServers: StreamingServersEnum, SubOrDub: SubOrDubEnum, MediaStatus: MediaStatusEnum } = enums;
+  const { SubOrDub: SubOrDubEnum } = enums;
 
-  // Provider configuration
   const baseUrl = createCustomBaseUrl('https://anikototv.to', customBaseURL);
 
   const config: ProviderConfig = {
@@ -32,10 +40,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     isDubAvailableSeparately: true,
   };
 
-  const defaultHeaders = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  };
+  const defaultHeaders = { 'User-Agent': USER_AGENT };
 
   const ajaxHeaders = (referer?: string) => ({
     ...defaultHeaders,
@@ -43,81 +48,48 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     'Referer': referer || config.baseUrl,
   });
 
-  const normalizePageNumber = (page: number): number => {
-    return page <= 0 ? 1 : page;
+  const scrapeCard = ($: CheerioAPI): IAnimeResult[] => {
+    const results: IAnimeResult[] = [];
+    $('.item').each((_, el) => {
+      const item = $(el);
+      const nameEl = item.find('.name.d-title, .name').first();
+      const title = nameEl.text().trim();
+      const href = item.find('a.name, .poster a').first().attr('href') || '';
+      const match = href.match(/\/watch\/([^/?#]+)/);
+      const id = match ? match[1]! : href.replace(/^.*\/watch\//, '').replace(/\/.*$/, '');
+      const ratingStr = item.find('.m-item.rated span').first().text().trim();
+
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          japaneseTitle: nameEl.attr('data-jp') || undefined,
+          image: item.find('.poster img, img').attr('src') || '',
+          url: href.startsWith('http') ? href : `${config.baseUrl}${href.startsWith('/') ? '' : '/'}${href}`,
+          type: (item.find('.meta .right').first().text().trim() || 'TV') as MediaFormat,
+          sub: parseInt(item.find('.ep-status.sub').first().text().trim(), 10) || 0,
+          dub: parseInt(item.find('.ep-status.dub').first().text().trim(), 10) || 0,
+          rating: ratingStr ? parseFloat(ratingStr) : undefined,
+        });
+      }
+    });
+    return results;
   };
 
-  // Helper to scrape card lists across search, types, genres, statuses
-  const scrapeCardPage = async (url: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    try {
-      const { data } = await axios.get(url, { headers: defaultHeaders });
-      const $ = load(data);
-      const results: IAnimeResult[] = [];
-
-      $('.item').each((_, el) => {
-        const item = $(el);
-        const nameEl = item.find('.name.d-title, .name').first();
-        const title = nameEl.text().trim();
-        const japaneseTitle = nameEl.attr('data-jp') || undefined;
-
-        const href = item.find('a.name, .poster a').first().attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1]! : href.replace(/^.*\/watch\//, '').replace(/\/.*$/, '');
-
-        const image = item.find('.poster img, img').attr('src') || '';
-        const subText = item.find('.ep-status.sub').first().text().trim();
-        const sub = parseInt(subText, 10) || 0;
-
-        const dubText = item.find('.ep-status.dub').first().text().trim();
-        const dub = parseInt(dubText, 10) || 0;
-
-        const type = (item.find('.meta .right').first().text().trim() || 'TV') as MediaFormat;
-        const ratingStr = item.find('.m-item.rated span').first().text().trim();
-        const rating = ratingStr ? parseFloat(ratingStr) : undefined;
-
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            japaneseTitle,
-            image,
-            url: href.startsWith('http') ? href : `${config.baseUrl}${href.startsWith('/') ? '' : '/'}${href}`,
-            type,
-            sub,
-            dub,
-            rating,
-          });
-        }
-      });
-
-      const hasNextPage =
-        $('.pagination .page-item .page-link[rel="next"]').length > 0 ||
-        $('.pagination .page-item.active').next('.page-item').find('.page-link').length > 0;
-
-      const lastPageHref = $('.pagination .page-item a[title="Last"]').attr('href') || '';
-      const lastPageMatch = lastPageHref.match(/page=(\d+)/);
-      const totalPages = lastPageMatch ? parseInt(lastPageMatch[1]!, 10) : undefined;
-
-      return {
-        currentPage: page,
-        hasNextPage,
-        totalPages,
-        results,
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to scrape card page: ${(err as Error).message}`);
-    }
+  /** Page `page` of the listing at `path` (`/most-viewed`, `/search?keyword=…`). */
+  const scrapeCardPage = async (path: string, page: number): Promise<ISearch<IAnimeResult>> => {
+    const { data } = await axios.get(pageUrl(`${config.baseUrl}${path}`, page), { headers: defaultHeaders });
+    const $ = load(data);
+    return cardPage($, scrapeCard($), page);
   };
 
-  // Main provider functions
-  const search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(
-      `${config.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${normalizedPage}`,
-      normalizedPage
-    );
-  };
+  const search = async (query: string, page: number = 1): Promise<ISearch<IAnimeResult>> =>
+    scrapeCardPage(`/search?keyword=${encodeURIComponent(query)}`, page);
 
+  /**
+   * Search with filters; each is optional. The site has no date filters: `_startDate` and
+   * `_endDate` are only there so the parameters line up with Zoro's.
+   */
   const fetchAdvancedSearch = async (
     page: number = 1,
     type?: string,
@@ -131,10 +103,7 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     sort?: string,
     genres?: string[]
   ): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
     const params = new URLSearchParams();
-    params.set('page', String(normalizedPage));
-
     if (type) params.set('type', type);
     if (status) params.set('status', status);
     if (rated) params.set('rated', rated);
@@ -142,473 +111,282 @@ export function createAniKoto(ctx: ProviderContext, customBaseURL?: string) {
     if (season) params.set('season', season);
     if (language) params.set('language', language);
     if (sort) params.set('sort', sort);
-    if (genres && genres.length > 0) {
-      for (const g of genres) {
-        params.append('genres[]', g);
-      }
-    }
+    for (const genre of genres ?? []) params.append('genres[]', genre);
 
-    return scrapeCardPage(`${config.baseUrl}/filter?${params.toString()}`, normalizedPage);
+    const query = params.toString();
+    return scrapeCardPage(query ? `/filter?${query}` : '/filter', page);
   };
 
-  const fetchTopAiring = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/currently-airing?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchMostPopular = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/most-viewed?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchMostFavorite = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?sort=most_favorite&page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchLatestCompleted = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/finished-airing?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchRecentlyUpdated = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/latest-updated?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchRecentlyAdded = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/new-release?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchTopUpcoming = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/status/not-yet-aired?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchStudio = async (studioId: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/studio/${studioId}?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchSubbedAnime = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?language=1&page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchDubbedAnime = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/filter?language=2&page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchMovie = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/movie?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchTV = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/tv?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchOVA = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/ova?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchONA = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/ona?page=${normalizedPage}`, normalizedPage);
-  };
-
-  const fetchSpecial = async (page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    return scrapeCardPage(`${config.baseUrl}/type/special?page=${normalizedPage}`, normalizedPage);
-  };
+  const fetchTopAiring = async (page: number = 1) => scrapeCardPage('/status/currently-airing', page);
+  const fetchMostPopular = async (page: number = 1) => scrapeCardPage('/most-viewed', page);
+  const fetchMostFavorite = async (page: number = 1) => scrapeCardPage('/filter?sort=most_favorite', page);
+  const fetchLatestCompleted = async (page: number = 1) => scrapeCardPage('/status/finished-airing', page);
+  const fetchRecentlyUpdated = async (page: number = 1) => scrapeCardPage('/latest-updated', page);
+  const fetchRecentlyAdded = async (page: number = 1) => scrapeCardPage('/new-release', page);
+  const fetchTopUpcoming = async (page: number = 1) => scrapeCardPage('/status/not-yet-aired', page);
+  /** @param studioId the studio's slug */
+  const fetchStudio = async (studioId: string, page: number = 1) => scrapeCardPage(`/studio/${studioId}`, page);
+  const fetchSubbedAnime = async (page: number = 1) => scrapeCardPage('/filter?language=1', page);
+  const fetchDubbedAnime = async (page: number = 1) => scrapeCardPage('/filter?language=2', page);
+  const fetchMovie = async (page: number = 1) => scrapeCardPage('/type/movie', page);
+  const fetchTV = async (page: number = 1) => scrapeCardPage('/type/tv', page);
+  const fetchOVA = async (page: number = 1) => scrapeCardPage('/type/ova', page);
+  const fetchONA = async (page: number = 1) => scrapeCardPage('/type/ona', page);
+  const fetchSpecial = async (page: number = 1) => scrapeCardPage('/type/special', page);
 
   const fetchGenres = async (): Promise<string[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
-      const $ = load(data);
-      const genres: string[] = [];
-      $('a[href*="/genre/"]').each((_, el) => {
-        const g = $(el).text().trim();
-        if (g && !genres.includes(g)) {
-          genres.push(g);
-        }
-      });
-      return genres.length > 0
-        ? genres
-        : [
-            'Action',
-            'Adventure',
-            'Comedy',
-            'Drama',
-            'Fantasy',
-            'Horror',
-            'Mystery',
-            'Romance',
-            'Sci-Fi',
-            'Slice of Life',
-            'Supernatural',
-          ];
-    } catch {
-      return [
-        'Action',
-        'Adventure',
-        'Comedy',
-        'Drama',
-        'Fantasy',
-        'Horror',
-        'Mystery',
-        'Romance',
-        'Sci-Fi',
-        'Slice of Life',
-        'Supernatural',
-      ];
-    }
+    const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
+    const $ = load(data);
+    const genres: string[] = [];
+    $('a[href*="/genre/"]').each((_, el) => {
+      const g = $(el).text().trim();
+      if (g && !genres.includes(g)) genres.push(g);
+    });
+    return genres;
   };
 
-  const genreSearch = async (genre: string, page: number = 1): Promise<ISearch<IAnimeResult>> => {
-    const normalizedPage = normalizePageNumber(page);
-    const cleanGenre = genre.toLowerCase().replace(/\s+/g, '-');
-    return scrapeCardPage(`${config.baseUrl}/genre/${cleanGenre}?page=${normalizedPage}`, normalizedPage);
-  };
+  /** @param genre a genre name or slug ("Slice of Life", "slice-of-life") */
+  const genreSearch = async (genre: string, page: number = 1): Promise<ISearch<IAnimeResult>> =>
+    scrapeCardPage(`/genre/${genre.toLowerCase().replace(/\s+/g, '-')}`, page);
 
+  /**
+   * The anime airing on a day.
+   * @param date `YYYY-MM-DD`; airing times are in IST (UTC+5:30)
+   */
   const fetchSchedule = async (date: string): Promise<IAnimeResult[]> => {
-    try {
-      const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=-330`, {
-        headers: ajaxHeaders(),
-      });
-      const html = res.data?.result || res.data;
-      const $ = load(html);
-      const results: IAnimeResult[] = [];
+    const res = await axios.get(`${config.baseUrl}/ajax/schedule/date?date=${date}&tzOffset=${IST_TZ_OFFSET}`, {
+      headers: ajaxHeaders(),
+    });
+    const $ = load(res.data?.result || res.data);
+    const results: IAnimeResult[] = [];
 
-      $('a.item').each((_, el) => {
-        const item = $(el);
-        const href = item.attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1]! : href;
-        const title = item.find('.title.d-title, .title').text().trim();
-        const time = item.find('.time').text().trim();
-        const episodeText = item.find('.ep span').text().trim();
+    $('a.item').each((_, el) => {
+      const item = $(el);
+      const href = item.attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? href;
+      const title = item.find('.title.d-title, .title').text().trim();
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          url: href,
+          time: item.find('.time').text().trim(),
+          episodeText: item.find('.ep span').text().trim(),
+        });
+      }
+    });
 
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            url: href,
-            time,
-            episodeText,
-          } as any);
-        }
-      });
-
-      return results;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch schedule: ${(err as Error).message}`);
-    }
+    return results;
   };
 
   const fetchSpotlight = async (): Promise<IAnimeResult[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
-      const $ = load(data);
-      const results: IAnimeResult[] = [];
+    const { data } = await axios.get(`${config.baseUrl}/home`, { headers: defaultHeaders });
+    const $ = load(data);
+    const results: IAnimeResult[] = [];
 
-      $('.swiper-slide.item').each((_, el) => {
-        const slide = $(el);
-        const title = slide.find('.title.d-title, .title').text().trim();
-        const japaneseTitle = slide.find('.title.d-title').attr('data-jp') || undefined;
-        const href = slide.find('a[href*="/watch/"]').first().attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1]! : '';
-        const description = slide.find('.synopsis').text().trim() || undefined;
-        const image = slide.find('img').attr('src') || '';
+    $('.swiper-slide.item').each((_, el) => {
+      const slide = $(el);
+      const title = slide.find('.title.d-title, .title').text().trim();
+      const href = slide.find('a[href*="/watch/"]').first().attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? '';
+      if (id && title) {
+        results.push({
+          id,
+          title,
+          japaneseTitle: slide.find('.title.d-title').attr('data-jp') || undefined,
+          description: slide.find('.synopsis').text().trim() || undefined,
+          image: slide.find('img').attr('src') || '',
+          url: href.startsWith('http') ? href : `${config.baseUrl}${href}`,
+        });
+      }
+    });
 
-        if (id && title) {
-          results.push({
-            id,
-            title,
-            japaneseTitle,
-            description,
-            image,
-            url: href.startsWith('http') ? href : `${config.baseUrl}${href}`,
-          });
-        }
-      });
-
-      return results;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch spotlight: ${(err as Error).message}`);
-    }
+    return results;
   };
 
   const fetchSearchSuggestions = async (query: string): Promise<IAnimeResult[]> => {
-    try {
-      const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
-        headers: ajaxHeaders(),
-      });
-      const html = res.data?.result?.html || res.data?.result || res.data;
-      const $ = load(html);
-      const suggestions: IAnimeResult[] = [];
+    const res = await axios.get(`${config.baseUrl}/ajax/anime/search?keyword=${encodeURIComponent(query)}`, {
+      headers: ajaxHeaders(),
+    });
+    const $ = load(res.data?.result?.html || res.data?.result || res.data);
+    const suggestions: IAnimeResult[] = [];
 
-      $('a.item').each((_, el) => {
-        const item = $(el);
-        const href = item.attr('href') || '';
-        const match = href.match(/\/watch\/([^/?#]+)/);
-        const id = match ? match[1]! : '';
-        const title = item.find('.name.d-title, .name').text().trim();
-        const japaneseTitle = item.find('.name.d-title').attr('data-jp') || undefined;
-        const image = item.find('.poster img, img').attr('src') || '';
-
-        if (id && title) {
-          suggestions.push({
-            id,
-            title,
-            japaneseTitle,
-            image,
-            url: href,
-          });
-        }
-      });
-
-      return suggestions;
-    } catch {
-      return [];
-    }
-  };
-
-  const fetchAnimeInfo = async (id: string): Promise<IAnimeInfo> => {
-    try {
-      const animeSlug = id.replace(/^\/watch\//, '').replace(/\/.*$/, '');
-      const watchUrl = `${config.baseUrl}/watch/${animeSlug}`;
-      const { data: pageHtml } = await axios.get(watchUrl, { headers: defaultHeaders });
-      const $ = load(pageHtml);
-
-      const title = $('#w-info .title.d-title, h1.title').first().text().trim();
-      const japaneseTitle =
-        $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
-
-      const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
-      const description = $('#w-info .synopsis .content, .synopsis')
-        .text()
-        .replace(/\[more\]/g, '')
-        .trim();
-
-      // Extract anime ID (data-id e.g. 7174)
-      const dataId =
-        $('#watch-main').attr('data-id') ||
-        $('.layout-page-watchtv').attr('data-id') ||
-        $('#w-rating').attr('data-id') ||
-        $('[data-id]').first().attr('data-id');
-
-      // Extract metadata
-      let type: MediaFormat = 'TV' as MediaFormat;
-      let premiered: string | undefined;
-      let aired: string | undefined;
-      let status: any = MediaStatusEnum.UNKNOWN;
-      const genres: string[] = [];
-      const studios: string[] = [];
-      const producers: string[] = [];
-      let duration: string | undefined;
-      let rating: number | undefined;
-
-      $('#w-info .bmeta .meta div').each((_, el) => {
-        const text = $(el).text();
-        if (text.includes('Type:')) {
-          type = $(el).find('span').text().trim() as MediaFormat;
-        } else if (text.includes('Premiered:')) {
-          premiered = $(el).find('span').text().trim();
-        } else if (text.includes('Aired:')) {
-          aired = $(el).find('span').text().trim();
-        } else if (text.includes('Status:')) {
-          const s = $(el).find('span').text().trim().toLowerCase();
-          if (s.includes('finished')) status = MediaStatusEnum.COMPLETED;
-          else if (s.includes('airing') || s.includes('ongoing')) status = MediaStatusEnum.ONGOING;
-          else if (s.includes('not yet')) status = MediaStatusEnum.NOT_YET_AIRED;
-        } else if (text.includes('Genres:')) {
-          $(el)
-            .find('a')
-            .each((_, a) => {
-              const g = $(a).text().trim();
-              if (g && !genres.includes(g)) genres.push(g);
-            });
-        } else if (text.includes('Studios:')) {
-          $(el)
-            .find('a')
-            .each((_, a) => {
-              const st = $(a).text().trim();
-              if (st && !studios.includes(st)) studios.push(st);
-            });
-        } else if (text.includes('Producers:')) {
-          $(el)
-            .find('a')
-            .each((_, a) => {
-              const pr = $(a).text().trim();
-              if (pr && pr !== 'unknown' && !producers.includes(pr)) producers.push(pr);
-            });
-        } else if (text.includes('Duration:')) {
-          duration = $(el).find('span').text().trim();
-        } else if (text.includes('MAL:')) {
-          const r = $(el).find('span').text().trim();
-          rating = r ? parseFloat(r) : undefined;
-        }
-      });
-
-      // Fetch episodes from /ajax/episode/list/${dataId}
-      const episodes: IAnimeEpisode[] = [];
-      if (dataId) {
-        try {
-          const epRes = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
-            headers: ajaxHeaders(watchUrl),
-          });
-          const epHtml = epRes.data?.result || epRes.data;
-          const $ep = load(epHtml);
-
-          $ep('li').each((_, li) => {
-            const listItem = $ep(li);
-            const anchor = listItem.find('a').first();
-            const dataIds = anchor.attr('data-ids') || anchor.attr('data-id') || '';
-            const numAttr = anchor.attr('data-num') || anchor.attr('data-slug') || anchor.find('b').text().trim();
-            const num = parseInt(numAttr, 10) || 1;
-            const epTitle = listItem.attr('title') || anchor.find('.d-title').text().trim() || `Episode ${num}`;
-            const isFiller = anchor.hasClass('filler');
-            const isSubbed = anchor.attr('data-sub') === '1';
-            const isDubbed = anchor.attr('data-dub') === '1';
-
-            if (dataIds) {
-              episodes.push({
-                id: `${animeSlug}$episode$${dataIds}`,
-                number: num,
-                title: epTitle,
-                url: `${config.baseUrl}/watch/${animeSlug}/ep-${num}`,
-                isFiller,
-                isSubbed,
-                isDubbed,
-              });
-            }
-          });
-        } catch {
-          // Keep empty episodes if request fails
-        }
+    $('a.item').each((_, el) => {
+      const item = $(el);
+      const href = item.attr('href') || '';
+      const id = href.match(/\/watch\/([^/?#]+)/)?.[1] ?? '';
+      const title = item.find('.name.d-title, .name').text().trim();
+      if (id && title) {
+        suggestions.push({
+          id,
+          title,
+          japaneseTitle: item.find('.name.d-title').attr('data-jp') || undefined,
+          image: item.find('.poster img, img').attr('src') || '',
+          url: href,
+        });
       }
+    });
 
-      return {
-        id: animeSlug,
-        title,
-        japaneseTitle,
-        image,
-        description,
-        type,
-        status,
-        genres,
-        studios,
-        producers,
-        duration,
-        rating,
-        aired,
-        season: premiered,
-        totalEpisodes: episodes.length > 0 ? episodes.length : undefined,
-        episodes,
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch anime info: ${(err as Error).message}`);
-    }
+    return suggestions;
   };
 
+  /** @param id the anime's slug, as in its /watch/ URL */
+  const fetchAnimeInfo = async (id: string): Promise<IAnimeInfo> => {
+    const animeSlug = id.replace(/^\/watch\//, '').replace(/\/.*$/, '');
+    const watchUrl = `${config.baseUrl}/watch/${animeSlug}`;
+    const { data: pageHtml } = await axios.get(watchUrl, { headers: defaultHeaders });
+    const $ = load(pageHtml);
+
+    const title = $('#w-info .title.d-title, h1.title').first().text().trim();
+    const japaneseTitle =
+      $('#w-info .title.d-title').attr('data-jp') || $('#w-info .names').text().split(';')[1]?.trim() || title;
+    const image = $('#w-info .poster img').attr('src') || $('meta[property="og:image"]').attr('content') || '';
+    const description = $('#w-info .synopsis .content, .synopsis')
+      .text()
+      .replace(/\[more\]/g, '')
+      .trim();
+
+    // The site's numeric anime id (e.g. 7174), which the episode list is fetched by.
+    const dataId =
+      $('#watch-main').attr('data-id') ||
+      $('.layout-page-watchtv').attr('data-id') ||
+      $('#w-rating').attr('data-id') ||
+      $('[data-id]').first().attr('data-id');
+
+    let type: MediaFormat = 'TV' as MediaFormat;
+    let premiered: string | undefined;
+    let aired: string | undefined;
+    let status: MediaStatus | undefined;
+    const genres: string[] = [];
+    const studios: string[] = [];
+    const producers: string[] = [];
+    let duration: string | undefined;
+    let rating: number | undefined;
+
+    const linkTexts = (el: any, list: string[], skip?: string) =>
+      $(el)
+        .find('a')
+        .each((_, a) => {
+          const text = $(a).text().trim();
+          if (text && text !== skip && !list.includes(text)) list.push(text);
+        });
+
+    $('#w-info .bmeta .meta div').each((_, el) => {
+      const text = $(el).text();
+      const value = $(el).find('span').text().trim();
+      if (text.includes('Type:')) type = value as MediaFormat;
+      else if (text.includes('Premiered:')) premiered = value;
+      else if (text.includes('Aired:')) aired = value;
+      else if (text.includes('Status:')) status = toMediaStatus(value, ctx.enums.MediaStatus);
+      else if (text.includes('Genres:')) linkTexts(el, genres);
+      else if (text.includes('Studios:')) linkTexts(el, studios);
+      else if (text.includes('Producers:')) linkTexts(el, producers, 'unknown');
+      else if (text.includes('Duration:')) duration = value;
+      else if (text.includes('MAL:')) rating = value ? parseFloat(value) : undefined;
+    });
+
+    const episodes: IAnimeEpisode[] = [];
+    if (dataId) {
+      const epRes = await axios.get(`${config.baseUrl}/ajax/episode/list/${dataId}`, {
+        headers: ajaxHeaders(watchUrl),
+      });
+      const $ep = load(epRes.data?.result || epRes.data);
+
+      $ep('li').each((_, li) => {
+        const listItem = $ep(li);
+        const anchor = listItem.find('a').first();
+        const dataIds = anchor.attr('data-ids') || anchor.attr('data-id') || '';
+        const numAttr = anchor.attr('data-num') || anchor.attr('data-slug') || anchor.find('b').text().trim();
+        const num = parseInt(numAttr, 10) || 1;
+        if (dataIds) {
+          episodes.push({
+            id: toEpisodeId(animeSlug, dataIds),
+            number: num,
+            title: listItem.attr('title') || anchor.find('.d-title').text().trim() || `Episode ${num}`,
+            url: `${config.baseUrl}/watch/${animeSlug}/ep-${num}`,
+            isFiller: anchor.hasClass('filler'),
+            isSubbed: anchor.attr('data-sub') === '1',
+            isDubbed: anchor.attr('data-dub') === '1',
+          });
+        }
+      });
+    }
+
+    return {
+      id: animeSlug,
+      title,
+      japaneseTitle,
+      image,
+      description,
+      type,
+      status,
+      genres,
+      studios,
+      producers,
+      duration,
+      rating,
+      aired,
+      season: premiered,
+      totalEpisodes: episodes.length > 0 ? episodes.length : undefined,
+      episodes,
+    };
+  };
+
+  /** @param episodeId an episode id from fetchAnimeInfo, or the site's own episode id */
   const fetchEpisodeServers = async (
     episodeId: string,
     subOrDub: SubOrDub = SubOrDubEnum.SUB
   ): Promise<IEpisodeServer[]> => {
-    try {
-      const dataIds = episodeId.includes('$episode$') ? episodeId.split('$episode$')[1]! : episodeId;
-      const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
+    const dataIds = siteEpisodeId(episodeId) ?? episodeId;
+    const targetSubDub = subOrDub === SubOrDubEnum.DUB ? 'dub' : 'sub';
 
-      const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
-        headers: ajaxHeaders(),
-      });
+    const res = await axios.get(`${config.baseUrl}/ajax/server/list?servers=${encodeURIComponent(dataIds)}`, {
+      headers: ajaxHeaders(),
+    });
+    const $ = load(res.data?.result || res.data);
 
-      const html = res.data?.result || res.data;
-      const $ = load(html);
-      const rawServers: { name: string; linkId: string }[] = [];
+    let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
+    if (!serverList.length) serverList = $('.servers li[data-link-id]');
 
-      let serverList = $(`.servers .type[data-type="${targetSubDub}"] li[data-link-id]`);
-      if (!serverList.length) {
-        // Fallback to any available type
-        serverList = $('.servers li[data-link-id]');
+    const servers: IEpisodeServer[] = [];
+    for (const el of serverList.toArray()) {
+      const linkId = $(el).attr('data-link-id');
+      if (!linkId) continue;
+      try {
+        const { data: linkData } = await axios.get(`${config.baseUrl}/ajax/server?get=${encodeURIComponent(linkId)}`, {
+          headers: ajaxHeaders(),
+        });
+        const embedUrl = linkData?.result?.url;
+        if (embedUrl) servers.push({ name: serverName('megaplay', $(el).text()), url: embedUrl });
+      } catch {
+        // A server whose link doesn't resolve is left out; the others still play.
       }
-
-      serverList.each((_, el) => {
-        const item = $(el);
-        const name = item.text().trim();
-        const linkId = item.attr('data-link-id');
-        if (linkId) {
-          rawServers.push({ name, linkId });
-        }
-      });
-
-      // Resolve each server link to its embed URL via /ajax/server?get=
-      const servers: IEpisodeServer[] = [];
-      for (const s of rawServers) {
-        try {
-          const { data: linkData } = await axios.get(
-            `${config.baseUrl}/ajax/server?get=${encodeURIComponent(s.linkId)}`,
-            { headers: ajaxHeaders() }
-          );
-
-          const embedUrl = linkData?.result?.url;
-          if (embedUrl) {
-            servers.push({
-              name: `megaplay-${s.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}`,
-              url: embedUrl,
-            });
-          }
-        } catch {
-          // Continue to next server
-        }
-      }
-
-      return servers;
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch episode servers: ${(err as Error).message}`);
     }
+
+    return servers;
   };
 
+  /** MegaPlay's sources for an embed URL. */
+  const extractFrom = async (embedUrl: string): Promise<ISource> => {
+    const serverUrl = new PolyURL(embedUrl);
+    return {
+      headers: { Referer: serverUrl.href },
+      ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
+    };
+  };
+
+  /**
+   * @param episodeId an episode id from fetchAnimeInfo, or a server's embed URL
+   * @param server a server name from fetchEpisodeServers, or the start of one; the first server when omitted
+   * @param subOrDub default `SubOrDub.SUB`
+   */
   const fetchEpisodeSources = async (
     episodeId: string,
-    server: StreamingServers = StreamingServersEnum.MegaPlay,
+    server?: string,
     subOrDub: SubOrDub = SubOrDubEnum.SUB
   ): Promise<ISource> => {
-    if (episodeId.startsWith('http')) {
-      const serverUrl = new PolyURL(episodeId);
-      switch (server) {
-        case StreamingServersEnum.MegaPlay:
-        default:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
-          };
-      }
-    }
-
-    try {
-      const servers = await fetchEpisodeServers(episodeId, subOrDub);
-      if (!servers.length) {
-        throw new Error(`[AniKoto] No servers available for episode: ${episodeId}`);
-      }
-
-      const matchedServer =
-        servers.find((s) => s.name.toLowerCase().includes(String(server).toLowerCase())) || servers[0]!;
-
-      const serverUrl = new PolyURL(matchedServer.url);
-      return {
-        headers: { Referer: serverUrl.href },
-        ...(await MegaPlay(ctx).extract(serverUrl, config.baseUrl)),
-      };
-    } catch (err) {
-      throw new Error(`[AniKoto] Failed to fetch episode sources: ${(err as Error).message}`);
-    }
+    if (episodeId.startsWith('http')) return extractFrom(episodeId);
+    return extractFrom(pickServer(await fetchEpisodeServers(episodeId, subOrDub), server).url);
   };
 
   return {

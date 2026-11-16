@@ -45,7 +45,7 @@ try {
 ```
 
 - **Missing hash:** an entry without `sha256` is rejected. Construct the manager with `{ allowUnhashed: true }` (third constructor argument) only for registries you control.
-- **Opting out:** `executeProviderCode(code, factoryName, metadata, { skipIntegrity: true })` (and the same for `executeExtractorCode`) runs code without the check. Use it only for code you already trust, such as files bundled with your app.
+- **Opting out:** `executeProviderCode(code, metadata, { skipIntegrity: true })` (and the same for `executeExtractorCode`) runs code without the check. Use it only for code you already trust, such as files bundled with your app.
 - **Checking at install time:** apps that download and cache code should verify it when they store it, with `verifyExtensionCode(code, entry)`.
 - **Compiled once:** a manager compiles verified code once per id and `sha256`. Running the same code again compares it with the verified copy instead of hashing it again, so different code that claims the same hash is still rejected. Code run with `skipIntegrity` is never reused.
 
@@ -77,7 +77,7 @@ The registry bundled in the app needs no signature: it ships in the app binary. 
 
 - **What is signed:** the exact bytes of `src/extension-registry.json` on `main`, the file apps download. Nothing is re-serialized, and `.gitattributes` keeps the file and its signature byte for byte.
 - **The signature file:** `src/extension-registry.json.sig`, served at the registry URL plus `.sig`. It holds 1 to 4 lines, each a hex ed25519 signature of the registry. The registry verifies when any line verifies under any trusted key.
-- **Trusted keys:** the public keys in `src/registry-signing-keys.ts`, bundled into each release as `REGISTRY_SIGNING_KEYS`. An app trusts only the keys of the library version it ships.
+- **Trusted keys:** the public keys in `src/registry-signing-keys.json`, bundled into each release as `REGISTRY_SIGNING_KEYS`. An app trusts only the keys of the library version it ships.
 - **Verifying:** `parseSignedRegistry(text, signature)` checks the signature before it parses the JSON, then runs `validateRegistry`. It fails closed with a `RegistrySignatureError` (`NO_SIGNING_KEYS`, `INVALID_SIGNING_KEY`, `MALFORMED_SIGNATURE`, `SIGNATURE_MISMATCH`). Verification is pure JavaScript (noble-curves, strict RFC 8032 checks), so it runs on Hermes. See [Downloaded Registries and Signatures](./extension-integration.md#downloaded-registries-and-signatures).
 - **Who signs:** the Sign registry workflow (`.github/workflows/sign-registry.yml`) runs when the registry or the key list changes on `main`. It runs in the `registry-signing` environment, which holds the private key as the `REGISTRY_SIGNING_KEY` secret, and commits the signature. The environment's required reviewer is the trust boundary: with the environment set up as described in [CONTRIBUTING](../CONTRIBUTING.md#registry-signing-maintainers) (a required reviewer, `main` only), nothing is signed, and the key can't be read, until that reviewer approves the run.
 - **Key rotation:** `yarn registry:keygen` adds a new public key next to the old one. Store its private key as `REGISTRY_SIGNING_KEY_2`; CI then signs with both keys, so apps that only trust the old key keep verifying. Remove the old key once no supported release needs it, and a leaked key at once.
@@ -105,17 +105,17 @@ These are tracked in the roadmap and not solved yet:
 
 ## Publishing and checking the registry
 
-`scripts/prepare-registry.js` publishes each entry's single-file bundle (`distFile`, built by `yarn build`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. It runs in the release flow (`after:bump` in release-it). Run it yourself after rebuilding `dist/`:
+`scripts/prepare-registry.js` publishes each entry's single-file bundle (`distFile` under `dist/bundles/`, built by `yarn build`) to its versioned path if that version isn't published yet, then writes `main` and `sha256` to both `src/extension-registry.json` and `dist/extension-registry.json`. The published path, the id and version rules and the schema check are the library's own (`src/utils/registry-schema.ts`, loaded from its build), so the script publishes only entries `validateRegistry` accepts. `yarn build:registry` rebuilds `dist/` and then runs it; the release flow (`after:bump` in release-it) and the pre-commit hook run that too. Run it yourself with:
 
 ```bash
-yarn build && node scripts/prepare-registry.js
+yarn build:registry
 ```
 
 It exits with an error, and writes nothing, if a build file is missing, if an entry's build output changed without a version bump, or if the result fails `validateRegistry`. `yarn registry:check` runs the same checks without writing.
 
 These checks also run automatically:
 
-- **Pre-commit hook** (`scripts/stage-dist.js`): when a commit stages changes under `src/` or `scripts/`, it rebuilds `dist/` from the staged files, runs `prepare-registry`, and stages `dist/`, the newly published files and the refreshed hashes. A bundle that changed under an already published version stops the commit.
+- **Pre-commit hook** (`scripts/stage-dist.js`): when a commit stages changes to what `dist/` is built from (`src/`, `scripts/`, the build config), it runs `yarn build:registry` on the staged files and stages `dist/`, the newly published files and the refreshed hashes. A bundle that changed under an already published version stops the commit.
 - **CI `registry` job:** rebuilds `dist/` from a clean checkout and fails if the committed `dist/` differs from the rebuild, if a hash doesn't match its rebuilt bundle, if a hash changed without a higher `version` (compared with the base commit), if a version went backwards, if a published file changed, or if a registry URL points at a missing file.
 
 ## Guidance for consumers

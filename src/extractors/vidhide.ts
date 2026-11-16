@@ -1,85 +1,36 @@
-import { type ExtractorContext, type IVideo, type ISource, type IVideoExtractor } from '../models';
+import { type ExtractorContext, type ISource } from '../models';
 import type { PolyURL } from '../utils/url-polyfill';
+import { hlsVariants } from './hls';
+import { toUrl } from './url';
 
-/**
- * VidHide extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT
- * @returns Object with extract method implementing IVideoExtractor interface
- */
-export function VidHide(ctx: ExtractorContext): IVideoExtractor {
-  const serverName = 'VidHide';
-  const sources: IVideo[] = [];
-  const { axios, USER_AGENT, NativeConsumet } = ctx;
+export function VidHide(ctx: ExtractorContext) {
+  const { axios, USER_AGENT, NativeConsumet, PolyURL } = ctx;
 
-  const extract = async (videoUrl: PolyURL): Promise<ISource> => {
-    try {
-      const { data } = await axios
-        .get(videoUrl.href, {
-          headers: {
-            'User-Agent': USER_AGENT,
-            'Referer': videoUrl.origin,
-          },
-        })
-        .catch(() => {
-          throw new Error('Video not found');
-        });
+  const extract = async (videoUrl: string | PolyURL): Promise<ISource> => {
+    const url = toUrl(PolyURL, videoUrl);
+    const { data } = await axios.get(url.href, {
+      headers: { 'User-Agent': USER_AGENT, 'Referer': url.origin },
+    });
 
-      // The packed `eval(function(p,a,c,k,e,d)...)` call can span lines; capture its argument up to </script>.
-      const packedScript = /eval(\(f.*?)\s*<\/script>/s.exec(data)?.[1];
+    // The packed `eval(function(p,a,c,k,e,d)...)` call can span lines; capture its argument up to </script>.
+    const packedScript = /eval(\(f.*?)\s*<\/script>/s.exec(data)?.[1];
+    if (!packedScript) throw new Error('No packed script found');
 
-      if (!packedScript) throw new Error('No packed script found');
+    const unpackedData = await NativeConsumet.deobfuscateScript(packedScript);
+    if (!unpackedData) throw new Error('Failed to deobfuscate script');
 
-      const unpackedData = await NativeConsumet.deobfuscateScript(packedScript);
-      if (!unpackedData) throw new Error('Failed to deobfuscate script');
+    const m3u8Link = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/)?.[0];
+    if (!m3u8Link) throw new Error('No m3u8 link found');
 
-      const links = unpackedData.match(/https?:\/\/[^"]+?\.m3u8[^"]*/g) ?? [];
-      const m3u8Link = links[0];
-      if (!m3u8Link) throw new Error('No m3u8 link found');
+    const { data: master } = await axios.get(m3u8Link, {
+      headers: { 'Referer': m3u8Link, 'User-Agent': USER_AGENT },
+    });
 
-      const m3u8Content = await axios.get(m3u8Link, {
-        headers: {
-          'Referer': m3u8Link,
-          'User-Agent': USER_AGENT,
-        },
-      });
-
-      const videoSources: IVideo[] = [
-        {
-          quality: 'auto',
-          url: m3u8Link,
-          isM3U8: m3u8Link.includes('.m3u8'),
-        },
-      ];
-
-      if (m3u8Content.data.includes('EXTM3U')) {
-        const pathWithoutMaster = m3u8Link.split('/master.m3u8')[0];
-        const videoList = m3u8Content.data.split('#EXT-X-STREAM-INF:');
-        for (const video of videoList ?? []) {
-          if (!video.includes('m3u8')) continue;
-
-          const url = video.split('\n')[1];
-          const quality = /RESOLUTION=\d+x(\d+)/.exec(video)?.[1];
-
-          videoSources.push({
-            url: `${pathWithoutMaster}/${url}`,
-            quality: `${quality}p`,
-            isM3U8: url.includes('.m3u8'),
-          });
-        }
-      }
-
-      return {
-        sources: videoSources,
-        subtitles: [],
-      };
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
+    return {
+      sources: [{ quality: 'auto', url: m3u8Link, isM3U8: true }, ...hlsVariants(master, m3u8Link)],
+      subtitles: [],
+    };
   };
 
-  return {
-    serverName,
-    sources,
-    extract,
-  };
+  return { extract };
 }

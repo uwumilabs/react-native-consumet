@@ -34,6 +34,29 @@ export declare class RegistryError extends Error {
         supported?: number;
     });
 }
+type Entry = Record<string, unknown>;
+/**
+ * The two lists of a registry. `key` names an entry: names are case-insensitive, so lookups,
+ * duplicate checks and published paths (`registry/<list>/<key>/<version>.js`) use it lowercased.
+ * `factory` names the function the entry's code defines.
+ */
+export declare const REGISTRY_KINDS: {
+    readonly extensions: {
+        readonly key: "id";
+        readonly factory: "factoryName";
+    };
+    readonly extractors: {
+        readonly key: "name";
+        readonly factory: "name";
+    };
+};
+export type RegistryKind = keyof typeof REGISTRY_KINDS;
+/** Pattern of an entry key as published paths use it: its id or name, lowercased. */
+export declare const REGISTRY_KEY_PATTERN = "[a-z0-9][a-z0-9-]*";
+/** Pattern of an entry version: major.minor.patch, as published paths use it. */
+export declare const REGISTRY_VERSION_PATTERN = "\\d+\\.\\d+\\.\\d+";
+/** The lowercase key of a registry entry of `kind`, or undefined when its key field isn't a string. */
+export declare function registryKey(kind: RegistryKind, entry: Entry): string | undefined;
 /**
  * Whether this library can run an entry: it needs no newer context than CONTEXT_VERSION.
  * Entries without `minContextVersion` need context 1. A malformed value is never compatible.
@@ -63,4 +86,5 @@ export declare function assertCompatibleEntry(entry: {
 export declare function validateRegistry(registry: unknown): ExtensionRegistryData & {
     schemaVersion: number;
 };
+export {};
 //# sourceMappingURL=registry-schema.d.ts.map

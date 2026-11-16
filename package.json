@@ -48,8 +48,9 @@
     "example": "yarn workspace react-native-consumet-example",
     "build": "tsc -p tsconfig.dist.json && node scripts/build-extensions.js && node scripts/hermes-safe-dist.js",
     "build:clean": "del-cli dist && yarn build",
+    "build:registry": "node scripts/build-registry.js",
     "test": "jest",
-    "test:live": "LIVE_TESTS=1 jest",
+    "test:live": "LIVE_TESTS=1 jest --runInBand",
     "registry:check": "node scripts/prepare-registry.js --check",
     "registry:prune": "node scripts/prune-registry.js",
     "registry:keygen": "node scripts/registry-keygen.js",
@@ -102,7 +103,6 @@
     "@types/crypto-js": "^4.2.2",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.0",
-    "@types/string-similarity": "^4.0.2",
     "babel-jest": "^29.7.0",
     "commitlint": "^19.6.1",
     "conventional-changelog-conventionalcommits": "^9.3.1",
@@ -170,7 +170,7 @@
       }
     },
     "hooks": {
-      "after:bump": "node scripts/prepare-registry.js"
+      "after:bump": "yarn build:registry"
     }
   },
   "react-native-builder-bob": {
@@ -222,7 +222,6 @@
     "ascii-url-encoder": "^1.2.0",
     "axios": "^1.8.4",
     "cheerio": "1.0.0-rc.12",
-    "crypto-js": "^4.2.0",
-    "string-similarity": "^4.0.4"
+    "crypto-js": "^4.2.0"
   }
 }

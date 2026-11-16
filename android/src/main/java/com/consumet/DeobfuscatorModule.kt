@@ -3,14 +3,12 @@ package com.consumet
 import android.content.Context
 import android.util.Log
 import com.facebook.react.bridge.Promise
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /** deobfuscateScript: runs Synchrony on a script. The Synchrony script itself comes from [scripts]. */
-class DeobfuscatorModule internal constructor(private val scripts: SynchronyScriptCache) {
+internal class DeobfuscatorModule(private val scripts: SynchronyScriptCache) {
 
     constructor(context: Context) : this(scriptCache(context))
 
@@ -45,12 +43,9 @@ class DeobfuscatorModule internal constructor(private val scripts: SynchronyScri
         }
     }
 
-    internal companion object {
-        private val client = OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .callTimeout(30, TimeUnit.SECONDS)
-            .build()
+    companion object {
+        /** The directory under the app's cache directory the verified script is saved in. */
+        const val CACHE_DIR = "consumet"
 
         @Volatile private var cache: SynchronyScriptCache? = null
 
@@ -61,7 +56,7 @@ class DeobfuscatorModule internal constructor(private val scripts: SynchronyScri
         private fun scriptCache(context: Context): SynchronyScriptCache =
             cache ?: synchronized(this) {
                 cache ?: SynchronyScriptCache(
-                    File(context.applicationContext.cacheDir, "consumet"),
+                    File(context.applicationContext.cacheDir, CACHE_DIR),
                     download = ::downloadScript,
                 ).also { cache = it }
             }
@@ -72,7 +67,7 @@ class DeobfuscatorModule internal constructor(private val scripts: SynchronyScri
                 .url(Synchrony.SCRIPT_URL)
                 .addHeader("User-Agent", "Mozilla/5.0 (Android)")
                 .build()
-            client.newCall(request).execute().use { response ->
+            HttpClients.synchrony.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("HTTP ${response.code}: ${response.message}")
                 return response.body?.bytes() ?: throw IOException("Empty body")
             }

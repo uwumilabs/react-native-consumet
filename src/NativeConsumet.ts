@@ -112,11 +112,17 @@ export interface Spec extends TurboModule {
 
 const NativeConsumet = TurboModuleRegistry.getEnforcing<Spec>('Consumet');
 
-export const bypassDdosGuard = NativeConsumet.bypassDdosGuard;
-export const getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
-export const makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
-export const makePostRequestWithWebView = NativeConsumet.makePostRequestWithWebView;
-export const makePostRequest = NativeConsumet.makePostRequest;
-export const deobfuscateScript = NativeConsumet.deobfuscateScript;
+/** The native methods, as contexts hand them to providers and extractors. */
+export type NativeMethods = Omit<Spec, keyof TurboModule>;
+
+/** The spec's methods in a plain object (extension code destructures and spreads it). */
+export const nativeMethods: NativeMethods = {
+  bypassDdosGuard: NativeConsumet.bypassDdosGuard,
+  getDdosGuardCookiesWithWebView: NativeConsumet.getDdosGuardCookiesWithWebView,
+  makeGetRequestWithWebView: NativeConsumet.makeGetRequestWithWebView,
+  makePostRequestWithWebView: NativeConsumet.makePostRequestWithWebView,
+  makePostRequest: NativeConsumet.makePostRequest,
+  deobfuscateScript: NativeConsumet.deobfuscateScript,
+};
 
 export default NativeConsumet;

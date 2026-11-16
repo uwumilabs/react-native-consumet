@@ -15,10 +15,6 @@ export declare class MangaKakalot extends MangaParser {
     private absoluteUrl;
     /** The title's slug (its id) in `https://www.kakamanga.com/manga/<slug>`. */
     private slugFromUrl;
-    /**
-     * @param query Search query
-     * @param page Page number (default: 1)
-     */
     search: (query: string, page?: number) => Promise<ISearch<IMangaResult>>;
     /** The JSON form of a search page: `[{ name, url, thumb, slug, ... }]`, with no pagination. */
     private searchFromJson;
@@ -29,8 +25,8 @@ export declare class MangaKakalot extends MangaParser {
     fetchChapterPages: (chapterId: string) => Promise<IMangaChapterPage[]>;
     /**
      * The synopsis under the `<title> summary:` heading, as plain text. Some titles store it as
-     * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more: whitespace
-     * collapses as a browser would and `<br>` breaks lines.
+     * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more, its
+     * whitespace collapsed first as a browser would.
      */
     private description;
     /** Every chapter of a title from the chapter-list API, in reading order. */

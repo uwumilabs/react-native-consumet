@@ -52,7 +52,9 @@ const UNLOCK_TIMEOUT_MS = 60 * 1000;
 // so only playback has to wait for the (slow) session unlock.
 const NEWTV_API = 'https://tv.imgcdn.kim';
 const NEWTV_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0 /OS.GatuNewTV v1.0';
-// One verified session works for every catalog, so share it across platforms and instances.
+// One verified session works for every catalog, so every instance made from this module shares it:
+// in the library that's all three catalogs. A registry load compiles each entry's bundle on its own,
+// so there each catalog unlocks its own session.
 const sessions = new Map();
 const pendingUnlocks = new Map();
 function createNetMirror(ctx, platform, customBaseURL) {
@@ -246,8 +248,8 @@ function createNetMirror(ctx, platform, customBaseURL) {
         ...result,
         type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
         seasons: isSeries ? post.season?.length || 1 : undefined,
-        // TMDB requires an exact year match whenever any result has one, so omit years
-        // entirely for catalogs that report a series' latest-season year.
+        // TMDB drops a result whose year is more than a year off the first-air year, and some
+        // catalogs (Disney+) give a series' latest-season year, so leave the year out for those.
         releaseDate: platform.seriesYearIsFirstAired ? post.year || undefined : undefined
       };
     } catch {
@@ -420,7 +422,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     }
   };
   const playlistPath = episodeId => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
-  const fetchEpisodeServers = async (episodeId, mediaId) => {
+  const fetchEpisodeServers = async (episodeId, _mediaId) => {
     return [{
       name: platform.label,
       url: `${baseUrl}${playlistPath(episodeId)}`
@@ -458,7 +460,7 @@ function createNetMirror(ctx, platform, customBaseURL) {
     const playable = sources.filter((_, i) => checks[i]);
     return playable.length ? playable : sources;
   };
-  const fetchEpisodeSources = async (episodeId, mediaId) => {
+  const fetchEpisodeSources = async (episodeId, _mediaId) => {
     try {
       // Without a verified session the server still returns a playlist, but every
       // source is a teaser stream tagged `in=unknown`.
@@ -515,12 +517,24 @@ function createNetMirror(ctx, platform, customBaseURL) {
     fetchHlsPlaylist
   };
 }
+/**
+ * NetflixMirror (net52.cc): the site's Netflix catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 function createNetflixMirror(ctx, customBaseURL) {
   return createNetMirror(ctx, PLATFORMS.nf, customBaseURL);
 }
+/**
+ * PrimeMirror (net52.cc): the site's Prime Video catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 function createPrimeMirror(ctx, customBaseURL) {
   return createNetMirror(ctx, PLATFORMS.pv, customBaseURL);
 }
+/**
+ * DisneyMirror (net52.cc): the site's Disney+ catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 function createDisneyMirror(ctx, customBaseURL) {
   return createNetMirror(ctx, PLATFORMS.hs, customBaseURL);
 }

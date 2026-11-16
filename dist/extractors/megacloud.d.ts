@@ -1,8 +1,10 @@
-import { type ExtractorContext, type IVideoExtractor } from '../models';
+import { type ExtractorContext, type ISource } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
 /**
- * MegaCloud extractor function
- * @param ctx ExtractorContext containing axios, load, USER_AGENT
- * @returns Object with extract method implementing IVideoExtractor interface
+ * MegaCloud, the player of HiAnime and HiMovies.
+ * Thanks to https://github.com/yogesh-hacker for the original implementation.
  */
-export declare function MegaCloud(ctx: ExtractorContext): IVideoExtractor;
+export declare function MegaCloud(ctx: ExtractorContext): {
+    extract: (videoUrl: string | PolyURL, referer: string) => Promise<ISource>;
+};
 //# sourceMappingURL=megacloud.d.ts.map

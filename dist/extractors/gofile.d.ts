@@ -1,7 +1,6 @@
-import { type ExtractorContext, type IVideoExtractor } from '../models';
-/**
- * Gofile extractor function / factory relying on ExtractorContext
- * Follows react-native-consumet conventions (Kwik, MegaUp, MegaPlay)
- */
-export declare function Gofile(ctx: ExtractorContext): IVideoExtractor;
+import { type ExtractorContext, type ISource } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
+export declare function Gofile(ctx: ExtractorContext): {
+    extract: (videoUrl: string | PolyURL) => Promise<ISource>;
+};
 //# sourceMappingURL=gofile.d.ts.map

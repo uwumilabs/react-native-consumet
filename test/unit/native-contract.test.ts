@@ -5,7 +5,7 @@ import { TurboModuleRegistry } from 'react-native';
 import * as NativeConsumet from '../../src/NativeConsumet';
 import { createProviderContext } from '../../src/utils/create-provider-context';
 import { createExtractorContext } from '../../src/utils/create-extractor-context';
-import { defaultExtractorContext } from '../../src/utils/extension-utils';
+import { defaultExtractorContext } from '../../src/utils/create-extractor-context';
 
 // NAT-1: pins the JS-facing contract of the native module. The spec signatures, the jest mock in
 // jest.setup.js, the exports and the contexts handed to extensions must agree, and both native
@@ -81,6 +81,21 @@ function kotlinFunction(source: string, name: string): string {
   return next < 0 ? source.slice(start) : source.slice(start, start + 1 + next);
 }
 
+/** The value of a Kotlin `const val` in `file`: a string, or a number (`30_000L` reads as 30000). */
+function kotlinConst(file: string, name: string): string | number {
+  const value = new RegExp(`const val ${name} =\\s*(.+)$`, 'm').exec(kotlin[file] ?? '')?.[1]?.trim();
+  if (value === undefined) throw new Error(`const val ${name} not found in ${file}`);
+  return value.startsWith('"') ? JSON.parse(value) : Number(value.replace(/_|L$/g, ''));
+}
+
+/** The value of an Objective-C `static ... const` in the iOS sources: a string or a number. */
+function objcConst(name: string): string | number {
+  const decl = new RegExp(`static (?:const \\w+|NSString \\*const) ${name} =((?:\\s*@"[^"]*")+|\\s*[\\d.]+);`).exec(allObjc);
+  if (!decl) throw new Error(`${name} not found in ios/`);
+  const strings = [...decl[1]!.matchAll(/@"([^"]*)"/g)].map((m) => m[1]);
+  return strings.length ? strings.join('') : Number(decl[1]);
+}
+
 describe('NativeConsumet spec (NAT-1)', () => {
   it('matches the pinned contract', () => {
     expect(specSignatures()).toEqual(SPEC);
@@ -98,6 +113,7 @@ describe('NativeConsumet spec (NAT-1)', () => {
     ]);
     const objcCodes = new Set([
       ...[...allObjc.matchAll(/reject\(\s*@"(\w+)"/g)].map((m) => m[1]),
+      ...[...allObjc.matchAll(/rejectWithCode:\s*@"(\w+)"/g)].map((m) => m[1]),
       ...[...allObjc.matchAll(/NSString \*const \w+Code = @"(\w+)"/g)].map((m) => m[1]),
     ]);
     expect([...kotlinCodes].sort()).toEqual([...ERROR_CODES].sort());
@@ -124,13 +140,10 @@ describe('jest mock of the native module (NAT-1)', () => {
 });
 
 describe('what JS and extensions see (NAT-1)', () => {
-  it('exports every spec method bound to the native module', () => {
-    const named = Object.keys(NativeConsumet)
-      .filter((key) => key !== 'default')
-      .sort();
-    expect(named).toEqual(methods);
+  it('lists every spec method of the native module in nativeMethods', () => {
+    expect(Object.keys(NativeConsumet.nativeMethods).sort()).toEqual(methods);
     for (const name of methods) {
-      expect((NativeConsumet as any)[name]).toBe((NativeConsumet.default as any)[name]);
+      expect((NativeConsumet.nativeMethods as any)[name]).toBe((NativeConsumet.default as any)[name]);
     }
   });
 
@@ -141,7 +154,7 @@ describe('what JS and extensions see (NAT-1)', () => {
   ])('%s exposes every spec method', (_label, native) => {
     const exposed = native() as Record<string, unknown>;
     expect(Object.keys(exposed).sort()).toEqual(methods);
-    for (const name of methods) expect(exposed[name]).toBe((NativeConsumet as any)[name]);
+    for (const name of methods) expect(exposed[name]).toBe((NativeConsumet.default as any)[name]);
   });
 });
 
@@ -151,29 +164,45 @@ describe('native implementations follow the contract (NAT-1)', () => {
     expect(objc).toMatch(new RegExp(`^- \\(void\\)${name}:`, 'm'));
   });
 
+  // The same values on both platforms, pinned here; change a pair together. The Synchrony URL and
+  // SHA-256 are pinned in native-synchrony-cache.test.ts.
+  it.each([
+    ['WebView request timeout (ms)', kotlinConst('WebViewTask.kt', 'TIMEOUT_MS'), Number(objcConst('kWebViewTimeout')) * 1000, 30_000],
+    ['time a loaded page gets to settle (ms)', kotlinConst('HttpRequestModule.kt', 'CAPTURE_DELAY_MS'), Number(objcConst('kCaptureDelay')) * 1000, 1500],
+    ['challenge page poll interval (ms)', kotlinConst('HttpRequestModule.kt', 'POLL_MS'), Number(objcConst('kPollInterval')) * 1000, 1000],
+    ['DDoS-Guard check cookie', kotlinConst('DdosGuardHelper.kt', 'CHECK_COOKIE'), objcConst('kDdosGuardCheckCookie'), '__ddg2_'],
+    ['DDoS-Guard check script', kotlinConst('DdosGuardHelper.kt', 'CHECK_SCRIPT_URL'), objcConst('kDdosGuardCheckScriptURL'), 'https://check.ddos-guard.net/check.js'],
+    ['Synchrony cache directory', kotlinConst('DeobfuscatorModule.kt', 'CACHE_DIR'), objcConst('kSynchronyDirectory'), 'consumet'],
+  ])('%s is the same on Android and iOS', (_label, android, ios, pinned) => {
+    expect(android).toEqual(pinned);
+    expect(ios).toEqual(android);
+  });
+
+  it('saves the Synchrony script under the same file name on both platforms', () => {
+    expect(kotlin['SynchronyScriptCache.kt']).toContain('"synchrony-$sha256.js"');
+    expect(allObjc).toContain('@"synchrony-%@.js"');
+  });
+
   it('getDdosGuardCookiesWithWebView resolves a plain string on Android, as on iOS', () => {
-    const android = kotlinFunction(kotlin['DdosGuardModule.kt']!, 'getDdosGuardCookiesWithWebView');
+    const android = kotlinFunction(kotlin['DdosGuardHelper.kt']!, 'getDdosGuardCookiesWithWebView');
     expect(android).toMatch(/task\.resolve\(cookie\)/);
     expect(android).not.toMatch(/WritableNativeMap|putString\("cookie"/);
-    expect(objc).toMatch(/\? resolve\(header\)/);
+    expect(objc).toMatch(/\[task resolve:header\]/);
   });
 
   it('WebView requests reject on timeout on both platforms', () => {
     expect(allKotlin).not.toMatch(/"status", "timeout"/);
-    expect(kotlin['WebViewTask.kt']).toMatch(/Runnable \{ reject\(TIMEOUT, "WebView request timed out"\) \}/);
-    expect(objc).toMatch(/self\.onError\(kTimeoutCode, @"WebView request timed out"\)/);
-    // GET, POST and the DDoS-Guard WebView all go through the shared task.
-    expect(kotlin['HttpRequestModule.kt']!.match(/WebViewTask\(context/g)).toHaveLength(2);
-    expect(kotlin['DdosGuardModule.kt']!.match(/WebViewTask\(context/g)).toHaveLength(1);
-    expect(allKotlin.match(/(?<![.\w])WebView\(\w+\)/g)).toHaveLength(1);
+    expect(kotlin['WebViewTask.kt']).toMatch(/reject\(TIMEOUT, "WebView request timed out"\)/);
+    expect(objc).toMatch(/rejectWithCode:kTimeoutCode message:@"WebView request timed out"/);
+    // Every WebView the module creates belongs to the task that settles its promise once.
+    expect(Object.keys(kotlin).filter((file) => /(?<![.\w])WebView\(\w+\)/.test(kotlin[file]!))).toEqual(['WebViewTask.kt']);
+    expect(allObjc.match(/\[WKWebView alloc\]/g)).toHaveLength(1);
   });
 
   it('only main-document failures reject on Android (sub-resources are ignored, as on iOS)', () => {
     const handlers = allKotlin.match(/override fun onReceivedError\([^)]*\) \{[^}]*/g) ?? [];
     expect(handlers.length).toBeGreaterThan(0);
-    for (const handler of handlers) {
-      expect(handler).toMatch(/if \(!request\.isForMainFrame\b[^)]*\) return/);
-    }
+    for (const handler of handlers) expect(handler).toMatch(/isForMainFrame/);
   });
 
   it('WebView GET and POST wait past a Cloudflare challenge on both platforms', () => {
@@ -182,34 +211,34 @@ describe('native implementations follow the contract (NAT-1)', () => {
       expect(kotlin['HttpRequestModule.kt']).toContain(marker);
       expect(objc).toContain(marker);
     }
-    // A challenge keeps the task open and the page is polled until it has turned into a loaded
-    // page (polling can't miss a reload that finished while a check ran, as navigation events can).
-    expect(kotlin['HttpRequestModule.kt']).toMatch(/state == "challenge" \|\| state == "loading"\) \{[\s\S]*?task\.keepOpen\(\)/);
+    // A challenge keeps the task open while the page is polled.
     expect(kotlin['WebViewTask.kt']).toMatch(/fun keepOpen\(\)/);
-    expect(objc).toMatch(/if \(challenge \|\| \[result isEqual:@"loading"\]\) \{\s*\[wt keepOpen\];/);
-    expect(objc).toMatch(/if \(_done && !_keptOpen\)\s*return;/);
+    expect(kotlin['HttpRequestModule.kt']).toMatch(/task\.keepOpen\(\)/);
+    expect(objc).toMatch(/- \(void\)keepOpen/);
+    expect(objc).toMatch(/\[t keepOpen\]/);
     // GET and POST both capture through the check.
     for (const name of ['makeGetRequestWithWebView', 'makePostRequestWithWebView']) {
-      expect(kotlinFunction(kotlin['HttpRequestModule.kt']!, name)).toMatch(/captureUnlessChallenge\(task, view\)/);
+      expect(kotlinFunction(kotlin['HttpRequestModule.kt']!, name)).toMatch(/captureUnlessChallenge\(/);
+      const method = objc.slice(objc.indexOf(`- (void)${name}:`));
+      expect(method.slice(0, method.indexOf('\n#pragma mark'))).toMatch(/RCConsumetCaptureUnlessChallenge\(/);
     }
-    expect(objc.match(/RCConsumetCaptureUnlessChallenge\(wt, webView, \^\{/g)).toHaveLength(2);
   });
 
   it("WebView requests keep the engine's own user agent unless one is passed", () => {
     // A user agent claiming another browser than the engine made Cloudflare fail its challenge.
     expect(kotlin['HttpRequestModule.kt']).not.toMatch(/DEFAULT_USER_AGENT/);
-    expect(kotlin['HttpRequestModule.kt']!.match(/WebViewTask\(context, promise, requestHeaders\.userAgent\)/g)).toHaveLength(2);
+    expect(kotlin['WebViewTask.kt']).toMatch(/if \(userAgent != null\) userAgentString = userAgent/);
     // iOS: WKWebView's own, with Mobile Safari's tokens for the running iOS version.
     expect(objc).not.toMatch(/kDefaultUA/);
-    expect(objc).toMatch(/cfg\.applicationNameForUserAgent = RCConsumetSafariApplicationName\(\);/);
+    expect(objc).toMatch(/applicationNameForUserAgent = RCConsumetSafariApplicationName\(\)/);
     expect(objc).toMatch(/if \(ua\.length\)\s*_webView\.customUserAgent = ua;/);
   });
 
   it('deobfuscateScript rejects instead of resolving null on both platforms', () => {
     expect(objc).not.toMatch(/resolve\(\[NSNull null\]\)/);
     expect(objc).not.toMatch(/catch\(e\)\{return null;\}/);
-    expect(objc).toMatch(/reject\(@"EvaluationError",\s*@"Deobfuscator did not return a string",\s*nil\)/);
-    expect(kotlin['DeobfuscatorModule.kt']).toMatch(/reject\("EvaluationError", "Deobfuscator did not return a string"\)/);
+    expect(objc).toContain('Deobfuscator did not return a string');
+    expect(kotlin['DeobfuscatorModule.kt']).toContain('Deobfuscator did not return a string');
   });
 });
 

@@ -1,91 +1,10 @@
-import type { AxiosInstance } from 'axios';
-import type { CheerioAPI } from 'cheerio';
-import type CryptoJS from 'crypto-js';
 import type AnimeParser from './anime-parser';
 import type MovieParser from './movie-parser';
-import type { ExtractorContext, ExtractorContextConfig } from './extractor-context';
 import type MangaParser from './manga-parser';
-import { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
-import type { ExtractorManager } from '../utils';
-import type { PolyURL, PolyURLSearchParams } from '../utils/url-polyfill';
-import type { bypassDdosGuard, getDdosGuardCookiesWithWebView, makeGetRequestWithWebView, makePostRequestWithWebView, makePostRequest, deobfuscateScript } from '../NativeConsumet';
-/**
- * Extractor registry type based on your registered extractors
- */
-export interface ExtractorRegistry {
-    AsianLoad: new (ctx?: ExtractorContext) => {
-        extract: (url: URL, isAlt?: boolean) => Promise<any>;
-    };
-    Filemoon: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    GogoCDN: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    Kwik: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-    MixDrop: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    Mp4Player: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    Mp4Upload: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    RapidCloud: new (ctx?: ExtractorContext) => {
-        extract: (url: URL, referer?: string) => Promise<any>;
-    };
-    MegaCloud: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-    StreamHub: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    StreamLare: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    StreamSB: new (ctx?: ExtractorContext) => {
-        extract: (url: URL, isAlt?: boolean) => Promise<any>;
-    };
-    StreamTape?: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    StreamWish: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-    VidMoly: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    VizCloud: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    VidHide: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-    Voe: new (ctx?: ExtractorContext) => {
-        extract: (url: URL) => Promise<any>;
-    };
-    MegaUp: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL) => Promise<any>;
-    };
-    MegaPlay: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-    GDFlix: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
-    };
-    Gofile: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
-    };
-    HubCloud: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL | string, ...args: any[]) => Promise<any>;
-    };
-    FlixCloud: (ctx?: ExtractorContext) => {
-        extract: (url: PolyURL, referer?: string) => Promise<any>;
-    };
-}
+import type { ExtractorContext } from './extractor-context';
+import type { StreamingServers, MediaFormat, MediaStatus, SubOrDub, WatchListType, TvType, Genres, Topics } from './types';
+import type * as BundledExtractors from '../extractors';
+/** The fields a provider factory returns besides its methods. */
 export type ProviderConfig = {
     name: string;
     languages: string[] | string;
@@ -97,22 +16,16 @@ export type ProviderConfig = {
     isDubAvailableSeparately?: boolean;
 };
 /**
- * ProviderContext:
- * Passed into each provider factory function. Gives full access to platform-wide utils and extractors.
+ * What every provider factory runs with: the extractor context, plus the base parsers, the library's
+ * enums and the extractors. `extractors.X(ctx)` runs X with the context it's given (the provider's
+ * own when omitted); under a ProviderManager whose registry lists X, that's X's registry version.
  */
-export interface ProviderContext {
-    axios: AxiosInstance;
-    load: (html: string) => CheerioAPI;
-    /** CryptoJS library — use instead of importing crypto-js directly */
-    CryptoJS: typeof CryptoJS;
-    USER_AGENT: string;
+export interface ProviderContext extends ExtractorContext {
     AnimeParser: typeof AnimeParser;
     MovieParser: typeof MovieParser;
     MangaParser: typeof MangaParser;
-    extractors: ExtractorRegistry;
-    extractorManager?: ExtractorManager;
-    PolyURL: typeof PolyURL;
-    PolyURLSearchParams: typeof PolyURLSearchParams;
+    extractors: typeof BundledExtractors;
+    /** The site URL a provider uses: `customUrl` (with `http://` added when it has no scheme), else `defaultUrl`. */
     createCustomBaseUrl: (defaultUrl: string, customUrl?: string) => string;
     enums: {
         StreamingServers: typeof StreamingServers;
@@ -124,36 +37,5 @@ export interface ProviderContext {
         Genres: typeof Genres;
         Topics: typeof Topics;
     };
-    NativeConsumet: {
-        getDdosGuardCookiesWithWebView: typeof getDdosGuardCookiesWithWebView;
-        makeGetRequestWithWebView: typeof makeGetRequestWithWebView;
-        makePostRequestWithWebView: typeof makePostRequestWithWebView;
-        makePostRequest: typeof makePostRequest;
-        bypassDdosGuard: typeof bypassDdosGuard;
-        deobfuscateScript: typeof deobfuscateScript;
-    };
-}
-/**
- * Configuration options for creating a provider context
- */
-export interface ProviderContextConfig extends ExtractorContextConfig {
-    /**
-     * Custom AnimeParser base class (optional) - for advanced use cases
-     */
-    AnimeParser?: typeof AnimeParser;
-    /**
-     * Custom MovieParser base class (optional) - for advanced use cases
-     */
-    MovieParser?: typeof MovieParser;
-    /**
-     * Custom MangaParser base class (optional) - for advanced use cases
-     */
-    MangaParser?: typeof MangaParser;
-    /**
-     * Extractor manager whose registry supplies extractors to providers (optional). When set,
-     * `ctx.extractors.X` runs the hash-verified registry version of X, falling back to the bundled
-     * one. Without it, providers use the bundled extractors.
-     */
-    extractorManager?: ExtractorManager;
 }
 //# sourceMappingURL=provider-context.d.ts.map

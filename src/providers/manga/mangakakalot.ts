@@ -2,16 +2,18 @@ import { load, type CheerioAPI } from 'cheerio';
 
 import {
   MangaParser,
-  MediaStatus,
   type ISearch,
   type IMangaInfo,
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
+  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
-import { parseChapterNumber, parseVolumeNumber, sortChaptersForReading } from '../../utils/manga';
+import { parseChapterNumber, parseVolumeNumber } from '../../utils/manga';
+import { toMediaStatus } from '../common/media-status';
+import { absoluteUrl, chapterTitle, finishChapters, plainText, refererHeaders, toIsoDate } from './shared';
 
 /** One chapter as the site's chapter-list API (`/api/manga/<slug>/chapters`) returns it. */
 interface ChapterRow {
@@ -39,15 +41,6 @@ const searchWord = (query: string): string =>
     .replace(/[\s!-/:-@[-`{-~]+/g, '_')
     .replace(/^_+|_+$/g, '');
 
-/** `2024-11-03T11:37:28.000000Z` (the API's microseconds) → `2024-11-03T11:37:28.000Z`. */
-const toIsoDate = (value: string | undefined): string | undefined => {
-  if (!value) return undefined;
-  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?Z$/.exec(value.trim());
-  if (match) return `${match[1]}.${(match[2] ?? '').padEnd(3, '0').slice(0, 3)}Z`;
-  const time = Date.parse(value);
-  return Number.isNaN(time) ? value : new Date(time).toISOString();
-};
-
 export class MangaKakalot extends MangaParser {
   override readonly name = 'MangaKakalot';
   // mangakakalot.com is gone; mangakakalot.gg redirects here, and manganato.gg is the same site
@@ -65,23 +58,13 @@ export class MangaKakalot extends MangaParser {
    * Covers and pages are on 2xstorage.com, which answers 403 unless the Referer is the site's
    * origin (exactly `https://www.kakamanga.com/`; a page URL is refused too).
    */
-  private imageHeaders = (): Record<string, string> => ({ Referer: `${this.baseUrl}/` });
+  private imageHeaders = (): Record<string, string> => refererHeaders(this.baseUrl);
 
-  private absoluteUrl = (url: string | undefined): string | undefined => {
-    const value = url?.trim();
-    if (!value) return undefined;
-    if (value.startsWith('//')) return `https:${value}`;
-    if (value.startsWith('/')) return `${this.baseUrl}${value}`;
-    return /^https?:\/\//.test(value) ? value : undefined;
-  };
+  private absoluteUrl = (url: string | undefined): string | undefined => absoluteUrl(url, this.baseUrl);
 
   /** The title's slug (its id) in `https://www.kakamanga.com/manga/<slug>`. */
   private slugFromUrl = (url: string | undefined): string | undefined => /\/manga\/([^/?#]+)/.exec(url ?? '')?.[1];
 
-  /**
-   * @param query Search query
-   * @param page Page number (default: 1)
-   */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     // /search/story/<word> is behind a Cloudflare challenge. The search box's endpoint serves the
     // same results page, and JSON to requests sent with X-Requested-With (the search box's own).
@@ -178,9 +161,8 @@ export class MangaKakalot extends MangaParser {
       .filter((author) => author && author.toLowerCase() !== 'unknown');
     if (authors.length) info.authors = authors;
 
-    const status = (fields.status ?? '').toLowerCase();
-    if (status === 'ongoing') info.status = MediaStatus.ONGOING;
-    else if (status === 'completed') info.status = MediaStatus.COMPLETED;
+    const status = toMediaStatus(fields.status, MediaStatus);
+    if (status) info.status = status;
 
     const genres = $('.manga-info-text li.genres a')
       .map((_, el) => $(el).text().trim())
@@ -209,26 +191,14 @@ export class MangaKakalot extends MangaParser {
 
   /**
    * The synopsis under the `<title> summary:` heading, as plain text. Some titles store it as
-   * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more: whitespace
-   * collapses as a browser would and `<br>` breaks lines.
+   * escaped HTML (`&amp;quot;`, `&lt;br&gt;`), so its text is read as HTML once more, its
+   * whitespace collapsed first as a browser would.
    */
   private description = ($: CheerioAPI): string | undefined => {
     const box = $('#contentBox').first().clone();
     box.find('h2').remove();
     box.find('br').replaceWith('&lt;br&gt;');
-    const html = box
-      .text()
-      .replace(/\s+/g, ' ')
-      .replace(/<br\s*\/?>/gi, '\n');
-    const text = load(html, null, false)
-      .root()
-      .text()
-      .split('\n')
-      .map((line) => line.trim())
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-    return text || undefined;
+    return plainText(box.text().replace(/\s+/g, ' '));
   };
 
   /** Every chapter of a title from the chapter-list API, in reading order. */
@@ -247,16 +217,9 @@ export class MangaKakalot extends MangaParser {
       if (!body.data.pagination?.has_more || page.length === 0) break;
     }
 
-    // A chapter published while paging shifts the offsets, so a row can come twice.
-    const seen = new Set<string>();
-    const chapters: IMangaChapter[] = [];
-    for (const row of rows) {
-      const chapter = this.toChapter(mangaId, row);
-      if (!chapter || seen.has(chapter.id)) continue;
-      seen.add(chapter.id);
-      chapters.push(chapter);
-    }
-    return sortChaptersForReading(chapters.reverse());
+    // A chapter published while paging shifts the offsets, so a row can come twice (finishChapters
+    // keeps one).
+    return finishChapters(rows.flatMap((row) => this.toChapter(mangaId, row) ?? []));
   };
 
   private toChapter = (mangaId: string, row: ChapterRow): IMangaChapter | undefined => {
@@ -268,7 +231,7 @@ export class MangaKakalot extends MangaParser {
 
     const chapter: IMangaChapter = {
       id: `${mangaId}/${slug}`,
-      title: label || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : slug),
+      title: chapterTitle(label, chapterNumber, slug),
     };
     if (chapterNumber !== undefined) chapter.chapterNumber = chapterNumber;
     const volumeNumber = parseVolumeNumber(label);

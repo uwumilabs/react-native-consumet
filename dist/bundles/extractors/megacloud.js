@@ -34,147 +34,118 @@ __export(megacloud_exports, {
   MegaCloud: () => MegaCloud
 });
 module.exports = __toCommonJS(megacloud_exports);
+
+// src/extractors/hls.ts
+function resolveUri(uri, playlistUrl) {
+  if (/^https?:\/\//i.test(uri)) return uri;
+  if (uri.startsWith("//")) return `${playlistUrl.split("//")[0]}${uri}`;
+  if (uri.startsWith("/")) return `${playlistUrl.match(/^https?:\/\/[^/?#]+/i)?.[0] ?? ""}${uri}`;
+  return `${playlistUrl.split(/[?#]/)[0].replace(/[^/]*$/, "")}${uri}`;
+}
+function hlsVariants(playlist, masterUrl) {
+  if (typeof playlist !== "string") return [];
+  var lines = playlist.split("\n").map(line => line.trim());
+  var separateAudio = lines.some(line => line.startsWith("#EXT-X-MEDIA:") && line.includes("TYPE=AUDIO") && line.includes("URI="));
+  if (separateAudio) return [];
+  var variants = [];
+  lines.forEach((line, i) => {
+    var uri = lines[i + 1];
+    if (!line.startsWith("#EXT-X-STREAM-INF") || !uri || uri.startsWith("#")) return;
+    var height = line.match(/RESOLUTION=\d+x(\d+)/)?.[1];
+    variants.push({
+      url: resolveUri(uri, masterUrl),
+      isM3U8: true,
+      quality: height ? `${height}p` : `quality_${variants.length + 1}`
+    });
+  });
+  return variants;
+}
+
+// src/extractors/url.ts
+function toUrl(URLClass, url) {
+  return typeof url === "string" ? new URLClass(url) : url;
+}
+
+// src/extractors/megacloud.ts
 function MegaCloud(ctx) {
-  var serverName = "MegaCloud";
-  var sources = [];
   var {
     axios,
     load,
     USER_AGENT,
     PolyURL
   } = ctx;
-  async function getSources(embed_url, site) {
-    var regex = /\/([^/?]+)(?=\?)/;
-    var xrax = embed_url.toString().match(regex)?.[1];
-    var basePath = embed_url.pathname.split("/").slice(0, 4).join("/");
-    var url = `${embed_url.origin}${basePath}/getSources?id=${xrax}`;
+  function findNonce(embedPage) {
+    var whole = embedPage.match(/\b[a-zA-Z0-9]{48}\b/)?.[0];
+    if (whole) return whole;
+    var parts = embedPage.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
+    return parts?.slice(1).join("");
+  }
+  var extract = async (videoUrl, referer) => {
+    var embedUrl = toUrl(PolyURL, videoUrl);
     var headers = {
       "Accept": "*/*",
       "X-Requested-With": "XMLHttpRequest",
-      "Referer": site,
+      "Referer": referer,
       "User-Agent": USER_AGENT
     };
-    var videoTag;
-    var embedRes;
-    try {
-      embedRes = await axios?.get(embed_url.href, {
-        headers
-      });
-      var $ = load(embedRes.data);
-      videoTag = $('[id$="-player"]');
-    } catch (error) {
-      console.error("\u274C Error fetching embed URL:", error);
-      return;
-    }
-    if (!videoTag.length) {
-      console.error("\u274C Looks like URL expired!");
-      return;
-    }
-    var rawText = embedRes.data;
-    var nonceMatch = rawText.match(/\b[a-zA-Z0-9]{48}\b/);
-    if (!nonceMatch) {
-      var altMatch = rawText.match(/\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b[\s\S]*?\b([a-zA-Z0-9]{16})\b/);
-      if (altMatch) nonceMatch = [altMatch.slice(1).join("")];
-    }
-    var nonce = nonceMatch?.[0];
-    if (!nonce) return console.error("\u274C Nonce not found!");
-    var fileId = videoTag.attr("data-id");
     var {
-      data: encryptedResData
-    } = await axios.get(`${embed_url.origin}${basePath}/getSources?id=${fileId}&_k=${nonce}`, {
+      data: embedPage
+    } = await axios.get(embedUrl.href, {
       headers
     });
-    var sources2 = encryptedResData.sources;
-    var videoSrc = [];
-    if (encryptedResData.encrypted) {
-      console.warn("\u274C API returned encrypted sources which we are no longer decrypting. Returning empty array.");
-    } else {
-      videoSrc = sources2;
+    var player = load(embedPage)('[id$="-player"]');
+    if (!player.length) throw new Error("[MegaCloud] The embed page has no player; the URL may have expired");
+    var nonce = findNonce(embedPage);
+    if (!nonce) throw new Error("[MegaCloud] Nonce not found");
+    var basePath = embedUrl.pathname.split("/").slice(0, 4).join("/");
+    var {
+      data
+    } = await axios.get(`${embedUrl.origin}${basePath}/getSources?id=${player.attr("data-id")}&_k=${nonce}`, {
+      headers
+    });
+    if (data.encrypted) throw new Error("[MegaCloud] The sources are encrypted, which this extractor does not decrypt");
+    var sources = [];
+    for (var source of Array.isArray(data.sources) ? data.sources : []) {
+      if (source.type !== "hls") {
+        sources.push({
+          url: source.file,
+          isM3U8: false,
+          quality: "default"
+        });
+        continue;
+      }
+      sources.push({
+        url: source.file,
+        isM3U8: true,
+        quality: "auto"
+      });
+      var {
+        data: master
+      } = await axios.get(source.file, {
+        headers: {
+          "Referer": referer,
+          "User-Agent": USER_AGENT
+        }
+      });
+      sources.push(...hlsVariants(master, source.file));
     }
     return {
-      sources: videoSrc,
-      tracks: encryptedResData.tracks,
-      intro: encryptedResData?.intro,
-      outro: encryptedResData?.outro
-    };
-  }
-  var extract = async function (embedIframeURL) {
-    var referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "https://himovies.sx";
-    var extractedData = {
-      subtitles: [],
-      intro: {
-        start: 0,
-        end: 0
-      },
-      outro: {
-        start: 0,
-        end: 0
-      },
-      sources: []
-    };
-    try {
-      var resp = await getSources(embedIframeURL, referer);
-      if (!resp) return extractedData;
-      if (Array.isArray(resp.sources)) {
-        for (var s of resp.sources) {
-          var isM3U8 = s.type === "hls";
-          extractedData.sources.push({
-            url: s.file,
-            isM3U8,
-            quality: "auto"
-          });
-          if (isM3U8) {
-            try {
-              var m3u8Response = await fetch(s.file, {
-                headers: {
-                  "Referer": referer,
-                  "User-Agent": USER_AGENT || "Mozilla/5.0"
-                }
-              });
-              var m3u8Content = await m3u8Response.text();
-              if (m3u8Content.includes("EXTM3U")) {
-                var pathWithoutMaster = s.file.split("/master.m3u8")[0] || s.file.split("/index.m3u8")[0];
-                var videoList = m3u8Content.split("#EXT-X-STREAM-INF:");
-                for (var video of videoList ?? []) {
-                  if (!video.includes("m3u8")) continue;
-                  var url = video.split("\n")[1].trim();
-                  var resolutionMatch = video.match(/RESOLUTION=(\d+)x(\d+)/);
-                  var quality = resolutionMatch ? resolutionMatch[2] : null;
-                  var isAbsoluteUrl = url.startsWith("http://") || url.startsWith("https://");
-                  var finalUrl = isAbsoluteUrl ? url : `${pathWithoutMaster}/${url}`;
-                  extractedData.sources.push({
-                    url: finalUrl,
-                    quality: quality ? `${quality}p` : "auto",
-                    isM3U8: url.includes(".m3u8")
-                  });
-                }
-              }
-            } catch (error) {
-              console.warn("[MegaCloud] Failed to fetch M3U8 variants:", error);
-            }
-          } else {
-            extractedData.sources[extractedData.sources.length - 1] = {
-              url: s.file,
-              isM3U8: false,
-              quality: "default"
-            };
-          }
-        }
-      }
-      extractedData.intro = resp.intro ?? extractedData.intro;
-      extractedData.outro = resp.outro ?? extractedData.outro;
-      extractedData.subtitles = resp.tracks?.map(track => ({
+      sources,
+      subtitles: data.tracks?.map(track => ({
         url: track.file,
         lang: track.label || track.kind
-      })) ?? [];
-      return extractedData;
-    } catch (err) {
-      throw err;
-    }
+      })) ?? [],
+      intro: data.intro ?? {
+        start: 0,
+        end: 0
+      },
+      outro: data.outro ?? {
+        start: 0,
+        end: 0
+      }
+    };
   };
   return {
-    serverName,
-    sources,
     extract
   };
 }

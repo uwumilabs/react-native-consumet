@@ -2,8 +2,6 @@ import { AnimePahe } from './animepahe/animepahe';
 import { createAnimePahe } from './animepahe/create-animepahe';
 import { Zoro } from './zoro/zoro';
 import { createZoro } from './zoro/create-zoro';
-import { AnimeKai } from './animekai/animekai';
-import { createAnimeKai } from './animekai/create-animekai';
 import { AniKoto } from './anikoto/anikoto';
 import { createAniKoto } from './anikoto/create-anikoto';
 import { ReAnime } from './reanime/reanime';
@@ -16,8 +14,6 @@ export const ANIME = {
   createAnimePahe,
   Zoro,
   createZoro,
-  AnimeKai,
-  createAnimeKai,
   AniKoto,
   createAniKoto,
   ReAnime,

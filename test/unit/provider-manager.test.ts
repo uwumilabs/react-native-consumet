@@ -2,9 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import registry from '../../src/extension-registry.json';
 import { ProviderManager } from '../../src/utils/ProviderManager';
-import { AnimeParser, MovieParser, SubOrDub } from '../../src/models';
-import type { AnimeProvider, MovieProvider } from '../../src/utils/provider-maps';
-import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
+import { AnimeParser, MovieParser } from '../../src/models';
+import type { KnownAnimeProviderId, KnownMovieProviderId } from '../../src/utils/ProviderManager';
 import Anilist from '../../src/providers/meta/anilist';
 import TMDB from '../../src/providers/meta/tmdb';
 import { sha256Hex } from '../../src/utils/extension-integrity';
@@ -30,20 +29,11 @@ afterEach(() => {
 const entry = (id: string) => registry.extensions.find((e) => e.id === id)!;
 
 describe('registry ids and prototypes (EXT-2)', () => {
-  it('loads a provider that has no bundled class by its registry id, as an AnimeParser', async () => {
-    const provider = await new ProviderManager(registry as any).getAnimeProvider('anineko');
+  it.each(['anineko', 'anikoto'])('loads %s by its registry id as an AnimeParser, bundled class or not', async (id) => {
+    const provider = await new ProviderManager(registry as any).getAnimeProvider(id);
 
     expect(Object.getPrototypeOf(provider)).toBe(AnimeParser.prototype);
     expect(typeof provider.fetchEpisodeServers).toBe('function');
-  });
-
-  it('attaches the bundled class prototype when one exists, exactly once', async () => {
-    const setPrototypeOf = jest.spyOn(Object, 'setPrototypeOf');
-
-    const provider = await new ProviderManager(registry as any).loadExtension('anikoto');
-
-    expect(provider).toBeInstanceOf(AniKoto);
-    expect(setPrototypeOf.mock.calls.filter(([target]) => target === provider)).toHaveLength(1);
   });
 
   it('gives movie providers the MovieParser prototype', async () => {
@@ -51,26 +41,30 @@ describe('registry ids and prototypes (EXT-2)', () => {
     expect(provider).toBeInstanceOf(MovieParser);
   });
 
-  it('keeps the generic call patterns apps already use working with meta providers', async () => {
+  it('hands registry-loaded providers to the meta providers', async () => {
     const manager = new ProviderManager(registry as any);
 
-    const anime = await manager.executeProviderCode<AnimeProvider>(
-      readPublished(entry('anikoto').main),
-      entry('anikoto').factoryName,
-      entry('anikoto') as any
-    );
-    expect(new Anilist(anime)).toBeInstanceOf(Anilist);
-    expect(typeof anime.fetchEpisodeServers).toBe('function');
-    // Mirrors the app-side call signature: (episodeId, SubOrDub)
-    const callServers: (id: string, dub: SubOrDub) => unknown = (id, dub) => anime.fetchEpisodeServers(id, dub);
-    expect(typeof callServers).toBe('function');
+    const anime = await manager.executeProviderCode(readPublished(entry('anikoto').main), entry('anikoto') as any);
+    expect(new Anilist(anime).provider).toBe(anime);
 
-    const movie = await manager.executeProviderCode<MovieProvider>(
-      readPublished(entry('vegamovies').main),
-      entry('vegamovies').factoryName,
-      entry('vegamovies') as any
-    );
-    expect(new TMDB('test-key', movie)).toBeInstanceOf(TMDB);
+    const movie = await manager.executeProviderCode(readPublished(entry('vegamovies').main), entry('vegamovies') as any);
+    expect(() => new TMDB('test-key', movie)).not.toThrow();
+  });
+
+  it('autocompletes exactly the anime and movie ids of the bundled registry', () => {
+    // Each Record must name every member of its union, so these lists follow the types.
+    const anime: Record<KnownAnimeProviderId, true> = { animepahe: true, anikoto: true, anineko: true };
+    const movies: Record<KnownMovieProviderId, true> = {
+      vegamovies: true,
+      netflixmirror: true,
+      primemirror: true,
+      disneymirror: true,
+    };
+    const idsOf = (category: string) =>
+      registry.extensions.filter((e) => e.category === category).map((e) => e.id).sort();
+
+    expect(Object.keys(anime).sort()).toEqual(idsOf('anime'));
+    expect(Object.keys(movies).sort()).toEqual(idsOf('movies'));
   });
 });
 
@@ -110,7 +104,7 @@ describe('base URL from the registry (EXT-6)', () => {
   });
 
   it("passes the entry's baseUrl to the factory", async () => {
-    const provider: any = await new ProviderManager(probeRegistry).executeProviderCode(code, 'createBaseUrlProbe', manifest);
+    const provider: any = await new ProviderManager(probeRegistry).executeProviderCode(code, manifest);
     expect(provider.baseUrl).toBe('https://registry.example');
   });
 

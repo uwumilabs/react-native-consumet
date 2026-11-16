@@ -26,10 +26,7 @@ describe('registry entries are single-file bundles (EXT-5)', () => {
 
   it.each(registry.extensions)('extension $id runs through executeProviderCode', async (entry) => {
     const provider: any = await new ProviderManager(registry as any).executeProviderCode(
-      read(entry.distFile),
-      entry.factoryName,
-      entry as any
-    );
+      read(entry.distFile), { ...entry as any, factoryName: entry.factoryName });
     expect(typeof provider.search).toBe('function');
   });
 
@@ -94,8 +91,7 @@ describe('extension runtime require (EXT-5)', () => {
     const manager = new ProviderManager(registry as any);
     const provider: any = await manager.executeProviderCode(
       code,
-      'createProbe',
-      { id: 'probe', category: 'anime' } as any,
+      { id: 'probe', factoryName: 'createProbe', category: 'anime' } as any,
       { skipIntegrity: true }
     );
 
@@ -120,7 +116,7 @@ describe('registry bundles on Hermes, which compiles runtime code without block 
     const manager = new ProviderManager(registry as any);
     for (const id of ['netflixmirror', 'primemirror', 'disneymirror']) {
       const entry = registry.extensions.find((e) => e.id === id)!;
-      const provider: any = await manager.executeProviderCode(read(entry.distFile), entry.factoryName, entry as any);
+      const provider: any = await manager.executeProviderCode(read(entry.distFile), { ...entry as any, factoryName: entry.factoryName });
       expect(provider.name).toBe(entry.name);
     }
   });
@@ -135,8 +131,7 @@ describe('registry bundles on Hermes, which compiles runtime code without block 
     `;
     const provider: any = await new ProviderManager(registry as any).executeProviderCode(
       code,
-      'createProbe',
-      { id: 'probe', category: 'anime' } as any,
+      { id: 'probe', factoryName: 'createProbe', category: 'anime' } as any,
       { skipIntegrity: true }
     );
     expect(provider.which).toBe('declared');

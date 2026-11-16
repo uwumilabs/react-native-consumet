@@ -4,31 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.FlameScans = void 0;
-const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
 const manga_1 = require("../../utils/manga");
+const media_status_1 = require("../common/media-status");
+const shared_1 = require("./shared");
 /** Covers and chapter pages; the CDN serves them without a Referer. */
 const IMAGE_CDN = 'https://cdn.flamecomics.xyz/uploads/images/series';
-const STATUS = {
-  'ongoing': models_1.MediaStatus.ONGOING,
-  'completed': models_1.MediaStatus.COMPLETED,
-  'hiatus': models_1.MediaStatus.HIATUS,
-  'dropped': models_1.MediaStatus.CANCELLED,
-  'cancelled': models_1.MediaStatus.CANCELLED,
-  'coming soon': models_1.MediaStatus.NOT_YET_AIRED
-};
 /** Lower-case words without punctuation, so `returners magic` finds "A Returner's Magic". */
 const searchable = text => text.toLowerCase().replace(/['`\u2018\u2019]/g, '').replace(/[^a-z0-9\u00c0-\u1fff\u2070-\uffff]+/g, ' ').trim();
-/** Plain text of the site's HTML descriptions (paragraphs become blank-line separated). */
-const plainText = html => {
-  if (!html) return undefined;
-  const $ = (0, cheerio_1.load)(html);
-  $('br').replaceWith('\n');
-  $('p').after('\n\n');
-  const text = $.root().text().replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  return text || undefined;
-};
 /** The non-empty strings of a list, trimmed and without repeats. */
 const strings = values => Array.isArray(values) ? [...new Set(values.filter(v => typeof v === 'string').map(v => v.trim()))].filter(Boolean) : [];
 const parseJson = data => {
@@ -60,9 +44,6 @@ class FlameScans extends models_1.MangaParser {
   /**
    * The site has no search endpoint: its browse page lists every series, and this keeps the ones
    * whose title has every word of the query. All matches come on page 1.
-   *
-   * @param query Search query
-   * @param page Page number (default 1)
    */
   search = (() => {
     var _this = this;
@@ -101,7 +82,7 @@ class FlameScans extends models_1.MangaParser {
       if (list.length) info[field] = list;
     }
     // The site lists the newest chapter first.
-    info.chapters = (0, manga_1.sortChaptersForReading)(chapters.map(chapter => this.toChapter(chapter, id)).reverse());
+    info.chapters = (0, shared_1.finishChapters)(chapters.map(chapter => this.toChapter(chapter, id)));
     return info;
   };
   /** @param chapterId chapter id from `fetchMangaInfo` (`"101/327c2f17ef9cacd3"`: series id / chapter token) */
@@ -140,10 +121,10 @@ class FlameScans extends models_1.MangaParser {
       const version = series.last_edit ? `?${series.last_edit}` : '';
       result.image = `${IMAGE_CDN}/${id}/${encodeURIComponent(series.cover)}${version}`;
     }
-    const description = plainText(series.description);
+    const description = (0, shared_1.plainText)(series.description);
     if (description) result.description = description;
-    const status = series.status?.trim();
-    if (status) result.status = STATUS[status.toLowerCase()] ?? models_1.MediaStatus.UNKNOWN;
+    const status = (0, media_status_1.toMediaStatus)(series.status, models_1.MediaStatus);
+    if (status) result.status = status;
     if (typeof series.year === 'number' && series.year > 0) result.releaseDate = series.year;
     return result;
   }

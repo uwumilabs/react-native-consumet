@@ -1,8 +1,10 @@
 import TMDB from '../../src/providers/meta/tmdb';
-import { MultiStream } from '../../src/providers/movies/multistream';
+import { MultiStream } from '../../src/providers/movies/multistream/multistream';
 import type { IMovieProvider } from '../../src/models/types';
 import { metaHttp } from '../../src/utils/meta-http';
-import { defaultAxios } from '../../src/utils/extension-utils';
+import { defaultAxios } from '../../src/utils/create-extractor-context';
+import { createProviderContext } from '../../src/utils/create-provider-context';
+import movie from './fixtures/tmdb/movie-559969.json';
 import search from './fixtures/tmdb/search-multi-tom-and-jerry-1.json';
 import trendingAll from './fixtures/tmdb/trending-all-week.json';
 import trendingPeople from './fixtures/tmdb/trending-person-day.json';
@@ -96,5 +98,45 @@ describe('TMDB search and trending release years (META-10)', () => {
 
     const movies = (result.results[0] as { movies: { releaseDate?: string }[] }).movies;
     expect(movies.map((m) => m.releaseDate)).toEqual(['2009', undefined]);
+  });
+});
+
+describe('MultiStream (META-10)', () => {
+  const multiStream = () => new MultiStream(undefined, undefined, 'test-key');
+
+  it('gives search results the TMDB release year, or none, never "NaN"', async () => {
+    jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: search });
+
+    const { results } = await multiStream().search(QUERY);
+
+    expect(results.map((r) => r.releaseDate)).toEqual(['2009', undefined, '1990']);
+  });
+
+  it('gives recommendations ids that fetchMediaInfo accepts', async () => {
+    const get = jest.spyOn(defaultAxios, 'get').mockResolvedValue({ data: movie });
+
+    const info = await multiStream().fetchMediaInfo(`${movie.id}$movie`);
+    const [recommendation] = info.recommendations!;
+    await multiStream().fetchMediaInfo(recommendation!.id);
+
+    expect(recommendation!.id).toBe(`${movie.recommendations.results[0]!.id}$movie`);
+    expect(new URL(get.mock.calls[1]![0] as string).pathname).toBe(`/3/movie/${movie.recommendations.results[0]!.id}`);
+    expect(info.episodes).toEqual([expect.objectContaining({ id: `${movie.id}$movie`, number: 1 })]);
+  });
+
+  it('asks each site once for an episode\'s sources, as for its servers', async () => {
+    const ctx = createProviderContext();
+    const get = jest.spyOn(ctx.axios, 'get').mockRejectedValue(new Error('offline'));
+    jest.spyOn(ctx.axios, 'post').mockRejectedValue(new Error('offline'));
+    const provider = new MultiStream(ctx, undefined, 'test-key');
+
+    await provider.fetchEpisodeServers('559969$movie');
+    const perScrape = get.mock.calls.length;
+    get.mockClear();
+    // Every site fails; videasy still lists its servers, none of which has a source.
+    await expect(provider.fetchEpisodeSources('559969$movie')).rejects.toThrow('No sources found for server: neon-org');
+
+    expect(perScrape).toBeGreaterThan(0);
+    expect(get).toHaveBeenCalledTimes(perScrape);
   });
 });

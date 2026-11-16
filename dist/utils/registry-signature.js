@@ -1,20 +1,20 @@
 "use strict";
 
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.REGISTRY_SIGNING_KEYS = exports.MAX_REGISTRY_SIGNATURES = exports.RegistrySignatureError = void 0;
+exports.MAX_REGISTRY_SIGNATURES = exports.REGISTRY_SIGNING_KEYS = exports.RegistrySignatureError = void 0;
 exports.verifyRegistrySignature = verifyRegistrySignature;
 exports.parseSignedRegistry = parseSignedRegistry;
 const ed25519_1 = require("@noble/curves/ed25519");
-const registry_signing_keys_1 = require("../registry-signing-keys");
-Object.defineProperty(exports, "REGISTRY_SIGNING_KEYS", {
-  enumerable: true,
-  get: function () {
-    return registry_signing_keys_1.REGISTRY_SIGNING_KEYS;
-  }
-});
+const registry_signing_keys_json_1 = __importDefault(require("../registry-signing-keys.json"));
 const registry_schema_1 = require("./registry-schema");
+const registry_signature_format_1 = require("./registry-signature-format");
 /** Thrown when a downloaded registry can't be verified. Never means the registry is usable. */
 class RegistrySignatureError extends Error {
   code;
@@ -27,15 +27,27 @@ class RegistrySignatureError extends Error {
   }
 }
 exports.RegistrySignatureError = RegistrySignatureError;
-/** Most signature lines checked, so an oversized signature file can't keep the app busy verifying. */
-exports.MAX_REGISTRY_SIGNATURES = 4;
-const PUBLIC_KEY_RE = /^[0-9a-f]{64}$/i;
-const SIGNATURE_RE = /^[0-9a-f]{128}$/i;
+/**
+ * Public keys trusted to sign a downloaded registry, as lowercase hex: the `publicKey` of each
+ * entry in src/registry-signing-keys.json. `yarn registry:keygen` adds a key there and prints its
+ * private key once, for the CI secret that signs src/extension-registry.json
+ * (.github/workflows/sign-registry.yml). An app trusts only the keys of the library version it
+ * ships, so keep an old key listed while apps move to a release that bundles its replacement.
+ * Without keys, downloaded registries can't be verified and verifyRegistrySignature fails closed.
+ */
+exports.REGISTRY_SIGNING_KEYS = registry_signing_keys_json_1.default.map(entry => entry.publicKey);
+var registry_signature_format_2 = require("./registry-signature-format");
+Object.defineProperty(exports, "MAX_REGISTRY_SIGNATURES", {
+  enumerable: true,
+  get: function () {
+    return registry_signature_format_2.MAX_REGISTRY_SIGNATURES;
+  }
+});
 // RFC 8032 checks: rejects non-canonical encodings and small-order keys (noble defaults to ZIP 215).
 const STRICT = {
   zip215: false
 };
-/** Bytes of a hex string already checked against PUBLIC_KEY_RE or SIGNATURE_RE. */
+/** Bytes of a hex string already checked by publicKeyHex or parseSignatureLines. */
 function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
@@ -82,28 +94,23 @@ function trustedKeys(publicKeys) {
     throw new RegistrySignatureError('NO_SIGNING_KEYS', 'No registry signing key configured: this version of react-native-consumet bundles no public key ' + 'to verify a downloaded registry. Use the bundled registry, or pass publicKeys.');
   }
   return publicKeys.map((key, index) => {
-    const bytes = typeof key === 'string' && PUBLIC_KEY_RE.test(key) ? hexToBytes(key) : undefined;
-    if (!bytes || !ed25519_1.ed25519.utils.isValidPublicKey(bytes, false)) {
+    const hex = (0, registry_signature_format_1.publicKeyHex)(key);
+    const bytes = hex && hexToBytes(hex);
+    if (!hex || !bytes || !ed25519_1.ed25519.utils.isValidPublicKey(bytes, false)) {
       throw new RegistrySignatureError('INVALID_SIGNING_KEY', `Registry signing key ${index} is not a 64-character hex ed25519 public key`);
     }
     return {
-      hex: key.toLowerCase(),
+      hex,
       bytes
     };
   });
 }
 function parseSignatures(signature) {
-  const lines = typeof signature === 'string' ? signature.split('\n').map(line => line.trim()) : [];
-  const signatures = lines.filter(Boolean);
-  if (signatures.length === 0 || signatures.length > exports.MAX_REGISTRY_SIGNATURES) {
-    throw new RegistrySignatureError('MALFORMED_SIGNATURE', `Registry signature must be 1 to ${exports.MAX_REGISTRY_SIGNATURES} lines of hex ed25519 signatures ` + `(got ${signatures.length})`);
+  try {
+    return (0, registry_signature_format_1.parseSignatureLines)(signature).map(hexToBytes);
+  } catch (error) {
+    throw new RegistrySignatureError('MALFORMED_SIGNATURE', `Registry signature ${error.message}`);
   }
-  return signatures.map((line, index) => {
-    if (!SIGNATURE_RE.test(line)) {
-      throw new RegistrySignatureError('MALFORMED_SIGNATURE', `Registry signature line ${index + 1} is not a 128-character hex ed25519 signature`);
-    }
-    return hexToBytes(line);
-  });
 }
 /**
  * Check a downloaded registry against its signature file before using it. Pass the registry
@@ -117,7 +124,7 @@ function parseSignatures(signature) {
  *   or no signature verifies under a trusted key. It never returns without a valid signature.
  */
 function verifyRegistrySignature(registryText, signature) {
-  let publicKeys = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : registry_signing_keys_1.REGISTRY_SIGNING_KEYS;
+  let publicKeys = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : exports.REGISTRY_SIGNING_KEYS;
   const keys = trustedKeys(publicKeys);
   const signatures = parseSignatures(signature);
   let message;

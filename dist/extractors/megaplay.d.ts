@@ -1,8 +1,7 @@
-import { type ExtractorContext, type IVideoExtractor } from '../models';
-/**
- * MegaPlay extractor factory that relies on the shared extractor context
- * @param ctx ExtractorContext containing axios, load, CryptoJS, USER_AGENT, PolyURL
- * @returns Object with extract method implementing IVideoExtractor interface
- */
-export declare function MegaPlay(ctx: ExtractorContext): IVideoExtractor;
+import { type ExtractorContext, type ISource } from '../models';
+import type { PolyURL } from '../utils/url-polyfill';
+/** MegaPlay, AniKoto's player. */
+export declare function MegaPlay(ctx: ExtractorContext): {
+    extract: (videoUrl: string | PolyURL, referer?: string) => Promise<ISource>;
+};
 //# sourceMappingURL=megaplay.d.ts.map

@@ -75,6 +75,8 @@ import {
   type ProviderConfig,
   type ProviderContext,
 } from '../../../models';
+import { emptySearch } from '../../common/search';
+import { pickServer } from '../../common/servers';
 
 export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: string) {
   const { axios, load, PolyURL, extractors, createCustomBaseUrl } = ctx;
@@ -97,6 +99,7 @@ export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: strin
     const { data } = await axios.get(`${baseUrl}/search?q=${encodeURIComponent(query)}&page=${page}`);
     const $ = load(data);
 
+    if (!$('div.anime-item').length) return emptySearch(page);
     const results: IAnimeResult[] = [];
     $('div.anime-item').each((_, el) => {
       const href = $(el).find('a').attr('href') ?? '';
@@ -131,9 +134,7 @@ export function createMyAnimeWebsite(ctx: ProviderContext, customBaseURL?: strin
   };
 
   const fetchEpisodeSources = async (episodeId: string, server: string = 'megacloud'): Promise<ISource> => {
-    const servers = await fetchEpisodeServers(episodeId);
-    const picked = servers.find((s) => s.name.startsWith(server)) ?? servers[0];
-    if (!picked) throw new Error(`No servers found for episode ${episodeId}`);
+    const picked = pickServer(await fetchEpisodeServers(episodeId), server);
 
     // Runs the registry version of MegaCloud when the app's registry has one, else the bundled one.
     // The base resolves a relative link; PolyURL throws a TypeError on one it can't parse.
@@ -154,6 +155,8 @@ export type MyAnimeWebsiteProviderInstance = ReturnType<typeof createMyAnimeWebs
 ```
 
 Export the factory by name (`export function createMyAnimeWebsite`); the registry's `factoryName` must match it. Provider and extractor modules use named exports only.
+
+Helpers several providers share live in `src/providers/common/`: `emptySearch(page)`, `toMediaStatus(text, ctx.enums.MediaStatus)` (a site's status text as a `MediaStatus`), `pickServer(servers, server?)` (the server whose name starts with `server`, or the first), and `ENC_DEC_API`. Import them, or any other module, by relative path: the build inlines it into your bundle.
 
 ## Step 3: Implement the Provider Logic
 
@@ -203,13 +206,11 @@ The loader looks for your factory as `exports[factoryName]`, then `module.export
 
 ### Integrating Extractors
 
-Call extractors through `ctx.extractors`, passing the context to function extractors: `extractors.MegaCloud(ctx).extract(new PolyURL(embedUrl), referer)`, as in the example above. When the provider is loaded by a `ProviderManager` whose registry lists the extractor, this runs the registry version, hash-checked and cached, and falls back to the bundled one if the registry copy can't be used. The `ExtractorRegistry` type in [`src/models/provider-context.ts`](../../src/models/provider-context.ts) lists each extractor's `extract` signature; older ones are classes that take the context too (`new extractors.MixDrop(ctx)`).
+Call extractors through `ctx.extractors`, passing your context: `extractors.MegaCloud(ctx).extract(new PolyURL(embedUrl), referer)`, as in the example above. When the provider is loaded by a `ProviderManager` whose registry lists the extractor, this runs the registry version, hash-checked and cached, and falls back to the bundled one if the registry copy can't be used. Either way the extractor runs with the context you pass, so its requests go through the app's axios, proxy and user agent. `ctx.extractors` has the type of [`src/extractors/index.ts`](../../src/extractors/index.ts), so each extractor's `extract` arguments type-check.
 
-Always pass your factory's `ctx` to the extractors you call. A bundled extractor then makes its requests through the app's axios, proxy and user agent; without a context it falls back to the library's default context and ignores the app's settings.
+List the extractors your provider uses in the entry's `extractors` field. Server names resolve to extractors by the longest registry `name` or alias they start with (`megacloud-hd-1` → MegaCloud), so name your servers `<extractor>-<label>`; `pickServer` relies on the same rule.
 
-List the extractors your provider uses in the entry's `extractors` field. Server names resolve to extractors by the longest registry `name` or alias they start with (`megacloud-hd-1` → MegaCloud), so name your servers after their extractor.
-
-A new extractor is a registry entry too. Write `src/extractors/<name>.ts` exporting a function named exactly like the entry's `name` (`export function NewHost(ctx: ExtractorContext): IVideoExtractor`), and add an entry to the registry's `extractors` array with `name`, `version`, `minContextVersion`, `distFile` (`dist/bundles/extractors/<name>.js`) and optional `aliases`. To call it as `ctx.extractors.NewHost` with types, also add it to `defaultExtractors` in [`src/utils/extension-utils.ts`](../../src/utils/extension-utils.ts) and to `ExtractorRegistry`.
+A new extractor is a registry entry too. Write `src/extractors/<name>.ts` exporting a function named exactly like the entry's `name`, which takes the context and returns `{ extract }` (`export function NewHost(ctx: ExtractorContext) { … }`; `extract` resolves an `ISource`), export it from [`src/extractors/index.ts`](../../src/extractors/index.ts), and add an entry to the registry's `extractors` array with `name`, `version`, `minContextVersion`, `distFile` (`dist/bundles/extractors/<name>.js`) and optional `aliases`.
 
 ### Declaring Capabilities
 
@@ -232,7 +233,6 @@ return {
 
 With `aniZipEpisodes`, `META.Anilist` keys your episodes by AniDB number (`uniqueId`), matching them to ani.zip by `number` first; see [Migrating stored episode `uniqueId`s](../migrations/uniqueid.md). Without it, your episodes are keyed by their own `number`.
 
-If your provider has a class wrapper, copy the field across: `this.capabilities = this.instance.capabilities;`.
 
 ### Native Module
 
@@ -313,23 +313,23 @@ The comments are for this guide only; the registry is plain JSON.
 
 Apps hand a server's URL to a registry extractor only when `haveMultiServers` is true and `isSourceDirect` is not. Otherwise they call the provider's `fetchEpisodeSources` with the server name. A provider whose servers are mirrors of direct files (e.g. VegaMovies: "CF Storage", "Pixeldrain") sets both `isSourceDirect` and `haveMultiServers`.
 
-Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook rebuilds `dist/` from the staged files, runs `prepare-registry`, and stages `dist/`, the newly published file under `registry/` and the updated registry entry. If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
+Don't write `main` or `sha256` yourself; leave them out of a new entry. Committing does the rest: when a commit stages changes under `src/` or `scripts/`, the pre-commit hook runs `yarn build:registry` on the staged files (build, `prepare-registry`, and the example app's local dist map) and stages `dist/`, the newly published file under `registry/`, the updated registry entry and the map. If you commit with `--no-verify`, or want to try it before committing, run the same steps yourself and commit what they change:
 
 ```bash
-yarn build && node scripts/prepare-registry.js
+yarn build:registry
 ```
 
-`prepare-registry` exits with an error, and writes nothing, if an entry's `distFile` is missing or isn't a `.js` file under `dist/`, if `main` is set to a URL it didn't write (anything other than this repo's `registry/<kind>/<id>/<version>.js` URL for the same entry), or if the resulting registry fails the library's own schema check (`validateRegistry`, e.g. a `factoryName` that isn't a JavaScript identifier).
+`prepare-registry` exits with an error, and writes nothing, if an entry's `distFile` is missing or isn't a `.js` file under `dist/bundles/`, if `main` is set to a URL it didn't write (anything other than this repo's `registry/<kind>/<id>/<version>.js` URL for the same entry), or if the resulting registry fails the library's own schema check (`validateRegistry`, e.g. a `factoryName` that isn't a JavaScript identifier).
 
 `yarn build` bundles every registry entry into one file. The `distFile` path names the bundle, and its source is the matching file under `src/`: `dist/bundles/providers/anime/myanimewebsite/create-myanimewebsite.js` is built from `src/providers/anime/myanimewebsite/create-myanimewebsite.ts`. Relative imports, such as a helper or another extractor, are inlined into the bundle. The runtime supplies only these modules:
 
 | Import                                               | What extension code gets                                                 |
 | ---------------------------------------------------- | ------------------------------------------------------------------------ |
 | `axios`, `cheerio`, `crypto-js`                      | The context's axios instance, `{ load }`, and CryptoJS                   |
-| anything under `src/models`                          | The base parsers and the library's enums                                 |
+| anything under `src/models`                          | The base parsers and the library's enums (loaders before 2.0.0 give `{}`) |
 | `src/utils` (index) and the `create-*-context` files | `createProviderContext` / `createExtractorContext` returning the context |
 
-Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports.
+Requiring anything else throws when the extension loads. Prefer what `ctx` gives your factory over imports, and take enum values from `ctx.enums`: apps on library versions before 2.0.0 also download the current registry, and their loader answers `require('react-native-consumet/models')` with an empty object. Shared helpers that need an enum take it as an argument, e.g. `toMediaStatus(text, ctx.enums.MediaStatus)`.
 
 `prepare-registry` then copies the bundle to an immutable path, `registry/extensions/<id>/<version>.js`, and sets `main` to that file's URL and `sha256` to its hash. Commit the new file under `registry/` with the registry change. Apps refuse to run code whose hash doesn't match, and refuse entries without a `sha256`.
 
@@ -373,10 +373,23 @@ Don't delete files by hand. `yarn registry:prune` lists what the rule allows del
 
 A registry provider needs no class and no library release. Add a class only if the provider should also ship inside the library, as `ANIME.MyAnimeWebsite`:
 
-1. Write `src/providers/anime/myanimewebsite/myanimewebsite.ts`: a class extending `AnimeParser` (or `MovieParser`) that takes `(ctx?, customBaseURL?)`, the factory's order, and keeps the older `(customBaseURL?)` form as an overload. `providerArgs(ctxOrBaseURL, customBaseURL)` from `src/providers/provider-args.ts` reads both forms and supplies `createProviderContext()` when there's no context. Build the instance with `createMyAnimeWebsite(ctx, baseURL)` and copy the fields and methods across, including `capabilities`. `src/providers/anime/anineko/anineko.ts` is a short example.
+1. Write `src/providers/anime/myanimewebsite/myanimewebsite.ts`:
+
+   ```typescript
+   import { AnimeParser } from '../../../models';
+   import { providerClass } from '../../provider-class';
+   import { createMyAnimeWebsite } from './create-myanimewebsite';
+
+   export const MyAnimeWebsite = providerClass(AnimeParser, createMyAnimeWebsite);
+   export type MyAnimeWebsite = InstanceType<typeof MyAnimeWebsite>;
+   ```
+
+   The class takes `(ctx?, customBaseURL?)`, or the older `(customBaseURL?)`, and its instances are the factory's output on an `AnimeParser` (use `MovieParser` for movies). Without a context it uses `createProviderContext()`.
+
 2. Export the class and the factory by name, and add them to the `ANIME` (or `MOVIES`) object in `src/providers/anime/index.ts`.
-3. Add a lazy getter for the class to `animeProviders` (or `movieProviders`) in [`src/utils/provider-maps.ts`](../../src/utils/provider-maps.ts), keyed by the registry entry's `name`. `ProviderManager` then gives loaded instances that class's prototype, so `instanceof MyAnimeWebsite` holds. Without it they get the `AnimeParser` / `MovieParser` prototype. The getters `require` the module and read the class by name, to avoid import cycles; copy an existing one.
-4. Add the registry id to `KnownAnimeProviderId` (or `KnownMovieProviderId`) in the same file, so it autocompletes in `getAnimeProvider`. Other ids type-check anyway.
+3. Add the registry id to `KnownAnimeProviderId` (or `KnownMovieProviderId`) in [`src/utils/ProviderManager.ts`](../../src/utils/ProviderManager.ts) and to the matching list in `test/unit/provider-manager.test.ts`, so it autocompletes in `getAnimeProvider`. Other ids type-check anyway.
+
+Providers that `ProviderManager` loads from the registry are instances of their category's base parser (`AnimeParser`, `MovieParser`, `MangaParser`, `LightNovelParser`), not of the bundled class.
 
 ## Step 5: Write Tests
 
@@ -442,7 +455,7 @@ Also, update the relevant `docs/guides/<category>.md` file to include your new p
 Before submitting, ensure your changes build correctly and pass the checks CI runs. `yarn lint` reports problems without changing files; `yarn lint:fix` fixes what it can.
 
 ```bash
-yarn build
+yarn build:registry
 yarn lint
 yarn typecheck
 yarn test
@@ -451,7 +464,7 @@ yarn registry:check --base origin/main
 
 Then test the provider in the example app (`apps/`), on a device or emulator. Its **Registry** tab loads anime and movie providers, and its **Load from** toggle picks where the code comes from:
 
-1. **Local dist**, before the version is published. After `yarn build`, run `node scripts/prepare-registry.js` (so the entry's `sha256` matches the new bundle) and `yarn example gen:local-dist` (which rewrites the app's map of bundles), then start the app with `yarn example android` or `yarn example ios`. The app still checks the code against the entry's `sha256`: a stale map shows an integrity mismatch.
+1. **Local dist**, before the version is published. After `yarn build:registry` (which publishes the entry locally, so its `sha256` matches the new bundle, and rewrites the app's map of bundles), start the app with `yarn example android` or `yarn example ios`. The app still checks the code against the entry's `sha256`: a stale map shows an integrity mismatch.
 2. **Registry**, once the version is on `main`. This is the path real apps take: it fetches the entry's `main` URL and verifies the hash. Before the merge it reports a 404.
 
 See [`apps/README.md`](../../apps/README.md) for what each error means.

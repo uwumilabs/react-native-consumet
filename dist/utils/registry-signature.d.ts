@@ -1,5 +1,4 @@
 import type { ExtensionRegistryData } from '../models/extension-manifest';
-import { REGISTRY_SIGNING_KEYS } from '../registry-signing-keys';
 /**
  * Signatures for a downloaded extension registry (REG-6).
  *
@@ -29,8 +28,16 @@ export declare class RegistrySignatureError extends Error {
     readonly code: RegistrySignatureErrorCode;
     constructor(code: RegistrySignatureErrorCode, message: string);
 }
-/** Most signature lines checked, so an oversized signature file can't keep the app busy verifying. */
-export declare const MAX_REGISTRY_SIGNATURES = 4;
+/**
+ * Public keys trusted to sign a downloaded registry, as lowercase hex: the `publicKey` of each
+ * entry in src/registry-signing-keys.json. `yarn registry:keygen` adds a key there and prints its
+ * private key once, for the CI secret that signs src/extension-registry.json
+ * (.github/workflows/sign-registry.yml). An app trusts only the keys of the library version it
+ * ships, so keep an old key listed while apps move to a release that bundles its replacement.
+ * Without keys, downloaded registries can't be verified and verifyRegistrySignature fails closed.
+ */
+export declare const REGISTRY_SIGNING_KEYS: readonly string[];
+export { MAX_REGISTRY_SIGNATURES } from './registry-signature-format';
 export interface RegistrySignatureOptions {
     /**
      * Hex ed25519 public keys to trust instead of the bundled REGISTRY_SIGNING_KEYS. To trust a key
@@ -62,5 +69,4 @@ export declare function verifyRegistrySignature(registryText: string | Uint8Arra
 export declare function parseSignedRegistry(registryText: string, signature: string, options?: RegistrySignatureOptions): ExtensionRegistryData & {
     schemaVersion: number;
 };
-export { REGISTRY_SIGNING_KEYS };
 //# sourceMappingURL=registry-signature.d.ts.map

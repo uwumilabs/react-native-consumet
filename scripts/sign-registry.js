@@ -2,13 +2,13 @@
 /**
  * Signs the extension registry apps download (REG-6): writes an ed25519 signature of the exact
  * bytes of src/extension-registry.json to src/extension-registry.json.sig, one line per key.
- * Apps check it against the public keys in src/registry-signing-keys.ts before using a registry
+ * Apps check it against the public keys in src/registry-signing-keys.json before using a registry
  * (verifyRegistrySignature / parseSignedRegistry).
  *
  * The private keys come from the REGISTRY_SIGNING_KEY environment variable: one or more
  * 64-character hex ed25519 private keys (as printed by scripts/registry-keygen.js), separated by
  * spaces, commas or newlines. Several keys sign with an old and a new key during a rotation. Each
- * key's public key must be listed in src/registry-signing-keys.ts, so a signature apps can't
+ * key's public key must be listed in src/registry-signing-keys.json, so a signature apps can't
  * verify is never written. CI runs this (.github/workflows/sign-registry.yml); the keys are never
  * printed or written to disk.
  *
@@ -16,21 +16,19 @@
  *   REGISTRY_SIGNING_KEY=<private key> node scripts/sign-registry.js
  *       [--registry <file>] [--keys <file>]
  *   --registry  registry to sign (default src/extension-registry.json); writes <file>.sig
- *   --keys      trusted public keys (default src/registry-signing-keys.ts)
+ *   --keys      trusted public keys (default src/registry-signing-keys.json)
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { repoRoot, REGISTRY_FILE, SIGNING_KEYS_FILE } = require('./registry-paths');
 const {
-  repoRoot,
-  REGISTRY_FILE,
-  SIGNING_KEYS_FILE,
-  MAX_SIGNATURES,
+  signatureFormat,
   ed25519PrivateKey,
   rawPublicKey,
   readSigningKeys,
   verifySignature,
-} = require('./registry-support');
+} = require('./registry-signing');
 
 const USAGE =
   'usage: REGISTRY_SIGNING_KEY=<private key> node scripts/sign-registry.js [--registry <file>] [--keys <file>]';
@@ -57,13 +55,22 @@ function parseArgs(argv) {
 function privateKeys(value) {
   const keys = [...new Set((value || '').split(/[\s,]+/).filter(Boolean))];
   if (!keys.length) fail(`REGISTRY_SIGNING_KEY is not set\n${USAGE}`);
-  if (keys.length > MAX_SIGNATURES) fail(`REGISTRY_SIGNING_KEY holds ${keys.length} keys; at most ${MAX_SIGNATURES}`);
+  if (keys.length > MAX_REGISTRY_SIGNATURES) {
+    fail(`REGISTRY_SIGNING_KEY holds ${keys.length} keys; at most ${MAX_REGISTRY_SIGNATURES}`);
+  }
   keys.forEach((key, index) => {
     if (!PRIVATE_KEY.test(key)) {
       fail(`REGISTRY_SIGNING_KEY key ${index + 1} is not a 64-character hex ed25519 private key`);
     }
   });
   return keys.map((key) => key.toLowerCase());
+}
+
+let MAX_REGISTRY_SIGNATURES;
+try {
+  ({ MAX_REGISTRY_SIGNATURES } = signatureFormat());
+} catch (error) {
+  fail(error.message);
 }
 
 const options = parseArgs(process.argv.slice(2));

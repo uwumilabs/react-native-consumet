@@ -1,20 +1,13 @@
 "use strict";
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.ProviderManager = exports.REQUIRED_PROVIDER_METHODS = void 0;
-const create_provider_context_1 = __importDefault(require("./create-provider-context"));
+const create_provider_context_1 = require("./create-provider-context");
 const ExtractorManager_1 = require("./ExtractorManager");
 const models_1 = require("../models");
-const provider_maps_1 = require("./provider-maps");
 const extension_integrity_1 = require("./extension-integrity");
-const fetch_with_timeout_1 = require("./fetch-with-timeout");
 const extension_modules_1 = require("./extension-modules");
 const registry_schema_1 = require("./registry-schema");
 /**
@@ -29,23 +22,37 @@ exports.REQUIRED_PROVIDER_METHODS = {
   'light-novels': ['search', 'fetchLightNovelInfo', 'fetchChapterContent'],
   'meta': ['search', 'fetchEpisodeSources', 'fetchEpisodeServers']
 };
-// How errors name a category: "Extension 'x' is not an anime provider"
-const CATEGORY_NAMES = {
-  'anime': 'an anime',
-  'movies': 'a movie',
-  'manga': 'a manga',
-  'light-novels': 'a light novel',
-  'meta': 'a meta'
+/** How errors name a category ("is not an anime provider"), and the base parser its providers are instances of. */
+const CATEGORIES = {
+  'anime': {
+    article: 'an anime',
+    base: models_1.AnimeParser
+  },
+  'movies': {
+    article: 'a movie',
+    base: models_1.MovieParser
+  },
+  'manga': {
+    article: 'a manga',
+    base: models_1.MangaParser
+  },
+  'light-novels': {
+    article: 'a light novel',
+    base: models_1.LightNovelParser
+  },
+  'meta': {
+    article: 'a meta'
+  }
 };
 class ProviderManager {
   providerContext;
   extractorManager;
   // Loads by `${id}|${sha256}|${baseUrl}`, see loadExtension
-  loadedExtensions = new Map();
-  // Compiled extension code by `${id}|${factoryName}`
-  compiledExtensions = new Map();
-  extensionManifest = new Map();
-  integrityOptions;
+  loads = new Map();
+  compiled;
+  extensions;
+  // Entries by lowercased id, and by lowercased name where no id is the same
+  byKey = new Map();
   /**
    * @throws RegistryError if the registry is invalid or uses a newer schema than this library reads
    */
@@ -53,7 +60,7 @@ class ProviderManager {
     let providerConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     let integrityOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     const validRegistry = (0, registry_schema_1.validateRegistry)(registry);
-    this.integrityOptions = integrityOptions;
+    this.compiled = new extension_modules_1.CompiledCodeCache(integrityOptions);
     // One extractor manager for every provider this manager loads, built from the same registry,
     // so providers run the registry (hash-verified) versions of their extractors.
     this.extractorManager = providerConfig.extractorManager ?? new ExtractorManager_1.ExtractorManager(validRegistry, {
@@ -61,20 +68,17 @@ class ProviderManager {
       load: providerConfig.load,
       userAgent: providerConfig.userAgent
     }, integrityOptions);
-    this.providerContext = (0, create_provider_context_1.default)({
+    this.providerContext = (0, create_provider_context_1.createProviderContext)({
       ...providerConfig,
       extractorManager: this.extractorManager
     });
-    this.loadRegistry(validRegistry.extensions);
-  }
-  /**
-   * Index the validated registry entries by lowercased id, for case-insensitive lookup
-   */
-  loadRegistry(extensions) {
-    for (const extension of extensions) {
-      this.extensionManifest.set(extension.id.toLowerCase(), {
-        ...extension
-      });
+    this.extensions = validRegistry.extensions.map(extension => ({
+      ...extension
+    }));
+    for (const extension of this.extensions) this.byKey.set(extension.id.toLowerCase(), extension);
+    for (const extension of this.extensions) {
+      const name = String(extension.name ?? '').toLowerCase();
+      if (name && !this.byKey.has(name)) this.byKey.set(name, extension);
     }
   }
   /**
@@ -82,39 +86,21 @@ class ProviderManager {
    * (see `isCompatibleEntry`); loading those throws a RegistryError.
    */
   getAvailableExtensions() {
-    return Array.from(this.extensionManifest.values());
+    return [...this.extensions];
   }
-  /**
-   * Get extensions by category
-   */
   getExtensionsByCategory(category) {
-    return this.getAvailableExtensions().filter(ext => ext.category === category);
+    return this.extensions.filter(ext => ext.category === category);
   }
-  /**
-   * Get extension metadata by ID/ name (case-insensitive) like 'zoro' or 'Zoro'
-   */
+  /** The registry entry for an id or name, case-insensitive ('zoro' or 'Zoro'). */
   getExtensionMetadata(extensionId) {
     if (!extensionId) throw new Error('Extension id/name is required');
-    const manifest = this.findExtensionMetadata(extensionId);
+    const manifest = this.byKey.get(extensionId.toLowerCase());
     if (!manifest) throw new Error(`Extension '${extensionId}' not found in extensionManifest`);
     return manifest;
   }
-  findExtensionMetadata(extensionId) {
-    // Try direct hit (as-is and lowercase id)
-    const direct = this.extensionManifest.get(extensionId) || this.extensionManifest.get(extensionId.toLowerCase());
-    if (direct) return direct;
-    // Fallback: search by id or name, case-insensitive
-    const needle = extensionId.toLowerCase();
-    for (const [key, manifest] of this.extensionManifest.entries()) {
-      if (key.toLowerCase() === needle) return manifest;
-      if (manifest.id && String(manifest.id).toLowerCase() === needle) return manifest;
-      if (manifest.name && String(manifest.name).toLowerCase() === needle) return manifest;
-    }
-    return undefined;
-  }
   /**
-   * Load an extension by ID from the extensionManifest. Concurrent and later calls for the same
-   * extension and base URL share one load; a failed load is retried on the next call.
+   * Load an extension by id or name. Concurrent and later calls for the same extension and base URL
+   * share one load; a failed load is retried on the next call.
    */
   async loadExtension(extensionId) {
     let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -123,167 +109,55 @@ class ProviderManager {
     (0, registry_schema_1.assertCompatibleEntry)(metadata);
     // Keyed on the hash, so a new version is loaded again, and on the base URL override, which
     // builds a different instance.
-    const cacheKey = `${metadata.id.toLowerCase()}|${metadata.sha256 ?? ''}|${options.baseUrl ?? ''}`;
-    return (0, extension_modules_1.memoiseLoad)(this.loadedExtensions, cacheKey, () => this.fetchExtension(metadata, options));
+    const key = `${metadata.id.toLowerCase()}|${metadata.sha256 ?? ''}|${options.baseUrl ?? ''}`;
+    return (0, extension_modules_1.memoiseLoad)(this.loads, key, async () => this.executeProviderCode(await (0, extension_modules_1.fetchEntryCode)('provider', metadata.main), metadata, options));
   }
   /**
    * Forget a loaded extension (for every base URL) and its compiled code, so the next load
    * fetches and runs it again. Extractors have their own: `getExtractorManager().invalidate(name)`.
    */
   invalidate(extensionId) {
-    const id = (this.findExtensionMetadata(extensionId)?.id ?? extensionId).toLowerCase();
-    (0, extension_modules_1.deleteEntriesOf)(this.loadedExtensions, id);
-    (0, extension_modules_1.deleteEntriesOf)(this.compiledExtensions, id);
+    const id = (this.byKey.get(extensionId.toLowerCase())?.id ?? extensionId).toLowerCase();
+    (0, extension_modules_1.deleteEntriesOf)(this.loads, id);
+    this.compiled.forget(id);
   }
   /**
-   * Fetch an extension's code from the registry and run it
-   */
-  async fetchExtension(metadata, options) {
-    try {
-      //console.log(`📥 Loading extension '${metadata.id}' from ${metadata.main}`);
-      const response = await (0, fetch_with_timeout_1.fetchTextWithTimeout)(metadata.main, {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/plain, application/javascript, */*',
-          'User-Agent': 'React-Native-Consumet/1.0.0'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch extension: ${response.status} ${response.statusText}`);
-      }
-      // Verifies the code against the registry hash and the factory name, then attaches the prototype
-      return await this.executeProviderCode(response.text, metadata.factoryName, metadata, {
-        baseUrl: options.baseUrl
-      });
-    } catch (error) {
-      console.error(`❌ Failed to load extension '${metadata.id}':`, error);
-      console.error(`❌ Error details:`, {
-        message: error instanceof Error ? error.message : String(error),
-        name: error instanceof Error ? error.name : 'Unknown',
-        stack: error instanceof Error ? error.stack : undefined,
-        url: metadata.main
-      });
-      throw error;
-    }
-  }
-  /**
-   * Attach the correct prototype to the loaded provider instance so runtime instanceof checks pass
-   * and developer tooling understands the shape better.
-   */
-  attachProviderPrototype(instance, providerKey, category) {
-    // Use provided key directly; our maps are keyed by PascalCase names
-    const key = providerKey;
-    // Pick the correct constructor map by category
-    const ctor = category === 'anime' ? provider_maps_1.animeProviders[key] : category === 'movies' ? provider_maps_1.movieProviders[key] : undefined;
-    // Providers without a bundled class (registry-only) still get the category's base parser,
-    // so `instanceof AnimeParser` / `instanceof MovieParser` hold for every loaded provider.
-    const base = category === 'anime' ? models_1.AnimeParser : category === 'movies' ? models_1.MovieParser : undefined;
-    const target = typeof ctor === 'function' && ctor.prototype ? ctor : base;
-    if (!target) return instance;
-    // If already an instance of desired ctor, skip
-    if (instance instanceof target) return instance;
-    // Attach the prototype so `instanceof` works at runtime
-    Object.setPrototypeOf(instance, target.prototype);
-    return instance;
-  }
-  /**
-   * Execute provider code and create instance (extensionManifest-based).
-   * The code must match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is
-   * compiled once per id and sha256; each call returns a new instance.
+   * Run an entry's provider code and build the provider with this manager's context. The code must
+   * match `metadata.sha256` unless `options.skipIntegrity` is set. Verified code is compiled once per
+   * id and sha256; each call returns a new instance, an instance of its category's base parser.
    *
    * @throws RegistryError before running anything if the entry needs a newer extension context
    * @throws IntegrityError before running anything if the hash or factory name is invalid
    */
-  async executeProviderCode(code, factoryName, metadata) {
-    let options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-    const id = String(metadata?.id ?? factoryName);
+  async executeProviderCode(code, metadata) {
+    let options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    const id = String(metadata?.id ?? metadata?.factoryName);
     (0, registry_schema_1.assertCompatibleEntry)(metadata);
-    (0, extension_integrity_1.assertValidIdentifier)(factoryName, 'factoryName', id);
-    // The same code verified against the same hash before runs from its compiled copy.
-    const key = `${id.toLowerCase()}|${factoryName}`;
-    const sha256 = metadata.sha256 ?? '';
-    const compiled = this.compiledExtensions.get(key);
-    let factory = compiled?.sha256 === sha256 && compiled.code === code ? compiled.factory : undefined;
-    if (!factory && !options.skipIntegrity) {
-      (0, extension_integrity_1.verifyExtensionCode)(code, metadata, this.integrityOptions);
-    }
     try {
-      if (!factory) {
-        factory = (0, extension_modules_1.evaluateExtensionCode)(code, factoryName, this.createExecutionContext(id), 'provider');
-        if (!factory) {
-          throw new Error(`Factory function '${factoryName}' not found in extension`);
-        }
-        // Unverified code is never reused: the next call checks its hash again.
-        if (!options.skipIntegrity) this.compiledExtensions.set(key, {
-          sha256,
-          code,
-          factory
-        });
-      }
+      const factory = this.compiled.compile(`${id.toLowerCase()}|${metadata.factoryName}`, {
+        kind: 'provider',
+        id,
+        name: metadata.factoryName,
+        code,
+        entry: metadata,
+        globals: () => (0, extension_modules_1.extensionGlobals)('provider', id, this.providerContext),
+        skipIntegrity: options.skipIntegrity
+      });
       const instance = factory(this.providerContext, options.baseUrl ?? metadata.baseUrl);
-      let providerInstance = instance;
-      // Validate the instance has required methods
-      this.validateProviderInstance(instance, metadata.category);
-      // Attempt to attach the prototype from local provider classes so instanceof works in app code
-      try {
-        // Prefer metadata.name (e.g., 'Zoro') to match local constructor map keys
-        const lookupKey = metadata.name;
-        providerInstance = this.attachProviderPrototype(instance, lookupKey, metadata.category);
-      } catch (protoErr) {
-        // Non-fatal – if we can't attach prototype, just proceed with the plain instance
-        console.warn(`⚠️  Could not attach prototype for '${metadata.name}':`, protoErr);
-      }
-      return providerInstance;
+      this.assertProviderOf(instance, metadata.category);
+      const base = CATEGORIES[metadata.category].base;
+      if (base && !(instance instanceof base)) Object.setPrototypeOf(instance, base.prototype);
+      return instance;
     } catch (error) {
-      throw new Error(`Failed to execute provider code: ${error instanceof Error ? error.message : String(error)}`);
+      if (error instanceof extension_integrity_1.IntegrityError) throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to execute provider code: ${message}`, {
+        cause: error
+      });
     }
   }
-  /**
-   * Create execution context for provider code: the globals it runs with
-   */
-  createExecutionContext(extensionId) {
-    // The only modules extension code can require; anything else throws (EXT-5).
-    const modules = {
-      'cheerio': {
-        load: this.providerContext.load
-      },
-      'axios': this.providerContext.axios,
-      'crypto-js': this.providerContext.CryptoJS,
-      [extension_modules_1.MODELS_MODULE]: this.createModelsContext(),
-      [extension_modules_1.UTILS_MODULE]: {
-        createProviderContext: () => this.providerContext
-      },
-      'URL': this.providerContext.PolyURL,
-      'URLSearchParams': this.providerContext.PolyURLSearchParams,
-      'NativeConsumet': this.providerContext.NativeConsumet
-    };
-    return {
-      exports: {},
-      require: (0, extension_modules_1.createExtensionRequire)(extensionId, modules),
-      module: {
-        exports: {}
-      },
-      console,
-      Promise,
-      Object,
-      fetch: (0, fetch_with_timeout_1.createExtensionFetch)(this.providerContext.axios)
-    };
-  }
-  /**
-   * Create models context: the base parsers and the library's real enums
-   */
-  createModelsContext() {
-    return {
-      AnimeParser: this.providerContext.AnimeParser,
-      MovieParser: this.providerContext.MovieParser,
-      MangaParser: this.providerContext.MangaParser,
-      ...this.providerContext.enums
-    };
-  }
-  /**
-   * Validate that the instance has the methods its category requires (REQUIRED_PROVIDER_METHODS)
-   */
-  validateProviderInstance(instance, category) {
+  /** Throws unless the instance has the methods its category requires (REQUIRED_PROVIDER_METHODS). */
+  assertProviderOf(instance, category) {
     const requiredMethods = exports.REQUIRED_PROVIDER_METHODS[category];
     if (!requiredMethods) {
       throw new Error(`Unknown provider category '${category}'`);
@@ -303,43 +177,32 @@ class ProviderManager {
     let options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     const metadata = this.getExtensionMetadata(extensionId);
     if (metadata.category !== category) {
-      throw new Error(`Extension '${extensionId}' is not ${CATEGORY_NAMES[category] ?? `a ${category}`} provider`);
+      throw new Error(`Extension '${extensionId}' is not ${CATEGORIES[category]?.article ?? `a ${category}`} provider`);
     }
-    // The category was checked above, and loading checked the category's methods.
+    // Loading checks the category's methods.
     return await this.loadExtension(extensionId, options);
   }
-  /**
-   * Get anime provider
-   */
   async getAnimeProvider(extensionId) {
     let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     return this.getProvider('anime', extensionId, options);
   }
-  /**
-   * Get movie provider
-   */
   async getMovieProvider(extensionId) {
     let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     return this.getProvider('movies', extensionId, options);
   }
-  /**
-   * Get the extractor manager shared by the providers this manager loads
-   */
+  /** The extractor manager shared by the providers this manager loads */
   getExtractorManager() {
     return this.extractorManager;
   }
-  /**
-   * Get the provider context
-   */
   getProviderContext() {
     return this.providerContext;
   }
   /**
-   * Search across all loaded providers of a specific category
+   * Search every provider of a category. A provider that fails to load or search gives an empty page
+   * and its `error`, so one broken provider doesn't hide the others' results.
    */
   async searchAcrossProviders(category, query, page) {
-    const extensions = this.getExtensionsByCategory(category);
-    const searchPromises = extensions.map(async ext => {
+    return Promise.all(this.getExtensionsByCategory(category).map(async ext => {
       try {
         const provider = await this.loadExtension(ext.id);
         const results = await provider.search(query, page);
@@ -348,18 +211,17 @@ class ProviderManager {
           results
         };
       } catch (error) {
-        console.error(`Search failed for ${ext.id}:`, error);
         return {
           extensionId: ext.id,
           results: {
             currentPage: page || 1,
             hasNextPage: false,
             results: []
-          }
+          },
+          error
         };
       }
-    });
-    return Promise.all(searchPromises);
+    }));
   }
 }
 exports.ProviderManager = ProviderManager;

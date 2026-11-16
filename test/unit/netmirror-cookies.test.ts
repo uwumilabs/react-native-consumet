@@ -53,8 +53,9 @@ describe('NetMirror sources', () => {
   it('drops a quality whose master playlist has no video stream', async () => {
     const withStream = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=600000,RESOLUTION=1280x720\nhttps://cdn.test/720p.m3u8\n';
     const audioOnly = '#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aac",URI="https://cdn.test/a.m3u8"\n';
+    const configs: any[] = [];
     const get = jest.fn(async (url: string, config: any) => {
-      expect(config?.withCredentials).toBe(false);
+      configs.push(config);
       if (url.includes('/mobile/home')) return { headers: { 'set-cookie': ['t_hash_t=session-token'] }, data: '' };
       if (url.includes('playlist.php')) {
         const sources = ['Auto', 'Full HD', 'Mid HD'].map((label, i) => ({ file: `/hls/1.m3u8?q=${i}&in=x`, label }));
@@ -68,5 +69,6 @@ describe('NetMirror sources', () => {
     const { sources } = await provider.fetchEpisodeSources('1');
 
     expect(sources.map((s: any) => s.quality)).toEqual(['auto', '720p']);
+    expect(configs.filter((config) => config?.withCredentials !== false)).toEqual([]);
   });
 });

@@ -78,7 +78,9 @@ const UNLOCK_TIMEOUT_MS = 60 * 1000;
 const NEWTV_API = 'https://tv.imgcdn.kim';
 const NEWTV_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0 /OS.GatuNewTV v1.0';
 
-// One verified session works for every catalog, so share it across platforms and instances.
+// One verified session works for every catalog, so every instance made from this module shares it:
+// in the library that's all three catalogs. A registry load compiles each entry's bundle on its own,
+// so there each catalog unlocks its own session.
 const sessions = new Map<string, { token: string; ts: number }>();
 const pendingUnlocks = new Map<string, Promise<string>>();
 
@@ -161,6 +163,7 @@ export type NetflixMirrorProviderInstance = {
   fetchMediaInfo: (mediaId: string) => Promise<IMovieInfo>;
   fetchEpisodeServers: (episodeId: string, mediaId?: string) => Promise<IEpisodeServer[]>;
   fetchEpisodeSources: (episodeId: string, mediaId?: string) => Promise<ISource>;
+  /** The episode's master playlist (its `auto` source) as text, fetched with the headers the CDN needs. */
   fetchHlsPlaylist: (episodeId: string) => Promise<string>;
 };
 
@@ -364,8 +367,8 @@ function createNetMirror(
         ...result,
         type: isSeries ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
         seasons: isSeries ? post.season?.length || 1 : undefined,
-        // TMDB requires an exact year match whenever any result has one, so omit years
-        // entirely for catalogs that report a series' latest-season year.
+        // TMDB drops a result whose year is more than a year off the first-air year, and some
+        // catalogs (Disney+) give a series' latest-season year, so leave the year out for those.
         releaseDate: platform.seriesYearIsFirstAired ? post.year || undefined : undefined,
       };
     } catch {
@@ -574,7 +577,7 @@ function createNetMirror(
 
   const playlistPath = (episodeId: string) => `/mobile/${platform.path}playlist.php?id=${episodeId}&t=x&tm=${now()}`;
 
-  const fetchEpisodeServers = async (episodeId: string, mediaId?: string): Promise<IEpisodeServer[]> => {
+  const fetchEpisodeServers = async (episodeId: string, _mediaId?: string): Promise<IEpisodeServer[]> => {
     return [{ name: platform.label, url: `${baseUrl}${playlistPath(episodeId)}` }];
   };
 
@@ -608,7 +611,7 @@ function createNetMirror(
     return playable.length ? playable : sources;
   };
 
-  const fetchEpisodeSources = async (episodeId: string, mediaId?: string): Promise<ISource> => {
+  const fetchEpisodeSources = async (episodeId: string, _mediaId?: string): Promise<ISource> => {
     try {
       // Without a verified session the server still returns a playlist, but every
       // source is a teaser stream tagged `in=unknown`.
@@ -666,14 +669,26 @@ function createNetMirror(
   };
 }
 
+/**
+ * NetflixMirror (net52.cc): the site's Netflix catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 export function createNetflixMirror(ctx: ProviderContext, customBaseURL?: string): NetflixMirrorProviderInstance {
   return createNetMirror(ctx, PLATFORMS.nf, customBaseURL);
 }
 
+/**
+ * PrimeMirror (net52.cc): the site's Prime Video catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 export function createPrimeMirror(ctx: ProviderContext, customBaseURL?: string): NetflixMirrorProviderInstance {
   return createNetMirror(ctx, PLATFORMS.pv, customBaseURL);
 }
 
+/**
+ * DisneyMirror (net52.cc): the site's Disney+ catalog.
+ * @param customBaseURL site URL to use instead of the default
+ */
 export function createDisneyMirror(ctx: ProviderContext, customBaseURL?: string): NetflixMirrorProviderInstance {
   return createNetMirror(ctx, PLATFORMS.hs, customBaseURL);
 }

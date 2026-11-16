@@ -34,6 +34,37 @@ __export(create_anineko_exports, {
   createAniNeko: () => createAniNeko
 });
 module.exports = __toCommonJS(create_anineko_exports);
+
+// src/providers/common/media-status.ts
+var STATUS_WORDS = [["NOT_YET_AIRED", /not[\s_-]*yet|coming[\s_-]*soon|upcoming/], ["COMPLETED", /finish|complete/], ["HIATUS", /hiatus/], ["CANCELLED", /cancel|discontinu|dropped|axed/], ["ONGOING", /airing|releasing|ongoing|on[\s_-]*going|publishing/]];
+function toMediaStatus(text, statuses) {
+  var normalized = text?.trim().toLowerCase();
+  if (!normalized) return void 0;
+  var key = STATUS_WORDS.find(_ref => {
+    var [, words] = _ref;
+    return words.test(normalized);
+  })?.[0] ?? "UNKNOWN";
+  return statuses[key];
+}
+
+// src/providers/common/servers.ts
+function pickServer(servers, server) {
+  if (!servers.length) throw new Error("No servers found for this episode");
+  if (!server) return servers[0];
+  var wanted = server.toLowerCase();
+  var match = servers.find(candidate => candidate.name.toLowerCase().startsWith(wanted));
+  if (!match) {
+    throw new Error(`Server '${server}' not found; available: ${servers.map(s => s.name).join(", ")}`);
+  }
+  return match;
+}
+
+// src/providers/anime/helpers.ts
+function serverName(extractor, label) {
+  return `${extractor}-${label.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "")}`;
+}
+
+// src/providers/anime/anineko/create-anineko.ts
 function createAniNeko(ctx, customBaseURL) {
   var {
     axios,
@@ -48,7 +79,6 @@ function createAniNeko(ctx, customBaseURL) {
     VidHide
   } = extractors;
   var {
-    MediaStatus: MediaStatusEnum,
     SubOrDub: SubOrDubEnum
   } = enums;
   var baseUrl = createCustomBaseUrl("https://anineko.to", customBaseURL);
@@ -62,21 +92,17 @@ function createAniNeko(ctx, customBaseURL) {
     isWorking: true,
     isDubAvailableSeparately: true
   };
-  var UA = USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
   var hdrs = referer => ({
-    "User-Agent": UA,
+    "User-Agent": USER_AGENT,
     "Accept": "text/html,application/xhtml+xml,*/*;q=0.9",
     "Accept-Language": "en-US,en;q=0.5",
     "Referer": referer ?? `${baseUrl}/`
   });
-  var scrapeCards = html => {
-    var $ = load(html);
+  var scrapeCards = $ => {
     var results = [];
     $("article.nv-anime-card").each((_, el) => {
       var card = $(el);
-      var anchor = card.find("a").first();
-      var href = anchor.attr("href") ?? "";
-      var id = href.replace(/^\/watch\//, "").replace(/\/$/, "");
+      var id = (card.find("a").first().attr("href") ?? "").replace(/^\/watch\//, "").replace(/\/$/, "");
       if (!id) return;
       var title = card.find("h3.nv-anime-title a").text().trim() || card.find("img").attr("alt")?.trim() || "";
       var image = card.find("img").attr("src") || card.find("img").attr("data-src") || void 0;
@@ -91,41 +117,25 @@ function createAniNeko(ctx, customBaseURL) {
     });
     return results;
   };
-  var parsePagination = (html, page) => {
-    var $ = load(html);
-    var totalText = $('[class*="result"], [class*="total"]').first().text();
-    var totalMatch = totalText.match(/(\d[\d,]*)/);
-    var total = totalMatch ? parseInt(totalMatch[1].replace(",", ""), 10) : 0;
-    var hasNextPage = $('a[rel="next"], .pagination .next:not(.disabled) a').length > 0;
-    return {
-      total,
-      hasNextPage
-    };
-  };
   var fetchBrowsePage = async function (params) {
     var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     var qs = new URLSearchParams({
-      page: String(page),
-      ...Object.fromEntries(Object.entries(params).map(_ref => {
-        var [k, v] = _ref;
-        return [k, String(v)];
-      }))
+      page: String(page)
     });
-    var url = `${baseUrl}/browse?${qs}`;
+    for (var [key, value] of Object.entries(params)) if (value !== void 0) qs.append(key, String(value));
     var {
       data: html
-    } = await axios.get(url, {
+    } = await axios.get(`${baseUrl}/browse?${qs}`, {
       headers: hdrs()
     });
-    var {
-      total,
-      hasNextPage
-    } = parsePagination(html, page);
+    var $ = load(html);
+    var totalText = $('[class*="result"], [class*="total"]').first().text();
+    var total = parseInt(totalText.match(/(\d[\d,]*)/)?.[1]?.replace(/,/g, "") ?? "0", 10);
     return {
       currentPage: page,
-      hasNextPage,
+      hasNextPage: $('a[rel="next"], .pagination .next:not(.disabled) a').length > 0,
       totalResults: total,
-      results: scrapeCards(html)
+      results: scrapeCards($)
     };
   };
   var GENRES = ["Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Drama", "Ecchi", "Fantasy", "Game", "Harem", "Historical", "Horror", "Isekai", "Josei", "Kids", "Magic", "Mahou Shoujo", "Martial Arts", "Mecha", "Military", "Music", "Mystery", "Parody", "Police", "Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports", "Super Power", "Supernatural", "Thriller", "Vampire"];
@@ -181,31 +191,14 @@ function createAniNeko(ctx, customBaseURL) {
   var genreSearch = async function (genre) {
     var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     var extra = arguments.length > 2 ? arguments[2] : undefined;
-    var params = new URLSearchParams({
-      page: String(page),
-      sort: SORT.LatestUpdate
-    });
-    params.append("genre[]", genre);
-    if (extra?.type) params.append("type[]", extra.type);
-    if (extra?.status) params.append("status[]", extra.status);
-    if (extra?.language) params.append("language[]", extra.language);
-    if (extra?.year) params.append("year[]", String(extra.year));
-    var url = `${baseUrl}/browse?${params}`;
-    var {
-      data: html
-    } = await axios.get(url, {
-      headers: hdrs()
-    });
-    var {
-      total,
-      hasNextPage
-    } = parsePagination(html, page);
-    return {
-      currentPage: page,
-      hasNextPage,
-      totalResults: total,
-      results: scrapeCards(html)
-    };
+    return fetchBrowsePage({
+      "sort": SORT.LatestUpdate,
+      "genre[]": genre,
+      "type[]": extra?.type,
+      "status[]": extra?.status,
+      "language[]": extra?.language,
+      "year[]": extra?.year
+    }, page);
   };
   var fetchAnimeInfo = async id => {
     var {
@@ -223,23 +216,7 @@ function createAniNeko(ctx, customBaseURL) {
     info.image = $('meta[property="og:image"]').attr("content") || $("img.nv-anime-poster, .poster img, img.cover").first().attr("src") || void 0;
     info.description = $('meta[property="og:description"]').attr("content")?.trim() || $('[class*="desc"], [class*="synopsis"], [class*="summary"]').first().text().trim() || void 0;
     var metaText = label => $(`[class*="info"] *:contains("${label}")`).filter((_, el) => $(el).text().trim().startsWith(label)).first().next().text().trim() || $(`[class*="info"] *:contains("${label}")`).first().text().replace(label, "").trim();
-    var statusRaw = metaText("Status");
-    switch (statusRaw.toLowerCase()) {
-      case "currently airing":
-      case "ongoing":
-      case "releasing":
-        info.status = MediaStatusEnum.ONGOING;
-        break;
-      case "finished airing":
-      case "completed":
-        info.status = MediaStatusEnum.COMPLETED;
-        break;
-      case "not yet aired":
-        info.status = MediaStatusEnum.NOT_YET_AIRED;
-        break;
-      default:
-        info.status = MediaStatusEnum.UNKNOWN;
-    }
+    info.status = toMediaStatus(metaText("Status"), ctx.enums.MediaStatus);
     info.type = metaText("Type").toUpperCase() || void 0;
     info.releaseDate = metaText("Aired") || metaText("Release") || void 0;
     info.genres = [];
@@ -281,6 +258,72 @@ function createAniNeko(ctx, customBaseURL) {
     info.totalEpisodes = info.episodes.length;
     return info;
   };
+  var extractorFor = embedUrl => {
+    var domain = new PolyURL(embedUrl).hostname.toLowerCase();
+    if (domain.includes("vivibebe") || domain.includes("vibevibe") || domain.includes("bibiemb")) {
+      return {
+        name: "vivibebe",
+        extract: async pageUrl => {
+          var {
+            data: pageHtml
+          } = await axios.get(embedUrl, {
+            headers: {
+              "User-Agent": USER_AGENT,
+              "Referer": pageUrl
+            }
+          });
+          var m3u8 = pageHtml.match(/const\s+src\s*=\s*"([^"]+\.m3u8[^"]*)"/)?.[1];
+          if (!m3u8) throw new Error(`[AniNeko] Could not find M3U8 in ${domain}`);
+          var params = new PolyURL(embedUrl).searchParams;
+          var subUrl = params.get("sub") || params.get("caption_1") || params.get("c1_file") || null;
+          var subLabel = params.get("c1_label") || params.get("sub_1") || "English";
+          return {
+            sources: [{
+              url: m3u8,
+              isM3U8: true,
+              quality: "auto"
+            }],
+            subtitles: subUrl ? [{
+              url: subUrl,
+              lang: subLabel
+            }] : [],
+            headers: {
+              Referer: `https://${domain}/`
+            }
+          };
+        }
+      };
+    }
+    if (domain.includes("dood") || domain.includes("playmogo")) {
+      return {
+        name: "dood",
+        extract: async pageUrl => {
+          var {
+            data: doodHtml
+          } = await axios.get(embedUrl, {
+            headers: {
+              "User-Agent": USER_AGENT,
+              "Referer": pageUrl
+            }
+          });
+          var mp4 = doodHtml.match(/source\s+src="([^"]+\.mp4[^"]*)"/)?.[1] || doodHtml.match(/file:\s*["']([^"']+)["']/)?.[1];
+          if (!mp4) throw new Error(`[AniNeko] Could not extract source from ${domain}`);
+          return {
+            sources: [{
+              url: mp4,
+              isM3U8: false,
+              quality: "auto"
+            }],
+            subtitles: []
+          };
+        }
+      };
+    }
+    return {
+      name: "vidhide",
+      extract: async () => VidHide(ctx).extract(new PolyURL(embedUrl))
+    };
+  };
   var fetchEpisodeServers = async function (episodeId) {
     var subOrDub = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SubOrDubEnum.SUB;
     var url = episodeId.startsWith("http") ? episodeId : `${baseUrl}/watch/${episodeId}`;
@@ -297,10 +340,10 @@ function createAniNeko(ctx, customBaseURL) {
       $(`div.lang-group[data-id="${panelId}"] button.server-video[data-video]`).each((_, btn) => {
         var embedUrl = $(btn).attr("data-video")?.trim();
         if (!embedUrl) return;
-        var serverName = $(btn).clone().children("span").remove().end().text().trim().toLowerCase().replace(/\s+/g, "-");
+        var label = $(btn).clone().children("span").remove().end().text().trim();
         var spanText = $(btn).find("span").text().trim().toLowerCase();
         var subType = spanText.includes("hard") ? "hardsub" : spanText.includes("dub") ? "dub" : "softsub";
-        var name = `${serverName}-${subType}`;
+        var name = serverName(extractorFor(embedUrl).name, `${label}-${subType}`);
         if (seen.has(name)) return;
         seen.add(name);
         servers.push({
@@ -311,85 +354,23 @@ function createAniNeko(ctx, customBaseURL) {
     }
     return servers;
   };
-  var extractFromUrl = async (embedUrl, pageUrl) => {
-    var domain = new PolyURL(embedUrl).hostname.toLowerCase();
-    if (domain.includes("vivibebe") || domain.includes("vibevibe") || domain.includes("bibiemb")) {
-      var {
-        data: pageHtml
-      } = await axios.get(embedUrl, {
-        headers: {
-          "User-Agent": UA,
-          "Referer": pageUrl
-        }
-      });
-      var m3u8Match = pageHtml.match(/const\s+src\s*=\s*"([^"]+\.m3u8[^"]*)"/);
-      if (!m3u8Match?.[1]) throw new Error(`[AniNeko] Could not find M3U8 in ${domain}`);
-      var subUrl = new PolyURL(embedUrl).searchParams.get("sub") || new PolyURL(embedUrl).searchParams.get("caption_1") || new PolyURL(embedUrl).searchParams.get("c1_file") || null;
-      var subLabel = new PolyURL(embedUrl).searchParams.get("c1_label") || new PolyURL(embedUrl).searchParams.get("sub_1") || "English";
-      return {
-        sources: [{
-          url: m3u8Match[1],
-          isM3U8: true,
-          quality: "auto"
-        }],
-        subtitles: subUrl ? [{
-          url: subUrl,
-          lang: subLabel
-        }] : [],
-        headers: {
-          Referer: `https://${domain}/`
-        }
-      };
-    }
-    if (domain.includes("dood") || domain.includes("playmogo")) {
-      var {
-        data: doodHtml
-      } = await axios.get(embedUrl, {
-        headers: {
-          "User-Agent": UA,
-          "Referer": pageUrl
-        }
-      });
-      var mp4 = doodHtml.match(/source\s+src="([^"]+\.mp4[^"]*)"/)?.[1] || doodHtml.match(/file:\s*["']([^"']+)["']/)?.[1];
-      if (!mp4) throw new Error(`[AniNeko] Could not extract source from ${domain}`);
-      return {
-        sources: [{
-          url: mp4,
-          isM3U8: false,
-          quality: "auto"
-        }],
-        subtitles: []
-      };
-    }
-    return VidHide(ctx).extract(new PolyURL(embedUrl), pageUrl);
-  };
   var fetchEpisodeSources = async function (episodeId, server) {
     var subOrDub = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : SubOrDubEnum.SUB;
-    if (episodeId.startsWith("http")) {
-      return extractFromUrl(episodeId, baseUrl);
-    }
-    var watchUrl = `${baseUrl}/watch/${episodeId}`;
-    var servers = await fetchEpisodeServers(episodeId, subOrDub);
-    if (servers.length === 0) {
-      throw new Error(`[AniNeko] No servers found for episode ${episodeId}`);
-    }
-    var serverLower = server?.toLowerCase() ?? "";
-    var picked = servers.find(s => s.name.includes(serverLower)) ?? servers[0];
+    if (episodeId.startsWith("http")) return extractorFor(episodeId).extract(baseUrl);
+    var picked = pickServer(await fetchEpisodeServers(episodeId, subOrDub), server);
     if (!picked.url) throw new Error(`[AniNeko] No embed URL for server "${picked.name}"`);
-    return extractFromUrl(picked.url, watchUrl);
+    return extractorFor(picked.url).extract(`${baseUrl}/watch/${episodeId}`);
   };
   return {
     ...config,
     capabilities: {
       aniZipEpisodes: true
     },
-    // filter constants — consumers can use these for UI filter pickers
     GENRES,
     TYPES,
     STATUS,
     LANGUAGE,
     SORT,
-    // methods
     search,
     fetchRecentlyUpdated,
     fetchNewReleases,

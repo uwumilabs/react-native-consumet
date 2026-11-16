@@ -252,30 +252,12 @@ export interface IVideo {
   [x: string]: unknown; // other fields
 }
 
+/** Server names, each the name of the extractor that reads it (UpCloud is served by MegaCloud). */
 export enum StreamingServers {
-  AsianLoad = 'asianload',
-  GogoCDN = 'gogocdn',
-  StreamSB = 'streamsb',
-  MixDrop = 'mixdrop',
-  Mp4Upload = 'mp4upload',
   UpCloud = 'upcloud',
-  StreamTape = 'streamtape',
-  VizCloud = 'vizcloud',
-  // same as vizcloud
-  MyCloud = 'mycloud',
-  Filemoon = 'filemoon',
-  VidStreaming = 'vidstreaming',
-  BuiltIn = 'builtin',
-  SmashyStream = 'smashystream',
-  StreamHub = 'streamhub',
   StreamWish = 'streamwish',
   VidHide = 'vidhide',
-  VidMoly = 'vidmoly',
-  Voe = 'voe',
-  MegaUp = 'megaup',
   MegaCloud = 'megacloud',
-  Luffy = 'luffy',
-  Multi = 'multi',
   Kwik = 'kwik',
   MegaPlay = 'megaplay',
   GDFlix = 'gdflix',

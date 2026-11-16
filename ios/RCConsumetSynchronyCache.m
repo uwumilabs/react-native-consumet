@@ -13,6 +13,8 @@ static NSString *const kSynchronyURL =
     @"synchrony-v2.4.5.1.js";
 static NSString *const kSynchronySHA256 =
     @"8f816ca971ca5e6a34952775f3ca1a3a7379ffe5645efd7b693574ec77358d82";
+// Under Library/Caches, as Android's DeobfuscatorModule.CACHE_DIR.
+static NSString *const kSynchronyDirectory = @"consumet";
 
 static NSString *RCConsumetSHA256Hex(NSData *data) {
   unsigned char digest[CC_SHA256_DIGEST_LENGTH];
@@ -76,7 +78,7 @@ static NSString *RCConsumetPrepareSynchrony(NSString *original) {
     shared = [[self alloc]
         initWithURL:[NSURL URLWithString:kSynchronyURL]
              sha256:kSynchronySHA256
-          directory:[caches URLByAppendingPathComponent:@"consumet"
+          directory:[caches URLByAppendingPathComponent:kSynchronyDirectory
                                             isDirectory:YES]];
   });
   return shared;

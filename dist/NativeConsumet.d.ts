@@ -107,36 +107,9 @@ export interface Spec extends TurboModule {
     deobfuscateScript: (source: string) => Promise<string | null>;
 }
 declare const NativeConsumet: Spec;
-export declare const bypassDdosGuard: (url: string) => Promise<{
-    cookie: string;
-}>;
-export declare const getDdosGuardCookiesWithWebView: (url: string) => Promise<string>;
-export declare const makeGetRequestWithWebView: (url: string, headers: {
-    [key: string]: string;
-}) => Promise<{
-    url: string;
-    html: string;
-    cookies: string;
-    status: string;
-}>;
-export declare const makePostRequestWithWebView: (url: string, headers: {
-    [key: string]: string;
-}, body: string) => Promise<{
-    url: string;
-    response: string;
-    cookies: string;
-    status: string;
-    contentType: string;
-}>;
-export declare const makePostRequest: (url: string, headers: {
-    [key: string]: string;
-}, body: string) => Promise<{
-    statusCode: number;
-    body: string;
-    headers: {
-        [key: string]: string;
-    };
-}>;
-export declare const deobfuscateScript: (source: string) => Promise<string | null>;
+/** The native methods, as contexts hand them to providers and extractors. */
+export type NativeMethods = Omit<Spec, keyof TurboModule>;
+/** The spec's methods in a plain object (extension code destructures and spreads it). */
+export declare const nativeMethods: NativeMethods;
 export default NativeConsumet;
 //# sourceMappingURL=NativeConsumet.d.ts.map

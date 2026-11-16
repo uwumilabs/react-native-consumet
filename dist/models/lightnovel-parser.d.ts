@@ -1,16 +1,8 @@
 import BaseParser from './base-parser';
 declare abstract class LightNovelParser extends BaseParser {
-    /**
-     * takes light novel link or id
-     *
-     * returns lightNovel info (including chapters)
-     */
+    /** The novel with its chapters; takes its URL or id */
     protected abstract fetchLightNovelInfo(lightNovelUrl: string, ...args: any): Promise<unknown>;
-    /**
-     * takes chapter id
-     *
-     * returns chapter content (text)
-     */
+    /** The chapter's text */
     protected abstract fetchChapterContent(chapterId: string, ...args: any): Promise<unknown>;
 }
 export default LightNovelParser;

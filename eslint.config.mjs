@@ -1,4 +1,5 @@
-import { fixupConfigRules } from '@eslint/compat';
+import { fileURLToPath } from 'node:url';
+import { fixupConfigRules, includeIgnoreFile } from '@eslint/compat';
 import reactNativeConfig from '@react-native/eslint-config/flat';
 import prettierConfig from 'eslint-config-prettier';
 import prettier from 'eslint-plugin-prettier';
@@ -49,82 +50,7 @@ export default defineConfig([
       ],
     },
   },
-  {
-    ignores: [
-      // Development Dependencies
-      'node_modules/',
-      '.claude/',
-      '.expo/',
-      '.expo-shared/',
-      '.vscode/',
-      '.android/',
-      '.yarn/',
-      'android/**/*',
-      'ios/**/*',
-      '.ios/',
-      '.github/',
-      'apps/**/*',
-
-      // Build and Output
-      'lib/',
-      'dist/',
-      // Published copies of dist/ bundles (scripts/prepare-registry.js)
-      'registry/',
-      'build/',
-      'web-build/',
-      '*.jsbundle',
-      '*.bundle',
-
-      // Testing and Coverage
-      '__tests__/',
-      'test/',
-      'jest.setup.*',
-      'coverage/',
-      'jest.config.*',
-
-      // Configuration Files
-      '*.config.*',
-      'metro.config.js',
-      'babel.config.js',
-      'tscconfig.json',
-      'app.json',
-      'expo-env.d.ts',
-      '.env*',
-
-      // Documentation and Info
-      'README.md',
-      '*.md',
-
-      // Media and Assets
-      'assets/',
-      '*.svg',
-      '*.png',
-      '*.jpg',
-      '*.jpeg',
-      '*.gif',
-      '*.ico',
-
-      // Cache and System Files
-      '.cache/',
-      '*.log',
-      '.DS_Store',
-      'temp/',
-      '*.tmp',
-
-      // Package Management
-      'package.json',
-      'package-lock.json',
-      'yarn.lock',
-
-      // Auto-generated
-      '*.generated.*',
-      '*.auto.*',
-      '*.d.ts',
-
-      // IDE specific
-      '.idea/',
-      '*.sublime-*',
-      '*.swp',
-    ],
-  },
+  includeIgnoreFile(fileURLToPath(new URL('.prettierignore', import.meta.url)), '.prettierignore'),
+  // ESLint also skips the example app (lint it with npx eslint --no-ignore) and config files.
+  { ignores: ['apps/**/*', '*.config.*'] },
 ]);

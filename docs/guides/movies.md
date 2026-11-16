@@ -52,8 +52,7 @@ On bundled classes, `languages`, `baseUrl`, `logo` and `classPath` may be protec
 | PrimeMirror   | `MOVIES.PrimeMirror`   | `primemirror` (beta)       | same API as NetflixMirror                             |
 | DisneyMirror  | `MOVIES.DisneyMirror`  | `disneymirror` (beta)      | same API as NetflixMirror                             |
 | VegaMovies    | `MOVIES.VegaMovies`    | `vegamovies` (alpha)       |                                                       |
-| MultiMovies   | `MOVIES.MultiMovies`   | `multimovies` (deprecated) | [MultiMovies](../providers/movies/multimovies.md)     |
-| YFlix         | `MOVIES.YFlix`         | `yflix` (deprecated)       |                                                       |
+| MultiMovies   | `MOVIES.MultiMovies`   | not in the registry        | [MultiMovies](../providers/movies/multimovies.md)     |
 | HiMovies      | `MOVIES.HiMovies`      | not in the registry        | [HiMovies](../providers/movies/himovies.md)           |
 | MultiStream   | `MOVIES.MultiStream`   | not in the registry        |                                                       |
 

@@ -4,7 +4,7 @@
  * A version is kept if it is the current version of its entry, the newest version before the
  * current one (for one-line rollbacks), or referenced by a supported release's bundled
  * registry. Supported releases: every stable tag in the two most recent minor lines
- * (see scripts/registry-support.js).
+ * (see scripts/registry-retention.js).
  *
  * Usage:
  *   node scripts/prune-registry.js            dry run: print what would be deleted
@@ -12,17 +12,11 @@
  */
 const fs = require('fs');
 const path = require('path');
-const {
-  repoRoot,
-  checkReferences,
-  publishedFiles,
-  planPrune,
-  supportedTags,
-  tagRegistry,
-} = require('./registry-support');
+const { repoRoot, readRegistry } = require('./registry-paths');
+const { checkReferences, listPublished, planPrune, supportedTags, registryAt } = require('./registry-retention');
 
 const apply = process.argv.includes('--delete');
-const registry = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'extension-registry.json'), 'utf8'));
+const registry = readRegistry();
 
 // Without tags we can't tell what supported releases reference, so nothing is safe to delete.
 const { tags, problems, notes } = checkReferences(registry);
@@ -38,8 +32,8 @@ if (problems.length) {
   process.exit(1);
 }
 
-const supported = supportedTags(tags).map((tag) => ({ tag, registry: tagRegistry(tag) }));
-const { keep, deletable } = planPrune(registry, publishedFiles(), supported);
+const supported = supportedTags(tags).map((tag) => ({ tag, registry: registryAt(tag) }));
+const { keep, deletable } = planPrune(registry, listPublished(), supported);
 
 console.log(`Supported releases: ${supported.map((s) => s.tag).join(', ') || 'none'}`);
 console.log(`Keeping ${keep.size} published version(s).`);

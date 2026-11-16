@@ -15,9 +15,6 @@ export declare class FlameScans extends MangaParser {
     /**
      * The site has no search endpoint: its browse page lists every series, and this keeps the ones
      * whose title has every word of the query. All matches come on page 1.
-     *
-     * @param query Search query
-     * @param page Page number (default 1)
      */
     search: (query: string, page?: number) => Promise<ISearch<IMangaResult>>;
     /** @param mangaId series id from `search` (`"101"`) */

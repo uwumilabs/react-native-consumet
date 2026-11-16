@@ -1,5 +1,7 @@
+import type { AnyNode, CheerioAPI } from 'cheerio';
 import {
   type IMovieInfo,
+  type IMovieEpisode,
   type IEpisodeServer,
   type StreamingServers,
   type ISource,
@@ -8,7 +10,26 @@ import {
   type ProviderContext,
   type ProviderConfig,
 } from '../../../models';
+import { pickServer } from '../../common/servers';
+import { pageId, pageUrl, querySlug } from '../site-paths';
 
+const CARDS = '.film_list-wrap > div.flw-item';
+const PAGINATION = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
+
+/**
+ * Reads a card's year-or-season label: movie cards show the year (`2021`), series cards their
+ * latest season (`SS 2`), which is how many seasons the series has.
+ */
+const yearOrSeasons = (label: string): { releaseDate?: string; seasons?: number } => {
+  const text = label.trim();
+  if (text.includes('SS')) return { seasons: parseInt(text.split('SS')[1]!, 10) };
+  return isNaN(parseInt(text, 10)) ? {} : { releaseDate: text };
+};
+
+/**
+ * HiMovies (himovies.sx). Media ids are page paths such as `tv/watch-vincenzo-67955`.
+ * @param customBaseURL site URL to use instead of the default
+ */
 export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
   const { load, extractors, enums, axios, createCustomBaseUrl, PolyURL } = ctx;
   const { MegaCloud } = extractors;
@@ -28,480 +49,201 @@ export function createHiMovies(ctx: ProviderContext, customBaseURL?: string) {
 
   const supportedTypes = new Set([TvTypeEnum.MOVIE, TvTypeEnum.TVSERIES]);
 
-  /**
-   * Search for movies/TV shows
-   * @param query search query string
-   * @param page page number (default 1) (optional)
-   */
-  const search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
-    const searchResult: ISearch<IMovieResult> = {
+  const getPage = async (url: string): Promise<CheerioAPI> => load((await axios.get(url)).data);
+
+  const parseCard = ($: CheerioAPI, el: AnyNode): IMovieResult => {
+    const card = $(el);
+    const id = pageId(card.find('div.film-poster > a').attr('href') ?? '', baseUrl);
+    const link = card.find('div.film-detail .film-name > a');
+    const details = card.find('div.film-detail > div.fd-infor');
+    // Movies: year, duration. Series: "SS 2", "EPS 16".
+    const label = details.find('span:nth-child(1)').text();
+    const extent = details.find('span:nth-child(3)').text().trim();
+    const type = details.find('span.float-right').text() === 'Movie' ? TvTypeEnum.MOVIE : TvTypeEnum.TVSERIES;
+    return {
+      id,
+      title: link.attr('title') ?? link.text().trim(),
+      url: pageUrl(id, baseUrl),
+      image: card.find('div.film-poster > img').attr('data-src'),
+      type,
+      ...yearOrSeasons(label),
+      ...(type === TvTypeEnum.TVSERIES
+        ? { latestEpisode: extent.replace('EPS', '').trim() || undefined }
+        : { duration: extent || undefined }),
+    };
+  };
+
+  const fetchCardPage = async (url: string, page: number): Promise<ISearch<IMovieResult>> => {
+    const $ = await getPage(url);
+    const pagination = $(PAGINATION);
+    return {
       currentPage: page,
-      hasNextPage: false,
-      results: [],
+      // The last page's link is the active one
+      hasNextPage: pagination.length > 0 && !pagination.children().last().hasClass('active'),
+      results: $(CARDS)
+        .toArray()
+        .map((el) => parseCard($, el)),
     };
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/search/${query.replace(/[\W_]+/g, '-')}?page=${page}`);
-
-      const $ = load(data);
-
-      const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
-      searchResult.hasNextPage =
-        $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
-
-      const initialResults: IMovieResult[] = [];
-      $('.film_list-wrap > div.flw-item').each((i, el) => {
-        const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-        initialResults.push({
-          id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-          title: $(el).find('div.film-detail > h2 > a').attr('title')!,
-          url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-          image: $(el).find('div.film-poster > img').attr('data-src'),
-          releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-          seasons: releaseDate.includes('SS') ? parseInt(releaseDate.split('SS')[1]!) : undefined,
-          type:
-            $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-              ? TvTypeEnum.MOVIE
-              : TvTypeEnum.TVSERIES,
-        });
-      });
-
-      // Fetch media info for all results in parallel
-      const mediaInfoPromises = initialResults.map(async (result) => {
-        try {
-          const mediaInfo = await fetchMediaInfo(result.id);
-          if (mediaInfo.releaseDate) {
-            const year = new Date(mediaInfo.releaseDate).getFullYear();
-            result.releaseDate = year.toString();
-          }
-          return result;
-        } catch (err) {
-          // Return original result if fetchMediaInfo fails
-          return result;
-        }
-      });
-
-      searchResult.results = await Promise.all(mediaInfoPromises);
-
-      return searchResult;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
   };
 
-  /**
-   * Fetch media info
-   * @param mediaId media link or id
-   */
-  const fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
-    if (!mediaId.startsWith(config.baseUrl)) {
-      mediaId = `${config.baseUrl}/${mediaId}`;
-    }
-
-    const movieInfo: IMovieInfo = {
-      id: mediaId.split('sx/').pop()!,
-      title: '',
-      url: mediaId,
-    };
-    try {
-      const { data } = await axios.get(mediaId);
-      const $ = load(data);
-      const recommendationsArray: IMovieResult[] = [];
-
-      $('section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item').each((i, el) => {
-        recommendationsArray.push({
-          id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-          title: $(el).find('div.film-detail > h3.film-name > a').text(),
-          image: $(el).find('div.film-poster > img').attr('data-src'),
-          duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text().replace('m', '') ?? null,
-          type:
-            $(el).find('div.film-detail > div.fd-infor > span.fdi-type').text() === 'TV'
-              ? TvTypeEnum.TVSERIES
-              : (TvTypeEnum.MOVIE ?? null),
-        });
-      });
-
-      const uid = $('.detail_page-watch').attr('data-id')!;
-      movieInfo.cover = $('div.cover_follow').attr('style')?.slice(22).replace(')', '').replace(';', '');
-      movieInfo.title = $('.heading-name > a:nth-child(1)').text();
-      movieInfo.image = $('.film-poster > img:nth-child(1)').attr('src');
-      movieInfo.description = $('.description').text().trim();
-      movieInfo.type = movieInfo.id.includes('tv/') ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE;
-      movieInfo.releaseDate = $('div.row-line:contains(Released:)').text().replace('Released:', '').trim();
-      movieInfo.genres = $('div.row-line:contains(Genre:) a')
-        .map((i, el) => $(el).text().split('&'))
+  const parseInfoPage = ($: CheerioAPI, url: string): IMovieInfo => {
+    const id = pageId(url, baseUrl);
+    return {
+      id,
+      title: $('.heading-name > a:nth-child(1)').text(),
+      url,
+      // style="background-image: url(https://...);"
+      cover: /url\(\s*['"]?([^'")]+)['"]?\s*\)/.exec($('div.cover_follow').attr('style') ?? '')?.[1],
+      image: $('.film-poster > img:nth-child(1)').attr('src'),
+      description: $('.description').text().trim(),
+      type: id.startsWith('tv/') ? TvTypeEnum.TVSERIES : TvTypeEnum.MOVIE,
+      releaseDate: $('div.row-line:contains(Released:)').text().replace('Released:', '').trim(),
+      genres: $('div.row-line:contains(Genre:) a')
+        .map((_, el) => $(el).text().split('&'))
         .get()
-        .map((v) => v.trim());
-      movieInfo.casts = $('.row-line:contains(Casts:) a')
-        .map((i, el) => $(el).text())
-        .get();
-      movieInfo.production = $('.row-line:contains(Production:) a').text().trim();
-      movieInfo.country = $('.row-line:contains(Country:) a').text().trim();
-      movieInfo.duration = $('.row-line:contains(Duration:)')
-        .text()
-        .replace('Duration:', '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      movieInfo.rating = parseFloat($('.dp-i-stats > span.item:nth-child(3)').text().replace('IMDB:', '').trim());
-      movieInfo.recommendations = recommendationsArray as any;
-      const ajaxReqUrl = (id: string, type: string, isSeasons: boolean = false) =>
-        `${config.baseUrl}/ajax/${type === 'movie' ? type : ``}${isSeasons ? 'season/list' : 'season/episodes'}/${id}`;
+        .map((v) => v.trim()),
+      casts: $('.row-line:contains(Casts:) a')
+        .map((_, el) => $(el).text())
+        .get(),
+      production: $('.row-line:contains(Production:) a').text().trim(),
+      country: $('.row-line:contains(Country:) a').text().trim(),
+      duration: $('.row-line:contains(Duration:)').text().replace('Duration:', '').replace(/\s+/g, ' ').trim(),
+      rating: parseFloat($('.dp-i-stats > span.item:nth-child(3)').text().replace('IMDB:', '').trim()),
+      recommendations: $('section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
+        .toArray()
+        .map((el) => parseCard($, el)),
+    };
+  };
 
-      if (movieInfo.type === TvTypeEnum.TVSERIES) {
-        const { data } = await axios.get(ajaxReqUrl(uid, 'tv', true));
-        const $$ = load(data);
-        const seasonsIds = $$('.dropdown-menu > a')
-          .map((i, el) => $(el).attr('data-id'))
-          .get();
-
-        movieInfo.episodes = [];
-        let season = 1;
-        for (const id of seasonsIds) {
-          const { data } = await axios.get(ajaxReqUrl(id, 'season'));
-          const $$$ = load(data);
-
-          $$$('.nav > li')
-            .map((i, el) => {
-              const episode = {
-                id: $$$(el).find('a').attr('id')!.split('-')[1]!,
-                title: $$$(el).find('a').attr('title')!,
-                number: parseInt($$$(el).find('a').attr('title')!.split(':')[0]!.slice(3).trim()),
-                season: season,
-                url: `${config.baseUrl}/ajax/episode/servers/${$$$(el).find('a').attr('id')!.split('-')[1]}`,
-              };
-              movieInfo.episodes?.push(episode);
-            })
-            .get();
-          season++;
-        }
-      } else {
-        movieInfo.episodes = [
-          {
-            id: uid,
-            title: movieInfo.title,
-            url: `${config.baseUrl}/ajax/episode/list/${uid}`,
-          },
-        ];
-      }
-
-      return movieInfo;
-    } catch (err) {
-      //console.log(err);
-      throw new Error((err as Error).message);
+  // A series card shows its latest season, not its year. Meta providers (TMDB) match search results
+  // on the year, so take it from the title's page.
+  const withReleaseYear = async (result: IMovieResult): Promise<IMovieResult> => {
+    if (result.releaseDate) return result;
+    try {
+      const url = pageUrl(result.id, baseUrl);
+      const year = new Date(parseInfoPage(await getPage(url), url).releaseDate ?? '').getFullYear();
+      return isNaN(year) ? result : { ...result, releaseDate: String(year) };
+    } catch {
+      // A page that doesn't load leaves the result without a year rather than failing the search.
+      return result;
     }
   };
 
+  const search = async (query: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
+    const cards = await fetchCardPage(`${baseUrl}/search/${querySlug(query, '-')}?page=${page}`, page);
+    return { ...cards, results: await Promise.all(cards.results.map(withReleaseYear)) };
+  };
+
+  const fetchSeriesEpisodes = async (uid: string): Promise<IMovieEpisode[]> => {
+    const seasonList = await getPage(`${baseUrl}/ajax/season/list/${uid}`);
+    const seasonIds = seasonList('.dropdown-menu > a')
+      .map((_, el) => seasonList(el).attr('data-id'))
+      .get();
+
+    const episodes: IMovieEpisode[] = [];
+    for (let i = 0; i < seasonIds.length; i++) {
+      const $ = await getPage(`${baseUrl}/ajax/season/episodes/${seasonIds[i]}`);
+      $('.nav > li').each((_, el) => {
+        const link = $(el).find('a');
+        const id = link.attr('id')!.split('-')[1]!;
+        const title = link.attr('title')!;
+        episodes.push({
+          id,
+          title,
+          // "Eps 1: Pilot"
+          number: parseInt(title.split(':')[0]!.slice(3).trim()),
+          season: i + 1,
+          url: `${baseUrl}/ajax/episode/servers/${id}`,
+        });
+      });
+    }
+    return episodes;
+  };
+
+  /** @param mediaId media id or page URL */
+  const fetchMediaInfo = async (mediaId: string): Promise<IMovieInfo> => {
+    const url = pageUrl(mediaId, baseUrl);
+    const $ = await getPage(url);
+    const info = parseInfoPage($, url);
+    const uid = $('.detail_page-watch').attr('data-id')!;
+    info.episodes =
+      info.type === TvTypeEnum.TVSERIES
+        ? await fetchSeriesEpisodes(uid)
+        : [{ id: uid, title: info.title as string, url: `${baseUrl}/ajax/episode/list/${uid}` }];
+    return info;
+  };
+
   /**
-   * Fetch episode sources
-   * @param episodeId episode id
-   * @param mediaId media id
-   * @param server server type (default `MegaCloud`) (optional)
+   * @param episodeId episode id, or the episode's `url` from fetchMediaInfo
+   * @param mediaId media id or page URL (found on the movie info object)
+   */
+  const fetchEpisodeServers = async (episodeId: string, mediaId: string): Promise<IEpisodeServer[]> => {
+    // The site lists a movie's servers under the movie's id, a series episode's under the episode's.
+    const list = pageId(mediaId, baseUrl).startsWith('movie/') ? 'list' : 'servers';
+    const $ = await getPage(episodeId.startsWith('http') ? episodeId : `${baseUrl}/ajax/episode/${list}/${episodeId}`);
+    return Promise.all(
+      $('ul.nav > li')
+        .toArray()
+        .map(async (el) => {
+          const link = $(el).find('a');
+          const { data } = await axios.get(`${baseUrl}/ajax/episode/sources/${link.attr('data-id')}`);
+          // "Server UpCloud" -> "upcloud"
+          return { name: link.attr('title')!.slice(6).toLowerCase().replace('server', '').trim(), url: data.link };
+        })
+    );
+  };
+
+  /**
+   * @param episodeId episode id, or a server's embed URL from fetchEpisodeServers
+   * @param mediaId media id or page URL
+   * @param server server to play (default `MegaCloud`); every HiMovies server runs the MegaCloud player
    */
   const fetchEpisodeSources = async (
     episodeId: string,
     mediaId: string,
     server: StreamingServers = StreamingServersEnum.MegaCloud
   ): Promise<ISource> => {
-    if (episodeId.startsWith('http')) {
-      const serverUrl = new PolyURL(episodeId);
-      switch (server) {
-        case StreamingServersEnum.MegaCloud:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
-          };
-        case StreamingServersEnum.UpCloud:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
-          };
-        default:
-          return {
-            headers: { Referer: serverUrl.href },
-            ...(await MegaCloud(ctx).extract(serverUrl, config.baseUrl)),
-          };
-      }
-    }
-
-    try {
-      const servers = await fetchEpisodeServers(episodeId, mediaId);
-
-      const i = servers.findIndex((s) => s.name === server);
-
-      if (i === -1) {
-        throw new Error(`Server ${server} not found`);
-      }
-
-      const serverUrl: URL = new URL(servers[i]!.url);
-
-      return await fetchEpisodeSources(serverUrl.href, mediaId, server);
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  /**
-   * Fetch episode servers
-   * @param episodeId takes episode link or movie id
-   * @param mediaId takes movie link or id (found on movie info object)
-   */
-  const fetchEpisodeServers = async (episodeId: string, mediaId: string): Promise<IEpisodeServer[]> => {
-    if (!episodeId.startsWith(config.baseUrl + '/ajax') && !mediaId.includes('movie')) {
-      episodeId = `${config.baseUrl}/ajax/episode/servers/${episodeId}`;
-    } else {
-      episodeId = `${config.baseUrl}/ajax/episode/list/${episodeId}`;
-    }
-    try {
-      const { data } = await axios.get(episodeId);
-      const $ = load(data);
-      const servers = $('ul.nav > li')
-        .map((i, el) => ({
-          name: $(el).find('a').attr('title')!.slice(6).toLowerCase().replace('server', '').trim(),
-          url: `${config.baseUrl}/ajax/episode/sources/${$(el).find('a').attr('data-id')}`,
-        }))
-        .get();
-
-      const finalServers: IEpisodeServer[] = await Promise.all(
-        servers.map(async (server) => {
-          const { data } = await axios.get(server.url);
-          return {
-            name: server.name,
-            url: data.link,
-          };
-        })
-      );
-
-      return finalServers;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  const fetchRecentMovies = async (): Promise<IMovieResult[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`);
-      const $ = load(data);
-
-      const movies = $(
-        'section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item'
-      )
-        .map((i, el) => {
-          const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-          const movie: any = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-            title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-            duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          return movie;
-        })
-        .get();
-      return movies;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  const fetchRecentTvShows = async (): Promise<IMovieResult[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`);
-      const $ = load(data);
-
-      const tvshows = $(
-        'section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item'
-      )
-        .map((i, el) => {
-          const tvshow = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-            title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
-            latestEpisode:
-              $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          return tvshow;
-        })
-        .get();
-      return tvshows;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  const fetchTrendingMovies = async (): Promise<IMovieResult[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`);
-      const $ = load(data);
-
-      const movies = $('div#trending-movies div.film_list-wrap div.flw-item')
-        .map((i, el) => {
-          const releaseDate = $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text();
-          const movie: any = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-            title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            releaseDate: isNaN(parseInt(releaseDate)) ? undefined : releaseDate,
-            duration: $(el).find('div.film-detail > div.fd-infor > span.fdi-duration').text() || null,
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          return movie;
-        })
-        .get();
-      return movies;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  const fetchTrendingTvShows = async (): Promise<IMovieResult[]> => {
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/home`);
-      const $ = load(data);
-
-      const tvshows = $('div#trending-tv div.film_list-wrap div.flw-item')
-        .map((i, el) => {
-          const tvshow = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1)!,
-            title: $(el).find('div.film-detail > h3.film-name > a').attr('title')!,
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            season: $(el).find('div.film-detail > div.fd-infor > span:nth-child(1)').text().replace('SS', '').trim(),
-            latestEpisode:
-              $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() || null,
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          return tvshow;
-        })
-        .get();
-      return tvshows;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  };
-
-  const fetchByCountry = async (country: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
-    const result: ISearch<IMovieResult> = {
-      currentPage: page,
-      hasNextPage: false,
-      results: [],
+    const embedUrl = new PolyURL(
+      episodeId.startsWith('http') ? episodeId : pickServer(await fetchEpisodeServers(episodeId, mediaId), server).url
+    );
+    return {
+      headers: { Referer: embedUrl.href },
+      ...(await MegaCloud(ctx).extract(embedUrl, baseUrl)),
     };
-    const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
-
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/country/${country}/?page=${page}`);
-      const $ = load(data);
-
-      result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
-
-      $('div.container > section.block_area > div.block_area-content > div.film_list-wrap > div.flw-item')
-        .each((i, el) => {
-          const resultItem: IMovieResult = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
-            title: $(el).find('div.film-detail > h2.film-name > a').attr('title') ?? '',
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          const season = $(el)
-            .find('div.film-detail > div.fd-infor > span:nth-child(1)')
-            .text()
-            .replace('SS', '')
-            .trim();
-          const latestEpisode =
-            $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-          if (resultItem.type === TvTypeEnum.TVSERIES) {
-            resultItem.season = season;
-            resultItem.latestEpisode = latestEpisode;
-          } else {
-            resultItem.releaseDate = season;
-            resultItem.duration = latestEpisode;
-          }
-          result.results.push(resultItem);
-        })
-        .get();
-      return result;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
   };
 
-  const fetchByGenre = async (genre: string, page: number = 1): Promise<ISearch<IMovieResult>> => {
-    const result: ISearch<IMovieResult> = {
-      currentPage: page,
-      hasNextPage: false,
-      results: [],
-    };
-    try {
-      const { data } = await axios.get(`${config.baseUrl}/genre/${genre}?page=${page}`);
-
-      const $ = load(data);
-
-      const navSelector = 'div.pre-pagination > nav:nth-child(1) > ul:nth-child(1)';
-
-      result.hasNextPage = $(navSelector).length > 0 ? !$(navSelector).children().last().hasClass('active') : false;
-
-      $('.film_list-wrap > div.flw-item')
-        .each((i, el) => {
-          const resultItem: IMovieResult = {
-            id: $(el).find('div.film-poster > a').attr('href')?.slice(1) ?? '',
-            title: $(el).find('div.film-detail > h2 > a').attr('title') ?? '',
-            url: `${config.baseUrl}${$(el).find('div.film-poster > a').attr('href')}`,
-            image: $(el).find('div.film-poster > img').attr('data-src'),
-            type:
-              $(el).find('div.film-detail > div.fd-infor > span.float-right').text() === 'Movie'
-                ? TvTypeEnum.MOVIE
-                : TvTypeEnum.TVSERIES,
-          };
-          const season = $(el)
-            .find('div.film-detail > div.fd-infor > span:nth-child(1)')
-            .text()
-            .replace('SS', '')
-            .trim();
-          const latestEpisode =
-            $(el).find('div.film-detail > div.fd-infor > span:nth-child(3)').text().replace('EPS', '').trim() ?? null;
-          if (resultItem.type === TvTypeEnum.TVSERIES) {
-            resultItem.season = season;
-            resultItem.latestEpisode = latestEpisode;
-          } else {
-            resultItem.releaseDate = season;
-            resultItem.duration = latestEpisode;
-          }
-          result.results.push(resultItem);
-        })
-        .get();
-
-      return result;
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
+  const fetchHomeSection = async (cards: string): Promise<IMovieResult[]> => {
+    const $ = await getPage(`${baseUrl}/home`);
+    return $(cards)
+      .toArray()
+      .map((el) => parseCard($, el));
   };
 
-  // Return the functional provider object
+  const fetchRecentMovies = () =>
+    fetchHomeSection(
+      'section.block_area:contains("Latest Movies") > div:nth-child(2) > div:nth-child(1) > div.flw-item'
+    );
+
+  const fetchRecentTvShows = () =>
+    fetchHomeSection(
+      'section.block_area:contains("Latest TV Shows") > div:nth-child(2) > div:nth-child(1) > div.flw-item'
+    );
+
+  const fetchTrendingMovies = () => fetchHomeSection('div#trending-movies div.film_list-wrap div.flw-item');
+
+  const fetchTrendingTvShows = () => fetchHomeSection('div#trending-tv div.film_list-wrap div.flw-item');
+
+  /** @param country country code, e.g. `KR` */
+  const fetchByCountry = (country: string, page: number = 1) =>
+    fetchCardPage(`${baseUrl}/country/${country}/?page=${page}`, page);
+
+  /** @param genre genre slug, e.g. `drama` */
+  const fetchByGenre = (genre: string, page: number = 1) =>
+    fetchCardPage(`${baseUrl}/genre/${genre}?page=${page}`, page);
+
   return {
     ...config,
     supportedTypes,
-
-    // Core methods, pass only the necessary methods, dont pass helpers or unused methods
     search,
     fetchMediaInfo,
     fetchEpisodeSources,

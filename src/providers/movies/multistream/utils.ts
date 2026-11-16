@@ -1,37 +1,28 @@
-import type { AxiosInstance } from 'axios';
-import type { IEpisodeServer, ISource, ISubtitle, IVideo } from '../../../models';
-import { load } from 'cheerio';
-import { URL } from '../../../utils/url-polyfill';
-import CryptoJS from 'crypto-js';
+import type { IEpisodeServer, ISource, ISubtitle, IVideo, ProviderContext } from '../../../models';
+import { ENC_DEC_API } from '../../common/enc-dec';
+import { pickServer } from '../../common/servers';
 
-export async function getDummySourcesAndServers(id: string): Promise<ISource & { servers: IEpisodeServer[] }> {
-  // Simulate some async work
-  await new Promise((resolve) => setTimeout(resolve, 100));
+/**
+ * MultiStream ids, built and read only here: `<tmdbId>$movie` for a movie (its media id and its one
+ * episode id), `<tmdbId>$tv` for a show, and `<tmdbId>$tv$<episode>$<season>$<tmdbEpisodeId>` for a
+ * show's episode (the TMDB episode id keeps ids unique).
+ */
+export const toMediaId = (tmdbId: string | number, type: string) => `${tmdbId}$${type}`;
 
-  return {
-    servers: [
-      { name: 'DummyServer1', url: 'https://dummy.com/server1/stream.m3u8' },
-      { name: 'DummyServer2', url: 'https://dummy.com/server2/stream.m3u8' },
-    ],
-    sources: [
-      { url: 'https://dummy.com/server1/stream.m3u8', isM3U8: true, quality: 'default', name: 'DummyServer1' },
-      { url: 'https://dummy.com/server2/stream.m3u8', isM3U8: true, quality: 'default', name: 'DummyServer2' },
-    ],
-    subtitles: [{ url: 'https://dummy.com/subs/en.vtt', lang: 'English' }],
-  };
-}
+export const toEpisodeId = (tmdbId: string | number, episode: number, season: number, tmdbEpisodeId: number) =>
+  `${tmdbId}$tv$${episode}$${season}$${tmdbEpisodeId}`;
 
-function getParts(id: string) {
-  const parts = id.split('$');
-  const [tmdbId, type, episode, season] = parts;
-  return [tmdbId, type, episode, season];
-}
+export const parseId = (id: string) => {
+  const [tmdbId = '', type = '', episode, season] = id.split('$');
+  return { tmdbId, type, episode, season };
+};
 
-export async function getVidsrcSourcesAndServers(
-  axios: AxiosInstance,
-  id: string
-): Promise<ISource & { servers: IEpisodeServer[] }> {
-  const [tmdbId, type, episode, season] = getParts(id);
+/** What one site gives for an episode: its servers, and the sources and subtitles they play. */
+type Scraped = ISource & { servers: IEpisodeServer[] };
+type Scraper = (ctx: ProviderContext, id: string) => Promise<Scraped>;
+
+const getVidsrcSourcesAndServers: Scraper = async ({ axios, load }, id) => {
+  const { tmdbId, type, episode, season } = parseId(id);
   const baseURL = 'https://vidsrc-embed.ru/embed/';
   const headers = {
     'User-Agent':
@@ -45,435 +36,252 @@ export async function getVidsrcSourcesAndServers(
       ? `${baseURL}tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`
       : `${baseURL}movie?tmdb=${tmdbId}`;
 
-  try {
-    // Step 1: Fetch embed iframe
-    const { data: html1 } = await axios.get(url, { headers });
-    const match1 = html1.match(/src="(.*?)"/)?.[1];
-    if (!match1) throw new Error('No source iframe found');
-    const allUrlRCP: any = [];
-    // Construct the RCP URL
-    const urlRCP = match1.startsWith('http')
-      ? match1
-      : match1.startsWith('/embed')
-        ? baseURL.split('/embed')[0] + match1
-        : 'https:' + match1;
+  // The embed page links an RCP player page per server; each RCP page loads a PRORCP page whose
+  // script names the m3u8.
+  const { data: html1 } = await axios.get(url, { headers });
+  const match1 = html1.match(/src="(.*?)"/)?.[1];
+  if (!match1) throw new Error('No source iframe found');
+  const urlRCP = match1.startsWith('http')
+    ? match1
+    : match1.startsWith('/embed')
+      ? baseURL.split('/embed')[0] + match1
+      : 'https:' + match1;
 
-    const $ = load(html1);
-    $('.serversList .server').each((i, el) => {
-      const name = $(el).text().trim();
-      const hash = $(el).attr('data-hash');
-      allUrlRCP.push({ name, url: `${urlRCP.split('rcp')[0]}rcp/${hash!}` });
-    });
-    // Step 2: Fetch all URLs from allUrlRCP and process them
-    await Promise.all(
-      allUrlRCP.map(async ({ name, url: rcpUrl }: { name: string; url: string }) => {
-        try {
-          // console.log(`Fetching RCP for ${name} from ${rcpUrl}`);
-          const { data: html2 } = await axios.get(rcpUrl, {
-            headers: { ...headers, Referer: url },
-          });
-          // console.log(`Found RCP for ${name}: ${html2}`);
-          const match2 = html2.match(/src.*['"](\/(?:src|pro)rcp.*?)['"]/)?.[1];
-          if (!match2) return;
+  const $ = load(html1);
+  const rcpPages = $('.serversList .server')
+    .get()
+    .map((el) => ({ name: $(el).text().trim(), url: `${urlRCP.split('rcp')[0]}rcp/${$(el).attr('data-hash')!}` }));
 
-          const urlPRORCP = rcpUrl.split('rcp')[0] + match2;
+  await Promise.all(
+    rcpPages.map(async ({ name, url: rcpUrl }) => {
+      try {
+        const { data: html2 } = await axios.get(rcpUrl, { headers: { ...headers, Referer: url } });
+        const match2 = html2.match(/src.*['"](\/(?:src|pro)rcp.*?)['"]/)?.[1];
+        if (!match2) return;
 
-          // Step 3: Fetch M3U8 file URL
-          // console.log(`Fetching M3U8 for ${name} from ${urlPRORCP}`);
-          const { data: html3 } = await axios.get(urlPRORCP, {
-            headers: { ...headers, Referer: rcpUrl },
-          });
-          const match3 = html3.match(/file:\s*['"]([^'"]+\.m3u8)['"]/)?.[1];
-          // console.log(`Found M3U8 for ${name}: ${match3}`);
-          if (match3) {
-            servers.push({
-              name: name,
-              url: match3,
-            });
-            sources.push({
-              url: match3,
-              isM3U8: match3.includes('.m3u8'),
-              quality: 'default',
-              name: name,
-            });
-          }
-        } catch (error) {
-          // Silently continue on error for individual servers
-          return;
+        const { data: html3 } = await axios.get(rcpUrl.split('rcp')[0] + match2, {
+          headers: { ...headers, Referer: rcpUrl },
+        });
+        const m3u8 = html3.match(/file:\s*['"]([^'"]+\.m3u8)['"]/)?.[1];
+        if (m3u8) {
+          servers.push({ name, url: m3u8 });
+          sources.push({ url: m3u8, isM3U8: true, quality: 'default', name });
         }
-      })
-    );
-    return {
-      servers,
-      sources,
-      headers: { Referer: urlRCP.split('rcp')[0] },
-    };
-  } catch (error) {
-    throw new Error(`Failed to fetch Vidsrc stream: ${(error as Error).message}`);
-  }
-}
+      } catch {
+        // A server whose pages fail is left out; the others still play.
+      }
+    })
+  );
+  return { servers, sources, headers: { Referer: urlRCP.split('rcp')[0] } };
+};
 
-export async function get111MoviesSourcesAndServers(
-  axios: AxiosInstance,
-  id: string
-): Promise<ISource & { servers: IEpisodeServer[] }> {
-  const [tmdbId, type, episode, season] = getParts(id);
+const get111MoviesSourcesAndServers: Scraper = async ({ axios, CryptoJS }, id) => {
+  const { tmdbId, type, episode, season } = parseId(id);
   const baseUrl = 'https://111movies.com';
-  const userAgent =
-    'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
-
-  const defaultDomain = (() => {
-    const u = new URL(baseUrl);
-    return `${u.protocol}//${u.host}/`;
-  })();
-
   const headers = {
-    'Referer': defaultDomain,
-    'User-Agent': userAgent,
-    // 'Content-Type': 'image/gif',
+    'Referer': `${baseUrl}/`,
+    'User-Agent':
+      'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
     'X-Requested-With': 'XMLHttpRequest',
   };
-  function customEncode(input: string): string {
+
+  // URL-safe base64 with the site's own alphabet.
+  const customEncode = (input: string): string => {
     const src = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
     const dst = 'BdNqfj2X1RalybZHxP50e8UGz4Tv6mg3QS-7JnAWIsiKrCpFktVM9D_chuYOoEwL';
-
-    // Normal base64 url-safe
-    let b64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(input));
-    b64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
-
-    // Translate characters
+    const b64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(input))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/[=]+$/, '');
     let result = '';
     for (const ch of b64) {
       const idx = src.indexOf(ch);
       result += idx >= 0 ? dst[idx] : ch;
     }
     return result;
-  }
-  let url;
-  if (type === 'tv') {
-    url = `${baseUrl}/tv/${tmdbId}/${season}/${episode}`;
-  } else {
-    url = `${baseUrl}/movie/${tmdbId}`;
-  }
-  const res = await axios.get(url, { headers });
-  const html = res.data as string;
+  };
 
-  // Extract raw data
-  const match = html.match(/\{\"data\":\"(.*?)\"/);
-  if (!match) {
-    console.error('No data found!');
-    throw new Error('No data found in the response');
-  }
-  const rawData = match[1];
+  const url = type === 'tv' ? `${baseUrl}/tv/${tmdbId}/${season}/${episode}` : `${baseUrl}/movie/${tmdbId}`;
+  const html = (await axios.get(url, { headers })).data as string;
+  const rawData = html.match(/\{"data":"(.*?)"/)?.[1];
+  if (!rawData) throw new Error('No data found in the response');
 
-  // AES CBC encrypt
-  const keyHex = '912660f3d9f3f35cee36396d31ed73366ab53c22c70710ce029697d17762997e';
-  const ivHex = 'f91f2863783814f51c56f341d6ce1677';
-
-  const aesKey = CryptoJS.enc.Hex.parse(keyHex);
-  const aesIv = CryptoJS.enc.Hex.parse(ivHex);
-
-  const padded = CryptoJS.enc.Utf8.parse(rawData!);
-  const encrypted = CryptoJS.AES.encrypt(padded, aesKey, {
-    iv: aesIv,
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  });
-
-  // Python used .hex(), CryptoJS AES output is base64 → convert to hex
-  // AES ciphertext in hex (same as Python's .hex())
+  // The page's data, AES-CBC encrypted with the site's key, hex-encoded, XORed and re-encoded,
+  // names the episode's server list.
+  const encrypted = CryptoJS.AES.encrypt(
+    CryptoJS.enc.Utf8.parse(rawData),
+    CryptoJS.enc.Hex.parse('912660f3d9f3f35cee36396d31ed73366ab53c22c70710ce029697d17762997e'),
+    {
+      iv: CryptoJS.enc.Hex.parse('f91f2863783814f51c56f341d6ce1677'),
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    }
+  );
   const aesEncryptedHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
-
-  // XOR key as a Uint8Array instead of Buffer
-  const xorKey = new Uint8Array([0xbe, 0x43, 0x0a]);
-
+  const xorKey = [0xbe, 0x43, 0x0a];
   let xorResult = '';
   for (let i = 0; i < aesEncryptedHex.length; i++) {
-    const charCode = aesEncryptedHex.charCodeAt(i);
-    xorResult += String.fromCharCode(charCode ^ xorKey[i % xorKey.length]!);
+    xorResult += String.fromCharCode(aesEncryptedHex.charCodeAt(i) ^ xorKey[i % xorKey.length]!);
   }
 
-  // Encode final
-  const encodedFinal = customEncode(xorResult);
-
-  // API call
   const staticPath =
     'to/1000003134441812/c945be05/2f30b6e198562e7015537bb71a738ff8245942a7/y/2c20617150078ad280239d1cc3a8b6ee9331acef9b0bdc6b742435597c38edb4/c8ddbffe-3efb-53e1-b883-3b6ce90ba310';
-
-  const apiServers = `https://111movies.com/${staticPath}/${encodedFinal}/sr`;
-  const { data: serversData } = await axios.post(apiServers, {}, { headers });
-  // const servers = serverRes.data;
-
-  if (!Array.isArray(serversData) || serversData.length === 0) {
-    console.error('No servers found!');
-    throw new Error('No servers found in the response');
-  }
+  const { data: serversData } = await axios.post(
+    `${baseUrl}/${staticPath}/${customEncode(xorResult)}/sr`,
+    {},
+    { headers }
+  );
+  if (!Array.isArray(serversData) || serversData.length === 0) throw new Error('No servers found in the response');
   const servers: IEpisodeServer[] = serversData.map((s: any) => ({
     name: s.name,
-    url: `https://111movies.com/${staticPath}/${s.data}`,
+    url: `${baseUrl}/${staticPath}/${s.data}`,
   }));
 
   const sources: IVideo[] = [];
   let subtitles: ISubtitle[] = [];
-
-  // console.log(subtitles);
   for (const server of servers) {
     try {
       const { data: streamData } = await axios.post(server.url, {}, { headers });
-      if (streamData.tracks && streamData.tracks.length > 0) {
-        const newSubs = streamData.tracks.map((sub: any) => ({
-          url: sub.file,
-          lang: sub.label,
-        }));
-
-        const allSubs = [...subtitles, ...newSubs];
-        const uniqueSubs = allSubs.filter(
-          (sub, index, self) => index === self.findIndex((s) => s.lang === sub.lang)
-        ) as ISubtitle[];
-
-        subtitles = uniqueSubs;
+      if (streamData.tracks?.length > 0) {
+        const allSubs: ISubtitle[] = [
+          ...subtitles,
+          ...streamData.tracks.map((sub: any) => ({ url: sub.file, lang: sub.label })),
+        ];
+        subtitles = allSubs.filter((sub, index) => index === allSubs.findIndex((s) => s.lang === sub.lang));
       }
-
       sources.push({
         url: streamData.url,
         isM3U8: streamData.url.includes('.m3u8'),
         quality: 'default',
         name: server.name,
       });
-    } catch (err) {
-      // ignore bad ones
+    } catch {
+      // A server that fails to answer is left out of the sources; the others still play.
     }
   }
+  return { servers, sources, subtitles };
+};
 
-  return {
-    servers,
-    sources,
-    subtitles,
-  };
-}
+const VIDEASY_SERVERS: IEpisodeServer[] = [
+  { name: 'neon-org', url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title' },
+  { name: 'sage-org', url: 'https://api.videasy.net/1movies/sources-with-title' },
+  { name: 'cypher-org', url: 'https://api.videasy.net/moviebox/sources-with-title' },
+  { name: 'yoru-org', url: 'https://api.videasy.net/cdn/sources-with-title' },
+  { name: 'reyna-org', url: 'https://api.videasy.net/primewire/sources-with-title' },
+  { name: 'omen-org', url: 'https://api.videasy.net/onionplay/sources-with-title' },
+  { name: 'breach-org', url: 'https://api.videasy.net/m4uhd/sources-with-title' },
+  { name: 'vyse-org', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
+  { name: 'killjoy-ger', url: 'https://api.videasy.net/meine/sources-with-title?language=german' },
+  { name: 'harbor-ita', url: 'https://api.videasy.net/meine/sources-with-title?language=italian' },
+  { name: 'chamber-fr', url: 'https://api.videasy.net/meine/sources-with-title?language=french' },
+  { name: 'fade-hin', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
+  { name: 'gekko-lat', url: 'https://api.videasy.net/cuevana-latino/sources-with-title' },
+  { name: 'kayo-spa', url: 'https://api.videasy.net/cuevana-spanish/sources-with-title' },
+  { name: 'raze-por', url: 'https://api.videasy.net/superflix/sources-with-title' },
+  { name: 'phoenix-por', url: 'https://api.videasy.net/overflix/sources-with-title' },
+  { name: 'astra-por', url: 'https://api.videasy.net/visioncine/sources-with-title' },
+];
 
-export async function getVideasySourcesAndServers(
-  axios: AxiosInstance,
-  id: string
-): Promise<ISource & { servers: IEpisodeServer[] }> {
-  const servers: IEpisodeServer[] = [
-    { name: 'neon-org', url: 'https://api.videasy.net/myflixerzupcloud/sources-with-title' },
-    { name: 'sage-org', url: 'https://api.videasy.net/1movies/sources-with-title' },
-    { name: 'cypher-org', url: 'https://api.videasy.net/moviebox/sources-with-title' },
-    { name: 'yoru-org', url: 'https://api.videasy.net/cdn/sources-with-title' },
-    { name: 'reyna-org', url: 'https://api.videasy.net/primewire/sources-with-title' },
-    { name: 'omen-org', url: 'https://api.videasy.net/onionplay/sources-with-title' },
-    { name: 'breach-org', url: 'https://api.videasy.net/m4uhd/sources-with-title' },
-    { name: 'vyse-org', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
-    { name: 'killjoy-ger', url: 'https://api.videasy.net/meine/sources-with-title?language=german' },
-    { name: 'harbor-ita', url: 'https://api.videasy.net/meine/sources-with-title?language=italian' },
-    { name: 'chamber-fr', url: 'https://api.videasy.net/meine/sources-with-title?language=french' },
-    { name: 'fade-hin', url: 'https://api.videasy.net/hdmovie/sources-with-title' },
-    { name: 'gekko-lat', url: 'https://api.videasy.net/cuevana-latino/sources-with-title' },
-    { name: 'kayo-spa', url: 'https://api.videasy.net/cuevana-spanish/sources-with-title' },
-    { name: 'raze-por', url: 'https://api.videasy.net/superflix/sources-with-title' },
-    { name: 'phoenix-por', url: 'https://api.videasy.net/overflix/sources-with-title' },
-    { name: 'astra-por', url: 'https://api.videasy.net/visioncine/sources-with-title' },
-  ];
+/** The sources and subtitles of enc-dec.app's decrypted answer, under `name` (or each source's own server). */
+const decryptedMedia = (result: any, name: (source: any) => string) => ({
+  sources: (Array.isArray(result?.sources) ? result.sources : []).map(
+    (source: any): IVideo => ({
+      url: source.url,
+      isM3U8: source.url?.includes('.m3u8') || false,
+      quality: source.quality || 'default',
+      name: name(source),
+    })
+  ),
+  subtitles: (Array.isArray(result?.subtitles) ? result.subtitles : []).map(
+    (subtitle: any): ISubtitle => ({ url: subtitle.url, lang: subtitle.lang || subtitle.language || 'Unknown' })
+  ),
+});
 
+const getVideasySourcesAndServers: Scraper = async ({ axios }, id) => {
+  const { tmdbId, type, episode, season } = parseId(id);
   const sources: IVideo[] = [];
   const subtitles: ISubtitle[] = [];
 
-  const [tmdbId, type, episode, season] = getParts(id);
-
   await Promise.all(
-    servers.map(async (server) => {
+    VIDEASY_SERVERS.map(async (server) => {
       try {
-        console.log('step 1');
         const url =
           type === 'tv'
             ? `${server.url}?mediaType=tv&tmdbId=${tmdbId}&seasonId=${season}&episodeId=${episode}`
             : `${server.url}?mediaType=movie&tmdbId=${tmdbId}`;
-
-        console.log('step 2');
         const { data: encData } = await axios.get(url);
-        console.log('step 3');
-        const { data: decData } = await axios.post('https://enc-dec.app/api/dec-videasy', {
-          text: encData,
-          id: tmdbId,
-        });
-        console.log('step 3');
-        const result = decData.result;
-        console.log(result);
-        if (result && typeof result === 'object') {
-          // Add sources from the decrypted data
-          if (result.sources && Array.isArray(result.sources)) {
-            result.sources.forEach((source: any) => {
-              sources.push({
-                url: source.url,
-                isM3U8: source.url?.includes('.m3u8') || false,
-                quality: source.quality || 'default',
-                name: server.name,
-              });
-            });
-          }
-
-          // Add subtitles if available
-          if (result.subtitles && Array.isArray(result.subtitles)) {
-            result.subtitles.forEach((subtitle: any) => {
-              subtitles.push({
-                url: subtitle.url,
-                lang: subtitle.lang || subtitle.language || 'Unknown',
-              });
-            });
-          }
-        }
-      } catch (err) {
-        // ignore bad ones
-        console.log(server.name, 'this failed');
+        const { data: decData } = await axios.post(`${ENC_DEC_API}/dec-videasy`, { text: encData, id: tmdbId });
+        const media = decryptedMedia(decData.result, () => server.name);
+        sources.push(...media.sources);
+        subtitles.push(...media.subtitles);
+      } catch {
+        // A server that fails is left out of the sources; the others still play.
       }
     })
   );
+  return { servers: VIDEASY_SERVERS, sources, subtitles };
+};
+
+const getHexaSourcesAndServers: Scraper = async ({ axios, CryptoJS }, id) => {
+  const { tmdbId, type, episode, season } = parseId(id);
+  // Hexa encrypts its answer with a key the client picks: 32 random bytes as hex.
+  const key = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+  const url =
+    type === 'tv'
+      ? `https://themoviedb.hexa.watch/api/tmdb/tv/${tmdbId}/season/${season}/episode/${episode}/images`
+      : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
+
+  const { data: encData } = await axios.get(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+      'Accept': 'plain/text',
+      'X-Api-Key': key,
+    },
+  });
+  const { data: decData } = await axios.post(`${ENC_DEC_API}/dec-hexa`, { text: encData, key });
+  const media = decryptedMedia(decData.result, (source) => `hexa-${source.server}`);
+  return {
+    servers: media.sources.map((source: IVideo) => ({ name: source.name!, url: source.url })),
+    ...media,
+  };
+};
+
+/** The sites MultiStream reads, in the order their servers are listed. */
+const SCRAPERS: Scraper[] = [
+  get111MoviesSourcesAndServers,
+  getVidsrcSourcesAndServers,
+  getVideasySourcesAndServers,
+  getHexaSourcesAndServers,
+];
+
+/** Every site's answer for the episode; a site that fails is left out. */
+const scrapeAll = async (ctx: ProviderContext, id: string): Promise<Scraped[]> =>
+  (await Promise.allSettled(SCRAPERS.map((scrape) => scrape(ctx, id)))).flatMap((result) =>
+    result.status === 'fulfilled' ? [result.value] : []
+  );
+
+export async function getMultiServers(ctx: ProviderContext, id: string): Promise<IEpisodeServer[]> {
+  return (await scrapeAll(ctx, id)).flatMap((result) => result.servers);
+}
+
+/**
+ * The sources of one server (`pickServer`'s rule; the first server when omitted), the headers its
+ * site needs, and the subtitles every site gave.
+ */
+export async function getMultiSources(ctx: ProviderContext, id: string, server?: string): Promise<ISource> {
+  const results = await scrapeAll(ctx, id);
+  const picked = pickServer(
+    results.flatMap((result) => result.servers),
+    server
+  );
+  const site = results.find((result) => result.servers.includes(picked))!;
+  const sources = site.sources.filter((source) => source.name === picked.name);
+  if (sources.length === 0) throw new Error(`No sources found for server: ${picked.name}`);
 
   return {
-    servers,
+    ...(site.headers ? { headers: site.headers } : {}),
     sources,
-    subtitles,
+    subtitles: results.flatMap((result) => result.subtitles ?? []),
   };
-}
-
-export async function getHexaSourcesAndServers(
-  axios: AxiosInstance,
-  id: string
-): Promise<ISource & { servers: IEpisodeServer[] }> {
-  const sources: IVideo[] = [];
-  const subtitles: ISubtitle[] = [];
-  const servers: IEpisodeServer[] = [];
-  const [tmdbId, type, episode, season] = getParts(id);
-
-  try {
-    // Generate 32-byte hex key (64 hex characters)
-    const key = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
-
-    const url =
-      type === 'tv'
-        ? `https://themoviedb.hexa.watch/api/tmdb/tv/${tmdbId}/season/${season}/episode/${episode}/images`
-        : `https://themoviedb.hexa.watch/api/tmdb/movie/${tmdbId}/images`;
-
-    // Get encrypted text with API key in header
-    const { data: encData } = await axios.get(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
-        'Accept': 'plain/text',
-        'X-Api-Key': key,
-      },
-    });
-    // Decrypt using the API
-    const { data: decData } = await axios.post('https://enc-dec.app/api/dec-hexa', {
-      text: encData,
-      key: key,
-    });
-
-    const result = decData.result;
-    if (result && typeof result === 'object') {
-      // Add sources from the decrypted data
-      if (result.sources && Array.isArray(result.sources)) {
-        result.sources.forEach((source: any) => {
-          sources.push({
-            url: source.url,
-            isM3U8: source.url?.includes('.m3u8') || false,
-            quality: source.quality || 'default',
-            name: `hexa-${source.server}`,
-          });
-          servers.push({
-            name: `hexa-${source.server}`,
-            url: source.url,
-          });
-        });
-      }
-
-      // Add subtitles if available
-      if (result.subtitles && Array.isArray(result.subtitles)) {
-        result.subtitles.forEach((subtitle: any) => {
-          subtitles.push({
-            url: subtitle.url,
-            lang: subtitle.lang || subtitle.language || 'Unknown',
-          });
-        });
-      }
-    }
-  } catch (err) {
-    // ignore errors
-    console.log(err);
-  }
-
-  return {
-    servers,
-    sources,
-    subtitles,
-  };
-}
-
-export async function getMultiServers(axios: AxiosInstance, id: string): Promise<IEpisodeServer[]> {
-  try {
-    const servers: IEpisodeServer[] = [];
-
-    // Fetch from all sources, handle errors individually
-    const results = await Promise.allSettled([
-      // getDummySourcesAndServers(id),
-      get111MoviesSourcesAndServers(axios, id),
-      getVidsrcSourcesAndServers(axios, id),
-      getVideasySourcesAndServers(axios, id),
-      getHexaSourcesAndServers(axios, id),
-    ]);
-
-    // Add servers from successful results only
-    results.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        servers.push(...result.value.servers);
-      }
-    });
-
-    return servers;
-  } catch (error) {
-    throw new Error(`Failed to fetch Multistream servers: ${(error as Error).message}`);
-  }
-}
-
-export async function getMultiSources(axios: AxiosInstance, id: string, server: string): Promise<ISource> {
-  try {
-    // Fetch from all sources, handle errors individually
-    const results = await Promise.allSettled([
-      // getDummySourcesAndServers(id),
-      get111MoviesSourcesAndServers(axios, id),
-      getVidsrcSourcesAndServers(axios, id),
-      getVideasySourcesAndServers(axios, id),
-      getHexaSourcesAndServers(axios, id),
-    ]);
-
-    const allSources: IVideo[] = [];
-    const allSubtitles: ISubtitle[] = [];
-
-    // Collect sources and subtitles from successful results only
-    results.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        const { servers: _, ...sourceData } = result.value;
-        if (sourceData.sources) {
-          allSources.push(...sourceData.sources);
-        }
-        if (sourceData.subtitles) {
-          allSubtitles.push(...sourceData.subtitles);
-        }
-      }
-    });
-    console.log({ allSources, allSubtitles });
-    const matchedSources = allSources.filter((source: IVideo) => source.name === server);
-
-    if (matchedSources.length === 0) {
-      throw new Error(`No sources found for server: ${server}`);
-    }
-
-    return {
-      sources: matchedSources,
-      subtitles: allSubtitles,
-    };
-  } catch (error) {
-    throw new Error(`Failed to fetch MultiSources: ${(error as Error).message}`);
-  }
 }

@@ -1,4 +1,3 @@
-import type { ISource } from '../../src/models';
 import { VidHide } from '../../src/extractors/vidhide';
 import { PolyURL } from '../../src/utils/url-polyfill';
 
@@ -26,7 +25,7 @@ describe('VidHide (PROV-1)', () => {
     const deobfuscateScript = jest.fn().mockResolvedValue(unpacked);
     const ctx: any = { axios: { get }, USER_AGENT: 'test-agent', NativeConsumet: { deobfuscateScript } };
 
-    const result = (await VidHide(ctx).extract(new PolyURL('https://vidhide.example/e/abc') as any)) as ISource;
+    const result = await VidHide(ctx).extract(new PolyURL('https://vidhide.example/e/abc'));
 
     const packed: string = deobfuscateScript.mock.calls[0][0];
     expect(packed.startsWith('(function(p,a,c,k,e,d)')).toBe(true);
@@ -45,7 +44,7 @@ describe('VidHide (PROV-1)', () => {
       USER_AGENT: 'test-agent',
       NativeConsumet: { deobfuscateScript: jest.fn() },
     };
-    await expect(VidHide(ctx).extract(new PolyURL('https://vidhide.example/e/abc') as any)).rejects.toThrow(
+    await expect(VidHide(ctx).extract(new PolyURL('https://vidhide.example/e/abc'))).rejects.toThrow(
       'No packed script found'
     );
   });

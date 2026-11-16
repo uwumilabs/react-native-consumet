@@ -4,12 +4,14 @@ import os from 'os';
 import path from 'path';
 
 // Runs scripts/prepare-registry.js against a throwaway repo, so exit codes and writes are real.
-const RAW_REPO = 'https://raw.githubusercontent.com/uwumilabs/react-native-consumet';
-const RAW_BASE = `${RAW_REPO}/refs/heads/main`;
+const REPO = path.join(__dirname, '../..');
+const RAW_BASE = 'https://raw.githubusercontent.com/uwumilabs/react-native-consumet/refs/heads/main';
 const DIST_FILE = 'dist/bundles/extractors/foo.js';
 const PUBLISHED = 'registry/extractors/foo/1.0.0.js';
-const SCRIPTS = ['prepare-registry.js', 'registry-support.js'];
-// The library's registry validator, which prepare-registry loads from the build
+const LOCAL_DIST_MAP = 'apps/src/registry/local-dist-map.ts';
+// What prepare-registry runs: the scripts, the example app's map generator, the library's registry
+// schema (loaded from the build) and package.json (the repository the URLs point at)
+const COPIED = ['scripts', 'apps/scripts/generate-local-dist.js', 'package.json'];
 const SCHEMA = 'dist/utils/registry-schema.js';
 
 type Entry = Record<string, unknown>;
@@ -55,11 +57,8 @@ function publishFoo() {
 
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'prepare-registry-'));
-  for (const script of SCRIPTS) {
-    write(`scripts/${script}`, fs.readFileSync(path.join(__dirname, '../../scripts', script), 'utf8'));
-  }
+  for (const rel of [...COPIED, SCHEMA]) fs.cpSync(path.join(REPO, rel), file(rel), { recursive: true });
   write(DIST_FILE, 'module.exports = 1;\n');
-  write(SCHEMA, fs.readFileSync(path.join(__dirname, '../..', SCHEMA), 'utf8'));
   git('init', '-q');
 });
 
@@ -79,11 +78,19 @@ describe('prepare-registry publishing', () => {
     expect(run('--check').status).toBe(0);
   });
 
-  it('accepts a legacy dist URL and records its distFile', () => {
-    writeRegistry([{ name: 'Foo', version: '1.0.0', main: `${RAW_REPO}/refs/heads/main/${DIST_FILE}` }]);
+  it("writes the example app's local dist map, and --check reports it when stale", () => {
+    writeRegistry([foo(), foo({ name: 'FooAlias' })]);
 
     expect(run().status).toBe(0);
-    expect(readRegistry().extractors[0]).toMatchObject({ distFile: DIST_FILE, main: `${RAW_BASE}/${PUBLISHED}` });
+    const map = read(LOCAL_DIST_MAP);
+    expect(map).toContain(`${JSON.stringify(DIST_FILE)}: ${JSON.stringify('module.exports = 1;\n')},`);
+    expect(map.split(JSON.stringify(DIST_FILE))).toHaveLength(2);
+    expect(map).toContain('// extractors/foo, extractors/fooalias');
+
+    write(LOCAL_DIST_MAP, `${map}\n`);
+    const stale = run('--check');
+    expect(stale.status).toBe(1);
+    expect(stale.output).toContain(`${LOCAL_DIST_MAP} is out of date`);
   });
 });
 
@@ -110,7 +117,8 @@ describe('prepare-registry exits non-zero', () => {
 
   it.each([
     ['another host', 'https://example.com/foo.js'],
-    ['a branch path outside dist/ and registry/', `${RAW_BASE}/src/extractors/foo.ts`],
+    ['a branch path outside registry/', `${RAW_BASE}/src/extractors/foo.ts`],
+    ['a dist URL, as entries had before published versions', `${RAW_BASE}/${DIST_FILE}`],
     ["another entry's published file", `${RAW_BASE}/registry/extractors/bar/1.0.0.js`],
     ['the wrong kind', `${RAW_BASE}/registry/extensions/foo/1.0.0.js`],
     ['a non-semver version', `${RAW_BASE}/registry/extractors/foo/latest.js`],
@@ -124,17 +132,21 @@ describe('prepare-registry exits non-zero', () => {
     expect(run('--check').status).toBe(1);
   });
 
-  it.each(['../secret.js', 'dist/../secret.js', 'src/extractors/foo.ts', 'dist/bundles/foo.ts'])(
-    'when distFile is not a .js file under dist/: %s',
-    (distFile) => {
-      writeRegistry([foo({ distFile })]);
+  it.each([
+    undefined,
+    '../secret.js',
+    'dist/bundles/../../secret.js',
+    'src/extractors/foo.ts',
+    'dist/extractors/foo.js',
+    'dist/bundles/foo.ts',
+  ])('when distFile is not a .js bundle under dist/bundles/: %s', (distFile) => {
+    writeRegistry([foo({ distFile })]);
 
-      const result = run();
+    const result = run();
 
-      expect(result.status).toBe(1);
-      expect(result.output).toContain('distFile must be a .js file under dist/');
-    }
-  );
+    expect(result.status).toBe(1);
+    expect(result.output).toContain('distFile must be a .js bundle under dist/bundles/');
+  });
 
   it('when a build changed under a published version', () => {
     writeRegistry([foo()]);

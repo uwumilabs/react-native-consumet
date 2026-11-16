@@ -1,5 +1,4 @@
 import Anilist from '../../src/providers/meta/anilist';
-import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import { metaHttp } from '../../src/utils/meta-http';
 
 // AniKoto's search results for "JUJUTSU KAISEN 0" (2026-10-24), the ones similar enough to be considered
@@ -15,19 +14,18 @@ const searchResults = [
   },
 ];
 
-const fakeAniKoto = () => {
-  const provider: any = Object.create(AniKoto.prototype);
-  provider.search = jest.fn().mockResolvedValue({ results: searchResults });
-  provider.fetchAnimeInfo = jest.fn().mockResolvedValue({ episodes: [{ id: 'ep-1', number: 1 }] });
-  return provider;
-};
+const fakeProvider = (): any => ({
+  name: 'AniKoto',
+  search: jest.fn().mockResolvedValue({ results: searchResults }),
+  fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes: [{ id: 'ep-1', number: 1 }] }),
+});
 
 const matchedId = async (media: { format: string; title: { romaji: string; english: string } }) => {
   jest
     .spyOn(metaHttp, 'post')
     .mockResolvedValue({ data: { data: { Media: { idMal: 1, episodes: 1, startDate: { year: 2021 }, ...media } } } } as any);
   jest.spyOn(metaHttp, 'get').mockRejectedValue(new Error('offline'));
-  const provider = fakeAniKoto();
+  const provider = fakeProvider();
   await new Anilist(provider).fetchEpisodesListById('1');
   return provider.fetchAnimeInfo.mock.calls[0][0];
 };

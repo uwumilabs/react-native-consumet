@@ -11,10 +11,7 @@ export declare class AsuraScans extends MangaParser {
     protected classPath: string;
     /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
     constructor(ctx?: ProviderContext);
-    /**
-     * @param query Search query
-     * @param page Page number (default: 1), 20 results per page
-     */
+    /** @param page page number (default: 1), 20 results per page */
     search: (query: string, page?: number) => Promise<ISearch<IMangaResult>>;
     /** @param mangaId series slug from `search` (`series/<slug>-<hash>` ids from asuracomic.net work too) */
     fetchMangaInfo: (mangaId: string) => Promise<IMangaInfo>;

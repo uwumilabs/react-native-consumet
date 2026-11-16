@@ -12,11 +12,10 @@
  * reads only that shape, with no per-provider cases, so a provider that breaks it shows up broken.
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   FlatList,
   Image,
   TouchableOpacity,
@@ -32,11 +31,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { IMangaChapter, IMangaChapterPage, IMangaInfo, IMangaResult } from 'react-native-consumet';
 import { colors, PAD, GAP, R } from '../theme';
-import { MANGA_PROVIDERS, type MangaProvider, type MangaProviderDef } from '../providers';
+import { MANGA_PROVIDERS, type MangaProvider } from '../providers';
 import { ProviderSheet } from '../components/ProviderSheet';
+import { HeaderChip, ScreenHeader } from '../components/ScreenHeader';
+import { SearchBox } from '../components/SearchBox';
+import { useLatestCall } from '../hooks/useLatestCall';
+import { useSearchBox } from '../hooks/useSearch';
 import { infoProblems, pageProblems, searchProblems, show } from './manga-contract';
-
-// ── Constants ─────────────────────────────────────────────────────────────────
 
 const { width } = Dimensions.get('window');
 const COLS = 3;
@@ -44,8 +45,6 @@ const CARD_W = (width - PAD * 2 - GAP * (COLS - 1)) / COLS;
 const CARD_H = CARD_W * 1.5;
 /** Width / height of a page until its real size is known: a typical manga page. */
 const DEFAULT_PAGE_RATIO = 0.7;
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Display text: strings as they are, anything else as JSON, so a field that breaks the shape shows. */
 const asText = (value: unknown): string => (value === undefined || value === null ? '' : show(value));
@@ -86,8 +85,6 @@ const chapterMeta = (c: IMangaChapter | undefined) =>
 
 const chapterLabel = (c: IMangaChapter | undefined) => asText(c?.title) || '(untitled chapter)';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 /** One provider call: what was asked, how long it took, and whether it threw. */
 type CallLog = { label: string; ms: number; failed?: boolean };
 
@@ -124,8 +121,6 @@ const withCall = (check: Check, log: CallLog, problems: string[]): Check => ({
   calls: [...check.calls, log],
   problems: [...check.problems, ...problems],
 });
-
-// ── Contract strip ────────────────────────────────────────────────────────────
 
 /** The contract strip: a one-line verdict and time; tap it for each call and every problem found. */
 function ContractPanel({ check, pending, idleHint }: { check: Check; pending: boolean; idleHint: string }) {
@@ -175,8 +170,6 @@ function ContractPanel({ check, pending, idleHint }: { check: Check; pending: bo
   );
 }
 
-// ── Search result card ────────────────────────────────────────────────────────
-
 const CoverCard = memo(function CoverCardView({
   item,
   onOpen,
@@ -217,8 +210,6 @@ const CoverCard = memo(function CoverCardView({
     </TouchableOpacity>
   );
 });
-
-// ── Info ──────────────────────────────────────────────────────────────────────
 
 const ChapterRow = memo(function ChapterRowView({
   chapter,
@@ -419,8 +410,6 @@ function InfoModal({
     </Modal>
   );
 }
-
-// ── Reader ────────────────────────────────────────────────────────────────────
 
 /** Known page shapes (width / height) by image URL, so a page keeps its height when the list re-mounts it. */
 const pageRatios = new Map<string, number>();
@@ -629,16 +618,11 @@ function ReaderModal({
 
 const PageGap = () => <View style={S.pageGap} />;
 
-// ── Screen ────────────────────────────────────────────────────────────────────
-
 export default function MangaScreen() {
-  // Provider
-  const [providerDef, setProviderDef] = useState<MangaProviderDef>(MANGA_PROVIDERS[0]!);
+  const [providerDef, setProviderDef] = useState(MANGA_PROVIDERS[0]!);
   const [provider, setProvider] = useState<MangaProvider>(() => MANGA_PROVIDERS[0]!.make());
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Search
-  const [query, setQuery] = useState('');
   const [searchedQuery, setSearchedQuery] = useState('');
   const [results, setResults] = useState<IMangaResult[]>([]);
   const [page, setPage] = useState(1);
@@ -649,7 +633,6 @@ export default function MangaScreen() {
   const [moreErr, setMoreErr] = useState<string | null>(null);
   const [searchCheck, setSearchCheck] = useState<Check>(NO_CHECK);
 
-  // Info
   const [selected, setSelected] = useState<IMangaResult | null>(null);
   const [info, setInfo] = useState<IMangaInfo | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
@@ -657,7 +640,6 @@ export default function MangaScreen() {
   const [infoCheck, setInfoCheck] = useState<Check>(NO_CHECK);
   const [newestFirst, setNewestFirst] = useState(false);
 
-  // Reader
   const [readingIndex, setReadingIndex] = useState<number | null>(null);
   const [pages, setPages] = useState<IMangaChapterPage[]>([]);
   const [loadingPages, setLoadingPages] = useState(false);
@@ -665,21 +647,14 @@ export default function MangaScreen() {
   const [pagesCheck, setPagesCheck] = useState<Check>(NO_CHECK);
   const [failedPages, setFailedPages] = useState<ReadonlySet<number>>(() => new Set());
 
-  // Each call takes the next number; a response whose number is no longer current (a newer call, a
-  // closed view or a provider switch) is dropped, so a slow provider can't fill another's screen.
-  const searchSeq = useRef(0);
-  const infoSeq = useRef(0);
-  const pagesSeq = useRef(0);
-  // The query page 1 was last fetched for, so the debounce doesn't repeat a search made on submit.
-  const lastQuery = useRef('');
+  const searchCalls = useLatestCall();
+  const infoCalls = useLatestCall();
+  const pagesCalls = useLatestCall();
 
   const chapters = useMemo<IMangaChapter[]>(() => (info && Array.isArray(info.chapters) ? info.chapters : []), [info]);
 
-  // ── Search ──────────────────────────────────────────────────────────────────
-
   const clearSearch = useCallback(() => {
-    searchSeq.current++;
-    lastQuery.current = '';
+    searchCalls.cancel();
     setSearchedQuery('');
     setResults([]);
     setPage(1);
@@ -689,15 +664,14 @@ export default function MangaScreen() {
     setSearchErr(null);
     setMoreErr(null);
     setSearchCheck(NO_CHECK);
-  }, []);
+  }, [searchCalls]);
 
   /** Fetches a page of results: page 1 starts a new search, later pages add to it. */
   const runSearch = useCallback(
     async (q: string, pageNo: number = 1, earlier: IMangaResult[] = []) => {
-      const seq = ++searchSeq.current;
+      const isCurrent = searchCalls.start();
       const first = pageNo === 1;
       if (first) {
-        lastQuery.current = q;
         setSearchedQuery(q);
         setResults([]);
         setPage(1);
@@ -711,7 +685,7 @@ export default function MangaScreen() {
       setMoreErr(null);
 
       const r = await timed(`search("${q}", ${pageNo})`, () => provider.search(q, pageNo));
-      if (seq !== searchSeq.current) return;
+      if (!isCurrent()) return;
       setSearching(false);
       setLoadingMore(false);
       // Later pages' problems say which page they came from.
@@ -732,37 +706,25 @@ export default function MangaScreen() {
       setPage(pageNo);
       setHasNextPage(r.value?.hasNextPage === true);
     },
-    [provider]
+    [provider, searchCalls]
   );
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasNextPage) runSearch(searchedQuery, page + 1, results);
   }, [loadingMore, hasNextPage, runSearch, searchedQuery, page, results]);
 
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
-      clearSearch();
-      return;
-    }
-    const t = setTimeout(() => {
-      if (q !== lastQuery.current) runSearch(q);
-    }, 650);
-    return () => clearTimeout(t);
-  }, [query, runSearch, clearSearch]);
-
-  // ── Info ────────────────────────────────────────────────────────────────────
+  const { query, setQuery, submit, idle } = useSearchBox(runSearch, clearSearch);
 
   const openInfo = useCallback(
     async (item: IMangaResult) => {
-      const seq = ++infoSeq.current;
+      const isCurrent = infoCalls.start();
       setSelected(item);
       setInfo(null);
       setInfoErr(null);
       setInfoCheck(NO_CHECK);
       setLoadingInfo(true);
       const r = await timed(`fetchMangaInfo("${asText(item.id)}")`, () => provider.fetchMangaInfo(item.id));
-      if (seq !== infoSeq.current) return;
+      if (!isCurrent()) return;
       setLoadingInfo(false);
       if (!r.ok) {
         setInfoErr(r.error);
@@ -772,16 +734,14 @@ export default function MangaScreen() {
       setInfoCheck(withCall(NO_CHECK, r.log, logged(r.log, infoProblems(r.value))));
       setInfo(r.value !== null && typeof r.value === 'object' ? r.value : null);
     },
-    [provider]
+    [provider, infoCalls]
   );
-
-  // ── Reader ──────────────────────────────────────────────────────────────────
 
   const openChapter = useCallback(
     async (index: number) => {
       const chapter = chapters[index];
       if (!chapter) return;
-      const seq = ++pagesSeq.current;
+      const isCurrent = pagesCalls.start();
       setReadingIndex(index);
       setPages([]);
       setPagesErr(null);
@@ -789,7 +749,7 @@ export default function MangaScreen() {
       setFailedPages(new Set());
       setLoadingPages(true);
       const r = await timed(`fetchChapterPages("${asText(chapter.id)}")`, () => provider.fetchChapterPages(chapter.id));
-      if (seq !== pagesSeq.current) return;
+      if (!isCurrent()) return;
       setLoadingPages(false);
       if (!r.ok) {
         setPagesErr(r.error);
@@ -799,7 +759,7 @@ export default function MangaScreen() {
       setPagesCheck(withCall(NO_CHECK, r.log, logged(r.log, pageProblems(r.value))));
       setPages(Array.isArray(r.value) ? r.value : []);
     },
-    [provider, chapters]
+    [provider, chapters, pagesCalls]
   );
 
   const onPageFailed = useCallback((index: number, failed: boolean) => {
@@ -813,25 +773,23 @@ export default function MangaScreen() {
   }, []);
 
   const closeReader = useCallback(() => {
-    pagesSeq.current++;
+    pagesCalls.cancel();
     setReadingIndex(null);
     setPages([]);
     setPagesErr(null);
     setPagesCheck(NO_CHECK);
     setLoadingPages(false);
-  }, []);
+  }, [pagesCalls]);
 
   const closeInfo = useCallback(() => {
-    infoSeq.current++;
+    infoCalls.cancel();
     closeReader();
     setSelected(null);
     setInfo(null);
     setInfoErr(null);
     setInfoCheck(NO_CHECK);
     setLoadingInfo(false);
-  }, [closeReader]);
-
-  // ── Provider switch ─────────────────────────────────────────────────────────
+  }, [closeReader, infoCalls]);
 
   const switchProvider = useCallback(
     (key: string) => {
@@ -843,53 +801,26 @@ export default function MangaScreen() {
       clearSearch();
       closeInfo();
     },
-    [providerDef.key, clearSearch, closeInfo]
+    [providerDef.key, setQuery, clearSearch, closeInfo]
   );
 
-  // ── Browse view ─────────────────────────────────────────────────────────────
-
-  const isIdle = query.trim().length < 2 || (!searchedQuery && !searching);
+  const isIdle = idle || (!searchedQuery && !searching);
 
   return (
     <SafeAreaView style={S.root} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" />
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <View style={S.header}>
-        <View style={S.headerLeft}>
-          <Text style={S.headerLogo}>◆</Text>
-          <Text style={S.headerTitle}>Manga</Text>
-        </View>
-        <TouchableOpacity style={S.providerChip} onPress={() => setSheetOpen(true)} activeOpacity={0.75}>
-          <Text style={S.providerEmoji}>{providerDef.emoji}</Text>
-          <Text style={S.providerLabel}>{providerDef.label}</Text>
-          <Text style={S.providerCaret}>▾</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader logo="◆" title="Manga">
+        <HeaderChip emoji={providerDef.emoji} label={providerDef.label} onPress={() => setSheetOpen(true)} />
+      </ScreenHeader>
 
-      {/* ── Search ──────────────────────────────────────────────────────────── */}
       <View style={S.searchWrap}>
-        <View style={S.searchBar}>
-          <Text style={S.searchIcon}>⊙</Text>
-          <TextInput
-            style={S.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            placeholder={`Search on ${providerDef.label}…`}
-            placeholderTextColor={colors.dim}
-            returnKeyType="search"
-            autoCorrect={false}
-            onSubmitEditing={() => {
-              const q = query.trim();
-              if (q.length >= 2) runSearch(q);
-            }}
-          />
-          {query.length > 0 ? (
-            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Text style={S.clearIcon}>✕</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <SearchBox
+          value={query}
+          onChangeText={setQuery}
+          onSubmit={submit}
+          placeholder={`Search on ${providerDef.label}…`}
+        />
       </View>
 
       <View style={S.contractWrap}>
@@ -900,7 +831,6 @@ export default function MangaScreen() {
         />
       </View>
 
-      {/* ── Body ─────────────────────────────────────────────────────────────── */}
       {searching ? (
         <View style={S.center}>
           <ActivityIndicator size="large" color={colors.accent} />
@@ -1004,58 +934,10 @@ export default function MangaScreen() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
 const S = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: PAD,
-    paddingTop: 14,
-    paddingBottom: 10,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerLogo: { fontSize: 22, color: colors.accent },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: 0.3 },
-
-  // Provider chip
-  providerChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: R.full,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  providerEmoji: { fontSize: 14 },
-  providerLabel: { fontSize: 13, fontWeight: '600', color: colors.textSub },
-  providerCaret: { fontSize: 11, color: colors.muted },
-
-  // Search
   searchWrap: { paddingHorizontal: PAD, paddingBottom: 10 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: R.full,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8,
-  },
-  searchIcon: { fontSize: 16, color: colors.muted },
-  searchInput: { flex: 1, fontSize: 15, color: colors.text, padding: 0 },
-  clearIcon: { fontSize: 13, color: colors.muted, padding: 4 },
 
-  // Contract strip
   contractWrap: { paddingHorizontal: PAD, paddingVertical: 8 },
   contract: {
     backgroundColor: colors.surface,
@@ -1082,13 +964,11 @@ const S = StyleSheet.create({
   textOk: { color: colors.success },
   textBad: { color: colors.error },
 
-  // Grid
   grid: { paddingHorizontal: PAD, paddingBottom: 30, gap: GAP },
   gridRow: { gap: GAP },
   footer: { alignItems: 'center', gap: 8, paddingVertical: 16 },
   footerText: { fontSize: 12, color: colors.dim },
 
-  // Cover card
   card: {
     width: CARD_W,
     height: CARD_H,
@@ -1122,7 +1002,6 @@ const S = StyleSheet.create({
   },
   cardBadgeText: { fontSize: 9, fontWeight: '700', color: colors.accentLight, letterSpacing: 0.4 },
 
-  // Info modal
   modalRoot: { flex: 1, backgroundColor: colors.bg },
   modalBar: {
     flexDirection: 'row',
@@ -1175,7 +1054,6 @@ const S = StyleSheet.create({
   },
   typeBadgeText: { fontSize: 11, fontWeight: '700', color: colors.accentLight },
 
-  // Genres
   genreWrap: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: PAD, gap: 6 },
   genreChip: {
     backgroundColor: colors.card,
@@ -1187,13 +1065,11 @@ const S = StyleSheet.create({
   },
   genreText: { fontSize: 12, color: colors.muted, fontWeight: '600' },
 
-  // Section
   section: { paddingHorizontal: PAD, marginTop: 20 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textSub, letterSpacing: 0.2 },
   synopsis: { fontSize: 14, color: colors.muted, lineHeight: 22, marginTop: 10 },
   moreText: { fontSize: 13, color: colors.accentLight, fontWeight: '600', marginTop: 6 },
 
-  // Chapter list
   chHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1234,7 +1110,6 @@ const S = StyleSheet.create({
   emptyChapters: { fontSize: 14, color: colors.muted, paddingHorizontal: PAD, paddingVertical: 20 },
   listEnd: { height: 50 },
 
-  // Reader
   readerRoot: { flex: 1, backgroundColor: '#000' },
   readerBar: {
     flexDirection: 'row',
@@ -1285,7 +1160,6 @@ const S = StyleSheet.create({
   pageErrorMsg: { fontSize: 12, color: colors.muted },
   pageErrorRetry: { fontSize: 13, fontWeight: '600', color: colors.accentLight, marginTop: 4 },
 
-  // Shared
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: PAD },
   mutedText: { fontSize: 14, color: colors.muted },
   idleEmoji: { fontSize: 52, marginBottom: 4 },

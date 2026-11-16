@@ -1,211 +1,29 @@
 import 'react-native-get-random-values';
-import { URL as PolyURL, URLSearchParams as PolyURLSearchParams } from './utils/url-polyfill';
+import { PolyURL, PolyURLSearchParams } from './utils/url-polyfill';
 
-// Polyfill global scope if they don't exist
-if (typeof globalThis !== 'undefined') {
-  // @ts-ignore
-  if (!globalThis.URL) {
-    (globalThis as any).URL = PolyURL;
-  }
-  // @ts-ignore
-  if (!globalThis.URLSearchParams) {
-    (globalThis as any).URLSearchParams = PolyURLSearchParams;
-  }
-}
-// Providers (namespaced provider groups)
-import { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+// React Native's URL and URLSearchParams are incomplete or missing; fill in only what's absent.
+const scope = globalThis as any;
+if (scope && !scope.URL) scope.URL = PolyURL;
+if (scope && !scope.URLSearchParams) scope.URLSearchParams = PolyURLSearchParams;
 
-// Provider metadata (catalog of built-in providers)
-import type {
-  AnimeProvider,
-  MovieProvider,
-  animeProviders,
-  movieProviders,
-  AnimeProviderId,
-  MovieProviderId,
-  KnownAnimeProviderId,
-  KnownMovieProviderId,
-  ProviderInstanceOf,
-} from './utils';
+export { default as ExtensionRegistry } from './extension-registry.json';
+export { ANIME, LIGHT_NOVELS, MANGA, MOVIES, META } from './providers';
+export * from './extractors';
+export { PolyURL, PolyURLSearchParams };
 
-import extensionRegistry from './extension-registry.json';
-// Utils (contexts, and provider management)
-import {
-  createProviderContext,
-  ProviderManager,
-  REQUIRED_PROVIDER_METHODS,
-  ExtractorManager,
-  createExtractorContext,
-  defaultAxios,
-  defaultExtractorContext,
-  defaultExtractors,
-  verifyExtensionCode,
-  IntegrityError,
-  CONTEXT_VERSION,
-  REGISTRY_SCHEMA_VERSION,
-  RegistryError,
-  validateRegistry,
-  isCompatibleEntry,
-  assertCompatibleEntry,
-  REGISTRY_SIGNING_KEYS,
-  RegistrySignatureError,
-  verifyRegistrySignature,
-  parseSignedRegistry,
-  parseChapterNumber,
-  parseVolumeNumber,
-  sortChaptersForReading,
-} from './utils';
-import type {
-  IntegrityErrorCode,
-  IntegrityOptions,
-  ExecuteCodeOptions,
-  ProviderLoadOptions,
-  ProviderOfCategory,
-  RegistryErrorCode,
-  RegistrySignatureErrorCode,
-  RegistrySignatureOptions,
-} from './utils';
-
-// Extractors (video/file hosters and scrapers)
-import {
-  AsianLoad,
-  Filemoon,
-  GogoCDN,
-  Kwik,
-  MixDrop,
-  Mp4Upload,
-  RapidCloud,
-  StreamHub,
-  StreamLare,
-  StreamSB,
-  StreamTape,
-  StreamWish,
-  VidMoly,
-  VizCloud,
-  Mp4Player,
-  MegaCloud,
-  VidHide,
-  Voe,
-  MegaUp,
-  MegaPlay,
-  GDFlix,
-  Gofile,
-  HubCloud,
-  FlixCloud,
-} from './extractors';
-
-// Models (domain types, enums, and constants)
-import {
-  type IProviderStats,
-  type ISearch,
-  type IAnimeEpisode,
-  type IAnimeInfo,
-  type IAnimeResult,
-  type IEpisodeServer,
-  type IVideo,
+export {
+  Topics,
+  Genres,
+  SubOrDub,
   StreamingServers,
   MediaStatus,
-  SubOrDub,
-  type IMangaResult,
-  type IMangaChapter,
-  type IMangaInfo,
-  type ILightNovelResult,
-  type ILightNovelInfo,
-  type ILightNovelChapter,
-  type ILightNovelChapterContent,
-  type IMangaChapterPage,
   TvType,
-  type IMovieEpisode,
-  type IMovieInfo,
-  type ISource,
-  type ISubtitle,
-  type IMovieResult,
-  type Intro,
-  Genres,
-  type INewsFeed,
-  Topics,
-  type INewsInfo,
-  type FuzzyDate,
-  type ITitle,
   MediaFormat,
-  type ProxyConfig,
-  type AniZipEpisode,
-  type IMetaAnimeEpisode,
-  type ProviderCapabilities,
-  type IAnimeProvider,
-  type IMovieProvider,
-  type IMovieSeason,
-  type ExtensionManifest,
-  type ExtractorInfo,
-  type ExtensionRegistryData,
-  type ProviderType,
-  type ProviderConfig,
-  type ProviderContext,
-  type ProviderContextConfig,
-  type ExtractorContext,
-  type ExtractorContextConfig,
-  type IVideoExtractor,
+  WatchListType,
   AnimeParser,
   MovieParser,
-  WatchListType,
   MetaError,
-  type MetaErrorSource,
 } from './models';
-
-// ---------------------------------------------------------------------------
-// Exports
-// ---------------------------------------------------------------------------
-
-// Providers (namespaced)
-export { ANIME, MANGA, LIGHT_NOVELS, MOVIES, META };
-
-export type {
-  AnimeProvider,
-  MovieProvider,
-  animeProviders,
-  movieProviders,
-  AnimeProviderId,
-  MovieProviderId,
-  KnownAnimeProviderId,
-  KnownMovieProviderId,
-  ProviderInstanceOf,
-};
-
-// Models: runtime enums/constants
-export { Topics, Genres, SubOrDub, StreamingServers, MediaStatus, TvType, MediaFormat, WatchListType };
-
-// Models: base classes that providers (including registry extensions) extend
-export { AnimeParser, MovieParser };
-
-// Extractors
-export {
-  GogoCDN,
-  StreamSB,
-  MixDrop,
-  Kwik,
-  RapidCloud,
-  StreamTape,
-  StreamLare,
-  StreamHub,
-  VizCloud,
-  AsianLoad,
-  Filemoon,
-  Mp4Upload,
-  StreamWish,
-  VidMoly,
-  MegaUp,
-  Mp4Player,
-  MegaCloud,
-  VidHide,
-  Voe,
-  MegaPlay,
-  GDFlix,
-  Gofile,
-  HubCloud,
-  FlixCloud,
-};
-
-// Models: TypeScript types
 export type {
   IProviderStats,
   IAnimeEpisode,
@@ -241,57 +59,58 @@ export type {
   IMovieProvider,
   ExtensionManifest,
   ExtractorInfo,
+  ExtensionRegistryData,
   ProviderType,
-};
-
-// Contexts handed to provider and extractor factories, provider metadata and the extractor interface
-export type {
   ProviderConfig,
   ProviderContext,
-  ProviderContextConfig,
   ExtractorContext,
-  ExtractorContextConfig,
   IVideoExtractor,
-};
-export { extensionRegistry as ExtensionRegistry };
-// Utils: context creation and provider management
+  ExtractorFactory,
+  MetaErrorSource,
+} from './models';
+
 export {
-  createProviderContext,
-  ProviderManager,
-  REQUIRED_PROVIDER_METHODS,
-  ExtractorManager,
   createExtractorContext,
-  PolyURL,
-  PolyURLSearchParams,
   defaultAxios,
   defaultExtractorContext,
-  defaultExtractors,
+  type ExtractorContextConfig,
+} from './utils/create-extractor-context';
+export { createProviderContext, defaultExtractors, type ProviderContextConfig } from './utils/create-provider-context';
+export {
+  ProviderManager,
+  REQUIRED_PROVIDER_METHODS,
+  type ProviderLoadOptions,
+  type ProviderOfCategory,
+  type ProviderInstanceOf,
+  type AnimeProviderId,
+  type MovieProviderId,
+  type KnownAnimeProviderId,
+  type KnownMovieProviderId,
+} from './utils/ProviderManager';
+export { ExtractorManager } from './utils/ExtractorManager';
+export { RegistryFetchError } from './utils/extension-modules';
+export {
   verifyExtensionCode,
   IntegrityError,
+  type IntegrityErrorCode,
+  type IntegrityOptions,
+  type ExecuteCodeOptions,
+} from './utils/extension-integrity';
+export {
   CONTEXT_VERSION,
   REGISTRY_SCHEMA_VERSION,
   RegistryError,
   validateRegistry,
   isCompatibleEntry,
   assertCompatibleEntry,
+  type RegistryErrorCode,
+} from './utils/registry-schema';
+export {
   REGISTRY_SIGNING_KEYS,
   RegistrySignatureError,
   verifyRegistrySignature,
   parseSignedRegistry,
-  parseChapterNumber,
-  parseVolumeNumber,
-  sortChaptersForReading,
-  MetaError,
-};
-export type { MetaErrorSource };
-export type {
-  IntegrityErrorCode,
-  IntegrityOptions,
-  ExecuteCodeOptions,
-  ProviderLoadOptions,
-  ProviderOfCategory,
-  RegistryErrorCode,
-  RegistrySignatureErrorCode,
-  RegistrySignatureOptions,
-};
-export type { ExtensionRegistryData };
+  type RegistrySignatureErrorCode,
+  type RegistrySignatureOptions,
+} from './utils/registry-signature';
+export { parseChapterNumber, parseVolumeNumber, sortChaptersForReading } from './utils/manga';

@@ -55,15 +55,9 @@ test('returns a filled array of popular anime', async () => {
 });
 
 test('returns a filled array of airing schedule', async () => {
-  const weekStart = Math.ceil(Date.now() / 1000);
-  const data = await anilist.fetchAiringSchedule(
-    1,
-    20,
-    weekStart,
-    weekStart + 604800,
-    true
-  );
-  expect(data.results).not.toEqual([]);
+  // weekStart and weekEnd are weekdays; the defaults are the week from today.
+  const data = await anilist.fetchAiringSchedule(1, 20, undefined, undefined, true);
+  expect(data.results.length).toBeGreaterThan(0);
 });
 
 test('returns object of staff information', async () => {

@@ -3,11 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = void 0;
+exports.REGISTRY_VERSION_PATTERN = exports.REGISTRY_KEY_PATTERN = exports.REGISTRY_KINDS = exports.RegistryError = exports.REGISTRY_SCHEMA_VERSION = exports.CONTEXT_VERSION = void 0;
+exports.registryKey = registryKey;
 exports.isCompatibleEntry = isCompatibleEntry;
 exports.assertCompatibleEntry = assertCompatibleEntry;
 exports.validateRegistry = validateRegistry;
-// No runtime imports: scripts/prepare-registry.js can require the built file on its own.
+// No runtime imports: the registry scripts (scripts/registry-paths.js) require the built file
+// without installed packages.
 /**
  * Version of the context this library gives extension code: the `ctx` helpers, the modules it can
  * `require` and the globals it runs with. Bump it when extension code may need something earlier
@@ -52,12 +54,37 @@ class RegistryError extends Error {
   }
 }
 exports.RegistryError = RegistryError;
+/**
+ * The two lists of a registry. `key` names an entry: names are case-insensitive, so lookups,
+ * duplicate checks and published paths (`registry/<list>/<key>/<version>.js`) use it lowercased.
+ * `factory` names the function the entry's code defines.
+ */
+exports.REGISTRY_KINDS = {
+  extensions: {
+    key: 'id',
+    factory: 'factoryName'
+  },
+  extractors: {
+    key: 'name',
+    factory: 'name'
+  }
+};
+/** Pattern of an entry key as published paths use it: its id or name, lowercased. */
+exports.REGISTRY_KEY_PATTERN = '[a-z0-9][a-z0-9-]*';
+/** Pattern of an entry version: major.minor.patch, as published paths use it. */
+exports.REGISTRY_VERSION_PATTERN = '\\d+\\.\\d+\\.\\d+';
+/** The lowercase key of a registry entry of `kind`, or undefined when its key field isn't a string. */
+function registryKey(kind, entry) {
+  const value = entry[exports.REGISTRY_KINDS[kind].key];
+  return typeof value === 'string' ? value.toLowerCase() : undefined;
+}
 // Factory and extractor names are interpolated into generated code (same rule as assertValidIdentifier).
 const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-// Ids end up in cache keys and file paths, in this library and in apps.
-const ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
-const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+// Ids and extractor names end up in cache keys and file paths, in this library and in apps.
+const KEY_RE = new RegExp(`^${exports.REGISTRY_KEY_PATTERN}$`);
+const VERSION_RE = new RegExp(`^${exports.REGISTRY_VERSION_PATTERN}$`);
 const SHA256_RE = /^[a-f0-9]{64}$/;
+const isKey = v => typeof v === 'string' && KEY_RE.test(v.toLowerCase());
 // Keyed by ProviderType, so adding a category to the type doesn't compile until it is listed here.
 const CATEGORIES = Object.keys({
   'anime': true,
@@ -85,8 +112,9 @@ const nonEmpty = rule('a non-empty string', v => typeof v === 'string' && v.leng
 const flag = rule('a boolean', v => typeof v === 'boolean');
 const strings = rule('an array of strings', v => Array.isArray(v) && v.every(s => typeof s === 'string'));
 const identifier = rule('a JavaScript identifier', v => typeof v === 'string' && IDENTIFIER_RE.test(v));
-const id = rule('letters, digits, "-" or "_"', v => typeof v === 'string' && ID_RE.test(v));
-const version = rule('a semver version like 1.2.3', v => typeof v === 'string' && VERSION_RE.test(v));
+const id = rule('letters, digits or "-", starting with a letter or digit', isKey);
+const extractorName = rule('a JavaScript identifier of letters and digits', v => typeof v === 'string' && IDENTIFIER_RE.test(v) && isKey(v));
+const version = rule('a version like 1.2.3', v => typeof v === 'string' && VERSION_RE.test(v));
 const sha256 = rule('a lowercase hex SHA-256 digest', v => typeof v === 'string' && SHA256_RE.test(v));
 const contextVersion = rule('a positive integer', isPositiveInteger);
 const category = rule(`one of ${CATEGORIES.join(', ')}`, v => typeof v === 'string' && CATEGORIES.includes(v));
@@ -119,7 +147,7 @@ const EXTENSION_RULES = {
   haveMultiServers: flag.optional
 };
 const EXTRACTOR_RULES = {
-  name: identifier.required,
+  name: extractorName.required,
   aliases: strings.optional,
   version: version.required,
   minContextVersion: contextVersion.optional,
@@ -181,7 +209,7 @@ function checkEntries(issues, list, field, rules, incompatibleRules) {
     issues.push(`${field}: must be an array (${received(list)})`);
     return;
   }
-  const keyField = field === 'extensions' ? 'id' : 'name';
+  const keyField = exports.REGISTRY_KINDS[field].key;
   const seen = new Set();
   list.forEach((entry, index) => {
     if (!isObject(entry)) {
@@ -202,10 +230,11 @@ function checkEntries(issues, list, field, rules, incompatibleRules) {
         issues.push(`${where}: ${name} must be ${expected} (${received(value)})`);
       }
     }
-    // Lookups are case-insensitive, so a second entry with the same key would shadow the first.
-    if (typeof key === 'string') {
-      if (seen.has(key.toLowerCase())) issues.push(`${where}: duplicate ${keyField} '${key}'`);
-      seen.add(key.toLowerCase());
+    // A second entry with the same lowercase key would shadow the first.
+    const lowercase = registryKey(field, entry);
+    if (lowercase !== undefined) {
+      if (seen.has(lowercase)) issues.push(`${where}: duplicate ${keyField} '${key}'`);
+      seen.add(lowercase);
     }
   });
 }

@@ -8,7 +8,7 @@ npx --no-install lint-staged
 echo "Type-checking..."
 yarn typecheck
 
-# dist/ and registry/ are committed. When src/, scripts/ or the build config are staged, rebuild
-# dist/ from the staged files, publish new versions and refresh hashes, and stage the result.
+# dist/, registry/ and the example app's local dist map are committed. When what they are built
+# from is staged, rebuild them from the staged files and stage the result (scripts/stage-dist.js).
 # Fails if a bundle changed under a version that is already published.
 node scripts/stage-dist.js

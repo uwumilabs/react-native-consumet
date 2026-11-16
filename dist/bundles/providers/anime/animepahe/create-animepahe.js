@@ -34,6 +34,30 @@ __export(create_animepahe_exports, {
   createAnimePahe: () => createAnimePahe
 });
 module.exports = __toCommonJS(create_animepahe_exports);
+
+// src/providers/common/media-status.ts
+var STATUS_WORDS = [["NOT_YET_AIRED", /not[\s_-]*yet|coming[\s_-]*soon|upcoming/], ["COMPLETED", /finish|complete/], ["HIATUS", /hiatus/], ["CANCELLED", /cancel|discontinu|dropped|axed/], ["ONGOING", /airing|releasing|ongoing|on[\s_-]*going|publishing/]];
+function toMediaStatus(text, statuses) {
+  var normalized = text?.trim().toLowerCase();
+  if (!normalized) return void 0;
+  var key = STATUS_WORDS.find(_ref => {
+    var [, words] = _ref;
+    return words.test(normalized);
+  })?.[0] ?? "UNKNOWN";
+  return statuses[key];
+}
+
+// src/providers/anime/helpers.ts
+function serverName(extractor, label) {
+  return `${extractor}-${label.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "")}`;
+}
+function webViewJson(html, url) {
+  var text = (html ?? "").replace(/<[^>]*>/g, "").trim();
+  if (!text) throw new Error(`Empty response from ${url}`);
+  return JSON.parse(text);
+}
+
+// src/providers/anime/animepahe/create-animepahe.ts
 function createAnimePahe(ctx, customBaseURL) {
   var {
     load,
@@ -50,9 +74,7 @@ function createAnimePahe(ctx, customBaseURL) {
     makeGetRequestWithWebView
   } = NativeConsumet;
   var {
-    StreamingServers: StreamingServersEnum,
-    SubOrDub: SubOrDubEnum,
-    MediaStatus: MediaStatusEnum
+    SubOrDub: SubOrDubEnum
   } = enums;
   var baseUrl = createCustomBaseUrl("https://animepahe.pw", customBaseURL);
   var config = {
@@ -68,47 +90,40 @@ function createAnimePahe(ctx, customBaseURL) {
   var challenge;
   var ensureChallengePassed = () => {
     if (!challenge) {
-      challenge = makeGetRequestWithWebView(config.baseUrl, {}).then(() => void 0, err => {
+      challenge = makeGetRequestWithWebView(baseUrl, {}).then(() => void 0, err => {
         challenge = void 0;
         throw err;
       });
     }
     return challenge;
   };
-  var withRetry = async function (fn) {
-    var retries = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
-    try {
-      return await fn();
-    } catch (err) {
-      var msg = String(err?.message ?? err);
-      var isQuic = msg.includes("QUIC") || msg.includes("ERR_QUIC");
-      var isJsonOrEmpty = msg.includes("JSON Parse error") || msg.includes("Unexpected token") || msg.includes("Unexpected character") || msg.includes("Empty response");
-      if (retries > 0 && (isQuic || isJsonOrEmpty)) {
-        if (isJsonOrEmpty) await new Promise(r => setTimeout(r, 800));
-        return withRetry(fn, retries - 1);
+  var webViewGet = async (url, headers, parse) => {
+    for (var attempt = 1;; attempt++) {
+      var html = void 0;
+      try {
+        html = (await makeGetRequestWithWebView(url, headers)).html ?? "";
+      } catch (err) {
+        if (attempt < 3 && String(err?.message ?? err).includes("QUIC")) continue;
+        throw err;
       }
-      throw err;
+      try {
+        return parse(html);
+      } catch (err) {
+        if (attempt >= 3) throw err;
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
     }
   };
-  var webViewGet = async (url, referer) => {
-    return withRetry(async () => {
-      var res = await makeGetRequestWithWebView(url, {
-        Referer: referer ?? config.baseUrl
-      });
-      return res.html ?? "";
-    });
-  };
-  var webViewGetJson = async (url, referer) => {
-    return withRetry(async () => {
-      var res = await makeGetRequestWithWebView(url, {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": referer ?? config.baseUrl
-      });
-      var raw = (res.html ?? "").replace(/<[^>]*>/g, "").trim();
-      if (!raw) throw new Error(`[AnimePahe] Empty response from ${url}`);
-      return JSON.parse(raw);
-    });
+  var webViewPage = async url => webViewGet(url, {
+    Referer: baseUrl
+  }, html => load(html));
+  var webViewApi = async function (url) {
+    var referer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : baseUrl;
+    return webViewGet(url, {
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+      "Referer": referer
+    }, html => webViewJson(html, url));
   };
   var mapEpisode = (session, item) => ({
     id: `${session}/${item.session}`,
@@ -119,169 +134,131 @@ function createAnimePahe(ctx, customBaseURL) {
     isSubbed: item.audio === "jpn" || item.audio === "eng",
     isDubbed: item.audio === "eng",
     releaseDate: item.created_at,
-    url: `${config.baseUrl}/play/${session}/${item.session}`
+    url: `${baseUrl}/play/${session}/${item.session}`
   });
-  var fetchEpisodePage = async (session, page) => {
-    var data = await webViewGetJson(`${config.baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, `${config.baseUrl}/anime/${session}`);
-    return data.data.map(item => mapEpisode(session, item));
-  };
+  var fetchEpisodePage = async (session, page) => webViewApi(`${baseUrl}/api?m=release&id=${session}&sort=episode_asc&page=${page}`, `${baseUrl}/anime/${session}`);
   var search = async function (query) {
-    var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-    try {
-      await ensureChallengePassed();
-      var data = await webViewGetJson(`${config.baseUrl}/api?m=search&q=${encodeURIComponent(query)}`);
-      return {
-        results: data.data.map(item => ({
-          id: item.session,
-          title: item.title,
-          image: item.poster,
-          rating: item.score,
-          releaseDate: item.year,
-          type: item.type
-        }))
-      };
-    } catch (err) {
-      throw new Error(err.message);
-    }
+    var _page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    await ensureChallengePassed();
+    var data = await webViewApi(`${baseUrl}/api?m=search&q=${encodeURIComponent(query)}`);
+    return {
+      results: data.data.map(item => ({
+        id: item.session,
+        title: item.title,
+        image: item.poster,
+        rating: item.score,
+        releaseDate: item.year,
+        type: item.type
+      }))
+    };
   };
   var fetchAnimeInfo = async function (id) {
     var episodePage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -1;
+    var $ = await webViewPage(`${baseUrl}/anime/${id}`);
     var animeInfo = {
       id,
-      title: ""
+      title: $("div.title-wrapper > h1 > span").first().text()
     };
-    try {
-      var html = await webViewGet(`${config.baseUrl}/anime/${id}`);
-      var $ = load(html);
-      animeInfo.title = $("div.title-wrapper > h1 > span").first().text();
-      animeInfo.image = $("div.anime-poster a").attr("href");
-      animeInfo.cover = `https:${$("div.anime-cover").attr("data-src")}`;
-      animeInfo.description = $("div.anime-summary").text().trim();
-      animeInfo.genres = $("div.anime-genre ul li").map((_, el) => $(el).find("a").attr("title")).get();
-      animeInfo.hasSub = true;
-      switch ($('div.anime-info p:icontains("Status:") a').text().trim()) {
-        case "Currently Airing":
-          animeInfo.status = MediaStatusEnum.ONGOING;
-          break;
-        case "Finished Airing":
-          animeInfo.status = MediaStatusEnum.COMPLETED;
-          break;
-        default:
-          animeInfo.status = MediaStatusEnum.UNKNOWN;
+    animeInfo.image = $("div.anime-poster a").attr("href");
+    animeInfo.cover = `https:${$("div.anime-cover").attr("data-src")}`;
+    animeInfo.description = $("div.anime-summary").text().trim();
+    animeInfo.genres = $("div.anime-genre ul li").map((_, el) => $(el).find("a").attr("title")).get();
+    animeInfo.hasSub = true;
+    animeInfo.status = toMediaStatus($('div.anime-info p:icontains("Status:") a').text(), ctx.enums.MediaStatus);
+    animeInfo.type = $('div.anime-info > p:contains("Type:") > a').text().trim().toUpperCase();
+    animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")').text().split("to")[0].replace("Aired:", "").trim();
+    animeInfo.studios = $('div.anime-info > p:contains("Studio:")').text().replace("Studio:", "").trim().split("\n");
+    animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace("Episodes:", ""));
+    var relatedCard = el => {
+      var anchor = $(el).find(".col-2 > a");
+      var animeId = anchor.attr("href")?.split("/")[2];
+      return {
+        id: animeId,
+        title: anchor.attr("title"),
+        image: $(el).find(".col-2 > a > img").attr("src") || $(el).find(".col-2 > a > img").attr("data-src"),
+        url: `${baseUrl}/anime/${animeId}`,
+        releaseDate: $(el).find("div.col-9 > a").text().trim(),
+        status: $(el).find("div.col-9 > strong").text().trim()
+      };
+    };
+    animeInfo.recommendations = $("div.anime-recommendation .col-sm-6").toArray().map(relatedCard);
+    animeInfo.relations = $("div.anime-relation .col-sm-6").toArray().map(el => ({
+      ...relatedCard(el),
+      relationType: $(el).find("h4 > span").text().trim()
+    }));
+    animeInfo.episodes = [];
+    if (episodePage < 0) {
+      var firstPage = await fetchEpisodePage(id, 1);
+      animeInfo.episodePages = firstPage.last_page;
+      animeInfo.episodes.push(...firstPage.data.map(item => mapEpisode(id, item)));
+      for (var i = 2; i <= firstPage.last_page; i++) {
+        animeInfo.episodes.push(...(await fetchEpisodePage(id, i)).data.map(item => mapEpisode(id, item)));
       }
-      animeInfo.type = $('div.anime-info > p:contains("Type:") > a').text().trim().toUpperCase();
-      animeInfo.releaseDate = $('div.anime-info > p:contains("Aired:")').text().split("to")[0].replace("Aired:", "").trim();
-      animeInfo.studios = $('div.anime-info > p:contains("Studio:")').text().replace("Studio:", "").trim().split("\n");
-      animeInfo.totalEpisodes = parseInt($('div.anime-info > p:contains("Episodes:")').text().replace("Episodes:", ""));
-      animeInfo.recommendations = [];
-      $("div.anime-recommendation .col-sm-6").each((_, el) => {
-        animeInfo.recommendations?.push({
-          id: $(el).find(".col-2 > a").attr("href")?.split("/")[2],
-          title: $(el).find(".col-2 > a").attr("title"),
-          image: $(el).find(".col-2 > a > img").attr("src") || $(el).find(".col-2 > a > img").attr("data-src"),
-          url: `${config.baseUrl}/anime/${$(el).find(".col-2 > a").attr("href")?.split("/")[2]}`,
-          releaseDate: $(el).find("div.col-9 > a").text().trim(),
-          status: $(el).find("div.col-9 > strong").text().trim()
-        });
-      });
-      animeInfo.relations = [];
-      $("div.anime-relation .col-sm-6").each((_, el) => {
-        animeInfo.relations?.push({
-          id: $(el).find(".col-2 > a").attr("href")?.split("/")[2],
-          title: $(el).find(".col-2 > a").attr("title"),
-          image: $(el).find(".col-2 > a > img").attr("src") || $(el).find(".col-2 > a > img").attr("data-src"),
-          url: `${config.baseUrl}/anime/${$(el).find(".col-2 > a").attr("href")?.split("/")[2]}`,
-          releaseDate: $(el).find("div.col-9 > a").text().trim(),
-          status: $(el).find("div.col-9 > strong").text().trim(),
-          relationType: $(el).find("h4 > span").text().trim()
-        });
-      });
-      animeInfo.episodes = [];
-      if (episodePage < 0) {
-        var firstPage = await webViewGetJson(`${config.baseUrl}/api?m=release&id=${id}&sort=episode_asc&page=1`, `${config.baseUrl}/anime/${id}`);
-        animeInfo.episodePages = firstPage.last_page;
-        animeInfo.episodes.push(...firstPage.data.map(item => mapEpisode(id, item)));
-        for (var i = 2; i <= firstPage.last_page; i++) {
-          animeInfo.episodes.push(...(await fetchEpisodePage(id, i)));
-        }
-      } else {
-        animeInfo.episodes.push(...(await fetchEpisodePage(id, episodePage)));
-      }
-      return animeInfo;
-    } catch (err) {
-      throw new Error(err.message);
+    } else {
+      animeInfo.episodes.push(...(await fetchEpisodePage(id, episodePage)).data.map(item => mapEpisode(id, item)));
     }
+    return animeInfo;
   };
-  var fetchEpisodeSources = async function (episodeId) {
-    var server = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : StreamingServersEnum.Kwik;
+  var fetchPlayers = async (episodeId, subOrDub) => {
+    var $ = await webViewPage(`${baseUrl}/play/${episodeId}`);
+    var players = $("div#resolutionMenu > button").toArray().map(el => ({
+      name: serverName("kwik", `${$(el).attr("data-fansub")}-${$(el).attr("data-resolution")}`),
+      url: $(el).attr("data-src"),
+      label: $(el).text(),
+      isDub: $(el).attr("data-audio") === "eng"
+    })).filter(player => subOrDub === SubOrDubEnum.DUB ? player.isDub : subOrDub === SubOrDubEnum.SUB ? !player.isDub : true);
+    var downloads = $("div#pickDownload > a").toArray().map(el => ({
+      url: $(el).attr("href"),
+      quality: $(el).text()
+    }));
+    return {
+      players,
+      downloads
+    };
+  };
+  var fetchEpisodeSources = async function (episodeId, server) {
     var subOrDub = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : SubOrDubEnum.SUB;
-    try {
-      var html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
-      var $ = load(html);
-      var links = $("div#resolutionMenu > button").map((_, el) => ({
-        url: $(el).attr("data-src"),
-        quality: $(el).text(),
-        audio: $(el).attr("data-audio")
-      })).get();
-      var downloads = $("div#pickDownload > a").map((_, el) => ({
-        url: $(el).attr("href"),
-        quality: $(el).text()
-      })).get();
-      var iSource = {
-        headers: {
-          Referer: "https://kwik.cx/"
-        },
-        sources: []
-      };
-      iSource.download = downloads;
-      var filteredLinks = links.filter(link => {
-        var isDub = link.audio === "eng";
-        if (subOrDub === SubOrDubEnum.DUB) return isDub;
-        if (subOrDub === SubOrDubEnum.SUB) return !isDub;
-        return true;
-      });
-      var _loop2 = async function (link) {
-        var res = await Kwik(ctx).extract(new PolyURL(link.url), `${config.baseUrl}/`);
-        if (res?.sources?.length) {
-          res.sources.forEach(source => {
-            iSource.sources.push({
-              ...source,
-              quality: (link.quality.match(/(\d{3,4})p/) || [])[0]
-            });
-          });
-        }
-      };
-      for (var link of filteredLinks) {
-        await _loop2(link);
+    var {
+      players,
+      downloads
+    } = await fetchPlayers(episodeId, subOrDub);
+    var wanted = server ? players.filter(player => player.name.toLowerCase().startsWith(server.toLowerCase())) : players;
+    if (server && !wanted.length) {
+      throw new Error(`Server '${server}' not found; available: ${players.map(p => p.name).join(", ")}`);
+    }
+    var iSource = {
+      headers: {
+        Referer: "https://kwik.cx/"
+      },
+      sources: [],
+      download: downloads
+    };
+    for (var player of wanted) {
+      var res = await Kwik(ctx).extract(new PolyURL(player.url), `${baseUrl}/`);
+      for (var source of res?.sources ?? []) {
+        iSource.sources.push({
+          ...source,
+          quality: (player.label.match(/(\d{3,4})p/) || [])[0]
+        });
       }
-      return iSource;
-    } catch (err) {
-      console.log(err);
-      throw new Error(err.message);
     }
+    return iSource;
   };
-  var fetchEpisodeServers = async (episodeId, subOrDub) => {
-    try {
-      var html = await webViewGet(`${config.baseUrl}/play/${episodeId}`);
-      var $ = load(html);
-      var servers = [];
-      $("div#resolutionMenu > button").each((_, el) => {
-        var audio = $(el).attr("data-audio");
-        var fansub = $(el).attr("data-fansub");
-        var src = $(el).attr("data-src");
-        var resolution = $(el).attr("data-resolution");
-        if (subOrDub === SubOrDubEnum.DUB && audio === "eng" || subOrDub === SubOrDubEnum.SUB && audio !== "eng") {
-          servers.push({
-            url: src,
-            name: `kwik-${fansub}-${resolution}`
-          });
-        }
-      });
-      return servers;
-    } catch (err) {
-      console.log(err);
-      throw new Error(err.message);
-    }
+  var fetchEpisodeServers = async function (episodeId) {
+    var subOrDub = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SubOrDubEnum.SUB;
+    var {
+      players
+    } = await fetchPlayers(episodeId, subOrDub);
+    return players.map(_ref2 => {
+      var {
+        name,
+        url
+      } = _ref2;
+      return {
+        name,
+        url
+      };
+    });
   };
   return {
     ...config,

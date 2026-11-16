@@ -8,22 +8,14 @@ export declare class ReadLightNovels extends LightNovelParser {
     /** @param ctx provider context; requests go through its axios (default: `createProviderContext()`) */
     constructor(ctx?: ProviderContext);
     /**
-     *
-     * @param lightNovelUrl light novel link or id
-     * @param chapterPage chapter page number (optional) if not provided, will fetch all chapter pages.
+     * @param lightNovelUrl light novel URL or id
+     * @param chapterPage one page of the chapter list, counting from 1 (default: every page)
      */
     fetchLightNovelInfo: (lightNovelUrl: string, chapterPage?: number) => Promise<ILightNovelInfo>;
     private fetchChapters;
     private fetchAllChapters;
-    /**
-     *
-     * @param chapterId chapter id or url
-     */
+    /** @param chapterId chapter id or URL */
     fetchChapterContent: (chapterId: string) => Promise<ILightNovelChapterContent>;
-    /**
-     *
-     * @param query search query string
-     */
     search: (query: string) => Promise<ISearch<ILightNovelResult>>;
 }
 //# sourceMappingURL=readlightnovels.d.ts.map

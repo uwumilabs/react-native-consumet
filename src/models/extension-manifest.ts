@@ -107,3 +107,6 @@ export interface ExtensionRegistryData {
   extensions: ExtensionManifest[];
   extractors: ExtractorInfo[];
 }
+
+/** The type of `ExtensionRegistry`, the registry the library ships (JSON types its categories as plain strings). */
+export type BundledRegistry = typeof import('../extension-registry.json');

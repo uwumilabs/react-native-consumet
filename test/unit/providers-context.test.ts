@@ -1,14 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import * as Extractors from '../../src/extractors';
 import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import { createAniKoto } from '../../src/providers/anime/anikoto/create-anikoto';
-import { AnimeKai } from '../../src/providers/anime/animekai/animekai';
-import { createAnimeKai } from '../../src/providers/anime/animekai/create-animekai';
 import { AnimePahe } from '../../src/providers/anime/animepahe/animepahe';
 import { createAnimePahe } from '../../src/providers/anime/animepahe/create-animepahe';
-import { AnimeUnity } from '../../src/providers/anime/animeunity';
 import { AniNeko } from '../../src/providers/anime/anineko/anineko';
 import { ReAnime } from '../../src/providers/anime/reanime/reanime';
 import { Zoro } from '../../src/providers/anime/zoro/zoro';
@@ -17,18 +13,21 @@ import { HiMovies } from '../../src/providers/movies/himovies/himovies';
 import { createHiMovies } from '../../src/providers/movies/himovies/create-himovies';
 import { MultiMovies } from '../../src/providers/movies/multimovies/multimovies';
 import { createMultiMovies } from '../../src/providers/movies/multimovies/create-multimovies';
-import { MultiStream } from '../../src/providers/movies/multistream';
-import { DisneyMirror } from '../../src/providers/movies/netflixmirror/disneymirror';
-import { NetflixMirror } from '../../src/providers/movies/netflixmirror/netflixmirror';
-import { PrimeMirror } from '../../src/providers/movies/netflixmirror/primemirror';
+import { createVegaMovies } from '../../src/providers/movies/vegamovies/create-vegamovies';
+import { createReanime } from '../../src/providers/anime/reanime/create-reanime';
+import { createAniNeko } from '../../src/providers/anime/anineko/create-anineko';
+import { MultiStream } from '../../src/providers/movies/multistream/multistream';
+import { DisneyMirror, NetflixMirror, PrimeMirror } from '../../src/providers/movies/netflixmirror/netflixmirror';
+import {
+  createDisneyMirror,
+  createNetflixMirror,
+  createPrimeMirror,
+} from '../../src/providers/movies/netflixmirror/create-netflixmirror';
 import { VegaMovies } from '../../src/providers/movies/vegamovies/vegamovies';
-import { YFlix } from '../../src/providers/movies/yflix/yflix';
-import { createYFlix } from '../../src/providers/movies/yflix/create-yflix';
 import { LIGHT_NOVELS } from '../../src/providers/light-novels';
 import { MANGA } from '../../src/providers/manga';
 import { createProviderContext } from '../../src/utils/create-provider-context';
-import { animeProviders, movieProviders } from '../../src/utils/provider-maps';
-import { defaultAxios, defaultExtractorContext } from '../../src/utils/extension-utils';
+import { defaultAxios, defaultExtractorContext } from '../../src/utils/create-extractor-context';
 import { PolyURL } from '../../src/utils/url-polyfill';
 
 // PROV-2: one provider pattern. Providers and extractors make their requests through the context
@@ -82,74 +81,12 @@ beforeEach(() => {
 });
 afterEach(() => jest.restoreAllMocks());
 
-const LEGACY_EXTRACTORS = [
-  'AsianLoad',
-  'Filemoon',
-  'GogoCDN',
-  'MixDrop',
-  'Mp4Player',
-  'Mp4Upload',
-  'RapidCloud',
-  'StreamHub',
-  'StreamLare',
-  'StreamSB',
-  'StreamTape',
-  'VidMoly',
-  'VizCloud',
-  'Voe',
-] as const;
-
-describe('class-based extractors use the context axios (PROV-2)', () => {
-  it.each(LEGACY_EXTRACTORS)('%s sends its requests through ctx.axios', async (name) => {
-    const ctx = { ...defaultExtractorContext, axios: stubAxios() };
-    const extractor: any = new Extractors[name](ctx);
-
-    await extractor
-      .extract(new URL('https://host.test/e/abc?id=1'), 'https://helper.test', 'api-key')
-      .catch(() => undefined);
-
-    expect(requestedUrls(ctx.axios).length).toBeGreaterThan(0);
-    for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('defaults to the library context', async () => {
-    await new Extractors.MixDrop().extract(new URL('https://host.test/e/abc')).catch(() => undefined);
-
-    expect(defaultAxios.get).toHaveBeenCalledWith('https://host.test/e/abc');
-  });
-
-  it('MegaUp fetches the subtitle list through ctx.axios', async () => {
-    const ctx = { ...defaultExtractorContext, axios: stubAxios() };
-    const embed = 'https://megaup.test/e/abc?sub.list=https%3A%2F%2Fsubs.test%2Flist.json';
-
-    await expect(Extractors.MegaUp(ctx).extract(new PolyURL(embed))).rejects.toThrow('stub axios');
-
-    expect(requestedUrls(ctx.axios)).toEqual(['https://subs.test/list.json']);
-    for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
-  });
-
-  it.each(['../../src/extractors/gogocdn', '../../src/extractors', '../../src/utils/extension-utils'])(
-    'defaultExtractors has every extractor when %s loads first',
-    (first) => {
-      jest.isolateModules(() => {
-        require(first);
-        const { defaultExtractors } = require('../../src/utils/extension-utils');
-        for (const [name, extractor] of Object.entries(defaultExtractors)) {
-          expect([name, typeof extractor]).toEqual([name, 'function']);
-        }
-      });
-    }
-  );
-});
-
 /** Extractor factories that record the context they were given and resolve a fixed source. */
 function recordingExtractors(...names: string[]) {
   return Object.fromEntries(
     names.map((name) => [
       name,
       jest.fn((_ctx?: unknown) => ({
-        serverName: name,
-        sources: [],
         extract: jest.fn(async () => ({ sources: [{ url: `https://cdn.test/${name}.m3u8`, isM3U8: true }] })),
       })),
     ])
@@ -166,10 +103,8 @@ function stubProviderContext(...extractorNames: string[]) {
 describe('factories hand their context to their extractors (PROV-2)', () => {
   it.each([
     ['createZoro', createZoro, 'MegaCloud', 'https://megacloud.test/embed-2/e-1/abc?k=1'],
-    ['createAnimeKai', createAnimeKai, 'MegaUp', 'https://megaup.test/e/abc'],
     ['createAniKoto', createAniKoto, 'MegaPlay', 'https://megaplay.test/stream/s-2/abc/sub'],
     ['createHiMovies', createHiMovies, 'MegaCloud', 'https://megacloud.test/embed-1/e-1/abc?z='],
-    ['createYFlix', createYFlix, 'MegaUp', 'https://megaup.test/e/abc'],
     ['createMultiMovies', createMultiMovies, 'StreamWish', 'https://streamwish.test/e/abc'],
   ] as const)('%s calls %s with its context', async (_name, factory, extractor, embed) => {
     const { ctx, extractors } = stubProviderContext(extractor);
@@ -206,42 +141,35 @@ describe('factories hand their context to their extractors (PROV-2)', () => {
   });
 });
 
-describe('class wrappers accept a context (PROV-2)', () => {
-  const WRAPPERS = [
-    { name: 'Zoro', Wrapper: Zoro, factory: 'anime/zoro/create-zoro#createZoro' },
-    { name: 'AnimePahe', Wrapper: AnimePahe, factory: 'anime/animepahe/create-animepahe#createAnimePahe' },
-    { name: 'AnimeKai', Wrapper: AnimeKai, factory: 'anime/animekai/create-animekai#createAnimeKai' },
-    { name: 'AniKoto', Wrapper: AniKoto, factory: 'anime/anikoto/create-anikoto#createAniKoto' },
-    { name: 'ReAnime', Wrapper: ReAnime, factory: 'anime/reanime/create-reanime#createReanime' },
-    { name: 'AniNeko', Wrapper: AniNeko, factory: 'anime/anineko/create-anineko#createAniNeko' },
-    { name: 'HiMovies', Wrapper: HiMovies, factory: 'movies/himovies/create-himovies#createHiMovies' },
-    { name: 'MultiMovies', Wrapper: MultiMovies, factory: 'movies/multimovies/create-multimovies#createMultiMovies' },
-    { name: 'YFlix', Wrapper: YFlix, factory: 'movies/yflix/create-yflix#createYFlix' },
-    { name: 'VegaMovies', Wrapper: VegaMovies, factory: 'movies/vegamovies/create-vegamovies#createVegaMovies' },
-    { name: 'NetflixMirror', Wrapper: NetflixMirror, factory: 'movies/netflixmirror/create-netflixmirror#createNetflixMirror' },
-    { name: 'PrimeMirror', Wrapper: PrimeMirror, factory: 'movies/netflixmirror/create-netflixmirror#createPrimeMirror' },
-    { name: 'DisneyMirror', Wrapper: DisneyMirror, factory: 'movies/netflixmirror/create-netflixmirror#createDisneyMirror' },
-  ] as { name: string; Wrapper: new (...args: any[]) => any; factory: string }[];
+describe('provider classes are their factories (PROV-2)', () => {
+  const CLASSES = [
+    { name: 'Zoro', Provider: Zoro, factory: createZoro },
+    { name: 'AnimePahe', Provider: AnimePahe, factory: createAnimePahe },
+    { name: 'AniKoto', Provider: AniKoto, factory: createAniKoto },
+    { name: 'ReAnime', Provider: ReAnime, factory: createReanime },
+    { name: 'AniNeko', Provider: AniNeko, factory: createAniNeko },
+    { name: 'HiMovies', Provider: HiMovies, factory: createHiMovies },
+    { name: 'MultiMovies', Provider: MultiMovies, factory: createMultiMovies },
+    { name: 'VegaMovies', Provider: VegaMovies, factory: createVegaMovies },
+    { name: 'NetflixMirror', Provider: NetflixMirror, factory: createNetflixMirror },
+    { name: 'PrimeMirror', Provider: PrimeMirror, factory: createPrimeMirror },
+    { name: 'DisneyMirror', Provider: DisneyMirror, factory: createDisneyMirror },
+  ] as { name: string; Provider: new (...args: any[]) => any; factory: (ctx: any, baseUrl?: string) => any }[];
 
-  /** Spies on (and still calls) the factory a wrapper builds its instance with. */
-  const spyOnFactory = (factory: string) => {
-    const [file, name] = factory.split('#') as [string, string];
-    return jest.spyOn(require(`../../src/providers/${file}`), name);
-  };
-
-  it.each(WRAPPERS)('$name passes (ctx, customBaseURL) to its factory', ({ Wrapper, factory }) => {
-    const spy = spyOnFactory(factory);
+  it.each(CLASSES)('$name has everything its factory returns', ({ Provider, factory }) => {
     const { ctx } = stubProviderContext();
+    const provider = new Provider(ctx, 'https://mirror.test');
+    const expected = factory(ctx, 'https://mirror.test');
 
-    const provider = new Wrapper(ctx, 'https://mirror.test');
-
-    expect(spy).toHaveBeenCalledWith(ctx, 'https://mirror.test');
+    for (const [key, value] of Object.entries(expected)) {
+      expect([key, typeof provider[key]]).toEqual([key, typeof value]);
+    }
     expect(provider.toString.baseUrl).toBe('https://mirror.test');
   });
 
-  it.each(WRAPPERS)('$name still takes (customBaseURL) alone', ({ Wrapper }) => {
-    expect(new Wrapper('https://mirror.test').toString.baseUrl).toBe('https://mirror.test');
-    expect(new Wrapper().toString.baseUrl).toMatch(/^https:\/\/(?!mirror\.test)/);
+  it.each(CLASSES)('$name still takes (customBaseURL) alone', ({ Provider }) => {
+    expect(new Provider('https://mirror.test').toString.baseUrl).toBe('https://mirror.test');
+    expect(new Provider().toString.baseUrl).toMatch(/^https:\/\/(?!mirror\.test)/);
   });
 
   it('Zoro sends its extractor calls through the given context', async () => {
@@ -250,13 +178,6 @@ describe('class wrappers accept a context (PROV-2)', () => {
     await new Zoro(ctx).fetchEpisodeSources('https://megacloud.test/embed-2/e-1/abc');
 
     expect(extractors.MegaCloud).toHaveBeenCalledWith(ctx);
-  });
-
-  it('AniNeko exposes every method of its factory', () => {
-    const aniNeko: any = new AniNeko();
-    for (const method of ['fetchRecentlyUpdated', 'fetchNewReleases', 'fetchRecentlyAdded', 'genreSearch']) {
-      expect([method, typeof aniNeko[method]]).toEqual([method, 'function']);
-    }
   });
 });
 
@@ -300,15 +221,6 @@ describe('class-based providers use the context axios (PROV-2)', () => {
     expect(new MultiStream('mirror.test').toString.baseUrl).toBe('http://mirror.test');
     expect(new MultiStream().toString.baseUrl).toBe('https://rivestream.org');
   });
-
-  it('AnimeUnity searches through ctx.axios', async () => {
-    const { ctx } = stubProviderContext();
-
-    await new AnimeUnity(ctx).search('naruto').catch(() => undefined);
-
-    expect(requestedUrls(ctx.axios)).toEqual(['https://www.animeunity.to/archivio?title=naruto']);
-    for (const spy of realAxios) expect(spy).not.toHaveBeenCalled();
-  });
 });
 
 describe('one export style (PROV-2)', () => {
@@ -326,14 +238,5 @@ describe('one export style (PROV-2)', () => {
       .filter((file) => /^export default\b/m.test(read(file)))
       .filter((file) => !DEFAULT_EXPORTS_STILL_IMPORTED.includes(file));
     expect(offenders).toEqual([]);
-  });
-
-  it.each([
-    ['anime', animeProviders],
-    ['movies', movieProviders],
-  ])('provider-maps resolves every %s class by name', (_category, providers) => {
-    for (const [name, Provider] of Object.entries(providers)) {
-      expect([name, typeof Provider, (Provider as any)?.name]).toEqual([name, 'function', name]);
-    }
   });
 });

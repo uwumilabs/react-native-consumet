@@ -27,6 +27,19 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      # The offline unit tests (test/unit/); the live suites call real sites and stay manual.
+      - name: Run unit tests
+        run: yarn test
+
   # dist/ and registry/ are committed; check both against a clean rebuild of the sources.
   registry:
     runs-on: ubuntu-latest
@@ -49,18 +62,20 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain -- dist)" ]; then
             git status --short -- dist
-            echo "::error::dist/ differs from a clean rebuild of the sources. Commit through the pre-commit hook, or run yarn build:clean and node scripts/prepare-registry.js, and commit dist/ and registry/."
+            echo "::error::dist/ differs from a clean rebuild of the sources. Commit through the pre-commit hook, or run yarn build:clean and yarn build:registry, and commit dist/, registry/, src/extension-registry.json and apps/src/registry/local-dist-map.ts."
             exit 1
           fi
 
       # Fails if a registry hash differs from its rebuilt bundle, a hash changed without a version
-      # bump, a published file changed, or a referenced published file is missing.
+      # bump, a published file changed, a referenced published file is missing, or the example
+      # app's local dist map is out of date.
       - name: Check registry entries against the rebuild and the base commit
         if: ${{ !cancelled() && steps.rebuild.outcome == 'success' }}
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
-        run: node scripts/prepare-registry.js --check --base "$BASE_SHA"
+        run: yarn registry:check --base "$BASE_SHA"
 
+  # The rest of `yarn prepare` (bob build && yarn build): the registry job builds dist/.
   build-library:
     runs-on: ubuntu-latest
     steps:
@@ -71,7 +86,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Build package
-        run: yarn prepare
+        run: yarn bob build
 
   build-android:
     runs-on: ubuntu-latest
@@ -84,21 +99,10 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Cache turborepo for Android
-        uses: actions/cache@v4
+      - name: Turborepo cache
+        uses: ./.github/actions/turbo-cache
         with:
-          path: ${{ env.TURBO_CACHE_DIR }}
-          key: ${{ runner.os }}-turborepo-android-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-turborepo-android-
-
-      - name: Check turborepo cache for Android
-        run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:android').cache.status")
-
-          if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
-          fi
+          platform: android
 
       - name: Install JDK
         if: env.turbo_cache_hit != 1
@@ -133,6 +137,13 @@ jobs:
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
+      # The native module's JVM tests (android/src/test). Skipped with the build on a cache hit,
+      # which turbo only reports while android/ and src/ are unchanged.
+      - name: Run Android unit tests
+        if: env.turbo_cache_hit != 1
+        working-directory: apps/android
+        run: ./gradlew :react-native-consumet:testDebugUnitTest --no-daemon --console=plain
+
   build-ios:
     runs-on: macos-latest
     env:
@@ -144,21 +155,10 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Cache turborepo for iOS
-        uses: actions/cache@v4
+      - name: Turborepo cache
+        uses: ./.github/actions/turbo-cache
         with:
-          path: ${{ env.TURBO_CACHE_DIR }}
-          key: ${{ runner.os }}-turborepo-ios-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-turborepo-ios-
-
-      - name: Check turborepo cache for iOS
-        run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
-
-          if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
-          fi
+          platform: ios
 
       - name: Restore cocoapods
         if: env.turbo_cache_hit != 1

@@ -7,11 +7,13 @@ import {
   type IMangaResult,
   type ISearch,
   MangaParser,
-  MediaStatus,
   type ProviderContext,
+  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
 import { parseChapterNumber, sortChaptersForReading } from '../../utils/manga';
+import { toMediaStatus } from '../common/media-status';
+import { chapterTitle } from './shared';
 
 /** Text in several languages, keyed by language code (`en`, `ja-ro`, `pt-br`, ...). */
 type Localized = Record<string, string | null | undefined>;
@@ -53,13 +55,6 @@ interface ChapterEntity {
   };
   relationships?: Relationship[];
 }
-
-const STATUSES: Record<string, MediaStatus> = {
-  ongoing: MediaStatus.ONGOING,
-  completed: MediaStatus.COMPLETED,
-  hiatus: MediaStatus.HIATUS,
-  cancelled: MediaStatus.CANCELLED,
-};
 
 /** Chapters per feed request (the API's maximum). */
 const FEED_PAGE_SIZE = 500;
@@ -197,9 +192,7 @@ export class MangaDex extends MangaParser {
     const files = (dataSaver ? server.chapter.dataSaver : server.chapter.data) ?? [];
     if (files.length === 0) {
       // Chapters of official publishers link to their site and have no pages on MangaDex.
-      throw new Error(
-        `[${this.name}] Chapter ${chapterId} has no pages on MangaDex (it may be hosted on another site)`
-      );
+      throw new Error(`${this.name}: chapter ${chapterId} has no pages on MangaDex (it may be hosted on another site)`);
     }
     const folder = dataSaver ? 'data-saver' : 'data';
     return files.map((file, index) => ({
@@ -209,8 +202,6 @@ export class MangaDex extends MangaParser {
   };
 
   /**
-   * @param query search query
-   * @param page page number (default: 1)
    * @param limit limit of results to return (default: 20) (max: 100) (min: 1)
    */
   override search = async (query: string, page: number = 1, limit: number = 20): Promise<ISearch<IMangaResult>> =>
@@ -337,7 +328,8 @@ export class MangaDex extends MangaParser {
     const text = description ? markdownToText(description) : '';
     if (text) result.description = text;
 
-    if (attributes.status) result.status = STATUSES[attributes.status] ?? MediaStatus.UNKNOWN;
+    const status = toMediaStatus(attributes.status, MediaStatus);
+    if (status) result.status = status;
     if (typeof attributes.year === 'number') result.releaseDate = attributes.year;
     result.url = `${this.baseUrl}/title/${manga.id}`;
     if (attributes.contentRating) result.contentRating = attributes.contentRating;
@@ -355,8 +347,7 @@ export class MangaDex extends MangaParser {
     const label = attributes.chapter?.trim();
     const result: IMangaChapter = {
       id: chapter.id,
-      title:
-        attributes.title?.trim() || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : label || 'Oneshot'),
+      title: chapterTitle(attributes.title, chapterNumber, label || 'Oneshot'),
     };
     if (chapterNumber !== undefined) result.chapterNumber = chapterNumber;
     if (volumeNumber !== undefined) result.volumeNumber = volumeNumber;
@@ -396,9 +387,9 @@ export class MangaDex extends MangaParser {
   private error = (err: unknown): Error => {
     const response = (err as AxiosError<{ errors?: { detail?: string }[] }>)?.response;
     const detail = response?.data?.errors?.[0]?.detail;
-    if (detail) return new Error(`[${this.name}] ${detail}`);
+    if (detail) return new Error(`${this.name}: ${detail}`);
     if ((err as AxiosError)?.code === 'ERR_BAD_REQUEST')
-      return new Error(`[${this.name}] Bad request. Make sure you have entered a valid query.`);
-    return new Error(`[${this.name}] ${(err as Error)?.message ?? String(err)}`);
+      return new Error(`${this.name}: bad request. Make sure you have entered a valid query.`);
+    return new Error(`${this.name}: ${(err as Error)?.message ?? String(err)}`);
   };
 }

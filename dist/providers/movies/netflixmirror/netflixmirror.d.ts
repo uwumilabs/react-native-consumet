@@ -1,12 +1,9 @@
-import type { ProviderContext } from '../../../models';
-import { NetMirrorParser } from './netmirror-parser';
-export declare class NetflixMirror extends NetMirrorParser {
-    /**
-     * @param ctx provider context; requests and extractors come from it (default: `createProviderContext()`)
-     * @param customBaseURL site URL to use instead of the default (optional)
-     */
-    constructor(ctx?: ProviderContext, customBaseURL?: string);
-    /** The older form, without a context. */
-    constructor(customBaseURL?: string);
-}
+import { MovieParser } from '../../../models';
+import { createDisneyMirror, createNetflixMirror, createPrimeMirror } from './create-netflixmirror';
+export declare const NetflixMirror: import("../../provider-class").ProviderClass<typeof createNetflixMirror, typeof MovieParser>;
+export type NetflixMirror = InstanceType<typeof NetflixMirror>;
+export declare const PrimeMirror: import("../../provider-class").ProviderClass<typeof createPrimeMirror, typeof MovieParser>;
+export type PrimeMirror = InstanceType<typeof PrimeMirror>;
+export declare const DisneyMirror: import("../../provider-class").ProviderClass<typeof createDisneyMirror, typeof MovieParser>;
+export type DisneyMirror = InstanceType<typeof DisneyMirror>;
 //# sourceMappingURL=netflixmirror.d.ts.map

@@ -1,4 +1,4 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type WatchListType, type ProviderContext, type ProviderCapabilities } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type SubOrDub, type WatchListType, type ProviderContext, type ProviderCapabilities } from '../../../models';
 export declare function createZoro(ctx: ProviderContext, customBaseURL?: string): {
     capabilities: ProviderCapabilities;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
@@ -34,8 +34,8 @@ export declare function createZoro(ctx: ProviderContext, customBaseURL?: string)
     fetchContinueWatching: () => Promise<IAnimeResult[]>;
     fetchWatchList: (watchListType: WatchListType) => Promise<IAnimeResult[]>;
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
-    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
-    fetchEpisodeServers: (episodeId: string, subOrDub: SubOrDub) => Promise<IEpisodeServer[]>;
+    fetchEpisodeSources: (episodeId: string, server?: string, subOrDub?: SubOrDub) => Promise<ISource>;
+    fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrDub) => Promise<IEpisodeServer[]>;
     name: string;
     languages: string[] | string;
     classPath: string;

@@ -7,12 +7,8 @@ exports.MangaDex = void 0;
 const models_1 = require("../../models");
 const create_provider_context_1 = require("../../utils/create-provider-context");
 const manga_1 = require("../../utils/manga");
-const STATUSES = {
-  ongoing: models_1.MediaStatus.ONGOING,
-  completed: models_1.MediaStatus.COMPLETED,
-  hiatus: models_1.MediaStatus.HIATUS,
-  cancelled: models_1.MediaStatus.CANCELLED
-};
+const media_status_1 = require("../common/media-status");
+const shared_1 = require("./shared");
 /** Chapters per feed request (the API's maximum). */
 const FEED_PAGE_SIZE = 500;
 /** MangaDex refuses list requests whose offset + limit is past this. */
@@ -145,7 +141,7 @@ class MangaDex extends models_1.MangaParser {
       const files = (dataSaver ? server.chapter.dataSaver : server.chapter.data) ?? [];
       if (files.length === 0) {
         // Chapters of official publishers link to their site and have no pages on MangaDex.
-        throw new Error(`[${_this2.name}] Chapter ${chapterId} has no pages on MangaDex (it may be hosted on another site)`);
+        throw new Error(`${_this2.name}: chapter ${chapterId} has no pages on MangaDex (it may be hosted on another site)`);
       }
       const folder = dataSaver ? 'data-saver' : 'data';
       return files.map((file, index) => ({
@@ -155,8 +151,6 @@ class MangaDex extends models_1.MangaParser {
     };
   })();
   /**
-   * @param query search query
-   * @param page page number (default: 1)
    * @param limit limit of results to return (default: 20) (max: 100) (min: 1)
    */
   search = (() => {
@@ -272,7 +266,8 @@ class MangaDex extends models_1.MangaParser {
       }) ?? descriptions[0])?.[1];
       const text = description ? markdownToText(description) : '';
       if (text) result.description = text;
-      if (attributes.status) result.status = STATUSES[attributes.status] ?? models_1.MediaStatus.UNKNOWN;
+      const status = (0, media_status_1.toMediaStatus)(attributes.status, models_1.MediaStatus);
+      if (status) result.status = status;
       if (typeof attributes.year === 'number') result.releaseDate = attributes.year;
       result.url = `${_this7.baseUrl}/title/${manga.id}`;
       if (attributes.contentRating) result.contentRating = attributes.contentRating;
@@ -292,7 +287,7 @@ class MangaDex extends models_1.MangaParser {
     const label = attributes.chapter?.trim();
     const result = {
       id: chapter.id,
-      title: attributes.title?.trim() || (chapterNumber !== undefined ? `Chapter ${chapterNumber}` : label || 'Oneshot')
+      title: (0, shared_1.chapterTitle)(attributes.title, chapterNumber, label || 'Oneshot')
     };
     if (chapterNumber !== undefined) result.chapterNumber = chapterNumber;
     if (volumeNumber !== undefined) result.volumeNumber = volumeNumber;
@@ -326,9 +321,9 @@ class MangaDex extends models_1.MangaParser {
   error = err => {
     const response = err?.response;
     const detail = response?.data?.errors?.[0]?.detail;
-    if (detail) return new Error(`[${this.name}] ${detail}`);
-    if (err?.code === 'ERR_BAD_REQUEST') return new Error(`[${this.name}] Bad request. Make sure you have entered a valid query.`);
-    return new Error(`[${this.name}] ${err?.message ?? String(err)}`);
+    if (detail) return new Error(`${this.name}: ${detail}`);
+    if (err?.code === 'ERR_BAD_REQUEST') return new Error(`${this.name}: bad request. Make sure you have entered a valid query.`);
+    return new Error(`${this.name}: ${err?.message ?? String(err)}`);
   };
 }
 exports.MangaDex = MangaDex;

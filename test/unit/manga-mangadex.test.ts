@@ -320,7 +320,7 @@ describe('MangaDex fetchMangaInfo', () => {
   it("passes on MangaDex's error message", async () => {
     const { mangadex } = setup();
 
-    await expect(mangadex.fetchMangaInfo(UNKNOWN)).rejects.toThrow(`[MangaDex] Manga \`${UNKNOWN}\` not found.`);
+    await expect(mangadex.fetchMangaInfo(UNKNOWN)).rejects.toThrow(`MangaDex: Manga \`${UNKNOWN}\` not found.`);
   });
 });
 
@@ -355,7 +355,7 @@ describe('MangaDex fetchChapterPages', () => {
     const { mangadex } = setup();
 
     await expect(mangadex.fetchChapterPages(EXTERNAL_CHAPTER)).rejects.toThrow(
-      `[MangaDex] Chapter ${EXTERNAL_CHAPTER} has no pages on MangaDex`
+      `MangaDex: chapter ${EXTERNAL_CHAPTER} has no pages on MangaDex`
     );
   });
 });

@@ -1,5 +1,16 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# Anime and Movies tabs
+
+The **Anime** and **Movies** tabs and the Registry tab's two sub-tabs run the same browsers:
+`src/components/AnimeBrowser.tsx` and `src/components/MovieBrowser.tsx` (search, a detail sheet with
+the episodes, and the player). Only the header and the provider differ:
+
+- The **Anime** and **Movies** tabs offer every provider class in the library's `ANIME` and `MOVIES`
+  objects (`src/providers.ts`), so a provider added to the library shows up without app changes.
+- The **Registry** sub-tabs load registry entries (below) and can wrap them in `META.Anilist` or
+  `META.TMDB`.
+
 # Registry tab: load modes
 
 The **Registry** tab loads its anime and movie providers through one `ProviderManager`, built from the
@@ -33,13 +44,11 @@ source URL. When a load fails, it shows the error and what to do about it:
 The map holds each registry entry's `distFile` (the build output its `sha256` is computed from):
 
 ```sh
-yarn build                         # from the repo root: rebuild dist/bundles
-node scripts/prepare-registry.js   # publish changed entries (bump their version) and refresh sha256
-yarn example gen:local-dist        # rewrite apps/src/registry/local-dist-map.ts
+yarn build:registry   # from the repo root: rebuild, publish changed entries (bump their version), rewrite the map
 ```
 
-If you skip `prepare-registry`, Local dist mode reports the new code as an integrity mismatch, because
-the registry still has the old hash. Use **Run unverified** while you iterate.
+`yarn example gen:local-dist` rewrites only the map. Without publishing, Local dist mode reports the new
+code as an integrity mismatch, because the registry still has the old hash. Use **Run unverified** while you iterate.
 
 # Manga tab
 

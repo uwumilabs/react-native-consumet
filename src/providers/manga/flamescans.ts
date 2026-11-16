@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
-
 import {
   MangaParser,
-  MediaStatus,
   type ISearch,
   type IMangaInfo,
   type IMangaResult,
   type IMangaChapterPage,
   type IMangaChapter,
   type ProviderContext,
+  MediaStatus,
 } from '../../models';
 import { createProviderContext } from '../../utils/create-provider-context';
-import { parseChapterNumber, sortChaptersForReading } from '../../utils/manga';
+import { parseChapterNumber } from '../../utils/manga';
+import { toMediaStatus } from '../common/media-status';
+import { finishChapters, plainText } from './shared';
 
 /** Covers and chapter pages; the CDN serves them without a Referer. */
 const IMAGE_CDN = 'https://cdn.flamecomics.xyz/uploads/images/series';
@@ -49,15 +49,6 @@ interface FlameReaderChapter {
   images?: Record<string, { name?: string }> | { name?: string }[];
 }
 
-const STATUS: Record<string, MediaStatus> = {
-  'ongoing': MediaStatus.ONGOING,
-  'completed': MediaStatus.COMPLETED,
-  'hiatus': MediaStatus.HIATUS,
-  'dropped': MediaStatus.CANCELLED,
-  'cancelled': MediaStatus.CANCELLED,
-  'coming soon': MediaStatus.NOT_YET_AIRED,
-};
-
 /** Lower-case words without punctuation, so `returners magic` finds "A Returner's Magic". */
 const searchable = (text: string) =>
   text
@@ -65,20 +56,6 @@ const searchable = (text: string) =>
     .replace(/['`\u2018\u2019]/g, '')
     .replace(/[^a-z0-9\u00c0-\u1fff\u2070-\uffff]+/g, ' ')
     .trim();
-
-/** Plain text of the site's HTML descriptions (paragraphs become blank-line separated). */
-const plainText = (html: string | null | undefined): string | undefined => {
-  if (!html) return undefined;
-  const $ = load(html);
-  $('br').replaceWith('\n');
-  $('p').after('\n\n');
-  const text = $.root()
-    .text()
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return text || undefined;
-};
 
 /** The non-empty strings of a list, trimmed and without repeats. */
 const strings = (values: unknown): string[] =>
@@ -118,9 +95,6 @@ export class FlameScans extends MangaParser {
   /**
    * The site has no search endpoint: its browse page lists every series, and this keeps the ones
    * whose title has every word of the query. All matches come on page 1.
-   *
-   * @param query Search query
-   * @param page Page number (default 1)
    */
   override search = async (query: string, page: number = 1): Promise<ISearch<IMangaResult>> => {
     const { series = [] } = await this.nextData<{ series?: FlameSeries[] }>('browse');
@@ -159,7 +133,7 @@ export class FlameScans extends MangaParser {
       if (list.length) info[field] = list;
     }
     // The site lists the newest chapter first.
-    info.chapters = sortChaptersForReading(chapters.map((chapter) => this.toChapter(chapter, id)).reverse());
+    info.chapters = finishChapters(chapters.map((chapter) => this.toChapter(chapter, id)));
     return info;
   };
 
@@ -195,8 +169,8 @@ export class FlameScans extends MangaParser {
     }
     const description = plainText(series.description);
     if (description) result.description = description;
-    const status = series.status?.trim();
-    if (status) result.status = STATUS[status.toLowerCase()] ?? MediaStatus.UNKNOWN;
+    const status = toMediaStatus(series.status, MediaStatus);
+    if (status) result.status = status;
     if (typeof series.year === 'number' && series.year > 0) result.releaseDate = series.year;
     return result;
   }

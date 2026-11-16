@@ -1,5 +1,4 @@
 import Anilist from '../../src/providers/meta/anilist';
-import { AniKoto } from '../../src/providers/anime/anikoto/anikoto';
 import { metaHttp } from '../../src/utils/meta-http';
 import { ProviderManager } from '../../src/utils/ProviderManager';
 import { sha256Hex } from '../../src/utils/extension-integrity';
@@ -24,13 +23,13 @@ const providerEpisodes = () => [
 
 const timeoutError = () => Object.assign(new Error('timeout of 5000ms exceeded'), { code: 'ECONNABORTED' });
 
-// A provider that passes `instanceof AniKoto` (the ani.zip merge path) without any network access.
-const fakeAniKoto = () => {
-  const provider: any = Object.create(AniKoto.prototype);
-  provider.search = jest.fn().mockResolvedValue({ results: [{ id: 'dr-stone', title: media.title.romaji }] });
-  provider.fetchAnimeInfo = jest.fn().mockResolvedValue({ episodes: providerEpisodes() });
-  return provider;
-};
+// A provider that opts into the ani.zip merge, as the bundled anime providers do, without any network access.
+const aniZipProvider = (): any => ({
+  name: 'Fake',
+  capabilities: { aniZipEpisodes: true },
+  search: jest.fn().mockResolvedValue({ results: [{ id: 'dr-stone', title: media.title.romaji }] }),
+  fetchAnimeInfo: jest.fn().mockResolvedValue({ episodes: providerEpisodes() }),
+});
 
 const stubAniList = () => jest.spyOn(metaHttp, 'post').mockResolvedValue({ data: { data: { Media: media } } } as any);
 
@@ -40,7 +39,7 @@ describe('Anilist.fetchEpisodesListById (META-4)', () => {
   it('returns provider episodes with a uniqueId when ani.zip and the filler list time out', async () => {
     stubAniList();
     jest.spyOn(metaHttp, 'get').mockRejectedValue(timeoutError());
-    const provider = fakeAniKoto();
+    const provider = aniZipProvider();
 
     const episodes = await new Anilist(provider).fetchEpisodesListById(ANILIST_ID, true);
 
@@ -69,7 +68,7 @@ describe('Anilist.fetchEpisodesListById (META-4)', () => {
       throw timeoutError();
     });
 
-    const episodes = await new Anilist(fakeAniKoto()).fetchEpisodesListById(ANILIST_ID);
+    const episodes = await new Anilist(aniZipProvider()).fetchEpisodesListById(ANILIST_ID);
 
     expect(episodes[0]).toEqual(expect.objectContaining({ uniqueId: `${ANILIST_ID}$ep=1`, title: 'Stone Wars Begin' }));
     expect(episodes.slice(1).map((e) => e.uniqueId)).toEqual([`${ANILIST_ID}$ep=2`, `${ANILIST_ID}$ep=3`]);
@@ -117,10 +116,7 @@ describe('Anilist.fetchEpisodesListById (META-4)', () => {
       }
       exports.createRegistryOnly = createRegistryOnly;`;
     const provider: any = await new ProviderManager({ extensions: [], extractors: [] } as any).executeProviderCode(
-      code,
-      'createRegistryOnly',
-      { id: 'registryonly', name: 'RegistryOnly', category: 'anime', sha256: sha256Hex(code) } as any
-    );
+      code, { id: 'registryonly', name: 'RegistryOnly', factoryName: 'createRegistryOnly', category: 'anime', sha256: sha256Hex(code) } as any);
 
     const episodes = await new Anilist(provider).fetchEpisodesListById(ANILIST_ID);
 
@@ -130,10 +126,10 @@ describe('Anilist.fetchEpisodesListById (META-4)', () => {
     ]);
   });
 
-  it('follows declared capabilities over the provider class', async () => {
+  it('skips ani.zip for a provider whose capabilities turn it off', async () => {
     stubAniList();
     const get = jest.spyOn(metaHttp, 'get');
-    const provider = fakeAniKoto();
+    const provider = aniZipProvider();
     provider.capabilities = { aniZipEpisodes: false };
 
     const episodes = await new Anilist(provider).fetchEpisodesListById(ANILIST_ID);
@@ -145,7 +141,7 @@ describe('Anilist.fetchEpisodesListById (META-4)', () => {
   it('still fails when the provider itself fails', async () => {
     stubAniList();
     jest.spyOn(metaHttp, 'get').mockRejectedValue(timeoutError());
-    const provider = fakeAniKoto();
+    const provider = aniZipProvider();
     provider.fetchAnimeInfo.mockRejectedValue(new Error('provider down'));
 
     await expect(new Anilist(provider).fetchEpisodesListById(ANILIST_ID)).rejects.toThrow('provider down');

@@ -35,10 +35,7 @@ type Probe = { report(url: string): Promise<any>; parse(url: string): Promise<an
 
 const viaProvider = async (client: AxiosInstance): Promise<Probe> =>
   (await new ProviderManager(emptyRegistry, { axios: client }).executeProviderCode(
-    providerCode,
-    'createFetchProbe',
-    { id: 'fetchprobe', category: 'anime', sha256: sha256Hex(providerCode) } as any
-  )) as any;
+    providerCode, { id: 'fetchprobe', factoryName: 'createFetchProbe', category: 'anime', sha256: sha256Hex(providerCode) } as any)) as any;
 
 const viaExtractor = async (client: AxiosInstance): Promise<Probe> => {
   const extractor: any = await new ExtractorManager(emptyRegistry, { axios: client }).executeExtractorCode(

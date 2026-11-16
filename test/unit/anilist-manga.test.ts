@@ -6,8 +6,8 @@ import { response } from './fixtures/anilist/replay';
 
 // AniList 105398: romaji "Na Honjaman Level Up", English "Solo Leveling", MAL 121496.
 const MALSYNC_URL = 'https://api.malsync.moe/mal/manga/121496';
-// Listed newest first, as many sites do; Anilist.Manga returns them in reading order.
-const chapters = () => [3, 2, 1].map((n) => ({ id: `ch-${n}`, title: `Chapter ${n}`, chapterNumber: n }));
+// In reading order, as every manga provider returns them.
+const chapters = () => [1, 2, 3].map((n) => ({ id: `ch-${n}`, title: `Chapter ${n}`, chapterNumber: n }));
 
 /** A manga provider that knows the manga under `knownAs` (its search slug) only. */
 const fakeMangaProvider = (knownAs?: string) =>
@@ -104,6 +104,23 @@ describe('Anilist.Manga.fetchMangaInfo chapters (META-12)', () => {
     expect(provider.search).not.toHaveBeenCalled();
     expect(provider.fetchMangaInfo).toHaveBeenCalledWith('solo-leveling');
     expect(info.chapters).toHaveLength(3);
+  });
+
+  it("keeps the provider's chapter order", async () => {
+    serve();
+    // MangaDex lists titles whose chapter numbers restart each volume in its feed order, which
+    // sorting by chapter number would scramble.
+    const restarting = [
+      { id: 'v1c1', title: 'Chapter 1', chapterNumber: 1 },
+      { id: 'v1c2', title: 'Chapter 2', chapterNumber: 2 },
+      { id: 'v2c1', title: 'Chapter 1', chapterNumber: 1, volumeNumber: 2 },
+    ];
+    const provider = fakeMangaProvider('na honjaman level up');
+    provider.fetchMangaInfo.mockResolvedValue({ id: 'solo-leveling', chapters: restarting });
+
+    const info = await new Anilist.Manga(provider).fetchMangaInfo('105398');
+
+    expect(info.chapters!.map((c) => c.id)).toEqual(['v1c1', 'v1c2', 'v2c1']);
   });
 
   it('reports a failing provider as a provider MetaError', async () => {

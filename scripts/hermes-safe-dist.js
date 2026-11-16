@@ -18,9 +18,10 @@
 const fs = require('fs');
 const path = require('path');
 const babel = require('@babel/core');
+const { repoRoot, BUNDLE_DIR } = require('./registry-paths');
 
-const distDir = path.join(__dirname, '..', 'dist');
-const bundlesDir = path.join(distDir, 'bundles');
+const distDir = path.join(repoRoot, 'dist');
+const bundlesDir = path.join(repoRoot, BUNDLE_DIR);
 const isBundle = (file) => file.startsWith(bundlesDir + path.sep);
 
 function walk(dir) {

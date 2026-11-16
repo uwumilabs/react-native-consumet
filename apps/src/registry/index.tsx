@@ -6,13 +6,12 @@
  * - Local dist: run the bundles in local-dist-map.ts, still checked against the registry sha256.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ExtAnimeScreen from './Ext-anime';
-import ExtMoviesScreen from './Ext-movies';
 import { LoadErrorView, ModeToggle } from './LoadStatus';
 import { createProviderManager, DEFAULT_LOAD_MODE, type LoadMode } from './load-provider';
+import { RegistryAnimeTab, RegistryMoviesTab } from './RegistryTabs';
 import { colors, PAD, R } from '../theme';
 
 type SubTab = 'anime' | 'movies';
@@ -30,7 +29,6 @@ export default function RegistryScreen() {
 
   return (
     <SafeAreaView style={S.root} edges={['top', 'left', 'right']}>
-      {/* Sub-tab bar */}
       <View style={S.subTabBar}>
         {SUBTABS.map((t) => {
           const active = subTab === t.id;
@@ -55,12 +53,12 @@ export default function RegistryScreen() {
         <LoadErrorView failure={setup.failure} />
       ) : (
         <>
-          {/* Content — mount both so state survives tab switches */}
+          {/* Mount both so state survives sub-tab switches */}
           <View style={[S.screen, subTab !== 'anime' && S.hidden]}>
-            <ExtAnimeScreen manager={setup.manager} mode={mode} onModeChange={setMode} />
+            <RegistryAnimeTab manager={setup.manager} mode={mode} onModeChange={setMode} />
           </View>
           <View style={[S.screen, subTab !== 'movies' && S.hidden]}>
-            <ExtMoviesScreen manager={setup.manager} mode={mode} onModeChange={setMode} />
+            <RegistryMoviesTab manager={setup.manager} mode={mode} onModeChange={setMode} />
           </View>
         </>
       )}

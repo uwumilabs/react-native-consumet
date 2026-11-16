@@ -22,6 +22,24 @@ static NSString *RCConsumetSafariApplicationName(void) {
 static NSString *const kWebViewErrorCode = @"WEBVIEW_ERROR";
 static NSString *const kTimeoutCode = @"TIMEOUT";
 
+// Timings shared with Android (WebViewTask.TIMEOUT_MS, HttpRequestModule's
+// CAPTURE_DELAY_MS and POLL_MS), in seconds: a WebView request times out 30 s
+// after it starts, a loaded page gets 1.5 s for its scripts to settle, and a
+// page that isn't ready yet is checked again every second.
+static const NSTimeInterval kWebViewTimeout = 30;
+static const NSTimeInterval kCaptureDelay = 1.5;
+static const NSTimeInterval kPollInterval = 1;
+
+// DDoS-Guard (as Android's DdosGuardHelper): the cookie a passed check sets,
+// and the script that names, between single quotes, the path that sets it.
+static NSString *const kDdosGuardCheckCookie = @"__ddg2_";
+static NSString *const kDdosGuardCheckScriptURL =
+    @"https://check.ddos-guard.net/check.js";
+
+static dispatch_time_t RCConsumetAfter(NSTimeInterval seconds) {
+  return dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC));
+}
+
 /**
  * One in-memory website data store for every request this module makes.
  * Cookies (such as a passed DDoS-Guard challenge) carry over between calls,
@@ -112,37 +130,104 @@ static void RCConsumetReadCookies(
 
 #pragma mark - RCConsumetWebTask
 
+@class RCConsumetWebTask;
+
+/// Called once, when the main document first finishes loading. Settles the
+/// task with -resolve: or -rejectWithCode:message:, or calls -keepOpen while it
+/// polls the page.
+typedef void (^RCConsumetWebTaskFinish)(RCConsumetWebTask *task,
+                                        WKWebView *webView, NSString *url);
+
 /**
- * Manages a single WKWebView lifecycle for an async request.
- * Must be created and used exclusively on the main thread.
+ * One hidden WKWebView load for a promise-returning request: the iOS
+ * counterpart of Android's WebViewTask, following the contract in
+ * src/NativeConsumet.ts. Main thread only.
+ *
+ * The promise settles exactly once:
+ * - onFinish runs once, when the main document first finishes loading. Errors
+ *   after that are ignored.
+ * - A main-frame load error rejects with WEBVIEW_ERROR. Failed sub-resources
+ *   never reach the navigation delegate.
+ * - No settled promise within kWebViewTimeout of loading rejects with TIMEOUT.
+ * A task keeps itself alive until it settles, then releases its WebView.
  */
 @interface RCConsumetWebTask : NSObject <WKNavigationDelegate>
-@property(nonatomic, copy) void (^onFinish)(WKWebView *webView, NSString *url);
-@property(nonatomic, copy) void (^onError)(NSString *code, NSString *description);
-- (void)loadRequest:(NSURLRequest *)request
-          userAgent:(nullable NSString *)ua
-       cookieHeader:(nullable NSString *)cookieHeader;
-/// Keeps the task open after the navigation finished, for a caller that polls
-/// the page (a challenge page that turns into the real page once solved), until
-/// it is cleaned up or the 30 s deadline from loadRequest passes.
+- (instancetype)initWithResolve:(RCTPromiseResolveBlock)resolve
+                         reject:(RCTPromiseRejectBlock)reject;
+@property(nonatomic, copy, nullable) RCConsumetWebTaskFinish onFinish;
+@property(nonatomic, readonly) BOOL isSettled;
+/// Loads `url`. Headers are split as on Android (RequestHeaders), matching
+/// names case-insensitively: User-Agent replaces the WebView's own, Cookie
+/// values go into its cookie store before loading (WKWebView ignores a raw
+/// Cookie header), and the rest are sent with the request.
+- (void)loadURL:(NSString *)url
+         method:(NSString *)method
+        headers:(nullable NSDictionary<NSString *, NSString *> *)headers
+           body:(nullable NSString *)body;
+/// Keeps the task open after the page finished loading, for a caller that
+/// polls the page (a challenge page that turns into the real page once
+/// solved), until it settles or the deadline from loading passes.
 - (void)keepOpen;
-- (void)cleanup;
+- (void)resolve:(id)value;
+- (void)rejectWithCode:(NSString *)code message:(NSString *)message;
 @end
 
+/// Running tasks, so a task lives until it settles. Main thread only.
+static NSMutableSet<RCConsumetWebTask *> *RCConsumetRunningTasks(void) {
+  static NSMutableSet<RCConsumetWebTask *> *tasks;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    tasks = [NSMutableSet set];
+  });
+  return tasks;
+}
+
 @implementation RCConsumetWebTask {
+  RCTPromiseResolveBlock _resolve;
+  RCTPromiseRejectBlock _reject;
   WKWebView *_webView;
   UIWindow *_offscreenWindow;
   NSTimer *_timer;
   NSDate *_startedAt;
-  BOOL _done;
+  BOOL _pageFinished;
   BOOL _keptOpen;
 }
 
-- (void)loadRequest:(NSURLRequest *)request
-          userAgent:(NSString *)ua
-       cookieHeader:(NSString *)cookieHeader {
-  NSAssert([NSThread isMainThread],
-           @"loadRequest must be called on main thread");
+- (instancetype)initWithResolve:(RCTPromiseResolveBlock)resolve
+                         reject:(RCTPromiseRejectBlock)reject {
+  if ((self = [super init])) {
+    _resolve = [resolve copy];
+    _reject = [reject copy];
+  }
+  return self;
+}
+
+- (void)loadURL:(NSString *)urlStr
+         method:(NSString *)method
+        headers:(NSDictionary<NSString *, NSString *> *)headers
+           body:(NSString *)body {
+  NSAssert([NSThread isMainThread], @"loadURL must be called on main thread");
+  [RCConsumetRunningTasks() addObject:self];
+
+  NSMutableURLRequest *request = [NSMutableURLRequest
+       requestWithURL:[NSURL URLWithString:urlStr]
+          cachePolicy:NSURLRequestReloadIgnoringCacheData
+      timeoutInterval:kWebViewTimeout];
+  request.HTTPMethod = method;
+  if (body)
+    request.HTTPBody = [body dataUsingEncoding:NSUTF8StringEncoding];
+  __block NSString *ua = nil;
+  __block NSString *cookieHeader = nil;
+  [headers enumerateKeysAndObjectsUsingBlock:^(NSString *k, NSString *v,
+                                               BOOL *stop) {
+    if ([k caseInsensitiveCompare:@"User-Agent"] == NSOrderedSame) {
+      ua = v;
+    } else if ([k caseInsensitiveCompare:@"Cookie"] == NSOrderedSame) {
+      cookieHeader = v;
+    } else {
+      [request setValue:v forHTTPHeaderField:k];
+    }
+  }];
 
   WKWebViewConfiguration *cfg = [WKWebViewConfiguration new];
   cfg.websiteDataStore = RCConsumetDataStore();
@@ -161,14 +246,9 @@ static void RCConsumetReadCookies(
   [_offscreenWindow addSubview:_webView];
 
   _startedAt = [NSDate date];
-  _timer = [NSTimer scheduledTimerWithTimeInterval:30
-                                            target:self
-                                          selector:@selector(_didTimeout)
-                                          userInfo:nil
-                                           repeats:NO];
+  [self _scheduleTimeoutIn:kWebViewTimeout];
 
-  // Seed cookies from the Cookie header into WKHTTPCookieStore before loading,
-  // then load once all cookies are set (WKWebView ignores a raw Cookie header).
+  // Load once the Cookie header's cookies are in the store.
   NSArray<NSHTTPCookie *> *seedCookies = [self _cookiesFromHeader:cookieHeader
                                                            forURL:request.URL];
   if (seedCookies.count == 0) {
@@ -216,68 +296,69 @@ static void RCConsumetReadCookies(
   return cookies;
 }
 
-- (void)keepOpen {
-  if (!_webView || _keptOpen)
-    return;
-  _keptOpen = YES;
+- (void)_scheduleTimeoutIn:(NSTimeInterval)seconds {
   [_timer invalidate];
-  NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:_startedAt];
-  _timer = [NSTimer scheduledTimerWithTimeInterval:MAX(30 - elapsed, 0)
+  _timer = [NSTimer scheduledTimerWithTimeInterval:MAX(seconds, 0)
                                             target:self
                                           selector:@selector(_didTimeout)
                                           userInfo:nil
                                            repeats:NO];
 }
 
+- (void)keepOpen {
+  if (_isSettled || _keptOpen)
+    return;
+  _keptOpen = YES;
+  [self _scheduleTimeoutIn:kWebViewTimeout -
+                           [[NSDate date] timeIntervalSinceDate:_startedAt]];
+}
+
 - (void)_didTimeout {
-  // A task kept open has finished its navigation (_done) but still times out.
-  if (_done && !_keptOpen)
-    return;
-  _done = YES;
-  _keptOpen = NO;
-  if (self.onError)
-    self.onError(kTimeoutCode, @"WebView request timed out");
-  [self cleanup];
+  [self rejectWithCode:kTimeoutCode message:@"WebView request timed out"];
 }
 
-- (void)_didFailWithError:(NSError *)error {
-  // A navigation cancelled because another one replaced it (a redirect or a
-  // script reload, as on challenge pages) is not a failure; the replacement
-  // navigation or the timeout settles the request. Android does not report
-  // these either.
-  if ([error.domain isEqualToString:NSURLErrorDomain] &&
-      error.code == NSURLErrorCancelled)
-    return;
-  if (_done)
-    return;
-  _done = YES;
-  [_timer invalidate];
-  _timer = nil;
-  if (self.onError)
-    self.onError(kWebViewErrorCode, error.localizedDescription);
-  [self cleanup];
+// The blocks are read before -_settle, which can release the last reference
+// to the task.
+- (void)resolve:(id)value {
+  RCTPromiseResolveBlock resolve = _resolve;
+  if ([self _settle])
+    resolve(value);
 }
 
-- (void)cleanup {
+- (void)rejectWithCode:(NSString *)code message:(NSString *)message {
+  RCTPromiseRejectBlock reject = _reject;
+  if ([self _settle])
+    reject(code, message, nil);
+}
+
+/// Marks the task settled and releases its WebView; NO if it already was.
+- (BOOL)_settle {
+  if (_isSettled)
+    return NO;
+  _isSettled = YES;
   [_timer invalidate];
   _timer = nil;
+  self.onFinish = nil;
   _webView.navigationDelegate = nil;
   [_webView stopLoading];
   [_webView removeFromSuperview];
   _webView = nil;
   _offscreenWindow.hidden = YES;
   _offscreenWindow = nil;
+  [RCConsumetRunningTasks() removeObject:self];
+  return YES;
 }
 
 - (void)webView:(WKWebView *)webView
     didFinishNavigation:(WKNavigation *)navigation {
-  if (_done)
+  if (_isSettled || _pageFinished)
     return;
-  _done = YES;
+  _pageFinished = YES;
   [_timer invalidate];
   _timer = nil;
-  if (self.onFinish)
-    self.onFinish(webView, webView.URL.absoluteString ?: @"");
+  RCConsumetWebTaskFinish onFinish = self.onFinish;
+  if (onFinish)
+    onFinish(self, webView, webView.URL.absoluteString ?: @"");
 }
 
 // WKWebView reports only main-frame navigation failures here; failed
@@ -292,6 +373,19 @@ static void RCConsumetReadCookies(
     didFailProvisionalNavigation:(WKNavigation *)navigation
                        withError:(NSError *)error {
   [self _didFailWithError:error];
+}
+
+- (void)_didFailWithError:(NSError *)error {
+  // A navigation cancelled because another one replaced it (a redirect or a
+  // script reload, as on challenge pages) is not a failure; the replacement
+  // navigation or the timeout settles the request. Android does not report
+  // these either.
+  if ([error.domain isEqualToString:NSURLErrorDomain] &&
+      error.code == NSURLErrorCancelled)
+    return;
+  if (_pageFinished)
+    return;
+  [self rejectWithCode:kWebViewErrorCode message:error.localizedDescription];
 }
 
 @end
@@ -309,10 +403,10 @@ static NSString *const kPageStateScript =
     @"return document.readyState==='complete'?'ready':'loading';"
     @"}catch(e){return 'ready';}})()";
 
-/// Checks the page every second until a challenge has turned into a loaded
-/// page, then runs capture 1.5 s later (or at once when there was none).
-/// Polling the page, not waiting for navigation events, can't miss a reload
-/// that finished while a check was running.
+/// Checks the page every kPollInterval until a challenge has turned into a
+/// loaded page, then runs capture kCaptureDelay later (or at once when there
+/// was none). Polling the page, not waiting for navigation events, can't miss
+/// a reload that finished while a check was running.
 static void RCConsumetCaptureWhenReady(RCConsumetWebTask *task,
                                        WKWebView *webView,
                                        BOOL afterChallenge,
@@ -321,121 +415,57 @@ static void RCConsumetCaptureWhenReady(RCConsumetWebTask *task,
   __weak WKWebView *wv = webView;
   [webView evaluateJavaScript:kPageStateScript
             completionHandler:^(id result, NSError *error) {
-              if (!wv)
+              RCConsumetWebTask *t = wt;
+              if (!t || t.isSettled)
                 return;
               BOOL challenge = [result isEqual:@"challenge"];
               if (challenge || [result isEqual:@"loading"]) {
-                [wt keepOpen];
-                dispatch_after(
-                    dispatch_time(DISPATCH_TIME_NOW, (int64_t)NSEC_PER_SEC),
-                    dispatch_get_main_queue(), ^{
-                      WKWebView *view = wv;
-                      if (view)
-                        RCConsumetCaptureWhenReady(wt, view,
-                                                   afterChallenge || challenge,
-                                                   capture);
-                    });
+                [t keepOpen];
+                dispatch_after(RCConsumetAfter(kPollInterval),
+                               dispatch_get_main_queue(), ^{
+                                 WKWebView *view = wv;
+                                 if (view && !wt.isSettled)
+                                   RCConsumetCaptureWhenReady(
+                                       wt, view, afterChallenge || challenge,
+                                       capture);
+                               });
               } else if (afterChallenge) {
                 // The page the challenge turned into gets the same time to
                 // settle as a first page.
-                dispatch_after(
-                    dispatch_time(DISPATCH_TIME_NOW,
-                                  (int64_t)(1.5 * NSEC_PER_SEC)),
-                    dispatch_get_main_queue(), ^{
-                      if (wv)
-                        capture();
-                    });
+                dispatch_after(RCConsumetAfter(kCaptureDelay),
+                               dispatch_get_main_queue(), ^{
+                                 if (wv && !wt.isSettled)
+                                   capture();
+                               });
               } else {
                 capture();
               }
             }];
 }
 
-/// Runs capture 1.5 s after a navigation finished (so scripts on the page can
-/// settle), unless the page is a Cloudflare challenge: then capture waits for
-/// the page the challenge turns into, and the task times out as usual if it
-/// never does.
+/// Runs capture kCaptureDelay after a navigation finished (so scripts on the
+/// page can settle), unless the page is a Cloudflare challenge: then capture
+/// waits for the page the challenge turns into, and the task times out as
+/// usual if it never does.
 static void RCConsumetCaptureUnlessChallenge(RCConsumetWebTask *task,
                                              WKWebView *webView,
                                              dispatch_block_t capture) {
   __weak RCConsumetWebTask *wt = task;
   __weak WKWebView *wv = webView;
-  dispatch_after(
-      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
-      dispatch_get_main_queue(), ^{
-        WKWebView *view = wv;
-        if (view)
-          RCConsumetCaptureWhenReady(wt, view, NO, capture);
-      });
+  dispatch_after(RCConsumetAfter(kCaptureDelay), dispatch_get_main_queue(), ^{
+    WKWebView *view = wv;
+    if (view && !wt.isSettled)
+      RCConsumetCaptureWhenReady(wt, view, NO, capture);
+  });
 }
 
-@implementation Consumet {
-  NSMutableSet<RCConsumetWebTask *> *_tasks;
-}
+@implementation Consumet
 
 RCT_EXPORT_MODULE()
-
-- (instancetype)init {
-  if ((self = [super init])) {
-    _tasks = [NSMutableSet set];
-  }
-  return self;
-}
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params {
   return std::make_shared<facebook::react::NativeConsumetSpecJSI>(params);
-}
-
-#pragma mark - Private Helpers
-
-- (NSString *)_cookieHeader:(NSArray<NSHTTPCookie *> *)cookies {
-  return RCConsumetCookieHeader(cookies);
-}
-
-- (void)_removeTask:(RCConsumetWebTask *)task {
-  if (task)
-    [_tasks removeObject:task];
-}
-
-- (NSMutableURLRequest *)_requestWithURL:(NSString *)urlStr
-                                  method:(NSString *)method
-                                 headers:(NSDictionary *)headers
-                                    body:(nullable NSString *)body
-                            outUserAgent:(NSString *__autoreleasing *)outUA {
-  NSMutableURLRequest *req =
-      [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlStr]
-                              cachePolicy:NSURLRequestReloadIgnoringCacheData
-                          timeoutInterval:30];
-  req.HTTPMethod = method;
-
-  __block NSString *ua = nil;
-  [headers enumerateKeysAndObjectsUsingBlock:^(NSString *k, NSString *v,
-                                               BOOL *stop) {
-    if ([k caseInsensitiveCompare:@"User-Agent"] == NSOrderedSame) {
-      ua = v;
-    } else if ([k caseInsensitiveCompare:@"Cookie"] != NSOrderedSame) {
-      [req setValue:v forHTTPHeaderField:k];
-    }
-  }];
-  if (outUA)
-    *outUA = ua;
-
-  if (body)
-    req.HTTPBody = [body dataUsingEncoding:NSUTF8StringEncoding];
-  return req;
-}
-
-- (NSString *)_cookieHeaderValueFromHeaders:(NSDictionary *)headers {
-  __block NSString *val = nil;
-  [headers enumerateKeysAndObjectsUsingBlock:^(NSString *k, NSString *v,
-                                               BOOL *stop) {
-    if ([k caseInsensitiveCompare:@"Cookie"] == NSOrderedSame) {
-      val = v;
-      *stop = YES;
-    }
-  }];
-  return val;
 }
 
 #pragma mark - bypassDdosGuard
@@ -449,12 +479,11 @@ RCT_EXPORT_MODULE()
     return;
   }
 
-  // Return existing __ddg2_ cookie if we already have one.
   NSArray<NSHTTPCookie *> *existing =
       [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:url];
   for (NSHTTPCookie *c in existing) {
-    if ([c.name isEqualToString:@"__ddg2_"] && c.value.length > 0) {
-      resolve(@{@"cookie" : [self _cookieHeader:existing]});
+    if ([c.name isEqualToString:kDdosGuardCheckCookie] && c.value.length > 0) {
+      resolve(@{@"cookie" : RCConsumetCookieHeader(existing)});
       return;
     }
   }
@@ -462,13 +491,11 @@ RCT_EXPORT_MODULE()
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
     NSURLSession *session = [NSURLSession sharedSession];
 
-    // Step 1 — fetch check.js to extract the well-known verification path.
     dispatch_semaphore_t sem1 = dispatch_semaphore_create(0);
     __block NSString *wellKnown = nil;
     __block NSError *err1 = nil;
 
-    [[session dataTaskWithURL:
-                  [NSURL URLWithString:@"https://check.ddos-guard.net/check.js"]
+    [[session dataTaskWithURL:[NSURL URLWithString:kDdosGuardCheckScriptURL]
             completionHandler:^(NSData *d, NSURLResponse *r, NSError *e) {
               if (e || !d) {
                 err1 = e;
@@ -495,8 +522,7 @@ RCT_EXPORT_MODULE()
       return;
     }
 
-    // Step 2 — hit the well-known path on the target host to obtain the __ddg2_
-    // cookie.
+    // The well-known path on the target host sets the check cookie.
     NSString *checkStr = [NSString
         stringWithFormat:@"%@://%@%@", url.scheme, url.host, wellKnown];
     NSURL *checkURL = [NSURL URLWithString:checkStr];
@@ -529,7 +555,7 @@ RCT_EXPORT_MODULE()
     }
     NSMutableArray<NSHTTPCookie *> *allCookies = [existing mutableCopy];
     [allCookies addObjectsFromArray:newCookies];
-    resolve(@{@"cookie" : [self _cookieHeader:allCookies]});
+    resolve(@{@"cookie" : RCConsumetCookieHeader(allCookies)});
   });
 }
 
@@ -539,38 +565,24 @@ RCT_EXPORT_MODULE()
                                resolve:(RCTPromiseResolveBlock)resolve
                                 reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_main_queue(), ^{
-    RCConsumetWebTask *task = [RCConsumetWebTask new];
-    [self->_tasks addObject:task];
-    __weak __typeof__(self) ws = self;
-    __weak RCConsumetWebTask *wt = task;
-
-    task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
+    RCConsumetWebTask *task =
+        [[RCConsumetWebTask alloc] initWithResolve:resolve reject:reject];
+    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
+                      NSString *loadedURL) {
       RCConsumetReadCookies(
           webView, loadedURL.length ? loadedURL : urlStr,
           ^(NSArray<NSHTTPCookie *> *cookies, NSString *header) {
-            BOOL hasDdg2 = NO;
             for (NSHTTPCookie *c in cookies) {
-              if ([c.name isEqualToString:@"__ddg2_"])
-                hasDdg2 = YES;
+              if ([c.name isEqualToString:kDdosGuardCheckCookie]) {
+                [task resolve:header];
+                return;
+              }
             }
-            hasDdg2
-                ? resolve(header)
-                : reject(@"COOKIE_ERROR", @"No __ddg2_ cookie received", nil);
-            [wt cleanup];
-            [ws _removeTask:wt];
+            [task rejectWithCode:@"COOKIE_ERROR"
+                         message:@"No __ddg2_ cookie received"];
           });
     };
-    task.onError = ^(NSString *code, NSString *desc) {
-      reject(code, desc, nil);
-      [ws _removeTask:wt];
-    };
-
-    [task loadRequest:[NSURLRequest
-                           requestWithURL:[NSURL URLWithString:urlStr]
-                              cachePolicy:NSURLRequestReloadIgnoringCacheData
-                          timeoutInterval:30]
-            userAgent:nil
-         cookieHeader:nil];
+    [task loadURL:urlStr method:@"GET" headers:nil body:nil];
   });
 }
 
@@ -581,13 +593,11 @@ RCT_EXPORT_MODULE()
                           resolve:(RCTPromiseResolveBlock)resolve
                            reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_main_queue(), ^{
-    RCConsumetWebTask *task = [RCConsumetWebTask new];
-    [self->_tasks addObject:task];
-    __weak __typeof__(self) ws = self;
-    __weak RCConsumetWebTask *wt = task;
-
-    task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
-      RCConsumetCaptureUnlessChallenge(wt, webView, ^{
+    RCConsumetWebTask *task =
+        [[RCConsumetWebTask alloc] initWithResolve:resolve reject:reject];
+    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
+                      NSString *loadedURL) {
+      RCConsumetCaptureUnlessChallenge(task, webView, ^{
         [webView
             evaluateJavaScript:@"(function(){try{return "
                                @"document.documentElement.outerHTML;}catch("
@@ -596,36 +606,20 @@ RCT_EXPORT_MODULE()
                NSString *htmlStr =
                    [html isKindOfClass:[NSString class]] ? html : @"";
                NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
-               RCConsumetReadCookies(
-                   webView, finalURL,
-                   ^(NSArray<NSHTTPCookie *> *cookies,
-                     NSString *cookieStr) {
-                     resolve(@{
-                       @"url" : finalURL,
-                       @"html" : htmlStr,
-                       @"cookies" : cookieStr,
-                       @"status" : @"success"
-                     });
-                     [wt cleanup];
-                     [ws _removeTask:wt];
-                   });
+               RCConsumetReadCookies(webView, finalURL,
+                                     ^(NSArray<NSHTTPCookie *> *cookies,
+                                       NSString *cookieStr) {
+                                       [task resolve:@{
+                                         @"url" : finalURL,
+                                         @"html" : htmlStr,
+                                         @"cookies" : cookieStr,
+                                         @"status" : @"success"
+                                       }];
+                                     });
              }];
       });
     };
-    task.onError = ^(NSString *code, NSString *desc) {
-      reject(code, desc, nil);
-      [ws _removeTask:wt];
-    };
-
-    NSString *ua = nil;
-    NSMutableURLRequest *req = [self _requestWithURL:urlStr
-                                              method:@"GET"
-                                             headers:headers
-                                                body:nil
-                                        outUserAgent:&ua];
-    [task loadRequest:req
-            userAgent:ua
-         cookieHeader:[self _cookieHeaderValueFromHeaders:headers]];
+    [task loadURL:urlStr method:@"GET" headers:headers body:nil];
   });
 }
 
@@ -637,11 +631,11 @@ RCT_EXPORT_MODULE()
                            resolve:(RCTPromiseResolveBlock)resolve
                             reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_main_queue(), ^{
-    RCConsumetWebTask *task = [RCConsumetWebTask new];
-    [self->_tasks addObject:task];
-    __weak __typeof__(self) ws = self;
-    __weak RCConsumetWebTask *wt = task;
+    RCConsumetWebTask *task =
+        [[RCConsumetWebTask alloc] initWithResolve:resolve reject:reject];
 
+    // The page as { content, contentType }: a JSON response is shown as a
+    // lone <pre>.
     NSString *jsExtract =
         @"(function(){"
         @"try{"
@@ -655,55 +649,38 @@ RCT_EXPORT_MODULE()
         @"}catch(e){return JSON.stringify({content:'',contentType:'unknown'});}"
         @"})()";
 
-    task.onFinish = ^(WKWebView *webView, NSString *loadedURL) {
-      RCConsumetCaptureUnlessChallenge(wt, webView, ^{
+    task.onFinish = ^(RCConsumetWebTask *task, WKWebView *webView,
+                      NSString *loadedURL) {
+      RCConsumetCaptureUnlessChallenge(task, webView, ^{
         [webView
             evaluateJavaScript:jsExtract
              completionHandler:^(id r, NSError *e) {
                NSString *finalURL = loadedURL.length ? loadedURL : urlStr;
                RCConsumetReadCookies(
                    webView, finalURL,
-                   ^(NSArray<NSHTTPCookie *> *cookies,
-                     NSString *cookieStr) {
+                   ^(NSArray<NSHTTPCookie *> *cookies, NSString *cookieStr) {
                      NSString *jsonStr =
                          [r isKindOfClass:[NSString class]] ? r : @"{}";
                      id json = [NSJSONSerialization
                          JSONObjectWithData:
-                             [jsonStr
-                                 dataUsingEncoding:NSUTF8StringEncoding]
+                             [jsonStr dataUsingEncoding:NSUTF8StringEncoding]
                                     options:0
                                       error:nil];
                      NSDictionary *parsed =
                          [json isKindOfClass:[NSDictionary class]] ? json
                                                                    : @{};
-                     resolve(@{
+                     [task resolve:@{
                        @"url" : finalURL,
                        @"response" : parsed[@"content"] ?: @"",
                        @"cookies" : cookieStr,
                        @"status" : @"success",
-                       @"contentType" : parsed[@"contentType"]
-                           ?: @"text/html"
-                     });
-                     [wt cleanup];
-                     [ws _removeTask:wt];
+                       @"contentType" : parsed[@"contentType"] ?: @"text/html"
+                     }];
                    });
              }];
       });
     };
-    task.onError = ^(NSString *code, NSString *desc) {
-      reject(code, desc, nil);
-      [ws _removeTask:wt];
-    };
-
-    NSString *ua = nil;
-    NSMutableURLRequest *req = [self _requestWithURL:urlStr
-                                              method:@"POST"
-                                             headers:headers
-                                                body:body
-                                        outUserAgent:&ua];
-    [task loadRequest:req
-            userAgent:ua
-         cookieHeader:[self _cookieHeaderValueFromHeaders:headers]];
+    [task loadURL:urlStr method:@"POST" headers:headers body:body];
   });
 }
 

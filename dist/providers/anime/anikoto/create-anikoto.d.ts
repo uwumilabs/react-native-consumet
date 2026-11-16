@@ -1,4 +1,4 @@
-import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type StreamingServers, type SubOrDub, type ProviderContext, type ProviderCapabilities } from '../../../models';
+import { type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, type SubOrDub, type ProviderContext, type ProviderCapabilities } from '../../../models';
 export declare function createAniKoto(ctx: ProviderContext, customBaseURL?: string): {
     capabilities: ProviderCapabilities;
     search: (query: string, page?: number) => Promise<ISearch<IAnimeResult>>;
@@ -33,7 +33,7 @@ export declare function createAniKoto(ctx: ProviderContext, customBaseURL?: stri
     fetchSearchSuggestions: (query: string) => Promise<IAnimeResult[]>;
     fetchAnimeInfo: (id: string) => Promise<IAnimeInfo>;
     fetchEpisodeServers: (episodeId: string, subOrDub?: SubOrDub) => Promise<IEpisodeServer[]>;
-    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrDub) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, server?: string, subOrDub?: SubOrDub) => Promise<ISource>;
     name: string;
     languages: string[] | string;
     classPath: string;

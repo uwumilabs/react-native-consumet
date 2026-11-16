@@ -2,29 +2,28 @@
 /**
  * Generates an ed25519 key pair for signing the extension registry (REG-6).
  *
- * Adds the public key to src/registry-signing-keys.ts, keeping the keys already listed, and prints
- * the private key once, with what to do with it. The private key is never written to disk: store
- * it as a GitHub Actions secret, which CI signs with (scripts/sign-registry.js).
+ * Adds the public key to src/registry-signing-keys.json, keeping the keys already listed, and
+ * prints the private key once, with what to do with it. The private key is never written to disk:
+ * store it as a GitHub Actions secret, which CI signs with (scripts/sign-registry.js).
  *
  * Usage:
  *   node scripts/registry-keygen.js [--keys <file>]   (yarn registry:keygen)
- *   --keys  the key list to add to (default src/registry-signing-keys.ts)
+ *   --keys  the key list to add to (default src/registry-signing-keys.json)
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { repoRoot, SIGNING_KEYS_FILE } = require('./registry-paths');
 const {
-  repoRoot,
-  SIGNING_KEYS_FILE,
-  SIGNING_KEYS_DECLARATION,
+  SIGNING_ENVIRONMENT,
+  SIGNING_SECRETS,
   PKCS8_HEADER,
   rawPublicKey,
   parseSigningKeys,
-} = require('./registry-support');
+  renderSigningKeys,
+} = require('./registry-signing');
 
 const USAGE = 'usage: node scripts/registry-keygen.js [--keys <file>]';
-const ENVIRONMENT = 'registry-signing';
-const SECRETS = ['REGISTRY_SIGNING_KEY', 'REGISTRY_SIGNING_KEY_2'];
 
 function fail(message) {
   console.error(`registry-keygen: ${message}`);
@@ -40,23 +39,11 @@ function parseArgs(argv) {
   return keys;
 }
 
-/** `source` with the key list rewritten from `entries` (as parseSigningKeys returns them). */
-function renderKeys(source, entries, trailing) {
-  const lines = [
-    ...entries.flatMap(({ key, comments, note }) => [...comments, `'${key}',${note ? ` ${note}` : ''}`]),
-    ...trailing,
-  ];
-  const list = lines.length ? `[\n${lines.map((line) => `  ${line}`).join('\n')}\n]` : '[]';
-  return source.replace(SIGNING_KEYS_DECLARATION, (_match, start) => `${start}${list};`);
-}
-
 const keysFile = parseArgs(process.argv.slice(2));
 const label = path.relative(process.cwd(), keysFile) || keysFile;
-let source;
 let current;
 try {
-  source = fs.readFileSync(keysFile, 'utf8');
-  current = parseSigningKeys(source, label);
+  current = parseSigningKeys(fs.readFileSync(keysFile, 'utf8'), label);
 } catch (error) {
   fail(error.message);
 }
@@ -67,22 +54,22 @@ if (!pkcs8.subarray(0, PKCS8_HEADER.length).equals(PKCS8_HEADER)) fail('unexpect
 const privateHex = pkcs8.subarray(PKCS8_HEADER.length).toString('hex');
 const publicHex = rawPublicKey(publicKey);
 
-const added = { key: publicHex, comments: [`// Added ${new Date().toISOString().slice(0, 10)}`], note: '' };
-fs.writeFileSync(keysFile, renderKeys(source, [...current.entries, added], current.trailing));
+const added = { publicKey: publicHex, added: new Date().toISOString().slice(0, 10) };
+fs.writeFileSync(keysFile, renderSigningKeys([...current, added]));
 
-const rotating = current.entries.length > 0;
-const [secret, otherSecret] = rotating ? [SECRETS[1], SECRETS[0]] : SECRETS;
+const rotating = current.length > 0;
+const [secret, otherSecret] = rotating ? [SIGNING_SECRETS[1], SIGNING_SECRETS[0]] : SIGNING_SECRETS;
 const lines = [
   `Added public key ${publicHex}`,
-  `to ${label}${rotating ? `, next to the ${current.entries.length} key(s) already there` : ''}.`,
+  `to ${label}${rotating ? `, next to the ${current.length} key(s) already there` : ''}.`,
   '',
   'Private key, shown once and not saved anywhere:',
   '',
   `  ${privateHex}`,
   '',
-  `1. Store it as the secret ${secret} in the "${ENVIRONMENT}" environment`,
-  `   (Settings > Environments > ${ENVIRONMENT} > Add environment secret), or run`,
-  `     gh secret set ${secret} --env ${ENVIRONMENT}`,
+  `1. Store it as the secret ${secret} in the "${SIGNING_ENVIRONMENT}" environment`,
+  `   (Settings > Environments > ${SIGNING_ENVIRONMENT} > Add environment secret), or run`,
+  `     gh secret set ${secret} --env ${SIGNING_ENVIRONMENT}`,
   '   and paste it at the prompt. Give the environment a required reviewer and limit it to the',
   '   main branch, so nothing is signed without your approval.',
 ];

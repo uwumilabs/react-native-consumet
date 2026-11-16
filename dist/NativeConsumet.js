@@ -1,13 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deobfuscateScript = exports.makePostRequest = exports.makePostRequestWithWebView = exports.makeGetRequestWithWebView = exports.getDdosGuardCookiesWithWebView = exports.bypassDdosGuard = void 0;
+exports.nativeMethods = void 0;
 const react_native_1 = require("react-native");
 const NativeConsumet = react_native_1.TurboModuleRegistry.getEnforcing('Consumet');
-exports.bypassDdosGuard = NativeConsumet.bypassDdosGuard;
-exports.getDdosGuardCookiesWithWebView = NativeConsumet.getDdosGuardCookiesWithWebView;
-exports.makeGetRequestWithWebView = NativeConsumet.makeGetRequestWithWebView;
-exports.makePostRequestWithWebView = NativeConsumet.makePostRequestWithWebView;
-exports.makePostRequest = NativeConsumet.makePostRequest;
-exports.deobfuscateScript = NativeConsumet.deobfuscateScript;
+/** The spec's methods in a plain object (extension code destructures and spreads it). */
+exports.nativeMethods = {
+    bypassDdosGuard: NativeConsumet.bypassDdosGuard,
+    getDdosGuardCookiesWithWebView: NativeConsumet.getDdosGuardCookiesWithWebView,
+    makeGetRequestWithWebView: NativeConsumet.makeGetRequestWithWebView,
+    makePostRequestWithWebView: NativeConsumet.makePostRequestWithWebView,
+    makePostRequest: NativeConsumet.makePostRequest,
+    deobfuscateScript: NativeConsumet.deobfuscateScript,
+};
 exports.default = NativeConsumet;
 //# sourceMappingURL=NativeConsumet.js.map

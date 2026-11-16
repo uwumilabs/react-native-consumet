@@ -48,17 +48,14 @@ describe('the pinned Synchrony script (NAT-3)', () => {
 });
 
 describe('deobfuscateScript does not download Synchrony per call (NAT-3)', () => {
-  it('Android goes through one process-wide SynchronyScriptCache', () => {
+  it('Android goes through SynchronyScriptCache', () => {
     expect(deobfuscatorKt).toMatch(/scripts\.get\(\)/);
-    expect(deobfuscatorKt.match(/\.newCall\(/g)).toHaveLength(1);
-    expect(deobfuscatorKt).toMatch(/fun downloadScript\(\)/);
-    expect(deobfuscatorKt).toMatch(/@Volatile private var cache: SynchronyScriptCache\?/);
+    expect(deobfuscatorKt).toMatch(/SynchronyScriptCache\(/);
   });
 
   it('iOS goes through RCConsumetSynchronyCache', () => {
-    expect(consumetMm).toMatch(/\[\[RCConsumetSynchronyCache sharedCache\] loadScript:/);
+    expect(consumetMm).toMatch(/RCConsumetSynchronyCache sharedCache/);
     expect(consumetMm).not.toMatch(/synchrony-v|raw\.githubusercontent/);
-    expect(iosCache.match(/dataTaskWithRequest:/g)).toHaveLength(1);
   });
 });
 

@@ -2,116 +2,70 @@ import { type AxiosAdapter } from 'axios';
 import { AnimeParser, type ISearch, type IAnimeInfo, type IAnimeResult, type ISource, type IEpisodeServer, Genres, MangaParser, type IMangaChapterPage, type IMangaInfo, type IMangaResult, type ProxyConfig, type IStaff, type IAnimeProvider } from '../../models';
 import type { IMetaAnimeEpisode } from '../../models/types';
 declare class Anilist extends AnimeParser {
-    proxyConfig?: ProxyConfig | undefined;
     readonly name = "Anilist";
     protected baseUrl: string;
     protected logo: string;
     protected classPath: string;
-    private readonly kitsuGraphqlUrl;
-    private readonly malSyncUrl;
-    private readonly anifyUrl;
     provider: AnimeParser | IAnimeProvider;
     /**
-     * This class maps anilist to kitsu with any other anime provider.
-     * kitsu is used for episode images, titles and description.
-     * @param provider anime provider (optional) default: Gogoanime
-     * @param proxyConfig proxy config (optional)
-     * @param adapter axios adapter (optional)
+     * Maps AniList anime to an anime provider's episodes, with ani.zip episode metadata for providers
+     * that declare `capabilities.aniZipEpisodes`.
+     * @param provider anime provider to find the episodes on (default: Zoro, HiAnime)
+     * @param _proxyConfig ignored: requests go through the library's own client. Kept so existing calls compile.
+     * @param _adapter ignored, for the same reason
+     * @param customBaseURL site URL for the default Zoro provider; ignored when `provider` is given
      */
-    constructor(provider?: AnimeParser | IAnimeProvider, proxyConfig?: ProxyConfig | undefined, adapter?: AxiosAdapter, customBaseURL?: string);
+    constructor(provider?: AnimeParser | IAnimeProvider, _proxyConfig?: ProxyConfig, _adapter?: AxiosAdapter, customBaseURL?: string);
     /**
-     * @param query Search query
-     * @param page Page number (optional)
-     * @param perPage Number of results per page (optional) (default: 15) (max: 50)
+     * @param perPage results per page (default: 15, max: 50)
      */
     search: (query: string, page?: number, perPage?: number) => Promise<ISearch<IAnimeResult>>;
     /**
-     *
-     * @param query Search query (optional)
-     * @param type Media type (optional) (default: `ANIME`) (options: `ANIME`, `MANGA`)
-     * @param page Page number (optional)
-     * @param perPage Number of results per page (optional) (default: `20`) (max: `50`)
-     * @param format Format (optional) (options: `TV`, `TV_SHORT`, `MOVIE`, `SPECIAL`, `OVA`, `ONA`, `MUSIC`)
-     * @param sort Sort (optional) (Default: `[POPULARITY_DESC, SCORE_DESC]`) (options: `POPULARITY_DESC`, `POPULARITY`, `TRENDING_DESC`, `TRENDING`, `UPDATED_AT_DESC`, `UPDATED_AT`, `START_DATE_DESC`, `START_DATE`, `END_DATE_DESC`, `END_DATE`, `FAVOURITES_DESC`, `FAVOURITES`, `SCORE_DESC`, `SCORE`, `TITLE_ROMAJI_DESC`, `TITLE_ROMAJI`, `TITLE_ENGLISH_DESC`, `TITLE_ENGLISH`, `TITLE_NATIVE_DESC`, `TITLE_NATIVE`, `EPISODES_DESC`, `EPISODES`, `ID`, `ID_DESC`)
-     * @param genres Genres (optional) (options: `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`)
-     * @param id anilist Id (optional)
-     * @param year Year (optional) e.g. `2022`
-     * @param status Status (optional) (options: `RELEASING`, `FINISHED`, `NOT_YET_RELEASED`, `CANCELLED`, `HIATUS`)
-     * @param season Season (optional) (options: `WINTER`, `SPRING`, `SUMMER`, `FALL`)
+     * @param type `ANIME` (default) or `MANGA`
+     * @param perPage results per page (default: 20, max: 50)
+     * @param format `TV`, `TV_SHORT`, `MOVIE`, `SPECIAL`, `OVA`, `ONA` or `MUSIC`
+     * @param sort default `[POPULARITY_DESC, SCORE_DESC]`; any of `POPULARITY_DESC`, `POPULARITY`, `TRENDING_DESC`, `TRENDING`, `UPDATED_AT_DESC`, `UPDATED_AT`, `START_DATE_DESC`, `START_DATE`, `END_DATE_DESC`, `END_DATE`, `FAVOURITES_DESC`, `FAVOURITES`, `SCORE_DESC`, `SCORE`, `TITLE_ROMAJI_DESC`, `TITLE_ROMAJI`, `TITLE_ENGLISH_DESC`, `TITLE_ENGLISH`, `TITLE_NATIVE_DESC`, `TITLE_NATIVE`, `EPISODES_DESC`, `EPISODES`, `ID`, `ID_DESC`
+     * @param genres any of `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`
+     * @param id AniList id
+     * @param year e.g. `2022`
+     * @param status `RELEASING`, `FINISHED`, `NOT_YET_RELEASED`, `CANCELLED` or `HIATUS`
+     * @param season `WINTER`, `SPRING`, `SUMMER` or `FALL`
      */
     advancedSearch: (query?: string, type?: string, page?: number, perPage?: number, format?: string, sort?: string[], genres?: Genres[] | string[], id?: string | number, year?: number, status?: string, season?: string) => Promise<ISearch<IAnimeResult>>;
     /**
-     *
-     * @param id Anime id
-     * @param dub to get dubbed episodes (optional) set to `true` to get dubbed episodes. **ONLY WORKS FOR GOGOANIME**
-     * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
+     * @param id AniList id
+     * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
      */
     fetchAnimeInfo: (id: string, fetchFiller?: boolean) => Promise<IAnimeInfo>;
-    /**
-     *
-     * @param episodeId Episode id
-     */
     fetchEpisodeSources: (episodeId: string, ...args: any) => Promise<ISource>;
-    /**
-     *
-     * @param episodeId Episode id
-     */
     fetchEpisodeServers: (episodeId: string) => Promise<IEpisodeServer[]>;
-    /**
-     * @param page page number to search for (optional)
-     * @param perPage number of results per page (optional)
-     */
     fetchTrendingAnime: (page?: number, perPage?: number) => Promise<ISearch<IAnimeResult>>;
-    /**
-     *
-     * @param page page number to search for (optional)
-     * @param perPage number of results per page (optional)
-     */
     fetchPopularAnime: (page?: number, perPage?: number) => Promise<ISearch<IAnimeResult>>;
     /**
-     *
-     * @param page page number (optional)
-     * @param perPage number of results per page (optional)
-     * @param weekStart First day of the schedule, its next occurrence counting today (optional) (default: today) (options: 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 0 = Saturday, 1 = Sunday) you can use either the number or the day's name
-     * @param weekEnd Last day of the schedule, included, on or after weekStart (optional) (default: the day before today, so a full week) similar to weekStart
-     * @param notYetAired if true will return anime that have not yet aired (optional)
-     * @returns the next airing episodes
+     * The episodes airing in a window of days.
+     * @param weekStart first day of the window, its next occurrence counting today (default: today): `2` = Monday, `3` = Tuesday, `4` = Wednesday, `5` = Thursday, `6` = Friday, `0` = Saturday, `1` = Sunday, or the day's name
+     * @param weekEnd last day of the window, included, on or after weekStart (default: the day before today, so a full week); like weekStart
+     * @param notYetAired only episodes that haven't aired yet
      */
     fetchAiringSchedule: (page?: number, perPage?: number, weekStart?: number | string, weekEnd?: number | string, notYetAired?: boolean) => Promise<ISearch<IAnimeResult>>;
     /**
-     *
-     * @param genres An array of genres to filter by (optional) genres: [`Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`]
-     * @param page page number (optional)
-     * @param perPage number of results per page (optional)
+     * @param genres any of `Action`, `Adventure`, `Cars`, `Comedy`, `Drama`, `Fantasy`, `Horror`, `Mahou Shoujo`, `Mecha`, `Music`, `Mystery`, `Psychological`, `Romance`, `Sci-Fi`, `Slice of Life`, `Sports`, `Supernatural`, `Thriller`
      */
     fetchAnimeGenres: (genres: string[] | Genres[], page?: number, perPage?: number) => Promise<ISearch<IAnimeResult>>;
-    private findAnimeRaw;
-    /**
-     * @returns a random anime
-     */
     fetchRandomAnime: () => Promise<IAnimeInfo>;
     /**
-     * @deprecated Reads from Anify, which is offline, so this always fails.
-     * @param provider The provider to get the episode Ids from (optional) default: `gogoanime` (options: `gogoanime`, `zoro`)
-     * @param page page number (optional)
-     * @param perPage number of results per page (optional)
+     * The provider's episodes for the AniList entry: the search result whose title is closest (see
+     * matchScore), the sub entry before the dub. Empty when no result is close enough.
      */
-    fetchRecentEpisodes: (provider?: "gogoanime" | "zoro", page?: number, perPage?: number) => Promise<ISearch<IAnimeResult>>;
-    private fetchDefaultEpisodeList;
+    private findProviderEpisodes;
     /**
-     * @param id anilist id
-     * @param fetchFiller to get filler boolean on the episode object (optional) set to `true` to get filler boolean on the episode object.
-     * @returns episode list **(without anime info)**, every episode with a `uniqueId`
+     * @param id AniList id
+     * @param fetchFiller set `isFiller` on the episodes, from the MAL filler list (default: `false`)
+     * @returns the episode list without the anime info, every episode with a `uniqueId`
      */
     fetchEpisodesListById: (id: string, fetchFiller?: boolean) => Promise<IMetaAnimeEpisode[]>;
-    /**
-     * Whether to merge the provider's episodes with ani.zip metadata. Providers declare this in
-     * `capabilities`, so registry-only providers (no class) can opt in. Code that predates
-     * capabilities falls back to the built-in provider classes.
-     */
+    /** Whether to merge the provider's episodes with ani.zip metadata, as the provider declares. */
     private usesAniZipEpisodes;
-    /** Optional filler flags by episode index; an empty list if the source is missing or unreachable. */
-    private fetchFillerEpisodes;
     /**
      * Overlay ani.zip titles, descriptions, images and TVDB numbers onto the provider's episodes. Only
      * numeric ani.zip keys (AniDB regular episodes) take part, so specials (`S1`, `O1`…) never land
@@ -119,20 +73,13 @@ declare class Anilist extends AnimeParser {
      */
     private mergeAniZipEpisodes;
     /**
-     * @param id anilist id
-     * @returns anilist data for the anime **(without episodes)** (use `fetchEpisodesListById` to get the episodes) (use `fetchAnimeInfo` to get both)
+     * @param id AniList id
+     * @returns the AniList info without episodes (`fetchEpisodesListById` gives them, `fetchAnimeInfo` both)
      */
     fetchAnilistInfoById: (id: string) => Promise<IAnimeInfo>;
-    /**
-     * To get Staff details by anilistId
-     * @param id staff id from anilist
-     *
-     */
+    /** @param id AniList staff id */
     fetchStaffById: (id: number) => Promise<IStaff>;
-    /**
-     *
-     * @param id character id from anilist
-     */
+    /** @param id AniList character id */
     fetchCharacterInfoById: (id: string) => Promise<{
         id: any;
         name: {
@@ -145,7 +92,7 @@ declare class Anilist extends AnimeParser {
             alternativeSpoiler: any;
         };
         image: any;
-        description: any;
+        description: string;
         gender: any;
         dateOfBirth: {
             year: any;
@@ -154,56 +101,45 @@ declare class Anilist extends AnimeParser {
         };
         bloodType: any;
         age: any;
-        hairColor: any;
-        eyeColor: any;
-        height: any;
-        weight: any;
-        occupation: any;
-        partner: any;
-        relatives: any;
-        race: any;
-        rank: any;
-        previousPosition: any;
-        dislikes: any;
-        sign: any;
-        zodicSign: any;
-        zodicAnimal: any;
-        themeSong: any;
+        hairColor: string | undefined;
+        eyeColor: string | undefined;
+        height: string | undefined;
+        weight: string | undefined;
+        occupation: string | undefined;
+        partner: {
+            id: string | undefined;
+            name: string | undefined;
+        }[] | undefined;
+        relatives: {
+            id: string | undefined;
+            name: string | undefined;
+            relationship: string | undefined;
+        }[] | undefined;
+        race: string[] | undefined;
+        rank: string | undefined;
+        previousPosition: string | undefined;
+        dislikes: string | undefined;
+        sign: string | undefined;
+        zodicSign: string | undefined;
+        zodicAnimal: string | undefined;
+        themeSong: string | undefined;
         relations: any;
     }>;
-    /**
-     * Anilist Anime class
-     */
-    static Anime: typeof Anilist;
-    /**
-     * Anilist Manga Class
-     */
+    /** Maps AniList manga to a manga provider's chapters. */
     static Manga: {
         new (provider?: MangaParser): {
             provider: MangaParser;
-            /**
-             *
-             * @param query query to search for
-             * @param page (optional) page number (default: `1`)
-             * @param perPage (optional) number of results per page (default: `20`)
-             */
+            /** @param perPage results per page (default: 20) */
             search: (query: string, page?: number, perPage?: number) => Promise<ISearch<IMangaResult>>;
-            /**
-             *
-             * @param chapterId chapter id
-             * @param args args to pass to the provider (if any)
-             * @returns
-             */
+            /** @param args passed on to the provider's fetchChapterPages */
             fetchChapterPages: (chapterId: string, ...args: any) => Promise<IMangaChapterPage[]>;
-            fetchMangaInfo: (id: string, ...args: any) => Promise<IMangaInfo>;
+            /**
+             * The AniList info with the provider's chapters, in the provider's order (reading order, as every
+             * manga provider returns them), looked up by the romaji title, then by the English one.
+             */
+            fetchMangaInfo: (id: string) => Promise<IMangaInfo>;
         };
     };
-    /** The provider's chapters for the manga titled `title`; empty when the provider doesn't have it. */
-    private findMangaSlug;
-    /** The provider's manga for a search, preferring an exact title match; `undefined` when it finds none. */
-    private findMangaRaw;
-    /** The provider's chapters, looked up by the romaji title, then by the English one if that finds none. */
-    private findManga;
 }
 export default Anilist;
 //# sourceMappingURL=anilist.d.ts.map
